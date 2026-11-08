@@ -77,7 +77,7 @@ module (`foo.ts`, `foo.test.ts`). Working rules for contributors, human or agent
 1. Release PR: version in `package.json`, `package-lock.json` (`npm install --package-lock-only`)
    and `src/version.ts`; move the `Unreleased` entries of `CHANGELOG.md` under
    `## [X.Y.Z] - YYYY-MM-DD` and update the link definitions at the bottom (`[Unreleased]` compares
-   `vX.Y.Z...HEAD`, `[X.Y.Z]` points to the release).
+   `vX.Y.Z...HEAD`, `[X.Y.Z]` compares the previous tag with `vX.Y.Z`).
 2. After the merge: `git fetch origin`, check that `origin/main` is the merge commit of the release PR,
    then `git tag -a vX.Y.Z -m "symcrys X.Y.Z" origin/main && git push origin vX.Y.Z`.
 3. The tag runs `.github/workflows/release.yml`: it checks that the tag matches `package.json`,
