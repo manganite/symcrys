@@ -6,6 +6,11 @@ All notable changes to symcrys are recorded here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- npm: 0.1.0 was published by hand; from this version on, each release is staged on npm by the
+  release workflow (trusted publishing) and goes live after approval by the maintainer.
+
 ## [0.1.0] - 2026-11-08
 
 ### Added

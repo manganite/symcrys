@@ -129,9 +129,10 @@ Carried over from birss-app, where the calculations come from.
 - **Releases:** procedure in `README.md`. The release PR is merged on Thomas' OK; **Thomas sets
   the tag by hand** (maintainer, 2026-11-08). Before tagging, `origin/main` must be the release
   PR's merge commit; afterwards `release.yml` must be green.
-- **npm:** Thomas publishes the first version by hand, after the first release tag; later
-  publishing from `release.yml` via Trusted Publishing is to be set up then (issue #3). No
-  placeholder packages.
+- **npm:** `release.yml` submits each tagged version with `npm stage publish` (trusted publishing,
+  allowed action "stage" only); **Thomas approves it** with 2FA (maintainer, 2026-11-08). Never
+  publish from a working copy other than a clean checkout of the tag; a stale checkout put `0.0.0`
+  on npm (issue #3). No placeholder packages.
 - Commits end with `Co-Authored-By: …`; in sessions with a link (claude.ai) also with
   `Claude-Session: …`. On Thomas' computer commit with
   `git config user.email 6277652+manganite@users.noreply.github.com` (GitHub rejects the private
