@@ -26,7 +26,9 @@ apply here. Where this file and another document disagree on process, this file 
 - **One-way dependency.** symcrys knows nothing about crystallography-common, the apps or
   birss-app. Exception: scripts under `audit/` may read sibling checkouts (`../birss-app`,
   `../stereography`); they are run by hand, never by the build, the tests or CI. Lint and format
-  apply to them like to any other file.
+  apply to them like to any other file, except generated reports (`audit/**/report.md`), which
+  Prettier leaves alone. The scripts are not type-checked, because they import the sibling
+  checkouts.
 - **Relative imports carry the `.js` extension** (`NodeNext`), so `dist/` runs in browsers and in
   Node without a bundler.
 

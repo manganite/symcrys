@@ -4,6 +4,7 @@
   // configuration. The library code itself is checked without any environment types by
   // tsconfig.build.json (npm run typecheck runs both). Because this file also covers src/ with Node
   // types, the editor does not flag Node APIs in library code; the gates (typecheck, lint) do.
+  // audit/ is left out: it imports sibling checkouts (../birss-app, ../stereography), which CI lacks.
   "compilerOptions": {
     "target": "ES2022",
     "lib": ["ES2022"],
