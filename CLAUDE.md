@@ -39,6 +39,7 @@ apply here. Where this file and another document disagree on process, this file 
 | Working mode, process, decisions with their reason                                       | this file                                   |
 | Purpose, use, build commands, release procedure                                          | `README.md`                                 |
 | Changes per version                                                                      | `CHANGELOG.md` (Keep a Changelog)           |
+| Supported versions, how to report a vulnerability                                        | `SECURITY.md`                               |
 | Open work, ideas, open questions                                                         | GitHub issues of this repository            |
 | Conventions (axis frames, settings, symbols, ITC vs Birss) with their literature anchors | `docs/`                                     |
 | Transcribed reference tables re-parsed by tests                                          | `references/`, with source and printed page |
@@ -126,6 +127,12 @@ Carried over from birss-app, where the calculations come from.
   diff for errors, edge cases, contradictions with this file, and domain claims against code and
   sources. Findings are verified, then fixed or answered, and listed in the PR ("Review").
 - **Merge only on Thomas' explicit OK.**
+- **Repository settings** (maintainer, 2026-11-08): the ruleset `main` allows changes only
+  through a pull request, merged with a merge commit, with `gates (22)` and `gates (24)` green on
+  a branch up to date with `main`; no force push, no deletion. It requires no approval, because
+  GitHub does not let Thomas approve his own PRs; his OK stays a process rule. Admins may bypass
+  only through a pull request (e.g. when a check itself is broken), never by pushing directly.
+  Squash and rebase merges are off, head branches are deleted after merge.
 - **Releases:** procedure in `README.md`. The release PR is merged on Thomas' OK; **Thomas sets
   the tag by hand** (maintainer, 2026-11-08). Before tagging, `origin/main` must be the release
   PR's merge commit; afterwards `release.yml` must be green.
