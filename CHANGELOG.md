@@ -10,3 +10,5 @@ All notable changes to symcrys are recorded here. The format follows
 
 - Project scaffold: TypeScript build to `dist/` (ES modules with type declarations), tests, lint,
   format check, CI and release workflow. The only export so far is `VERSION`.
+
+[Unreleased]: https://github.com/manganite/symcrys/commits/main

@@ -50,17 +50,18 @@ paths.
 
 ## Development
 
-Requires Node 22.12 or later.
+Development requires Node 22 (22.13 or later) or 24; CI runs on both. The library itself needs only
+an ES2022 runtime with ES modules.
 
 ```bash
 npm install
-npm run typecheck      # TypeScript 6, src/ including tests
-npm run typecheck:ts7  # the same with TypeScript 7 (fetched by npx)
+npm run typecheck      # TypeScript 6: tests and scripts with Node types, library code without
+npm run typecheck:ts7  # the same with TypeScript 7
 npm run lint           # ESLint
 npm run format:check   # Prettier (npm run format fixes)
 npm test               # vitest
 npm run build          # dist/: JavaScript, .d.ts, source maps
-npm run check:dist     # dist/ loads, imports only relative .js paths, has no tests
+npm run check:dist     # dist/ loads, imports only relative .js paths, has no test-only code
 ```
 
 CI runs these seven gates on every pull request, on Node 22 and 24. Tests sit next to their
@@ -70,7 +71,8 @@ module (`foo.ts`, `foo.test.ts`). Working rules for contributors, human or agent
 
 1. Release PR: version in `package.json`, `package-lock.json` (`npm install --package-lock-only`)
    and `src/version.ts`; move the `Unreleased` entries of `CHANGELOG.md` under
-   `## [X.Y.Z] - YYYY-MM-DD` and add the compare link at the bottom.
+   `## [X.Y.Z] - YYYY-MM-DD` and update the link definitions at the bottom (`[Unreleased]` compares
+   `vX.Y.Z...HEAD`, `[X.Y.Z]` points to the release).
 2. After the merge, on the merge commit of the release PR:
    `git tag -a vX.Y.Z -m "symcrys X.Y.Z" && git push origin vX.Y.Z`.
 3. The tag runs `.github/workflows/release.yml`: it checks that the tag matches `package.json`,

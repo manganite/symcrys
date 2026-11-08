@@ -1,14 +1,17 @@
 {
-  // Type check of src/ including the tests (npm run typecheck). No DOM and no Node types:
-  // the library runs in browsers and in Node, so it may use neither environment's API.
-  // The build (tsconfig.build.json) extends this file and leaves the tests out.
+  // Type check of everything that is not shipped as library code: tests, fixtures, test helpers,
+  // scripts and config, with Node types (tests read the reference tables from disk). Also the editor
+  // configuration. The library code itself is checked without any environment types by
+  // tsconfig.build.json (npm run typecheck runs both).
   "compilerOptions": {
     "target": "ES2022",
     "lib": ["ES2022"],
-    "types": [],
+    "types": ["node"],
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "resolveJsonModule": true,
+    "allowJs": true,
+    "checkJs": true,
     "strict": true,
     "noImplicitOverride": true,
     "noFallthroughCasesInSwitch": true,
@@ -18,5 +21,5 @@
     "skipLibCheck": true,
     "noEmit": true
   },
-  "include": ["src"]
+  "include": ["src", "scripts", "vitest.config.ts"]
 }

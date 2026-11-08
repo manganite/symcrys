@@ -17,14 +17,16 @@ apply here. Where this file and another document disagree on process, this file 
 
 ## Hard constraints
 
-- **No DOM, no UI, no I/O in `src/`.** `tsconfig.json` has neither DOM nor Node types, and ESLint
-  forbids environment globals and non-relative imports in library code.
+- **No DOM, no UI, no I/O in library code** (everything in `src/` except test-only code, see
+  "Tests"). `tsconfig.build.json` type-checks it with neither DOM nor Node types, and ESLint
+  forbids a list of environment globals and any non-relative import there.
 - **No runtime dependencies** unless Thomas agrees. The apps copy `dist/` and run it unbundled in
-  the browser; `scripts/check-dist.mjs` fails on any import in `dist/` that is not a relative
-  `.js` path.
+  the browser; `scripts/check-dist.mjs` fails on any import or type reference in `dist/` that is
+  not a relative `.js` path.
 - **One-way dependency.** symcrys knows nothing about crystallography-common, the apps or
   birss-app. Exception: scripts under `audit/` may read sibling checkouts (`../birss-app`,
-  `../stereography`); they are never part of the build or of CI.
+  `../stereography`); they are run by hand, never by the build, the tests or CI. Lint and format
+  apply to them like to any other file.
 - **Relative imports carry the `.js` extension** (`NodeNext`), so `dist/` runs in browsers and in
   Node without a bundler.
 
@@ -83,9 +85,20 @@ Carried over from birss-app, where the calculations come from.
   correctness authority; regenerate them only by re-capture, never edit one to turn it green.
 - **Safety net first.** For any data or math change: extend the relevant fixture first, require
   it green, then change the code.
-- Files in `references/` change only to correct them against print.
-- Test classes by file suffix: `*.reference.test.ts`, `*.audit.test.ts`, `*.pins.test.ts`, plain
-  `*.test.ts`. `npm test` runs all of them and is the only gate.
+- Files in `references/` change only to correct them against print; Prettier and ESLint leave
+  them alone.
+
+## Tests
+
+- Tests sit next to their module (`foo.ts`, `foo.test.ts`), as in birss-app.
+- **Test-only code** is `*.test.ts`, `*.fixtures.ts` and anything in a `testUtils/` folder. It is
+  type-checked with Node types (tests read `references/` from disk), may import Node built-ins,
+  and is left out of `dist/` and the npm package; `check:dist` fails if any of it is built. Any
+  other file in `src/` is library code.
+- Test classes by file suffix: `*.reference.test.ts` (re-parse print transcriptions),
+  `*.audit.test.ts` (exhaustive coverage), `*.pins.test.ts` (behavioural pins), plain `*.test.ts`;
+  further suffixes from birss-app may come along. `npm test` runs all of them; no subset is a
+  gate of its own.
 
 ## Public API and versions
 
@@ -103,8 +116,9 @@ Carried over from birss-app, where the calculations come from.
 - Never commit to `main` (the only exception was the initial commit that created it). Short-lived
   branch (`feature/`, `fix/`, `refactor/`, `docs/`, `chore/`, `audit/`), Conventional Commits
   (`type(scope): summary`), PR to `main`, merged with a merge commit (no squash).
-- **Gates**, run by CI on every PR on Node 22 and 24 and quoted in full in every report:
-  `typecheck`, `typecheck:ts7`, `lint`, `format:check`, `test`, `build`, `check:dist`.
+- **Gates**, run by CI on every PR on Node 22 and 24: `typecheck`, `typecheck:ts7`, `lint`,
+  `format:check`, `test`, `build`, `check:dist`. A report names all seven with their result; a
+  skipped one is named as skipped.
 - **Review by an independent agent** before reporting to Thomas, on every PR without exception:
   an agent that does not know the work gets only repository, branch and purpose and checks the
   diff for errors, edge cases, contradictions with this file, and domain claims against code and
@@ -140,17 +154,25 @@ Carried over from birss-app, where the calculations come from.
 
 ## Decisions (with reason)
 
-- **TypeScript 6.0, checked also with 7.0** (2026-11-08): typescript-eslint supports TypeScript
-  below 6.1 only, and the npm package of TypeScript 7 has no JavaScript API, so ESLint cannot parse
-  `.ts` with it (checked 2026-11-08). The gate `typecheck:ts7` keeps the code valid under 7, so
-  switching later is a version bump once typescript-eslint supports it. The `.d.ts` files are read
-  by any TypeScript version, including the apps' TypeScript 7.
-- **vitest** as in birss-app, so its tests move over unchanged. **Prettier** with birss-app's
-  settings, so moved code is not reformatted.
-- **Tests next to the module** (`foo.ts`, `foo.test.ts`), as in birss-app; left out of `dist/` by
-  `tsconfig.build.json`.
+- **TypeScript 6.0, checked also with 7.0** (2026-11-08): typescript-eslint 8.72 supports
+  TypeScript below 6.1 only, and TypeScript 7.0.2 offers no stable compiler API (only
+  `typescript/unstable/*`), so ESLint cannot parse `.ts` with it (checked 2026-11-08). TypeScript 7
+  is installed as the aliased dev dependency `typescript7`, and the gate `typecheck:ts7` keeps the
+  code valid under 7, so switching is a version bump once typescript-eslint supports it. Scripts
+  call both compilers by path, because the two packages compete for the `tsc` command. The
+  `.d.ts` files are read by TypeScript 6 and 7 (the apps check with 7.0.2).
+- **vitest** as in birss-app (there 4.1, here 5.1); its tests move over with relative imports
+  given the `.js` extension. **Prettier** with birss-app's settings, so moved code is not
+  reformatted.
+- **Two type checks** (2026-11-08): library code without environment types
+  (`tsconfig.build.json`), everything else with Node types (`tsconfig.json`), so tests can read
+  reference files from disk while the library stays environment-free.
+- **No `engines` field**: the library needs only ES2022 with ES modules, and a narrow range would
+  warn consumers needlessly; the development requirement is in `README.md`.
 - **Release tarball on GitHub** (2026-11-08): every release carries the `npm pack` tarball, so the
   apps' `sync.mjs` and birss-app can take a version without building symcrys and before it is on
   npm.
-- **The npm package also ships `src/`** (without tests), so source maps and declaration maps
-  resolve; the apps copy only `dist/`.
+- **The npm package also ships `src/`** (without test-only code), so source maps and declaration
+  maps resolve; the apps copy only `dist/`.
+- **`exports` with `default`, not `import`** (2026-11-08): `require('symcrys')` then works too
+  (Node 22.12+ can require ES modules), and so do tools that resolve only `default`.

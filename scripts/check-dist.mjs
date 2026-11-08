@@ -2,16 +2,19 @@
 //
 // The apps copy dist/ into lib/kern/ and load it unbundled in the browser, so every module must
 // import only relative paths ending in .js: no bare package names (no runtime dependencies) and no
-// node: built-ins. Also checks that the package entry points exist, that no test file was built,
-// and that the built module loads in Node and reports the version of package.json.
+// node: built-ins. The .d.ts files must not pull in other type packages either. Also checks that
+// the package entry points exist, that no test-only code was built, and that the built module
+// loads in Node and reports the version of package.json.
 
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
-import { join, relative } from 'node:path';
+import { join, relative, sep } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import ts from 'typescript';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 const dist = join(root, 'dist');
 const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
+/** @type {string[]} */
 const errors = [];
 
 if (!existsSync(dist)) {
@@ -27,31 +30,40 @@ function files(dir) {
 }
 
 const all = files(dist);
+const rel = (/** @type {string} */ file) => relative(root, file);
 
 // Entry points named in package.json
-const targets = [pkg.main, pkg.types, ...Object.values(pkg.exports['.'])];
-for (const target of targets) {
+const entry = pkg.exports['.'];
+for (const target of new Set([pkg.main, pkg.types, entry.types, entry.default])) {
   if (!existsSync(join(root, target))) errors.push(`entry point ${target} does not exist`);
 }
 
-// No tests in the build
+// No test-only code in the build (CLAUDE.md, "Tests")
 for (const file of all) {
-  if (/\.test\.(js|d\.ts)$/.test(file)) errors.push(`test file in dist: ${relative(root, file)}`);
+  if (/\.(test|fixtures)\.(js|d\.ts)(\.map)?$/.test(file) || file.includes(`${sep}testUtils${sep}`)) {
+    errors.push(`test-only file in dist: ${rel(file)}`);
+  }
 }
 
-// Import specifiers: static imports and re-exports, side-effect imports, dynamic imports
-const SPECIFIER = /(?:\bfrom\s*|\bimport\s*|\bimport\s*\(\s*)(['"])([^'"]+)\1/g;
+// Imports, re-exports, dynamic imports, type imports and triple-slash directives, read by the
+// TypeScript scanner, so that text in comments and strings is not mistaken for an import.
 for (const file of all.filter((f) => f.endsWith('.js') || f.endsWith('.d.ts'))) {
-  const code = readFileSync(file, 'utf8');
-  for (const [, , spec] of code.matchAll(SPECIFIER)) {
-    if (!/^\.{1,2}\//.test(spec) || !spec.endsWith('.js')) {
-      errors.push(`${relative(root, file)}: import '${spec}' is not a relative .js path`);
+  const info = ts.preProcessFile(readFileSync(file, 'utf8'), true, true);
+  for (const { fileName } of info.importedFiles) {
+    if (!/^\.{1,2}\//.test(fileName) || !fileName.endsWith('.js')) {
+      errors.push(`${rel(file)}: import '${fileName}' is not a relative .js path`);
     }
+  }
+  for (const { fileName } of [...info.typeReferenceDirectives, ...info.libReferenceDirectives]) {
+    errors.push(`${rel(file)}: triple-slash reference to '${fileName}'`);
+  }
+  for (const { fileName } of info.referencedFiles) {
+    if (!/^\.{1,2}\//.test(fileName)) errors.push(`${rel(file)}: triple-slash path '${fileName}'`);
   }
 }
 
 // The built module loads and carries the right version
-const mod = await import(pathToFileURL(join(root, pkg.exports['.'].import)).href);
+const mod = await import(pathToFileURL(join(root, entry.default)).href);
 if (mod.VERSION !== pkg.version) {
   errors.push(`dist reports VERSION ${mod.VERSION}, package.json has ${pkg.version}`);
 }

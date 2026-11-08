@@ -44,27 +44,30 @@ jobs:
           npm test
           npm run build
           npm run check:dist
+      # --ignore-scripts: pack the dist/ that the gates just checked, without rebuilding it (prepack)
       - name: Pack
         id: pack
-        run: echo "file=$(npm pack --silent)" >> "$GITHUB_OUTPUT"
+        run: echo "file=$(npm pack --silent --ignore-scripts)" >> "$GITHUB_OUTPUT"
       - name: Extract changelog section
         id: changelog
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
-          NOTES=$(awk -v ver="$VERSION" '
-            $0 ~ "^## \\[" ver "\\]" { capture = 1; next }
+          NOTES=$(awk -v head="## [${VERSION}]" '
+            index($0, head) == 1 { capture = 1; next }
             capture && /^## \[/ { exit }
             capture && /^\[.*\]:/ { exit }
-            capture { print }
+            capture && !started && /^$/ { next }
+            capture { started = 1; print }
           ' CHANGELOG.md)
           if [ -z "$NOTES" ]; then
             echo "::error::CHANGELOG.md has no section for ${VERSION}."
             exit 1
           fi
+          DELIM="NOTES_$(openssl rand -hex 8)"
           {
-            echo "notes<<EOF"
+            echo "notes<<${DELIM}"
             echo "$NOTES"
-            echo "EOF"
+            echo "${DELIM}"
           } >> "$GITHUB_OUTPUT"
       - name: Create GitHub release with the package tarball
         uses: softprops/action-gh-release@v2
