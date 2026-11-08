@@ -1,0 +1,77 @@
+name: Release
+
+# Runs when a tag vX.Y.Z is pushed (by hand, after the release PR is merged; CLAUDE.md, "Releases").
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate tag
+        run: |
+          if [[ ! "${GITHUB_REF_NAME}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Tag '${GITHUB_REF_NAME}' is not of the form vX.Y.Z."
+            exit 1
+          fi
+      - name: Checkout
+        uses: actions/checkout@v5
+      - name: Set up Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - name: Tag matches package.json
+        run: |
+          VERSION="$(node -p "require('./package.json').version")"
+          if [ "v${VERSION}" != "${GITHUB_REF_NAME}" ]; then
+            echo "::error::Tag ${GITHUB_REF_NAME} does not match package.json version ${VERSION}."
+            exit 1
+          fi
+      - name: Install dependencies
+        run: npm ci
+      - name: Gates
+        run: |
+          npm run typecheck
+          npm run typecheck:ts7
+          npm run lint
+          npm run format:check
+          npm test
+          npm run build
+          npm run check:dist
+      # --ignore-scripts: pack the dist/ that the gates just checked, without rebuilding it (prepack)
+      - name: Pack
+        id: pack
+        run: echo "file=$(npm pack --silent --ignore-scripts)" >> "$GITHUB_OUTPUT"
+      - name: Extract changelog section
+        id: changelog
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          NOTES=$(awk -v head="## [${VERSION}]" '
+            index($0, head) == 1 { capture = 1; next }
+            capture && /^## \[/ { exit }
+            capture && /^\[.*\]:/ { exit }
+            capture && !started && /^$/ { next }
+            capture { started = 1; print }
+          ' CHANGELOG.md)
+          if [ -z "$NOTES" ]; then
+            echo "::error::CHANGELOG.md has no section for ${VERSION}."
+            exit 1
+          fi
+          DELIM="NOTES_$(openssl rand -hex 8)"
+          {
+            echo "notes<<${DELIM}"
+            echo "$NOTES"
+            echo "${DELIM}"
+          } >> "$GITHUB_OUTPUT"
+      - name: Create GitHub release with the package tarball
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ github.ref_name }}
+          body: ${{ steps.changelog.outputs.notes }}
+          files: ${{ steps.pack.outputs.file }}

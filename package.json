@@ -1,0 +1,62 @@
+{
+  "name": "symcrys",
+  "version": "0.0.0",
+  "description": "Crystallographic symmetry calculations: point groups (crystallographic and magnetic), their settings, symbols and properties, and property tensors. TypeScript library without dependencies.",
+  "keywords": [
+    "crystallography",
+    "symmetry",
+    "point-groups",
+    "magnetic-point-groups",
+    "tensors"
+  ],
+  "author": "Thomas Lottermoser",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/manganite/symcrys.git"
+  },
+  "bugs": "https://github.com/manganite/symcrys/issues",
+  "homepage": "https://github.com/manganite/symcrys#readme",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "src",
+    "!src/**/*.test.ts",
+    "!src/**/*.fixtures.ts",
+    "!src/**/testUtils/**"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "typecheck": "node node_modules/typescript/bin/tsc -p tsconfig.json && node node_modules/typescript/bin/tsc -p tsconfig.build.json --noEmit",
+    "typecheck:ts7": "node node_modules/typescript7/bin/tsc -p tsconfig.json && node node_modules/typescript7/bin/tsc -p tsconfig.build.json --noEmit",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prebuild": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",
+    "build": "node node_modules/typescript/bin/tsc -p tsconfig.build.json",
+    "check:dist": "node scripts/check-dist.mjs",
+    "prepack": "npm run build"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/node": "22.20.5",
+    "eslint": "10.14.0",
+    "globals": "17.14.0",
+    "prettier": "3.9.10",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.72.1",
+    "typescript7": "npm:typescript@7.0.2",
+    "vitest": "5.1.0"
+  }
+}

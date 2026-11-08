@@ -1,0 +1,5 @@
+dist/
+coverage/
+package-lock.json
+# Transcriptions of printed tables: changed only to correct them against print (CLAUDE.md)
+references/
