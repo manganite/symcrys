@@ -2,7 +2,8 @@
   // Type check of everything that is not shipped as library code: tests, fixtures, test helpers,
   // scripts and config, with Node types (tests read the reference tables from disk). Also the editor
   // configuration. The library code itself is checked without any environment types by
-  // tsconfig.build.json (npm run typecheck runs both).
+  // tsconfig.build.json (npm run typecheck runs both). Because this file also covers src/ with Node
+  // types, the editor does not flag Node APIs in library code; the gates (typecheck, lint) do.
   "compilerOptions": {
     "target": "ES2022",
     "lib": ["ES2022"],
@@ -21,5 +22,5 @@
     "skipLibCheck": true,
     "noEmit": true
   },
-  "include": ["src", "scripts", "vitest.config.ts"]
+  "include": ["src", "scripts", "vitest.config.ts", "eslint.config.js"]
 }
