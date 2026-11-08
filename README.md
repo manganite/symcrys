@@ -78,11 +78,12 @@ module (`foo.ts`, `foo.test.ts`). Working rules for contributors, human or agent
    and `src/version.ts`; move the `Unreleased` entries of `CHANGELOG.md` under
    `## [X.Y.Z] - YYYY-MM-DD` and update the link definitions at the bottom (`[Unreleased]` compares
    `vX.Y.Z...HEAD`, `[X.Y.Z]` points to the release).
-2. After the merge, on the merge commit of the release PR:
-   `git tag -a vX.Y.Z -m "symcrys X.Y.Z" && git push origin vX.Y.Z`.
+2. After the merge: `git fetch origin`, check that `origin/main` is the merge commit of the release PR,
+   then `git tag -a vX.Y.Z -m "symcrys X.Y.Z" origin/main && git push origin vX.Y.Z`.
 3. The tag runs `.github/workflows/release.yml`: it checks that the tag matches `package.json`,
    runs all gates, and creates the GitHub release with the `CHANGELOG.md` section as notes and the
-   `npm pack` tarball attached.
+   `npm pack` tarball attached. Check that the workflow is green and the release carries
+   `symcrys-X.Y.Z.tgz`.
 
 **npm** (not yet set up). The first version is published by hand from a clean checkout of the
 tag: `npm login` (account with two-factor authentication), then `npm publish`. After that,
