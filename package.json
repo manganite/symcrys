@@ -46,7 +46,8 @@
     "prebuild": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",
     "build": "node node_modules/typescript/bin/tsc -p tsconfig.build.json",
     "check:dist": "node scripts/check-dist.mjs",
-    "prepack": "npm run build"
+    "prepack": "npm run build",
+    "audit:point-groups": "vitest run --config audit/point-groups/vitest.config.ts"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

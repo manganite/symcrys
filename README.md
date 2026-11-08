@@ -64,6 +64,11 @@ npm run build          # dist/: JavaScript, .d.ts, source maps
 npm run check:dist     # dist/ loads, imports only relative .js paths, has no test-only code
 ```
 
+Audits under `audit/` compare the code bases symcrys draws on. They are run by hand, with
+[birss-app](https://github.com/manganite/birss-app) and
+[stereography](https://github.com/manganite/stereography) checked out next to this repository:
+`npm run audit:point-groups` writes `audit/point-groups/report.md`.
+
 CI runs these seven gates on every pull request, on Node 22 and 24. Tests sit next to their
 module (`foo.ts`, `foo.test.ts`). Working rules for contributors, human or agent: `CLAUDE.md`.
 
