@@ -1,6 +1,6 @@
 {
   "name": "symcrys",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Crystallographic symmetry calculations: point groups (crystallographic and magnetic), their settings, symbols and properties, and property tensors. TypeScript library without dependencies.",
   "keywords": [
     "crystallography",
