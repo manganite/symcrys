@@ -1,0 +1,22 @@
+{
+  // Type check of src/ including the tests (npm run typecheck). No DOM and no Node types:
+  // the library runs in browsers and in Node, so it may use neither environment's API.
+  // The build (tsconfig.build.json) extends this file and leaves the tests out.
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "types": [],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "resolveJsonModule": true,
+    "strict": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "noEmit": true
+  },
+  "include": ["src"]
+}

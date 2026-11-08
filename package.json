@@ -1,0 +1,61 @@
+{
+  "name": "symcrys",
+  "version": "0.0.0",
+  "description": "Crystallographic symmetry calculations: point groups (crystallographic and magnetic), their settings, symbols and properties, and property tensors. TypeScript library without dependencies.",
+  "keywords": [
+    "crystallography",
+    "symmetry",
+    "point-groups",
+    "magnetic-point-groups",
+    "tensors"
+  ],
+  "author": "Thomas Lottermoser",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/manganite/symcrys.git"
+  },
+  "bugs": "https://github.com/manganite/symcrys/issues",
+  "homepage": "https://github.com/manganite/symcrys#readme",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "src",
+    "!src/**/*.test.ts"
+  ],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "typecheck:ts7": "npx --yes -p typescript@7.0.2 tsc -p tsconfig.json",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prebuild": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",
+    "build": "tsc -p tsconfig.build.json",
+    "check:dist": "node scripts/check-dist.mjs",
+    "prepack": "npm run build"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "eslint": "10.14.0",
+    "globals": "17.14.0",
+    "prettier": "3.9.10",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.72.1",
+    "vitest": "5.1.0"
+  }
+}
