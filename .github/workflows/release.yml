@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: write
+  id-token: write # OIDC token for npm trusted publishing
 
 jobs:
   release:
@@ -26,6 +27,7 @@ jobs:
         with:
           node-version: 22
           cache: npm
+          registry-url: 'https://registry.npmjs.org'
       - name: Tag matches package.json
         run: |
           VERSION="$(node -p "require('./package.json').version")"
@@ -75,3 +77,11 @@ jobs:
           name: ${{ github.ref_name }}
           body: ${{ steps.changelog.outputs.notes }}
           files: ${{ steps.pack.outputs.file }}
+      # Submits the version to npm for approval (staged publishing). The trusted publisher on
+      # npmjs.com allows only `npm stage publish`; Thomas approves the staged version with 2FA
+      # (README, "Releases"). Needs npm >= 11.15 (Node 22 ships npm 10). It stages the same tarball
+      # that is attached to the GitHub release.
+      - name: Install npm with staged publishing
+        run: npm install --global npm@11.21.2
+      - name: Stage on npm
+        run: npm stage publish "./${{ steps.pack.outputs.file }}"

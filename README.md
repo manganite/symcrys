@@ -34,11 +34,11 @@ birss-app.
 
 ## Use
 
-Not yet on npm. Each release on GitHub carries the package as `symcrys-X.Y.Z.tgz`:
-
 ```bash
-npm install https://github.com/manganite/symcrys/releases/download/vX.Y.Z/symcrys-X.Y.Z.tgz
+npm install symcrys
 ```
+
+Each release on GitHub also carries the package as `symcrys-X.Y.Z.tgz`.
 
 ```ts
 import { VERSION } from 'symcrys';
@@ -85,10 +85,11 @@ module (`foo.ts`, `foo.test.ts`). Working rules for contributors, human or agent
    `npm pack` tarball attached. Check that the workflow is green and the release carries
    `symcrys-X.Y.Z.tgz`.
 
-**npm** (not yet set up). The first version is published by hand from a clean checkout of the
-tag: `npm login` (account with two-factor authentication), then `npm publish`. After that,
-"Trusted Publishing" for `manganite/symcrys` and `release.yml` can be configured on npmjs.com, so
-that later tags publish without a token.
+**npm.** `release.yml` also submits the version to npm as a staged version (trusted publishing,
+no token). It goes live only after approval with two-factor authentication:
+`npm stage list symcrys`, `npm stage view <stage-id>`, then `npm stage approve <stage-id>` (npm 11.15 or
+later), or "Staged Packages" on npmjs.com. Check afterwards that `npm view symcrys` shows the version
+as `latest`.
 
 ## Licence
 
