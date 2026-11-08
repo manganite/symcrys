@@ -377,6 +377,22 @@ function report(rows: Row[]): string {
   }
   L.push('');
 
+  // Overbar: both code bases write it as a leading '-' in data; look for any other spelling.
+  const symbolStrings = [
+    ...rows.flatMap((r) => [r.id, r.symbols.sHm, r.symbols.sSetting ?? '', r.symbols.sFull]),
+    ...rows.flatMap((r) => [r.key, r.itc.name, r.symbols.bFull ?? '']),
+  ];
+  const otherBars = symbolStrings.filter((t) => /\u0305|\u00af|\u0304|\u2212|\\bar|overline/.test(t));
+  const barred = symbolStrings.filter((t) => t.includes('-'));
+  L.push(
+    'Overbar: both code bases write it as a leading `-` in their data (' +
+      `${barred.length} of ${symbolStrings.length} symbol strings above contain one; other spellings found: ` +
+      `${otherBars.length ? otherBars.join(', ') : 'none'}). The bar on the cubic 3 is kept on both sides (m-3, m-3m). ` +
+      "birss-app's full HM symbols are one string per group key, for its setting 1 (c-unique for monoclinic; " +
+      'for 32 the string 321 sits on the frame that ITC names 312).',
+    '',
+  );
+
   L.push('## Derived data', '');
   const propNames = Object.keys(rows[0].props);
   L.push(`| stereography | ${propNames.join(' | ')} |`);
@@ -398,22 +414,6 @@ function report(rows: Row[]): string {
   const sfBad = rows
     .filter((r) => r.symbols.sSf !== r.symbols.bSf)
     .map((r) => `${r.id} (${r.symbols.sSf} / ${r.symbols.bSf})`);
-  // Overbar: both code bases write it as a leading '-' in data; look for any other spelling.
-  const symbolStrings = [
-    ...rows.flatMap((r) => [r.id, r.symbols.sHm, r.symbols.sSetting ?? '', r.symbols.sFull]),
-    ...rows.flatMap((r) => [r.key, r.itc.name, r.symbols.bFull ?? '']),
-  ];
-  const otherBars = symbolStrings.filter((t) => /\u0305|\u00af|\u0304|\\bar|overline/.test(t));
-  const barred = symbolStrings.filter((t) => t.includes('-'));
-  L.push(
-    'Overbar: both code bases write it as a leading `-` in their data (' +
-      `${barred.length} of ${symbolStrings.length} symbol strings above contain one; other spellings found: ` +
-      `${otherBars.length ? otherBars.join(', ') : 'none'}). The bar on the cubic 3 is kept on both sides (m-3, m-3m). ` +
-      "birss-app's full HM symbols are one string per group key, for its setting 1 (c-unique for monoclinic; " +
-      'for 32 the string 321 sits on the frame that ITC names 312).',
-    '',
-  );
-
   L.push('## Summary', '');
   L.push(`- Entries compared: ${rows.length} (32 classes, ${rows.length - 32} additional settings).`);
   L.push(

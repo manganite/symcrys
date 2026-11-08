@@ -119,6 +119,8 @@ Labels differ, not operations: in ITC mode birss-app names the settings with the
 | -43m | -43m | -4 3 m | Td | -43m | -43m | Td |
 | m-3m | m-3m | 4/m -3 2/m | Oh | m-3m | 4/m -3 2/m | Oh |
 
+Overbar: both code bases write it as a leading `-` in their data (80 of 280 symbol strings above contain one; other spellings found: none). The bar on the cubic 3 is kept on both sides (m-3, m-3m). birss-app's full HM symbols are one string per group key, for its setting 1 (c-unique for monoclinic; for 32 the string 321 sits on the frame that ITC names 312).
+
 ## Derived data
 
 | stereography | system | laue | centro | polar | chiral | piezo |
@@ -163,8 +165,6 @@ Labels differ, not operations: in ITC mode birss-app names the settings with the
 | 432 | Cubic | m-3m | false | false | true | false |
 | -43m | Cubic | m-3m | false | false | false | true |
 | m-3m | Cubic | m-3m | true | false | false | false |
-
-Overbar: both code bases write it as a leading `-` in their data (80 of 280 symbol strings above contain one; other spellings found: none). The bar on the cubic 3 is kept on both sides (m-3, m-3m). birss-app's full HM symbols are one string per group key, for its setting 1 (c-unique for monoclinic; for 32 the string 321 sits on the frame that ITC names 312).
 
 ## Summary
 
