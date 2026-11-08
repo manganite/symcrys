@@ -6,6 +6,8 @@ All notable changes to symcrys are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-11-08
+
 ### Changed
 
 - npm: 0.1.0 was published by hand; from this version on, each release is staged on npm by the
@@ -18,5 +20,6 @@ All notable changes to symcrys are recorded here. The format follows
 - Project scaffold: TypeScript build to `dist/` (ES modules with type declarations), tests, lint,
   format check, CI and release workflow. The only export so far is `VERSION`.
 
-[Unreleased]: https://github.com/manganite/symcrys/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/manganite/symcrys/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/manganite/symcrys/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/manganite/symcrys/releases/tag/v0.1.0
