@@ -86,19 +86,19 @@ module (`foo.ts`, `foo.test.ts`). Working rules for contributors, human or agent
    `symcrys-X.Y.Z.tgz`.
 
 **npm.** The `npm` job of `release.yml` submits the same tarball to npm as a staged version
-(trusted publishing, no token). Its log shows the tarball's integrity and the stage id. The version
+(trusted publishing, no token). Its log shows the tarball's shasum and integrity and the stage id. The version
 goes live only after approval with two-factor authentication (npm 11.15 or later):
 
-1. `npm stage list symcrys`, then `npm stage view <stage-id>`: version and integrity must match the
-   log of the `npm` job (or "Staged Packages" on npmjs.com).
+1. `npm stage list symcrys`, then `npm stage view <stage-id>`: version and shasum must match the log
+   of the `npm` job (or "Staged Packages" on npmjs.com).
 2. `npm stage approve <stage-id>`.
 3. `npm view symcrys` shows the version as `latest`.
 
 If staging fails, re-run the `npm` job (a staged version cannot be staged twice, so check
 `npm stage list` first). An authentication error usually means the trusted publisher on npmjs.com
-does not match (repository, workflow `release.yml`); `--loglevel verbose` on the stage step shows
-the OIDC exchange. As a fallback, stage the release asset by hand:
-`npm stage publish ./symcrys-X.Y.Z.tgz`.
+does not match (repository, workflow `release.yml`); the stage step runs with `--loglevel verbose`,
+so its log shows the OIDC exchange. As a fallback, stage the release asset by hand:
+`npm stage publish ./symcrys-X.Y.Z.tgz` (then without provenance, which only CI can attest).
 
 ## Licence
 

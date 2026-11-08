@@ -26,6 +26,8 @@ jobs:
           fi
       - name: Checkout
         uses: actions/checkout@v5
+        with:
+          persist-credentials: false # dev dependencies run in this job; no git token left behind
       - name: Set up Node
         uses: actions/setup-node@v5
         with:
@@ -97,7 +99,7 @@ jobs:
       id-token: write # OIDC token for npm trusted publishing
     steps:
       - name: Get the tarball
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: package
       - name: Set up Node
@@ -108,9 +110,11 @@ jobs:
       # Staging needs npm >= 11.15; Node 22 ships npm 10.
       - name: Install npm with staged publishing
         run: npm install --global npm@11.21.1
-      - name: Show the integrity to compare before approving
+      - name: Show the checksums to compare before approving
         run: |
           FILE="${{ needs.release.outputs.file }}"
-          echo "${FILE}: sha512-$(openssl dgst -sha512 -binary "${FILE}" | openssl base64 -A)"
+          echo "${FILE} shasum: $(sha1sum "${FILE}" | cut -d' ' -f1)"
+          echo "${FILE} integrity: sha512-$(openssl dgst -sha512 -binary "${FILE}" | openssl base64 -A)"
       - name: Stage on npm
-        run: npm stage publish "./${{ needs.release.outputs.file }}"
+        # verbose: the log shows the OIDC exchange if authentication fails (npm redacts tokens)
+        run: npm stage publish "./${{ needs.release.outputs.file }}" --loglevel verbose
