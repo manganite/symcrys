@@ -91,7 +91,8 @@ goes live only after approval with two-factor authentication (npm 11.15 or later
 
 1. `npm stage list symcrys`, then `npm stage view <stage-id>`: version and shasum must match the log
    of the `npm` job (or "Staged Packages" on npmjs.com).
-2. `npm stage approve <stage-id>`.
+2. `npm stage approve <stage-id>`. npm first runs an automated review of the staged version; until it
+   has finished, approval fails with `E409 … automated review hasn't finished` (a few minutes).
 3. `npm view symcrys` shows the version as `latest`.
 
 If staging fails, re-run the `npm` job (a staged version cannot be staged twice, so check
