@@ -6,13 +6,17 @@ on:
     tags:
       - 'v*.*.*'
 
-permissions:
-  contents: write
-  id-token: write # OIDC token for npm trusted publishing
+# Two jobs, so that only the short npm job can obtain an OIDC token for npm: the release job runs
+# the dev dependencies (install scripts, tests, lint) and never sees that token.
+permissions: {}
 
 jobs:
   release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # create the GitHub release
+    outputs:
+      file: ${{ steps.pack.outputs.file }}
     steps:
       - name: Validate tag
         run: |
@@ -26,8 +30,6 @@ jobs:
         uses: actions/setup-node@v5
         with:
           node-version: 22
-          cache: npm
-          registry-url: 'https://registry.npmjs.org'
       - name: Tag matches package.json
         run: |
           VERSION="$(node -p "require('./package.json').version")"
@@ -77,11 +79,38 @@ jobs:
           name: ${{ github.ref_name }}
           body: ${{ steps.changelog.outputs.notes }}
           files: ${{ steps.pack.outputs.file }}
-      # Submits the version to npm for approval (staged publishing). The trusted publisher on
-      # npmjs.com allows only `npm stage publish`; Thomas approves the staged version with 2FA
-      # (README, "Releases"). Needs npm >= 11.15 (Node 22 ships npm 10). It stages the same tarball
-      # that is attached to the GitHub release.
+      - name: Keep the tarball for the npm job
+        uses: actions/upload-artifact@v6
+        with:
+          name: package
+          path: ${{ steps.pack.outputs.file }}
+          if-no-files-found: error
+
+  # Submits the version to npm for approval (staged publishing). The trusted publisher on npmjs.com
+  # allows only `npm stage publish`; Thomas approves the staged version with 2FA (README,
+  # "Releases"). It stages the same tarball that is attached to the GitHub release. No dependency
+  # cache in this job (npm trusted-publishing guidance for release builds).
+  npm:
+    needs: release
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write # OIDC token for npm trusted publishing
+    steps:
+      - name: Get the tarball
+        uses: actions/download-artifact@v6
+        with:
+          name: package
+      - name: Set up Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          registry-url: 'https://registry.npmjs.org'
+      # Staging needs npm >= 11.15; Node 22 ships npm 10.
       - name: Install npm with staged publishing
-        run: npm install --global npm@11.21.2
+        run: npm install --global npm@11.21.1
+      - name: Show the integrity to compare before approving
+        run: |
+          FILE="${{ needs.release.outputs.file }}"
+          echo "${FILE}: sha512-$(openssl dgst -sha512 -binary "${FILE}" | openssl base64 -A)"
       - name: Stage on npm
-        run: npm stage publish "./${{ steps.pack.outputs.file }}"
+        run: npm stage publish "./${{ needs.release.outputs.file }}"

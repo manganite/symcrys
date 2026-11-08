@@ -8,8 +8,8 @@ All notable changes to symcrys are recorded here. The format follows
 
 ### Changed
 
-- Available on npm (`npm install symcrys`). Each release is now staged on npm by the release
-  workflow (trusted publishing) and goes live after approval by the maintainer.
+- npm: 0.1.0 was published by hand; from this version on, each release is staged on npm by the
+  release workflow (trusted publishing) and goes live after approval by the maintainer.
 
 ## [0.1.0] - 2026-11-08
 
