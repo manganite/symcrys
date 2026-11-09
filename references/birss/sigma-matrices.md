@@ -17,4 +17,4 @@ Cartesian frame (x, y, z); `σ'(N)` is σ(N) combined with time reversal.
 | 6 | [3_z] | -1/2 √3/2 0 | -√3/2 -1/2 0 | 0 0 1 | threefold rotation about z |
 | 7 | [4_z] | 0 1 0 | -1 0 0 | 0 0 1 | fourfold rotation about z |
 | 8 | [-4_z] | 0 -1 0 | 1 0 0 | 0 0 -1 | fourfold rotoinversion about z |
-| 9 | | 0 1 0 | 0 0 1 | 1 0 0 | threefold rotation about [111] (x → y → z → x, as a cyclic permutation of components) |
+| 9 | | 0 1 0 | 0 0 1 | 1 0 0 | threefold rotation about [111]; maps the components (x, y, z) to (y, z, x) |

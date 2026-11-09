@@ -99,9 +99,9 @@ export function rotationY(angleDeg: number): Mat3 {
 }
 
 /**
- * The exact values every entry of a crystallographic point-group operation takes, in the Cartesian
- * frames of symcrys (the 45° settings bring in ±√2/2, the trigonal and hexagonal groups ±1/2 and
- * ±√3/2).
+ * Exact values for snapping: the entries of every point-group operation in the frames of symcrys
+ * (0, ±1, and ±1/2, ±√3/2 in the trigonal and hexagonal groups), and ±√2/2, the entries of the
+ * 45° setting frame (rotationZ(45), which is snapped as well).
  */
 const SNAP_VALUES = [0, 1, -1, 0.5, -0.5, Math.SQRT1_2, -Math.SQRT1_2, Math.sqrt(3) / 2, -Math.sqrt(3) / 2];
 

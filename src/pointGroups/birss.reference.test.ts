@@ -7,9 +7,18 @@
  */
 
 import { describe, expect, it } from 'vitest';
+import { groupOfSymbol, hmTokens } from '../testUtils/hermannMauguin.js';
 import { close, sameGroup, type M, type RefOp } from '../testUtils/independentGroups.js';
 import { expectHeader, readReference, section, tableRows } from '../testUtils/references.js';
-import { isPointGroupKey, operations, pointGroup, settings, symbol, type PointGroupKey } from './pointGroups.js';
+import {
+  POINT_GROUP_KEYS,
+  isPointGroupKey,
+  operations,
+  pointGroup,
+  settings,
+  symbol,
+  type PointGroupKey,
+} from './pointGroups.js';
 
 // --- σ(0)–σ(9) ---------------------------------------------------------------------------------
 
@@ -120,5 +129,41 @@ describe('Birss Table 3 (printed pp. 36–39) against symcrys, Birss convention'
         expect(symbol(row.key, { convention: 'birss' })).toBe(row.key);
       });
     });
+  }
+});
+
+/**
+ * Birss symbols of every setting, read along Birss's directions (fixture class (b)). Birss prints
+ * short symbols for the default orientation only (Table 3) and no full symbols in the modern sense
+ * (Table 3's "Full" column repeats the short symbol), so the other symbols are derived: positions
+ * as in ITC, except that in the hexagonal family position 2 is y (Birss Table 4a, printed pp. 56–57:
+ * `32: 2//y`, `3m: -2//y`, `-6m2: -2//y`) and position 3 is x (derived; #17).
+ */
+describe('Birss symbols of every setting generate its operations along Birss directions', () => {
+  const X = [1, 0, 0];
+  const Y = [0, 1, 0];
+  const Z = [0, 0, 1];
+  const DIRECTIONS: Record<string, number[][]> = {
+    triclinic: [Z],
+    monoclinic: [X, Y, Z],
+    orthorhombic: [X, Y, Z],
+    tetragonal: [Z, X, [1, -1, 0]],
+    trigonal: [Z, Y, X],
+    hexagonal: [Z, Y, X],
+    cubic: [X, [1, 1, 1], [1, -1, 0]],
+  };
+  const AXIS: Record<string, number[]> = { a: X, b: Y, c: Z };
+
+  for (const key of POINT_GROUP_KEYS) {
+    for (const s of settings(key, 'birss')) {
+      it(`${key}, setting ${s.index}: ${s.symbol} (${s.fullSymbol})`, () => {
+        const system = pointGroup(key).crystalSystem;
+        const ops = operations(key, { setting: s.index });
+        const shortDirections =
+          system === 'monoclinic' && hmTokens(s.symbol).length === 1 ? [AXIS[s.uniqueAxis!]] : DIRECTIONS[system];
+        expect(sameGroup(groupOfSymbol(s.symbol, shortDirections), ops)).toBe(true);
+        expect(sameGroup(groupOfSymbol(s.fullSymbol, DIRECTIONS[system]), ops)).toBe(true);
+      });
+    }
   }
 });

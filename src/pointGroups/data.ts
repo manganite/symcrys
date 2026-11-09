@@ -12,7 +12,7 @@ import { operation, type Operation } from '../operations.js';
 import type { CrystalSystem } from '../lattice.js';
 
 /** Keys of the 32 crystal classes: the ITC short symbol of the class (docs/conventions.md, "Keys"). */
-export const POINT_GROUP_KEYS = [
+export const POINT_GROUP_KEYS = Object.freeze([
   '1',
   '-1',
   '2',
@@ -45,7 +45,7 @@ export const POINT_GROUP_KEYS = [
   '432',
   '-43m',
   'm-3m',
-] as const;
+] as const);
 
 export type PointGroupKey = (typeof POINT_GROUP_KEYS)[number];
 
@@ -109,7 +109,7 @@ const MIRROR_XY: Mat3 = [
   [1, 0, 0],
   [0, 0, 1],
 ];
-/** Threefold rotation about [111]: x → y → z → x. */
+/** Threefold rotation about [111], mapping the vector x to y, y to z, z to x. */
 const ROT3_111: Mat3 = [
   [0, 0, 1],
   [1, 0, 0],

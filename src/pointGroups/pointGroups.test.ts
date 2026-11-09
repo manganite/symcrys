@@ -35,7 +35,15 @@ describe('lookup', () => {
     expect(() => operations('32', { setting: 0 })).toThrow(RangeError);
     expect(() => operations('32', { setting: 1.5 })).toThrow(RangeError);
     expect(() => settings('32', 'ita' as 'itc')).toThrow(RangeError);
+    expect(() => operations('32', { setting: 1, convention: 'ita' as 'itc' })).toThrow(RangeError);
+    expect(() => generators('32', { convention: 'ita' as 'itc' })).toThrow(RangeError);
+    expect(() => symbol('32', { form: 'schoenflies', setting: 9 })).toThrow(RangeError);
+    expect(() => findPointGroup('32', 'ita' as 'itc')).toThrow(RangeError);
     expect(() => symbol('32', { form: 'long' as 'full' })).toThrow(RangeError);
+  });
+
+  it('keeps exported constants frozen', () => {
+    expect(Object.isFrozen(POINT_GROUP_KEYS)).toBe(true);
   });
 
   it('returns frozen results, the same object on repeated calls', () => {
@@ -128,5 +136,7 @@ describe('findPointGroup', () => {
     expect(findPointGroup('112')).toEqual({ key: '2', setting: 1 });
     expect(findPointGroup('m2m')).toEqual({ key: 'mm2', setting: 3 });
     expect(findPointGroup('m3m')).toBeUndefined();
+    expect(findPointGroup('m3m', 'birss')).toBeUndefined();
+    expect(findPointGroup(42 as unknown as string)).toBeUndefined();
   });
 });

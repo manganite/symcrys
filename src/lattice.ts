@@ -20,21 +20,25 @@ export type FixedAngleFamily = 'orthorhombic' | 'tetragonal' | 'hexagonal' | 'cu
 
 const S3_2 = Math.sqrt(3) / 2;
 
-const ORTHONORMAL: Mat3 = [
+/** A deeply frozen matrix: the apps run dist/ as plain JavaScript, where `readonly` does not hold. */
+const frozen = (m: [number, number, number][]): Mat3 =>
+  Object.freeze(m.map((row) => Object.freeze(row))) as unknown as Mat3;
+
+const ORTHONORMAL = frozen([
   [1, 0, 0],
   [0, 1, 0],
   [0, 0, 1],
-];
+]);
 
-const HEXAGONAL: Mat3 = [
+const HEXAGONAL = frozen([
   [1, -0.5, 0],
   [0, S3_2, 0],
   [0, 0, 1],
-];
+]);
 
 /**
  * The conventional basis vectors a, b, c as the **columns** of a Cartesian matrix, with unit edge
- * lengths. Hexagonal family (hexagonal axes): x ∥ a, z ∥ c, y = z × x, so b points at 120° from a.
+ * lengths (a frozen array, shared between calls). Hexagonal family (hexagonal axes): x ∥ a, z ∥ c, y = z × x, so b points at 120° from a.
  * Orthorhombic, tetragonal, cubic: x ∥ a, y ∥ b, z ∥ c.
  *
  * The edge lengths are set to 1 because the symmetry directions of these families, and so the

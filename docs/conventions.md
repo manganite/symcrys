@@ -25,7 +25,8 @@ A class is identified by its key: the ITC short symbol of the class, as in `POIN
 classes with several settings, `symbol()` gives the symbol of a setting (`321`, `312`).
 
 For D3h the key is `-6m2`, the symbol of ITC's standard setting in ITC Vol. D Table 1.5.2.3. ITA
-Table 2.1.1.1 lists this class as `-62m`, the symbol of the other setting.
+Table 2.1.1.1 lists this class as `-62m`, the symbol of the other setting; which one is ITC's
+standard for the crystal classes is open (#17).
 
 ## Cartesian frame
 
@@ -100,26 +101,33 @@ The classes `222` and `mmm` have one setting only: their three axes are equivale
 2. **Monoclinic unique axis.** ITC's standard is unique axis b (y), Birss's is c (z). The short
    symbols agree; the full symbols (`1 2 1`, `1 1 2`) tell the settings apart.
 3. **Cubic symbols.** Birss prints `m3` and `m3m`; symcrys writes `m-3` and `m-3m` in both
-   conventions (pure spelling).
+   conventions (pure spelling). `findPointGroup` therefore does not accept Birss's printed `m3`
+   and `m3m`.
 
-Everywhere else the two conventions agree: same default setting, same symbols.
+Everywhere else the two conventions agree: same default setting, same symbols. Open: the
+Schoenflies symbol of `-3`, which ITC Vol. D Table 1.5.2.3 writes `S6` (#17).
 
 ## Symbols
 
 - Plain strings: a leading `-` is the overbar (`-3m`, `m-3m`); time reversal will be written `'`.
-- **Short symbol** (`form: 'short'`, the default): the symbol of the setting as the convention
-  prints it: in ITC with the trailing or inner `1` that fixes the orientation (`321`, `31m`,
-  `-3m1`), in Birss the printed class symbol for the default setting (`32`).
+- **Short symbol** (`form: 'short'`, the default): the symbol of the setting, in ITC with the
+  trailing or inner `1` that fixes the orientation (`321`, `31m`, `-3m1`), in Birss the printed
+  class symbol for the default setting (`32`).
 - **Full symbol** (`form: 'full'`): one entry per symmetry direction, separated by single spaces,
   `1` for a direction without symmetry: `-3 2/m 1`, `1 2 1`, `4/m -3 2/m`.
+- **Birss symbols other than the printed short symbol of the default setting are derived.** Birss
+  prints short symbols for the default orientation only, and no full symbols (the "Full" column of
+  his Table 3 repeats the short symbol). symcrys reads the positions along Birss's directions: as
+  in ITC, except that in the hexagonal family position 2 is y (Birss Table 4a) and position 3 is x
+  (#17).
 - **Schoenflies** (`form: 'schoenflies'`): subscripts written inline (`C3v`, `D2d`, `Oh`); the same
-  in both conventions. The class `-3` is `C3i`, the primary name in Birss Table 3.
+  in both conventions. The class `-3` is `C3i`, the primary name in Birss Table 3 (ITC: #17).
 - Rendering (overbars, subscripts, LaTeX) is left to the applications.
 
 ## Numbers
 
 Matrices hold floating-point numbers. During group closure every entry within 10⁻⁹ of an exact
-value (0, ±1, ±1/2, ±√2/2, ±√3/2) is set to that value, so products do not drift; two matrices are
+value (0, ±1, ±1/2, ±√3/2, and ±√2/2 for the 45° setting frame) is set to that value, so products do not drift; two matrices are
 equal when all entries agree within 10⁻⁶. Exact matrices in the lattice basis may come later, when
 a consumer needs them (decision on #13).
 
@@ -134,6 +142,7 @@ ones) come with the tensor module.
 | What                                           | Print source                                                                                                                                              | Test                           |
 | ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
 | Birss operations, symbols, Schoenflies, orders | Birss Table 3 (pp. 36–39), generating matrices eq. (2.17) (p. 48): `references/birss/`                                                                    | `birss.reference.test.ts`      |
+| Birss symbols of other settings, full symbols  | derived along Birss's directions (position 2 from Birss Table 4a, pp. 56–57)                                                                              | `birss.reference.test.ts`      |
 | ITC symbols of the settings                    | ITC Table 3.2.2.2 (class column), ITA Table 2.1.1.1, the symbol rule of ITA § 2.2.4.1 (5th ed., p. 18)                                                    | `itc.reference.test.ts`        |
 | ITC operations of every setting                | the ITC symbol along the symmetry directions of ITA Table 2.1.3.1 (5th ed. Table 2.2.4.1, p. 18), in the frame of #6                                      | `itc.reference.test.ts`        |
 | ITC standard settings                          | ITA § 2.2.3 (5th ed., p. 17) for unique axis b; ITC Vol. D § 1.1.4.10.4.4 for 321, 3m1; ITC Vol. D Table 1.5.2.3 for -3m1 (full symbol -3 2/m 1) and -6m2 | `itcSettings.fixtures.ts`      |

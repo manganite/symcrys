@@ -45,7 +45,7 @@ import { operations, settings, symbol } from 'symcrys';
 
 symbol('32'); // '321': ITC short symbol of the default setting
 symbol('32', { convention: 'birss' }); // '32'
-settings('32'); // two settings, 321 (default) and 312
+settings('32'); // setting 1: 312, setting 2: 321 (the ITC default)
 operations('-3m'); // 12 operations, Cartesian matrices; x ∥ a, z ∥ c
 ```
 

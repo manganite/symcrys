@@ -77,7 +77,8 @@ function defaultSetting(d: PointGroupData, c: Convention): number {
 
 /** The requested setting index, checked; the convention's default if none is given. */
 function settingIndex(d: PointGroupData, options?: SettingOptions): number {
-  const index = options?.setting ?? defaultSetting(d, convention(options));
+  const c = convention(options);
+  const index = options?.setting ?? defaultSetting(d, c);
   if (!Number.isInteger(index) || index < 1 || index > d.settings.length) {
     throw new RangeError(`Point group ${d.key} has no setting ${String(index)} (settings 1 to ${d.settings.length})`);
   }
@@ -169,8 +170,8 @@ export function generators(key: PointGroupKey, options?: SettingOptions): readon
 export function symbol(key: PointGroupKey, options?: SymbolOptions): string {
   const d = data(key);
   const form = options?.form ?? 'short';
-  if (form === 'schoenflies') return d.schoenflies;
   const s = d.settings[settingIndex(d, options) - 1][convention(options)];
+  if (form === 'schoenflies') return d.schoenflies;
   if (form === 'short') return s.short;
   if (form === 'full') return s.full;
   throw new RangeError(`Unknown symbol form: ${JSON.stringify(form)}`);
@@ -187,11 +188,13 @@ const compact = (s: string): string => s.replace(/\s+/g, '');
 /**
  * Finds a point group by a Hermann–Mauguin symbol in the given convention (default `'itc'`): the
  * key (giving the default setting), the short symbol of a setting, or a full symbol (spaces are
- * ignored). Returns undefined if nothing matches. Symbols are written as in this library: `-` for
- * the overbar (`-3m`, `m-3m`).
+ * ignored). Returns undefined if nothing matches, also for a value that is not a string. Symbols
+ * are written as in this library: `-` for the overbar, also in the Birss convention (`m-3m`, where
+ * Birss prints `m3m`; docs/conventions.md, "Where ITC and Birss differ").
  */
 export function findPointGroup(hm: string, conventionName: Convention = 'itc'): PointGroupInSetting | undefined {
   const c = convention({ convention: conventionName });
+  if (typeof hm !== 'string') return undefined;
   const target = compact(hm);
   const byKey = BY_KEY.get(target);
   if (byKey) return { key: byKey.key, setting: defaultSetting(byKey, c) };

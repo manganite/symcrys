@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from 'vitest';
 import { expectHeader, readReference, tableRows } from '../testUtils/references.js';
-import { POINT_GROUP_KEYS, isPointGroupKey, type PointGroupKey } from './pointGroups.js';
+import { POINT_GROUP_KEYS, isPointGroupKey, symbol, type PointGroupKey } from './pointGroups.js';
 import { isCentrosymmetric, isChiral, isPolar, laueClass } from './properties.js';
 
 /** ITA Table 2.1.1.1 prints D3h as -62m; the key is -6m2 (docs/conventions.md, "Keys"). */
@@ -120,6 +120,17 @@ describe('ITC Table 3.2.2.1: the 21 noncentrosymmetric classes', () => {
       expect(laueClass(key)).toBe(key);
       expect(isPolar(key)).toBe(false);
       expect(isChiral(key)).toBe(false);
+    });
+  }
+});
+
+describe('ITC Table 3.2.2.1: full symbols of the Laue classes', () => {
+  // The trigonal Laue class is printed without the trailing 1 of its hexagonal-axes symbol; the
+  // monoclinic one is printed as its short symbol 2/m, which names no unique axis and is left out.
+  const printed = (full: string) => (full === '-32/m' ? '-32/m1' : full);
+  for (const [full, key] of Object.entries(LAUE_KEY).filter(([f]) => f !== '2/m')) {
+    it(`${full}: ITC full symbol of ${key}`, () => {
+      expect(symbol(key, { form: 'full' }).replace(/\s+/g, '')).toBe(printed(full));
     });
   }
 });

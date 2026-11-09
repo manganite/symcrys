@@ -29,6 +29,12 @@ describe('latticeBasis', () => {
     ]);
   });
 
+  it('returns frozen matrices', () => {
+    const m = latticeBasis('cubic');
+    expect(Object.isFrozen(m)).toBe(true);
+    expect(Object.isFrozen(m[0])).toBe(true);
+  });
+
   it('refuses families with free cell angles', () => {
     expect(() => latticeBasis('monoclinic' as FixedAngleFamily)).toThrow(RangeError);
   });
