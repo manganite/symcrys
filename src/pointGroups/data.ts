@@ -2,9 +2,8 @@
  * The 32 crystallographic point groups (crystal classes) as data: generators, settings and symbols.
  *
  * Generators are stored in the Birss frame (docs/conventions.md); every setting is a rotation of
- * that frame, and the ITC settings are among them. The print anchors are in the reference tests:
- * birss.reference.test.ts (Birss Table 3) and itc.reference.test.ts (ITC symbols and symmetry
- * directions); never derive data here from symcrys output.
+ * that frame, and the ITC settings are among them. The print anchors and their tests are listed in
+ * docs/conventions.md, "Sources"; never derive data here from symcrys output.
  */
 
 import { INVERSION, multiply, rotationX, rotationY, rotationZ, type Mat3 } from '../linalg.js';
