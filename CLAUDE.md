@@ -188,3 +188,39 @@ Carried over from birss-app, where the calculations come from.
   maps resolve; the apps copy only `dist/`.
 - **`exports` with `default`, not `import`** (2026-11-08): `require('symcrys')` then works too
   (Node 22.12+ can require ES modules), and so do tools that resolve only `default`.
+
+### Point groups
+
+The conventions themselves are in `docs/conventions.md`; here, what was decided and why.
+
+- **Keys are ITC short symbols of the class** (maintainer, 2026-11-08, #13): ITC is the default
+  convention, and birss-app selects `'birss'` anyway. For the 32 classes they equal birss-app's
+  keys; for the magnetic groups the mapping is checked against ITC Vol. D Table 1.5.2.3.
+- **Order of work** (maintainer, 2026-11-08, #13): first the 32 crystal classes (type I) with
+  settings, both conventions, symbols and the properties that follow from the operations; the 90
+  magnetic groups (types II and III) in a second step. Data and code are shared; the split only
+  keeps reviews small.
+- **Cartesian floating-point matrices with snapping** (maintainer, 2026-11-08, #13), as in
+  birss-app, so its tests carry over; exact lattice-basis matrices when a consumer needs them.
+- **Properties that need tensors** (piezoelectric, piezomagnetic, magnetoelectric, ferromagnetic)
+  come with the tensor module (maintainer, 2026-11-08, #13).
+- **Hexagonal frame x ∥ a, z ∥ c** (maintainer, 2026-11-08, #6): birss-app's frame, in which its
+  print-verified tensor tests hold; ITC Vol. D puts the secondary direction of the trigonal groups
+  along x₁ as well.
+- **ITC anchor for the crystal classes** (maintainer, 2026-11-09, #13): the ITC symbol of each
+  setting, read along the symmetry directions of ITA Table 2.1.3.1 and closed independently, must
+  give the setting's operations; ITC Vol. D Table 1.5.2.3 is transcribed with the magnetic groups.
+- **Stored frame and settings** (2026-11-09, #14): data are stored once, in Birss's frame (setting
+  1); every setting, the ITC ones included, is a rotation of it. A setting index names a physical
+  frame and means the same in both conventions; the convention only picks the default and the
+  symbols. One data set then serves both conventions, and the Birss print tests apply directly.
+- **birss-app is the reference where print leaves a choice open** (maintainer, 2026-11-09, #17):
+  symcrys follows birss-app's current implementation unless it is wrong on the subject. The choices
+  for the crystal classes were checked against birss-app 2be5fe3: D3h keeps the key and ITC
+  default `-6m2` (print state in `docs/conventions.md`, "Keys"), and the Birss symbols that Birss
+  does not print are derived as birss-app reads them. Where birss-app is not wrong but can be
+  improved, symcrys improves on it only after clarifying with Thomas; `docs/conventions.md` records
+  the difference with its reason, and #19 collects what birss-app takes over when it moves onto
+  symcrys.
+- **`latticeBasis` only for families with fixed cell angles** (2026-11-09, #14): for monoclinic
+  and triclinic a Cartesian basis would need the cell angles, which a point group does not fix.

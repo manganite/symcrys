@@ -6,6 +6,20 @@ All notable changes to symcrys are recorded here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- The 32 crystallographic point groups (crystal classes): `pointGroups`, `pointGroup`,
+  `POINT_GROUP_KEYS`, `isPointGroupKey`, `findPointGroup`; their settings (`settings`), operations
+  and generators as Cartesian matrices (`operations`, `generators`), and short, full and
+  Schoenflies symbols (`symbol`), each in the ITC convention (default) or the Birss convention;
+  with the types `Convention`, `PointGroup`, `PointGroupKey`, `Setting`, `Operation`, `Mat3`,
+  `Vec3` and others.
+- Properties that follow from the operations: `isCentrosymmetric`, `isPolar`, `isChiral`,
+  `laueClass`.
+- `latticeBasis` and `crystalFamily`: the conventional lattice basis in the Cartesian frame
+  (hexagonal family: x ∥ a, z ∥ c).
+- `docs/conventions.md`: frames, settings, symbols and the differences between ITC and Birss.
+
 ## [0.1.1] - 2026-11-08
 
 ### Changed
