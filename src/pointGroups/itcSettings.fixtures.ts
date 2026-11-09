@@ -56,7 +56,7 @@ const printed = (short: string, full: string = short, standard = true, standardS
 
 const B_UNIQUE = 'ITA (6th ed.) § 2.1.3.15, p. 171';
 const VOL_D_1_1_4 = 'ITC Vol. D § 1.1.4.10.4.4 (#6)';
-const VOL_D_1_5_2_3 = 'ITC Vol. D Table 1.5.2.3, birss-app (#13, #17)';
+const D3H_DEFAULT = 'ITC Vol. D Table 1.5.2.3; birss-app (decision on #17)';
 const LAUE_OF_321 = 'consistency: Laue class of 321 and 3m1, same frame';
 
 function monoclinic(short: string, fullB: string, fullC: string): ItcSettingFixture[] {
@@ -104,7 +104,7 @@ export const ITC_SETTINGS: Record<string, ItcSettingFixture[]> = {
   '6/m': [printed('6/m')],
   '622': [printed('622')],
   '6mm': [printed('6mm')],
-  '-6m2': [printed('-6m2', '-6m2', true, VOL_D_1_5_2_3), printed('-62m', '-62m', false)],
+  '-6m2': [printed('-6m2', '-6m2', true, D3H_DEFAULT), printed('-62m', '-62m', false)],
   '6/mmm': [printed('6/mmm', '6/m 2/m 2/m')],
   '23': [printed('23')],
   'm-3': [printed('m-3', '2/m -3')],
