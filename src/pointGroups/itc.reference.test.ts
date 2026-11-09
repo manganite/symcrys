@@ -96,7 +96,10 @@ const TABLE_2111 = rows2111
   .map((s) => s.replace(/\((L|H)\)/, '').trim())
   .filter((s) => s !== '');
 
-/** The crystal system of a key, from ITA Table 2.1.1.1 (D3h is printed there as -62m, #17). */
+/**
+ * The crystal system of a key, from ITA Table 2.1.1.1 (D3h is printed there as -62m; the key is
+ * -6m2, #17).
+ */
 function crystalSystemOf(key: PointGroupKey): string {
   let system = '';
   for (const r of rows2111.slice(1)) {
@@ -188,7 +191,7 @@ describe('ITC settings fixture against print', () => {
     }
   });
 
-  it('Table 2.1.1.1 lists the 32 keys, except that it prints D3h as -62m (#17)', () => {
+  it('Table 2.1.1.1 lists the 32 keys, except that it prints D3h as -62m (key -6m2, #17)', () => {
     expect(TABLE_2111).toHaveLength(32);
     expect(TABLE_2111.map((s) => (s === '-62m' ? '-6m2' : s)).sort()).toEqual([...POINT_GROUP_KEYS].sort());
   });

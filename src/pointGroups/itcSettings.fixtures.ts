@@ -27,8 +27,8 @@
  *   twofold axis parallel to Ox₁; group 3m: mirror perpendicular to Ox₁), as recorded on #6;
  * - -3m1: a consistency choice, not a print statement: the Laue class of 321 and 3m1, in the same
  *   frame. ITC Vol. D Table 1.5.2.3 prints its full symbol -3 2/m 1 for D3d;
- * - -6m2: ITC Vol. D Table 1.5.2.3 and the key decision on #13; ITA lists it first (§ 3.2.1.2.1
- *   (b), p. 721; Table 3.2.3.2, p. 762), but its class tables print -62m. Open question, #17.
+ * - -6m2: ITC Vol. D Table 1.5.2.3, the key decision on #13 and birss-app (decision on #17); ITA
+ *   lists it first (§ 3.2.1.2.1 (b), p. 721; Table 3.2.3.2, p. 762), its class tables print -62m.
  */
 
 export type Source = 'vol-a-table-3.2.3.2' | 'vol-d-table-1.5.2.3' | 'derived';
@@ -56,7 +56,7 @@ const printed = (short: string, full: string = short, standard = true, standardS
 
 const B_UNIQUE = 'ITA (6th ed.) § 2.1.3.15, p. 171';
 const VOL_D_1_1_4 = 'ITC Vol. D § 1.1.4.10.4.4 (#6)';
-const VOL_D_1_5_2_3 = 'ITC Vol. D Table 1.5.2.3 (#13; open, #17)';
+const VOL_D_1_5_2_3 = 'ITC Vol. D Table 1.5.2.3, birss-app (#13, #17)';
 const LAUE_OF_321 = 'consistency: Laue class of 321 and 3m1, same frame';
 
 function monoclinic(short: string, fullB: string, fullC: string): ItcSettingFixture[] {

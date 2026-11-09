@@ -26,7 +26,7 @@ classes with several settings, `symbol()` gives the symbol of a setting (`321`, 
 
 For D3h the key is `-6m2`, as in ITC Vol. D Table 1.5.2.3. ITA lists both orientations, `-6m2`
 first (§ 3.2.1.2.1 (b), p. 721; Table 3.2.3.2, pp. 762–763), but its tables of classes print `-62m`
-(Tables 2.1.1.1, 3.2.1.2, 3.2.2.1); open question, #17.
+(Tables 2.1.1.1, 3.2.1.2, 3.2.2.1). symcrys keeps `-6m2`, as birss-app does (decision on #17).
 
 ## Cartesian frame
 
@@ -93,7 +93,7 @@ The ITC defaults of symcrys:
 - `321` and `3m1`: the frame of the tensor tables of ITC Vol. D (§ 1.1.4.10.4.4, #6);
 - `-3m1`: their Laue class in the same frame (a consistency choice; ITC Vol. D Table 1.5.2.3 prints
   its full symbol `-3 2/m 1`);
-- `-6m2`: ITC Vol. D Table 1.5.2.3, and the first entry in ITA (open, #17);
+- `-6m2`: ITC Vol. D Table 1.5.2.3, the first entry in ITA, and birss-app (decision on #17);
 - `-42m`, `mm2`: the first or only entry in ITA.
 
 Frames relative to setting 1: monoclinic setting 2 maps z to y (rotation by 180° about [011]);
@@ -133,7 +133,7 @@ symbols (`-3` is `C3i` in both Birss Table 3 and ITA Tables 3.2.1.2 and 3.2.3.2)
   prints short symbols for the default orientation only, and no full symbols (the "Full" column of
   his Table 3 repeats the short symbol). symcrys reads the positions along Birss's directions: as
   in ITC, except that in the hexagonal family position 2 is y (Birss Table 4a) and position 3 is x
-  (#17).
+  (the reading of birss-app; #17).
 - **Schoenflies** (`form: 'schoenflies'`): subscripts written inline (`C3v`, `D2d`, `Oh`); the same
   in both conventions. ITC Vol. D Table 1.5.2.3, for the magnetic groups, writes `S6` for `-3`.
 - Rendering (overbars, subscripts, LaTeX) is left to the applications.

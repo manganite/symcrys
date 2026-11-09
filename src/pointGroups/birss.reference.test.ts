@@ -137,7 +137,8 @@ describe('Birss Table 3 (printed pp. 36–39) against symcrys, Birss convention'
  * short symbols for the default orientation only (Table 3) and no full symbols in the modern sense
  * (Table 3's "Full" column repeats the short symbol), so the other symbols are derived: positions
  * as in ITC, except that in the hexagonal family position 2 is y (Birss Table 4a, printed pp. 56–57:
- * `32: 2//y`, `3m: -2//y`, `-6m2: -2//y`) and position 3 is x (derived; #17).
+ * `32: 2//y`, `3m: -2//y`, `-6m2: -2//y`) and position 3 is x (derived, as birss-app reads them;
+ * #17).
  */
 describe('Birss symbols of every setting generate its operations along Birss directions', () => {
   const X = [1, 0, 0];

@@ -214,5 +214,9 @@ The conventions themselves are in `docs/conventions.md`; here, what was decided 
   1); every setting, the ITC ones included, is a rotation of it. A setting index names a physical
   frame and means the same in both conventions; the convention only picks the default and the
   symbols. One data set then serves both conventions, and the Birss print tests apply directly.
+- **birss-app is the reference where print leaves a choice open** (maintainer, 2026-11-09, #17):
+  symcrys follows birss-app's current implementation unless it is wrong on the subject. So D3h keeps
+  the key and ITC default `-6m2` (ITA lists both orientations; its class tables print `-62m`), and
+  the Birss symbols that Birss does not print are derived as birss-app reads them.
 - **`latticeBasis` only for families with fixed cell angles** (2026-11-09, #14): for monoclinic
   and triclinic a Cartesian basis would need the cell angles, which a point group does not fix.
