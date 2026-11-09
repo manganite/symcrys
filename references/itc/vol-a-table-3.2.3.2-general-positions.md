@@ -2,9 +2,8 @@
 
 Source: _International Tables for Crystallography_, Vol. A, 6th edition (2016), Chapter 3.2 (Point
 groups and crystal classes), Table 3.2.3.2, printed pp. 745–769. Transcribed 2026-11-09 from the
-chapter PDF provided by Thomas. The coordinate triplets were read from the PDF text layer, which
-marks the overbars; where that layer misplaces an overbar (4/mmm, 432, -43m, m-3m), the rows were
-read from the rendered pages instead. Headlines of the same entries: `vol-a-table-3.2.3.2-headlines.md`.
+chapter PDF provided by Thomas; every row checked triplet by triplet against the rendered pages.
+Headlines of the same entries: `vol-a-table-3.2.3.2-headlines.md`.
 
 Each row is the general position (the first Wyckoff position, site symmetry 1) of one entry: the
 coordinate triplets x̃, ỹ, z̃ of the images of a point x, y, z, in the basis of the conventional

@@ -208,10 +208,12 @@ The conventions themselves are in `docs/conventions.md`; here, what was decided 
   print-verified tensor tests hold; ITC Vol. D puts the secondary direction of the trigonal groups
   along x₁ as well.
 - **ITC anchor for the crystal classes** (maintainer, 2026-11-09, #13, #18): the operations of
-  every ITC setting must equal the general position printed in ITA Table 3.2.3.2 (print, class (a)).
-  In addition the ITC symbol of each setting, read along the symmetry directions of ITA Table
-  2.1.3.1 and closed independently, must give the same operations; this also covers `2mm` and
-  `m2m`, which ITA does not list. ITC Vol. D Table 1.5.2.3 is transcribed with the magnetic groups.
+  every ITC setting that ITA lists must equal its general position printed in ITA Table 3.2.3.2, a
+  print anchor (class (a)) and so stronger than a derivation; it is also the basis for exact
+  lattice-basis matrices later. In addition the ITC symbol of each setting, read along the symmetry
+  directions of ITA Table 2.1.3.1 and closed independently, must give the same operations; this
+  also covers `2mm` and `m2m`, which ITA does not list. ITC Vol. D Table 1.5.2.3 is transcribed with
+  the magnetic groups.
 - **Stored frame and settings** (2026-11-09, #14): data are stored once, in Birss's frame (setting
   1); every setting, the ITC ones included, is a rotation of it. A setting index names a physical
   frame and means the same in both conventions; the convention only picks the default and the

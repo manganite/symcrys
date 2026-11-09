@@ -87,5 +87,8 @@ export function sameGroup(
   ops: readonly { readonly matrix: readonly (readonly number[])[]; readonly timeReversal: boolean }[],
 ): boolean {
   if (ref.length !== ops.length) return false;
-  return ref.every((r) => ops.some((o) => o.timeReversal === r.t && sameM(r.m, o.matrix)));
+  return (
+    ref.every((r) => ops.some((o) => o.timeReversal === r.t && sameM(r.m, o.matrix))) &&
+    ops.every((o) => ref.some((r) => o.timeReversal === r.t && sameM(r.m, o.matrix)))
+  );
 }

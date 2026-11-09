@@ -8,10 +8,15 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { close, inverse, mul, sameGroup, type M, type RefOp } from '../testUtils/independentGroups.js';
+import { close, inverse, mul, sameGroup, sameM, type M, type RefOp } from '../testUtils/independentGroups.js';
 import { expectHeader, readReference, tableRows } from '../testUtils/references.js';
 import { POINT_GROUP_KEYS, operations, settings, type PointGroupKey } from './pointGroups.js';
 
+/**
+ * Lattice basis for all but the hexagonal family. For monoclinic and triclinic it stands in for the
+ * real oblique cell: their operations only negate the plane perpendicular to the unique axis (or
+ * every direction), so B·W·B⁻¹ does not depend on the cell angles.
+ */
 const ORTHONORMAL: M = [
   [1, 0, 0],
   [0, 1, 0],
@@ -34,6 +39,7 @@ expectHeader(positionRows, ['Short', 'Axes', 'Page', 'Multiplicity', 'General po
 
 /** One coordinate, e.g. `-x+y`, as the row of W: the coefficients of x, y, z. */
 function coefficients(expr: string): number[] {
+  if (!expr) throw new Error('Empty coordinate');
   const row = [0, 0, 0];
   const terms = expr.match(/[+-]?[xyz]/g) ?? [];
   if (terms.join('').replace(/^\+/, '') !== expr) throw new Error(`Unreadable coordinate: ${expr}`);
@@ -105,10 +111,16 @@ describe('ITA Table 3.2.3.2: general positions', () => {
 
   for (const e of ENTRIES) {
     const label = `${e.short}${e.axes ? ` (${e.axes})` : ''}, p. ${e.page}`;
-    it(`${label}: ${e.multiplicity} distinct triplets forming a group`, () => {
+    it(`${label}: ${e.multiplicity} distinct operations forming a group`, () => {
       expect(e.triplets).toHaveLength(e.multiplicity);
-      expect(new Set(e.triplets).size).toBe(e.multiplicity);
-      expect(close(cartesian(e))).toHaveLength(e.multiplicity);
+      const ops = cartesian(e);
+      // Distinct as matrices, not only as strings (`y-x` and `-x+y` are the same coordinate).
+      for (let i = 0; i < ops.length; i++) {
+        for (let j = i + 1; j < ops.length; j++) {
+          expect(sameM(ops[i].m, ops[j].m), `${e.triplets[i]} = ${e.triplets[j]}`).toBe(false);
+        }
+      }
+      expect(close(ops)).toHaveLength(e.multiplicity);
     });
 
     it(`${label}: the printed operations are those of the ITC setting`, () => {
