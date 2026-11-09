@@ -4,8 +4,8 @@ Crystallographic symmetry calculations in TypeScript: point groups, both crystal
 magnetic, with their settings, symbols and properties, and the property tensors they allow. A
 library without runtime dependencies that runs unbundled in browsers and in Node.
 
-> **Status: pre-release.** The repository holds the scaffold only; the only export is `VERSION`.
-> The API will change without notice until 1.0.0.
+> **Status: pre-release.** So far: the 32 crystallographic point groups. The API will change
+> without notice until 1.0.0.
 
 ## Scope
 
@@ -24,7 +24,7 @@ display names stay in the applications that use symcrys.
 **Conventions.** Point groups follow the _International Tables for Crystallography_ by default
 (Vol. A for the crystal classes, Vol. D Ch. 1.5 for the magnetic point groups). The convention of
 Birss, _Symmetry and Magnetism_ (1966), is available as an option. Where the two differ is
-documented in `docs/` as the point groups arrive.
+documented in [`docs/conventions.md`](docs/conventions.md).
 
 symcrys is the computational core of the crystallography teaching apps
 ([stereography](https://github.com/manganite/stereography),
@@ -41,8 +41,15 @@ npm install symcrys
 Each release on GitHub also carries the package as `symcrys-X.Y.Z.tgz`.
 
 ```ts
-import { VERSION } from 'symcrys';
+import { operations, settings, symbol } from 'symcrys';
+
+symbol('32'); // '321': ITC short symbol of the default setting
+symbol('32', { convention: 'birss' }); // '32'
+settings('32'); // two settings, 321 (default) and 312
+operations('-3m'); // 12 operations, Cartesian matrices; x ∥ a, z ∥ c
 ```
+
+Conventions, frames and symbols: [`docs/conventions.md`](docs/conventions.md).
 
 Without a build step, copy `dist/` (from the tarball, or built with `npm run build`) next to your
 code and import `dist/index.js` directly: every module in `dist/` imports only relative `.js`
