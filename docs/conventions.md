@@ -130,7 +130,7 @@ symbols (`-3` is `C3i` in both Birss Table 3 and ITA Tables 3.2.1.2 and 3.2.3.2)
   from birss-app, agreed with Thomas (2026-11-09): birss-app labels the ITC default frames of `32`,
   `3m`, `-3m` as `32`, `3m`, `-3m`. With hexagonal axes ITA keeps the `1` (`321`, `312`; Table
   3.2.3.2, p. 754), because without it the two orientations cannot be told apart; `32` there is the
-  description with rhombohedral axes (p. 755).
+  description with rhombohedral axes (p. 755). For birss-app, when it moves onto symcrys: #19.
 - **Full symbol** (`form: 'full'`): one entry per symmetry direction, separated by single spaces,
   `1` for a direction without symmetry: `-3 2/m 1`, `1 2 1`, `4/m -3 2/m`.
 - **Birss symbols other than the printed short symbol of the default setting are derived.** Birss
