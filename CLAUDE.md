@@ -217,6 +217,8 @@ The conventions themselves are in `docs/conventions.md`; here, what was decided 
 - **birss-app is the reference where print leaves a choice open** (maintainer, 2026-11-09, #17):
   symcrys follows birss-app's current implementation unless it is wrong on the subject. So D3h keeps
   the key and ITC default `-6m2` (ITA lists both orientations; its class tables print `-62m`), and
-  the Birss symbols that Birss does not print are derived as birss-app reads them.
+  the Birss symbols that Birss does not print are derived as birss-app reads them. Where birss-app
+  is not wrong but can be improved, symcrys improves on it only after clarifying with Thomas, and
+  `docs/conventions.md` records the difference with its reason.
 - **`latticeBasis` only for families with fixed cell angles** (2026-11-09, #14): for monoclinic
   and triclinic a Cartesian basis would need the cell angles, which a point group does not fix.

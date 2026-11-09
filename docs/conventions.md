@@ -126,7 +126,11 @@ symbols (`-3` is `C3i` in both Birss Table 3 and ITA Tables 3.2.1.2 and 3.2.3.2)
 - Plain strings: a leading `-` is the overbar (`-3m`, `m-3m`); time reversal will be written `'`.
 - **Short symbol** (`form: 'short'`, the default): the symbol of the setting, in ITC as in the
   headline of ITA Table 3.2.3.2, with the trailing or inner `1` that fixes the orientation (`321`,
-  `31m`, `-3m1`); in Birss the printed class symbol for the default setting (`32`).
+  `31m`, `-3m1`); in Birss the printed class symbol for the default setting (`32`). Difference
+  from birss-app, agreed with Thomas (2026-11-09): birss-app labels the ITC default frames of `32`,
+  `3m`, `-3m` as `32`, `3m`, `-3m`. With hexagonal axes ITA keeps the `1` (`321`, `312`; Table
+  3.2.3.2, p. 754), because without it the two orientations cannot be told apart; `32` there is the
+  description with rhombohedral axes (p. 755).
 - **Full symbol** (`form: 'full'`): one entry per symmetry direction, separated by single spaces,
   `1` for a direction without symmetry: `-3 2/m 1`, `1 2 1`, `4/m -3 2/m`.
 - **Birss symbols other than the printed short symbol of the default setting are derived.** Birss
