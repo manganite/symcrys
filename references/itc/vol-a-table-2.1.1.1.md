@@ -1,8 +1,9 @@
 # ITA Table 2.1.1.1: crystal families, crystal systems, conventional coordinate systems and Bravais lattices
 
-Source: _International Tables for Crystallography_, Vol. A, Chapter 2.1, Table 2.1.1.1; the table
-number is that of the 6th edition (2016). Transcribed in birss-app from a screenshot provided by
-Thomas (2026-07-11), single read. Printed page: not recorded (open).
+Source: _International Tables for Crystallography_, Vol. A, 6th edition (2016), Chapter 2.1 (Guide
+to the use of the space-group tables), Table 2.1.1.1, printed p. 143. Transcribed in birss-app from
+a screenshot provided by Thomas (2026-07-11); checked against the printed page in the chapter PDF
+on 2026-11-09.
 
 Transcription conventions: a leading minus sign is an overbar (`-3`). The point-group symbols carry
 the printed box markers as suffixes: `(L)` dashed box, a Laue group; `(H)` full box, a Laue group

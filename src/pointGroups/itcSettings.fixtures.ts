@@ -4,27 +4,31 @@
  *
  * Sources of a symbol (`shortSource`, `fullSource`), by fixture class (CLAUDE.md, "Correctness and
  * provenance"):
- * - (a) `table-3.2.2.2`, `vol-a-table-2.1.1.1`: printed in that table; itc.reference.test.ts
- *   re-parses the transcription in references/itc/ and fails if a cited row is missing;
+ * - (a) `vol-a-table-3.2.3.2`: printed in the headline of the entry in ITA (6th ed.) Table 3.2.3.2,
+ *   pp. 745–769; itc.reference.test.ts re-parses references/itc/vol-a-table-3.2.3.2-headlines.md
+ *   and fails if a cited symbol is missing. Where the table prints no full symbol, the full symbol
+ *   is the short one ("if different", § 3.2.1.2.1, p. 721).
  * - (a) `vol-d-table-1.5.2.3`: ITC Vol. D Table 1.5.2.3 (full Hermann–Mauguin symbols), as
  *   transcribed in manganite/birss-tables (`tools/generate_nomenclature.py`); not yet in
- *   references/ and so not re-parsed: it comes with the magnetic groups (#13);
- * - (b) `derived`: follows from the rule for Hermann–Mauguin symbols in ITA (5th ed., § 2.2.4.1,
- *   printed p. 18): positions follow the symmetry directions of Table 2.1.3.1 (5th ed. Table
- *   2.2.4.1), '1' marks a direction without symmetry, and the monoclinic full symbols 1 2 1 and
- *   1 1 2 name the unique axis b and c.
+ *   references/ and so not re-parsed: it comes with the magnetic groups (#13).
+ * - (b) `derived`: follows from the rule for Hermann–Mauguin symbols, ITA (6th ed.) § 2.1.3.4,
+ *   p. 151: positions follow the symmetry directions of Table 2.1.3.1, '1' marks a direction
+ *   without symmetry; the monoclinic full symbols 1 2 1 and 1 1 2 name the unique axis b and c
+ *   (ITA 5th ed. § 2.2.4.1 (ii), p. 18).
  *
- * `standard` marks ITC's standard setting where a class has several, from `standardSource`; no test
- * re-parses it:
- * - monoclinic unique axis b: ITA (5th ed.) § 2.2.3, printed p. 17, adopts the b-axis setting for
- *   the standard short symbol;
+ * `standard` marks the setting symcrys takes as ITC default where a class has several, from
+ * `standardSource`; no test re-parses it. ITA describes both orientations of these classes without
+ * naming one standard (§ 3.2.1.2.1 (a)–(d), p. 721):
+ * - monoclinic unique axis b: ITA (6th ed.) § 2.1.3.3, p. 151, adopts the short symbol of the b-axis
+ *   setting as the standard symbol of a monoclinic space-group type;
  * - 321 and 3m1 (twofold axes or mirror normals along a = x): ITC Vol. D § 1.1.4.10.4.4 (group 32:
- *   twofold axis parallel to Ox₁; group 3m: mirror perpendicular to Ox₁), as recorded on #6;
- * - -3m1 and -6m2: ITC Vol. D Table 1.5.2.3 (full symbols -3 2/m 1 and -6m2) and the key decision
- *   on #13. ITA Table 2.1.1.1 prints D3h as -62m (open question, #17).
+ *   twofold axis parallel to Ox₁; group 3m: mirror perpendicular to Ox₁), as recorded on #6; -3m1
+ *   (full -3 2/m 1) likewise, its Laue class;
+ * - -6m2: ITC Vol. D Table 1.5.2.3 and the key decision on #13. ITA Tables 2.1.1.1, 3.2.1.2 and
+ *   3.2.2.1 name the class -62m; open question, #17.
  */
 
-export type Source = 'table-3.2.2.2' | 'vol-a-table-2.1.1.1' | 'vol-d-table-1.5.2.3' | 'derived';
+export type Source = 'vol-a-table-3.2.3.2' | 'vol-d-table-1.5.2.3' | 'derived';
 
 export interface ItcSettingFixture {
   readonly short: string;
@@ -37,131 +41,70 @@ export interface ItcSettingFixture {
   readonly standardSource?: string;
 }
 
-const T3222 = 'table-3.2.2.2';
-const A2111 = 'vol-a-table-2.1.1.1';
+const A3232 = 'vol-a-table-3.2.3.2';
 const D1523 = 'vol-d-table-1.5.2.3';
 const DERIVED = 'derived';
 
-/** A class with one setting: short symbol from ITA Table 2.1.1.1, full symbol from Vol. D 1.5.2.3. */
-const one = (short: string, full: string): ItcSettingFixture[] => [
-  { short, full, standard: true, shortSource: A2111, fullSource: D1523 },
-];
+/** A setting printed with its short (and, if different, full) symbol in ITA Table 3.2.3.2. */
+const printed = (short: string, full: string = short, standard = true, standardSource?: string): ItcSettingFixture =>
+  standardSource
+    ? { short, full, standard, shortSource: A3232, fullSource: A3232, standardSource }
+    : { short, full, standard, shortSource: A3232, fullSource: A3232 };
 
-const B_UNIQUE = 'ITA (5th ed.) § 2.2.3, p. 17';
+const B_UNIQUE = 'ITA (6th ed.) § 2.1.3.3, p. 151';
 const VOL_D_1_1_4 = 'ITC Vol. D § 1.1.4.10.4.4 (#6)';
-const VOL_D_1_5_2_3 = 'ITC Vol. D Table 1.5.2.3 (#13)';
+const VOL_D_1_5_2_3 = 'ITC Vol. D Table 1.5.2.3 (#13; open, #17)';
+
+function monoclinic(short: string, fullB: string, fullC: string): ItcSettingFixture[] {
+  return [
+    {
+      short,
+      full: fullB,
+      uniqueAxis: 'b',
+      standard: true,
+      shortSource: A3232,
+      fullSource: D1523,
+      standardSource: B_UNIQUE,
+    },
+    { short, full: fullC, uniqueAxis: 'c', standard: false, shortSource: A3232, fullSource: DERIVED },
+  ];
+}
 
 export const ITC_SETTINGS: Record<string, ItcSettingFixture[]> = {
-  '1': one('1', '1'),
-  '-1': one('-1', '-1'),
-  '2': [
-    {
-      short: '2',
-      full: '121',
-      uniqueAxis: 'b',
-      standard: true,
-      shortSource: T3222,
-      fullSource: D1523,
-      standardSource: B_UNIQUE,
-    },
-    { short: '2', full: '112', uniqueAxis: 'c', standard: false, shortSource: T3222, fullSource: DERIVED },
-  ],
-  m: [
-    {
-      short: 'm',
-      full: '1m1',
-      uniqueAxis: 'b',
-      standard: true,
-      shortSource: T3222,
-      fullSource: D1523,
-      standardSource: B_UNIQUE,
-    },
-    { short: 'm', full: '11m', uniqueAxis: 'c', standard: false, shortSource: T3222, fullSource: DERIVED },
-  ],
-  '2/m': [
-    {
-      short: '2/m',
-      full: '1 2/m 1',
-      uniqueAxis: 'b',
-      standard: true,
-      shortSource: A2111,
-      fullSource: D1523,
-      standardSource: B_UNIQUE,
-    },
-    { short: '2/m', full: '1 1 2/m', uniqueAxis: 'c', standard: false, shortSource: A2111, fullSource: DERIVED },
-  ],
-  '222': one('222', '222'),
+  '1': [printed('1')],
+  '-1': [printed('-1')],
+  '2': monoclinic('2', '121', '112'),
+  m: monoclinic('m', '1m1', '11m'),
+  '2/m': monoclinic('2/m', '1 2/m 1', '1 1 2/m'),
+  '222': [printed('222')],
   mm2: [
-    { short: 'mm2', full: 'mm2', uniqueAxis: 'c', standard: true, shortSource: T3222, fullSource: D1523 },
+    { ...printed('mm2'), uniqueAxis: 'c' },
     { short: '2mm', full: '2mm', uniqueAxis: 'a', standard: false, shortSource: DERIVED, fullSource: DERIVED },
     { short: 'm2m', full: 'm2m', uniqueAxis: 'b', standard: false, shortSource: DERIVED, fullSource: DERIVED },
   ],
-  mmm: one('mmm', '2/m 2/m 2/m'),
-  '4': one('4', '4'),
-  '-4': one('-4', '-4'),
-  '4/m': one('4/m', '4/m'),
-  '422': one('422', '422'),
-  '4mm': one('4mm', '4mm'),
-  '-42m': [
-    { short: '-42m', full: '-42m', standard: true, shortSource: T3222, fullSource: D1523 },
-    { short: '-4m2', full: '-4m2', standard: false, shortSource: T3222, fullSource: T3222 },
-  ],
-  '4/mmm': one('4/mmm', '4/m 2/m 2/m'),
-  '3': one('3', '3'),
-  '-3': one('-3', '-3'),
-  '32': [
-    {
-      short: '321',
-      full: '321',
-      standard: true,
-      shortSource: T3222,
-      fullSource: D1523,
-      standardSource: VOL_D_1_1_4,
-    },
-    { short: '312', full: '312', standard: false, shortSource: T3222, fullSource: T3222 },
-  ],
-  '3m': [
-    {
-      short: '3m1',
-      full: '3m1',
-      standard: true,
-      shortSource: T3222,
-      fullSource: D1523,
-      standardSource: VOL_D_1_1_4,
-    },
-    { short: '31m', full: '31m', standard: false, shortSource: T3222, fullSource: T3222 },
-  ],
-  '-3m': [
-    {
-      short: '-3m1',
-      full: '-3 2/m 1',
-      standard: true,
-      shortSource: DERIVED,
-      fullSource: D1523,
-      standardSource: VOL_D_1_5_2_3,
-    },
-    { short: '-31m', full: '-3 1 2/m', standard: false, shortSource: DERIVED, fullSource: DERIVED },
-  ],
-  '6': one('6', '6'),
-  '-6': one('-6', '-6'),
-  '6/m': one('6/m', '6/m'),
-  '622': one('622', '622'),
-  '6mm': one('6mm', '6mm'),
-  '-6m2': [
-    {
-      short: '-6m2',
-      full: '-6m2',
-      standard: true,
-      shortSource: T3222,
-      fullSource: D1523,
-      standardSource: VOL_D_1_5_2_3,
-    },
-    { short: '-62m', full: '-62m', standard: false, shortSource: T3222, fullSource: T3222 },
-  ],
-  '6/mmm': one('6/mmm', '6/m 2/m 2/m'),
-  '23': one('23', '23'),
-  'm-3': one('m-3', '2/m -3'),
-  '432': one('432', '432'),
-  '-43m': one('-43m', '-43m'),
-  'm-3m': one('m-3m', '4/m -3 2/m'),
+  mmm: [printed('mmm', '2/m 2/m 2/m')],
+  '4': [printed('4')],
+  '-4': [printed('-4')],
+  '4/m': [printed('4/m')],
+  '422': [printed('422')],
+  '4mm': [printed('4mm')],
+  '-42m': [printed('-42m'), printed('-4m2', '-4m2', false)],
+  '4/mmm': [printed('4/mmm', '4/m 2/m 2/m')],
+  '3': [printed('3')],
+  '-3': [printed('-3')],
+  '32': [printed('321', '321', true, VOL_D_1_1_4), printed('312', '312', false)],
+  '3m': [printed('3m1', '3m1', true, VOL_D_1_1_4), printed('31m', '31m', false)],
+  '-3m': [printed('-3m1', '-3 2/m 1', true, VOL_D_1_1_4), printed('-31m', '-3 1 2/m', false)],
+  '6': [printed('6')],
+  '-6': [printed('-6')],
+  '6/m': [printed('6/m')],
+  '622': [printed('622')],
+  '6mm': [printed('6mm')],
+  '-6m2': [printed('-6m2', '-6m2', true, VOL_D_1_5_2_3), printed('-62m', '-62m', false)],
+  '6/mmm': [printed('6/mmm', '6/m 2/m 2/m')],
+  '23': [printed('23')],
+  'm-3': [printed('m-3', '2/m -3')],
+  '432': [printed('432')],
+  '-43m': [printed('-43m')],
+  'm-3m': [printed('m-3m', '4/m -3 2/m')],
 };

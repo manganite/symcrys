@@ -1,12 +1,10 @@
 # ITC Table 3.2.2.1: Laue classes, noncentrosymmetric crystal classes, occurrence of physical properties
 
-Source: _International Tables for Crystallography_, Chapter 3.2, Table 3.2.2.1 (page 19 of the
-chapter PDF `ch3o2.pdf`). birss-app recorded the volume as Vol. D; the chapter and table numbers
-match Vol. A, 6th edition (2016), Chapter 3.2 (Point groups and crystal classes). Volume and printed
-page: to be confirmed against print (open).
+Source: _International Tables for Crystallography_, Vol. A, 6th edition (2016), Chapter 3.2 (Point
+groups and crystal classes), Table 3.2.2.1, printed p. 738.
 
-Transcribed in birss-app (2026-07-11) from a screenshot provided by Thomas, the page scan at full
-resolution and the OCR text, three reads; confirmed by Thomas as provisionally correct.
+Transcribed in birss-app (2026-07-11) from a screenshot provided by Thomas, the page scan and the
+OCR text; checked against the printed page in the chapter PDF on 2026-11-09.
 
 Transcription conventions: a leading minus sign is an overbar (`-4`); `inf` is the infinity symbol.
 Numbers in parentheses are the numbers of independent nonzero tensor components as printed. `+`:

@@ -1,6 +1,6 @@
 /**
  * Operation-based properties against print (fixture class (a)): ITA Table 2.1.1.1 (Laue groups
- * marked by boxes) and ITC Table 3.2.2.1 (Laue class, pyroelectricity, enantiomorphism of the 21
+ * marked by boxes) and ITA Table 3.2.2.1 (Laue class, pyroelectricity, enantiomorphism of the 21
  * noncentrosymmetric classes), re-parsed from references/itc/.
  */
 
@@ -31,7 +31,7 @@ const LAUE_GROUPS = new Set<PointGroupKey>(
 
 // --- Table 3.2.2.1 --------------------------------------------------------------------------------
 
-const rows3221 = tableRows(readReference('itc/table-3.2.2.1.md'));
+const rows3221 = tableRows(readReference('itc/vol-a-table-3.2.2.1.md'));
 expectHeader(rows3221, [
   'System',
   'Laue class',
@@ -94,7 +94,7 @@ describe('ITA Table 2.1.1.1: centrosymmetric classes are the 11 Laue groups', ()
   }
 });
 
-describe('ITC Table 3.2.2.1: the 21 noncentrosymmetric classes', () => {
+describe('ITA Table 3.2.2.1: the 21 noncentrosymmetric classes', () => {
   it('lists 21 classes with the printed totals: 10 pyroelectric, 11 enantiomorphic', () => {
     expect(TABLE3221).toHaveLength(21);
     expect(new Set(TABLE3221.map((r) => r.key)).size).toBe(21);
@@ -124,7 +124,7 @@ describe('ITC Table 3.2.2.1: the 21 noncentrosymmetric classes', () => {
   }
 });
 
-describe('ITC Table 3.2.2.1: full symbols of the Laue classes', () => {
+describe('ITA Table 3.2.2.1: full symbols of the Laue classes', () => {
   // The trigonal Laue class is printed without the trailing 1 of its hexagonal-axes symbol; the
   // monoclinic one is printed as its short symbol 2/m, which names no unique axis and is left out.
   const printed = (full: string) => (full === '-32/m' ? '-32/m1' : full);

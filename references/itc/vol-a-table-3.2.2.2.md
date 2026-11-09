@@ -1,17 +1,17 @@
 # ITC Table 3.2.2.2: polar axes and nonpolar directions in the 21 noncentrosymmetric crystal classes
 
-Source: _International Tables for Crystallography_, Chapter 3.2, Table 3.2.2.2 (page 20 of the
-chapter PDF `ch3o2.pdf`). Volume and printed page as for `table-3.2.2.1.md`: to be confirmed
-against print (open).
+Source: _International Tables for Crystallography_, Vol. A, 6th edition (2016), Chapter 3.2 (Point
+groups and crystal classes), Table 3.2.2.2, printed p. 739.
 
-Transcribed in birss-app (2026-07-11) from a screenshot provided by Thomas, the page scan at full
-resolution with zooms on the trigonal and hexagonal rows, and the OCR text, three reads. Thomas
-compared the transcription with the printed original (2026-07-11), including the 622 row.
+Transcribed in birss-app (2026-07-11) from a screenshot provided by Thomas, the page scan with
+zooms on the trigonal and hexagonal rows, and the OCR text. Thomas compared the transcription with
+the printed original (2026-07-11), including the 622 row; checked again against the printed page in
+the chapter PDF on 2026-11-09.
 
 Transcription conventions: a leading minus sign inside a direction is an overbar on that index
 (`[-1-10]`); indices are written without separators as printed (`[u2uw]` is the family [u, 2u, w]).
 Semicolons separate symmetry-equivalent sets as printed; the sets follow the order of the symmetry
-directions of ITA Table 2.1.3.1 (`vol-a-table-2.1.3.1.md`).
+directions of ITA Table 2.1.3.1 (`vol-a-table-2.1.3.1.md`), as the printed header says.
 
 Printed header notes: all directions normal to an evenfold rotation axis
 and along rotoinversion axes are nonpolar. All directions other than
