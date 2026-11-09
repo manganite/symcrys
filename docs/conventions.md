@@ -24,8 +24,9 @@ A class is identified by its key: the ITC short symbol of the class, as in `POIN
 (`'32'`, `'3m'`, `'-3m'`, `'-6m2'`, `'m-3m'`, …). A key names the class, not a setting; for the
 classes with several settings, `symbol()` gives the symbol of a setting (`321`, `312`).
 
-For D3h the key is `-6m2`, as in ITC Vol. D Table 1.5.2.3. ITA names the class `-62m` (Tables
-2.1.1.1, 3.2.1.2, 3.2.2.1), the symbol of the other setting; open question, #17.
+For D3h the key is `-6m2`, as in ITC Vol. D Table 1.5.2.3. ITA lists both orientations, `-6m2`
+first (§ 3.2.1.2.1 (b), p. 721; Table 3.2.3.2, pp. 762–763), but its tables of classes print `-62m`
+(Tables 2.1.1.1, 3.2.1.2, 3.2.2.1); open question, #17.
 
 ## Cartesian frame
 
@@ -82,11 +83,18 @@ Classes with more than one setting (short symbol, full symbol in parentheses):
 | `-6m2` | 1       |      | `-62m` (`-6 2 m`)               | `-6m2` (`-6 m 2`) **default**  |
 |        | 2       |      | `-6m2` (`-6 m 2`) **default**   | `-62m` (`-6 2 m`)              |
 
-ITA describes both settings or orientations of these classes without naming one standard (§ 3.2.1.2.1
-(a)–(d), p. 721; Table 3.2.3.2). The ITC defaults of symcrys: unique axis b, the standard setting
-of the monoclinic space-group symbols (ITA § 2.1.3.3, p. 151); `321`, `3m1` and their Laue class
-`-3m1`, as in the tensor tables of ITC Vol. D (§ 1.1.4.10.4.4, #6); `-6m2` after ITC Vol. D Table
-1.5.2.3 (open, #17); otherwise the first entry in ITA.
+ITA describes the monoclinic classes with unique axis b and c, `-42m` and `-6m2` in two
+orientations, and `32`, `3m`, `-3m` with hexagonal axes in two orientations, without naming one
+standard (§ 3.2.1.2.1 (a), (b), (d), p. 721; Table 3.2.3.2); `mm2` it gives in one setting only.
+The ITC defaults of symcrys:
+
+- unique axis b: the IUCr accepts the b-axis setting as standard for morphological and structural
+  studies (ITA § 2.1.3.15, p. 171);
+- `321` and `3m1`: the frame of the tensor tables of ITC Vol. D (§ 1.1.4.10.4.4, #6);
+- `-3m1`: their Laue class in the same frame (a consistency choice; ITC Vol. D Table 1.5.2.3 prints
+  its full symbol `-3 2/m 1`);
+- `-6m2`: ITC Vol. D Table 1.5.2.3, and the first entry in ITA (open, #17);
+- `-42m`, `mm2`: the first or only entry in ITA.
 
 Frames relative to setting 1: monoclinic setting 2 maps z to y (rotation by 180° about [011]);
 orthorhombic settings 2 and 3 move the twofold axis from z to x and to y (cyclic permutations of
@@ -103,7 +111,8 @@ The classes `222` and `mmm` have one setting only: their three axes are equivale
    `-6m2` each frame carries, in Birss, the ITC symbol of the other frame (table above). Both
    conventions take as default the frame their own short symbol of the class describes, so the
    defaults are 30° apart, and so are the Cartesian tensor components that survive.
-2. **Monoclinic unique axis.** ITC's standard is unique axis b (y), Birss's is c (z). The short
+2. **Monoclinic unique axis.** ITC's standard is unique axis b (y; ITA § 2.1.3.15, p. 171), Birss's
+   is c (z). The short
    symbols agree; the full symbols (`1 2 1`, `1 1 2`) tell the settings apart.
 3. **Cubic symbols.** Birss prints `m3` and `m3m`; symcrys writes `m-3` and `m-3m` in both
    conventions (pure spelling). `findPointGroup` therefore does not accept Birss's printed `m3`
@@ -144,14 +153,14 @@ ones) come with the tensor module.
 
 ## Sources
 
-| What                                                    | Print source                                                                                                                                                                                                                                   | Test                                                    |
-| ------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
-| Birss operations, symbols, Schoenflies, orders          | Birss Table 3 (pp. 36–39), generating matrices eq. (2.17) (p. 48): `references/birss/`                                                                                                                                                         | `birss.reference.test.ts`                               |
-| Birss symbols of other settings, full symbols           | derived along Birss's directions (position 2 from Birss Table 4a, pp. 56–57)                                                                                                                                                                   | `birss.reference.test.ts`                               |
-| ITC symbols of the settings                             | ITA Table 3.2.3.2 (headlines, pp. 745–769); ITC Vol. D Table 1.5.2.3 for monoclinic full symbols; the symbol rule of ITA § 2.1.3.4 (p. 151; for the monoclinic full symbols, 5th ed. § 2.2.4.1 (ii), p. 18) for `2mm`, `m2m` and unique axis c | `itc.reference.test.ts`                                 |
-| ITC operations of every setting                         | the ITC symbol along the symmetry directions of ITA Table 2.1.3.1 (p. 151), in the frame of #6                                                                                                                                                 | `itc.reference.test.ts`                                 |
-| ITC default settings                                    | see "Settings" above                                                                                                                                                                                                                           | `itcSettings.fixtures.ts`                               |
-| centrosymmetric, polar, chiral, Laue class, Schoenflies | ITA Table 2.1.1.1 (p. 143, Laue groups), Table 3.2.2.1 (p. 738), Table 3.2.3.2                                                                                                                                                                 | `properties.reference.test.ts`, `itc.reference.test.ts` |
+| What                                                    | Print source                                                                                                                                                                                                                                                                                              | Test                                                    |
+| ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| Birss operations, symbols, Schoenflies, orders          | Birss Table 3 (pp. 36–39), generating matrices eq. (2.17) (p. 48): `references/birss/`                                                                                                                                                                                                                    | `birss.reference.test.ts`                               |
+| Birss symbols of other settings, full symbols           | derived along Birss's directions (position 2 from Birss Table 4a, pp. 56–57)                                                                                                                                                                                                                              | `birss.reference.test.ts`                               |
+| ITC symbols of the settings                             | ITA Table 3.2.3.2 (headlines, pp. 745–769); ITC Vol. D Table 1.5.2.3 for monoclinic full symbols; the symbol rule (positions: ITA § 2.1.3.4, p. 151; `1` for a direction without symmetry: 5th ed. § 2.2.4.1 (iv), p. 18; monoclinic full symbols: § 2.1.3.15, p. 171) for `2mm`, `m2m` and unique axis c | `itc.reference.test.ts`                                 |
+| ITC operations of every setting                         | the ITC symbol along the symmetry directions of ITA Table 2.1.3.1 (p. 151), in the frame of #6                                                                                                                                                                                                            | `itc.reference.test.ts`                                 |
+| ITC default settings                                    | see "Settings" above                                                                                                                                                                                                                                                                                      | `itcSettings.fixtures.ts`                               |
+| centrosymmetric, polar, chiral, Laue class, Schoenflies | ITA Table 2.1.1.1 (p. 143, Laue groups), Table 3.2.2.1 (p. 738), Table 3.2.3.2                                                                                                                                                                                                                            | `properties.reference.test.ts`, `itc.reference.test.ts` |
 
 Each file in `references/` names its source and the printed page. ITA means Vol. A, 6th edition
 (2016).

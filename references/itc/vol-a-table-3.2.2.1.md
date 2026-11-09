@@ -1,4 +1,4 @@
-# ITC Table 3.2.2.1: Laue classes, noncentrosymmetric crystal classes, occurrence of physical properties
+# ITA Table 3.2.2.1: Laue classes, noncentrosymmetric crystal classes, occurrence of physical properties
 
 Source: _International Tables for Crystallography_, Vol. A, 6th edition (2016), Chapter 3.2 (Point
 groups and crystal classes), Table 3.2.2.1, printed p. 738.

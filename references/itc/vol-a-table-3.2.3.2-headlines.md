@@ -6,14 +6,17 @@ Transcribed 2026-11-09 from the chapter PDF provided by Thomas (rendered pages, 
 so the overbars are read from the print).
 
 Only the headline of each entry is transcribed: the short Hermann–Mauguin symbol, the full symbol
-where the table prints one (below the short symbol, "if different", § 3.2.1.2.1, p. 721), the
-Schoenflies symbol, the axis note, and the page. The trigonal groups are described with hexagonal
-axes and, separately, with rhombohedral axes; three point groups are given in two settings
-(monoclinic unique axis b and c; 42m and 4m2; 6m2 and 62m) and three trigonal ones in two
-orientations (321 and 312, 3m1 and 31m, -3m1 and -31m), as listed in § 3.2.1.2.1 (a)–(d), p. 721.
+where the table prints one (below the short symbol, § 3.2.1.2.1, p. 721), the Schoenflies symbol,
+the axis note, and the page. Several groups are given more than once (§ 3.2.1.2.1 (a)–(d),
+p. 721): the three monoclinic groups with unique axis b and with unique axis c; -42m and -6m2 in
+two orientations (-42m and -4m2, -6m2 and -62m); the five trigonal groups with hexagonal and with
+rhombohedral axes, and 32, 3m and -3m with hexagonal axes in two orientations (321 and 312, 3m1
+and 31m, -3m1 and -31m).
 
 Transcription conventions: a leading minus sign is an overbar; positions of the full symbol are
-separated by spaces; an empty "Full" cell means the table prints no full symbol.
+separated by spaces; an empty "Full" cell means the table prints no full symbol. The table prints a
+full symbol where it differs from the short one ("if different", p. 721), except for the monoclinic
+groups, whose full symbols (1 2 1, 1 1 2, …) it does not print.
 
 | System | Short | Full | Schoenflies | Axes | Page |
 |---|---|---|---|---|---|

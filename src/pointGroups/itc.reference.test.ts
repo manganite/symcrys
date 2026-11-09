@@ -2,8 +2,9 @@
  * ITC convention against its print sources (fixture class (b), calibrated against (a)).
  *
  * The expected ITC operations of every setting are derived independently of the library: the ITC
- * symbols of the setting (itcSettings.fixtures.ts, each printed one checked against the headlines of
- * ITA Table 3.2.3.2, references/itc/vol-a-table-3.2.3.2-headlines.md) are read position by position along the symmetry directions of ITA Table 2.1.3.1
+ * symbols of the setting (itcSettings.fixtures.ts, each printed one checked against the headlines
+ * of ITA Table 3.2.3.2, references/itc/vol-a-table-3.2.3.2-headlines.md) are read position by
+ * position along the symmetry directions of ITA Table 2.1.3.1
  * (references/itc/vol-a-table-2.1.3.1.md), converted to Cartesian with the frame decided on #6
  * (x ∥ a, z ∥ c, y = z × x; typed here from the decision, not imported), and closed with the
  * independent algebra of testUtils. The library's symbols must equal the fixture's.
@@ -71,7 +72,7 @@ const toCartesian = (basis: M, d: number[]): number[] =>
 /**
  * Cartesian directions of the symbol positions for a crystal system (ITA Table 2.1.3.1); a
  * monoclinic short symbol has the unique axis as its only position, a monoclinic full symbol the
- * three axes a, b, c (ITA 5th ed. § 2.2.4.1 (ii), p. 18).
+ * three axes a, b, c (ITA 6th ed. § 2.1.3.15, p. 171).
  */
 function directions(system: string, hm: string, uniqueAxis?: 'a' | 'b' | 'c'): number[][] {
   if (system === 'triclinic') return [[0, 0, 1]]; // only 1 or -1, which need no direction
@@ -121,7 +122,8 @@ const HEADLINES: Headline[] = (() => {
     .filter((r) => r[4] !== 'rhombohedral axes')
     .map((r) => {
       const axis = /^unique axis (b|c)$/.exec(r[4])?.[1] as 'b' | 'c' | undefined;
-      // The table prints a full symbol only if it differs from the short one (§ 3.2.1.2.1, p. 721).
+      // The table prints a full symbol if it differs from the short one (§ 3.2.1.2.1, p. 721); the
+      // monoclinic full symbols it does not print, and the fixture takes those from elsewhere.
       const h: Headline = { short: r[1], full: r[2] || r[1], schoenflies: r[3] };
       return axis ? { ...h, axis } : h;
     });
@@ -159,7 +161,10 @@ describe('ITC settings fixture against print', () => {
     for (const [, f] of FIXTURE) {
       const h = headlineOf(f);
       if (f.shortSource === 'vol-a-table-3.2.3.2') expect(h, `${f.short} in Table 3.2.3.2`).toBeDefined();
-      if (f.fullSource === 'vol-a-table-3.2.3.2') expect(hmTokens(f.full)).toEqual(hmTokens(h!.full));
+      if (f.fullSource === 'vol-a-table-3.2.3.2') {
+        expect(h, `${f.short} in Table 3.2.3.2`).toBeDefined();
+        expect(hmTokens(f.full), `full symbol of ${f.short}`).toEqual(hmTokens(h?.full ?? ''));
+      }
     }
   });
 

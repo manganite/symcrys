@@ -7,25 +7,28 @@
  * - (a) `vol-a-table-3.2.3.2`: printed in the headline of the entry in ITA (6th ed.) Table 3.2.3.2,
  *   pp. 745–769; itc.reference.test.ts re-parses references/itc/vol-a-table-3.2.3.2-headlines.md
  *   and fails if a cited symbol is missing. Where the table prints no full symbol, the full symbol
- *   is the short one ("if different", § 3.2.1.2.1, p. 721).
+ *   is the short one ("if different", § 3.2.1.2.1, p. 721), except for the monoclinic groups,
+ *   whose full symbols the table does not print (they come from Vol. D or are derived).
  * - (a) `vol-d-table-1.5.2.3`: ITC Vol. D Table 1.5.2.3 (full Hermann–Mauguin symbols), as
  *   transcribed in manganite/birss-tables (`tools/generate_nomenclature.py`); not yet in
  *   references/ and so not re-parsed: it comes with the magnetic groups (#13).
- * - (b) `derived`: follows from the rule for Hermann–Mauguin symbols, ITA (6th ed.) § 2.1.3.4,
- *   p. 151: positions follow the symmetry directions of Table 2.1.3.1, '1' marks a direction
- *   without symmetry; the monoclinic full symbols 1 2 1 and 1 1 2 name the unique axis b and c
- *   (ITA 5th ed. § 2.2.4.1 (ii), p. 18).
+ * - (b) `derived`: follows from the rule for Hermann–Mauguin symbols: positions follow the
+ *   symmetry directions of Table 2.1.3.1 (ITA 6th ed. § 2.1.3.4, p. 151); a direction without
+ *   symmetry is written '1' (ITA 5th ed. § 2.2.4.1 (iv), p. 18: P3m1, P31m); the monoclinic full
+ *   symbols name the unique axis by its position (ITA 6th ed. § 2.1.3.15, p. 171: P 1 21/c 1 for
+ *   unique axis b, P 1 1 21/b for unique axis c).
  *
  * `standard` marks the setting symcrys takes as ITC default where a class has several, from
  * `standardSource`; no test re-parses it. ITA describes both orientations of these classes without
  * naming one standard (§ 3.2.1.2.1 (a)–(d), p. 721):
- * - monoclinic unique axis b: ITA (6th ed.) § 2.1.3.3, p. 151, adopts the short symbol of the b-axis
- *   setting as the standard symbol of a monoclinic space-group type;
+ * - monoclinic unique axis b: ITA (6th ed.) § 2.1.3.15, p. 171 (IUCr 1951: the b-axis setting is
+ *   accepted as standard for morphological and structural studies);
  * - 321 and 3m1 (twofold axes or mirror normals along a = x): ITC Vol. D § 1.1.4.10.4.4 (group 32:
- *   twofold axis parallel to Ox₁; group 3m: mirror perpendicular to Ox₁), as recorded on #6; -3m1
- *   (full -3 2/m 1) likewise, its Laue class;
- * - -6m2: ITC Vol. D Table 1.5.2.3 and the key decision on #13. ITA Tables 2.1.1.1, 3.2.1.2 and
- *   3.2.2.1 name the class -62m; open question, #17.
+ *   twofold axis parallel to Ox₁; group 3m: mirror perpendicular to Ox₁), as recorded on #6;
+ * - -3m1: a consistency choice, not a print statement: the Laue class of 321 and 3m1, in the same
+ *   frame. ITC Vol. D Table 1.5.2.3 prints its full symbol -3 2/m 1 for D3d;
+ * - -6m2: ITC Vol. D Table 1.5.2.3 and the key decision on #13; ITA lists it first (§ 3.2.1.2.1
+ *   (b), p. 721; Table 3.2.3.2, p. 762), but its class tables print -62m. Open question, #17.
  */
 
 export type Source = 'vol-a-table-3.2.3.2' | 'vol-d-table-1.5.2.3' | 'derived';
@@ -51,9 +54,10 @@ const printed = (short: string, full: string = short, standard = true, standardS
     ? { short, full, standard, shortSource: A3232, fullSource: A3232, standardSource }
     : { short, full, standard, shortSource: A3232, fullSource: A3232 };
 
-const B_UNIQUE = 'ITA (6th ed.) § 2.1.3.3, p. 151';
+const B_UNIQUE = 'ITA (6th ed.) § 2.1.3.15, p. 171';
 const VOL_D_1_1_4 = 'ITC Vol. D § 1.1.4.10.4.4 (#6)';
 const VOL_D_1_5_2_3 = 'ITC Vol. D Table 1.5.2.3 (#13; open, #17)';
+const LAUE_OF_321 = 'consistency: Laue class of 321 and 3m1, same frame';
 
 function monoclinic(short: string, fullB: string, fullC: string): ItcSettingFixture[] {
   return [
@@ -94,7 +98,7 @@ export const ITC_SETTINGS: Record<string, ItcSettingFixture[]> = {
   '-3': [printed('-3')],
   '32': [printed('321', '321', true, VOL_D_1_1_4), printed('312', '312', false)],
   '3m': [printed('3m1', '3m1', true, VOL_D_1_1_4), printed('31m', '31m', false)],
-  '-3m': [printed('-3m1', '-3 2/m 1', true, VOL_D_1_1_4), printed('-31m', '-3 1 2/m', false)],
+  '-3m': [printed('-3m1', '-3 2/m 1', true, LAUE_OF_321), printed('-31m', '-3 1 2/m', false)],
   '6': [printed('6')],
   '-6': [printed('-6')],
   '6/m': [printed('6/m')],

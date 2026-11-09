@@ -1,4 +1,4 @@
-# ITC Table 3.2.2.2: polar axes and nonpolar directions in the 21 noncentrosymmetric crystal classes
+# ITA Table 3.2.2.2: polar axes and nonpolar directions in the 21 noncentrosymmetric crystal classes
 
 Source: _International Tables for Crystallography_, Vol. A, 6th edition (2016), Chapter 3.2 (Point
 groups and crystal classes), Table 3.2.2.2, printed p. 739.
