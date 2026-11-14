@@ -62,7 +62,8 @@ convention or the process updates this file (or the `docs/` file) in the same PR
   Sources are in Thomas' Zotero, in the collection _Projekte › Crystallography-Apps_, which also
   holds the literature of the app family (maintainer, 2026-11-14: one place for the literature of
   all repositories). A source newly cited in symcrys is added there; if it is missing from Zotero,
-  import it by DOI or ISBN and check authors, year, edition and publisher against the title page.
+  import it by DOI or ISBN and check its metadata against the printed source (for a book: authors,
+  year, edition and publisher against the title page).
   Ask Thomas for a volume that is not at hand.
 
 ## Two conventions: ITC (default) and Birss
