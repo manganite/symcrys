@@ -59,7 +59,12 @@ convention or the process updates this file (or the `docs/` file) in the same PR
   to the point. Proactive proposals are welcome.
 - Thomas is the domain authority. Crystallography and physics claims are checked against code and
   print sources (ITC, Birss 1966, …) with printed page numbers, never against app output alone.
-  Sources are in Thomas' Zotero; ask him for a volume that is not at hand.
+  Sources are in Thomas' Zotero, in the collection _Projekte › Crystallography-Apps_, which also
+  holds the literature of the app family (maintainer, 2026-11-14: one place for the literature of
+  all repositories). A source newly cited in symcrys is added there; if it is missing from Zotero,
+  import it by DOI or ISBN and check its metadata against the printed source (for a book: authors,
+  year, edition and publisher against the title page).
+  Ask Thomas for a volume that is not at hand.
 
 ## Two conventions: ITC (default) and Birss
 
