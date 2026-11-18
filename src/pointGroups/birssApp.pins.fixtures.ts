@@ -1,14 +1,15 @@
 /**
- * Behavioural pins (fixture class (c), CLAUDE.md): what birss-app 2be5fe3 2026-11-07 shows for the 32 crystal
- * classes. Captured by audit/birss-app/capture.run.ts (npm run audit:birss-app); regenerate only by
- * re-capture, never edit. Matrices are birss-app's Cartesian matrices (Birss frame), rows first.
+ * Behavioural pins (fixture class (c), CLAUDE.md): what birss-app 2be5fe3 2026-11-07 shows for the 32
+ * crystal classes. Captured by audit/birss-app/capture.run.ts (npm run audit:birss-app);
+ * regenerate only by re-capture, never edit. Matrices are birss-app's Cartesian matrices (Birss
+ * frame), rows first.
  */
 
 export interface BirssAppSetting {
   readonly setting: number;
   readonly symbol: string;
-  readonly generators: readonly (readonly number[])[][];
-  readonly operations: readonly (readonly number[])[][];
+  readonly generators: readonly (readonly (readonly number[])[])[];
+  readonly operations: readonly (readonly (readonly number[])[])[];
   readonly generatorSymbols: readonly string[];
   readonly operationSymbols: readonly string[];
 }

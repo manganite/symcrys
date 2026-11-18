@@ -2,7 +2,8 @@
  * Captures what birss-app shows for the 32 crystal classes, as behavioural pins (fixture class (c),
  * CLAUDE.md) for symcrys's Birss convention: in its Birss mode symcrys must give what birss-app
  * gives (maintainer, 2026-11-18). Reads ../birss-app (sibling checkout), writes
- * src/pointGroups/birssApp.pins.fixtures.ts. Run by hand: npm run audit:birss-app. Not part of the
+ * src/pointGroups/birssApp.pins.fixtures.ts (the npm script formats it with Prettier afterwards).
+ * Run by hand: npm run audit:birss-app. Not part of the
  * build, the tests or CI (CLAUDE.md, "Hard constraints"). Regenerate the pins only by re-running
  * this script against a known-good birss-app revision, never by editing them.
  *
@@ -71,16 +72,17 @@ it('captures the Birss-mode pins from birss-app', () => {
   });
 
   const out = `/**
- * Behavioural pins (fixture class (c), CLAUDE.md): what birss-app ${commit} shows for the 32 crystal
- * classes. Captured by audit/birss-app/capture.run.ts (npm run audit:birss-app); regenerate only by
- * re-capture, never edit. Matrices are birss-app's Cartesian matrices (Birss frame), rows first.
+ * Behavioural pins (fixture class (c), CLAUDE.md): what birss-app ${commit} shows for the 32
+ * crystal classes. Captured by audit/birss-app/capture.run.ts (npm run audit:birss-app);
+ * regenerate only by re-capture, never edit. Matrices are birss-app's Cartesian matrices (Birss
+ * frame), rows first.
  */
 
 export interface BirssAppSetting {
   readonly setting: number;
   readonly symbol: string;
-  readonly generators: readonly (readonly number[])[][];
-  readonly operations: readonly (readonly number[])[][];
+  readonly generators: readonly (readonly (readonly number[])[])[];
+  readonly operations: readonly (readonly (readonly number[])[])[];
   readonly generatorSymbols: readonly string[];
   readonly operationSymbols: readonly string[];
 }

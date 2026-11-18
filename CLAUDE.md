@@ -84,8 +84,9 @@ convention or the process updates this file (or the `docs/` file) in the same PR
   2026-11-18): in `'birss'` symcrys gives what birss-app gives today, so that birss-app shows the
   same once it moves onto symcrys; where Birss's print leaves a choice open (generators, order of
   the operations, sign of an axis), birss-app's choice holds. Behavioural pins captured from
-  birss-app check it (`docs/conventions.md`, "Birss convention and birss-app"). In `'itc'` the
-  output follows ITA.
+  birss-app check it (`docs/conventions.md`, "Birss convention and birss-app"); for these choices
+  they are the reference, not only regression detectors, because birss-app defines them. In `'itc'`
+  the output follows ITA.
 
 ## Correctness and provenance
 
@@ -248,8 +249,9 @@ The conventions themselves are in `docs/conventions.md`; here, what was decided 
   the magnetic groups.
 - **Stored frame and settings** (2026-11-09, #14): data are stored once, in Birss's frame (setting
   1); every setting, the ITC ones included, is a rotation of it. A setting index names a physical
-  frame and means the same in both conventions; the convention picks the default and the symbols
-  and how the operations are presented (order, generators, axis signs), not their set. One data set then serves both conventions, and the Birss print tests apply directly.
+  frame and means the same in both conventions; the convention picks the default and the symbols and
+  how the operations are presented (order, generators, axis signs), not their set. One data set then
+  serves both conventions, and the Birss print tests apply directly.
 - **birss-app is the reference where print leaves a choice open** (maintainer, 2026-11-09, #17):
   symcrys follows birss-app's current implementation unless it is wrong on the subject. The choices
   for the crystal classes were checked against birss-app 2be5fe3: D3h keeps the key and ITC

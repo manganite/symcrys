@@ -176,11 +176,12 @@ convention and birss-app"). `describeOperations` follows the order of `operation
 In the ITC convention `generators` returns ITA's selected generators of the setting ("Generators
 selected" of the symmorphic P group, 5th ed., Part 7), in printed order and without the identity;
 for `mm2` settings 2 and 3, which ITA does not list, those of setting 1 carried into their frame. In
-the Birss convention it returns birss-app's generators, which are the generators stored in
-`src/pointGroups/data.ts` carried into the frame of the setting ("Birss convention and birss-app").
-Neither are Birss's printed generating matrices (Birss Table 3, pp. 36–39, σ(N) of eq. (2.17), p.
-48), which differ for some classes in choice and order (e.g. `222`: birss-app 2_z, 2_x; Birss σ(2),
-σ(3) = 2_y, 2_z); Birss's tests check only the group they generate.
+the Birss convention it returns birss-app's generators (for `1` the identity, as in birss-app),
+which are the generators stored in `src/pointGroups/data.ts` carried into the frame of the setting
+("Birss convention and birss-app"). Neither are Birss's printed generating matrices (Birss Table 3,
+pp. 36–39, σ(N) of eq. (2.17), p. 48), which differ for some classes in choice and order (e.g.
+`222`: birss-app 2_z, 2_x; Birss σ(2), σ(3) = 2_y, 2_z); Birss's tests check only the group they
+generate.
 
 ## Birss convention and birss-app
 
@@ -195,14 +196,18 @@ choices that Birss's print leaves open:
   in the order of g, then h, until a pass adds nothing. The identity is not necessarily first.
 - **Sign of an axis** in `describeOperations`: as birss-app signs it, with the first non-zero
   Cartesian component (in the order x, y, z) positive; the sense refers to that sign. The axis is
-  still a symmetry direction of ITA Table 2.1.3.1, possibly reversed.
+  still a symmetry direction of ITA Table 2.1.3.1, possibly reversed; `symmetryDirections` keeps
+  the sign of the table, so in this convention an axis is matched to a direction by |dot| = 1, not
+  by identity.
 
 `birssApp.pins.test.ts` checks this against behavioural pins captured from birss-app
-(`audit/birss-app`, fixture class (c)): for all 32 classes and all settings the generators and the
-operations in order, the symbols, the default setting, the property flags, and the operation symbols
-birss-app writes, rebuilt from `describeOperations` with birss-app's labelling rules. The strings
-themselves (`2_z`, `3_[111]⁺`, `m_60°`) and the order birss-app sorts them into for display stay in
-birss-app.
+(`audit/birss-app`, fixture class (c); the revision is `BIRSS_APP_REVISION` in the fixture, at
+present 2be5fe3, and the test requires this text to name it): for all 32 classes and all settings
+the generators and the operations in order, the symbols, the default setting, the property flags,
+and the operation symbols birss-app writes, rebuilt from `describeOperations` with birss-app's
+labelling rules. For these choices birss-app is the specification (maintainer decision), so here its
+pins are the reference, not only a regression detector. The strings themselves (`2_z`, `3_[111]⁺`,
+`m_60°`) and the order birss-app sorts them into for display stay in birss-app.
 
 ## Symmetry directions and elements
 

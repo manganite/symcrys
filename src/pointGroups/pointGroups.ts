@@ -3,7 +3,14 @@
  * symbols, in the ITC convention (default) or the Birss convention.
  */
 
-import { closeGroup, compose, operationsEqual, transformOperation, type Operation } from '../operations.js';
+import {
+  MAX_GROUP_ORDER,
+  closeGroup,
+  compose,
+  operationsEqual,
+  transformOperation,
+  type Operation,
+} from '../operations.js';
 import { inItaOrder, itaGeneratorOperations } from './itaOrder.js';
 import type { CrystalSystem } from '../lattice.js';
 import { POINT_GROUP_DATA, POINT_GROUP_KEYS, type PointGroupData, type PointGroupKey } from './data.js';
@@ -129,9 +136,6 @@ function settingItaGenerators(d: PointGroupData, index: number): readonly Operat
 
 const birssOperationCache = new Map<string, readonly Operation[]>();
 
-/** Largest crystallographic point group order times a margin, as in closeGroup. */
-const MAX_ORDER = 200;
-
 /**
  * The operations of a setting in the Birss convention, in birss-app's order (docs/conventions.md,
  * "Birss convention and birss-app"): the generators of the setting first, then repeated passes
@@ -150,7 +154,7 @@ function birssOperations(d: PointGroupData, index: number): readonly Operation[]
         for (let j = 0; j < size; j++) {
           const product = compose(group[i], group[j]);
           if (!group.some((g) => operationsEqual(g, product))) {
-            if (group.length >= MAX_ORDER) throw new Error(`Point group ${d.key}: closure does not terminate`);
+            if (group.length >= MAX_GROUP_ORDER) throw new Error(`Point group ${d.key}: closure does not terminate`);
             group.push(product);
             changed = true;
           }
@@ -249,7 +253,8 @@ export function operations(key: PointGroupKey, options?: SettingOptions): readon
  * Generators of the point group in the requested setting (docs/conventions.md, "Generators"). ITC
  * convention: ITA's selected generators in printed order, without the identity and ITA's lattice
  * translations, so the list is empty for `1`; for `mm2` settings 2 and 3, which ITA does not list,
- * those of setting 1 carried into their frame. Birss convention: birss-app's generators.
+ * those of setting 1 carried into their frame. Birss convention: birss-app's generators (for `1`
+ * the identity, as in birss-app).
  */
 export function generators(key: PointGroupKey, options?: SettingOptions): readonly Operation[] {
   const d = data(key);

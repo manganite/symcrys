@@ -23,7 +23,10 @@ export type OperationKind = 'identity' | 'inversion' | 'rotation' | 'rotoinversi
 
 /** A symmetry direction: as a lattice direction [uvw] and as a Cartesian unit vector. */
 export interface Axis {
-  /** Integer coordinates in the conventional basis, sign as in ITA Table 2.1.3.1. */
+  /**
+   * Integer coordinates in the conventional basis. ITC convention: sign as in ITA Table 2.1.3.1;
+   * Birss convention, in `describeOperations`: first non-zero Cartesian component positive.
+   */
   readonly lattice: Uvw;
   /**
    * Unit vector in the Cartesian frame of symcrys. Monoclinic: a, b, c taken along x, y, z, exact for
@@ -252,7 +255,9 @@ export function describeOperations(key: PointGroupKey, options?: SettingOptions)
  * The positions of the full Hermann–Mauguin symbol in the requested convention and setting, each
  * with its symmetry directions (ITA Table 2.1.3.1) and the symmetry elements along them. All
  * positions of the crystal family are listed, also those the symbol of the class leaves out (then
- * without `symbol`); the triclinic family has none.
+ * without `symbol`); the triclinic family has none. The directions keep the sign of Table 2.1.3.1
+ * in both conventions; in the Birss convention an axis of `describeOperations` may be reversed, so
+ * match it to a direction by |dot| = 1, not by identity.
  */
 export function symmetryDirections(key: PointGroupKey, options?: SettingOptions): readonly SymmetryDirection[] {
   return analysis(key, options).directions;

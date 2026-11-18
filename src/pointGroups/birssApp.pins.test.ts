@@ -10,9 +10,10 @@
  * description carries exactly what birss-app's strings say.
  */
 
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import type { Vec3 } from '../linalg.js';
-import { BIRSS_APP_CLASSES } from './birssApp.pins.fixtures.js';
+import { BIRSS_APP_CLASSES, BIRSS_APP_REVISION } from './birssApp.pins.fixtures.js';
 import { describeOperations, type OperationDescription } from './elements.js';
 import { isCentrosymmetric, isChiral, isPolar, laueClass } from './properties.js';
 import { generators, operations, settings, symbol, type PointGroupKey } from './pointGroups.js';
@@ -21,7 +22,11 @@ const TOL = 1e-9;
 const sameMatrix = (a: readonly (readonly number[])[], b: readonly (readonly number[])[]) =>
   a.every((r, i) => r.every((x, j) => Math.abs(x - b[i][j]) < TOL));
 
-/** birss-app's axis label (formatMatrixSymbol, formatAxis) for an axis it has already normalised. */
+/**
+ * birss-app's axis label (formatMatrixSymbol, formatAxis) for an axis it has already normalised.
+ * Covers exact crystallographic directions only (one tolerance, no decimal fallback); it throws
+ * where birss-app's rules would need more.
+ */
 function axisLabel(v: Vec3): string {
   const max = Math.max(...v.map(Math.abs));
   const [x, y, z] = v.map((c) => c / max);
@@ -54,6 +59,11 @@ function birssAppSymbol(d: OperationDescription): string {
 }
 
 describe('Birss convention = birss-app (pins)', () => {
+  it('docs/conventions.md names the birss-app revision the pins come from', () => {
+    const docs = readFileSync(new URL('../../docs/conventions.md', import.meta.url), 'utf8');
+    expect(docs).toContain(`birss-app ${BIRSS_APP_REVISION.split(' ')[0]}`);
+  });
+
   it('covers the 32 classes and all their settings', () => {
     expect(BIRSS_APP_CLASSES).toHaveLength(32);
     for (const c of BIRSS_APP_CLASSES) {
