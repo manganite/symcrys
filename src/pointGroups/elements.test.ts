@@ -80,10 +80,18 @@ describe('describeOperations', () => {
         const c = cartesianOf(key, d.axis!.lattice);
         expect(c.every((x, k) => Math.abs(x - d.axis!.cartesian[k]) < 1e-9)).toBe(true);
         expect(d.axis!.lattice.every(Number.isInteger)).toBe(true);
-        // the sign of ITA Table 2.1.3.1, also for twofold axes and mirror normals
-        expect(LATTICE_SYMMETRY_DIRECTIONS[familyOf(key)].flat().map((u) => [...u])).toContainEqual([
-          ...d.axis!.lattice,
-        ]);
+        const table = LATTICE_SYMMETRY_DIRECTIONS[familyOf(key)].flat().map((u) => [...u]);
+        if (convention === 'itc') {
+          // the sign of ITA Table 2.1.3.1, also for twofold axes and mirror normals
+          expect(table).toContainEqual([...d.axis!.lattice]);
+        } else {
+          // a direction of ITA Table 2.1.3.1, signed as birss-app: first non-zero Cartesian component positive
+          const lattice = [...d.axis!.lattice];
+          expect(table.some((u) => u.every((x, k) => x === lattice[k]) || u.every((x, k) => x === -lattice[k]))).toBe(
+            true,
+          );
+          expect(d.axis!.cartesian.find((x) => Math.abs(x) > 1e-9)! > 0).toBe(true);
+        }
       }
       expect(d.sense !== undefined).toBe(d.order >= 3);
     });

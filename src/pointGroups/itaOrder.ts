@@ -640,7 +640,7 @@ const ITA_GENERATORS: Readonly<Record<string, readonly IntMat3[]>> = {
 };
 
 /** ITA's selected generators of a setting as matrices in the conventional basis, or undefined if ITA does not list it. */
-export function itaGenerators(key: string, setting: number): readonly IntMat3[] | undefined {
+function itaGenerators(key: string, setting: number): readonly IntMat3[] | undefined {
   return ITA_GENERATORS[`${key}#${setting}`];
 }
 
@@ -657,6 +657,11 @@ function cartesian(w: IntMat3, system: CrystalSystem): Mat3 {
   return multiply(multiply(b, w as unknown as Mat3), inverse(b));
 }
 
+/** ITA's selected generators of a setting as Cartesian operations, in printed order, or undefined if ITA does not list it. */
+export function itaGeneratorOperations(key: string, setting: number, system: CrystalSystem): Operation[] | undefined {
+  return itaGenerators(key, setting)?.map((w) => operation(snap(cartesian(w, system))));
+}
+
 /**
  * The operations of a setting in ITA's order, built coset by coset from ITA's generators, or
  * undefined if ITA does not list the setting. `closed` (the closure of the stored generators) only
@@ -668,12 +673,11 @@ export function inItaOrder(
   system: CrystalSystem,
   closed: readonly Operation[],
 ): Operation[] | undefined {
-  const gens = itaGenerators(key, setting);
+  const gens = itaGeneratorOperations(key, setting, system);
   if (!gens) return undefined;
   const has = (list: readonly Operation[], op: Operation) => list.some((x) => operationsEqual(x, op));
   const list: Operation[] = [IDENTITY_OPERATION];
-  for (const w of gens) {
-    const g = operation(snap(cartesian(w, system)));
+  for (const g of gens) {
     const h = list.slice();
     for (let power = g; !has(h, power); power = compose(power, g)) {
       if (list.length > closed.length) break;

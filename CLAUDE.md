@@ -80,6 +80,13 @@ convention or the process updates this file (or the `docs/` file) in the same PR
   against its own print source: ITC output against ITC tables, Birss output against Birss's tables.
 - birss-app keeps Birss as its own default for now and selects `'birss'`; to be revisited when it
   moves onto symcrys (maintainer, 2026-11-08).
+- **ITC output in the ITC convention, Birss output in the Birss convention** (maintainer,
+  2026-11-18): in `'birss'` symcrys gives what birss-app gives today, so that birss-app shows the
+  same once it moves onto symcrys; where Birss's print leaves a choice open (generators, order of
+  the operations, sign of an axis), birss-app's choice holds. Behavioural pins captured from
+  birss-app check it (`docs/conventions.md`, "Birss convention and birss-app"); for these choices
+  they are the reference, not only regression detectors, because birss-app defines them. In `'itc'`
+  the output follows ITA.
 
 ## Correctness and provenance
 
@@ -213,15 +220,19 @@ The conventions themselves are in `docs/conventions.md`; here, what was decided 
   operation (`describeOperations`: kind, n, axis, sense, time reversal) and the elements along each
   symmetry direction (`symmetryDirections`); strings such as `4⁺ 0,0,z` or `2_z` stay in the
   applications, which also translate them. An axis is given both as a lattice direction [uvw] and as
-  a Cartesian unit vector, with the sign of ITA Table 2.1.3.1, which fixes what the sense refers to
-  and reproduces ITA's printed operation symbols (`docs/conventions.md`, "Symmetry directions and
-  elements").
-- **Operations in ITA's order** (maintainer, 2026-11-18, crystallography-common#99): `operations`
-  returns the operations as ITA numbers them, built coset by coset from ITA's selected generators
-  (`docs/conventions.md`, "Order of the operations"). Consumers draw and list operations in this
-  order (stereography: poles, faces, face lists), so it should mean something and stay stable; the
-  closure order had no meaning of its own. The closure of the stored generators stays the source of
-  the set; the ordering throws if ITA's generators give a different set.
+  a Cartesian unit vector. In the ITC convention it has the sign of ITA Table 2.1.3.1, which fixes
+  what the sense refers to and reproduces ITA's printed operation symbols; in the Birss convention
+  the sign birss-app gives it (`docs/conventions.md`, "Symmetry directions and elements").
+- **Operations in ITA's order in the ITC convention** (maintainer, 2026-11-18,
+  crystallography-common#99): `operations` returns the operations as ITA numbers them, built coset
+  by coset from ITA's selected generators (`docs/conventions.md`, "Order of the operations").
+  Consumers draw and list operations in this order (stereography: poles, faces, face lists), so it
+  should mean something and stay stable; the closure order had no meaning of its own. The closure of
+  the stored generators stays the source of the set; the ordering throws if ITA's generators give a
+  different set. In the Birss convention the order is birss-app's (above).
+- **Generators per convention** (maintainer, 2026-11-18, #25, #27): `generators` returns ITA's
+  selected generators in the ITC convention and birss-app's (the stored ones) in the Birss
+  convention (`docs/conventions.md`, "Generators").
 - **Cartesian floating-point matrices with snapping** (maintainer, 2026-11-08, #13), as in
   birss-app, so its tests carry over; exact lattice-basis matrices when a consumer needs them.
 - **Properties that need tensors** (piezoelectric, piezomagnetic, magnetoelectric, ferromagnetic)
@@ -238,8 +249,9 @@ The conventions themselves are in `docs/conventions.md`; here, what was decided 
   the magnetic groups.
 - **Stored frame and settings** (2026-11-09, #14): data are stored once, in Birss's frame (setting
   1); every setting, the ITC ones included, is a rotation of it. A setting index names a physical
-  frame and means the same in both conventions; the convention only picks the default and the
-  symbols. One data set then serves both conventions, and the Birss print tests apply directly.
+  frame and means the same in both conventions; the convention picks the default and the symbols and
+  how the operations are presented (order, generators, axis signs), not their set. One data set then
+  serves both conventions, and the Birss print tests apply directly.
 - **birss-app is the reference where print leaves a choice open** (maintainer, 2026-11-09, #17):
   symcrys follows birss-app's current implementation unless it is wrong on the subject. The choices
   for the crystal classes were checked against birss-app 2be5fe3: D3h keeps the key and ITC

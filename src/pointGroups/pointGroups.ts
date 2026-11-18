@@ -3,8 +3,15 @@
  * symbols, in the ITC convention (default) or the Birss convention.
  */
 
-import { closeGroup, operationsEqual, transformOperation, type Operation } from '../operations.js';
-import { inItaOrder } from './itaOrder.js';
+import {
+  MAX_GROUP_ORDER,
+  closeGroup,
+  compose,
+  operationsEqual,
+  transformOperation,
+  type Operation,
+} from '../operations.js';
+import { inItaOrder, itaGeneratorOperations } from './itaOrder.js';
 import type { CrystalSystem } from '../lattice.js';
 import { POINT_GROUP_DATA, POINT_GROUP_KEYS, type PointGroupData, type PointGroupKey } from './data.js';
 
@@ -97,6 +104,7 @@ function freezeOperation(op: Operation): Operation {
 const generatorCache = new Map<string, readonly Operation[]>();
 const operationCache = new Map<string, readonly Operation[]>();
 
+/** The stored generators carried into the frame of a setting: the generators of the Birss convention. */
 function settingGenerators(d: PointGroupData, index: number): readonly Operation[] {
   const cacheKey = `${d.key}#${index}`;
   let result = generatorCache.get(cacheKey);
@@ -104,6 +112,60 @@ function settingGenerators(d: PointGroupData, index: number): readonly Operation
     const frame = d.settings[index - 1].frame;
     result = Object.freeze(d.generators.map((g) => freezeOperation(transformOperation(g, frame))));
     generatorCache.set(cacheKey, result);
+  }
+  return result;
+}
+
+const itaGeneratorCache = new Map<string, readonly Operation[]>();
+
+/** ITA's generators of a setting (see `generators`); throws if setting 1 has none. */
+function settingItaGenerators(d: PointGroupData, index: number): readonly Operation[] {
+  const cacheKey = `${d.key}#${index}`;
+  let result = itaGeneratorCache.get(cacheKey);
+  if (!result) {
+    let gens = itaGeneratorOperations(d.key, index, d.crystalSystem);
+    if (!gens) {
+      if (index === 1) throw new Error(`Point group ${d.key}: no ITA generators for setting 1`);
+      gens = settingItaGenerators(d, 1).map((op) => transformOperation(op, d.settings[index - 1].frame));
+    }
+    result = Object.freeze(gens.map(freezeOperation));
+    itaGeneratorCache.set(cacheKey, result);
+  }
+  return result;
+}
+
+const birssOperationCache = new Map<string, readonly Operation[]>();
+
+/**
+ * The operations of a setting in the Birss convention, in birss-app's order (docs/conventions.md,
+ * "Birss convention and birss-app"): the generators of the setting first, then repeated passes
+ * that append every new product g·h of two operations found before the pass, in the order of g,
+ * then h, until a pass adds nothing.
+ */
+function birssOperations(d: PointGroupData, index: number): readonly Operation[] {
+  const cacheKey = `${d.key}#${index}`;
+  let result = birssOperationCache.get(cacheKey);
+  if (!result) {
+    const group = [...settingGenerators(d, index)];
+    for (let changed = true; changed;) {
+      changed = false;
+      const size = group.length;
+      for (let i = 0; i < size; i++) {
+        for (let j = 0; j < size; j++) {
+          const product = compose(group[i], group[j]);
+          if (!group.some((g) => operationsEqual(g, product))) {
+            if (group.length >= MAX_GROUP_ORDER) throw new Error(`Point group ${d.key}: closure does not terminate`);
+            group.push(product);
+            changed = true;
+          }
+        }
+      }
+    }
+    if (!sameSet(group, settingOperations(d, index))) {
+      throw new Error(`Point group ${d.key}, setting ${index}: Birss operations differ from the closure`);
+    }
+    result = Object.freeze(group.map(freezeOperation));
+    birssOperationCache.set(cacheKey, result);
   }
   return result;
 }
@@ -177,22 +239,27 @@ export function settings(key: PointGroupKey, conventionName: Convention = 'itc')
 
 /**
  * All operations of the point group in the requested setting (default: the convention's default
- * setting), in ITA's order: identity first, then as ITA numbers the general position (docs/conventions.md,
- * "Order of the operations"). The matrices are Cartesian (docs/conventions.md, "Cartesian frame").
+ * setting). ITC convention: in ITA's order, identity first, then as ITA numbers the general
+ * position; Birss convention: in birss-app's order (docs/conventions.md, "Order of the
+ * operations"). The matrices are Cartesian (docs/conventions.md, "Cartesian frame").
  */
 export function operations(key: PointGroupKey, options?: SettingOptions): readonly Operation[] {
   const d = data(key);
-  return settingOperations(d, settingIndex(d, options));
+  const index = settingIndex(d, options);
+  return convention(options) === 'birss' ? birssOperations(d, index) : settingOperations(d, index);
 }
 
 /**
- * Generators of the point group in the requested setting: the stored generators, carried into its
- * frame. They are not ITA's selected generators, and their order is not ITA's (docs/conventions.md,
- * "Order of the operations").
+ * Generators of the point group in the requested setting (docs/conventions.md, "Generators"). ITC
+ * convention: ITA's selected generators in printed order, without the identity and ITA's lattice
+ * translations, so the list is empty for `1`; for `mm2` settings 2 and 3, which ITA does not list,
+ * those of setting 1 carried into their frame. Birss convention: birss-app's generators (for `1`
+ * the identity, as in birss-app).
  */
 export function generators(key: PointGroupKey, options?: SettingOptions): readonly Operation[] {
   const d = data(key);
-  return settingGenerators(d, settingIndex(d, options));
+  const index = settingIndex(d, options);
+  return convention(options) === 'birss' ? settingGenerators(d, index) : settingItaGenerators(d, index);
 }
 
 /** A symbol of the point group in the requested convention and setting. */
