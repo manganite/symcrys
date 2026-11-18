@@ -6,7 +6,7 @@
  * docs/conventions.md, "Sources"; never derive data here from symcrys output.
  */
 
-import { INVERSION, multiply, rotationX, rotationY, rotationZ, type Mat3 } from '../linalg.js';
+import { IDENTITY, INVERSION, multiply, rotationX, rotationY, rotationZ, type Mat3 } from '../linalg.js';
 import { operation, type Operation } from '../operations.js';
 import type { CrystalSystem } from '../lattice.js';
 
@@ -207,7 +207,7 @@ function monoclinic(key: PointGroupKey, schoenflies: string, generators: Operati
 // --- The 32 crystal classes -----------------------------------------------------------------------
 
 export const POINT_GROUP_DATA: readonly PointGroupData[] = [
-  group('1', 'triclinic', 'C1', []),
+  group('1', 'triclinic', 'C1', ops(IDENTITY)),
   group('-1', 'triclinic', 'Ci', ops(INVERSION)),
 
   monoclinic('2', 'C2', ops(ROT2_Z), (u) => (u === 'c' ? '1 1 2' : '1 2 1')),

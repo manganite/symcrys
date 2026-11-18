@@ -4,8 +4,8 @@ How symcrys represents the crystallographic point groups, and where the two supp
 ITC and Birss, differ. The print sources behind each statement are listed in "Sources" at the end;
 the tests named there re-check them against the transcriptions in `references/`.
 
-So far symcrys holds the 32 crystallographic point groups (crystal classes, type I). The magnetic
-point groups (types II and III) follow.
+So far symcrys holds the 32 crystallographic point groups (crystal classes, type I), with their
+symmetry directions and elements. The magnetic point groups (types II and III) follow.
 
 ## Conventions
 
@@ -14,9 +14,12 @@ point groups (types II and III) follow.
 | `'itc'`   | _International Tables for Crystallography_: Vol. A (6th ed., 2016) for the 32 classes | default  |
 | `'birss'` | R. R. Birss, _Symmetry and Magnetism_ (North-Holland, Amsterdam, 1966)                | optional |
 
-A convention decides two things: which setting a class takes by default, and the Hermann–Mauguin
-symbols of its settings. It does not change a group's operations in a given setting. Functions
-that take a convention default to `'itc'`.
+A convention decides which setting a class takes by default and the Hermann–Mauguin symbols of its
+settings, and it decides how the operations of a setting are presented: their order, the generators
+and the sign of the axes in `describeOperations`. The ITC convention follows ITA; the Birss
+convention gives what birss-app gives ("Birss convention and birss-app"). A convention does not
+change the set of operations of a given setting. Functions that take a convention default to
+`'itc'`.
 
 ## Keys
 
@@ -155,6 +158,96 @@ a consumer needs them (decision on #13).
 not depend on setting or convention. Properties that need tensors (piezoelectric, and the magnetic
 ones) come with the tensor module.
 
+## Order of the operations
+
+In the ITC convention `operations` lists the operations of a setting in ITA's order: for every
+setting that ITA lists, as ITA numbers its general position (ITA Table 3.2.3.2; the symmetry
+operations (1) … (n) of the space-group tables carry the same numbers). ITA bases this sequence on
+its selected generators (`generators`, below; 5th ed., § 2.2.11 (iv), p. 27; "Generators selected"
+of the symmorphic P group in Part 7) and takes the next generator as soon as a power of the current
+one lies in the group generated so far (§ 8.3.5, p. 737). Starting from the identity, each generator
+g therefore extends the group H generated so far by the cosets gH, g²H, … until a power of g lies in
+H. For the two settings ITA does not list, `mm2` settings 2 (`2mm`) and 3 (`m2m`), the order is that
+of setting 1, carried into their frame. In the Birss convention the order is birss-app's ("Birss
+convention and birss-app"). `describeOperations` follows the order of `operations`.
+
+## Generators
+
+In the ITC convention `generators` returns ITA's selected generators of the setting ("Generators
+selected" of the symmorphic P group, 5th ed., Part 7), in printed order and without the identity;
+for `mm2` settings 2 and 3, which ITA does not list, those of setting 1 carried into their frame. In
+the Birss convention it returns birss-app's generators (for `1` the identity, as in birss-app),
+which are the generators stored in `src/pointGroups/data.ts` carried into the frame of the setting
+("Birss convention and birss-app"). Neither are Birss's printed generating matrices (Birss Table 3,
+pp. 36–39, σ(N) of eq. (2.17), p. 48), which differ for some classes in choice and order (e.g.
+`222`: birss-app 2_z, 2_x; Birss σ(2), σ(3) = 2_y, 2_z); Birss's tests check only the group they
+generate.
+
+## Birss convention and birss-app
+
+In the Birss convention symcrys gives what birss-app gives (maintainer, 2026-11-18): birss-app is
+the Birss application symcrys serves, and it must show the same once it moves onto symcrys. Beyond
+the default settings and symbols (checked against Birss's print and birss-app), this fixes three
+choices that Birss's print leaves open:
+
+- **Generators:** birss-app's, per class and setting (`generators`).
+- **Order of the operations:** birss-app's group closure: the generators of the setting first,
+  then repeated passes that append every new product g·h of two operations found before the pass,
+  in the order of g, then h, until a pass adds nothing. The identity is not necessarily first.
+- **Sign of an axis** in `describeOperations`: as birss-app signs it, with the first non-zero
+  Cartesian component (in the order x, y, z) positive; the sense refers to that sign. The axis is
+  still a symmetry direction of ITA Table 2.1.3.1, possibly reversed; `symmetryDirections` keeps
+  the sign of the table, so in this convention an axis is matched to a direction by |dot| = 1, not
+  by identity.
+
+`birssApp.pins.test.ts` checks this against behavioural pins captured from birss-app
+(`audit/birss-app`, fixture class (c); the revision is `BIRSS_APP_REVISION` in the fixture, at
+present 2be5fe3, and the test requires this text to name it): for all 32 classes and all settings
+the generators and the operations in order, the symbols, the default setting, the property flags,
+and the operation symbols birss-app writes, rebuilt from `describeOperations` with birss-app's
+labelling rules. For these choices birss-app is the specification (maintainer decision), so here its
+pins are the reference, not only a regression detector. The strings themselves (`2_z`, `3_[111]⁺`,
+`m_60°`) and the order birss-app sorts them into for display stay in birss-app.
+
+## Symmetry directions and elements
+
+**Symmetry directions** (`LATTICE_SYMMETRY_DIRECTIONS`) are the lattice directions of ITA Table
+2.1.3.1, grouped by position of the full symbol, in the printed order and with the printed signs:
+primary, secondary, tertiary (hexagonal family: the row "Hexagonal", also for the trigonal classes
+with hexagonal axes). The monoclinic full symbol reads along a, b, c, so the monoclinic family has
+the orthorhombic positions; the triclinic family has none.
+
+`symmetryDirections(key, options)` lists, for a setting, every position of the family with the
+symbol at that position (if the full symbol has it) and, for each direction, the elements along
+it: the highest rotation n, the highest rotoinversion n̄ (n = 3, 4, 6) and whether a mirror is
+perpendicular. In the Birss convention the hexagonal positions 2 and 3 are read along y (a tertiary
+direction) and x (a secondary one), as for the symbols ("Where ITC and Birss differ").
+
+`describeOperations(key, options)` describes each operation, in the order of `operations`:
+
+| Field          | Meaning                                                                                                  |
+| -------------- | -------------------------------------------------------------------------------------------------------- |
+| `kind`         | `identity`, `inversion`, `rotation`, `rotoinversion` (n̄ = inversion × rotation n, n = 3, 4, 6), `mirror` |
+| `order`        | the n of n or n̄; 1 for the identity and the inversion, 2 for a mirror (m = 2̄)                            |
+| `axis`         | rotation or rotoinversion axis, or mirror normal: `lattice` [uvw] and `cartesian` unit vector            |
+| `sense`        | for n ≥ 3: `+` or `-`                                                                                    |
+| `timeReversal` | as in the operation                                                                                      |
+
+- **Axis.** Every axis and mirror normal of a crystal class lies along one of its symmetry
+  directions; the axis is that direction, as [uvw] with the sign of Table 2.1.3.1 (Birss
+  convention: signed as birss-app signs it, above) and as a Cartesian unit vector in the frame of
+  the setting. For the monoclinic family, which has no fixed
+  basis, a, b, c are taken along x, y, z; this is exact for the unique axis, the only direction
+  that carries an element.
+- **Sense** follows ITA § 11.1.2 (5th ed., pp. 810–811): `+` if the rotation is counter-clockwise
+  seen from the tip of the axis looking towards the origin, i.e. by +360°/n about it; for a
+  rotoinversion, angle and sense refer to the rotation part. The sense refers to the sign of the
+  axis. For all 40 settings of ITA's tables the printed
+  axis of every operation with n ≥ 3 has exactly this sign, so `sense` equals the printed one
+  (test below).
+- Symbols built from these data (`4⁺ 0,0,z`, `3⁻`, `2_z`, axis names in another frame) are left to
+  the applications.
+
 ## Sources
 
 | What                                                    | Print source                                                                                                                                                                                                                                                                                              | Test                                                             |
@@ -165,6 +258,11 @@ ones) come with the tensor module.
 | ITC operations of every setting                         | the general positions of ITA Table 3.2.3.2 (pp. 745–769), in the frame of #6; `2mm`, `m2m`, which ITA does not list: their ITC symbol along the symmetry directions of ITA Table 2.1.3.1 (p. 151)                                                                                                         | `itcGeneralPositions.reference.test.ts`, `itc.reference.test.ts` |
 | ITC default settings                                    | see "Settings" above                                                                                                                                                                                                                                                                                      | `itcSettings.fixtures.ts`                                        |
 | centrosymmetric, polar, chiral, Laue class, Schoenflies | ITA Table 2.1.1.1 (p. 143, Laue groups), Table 3.2.2.1 (p. 738), Table 3.2.3.2                                                                                                                                                                                                                            | `properties.reference.test.ts`, `itc.reference.test.ts`          |
+| symmetry directions                                     | ITA Table 2.1.3.1 (p. 151)                                                                                                                                                                                                                                                                                | `symmetryDirections.reference.test.ts`                           |
+| ITC: order of the operations, generators                | ITA's selected generators, ITA 5th ed. (2006), Part 7 (pages in `references/itc/vol-a-2006-symmetry-operations.md`), § 2.2.11 (iv) p. 27, § 8.3.5 p. 737, giving the numbering of Table 3.2.3.2                                                                                                           | `elements.reference.test.ts`                                     |
+| Birss: order of the operations, generators, axis signs  | none: birss-app 2be5fe3, behavioural pins (class (c)) captured by `audit/birss-app`                                                                                                                                                                                                                       | `birssApp.pins.test.ts`                                          |
+| operations described (kind, n, axis, sense)             | the symmetry operations of the symmorphic P space groups, ITA 5th ed. (2006), Part 7, one per ITC setting (pages in `references/itc/vol-a-2006-symmetry-operations.md`); symbols as defined in § 11.1.2, pp. 810–811; numbering checked against the general positions of Table 3.2.3.2                    | `elements.reference.test.ts`, `elements.test.ts`                 |
 
 Each file in `references/` names its source and the printed page. ITA means Vol. A, 6th edition
-(2016).
+(2016), unless the 5th edition (2006) is named: its space-group tables are the source for the
+symbols of the operations.
