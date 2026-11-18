@@ -205,15 +205,44 @@ function analysis(key: PointGroupKey, options?: SettingOptions): Analysis {
       return Object.freeze(position);
     }),
   );
-  const result = { descriptions, directions };
+  const result = {
+    descriptions: c === 'birss' ? Object.freeze(descriptions.map(birssSigned)) : descriptions,
+    directions,
+  };
   cache.set(cacheKey, result);
   return result;
 }
 
+const flipped = new Map<Axis, Axis>();
+
+/**
+ * The description with the axis signed as in birss-app (docs/conventions.md, "Birss convention and
+ * birss-app"): its first non-zero Cartesian component, in the order x, y, z, is positive. If the
+ * axis of ITA Table 2.1.3.1 points the other way, axis and sense are reversed; the rotation stays
+ * the same.
+ */
+function birssSigned(d: OperationDescription): OperationDescription {
+  const a = d.axis;
+  if (!a) return d;
+  const first = a.cartesian.find((x) => Math.abs(x) > 1e-9) ?? 0;
+  if (first > 0) return d;
+  let axis = flipped.get(a);
+  if (!axis) {
+    axis = Object.freeze({
+      lattice: Object.freeze(a.lattice.map((x) => (x === 0 ? 0 : -x))) as unknown as Uvw,
+      cartesian: Object.freeze(a.cartesian.map((x) => (x === 0 ? 0 : -x))) as unknown as Vec3,
+    });
+    flipped.set(a, axis);
+  }
+  const sense = d.sense === '+' ? '-' : d.sense === '-' ? '+' : undefined;
+  return Object.freeze({ ...d, axis, ...(sense ? { sense } : {}) });
+}
+
 /**
  * Each operation of the point group described geometrically, in the order of `operations` for
- * the same key and options. Axes are named by the symmetry direction they lie along (ITA Table
- * 2.1.3.1), which also fixes the sign the sense refers to.
+ * the same key and options. Axes are named by the symmetry direction they lie along: in the ITC
+ * convention with the sign of ITA Table 2.1.3.1, in the Birss convention signed as birss-app signs
+ * them (first non-zero Cartesian component positive); the sign fixes what the sense refers to.
  */
 export function describeOperations(key: PointGroupKey, options?: SettingOptions): readonly OperationDescription[] {
   return analysis(key, options).descriptions;

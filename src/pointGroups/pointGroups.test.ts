@@ -62,12 +62,12 @@ describe('settings and conventions', () => {
     expect(symbol('32')).toBe('321');
   });
 
-  it('the convention picks only the default setting of operations and generators', () => {
+  it('without a setting, operations and generators are those of the default setting of the convention', () => {
     for (const key of POINT_GROUP_KEYS) {
       for (const convention of ['itc', 'birss'] as const) {
         const setting = settings(key, convention).find((s) => s.isDefault)!.index;
-        expect(generators(key, { convention })).toBe(generators(key, { setting }));
-        expect(operations(key, { convention })).toBe(operations(key, { setting }));
+        expect(generators(key, { convention })).toBe(generators(key, { convention, setting }));
+        expect(operations(key, { convention })).toBe(operations(key, { convention, setting }));
       }
     }
   });
@@ -110,12 +110,13 @@ describe('settings and conventions', () => {
     expect(differing).toEqual(CONVENTION_DEPENDENT);
   });
 
-  it('a setting index is the same frame in both conventions', () => {
+  it('a setting index is the same frame in both conventions: the same operations, in each its own order', () => {
     for (const key of POINT_GROUP_KEYS) {
       for (const s of settings(key)) {
-        expect(operations(key, { convention: 'itc', setting: s.index })).toBe(
-          operations(key, { convention: 'birss', setting: s.index }),
-        );
+        const itc = operations(key, { convention: 'itc', setting: s.index });
+        const birss = operations(key, { convention: 'birss', setting: s.index });
+        expect(birss).toHaveLength(itc.length);
+        expect(birss.every((op) => itc.some((x) => operationsEqual(x, op)))).toBe(true);
       }
     }
   });
