@@ -23,7 +23,10 @@ export type OperationKind = 'identity' | 'inversion' | 'rotation' | 'rotoinversi
 
 /** A symmetry direction: as a lattice direction [uvw] and as a Cartesian unit vector. */
 export interface Axis {
-  /** Integer coordinates in the conventional basis, sign as in ITA Table 2.1.3.1. */
+  /**
+   * Integer coordinates in the conventional basis. ITC convention: sign as in ITA Table 2.1.3.1;
+   * Birss convention, in `describeOperations`: first non-zero Cartesian component positive.
+   */
   readonly lattice: Uvw;
   /**
    * Unit vector in the Cartesian frame of symcrys. Monoclinic: a, b, c taken along x, y, z, exact for
@@ -205,15 +208,44 @@ function analysis(key: PointGroupKey, options?: SettingOptions): Analysis {
       return Object.freeze(position);
     }),
   );
-  const result = { descriptions, directions };
+  const result = {
+    descriptions: c === 'birss' ? Object.freeze(descriptions.map(birssSigned)) : descriptions,
+    directions,
+  };
   cache.set(cacheKey, result);
   return result;
 }
 
+const flipped = new Map<Axis, Axis>();
+
+/**
+ * The description with the axis signed as in birss-app (docs/conventions.md, "Birss convention and
+ * birss-app"): its first non-zero Cartesian component, in the order x, y, z, is positive. If the
+ * axis of ITA Table 2.1.3.1 points the other way, axis and sense are reversed; the rotation stays
+ * the same.
+ */
+function birssSigned(d: OperationDescription): OperationDescription {
+  const a = d.axis;
+  if (!a) return d;
+  const first = a.cartesian.find((x) => Math.abs(x) > 1e-9) ?? 0;
+  if (first > 0) return d;
+  let axis = flipped.get(a);
+  if (!axis) {
+    axis = Object.freeze({
+      lattice: Object.freeze(a.lattice.map((x) => (x === 0 ? 0 : -x))) as unknown as Uvw,
+      cartesian: Object.freeze(a.cartesian.map((x) => (x === 0 ? 0 : -x))) as unknown as Vec3,
+    });
+    flipped.set(a, axis);
+  }
+  const sense = d.sense === '+' ? '-' : d.sense === '-' ? '+' : undefined;
+  return Object.freeze({ ...d, axis, ...(sense ? { sense } : {}) });
+}
+
 /**
  * Each operation of the point group described geometrically, in the order of `operations` for
- * the same key and options. Axes are named by the symmetry direction they lie along (ITA Table
- * 2.1.3.1), which also fixes the sign the sense refers to.
+ * the same key and options. Axes are named by the symmetry direction they lie along: in the ITC
+ * convention with the sign of ITA Table 2.1.3.1, in the Birss convention signed as birss-app signs
+ * them (first non-zero Cartesian component positive); the sign fixes what the sense refers to.
  */
 export function describeOperations(key: PointGroupKey, options?: SettingOptions): readonly OperationDescription[] {
   return analysis(key, options).descriptions;
@@ -223,7 +255,9 @@ export function describeOperations(key: PointGroupKey, options?: SettingOptions)
  * The positions of the full Hermann–Mauguin symbol in the requested convention and setting, each
  * with its symmetry directions (ITA Table 2.1.3.1) and the symmetry elements along them. All
  * positions of the crystal family are listed, also those the symbol of the class leaves out (then
- * without `symbol`); the triclinic family has none.
+ * without `symbol`); the triclinic family has none. The directions keep the sign of Table 2.1.3.1
+ * in both conventions; in the Birss convention an axis of `describeOperations` may be reversed, so
+ * match it to a direction by |dot| = 1, not by identity.
  */
 export function symmetryDirections(key: PointGroupKey, options?: SettingOptions): readonly SymmetryDirection[] {
   return analysis(key, options).directions;

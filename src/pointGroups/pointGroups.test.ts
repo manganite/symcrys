@@ -4,7 +4,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { closeGroup, operationsEqual } from '../operations.js';
+import { closeGroup, operationsEqual, type Operation } from '../operations.js';
 import {
   POINT_GROUP_KEYS,
   findPointGroup,
@@ -62,6 +62,40 @@ describe('settings and conventions', () => {
     expect(symbol('32')).toBe('321');
   });
 
+  it('without a setting, operations and generators are those of the default setting of the convention', () => {
+    for (const key of POINT_GROUP_KEYS) {
+      for (const convention of ['itc', 'birss'] as const) {
+        const setting = settings(key, convention).find((s) => s.isDefault)!.index;
+        expect(generators(key, { convention })).toBe(generators(key, { convention, setting }));
+        expect(operations(key, { convention })).toBe(operations(key, { convention, setting }));
+      }
+    }
+  });
+
+  it('orders mm2 settings 2 and 3, which ITA does not list, and gives their generators, as setting 1 carried into their frame', () => {
+    // Setting 1 in ITA's order (Pmm2, ITA 5th ed. p. 218): (1) 1, (2) 2 0,0,z, (3) m x,0,z, (4) m 0,y,z,
+    // all diagonal. Setting 2 moves the 2-fold axis from z to x, setting 3 to y, each by a cyclic
+    // permutation of x, y, z (docs/conventions.md, "Settings"): diagonal (d1, d2, d3) becomes
+    // (d3, d1, d2) and (d2, d3, d1).
+    const setting1 = [
+      [1, 1, 1],
+      [-1, -1, 1],
+      [1, -1, 1],
+      [-1, 1, 1],
+    ];
+    const expected = {
+      2: setting1.map(([a, b, c]) => [c, a, b]),
+      3: setting1.map(([a, b, c]) => [b, c, a]),
+    };
+    const diagonal = (d: number[]) => [0, 1, 2].map((i) => [0, 1, 2].map((j) => (i === j ? d[i] : 0)));
+    const plain = (ops: readonly Operation[]) => ops.map((op) => op.matrix.map((row) => row.map((x) => x + 0)));
+    for (const k of [2, 3] as const) {
+      expect(plain(operations('mm2', { setting: k }))).toEqual(expected[k].map(diagonal));
+      // ITA's generators of Pmm2 (p. 219): (2); (3)
+      expect(plain(generators('mm2', { setting: k }))).toEqual([expected[k][1], expected[k][2]].map(diagonal));
+    }
+  });
+
   it('every class has exactly one default setting per convention', () => {
     for (const key of POINT_GROUP_KEYS) {
       for (const c of ['itc', 'birss'] as const) expect(settings(key, c).filter((s) => s.isDefault)).toHaveLength(1);
@@ -76,12 +110,13 @@ describe('settings and conventions', () => {
     expect(differing).toEqual(CONVENTION_DEPENDENT);
   });
 
-  it('a setting index is the same frame in both conventions', () => {
+  it('a setting index is the same frame in both conventions: the same operations, in each its own order', () => {
     for (const key of POINT_GROUP_KEYS) {
       for (const s of settings(key)) {
-        expect(operations(key, { convention: 'itc', setting: s.index })).toBe(
-          operations(key, { convention: 'birss', setting: s.index }),
-        );
+        const itc = operations(key, { convention: 'itc', setting: s.index });
+        const birss = operations(key, { convention: 'birss', setting: s.index });
+        expect(birss).toHaveLength(itc.length);
+        expect(birss.every((op) => itc.some((x) => operationsEqual(x, op)))).toBe(true);
       }
     }
   });

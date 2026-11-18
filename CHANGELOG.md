@@ -10,7 +10,10 @@ All notable changes to symcrys are recorded here. The format follows
 
 - The 32 crystallographic point groups (crystal classes): `pointGroups`, `pointGroup`,
   `POINT_GROUP_KEYS`, `isPointGroupKey`, `findPointGroup`; their settings (`settings`), operations
-  and generators as Cartesian matrices (`operations`, `generators`), and short, full and
+  and generators as Cartesian matrices (`operations`, `generators`; in the ITC convention in ITA's
+  order, the numbering of the general position in ITA Table 3.2.3.2, and ITA's selected generators
+  in printed order, ITA 5th ed. Part 7, crystallography-common#99; in the Birss convention
+  birss-app's order and generators), and short, full and
   Schoenflies symbols (`symbol`), each in the ITC convention (default) or the Birss convention;
   with the types `Convention`, `PointGroup`, `PointGroupKey`, `Setting`, `Operation`, `Mat3`,
   `Vec3` and others.
@@ -22,7 +25,7 @@ All notable changes to symcrys are recorded here. The format follows
 - Symmetry directions and elements: `LATTICE_SYMMETRY_DIRECTIONS` (ITA Table 2.1.3.1; monoclinic: the axes a, b,
   c of the full symbol; with the type `Uvw`), `symmetryDirections` (per position of the full symbol, the elements along each direction)
   and `describeOperations` (kind, n, axis as [uvw] and Cartesian, sense of each operation, as in the
-  symmetry operations printed in ITA), with the types `Axis`, `DirectionElements`,
+  symmetry operations printed in ITA; in the Birss convention with birss-app's axis signs), with the types `Axis`, `DirectionElements`,
   `OperationDescription`, `OperationKind`, `SymmetryDirection` (#16).
 
 ## [0.1.1] - 2026-11-08

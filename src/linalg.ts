@@ -120,6 +120,18 @@ export function matricesEqual(a: Mat3, b: Mat3): boolean {
   return true;
 }
 
+/** The inverse of a regular matrix (by the adjugate); throws for a singular one. */
+export function inverse(a: Mat3): Mat3 {
+  const d = det(a);
+  if (Math.abs(d) < EPSILON) throw new RangeError('inverse: singular matrix');
+  const c = (i: number, j: number): number => {
+    const [r0, r1] = [0, 1, 2].filter((k) => k !== i);
+    const [s0, s1] = [0, 1, 2].filter((k) => k !== j);
+    return a[r0][s0] * a[r1][s1] - a[r0][s1] * a[r1][s0];
+  };
+  return build((i, j) => ((i + j) % 2 === 0 ? 1 : -1) * (c(j, i) / d));
+}
+
 /** The transformed matrix s·a·sᵀ, for an orthogonal s. */
 export function conjugate(a: Mat3, s: Mat3): Mat3 {
   return multiply(multiply(s, a), transpose(s));

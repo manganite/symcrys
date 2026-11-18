@@ -15,7 +15,7 @@ export interface Operation {
 }
 
 /** No point group has more than 48 operations (96 with time reversal); a closure beyond this is a data error. */
-const MAX_GROUP_ORDER = 200;
+export const MAX_GROUP_ORDER = 200;
 
 export const IDENTITY_OPERATION: Operation = { matrix: IDENTITY, timeReversal: false };
 
