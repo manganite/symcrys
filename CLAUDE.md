@@ -169,15 +169,17 @@ Carried over from birss-app, where the calculations come from.
 
 ## Decisions (with reason)
 
-- **TypeScript 6.0, checked also with 7.0** (2026-11-08): typescript-eslint 8.72 (and 8.73, 2026-11-18) supports
-  TypeScript below 6.1 only, and TypeScript 7.0.2 offers no stable compiler API (only
+- **TypeScript 6.0, checked also with 7.0** (2026-11-08): typescript-eslint 8.73 supports TypeScript
+  below 6.1 only (peer range, checked 2026-11-18); its experimental `tsgo` backend
+  (`parserOptions.backend`, optional peer `@typescript/native`) needs TypeScript 7.1 dev or beta
+  builds, not 7.0.2, and is not public API. TypeScript 7.0.2 offers no stable compiler API (only
   `typescript/unstable/*`), so ESLint cannot parse `.ts` with it (checked 2026-11-08). TypeScript 7
   is installed as the aliased dev dependency `typescript7`, and the gate `typecheck:ts7` keeps the
   code valid under 7, so switching is mostly a version bump once typescript-eslint supports it; only
   `scripts/check-dist.mjs`, which reads imports with `ts.preProcessFile` of TypeScript 6, then needs
-  another way to read them. Scripts
-  call both compilers by path, because the two packages compete for the `tsc` command. The
-  `.d.ts` files are read by TypeScript 6 and 7 (the apps check with 7.0.2).
+  another way to read them. Scripts call both compilers by path, because the two packages compete
+  for the `tsc` command. The `.d.ts` files are read by TypeScript 6 and 7 (the apps check with
+  7.0.2).
 - **vitest** as in birss-app (there 4.1, here 5.1); its tests move over with relative imports
   given the `.js` extension. **Prettier** with birss-app's settings, so moved code is not
   reformatted.
