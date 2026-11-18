@@ -169,7 +169,7 @@ Carried over from birss-app, where the calculations come from.
 
 ## Decisions (with reason)
 
-- **TypeScript 6.0, checked also with 7.0** (2026-11-08): typescript-eslint 8.72 supports
+- **TypeScript 6.0, checked also with 7.0** (2026-11-08): typescript-eslint 8.72 (and 8.73, 2026-11-18) supports
   TypeScript below 6.1 only, and TypeScript 7.0.2 offers no stable compiler API (only
   `typescript/unstable/*`), so ESLint cannot parse `.ts` with it (checked 2026-11-08). TypeScript 7
   is installed as the aliased dev dependency `typescript7`, and the gate `typecheck:ts7` keeps the
