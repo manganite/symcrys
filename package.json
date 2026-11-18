@@ -47,7 +47,8 @@
     "build": "node node_modules/typescript/bin/tsc -p tsconfig.build.json",
     "check:dist": "node scripts/check-dist.mjs",
     "prepack": "npm run build",
-    "audit:point-groups": "vitest run --config audit/point-groups/vitest.config.ts"
+    "audit:point-groups": "vitest run --config audit/point-groups/vitest.config.ts",
+    "audit:birss-app": "vitest run --config audit/birss-app/vitest.config.ts && prettier --write src/pointGroups/birssApp.pins.fixtures.ts"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
