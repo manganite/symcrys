@@ -11,7 +11,7 @@
  * (6th ed.) Table 3.2.3.2, and the library's description of each operation must name what is
  * printed: kind, n, sense and, for n ≥ 3, the printed direction including its sign. The
  * transcription also holds ITA's "Generators selected"; `generators` must give the printed triplets
- * at those numbers, in printed order and in both conventions (they also fix the order of `operations`).
+ * at those numbers, in printed order, in the ITC convention (they also fix the order of `operations`).
  */
 
 import { describe, expect, it } from 'vitest';
@@ -226,12 +226,10 @@ describe('describeOperations against the symmetry operations printed in ITA', ()
     });
     expect(used.size).toBe(ops.length);
 
-    // generators() gives ITA's selected generators, line (n) of each printed n, in printed order,
-    // in both conventions
-    for (const convention of ['itc', 'birss'] as const) {
-      const g = generators(key, { setting, convention });
-      expect(g).toHaveLength(e.generators.length);
-      e.generators.forEach((n, j) => expect(sameM(mul(mul(b, general[n - 1]), inverse(b)), g[j].matrix)).toBe(true));
-    }
+    // generators() in the ITC convention gives ITA's selected generators, line (n) of each printed
+    // n, in printed order (the Birss convention gives birss-app's: birssApp.pins.test.ts)
+    const g = generators(key, { setting });
+    expect(g).toHaveLength(e.generators.length);
+    e.generators.forEach((n, j) => expect(sameM(mul(mul(b, general[n - 1]), inverse(b)), g[j].matrix)).toBe(true));
   });
 });
