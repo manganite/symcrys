@@ -24,9 +24,15 @@ All notable changes to symcrys are recorded here. The format follows
   and `describeOperations` (kind, n, axis as [uvw] and Cartesian, sense of each operation, as in the
   symmetry operations printed in ITA), with the types `Axis`, `DirectionElements`,
   `OperationDescription`, `OperationKind`, `SymmetryDirection` (#16).
+
+### Changed
+
 - `operations` lists the operations in ITA's order (the numbering of the general position in ITA
   Table 3.2.3.2), built from ITA's selected generators, in both conventions; before, they came in the
   order of the closure (crystallography-common#99).
+- `generators` returns ITA's selected generators of the setting in printed order (ITA 5th ed.,
+  "Generators selected"), in both conventions; before, it returned the generators stored in Birss's
+  frame, which are neither ITA's nor Birss's printed ones.
 
 ## [0.1.1] - 2026-11-08
 

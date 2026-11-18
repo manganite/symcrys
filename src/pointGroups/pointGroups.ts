@@ -4,7 +4,7 @@
  */
 
 import { closeGroup, operationsEqual, transformOperation, type Operation } from '../operations.js';
-import { inItaOrder } from './itaOrder.js';
+import { inItaOrder, itaGeneratorOperations } from './itaOrder.js';
 import type { CrystalSystem } from '../lattice.js';
 import { POINT_GROUP_DATA, POINT_GROUP_KEYS, type PointGroupData, type PointGroupKey } from './data.js';
 
@@ -108,6 +108,24 @@ function settingGenerators(d: PointGroupData, index: number): readonly Operation
   return result;
 }
 
+const itaGeneratorCache = new Map<string, readonly Operation[]>();
+
+/** ITA's generators of a setting (see `generators`); throws if setting 1 has none. */
+function settingItaGenerators(d: PointGroupData, index: number): readonly Operation[] {
+  const cacheKey = `${d.key}#${index}`;
+  let result = itaGeneratorCache.get(cacheKey);
+  if (!result) {
+    let gens = itaGeneratorOperations(d.key, index, d.crystalSystem);
+    if (!gens) {
+      if (index === 1) throw new Error(`Point group ${d.key}: no ITA generators for setting 1`);
+      gens = settingItaGenerators(d, 1).map((op) => transformOperation(op, d.settings[index - 1].frame));
+    }
+    result = Object.freeze(gens.map(freezeOperation));
+    itaGeneratorCache.set(cacheKey, result);
+  }
+  return result;
+}
+
 /**
  * The operations of a setting in ITA's order (docs/conventions.md, "Order of the operations"): for a
  * setting ITA lists, coset by coset from ITA's generators; for a setting ITA does not list (today
@@ -186,13 +204,14 @@ export function operations(key: PointGroupKey, options?: SettingOptions): readon
 }
 
 /**
- * Generators of the point group in the requested setting: the stored generators, carried into its
- * frame. They are not ITA's selected generators, and their order is not ITA's (docs/conventions.md,
- * "Order of the operations").
+ * Generators of the point group in the requested setting, in both conventions ITA's selected
+ * generators in printed order (docs/conventions.md, "Generators"): for `mm2` settings 2 and 3, which
+ * ITA does not list, those of setting 1 carried into their frame. The identity is left out, so the
+ * list is empty for `1`.
  */
 export function generators(key: PointGroupKey, options?: SettingOptions): readonly Operation[] {
   const d = data(key);
-  return settingGenerators(d, settingIndex(d, options));
+  return settingItaGenerators(d, settingIndex(d, options));
 }
 
 /** A symbol of the point group in the requested convention and setting. */

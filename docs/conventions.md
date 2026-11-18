@@ -160,13 +160,23 @@ ones) come with the tensor module.
 `operations` lists the operations of a setting in ITA's order, in both conventions (a setting
 index names a physical frame): for every setting that ITA lists, as ITA numbers its general
 position (ITA Table 3.2.3.2; the symmetry operations (1) … (n) of the space-group tables carry the
-same numbers). ITA bases this sequence on its selected generators (5th ed., § 2.2.11 (iv), p. 27;
+same numbers). ITA bases this sequence on its selected generators (`generators`, below) (5th ed., § 2.2.11 (iv), p. 27;
 "Generators selected" of the symmorphic P group in Part 7) and takes the next generator as soon as
 a power of the current one lies in the group generated so far (§ 8.3.5, p. 737). Starting from the
 identity, each generator g therefore extends the group H generated so far by the cosets gH, g²H, …
 until a power of g lies in H. For the two settings ITA does not list, `mm2` settings 2 (`2mm`) and
 3 (`m2m`), the order is that of setting 1, carried into their frame. `describeOperations` follows
-the same order. `generators` is unaffected: it returns the stored generators, not ITA's.
+the same order.
+
+## Generators
+
+`generators` returns ITA's selected generators of the setting ("Generators selected" of the
+symmorphic P group, 5th ed., Part 7), in printed order and without the identity, in both
+conventions: symcrys follows ITC first, and an application that shows Birss's convention (birss-app)
+takes Birss's generating matrices (Birss Table 3, σ(N) of eq. (2.17)) from its own presentation
+(maintainer, 2026-11-18). For `mm2` settings 2 and 3, which ITA does not list, they are those of
+setting 1 carried into their frame. The generators stored in `src/pointGroups/data.ts` only define
+the set of operations (by closure); they are internal.
 
 ## Symmetry directions and elements
 
@@ -217,7 +227,7 @@ direction) and x (a secondary one), as for the symbols ("Where ITC and Birss dif
 | ITC default settings                                    | see "Settings" above                                                                                                                                                                                                                                                                                      | `itcSettings.fixtures.ts`                                        |
 | centrosymmetric, polar, chiral, Laue class, Schoenflies | ITA Table 2.1.1.1 (p. 143, Laue groups), Table 3.2.2.1 (p. 738), Table 3.2.3.2                                                                                                                                                                                                                            | `properties.reference.test.ts`, `itc.reference.test.ts`          |
 | symmetry directions                                     | ITA Table 2.1.3.1 (p. 151)                                                                                                                                                                                                                                                                                | `symmetryDirections.reference.test.ts`                           |
-| order of the operations                                 | ITA's selected generators, ITA 5th ed. (2006), Part 7 (pages in `references/itc/vol-a-2006-symmetry-operations.md`), § 2.2.11 (iv) p. 27, § 8.3.5 p. 737, giving the numbering of Table 3.2.3.2                                                                                                           | `elements.reference.test.ts`                                     |
+| order of the operations; generators                     | ITA's selected generators, ITA 5th ed. (2006), Part 7 (pages in `references/itc/vol-a-2006-symmetry-operations.md`), § 2.2.11 (iv) p. 27, § 8.3.5 p. 737, giving the numbering of Table 3.2.3.2                                                                                                           | `elements.reference.test.ts`                                     |
 | operations described (kind, n, axis, sense)             | the symmetry operations of the symmorphic P space groups, ITA 5th ed. (2006), Part 7, one per ITC setting (pages in `references/itc/vol-a-2006-symmetry-operations.md`); symbols as defined in § 11.1.2, pp. 810–811; numbering checked against the general positions of Table 3.2.3.2                    | `elements.reference.test.ts`, `elements.test.ts`                 |
 
 Each file in `references/` names its source and the printed page. ITA means Vol. A, 6th edition

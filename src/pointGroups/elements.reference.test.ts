@@ -10,16 +10,15 @@
  * operations of the setting, line (n) must be the n-th triplet of the general position in ITA
  * (6th ed.) Table 3.2.3.2, and the library's description of each operation must name what is
  * printed: kind, n, sense and, for n ≥ 3, the printed direction including its sign. The
- * transcription also holds ITA's "Generators selected"; the library's ITA generators
- * (`itaGenerators`, which fix the order of `operations`) must be the printed triplets at those numbers.
+ * transcription also holds ITA's "Generators selected"; `generators` must give the printed triplets
+ * at those numbers, in printed order and in both conventions (they also fix the order of `operations`).
  */
 
 import { describe, expect, it } from 'vitest';
 import { I3, inverse, mirrorNormal, mul, neg, rotationAbout, sameM, type M } from '../testUtils/independentGroups.js';
 import { expectHeader, readReference, tableRows } from '../testUtils/references.js';
 import { describeOperations } from './elements.js';
-import { itaGenerators } from './itaOrder.js';
-import { findPointGroup, operations, pointGroup, settings, type PointGroupKey } from './pointGroups.js';
+import { findPointGroup, generators, operations, pointGroup, settings, type PointGroupKey } from './pointGroups.js';
 
 /** Columns a, b, c of the #6 frame, typed here independently of src/lattice.ts. */
 const HEXAGONAL: M = [
@@ -227,9 +226,12 @@ describe('describeOperations against the symmetry operations printed in ITA', ()
     });
     expect(used.size).toBe(ops.length);
 
-    // the library's ITA generators are the printed ones: line (n) of each selected n, in order
-    expect(itaGenerators(key, setting)?.map((w) => w.map((r) => [...r]))).toEqual(
-      e.generators.map((n) => general[n - 1]),
-    );
+    // generators() gives ITA's selected generators, line (n) of each printed n, in printed order,
+    // in both conventions
+    for (const convention of ['itc', 'birss'] as const) {
+      const g = generators(key, { setting, convention });
+      expect(g).toHaveLength(e.generators.length);
+      e.generators.forEach((n, j) => expect(sameM(mul(mul(b, general[n - 1]), inverse(b)), g[j].matrix)).toBe(true));
+    }
   });
 });
