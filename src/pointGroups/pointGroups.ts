@@ -110,24 +110,35 @@ function settingGenerators(d: PointGroupData, index: number): readonly Operation
 
 /**
  * The operations of a setting in ITA's order (docs/conventions.md, "Order of the operations"): for a
- * setting ITA lists, coset by coset from ITA's generators; otherwise (`mm2` settings 2 and 3) the
- * order of setting 1, carried into the frame of the setting.
+ * setting ITA lists, coset by coset from ITA's generators; for a setting ITA does not list (today
+ * `mm2` settings 2 and 3), the order of setting 1, carried into the frame of the setting. Setting 1
+ * is always one ITA lists; throws if its generators are missing or do not give the closure.
  */
 function settingOperations(d: PointGroupData, index: number): readonly Operation[] {
   const cacheKey = `${d.key}#${index}`;
   let result = operationCache.get(cacheKey);
   if (!result) {
     const closed = closeGroup(settingGenerators(d, index));
-    const ordered =
-      inItaOrder(d.key, index, d.crystalSystem, closed) ??
-      settingOperations(d, 1).map((op) => transformOperation(op, d.settings[index - 1].frame));
-    if (ordered.length !== closed.length || !ordered.every((op) => closed.some((c) => operationsEqual(c, op)))) {
+    let ordered = inItaOrder(d.key, index, d.crystalSystem, closed);
+    if (!ordered) {
+      if (index === 1) throw new Error(`Point group ${d.key}: no ITA generators for setting 1`);
+      ordered = settingOperations(d, 1).map((op) => transformOperation(op, d.settings[index - 1].frame));
+    }
+    if (!sameSet(ordered, closed)) {
       throw new Error(`Point group ${d.key}, setting ${index}: ordered operations differ from the closure`);
     }
     result = Object.freeze(ordered.map(freezeOperation));
     operationCache.set(cacheKey, result);
   }
   return result;
+}
+
+/** True if `a` is `b` in some order: equal length, no operation twice in `a`, every one of `a` in `b`. */
+function sameSet(a: readonly Operation[], b: readonly Operation[]): boolean {
+  return (
+    a.length === b.length &&
+    a.every((op, i) => b.some((x) => operationsEqual(x, op)) && !a.slice(0, i).some((x) => operationsEqual(x, op)))
+  );
 }
 
 const groupCache = new Map<string, PointGroup>();
@@ -174,7 +185,11 @@ export function operations(key: PointGroupKey, options?: SettingOptions): readon
   return settingOperations(d, settingIndex(d, options));
 }
 
-/** Generators of the point group in the requested setting: the stored generators, carried into its frame. */
+/**
+ * Generators of the point group in the requested setting: the stored generators, carried into its
+ * frame. They are not ITA's selected generators, and their order is not ITA's (docs/conventions.md,
+ * "Order of the operations").
+ */
 export function generators(key: PointGroupKey, options?: SettingOptions): readonly Operation[] {
   const d = data(key);
   return settingGenerators(d, settingIndex(d, options));

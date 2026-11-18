@@ -1,9 +1,10 @@
 /**
- * The order of the operations: as ITA numbers them. For every setting that ITA lists, ITA's
- * "Generators selected" (Vol. A, 5th ed. 2006, Part 7, block "Positions" of the symmorphic P space
- * group; transcription in references/itc/vol-a-2006-symmetry-operations.md) span the group
- * coset by coset: starting from the identity, each generator g extends the group H generated so
- * far by gH, g²H, … until a power of g lies in H. This gives ITA's numbering of the general
+ * The order of the operations: as ITA numbers them. ITA bases the sequence of the coordinate
+ * triplets on its "Generators selected" (Vol. A, 5th ed. 2006, § 2.2.11 (iv), p. 27; transcribed
+ * for the symmorphic P group of every setting it lists in references/itc/vol-a-2006-symmetry-operations.md)
+ * and takes the next generator as soon as a power of the current one lies in the group generated
+ * so far (§ 8.3.5, p. 737). So, starting from the identity, each generator g extends that group H
+ * by gH, g²H, … until a power of g lies in H. This gives ITA's numbering of the general
  * position (ITA 6th ed. Table 3.2.3.2), as `elements.reference.test.ts` checks for all 40 settings.
  * The generators are the printed triplets of Table 3.2.3.2, as matrices W in the conventional basis
  * (x̃ = W x); docs/conventions.md, "Order of the operations".
@@ -643,7 +644,12 @@ export function itaGenerators(key: string, setting: number): readonly IntMat3[] 
   return ITA_GENERATORS[`${key}#${setting}`];
 }
 
-/** W in the conventional basis as a Cartesian matrix B·W·B⁻¹ (monoclinic, triclinic: a, b, c along x, y, z). */
+/**
+ * W in the conventional basis as a Cartesian matrix B·W·B⁻¹. Monoclinic and triclinic: W itself,
+ * without a basis (symcrys fixes none for them): their point operations are ±1 on the diagonal,
+ * and the unique axis (y or z) is perpendicular to the other two axes, so W is the same in every
+ * Cartesian frame with that axis along y or z.
+ */
 function cartesian(w: IntMat3, system: CrystalSystem): Mat3 {
   const family = crystalFamily(system);
   if (family === 'monoclinic' || family === 'triclinic') return w as unknown as Mat3;
@@ -652,8 +658,9 @@ function cartesian(w: IntMat3, system: CrystalSystem): Mat3 {
 }
 
 /**
- * The operations `closed` (one setting of a point group) in ITA's order, built coset by coset from
- * ITA's generators. Throws if the generators do not give exactly the same set, a data error.
+ * The operations of a setting in ITA's order, built coset by coset from ITA's generators, or
+ * undefined if ITA does not list the setting. `closed` (the closure of the stored generators) only
+ * bounds the loop; the caller checks that the result is the same set.
  */
 export function inItaOrder(
   key: string,
@@ -672,9 +679,6 @@ export function inItaOrder(
       if (list.length > closed.length) break;
       for (const x of h) list.push(compose(power, x));
     }
-  }
-  if (list.length !== closed.length || !list.every((op) => has(closed, op))) {
-    throw new Error(`Point group ${key}, setting ${setting}: ITA's generators do not give the stored operations`);
   }
   return list;
 }

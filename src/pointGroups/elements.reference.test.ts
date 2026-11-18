@@ -9,7 +9,9 @@
  * rotoinversion the rotation followed by the inversion. These matrices must be exactly the
  * operations of the setting, line (n) must be the n-th triplet of the general position in ITA
  * (6th ed.) Table 3.2.3.2, and the library's description of each operation must name what is
- * printed: kind, n, sense and, for n ≥ 3, the printed direction including its sign.
+ * printed: kind, n, sense and, for n ≥ 3, the printed direction including its sign. The
+ * transcription also holds ITA's "Generators selected"; the library's ITA generators
+ * (`itaGenerators`, which fix the order of `operations`) must be the printed triplets at those numbers.
  */
 
 import { describe, expect, it } from 'vitest';

@@ -25,7 +25,8 @@ All notable changes to symcrys are recorded here. The format follows
   symmetry operations printed in ITA), with the types `Axis`, `DirectionElements`,
   `OperationDescription`, `OperationKind`, `SymmetryDirection` (#16).
 - `operations` lists the operations in ITA's order (the numbering of the general position in ITA
-  Table 3.2.3.2), built from ITA's selected generators.
+  Table 3.2.3.2), built from ITA's selected generators, in both conventions; before, they came in the
+  order of the closure (crystallography-common#99).
 
 ## [0.1.1] - 2026-11-08
 
