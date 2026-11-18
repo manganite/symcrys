@@ -10,7 +10,9 @@ All notable changes to symcrys are recorded here. The format follows
 
 - The 32 crystallographic point groups (crystal classes): `pointGroups`, `pointGroup`,
   `POINT_GROUP_KEYS`, `isPointGroupKey`, `findPointGroup`; their settings (`settings`), operations
-  and generators as Cartesian matrices (`operations`, `generators`), and short, full and
+  and generators as Cartesian matrices (`operations` in ITA's order, the numbering of the general
+  position in ITA Table 3.2.3.2; `generators`: ITA's selected generators in printed order, ITA 5th
+  ed. Part 7; both in either convention, crystallography-common#99), and short, full and
   Schoenflies symbols (`symbol`), each in the ITC convention (default) or the Birss convention;
   with the types `Convention`, `PointGroup`, `PointGroupKey`, `Setting`, `Operation`, `Mat3`,
   `Vec3` and others.
@@ -24,15 +26,6 @@ All notable changes to symcrys are recorded here. The format follows
   and `describeOperations` (kind, n, axis as [uvw] and Cartesian, sense of each operation, as in the
   symmetry operations printed in ITA), with the types `Axis`, `DirectionElements`,
   `OperationDescription`, `OperationKind`, `SymmetryDirection` (#16).
-
-### Changed
-
-- `operations` lists the operations in ITA's order (the numbering of the general position in ITA
-  Table 3.2.3.2), built from ITA's selected generators, in both conventions; before, they came in the
-  order of the closure (crystallography-common#99).
-- `generators` returns ITA's selected generators of the setting in printed order (ITA 5th ed.,
-  "Generators selected"), in both conventions; before, it returned the generators stored in Birss's
-  frame, which are neither ITA's nor Birss's printed ones.
 
 ## [0.1.1] - 2026-11-08
 

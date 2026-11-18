@@ -62,6 +62,16 @@ describe('settings and conventions', () => {
     expect(symbol('32')).toBe('321');
   });
 
+  it('the convention picks only the default setting of operations and generators', () => {
+    for (const key of POINT_GROUP_KEYS) {
+      for (const convention of ['itc', 'birss'] as const) {
+        const setting = settings(key, convention).find((s) => s.isDefault)!.index;
+        expect(generators(key, { convention })).toBe(generators(key, { setting }));
+        expect(operations(key, { convention })).toBe(operations(key, { setting }));
+      }
+    }
+  });
+
   it('orders mm2 settings 2 and 3, which ITA does not list, and gives their generators, as setting 1 carried into their frame', () => {
     // Setting 1 in ITA's order (Pmm2, ITA 5th ed. p. 218): (1) 1, (2) 2 0,0,z, (3) m x,0,z, (4) m 0,y,z,
     // all diagonal. Setting 2 moves the 2-fold axis from z to x, setting 3 to y, each by a cyclic

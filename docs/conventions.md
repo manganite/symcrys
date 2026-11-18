@@ -157,14 +157,14 @@ ones) come with the tensor module.
 
 ## Order of the operations
 
-`operations` lists the operations of a setting in ITA's order, in both conventions (a setting
-index names a physical frame): for every setting that ITA lists, as ITA numbers its general
-position (ITA Table 3.2.3.2; the symmetry operations (1) … (n) of the space-group tables carry the
-same numbers). ITA bases this sequence on its selected generators (`generators`, below) (5th ed., § 2.2.11 (iv), p. 27;
-"Generators selected" of the symmorphic P group in Part 7) and takes the next generator as soon as
-a power of the current one lies in the group generated so far (§ 8.3.5, p. 737). Starting from the
-identity, each generator g therefore extends the group H generated so far by the cosets gH, g²H, …
-until a power of g lies in H. For the two settings ITA does not list, `mm2` settings 2 (`2mm`) and
+`operations` lists the operations of a setting in ITA's order, in both conventions (a setting index
+names a physical frame): for every setting that ITA lists, as ITA numbers its general position (ITA
+Table 3.2.3.2; the symmetry operations (1) … (n) of the space-group tables carry the same numbers).
+ITA bases this sequence on its selected generators (`generators`, below; 5th ed., § 2.2.11 (iv), p.
+27; "Generators selected" of the symmorphic P group in Part 7) and takes the next generator as soon
+as a power of the current one lies in the group generated so far (§ 8.3.5, p. 737). Starting from
+the identity, each generator g therefore extends the group H generated so far by the cosets gH, g²H,
+… until a power of g lies in H. For the two settings ITA does not list, `mm2` settings 2 (`2mm`) and
 3 (`m2m`), the order is that of setting 1, carried into their frame. `describeOperations` follows
 the same order.
 
@@ -173,10 +173,11 @@ the same order.
 `generators` returns ITA's selected generators of the setting ("Generators selected" of the
 symmorphic P group, 5th ed., Part 7), in printed order and without the identity, in both
 conventions: symcrys follows ITC first, and an application that shows Birss's convention (birss-app)
-takes Birss's generating matrices (Birss Table 3, σ(N) of eq. (2.17)) from its own presentation
-(maintainer, 2026-11-18). For `mm2` settings 2 and 3, which ITA does not list, they are those of
-setting 1 carried into their frame. The generators stored in `src/pointGroups/data.ts` only define
-the set of operations (by closure); they are internal.
+takes Birss's generating matrices (Birss Table 3, pp. 36–39, σ(N) of eq. (2.17), p. 48, with the
+errata in `references/birss/table-3.md`) from its own presentation (maintainer, 2026-11-18). For
+`mm2` settings 2 and 3, which ITA does not list, they are those of setting 1 carried into their
+frame. The generators stored in `src/pointGroups/data.ts` only define the set of operations (by
+closure); they are internal.
 
 ## Symmetry directions and elements
 

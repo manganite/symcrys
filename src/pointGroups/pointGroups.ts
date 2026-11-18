@@ -204,10 +204,10 @@ export function operations(key: PointGroupKey, options?: SettingOptions): readon
 }
 
 /**
- * Generators of the point group in the requested setting, in both conventions ITA's selected
- * generators in printed order (docs/conventions.md, "Generators"): for `mm2` settings 2 and 3, which
- * ITA does not list, those of setting 1 carried into their frame. The identity is left out, so the
- * list is empty for `1`.
+ * Generators of the point group in the requested setting: ITA's selected generators in printed
+ * order, in both conventions (docs/conventions.md, "Generators"). For `mm2` settings 2 and 3, which
+ * ITA does not list, those of setting 1 carried into their frame. The identity (and ITA's lattice
+ * translations) are left out, so the list is empty for `1`.
  */
 export function generators(key: PointGroupKey, options?: SettingOptions): readonly Operation[] {
   const d = data(key);

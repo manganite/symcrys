@@ -640,7 +640,7 @@ const ITA_GENERATORS: Readonly<Record<string, readonly IntMat3[]>> = {
 };
 
 /** ITA's selected generators of a setting as matrices in the conventional basis, or undefined if ITA does not list it. */
-export function itaGenerators(key: string, setting: number): readonly IntMat3[] | undefined {
+function itaGenerators(key: string, setting: number): readonly IntMat3[] | undefined {
   return ITA_GENERATORS[`${key}#${setting}`];
 }
 

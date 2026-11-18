@@ -222,7 +222,7 @@ The conventions themselves are in `docs/conventions.md`; here, what was decided 
   order (stereography: poles, faces, face lists), so it should mean something and stay stable; the
   closure order had no meaning of its own. The closure of the stored generators stays the source of
   the set; the ordering throws if ITA's generators give a different set.
-- **ITC first, also for generators** (maintainer, 2026-11-18): `generators` returns ITA's selected
+- **ITC first, also for generators** (maintainer, 2026-11-18, #25): `generators` returns ITA's selected
   generators in both conventions (`docs/conventions.md`, "Generators"), like the order of the
   operations. symcrys is oriented to ITC; birss-app, when it moves onto symcrys, makes sure that its
   Birss mode shows everything in Birss's convention (#19).
