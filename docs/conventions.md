@@ -155,6 +155,17 @@ a consumer needs them (decision on #13).
 not depend on setting or convention. Properties that need tensors (piezoelectric, and the magnetic
 ones) come with the tensor module.
 
+## Order of the operations
+
+`operations` lists the operations of a setting in ITA's order: for every setting that ITA lists,
+as ITA numbers its general position (ITA Table 3.2.3.2; the symmetry operations (1) … (n) of the
+space-group tables carry the same numbers). The order follows from ITA's selected generators (5th
+ed., Part 7, "Generators selected" of the symmorphic P group): starting from the identity, each
+generator g extends the group H generated so far by the cosets gH, g²H, … until a power of g lies
+in H. For the two settings ITA does not list, `mm2` settings 2 (`2mm`) and 3 (`m2m`), the order
+is that of setting 1, carried into their frame. `describeOperations` follows the same order, and
+so does `generators` within its own list (the stored generators, not ITA's).
+
 ## Symmetry directions and elements
 
 **Symmetry directions** (`LATTICE_SYMMETRY_DIRECTIONS`) are the lattice directions of ITA Table
@@ -204,6 +215,7 @@ direction) and x (a secondary one), as for the symbols ("Where ITC and Birss dif
 | ITC default settings                                    | see "Settings" above                                                                                                                                                                                                                                                                                      | `itcSettings.fixtures.ts`                                        |
 | centrosymmetric, polar, chiral, Laue class, Schoenflies | ITA Table 2.1.1.1 (p. 143, Laue groups), Table 3.2.2.1 (p. 738), Table 3.2.3.2                                                                                                                                                                                                                            | `properties.reference.test.ts`, `itc.reference.test.ts`          |
 | symmetry directions                                     | ITA Table 2.1.3.1 (p. 151)                                                                                                                                                                                                                                                                                | `symmetryDirections.reference.test.ts`                           |
+| order of the operations                                 | ITA's selected generators, ITA 5th ed. (2006), Part 7 (pages in `references/itc/vol-a-2006-symmetry-operations.md`), giving the numbering of Table 3.2.3.2                                                                                                                                                | `elements.reference.test.ts`                                     |
 | operations described (kind, n, axis, sense)             | the symmetry operations of the symmorphic P space groups, ITA 5th ed. (2006), Part 7, one per ITC setting (pages in `references/itc/vol-a-2006-symmetry-operations.md`); symbols as defined in § 11.1.2, pp. 810–811; numbering checked against the general positions of Table 3.2.3.2                    | `elements.reference.test.ts`, `elements.test.ts`                 |
 
 Each file in `references/` names its source and the printed page. ITA means Vol. A, 6th edition

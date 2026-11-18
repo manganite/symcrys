@@ -5,6 +5,7 @@ import {
   apply,
   conjugate,
   det,
+  inverse,
   matricesEqual,
   multiply,
   rotationX,
@@ -44,6 +45,23 @@ describe('linalg', () => {
     const r = rotationZ(30);
     expect(matricesEqual(multiply(r, transpose(r)), IDENTITY)).toBe(true);
     expect(matricesEqual(multiply(rotationZ(60), rotationZ(60)), rotationZ(120))).toBe(true);
+  });
+
+  it('inverse of a non-orthogonal matrix; singular rejected', () => {
+    const b: Mat3 = [
+      [1, -0.5, 0],
+      [0, Math.sqrt(3) / 2, 0],
+      [0, 0, 2],
+    ];
+    expect(matricesEqual(multiply(b, inverse(b)), IDENTITY)).toBe(true);
+    expect(matricesEqual(multiply(inverse(b), b), IDENTITY)).toBe(true);
+    expect(() =>
+      inverse([
+        [1, 2, 3],
+        [2, 4, 6],
+        [0, 0, 1],
+      ]),
+    ).toThrow(RangeError);
   });
 
   it('conjugate expresses an operation in a rotated frame', () => {

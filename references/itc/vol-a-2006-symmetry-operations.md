@@ -12,6 +12,11 @@ direction of decreasing values of the parameter that describes it; for a rotoinv
 sense refer to the pure rotation, followed by the inversion through the point after the
 semicolon.
 
+Each entry also gives the line "Generators selected" from the facing page (block "Positions",
+page given): the numbers of the symmetry operations ITA uses as generators, in printed order; the
+identity (1) and the lattice translations t(1,0,0), t(0,1,0), t(0,0,1) that precede them in print
+are left out.
+
 Transcription conventions: a leading minus sign is an overbar (`-4+` for 4̄⁺, `-1` for 1̄, `-x`
 for x̄); superscripts `+` and `-` follow the number; each line is `(n) symbol location`, with the
 location as printed (axis or plane; for a rotoinversion also the inversion point after `; `).
@@ -20,34 +25,48 @@ origin, so each line names one point operation.
 
 ## 1 — No. 1, P1, p. 112
 
+Generators selected (p. 113): none
+
 (1) 1
 
 ## -1 — No. 2, P-1, p. 114
+
+Generators selected (p. 115): (2)
 
 (1) 1
 (2) -1 0,0,0
 
 ## 2, unique axis b — No. 3, P121, p. 116
 
+Generators selected (p. 117): (2)
+
 (1) 1
 (2) 2 0,y,0
 
 ## 2, unique axis c — No. 3, P112, p. 118
+
+Generators selected (p. 119): (2)
 
 (1) 1
 (2) 2 0,0,z
 
 ## m, unique axis b — No. 6, P1m1, p. 132
 
+Generators selected (p. 133): (2)
+
 (1) 1
 (2) m x,0,z
 
 ## m, unique axis c — No. 6, P11m, p. 134
 
+Generators selected (p. 135): (2)
+
 (1) 1
 (2) m x,y,0
 
 ## 2/m, unique axis b — No. 10, P12/m1, p. 160
+
+Generators selected (p. 161): (2); (3)
 
 (1) 1
 (2) 2 0,y,0
@@ -56,12 +75,16 @@ origin, so each line names one point operation.
 
 ## 2/m, unique axis c — No. 10, P112/m, p. 162
 
+Generators selected (p. 163): (2); (3)
+
 (1) 1
 (2) 2 0,0,z
 (3) -1 0,0,0
 (4) m x,y,0
 
 ## 222 — No. 16, P222, p. 200
+
+Generators selected (p. 201): (2); (3)
 
 (1) 1
 (2) 2 0,0,z
@@ -70,12 +93,16 @@ origin, so each line names one point operation.
 
 ## mm2 — No. 25, Pmm2, p. 218
 
+Generators selected (p. 219): (2); (3)
+
 (1) 1
 (2) 2 0,0,z
 (3) m x,0,z
 (4) m 0,y,z
 
 ## mmm — No. 47, Pmmm, p. 262
+
+Generators selected (p. 263): (2); (3); (5)
 
 (1) 1
 (2) 2 0,0,z
@@ -88,6 +115,8 @@ origin, so each line names one point operation.
 
 ## 4 — No. 75, P4, p. 332
 
+Generators selected (p. 332): (2); (3)
+
 (1) 1
 (2) 2 0,0,z
 (3) 4+ 0,0,z
@@ -95,12 +124,16 @@ origin, so each line names one point operation.
 
 ## -4 — No. 81, P-4, p. 340
 
+Generators selected (p. 341): (2); (3)
+
 (1) 1
 (2) 2 0,0,z
 (3) -4+ 0,0,z; 0,0,0
 (4) -4- 0,0,z; 0,0,0
 
 ## 4/m — No. 83, P4/m, p. 344
+
+Generators selected (p. 345): (2); (3); (5)
 
 (1) 1
 (2) 2 0,0,z
@@ -113,6 +146,8 @@ origin, so each line names one point operation.
 
 ## 422 — No. 89, P422, p. 362
 
+Generators selected (p. 363): (2); (3); (5)
+
 (1) 1
 (2) 2 0,0,z
 (3) 4+ 0,0,z
@@ -123,6 +158,8 @@ origin, so each line names one point operation.
 (8) 2 x,-x,0
 
 ## 4mm — No. 99, P4mm, p. 382
+
+Generators selected (p. 383): (2); (3); (5)
 
 (1) 1
 (2) 2 0,0,z
@@ -135,6 +172,8 @@ origin, so each line names one point operation.
 
 ## -42m — No. 111, P-42m, p. 406
 
+Generators selected (p. 407): (2); (3); (5)
+
 (1) 1
 (2) 2 0,0,z
 (3) -4+ 0,0,z; 0,0,0
@@ -146,6 +185,8 @@ origin, so each line names one point operation.
 
 ## -4m2 — No. 115, P-4m2, p. 414
 
+Generators selected (p. 415): (2); (3); (5)
+
 (1) 1
 (2) 2 0,0,z
 (3) -4+ 0,0,z; 0,0,0
@@ -156,6 +197,8 @@ origin, so each line names one point operation.
 (8) 2 x,-x,0
 
 ## 4/mmm — No. 123, P4/mmm, p. 430
+
+Generators selected (p. 431): (2); (3); (5); (9)
 
 (1) 1
 (2) 2 0,0,z
@@ -176,11 +219,15 @@ origin, so each line names one point operation.
 
 ## 3 — No. 143, P3, p. 490
 
+Generators selected (p. 491): (2)
+
 (1) 1
 (2) 3+ 0,0,z
 (3) 3- 0,0,z
 
 ## -3 — No. 147, P-3, p. 498
+
+Generators selected (p. 499): (2); (4)
 
 (1) 1
 (2) 3+ 0,0,z
@@ -191,6 +238,8 @@ origin, so each line names one point operation.
 
 ## 312 — No. 149, P312, p. 504
 
+Generators selected (p. 505): (2); (4)
+
 (1) 1
 (2) 3+ 0,0,z
 (3) 3- 0,0,z
@@ -199,6 +248,8 @@ origin, so each line names one point operation.
 (6) 2 2x,x,0
 
 ## 321 — No. 150, P321, p. 506
+
+Generators selected (p. 507): (2); (4)
 
 (1) 1
 (2) 3+ 0,0,z
@@ -209,6 +260,8 @@ origin, so each line names one point operation.
 
 ## 3m1 — No. 156, P3m1, p. 520
 
+Generators selected (p. 521): (2); (4)
+
 (1) 1
 (2) 3+ 0,0,z
 (3) 3- 0,0,z
@@ -218,6 +271,8 @@ origin, so each line names one point operation.
 
 ## 31m — No. 157, P31m, p. 522
 
+Generators selected (p. 523): (2); (4)
+
 (1) 1
 (2) 3+ 0,0,z
 (3) 3- 0,0,z
@@ -226,6 +281,8 @@ origin, so each line names one point operation.
 (6) m 0,y,z
 
 ## -31m — No. 162, P-31m, p. 536
+
+Generators selected (p. 537): (2); (4); (7)
 
 (1) 1
 (2) 3+ 0,0,z
@@ -242,6 +299,8 @@ origin, so each line names one point operation.
 
 ## -3m1 — No. 164, P-3m1, p. 540
 
+Generators selected (p. 541): (2); (4); (7)
+
 (1) 1
 (2) 3+ 0,0,z
 (3) 3- 0,0,z
@@ -257,6 +316,8 @@ origin, so each line names one point operation.
 
 ## 6 — No. 168, P6, p. 552
 
+Generators selected (p. 553): (2); (4)
+
 (1) 1
 (2) 3+ 0,0,z
 (3) 3- 0,0,z
@@ -266,6 +327,8 @@ origin, so each line names one point operation.
 
 ## -6 — No. 174, P-6, p. 560
 
+Generators selected (p. 561): (2); (4)
+
 (1) 1
 (2) 3+ 0,0,z
 (3) 3- 0,0,z
@@ -274,6 +337,8 @@ origin, so each line names one point operation.
 (6) -6+ 0,0,z; 0,0,0
 
 ## 6/m — No. 175, P6/m, p. 562
+
+Generators selected (p. 563): (2); (4); (7)
 
 (1) 1
 (2) 3+ 0,0,z
@@ -290,6 +355,8 @@ origin, so each line names one point operation.
 
 ## 622 — No. 177, P622, p. 566
 
+Generators selected (p. 567): (2); (4); (7)
+
 (1) 1
 (2) 3+ 0,0,z
 (3) 3- 0,0,z
@@ -304,6 +371,8 @@ origin, so each line names one point operation.
 (12) 2 2x,x,0
 
 ## 6mm — No. 183, P6mm, p. 578
+
+Generators selected (p. 579): (2); (4); (7)
 
 (1) 1
 (2) 3+ 0,0,z
@@ -320,6 +389,8 @@ origin, so each line names one point operation.
 
 ## -6m2 — No. 187, P-6m2, p. 586
 
+Generators selected (p. 587): (2); (4); (7)
+
 (1) 1
 (2) 3+ 0,0,z
 (3) 3- 0,0,z
@@ -335,6 +406,8 @@ origin, so each line names one point operation.
 
 ## -62m — No. 189, P-62m, p. 590
 
+Generators selected (p. 591): (2); (4); (7)
+
 (1) 1
 (2) 3+ 0,0,z
 (3) 3- 0,0,z
@@ -349,6 +422,8 @@ origin, so each line names one point operation.
 (12) m 0,y,z
 
 ## 6/mmm — No. 191, P6/mmm, p. 594
+
+Generators selected (p. 595): (2); (4); (7); (13)
 
 (1) 1
 (2) 3+ 0,0,z
@@ -377,6 +452,8 @@ origin, so each line names one point operation.
 
 ## 23 — No. 195, P23, p. 602
 
+Generators selected (p. 603): (2); (3); (5)
+
 (1) 1
 (2) 2 0,0,z
 (3) 2 0,y,0
@@ -391,6 +468,8 @@ origin, so each line names one point operation.
 (12) 3- -x,x,-x
 
 ## m-3 — No. 200, Pm-3, p. 614
+
+Generators selected (p. 615): (2); (3); (5); (13)
 
 (1) 1
 (2) 2 0,0,z
@@ -419,6 +498,8 @@ origin, so each line names one point operation.
 
 ## 432 — No. 207, P432, p. 634
 
+Generators selected (p. 635): (2); (3); (5); (13)
+
 (1) 1
 (2) 2 0,0,z
 (3) 2 0,y,0
@@ -446,6 +527,8 @@ origin, so each line names one point operation.
 
 ## -43m — No. 215, P-43m, p. 656
 
+Generators selected (p. 657): (2); (3); (5); (13)
+
 (1) 1
 (2) 2 0,0,z
 (3) 2 0,y,0
@@ -472,6 +555,8 @@ origin, so each line names one point operation.
 (24) -4+ 0,y,0; 0,0,0
 
 ## m-3m — No. 221, Pm-3m, p. 674
+
+Generators selected (p. 673): (2); (3); (5); (13); (25)
 
 (1) 1
 (2) 2 0,0,z

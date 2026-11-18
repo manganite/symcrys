@@ -3,7 +3,8 @@
  * symbols, in the ITC convention (default) or the Birss convention.
  */
 
-import { closeGroup, transformOperation, type Operation } from '../operations.js';
+import { closeGroup, operationsEqual, transformOperation, type Operation } from '../operations.js';
+import { inItaOrder } from './itaOrder.js';
 import type { CrystalSystem } from '../lattice.js';
 import { POINT_GROUP_DATA, POINT_GROUP_KEYS, type PointGroupData, type PointGroupKey } from './data.js';
 
@@ -107,11 +108,23 @@ function settingGenerators(d: PointGroupData, index: number): readonly Operation
   return result;
 }
 
+/**
+ * The operations of a setting in ITA's order (docs/conventions.md, "Order of the operations"): for a
+ * setting ITA lists, coset by coset from ITA's generators; otherwise (`mm2` settings 2 and 3) the
+ * order of setting 1, carried into the frame of the setting.
+ */
 function settingOperations(d: PointGroupData, index: number): readonly Operation[] {
   const cacheKey = `${d.key}#${index}`;
   let result = operationCache.get(cacheKey);
   if (!result) {
-    result = Object.freeze(closeGroup(settingGenerators(d, index)).map(freezeOperation));
+    const closed = closeGroup(settingGenerators(d, index));
+    const ordered =
+      inItaOrder(d.key, index, d.crystalSystem, closed) ??
+      settingOperations(d, 1).map((op) => transformOperation(op, d.settings[index - 1].frame));
+    if (ordered.length !== closed.length || !ordered.every((op) => closed.some((c) => operationsEqual(c, op)))) {
+      throw new Error(`Point group ${d.key}, setting ${index}: ordered operations differ from the closure`);
+    }
+    result = Object.freeze(ordered.map(freezeOperation));
     operationCache.set(cacheKey, result);
   }
   return result;
@@ -153,7 +166,8 @@ export function settings(key: PointGroupKey, conventionName: Convention = 'itc')
 
 /**
  * All operations of the point group in the requested setting (default: the convention's default
- * setting), identity first. The matrices are Cartesian (docs/conventions.md, "Cartesian frame").
+ * setting), in ITA's order: identity first, then as ITA numbers the general position (docs/conventions.md,
+ * "Order of the operations"). The matrices are Cartesian (docs/conventions.md, "Cartesian frame").
  */
 export function operations(key: PointGroupKey, options?: SettingOptions): readonly Operation[] {
   const d = data(key);

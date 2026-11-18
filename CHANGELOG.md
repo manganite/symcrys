@@ -24,6 +24,8 @@ All notable changes to symcrys are recorded here. The format follows
   and `describeOperations` (kind, n, axis as [uvw] and Cartesian, sense of each operation, as in the
   symmetry operations printed in ITA), with the types `Axis`, `DirectionElements`,
   `OperationDescription`, `OperationKind`, `SymmetryDirection` (#16).
+- `operations` lists the operations in ITA's order (the numbering of the general position in ITA
+  Table 3.2.3.2), built from ITA's selected generators.
 
 ## [0.1.1] - 2026-11-08
 

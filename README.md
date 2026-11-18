@@ -47,7 +47,7 @@ symbol('32'); // '321': ITC short symbol of the default setting
 symbol('32', { convention: 'birss' }); // '32'
 settings('32'); // setting 1: 312, setting 2: 321 (the ITC default)
 operations('-3m'); // 12 operations, Cartesian matrices; x ∥ a, z ∥ c
-describeOperations('4')[1]; // { kind: 'rotation', order: 4, sense: '+', axis: { lattice: [0, 0, 1], … } }
+describeOperations('4')[2]; // { kind: 'rotation', order: 4, sense: '+', axis: { lattice: [0, 0, 1], … } }
 symmetryDirections('4mm')[1]; // position 2: symbol 'm', directions [100] and [010], each with a mirror
 ```
 

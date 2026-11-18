@@ -16,6 +16,7 @@ import { describe, expect, it } from 'vitest';
 import { I3, inverse, mirrorNormal, mul, neg, rotationAbout, sameM, type M } from '../testUtils/independentGroups.js';
 import { expectHeader, readReference, tableRows } from '../testUtils/references.js';
 import { describeOperations } from './elements.js';
+import { itaGenerators } from './itaOrder.js';
 import { findPointGroup, operations, pointGroup, settings, type PointGroupKey } from './pointGroups.js';
 
 /** Columns a, b, c of the #6 frame, typed here independently of src/lattice.ts. */
@@ -54,6 +55,8 @@ interface Entry {
   cls: string;
   axis?: 'b' | 'c';
   heading: string;
+  /** Numbers of the operations ITA selects as generators, in printed order. */
+  generators: number[];
   ops: PrintedOperation[];
 }
 
@@ -63,7 +66,18 @@ const ENTRIES: Entry[] = (() => {
   for (const line of text.split('\n')) {
     const h = /^## (\S+)(?:, unique axis (b|c))? — No\. \d+, \S+, p\. \d+$/.exec(line);
     if (h) {
-      entries.push({ cls: h[1], ...(h[2] ? { axis: h[2] as 'b' | 'c' } : {}), heading: line.slice(3), ops: [] });
+      entries.push({
+        cls: h[1],
+        ...(h[2] ? { axis: h[2] as 'b' | 'c' } : {}),
+        heading: line.slice(3),
+        generators: [],
+        ops: [],
+      });
+      continue;
+    }
+    const g = /^Generators selected \(p\. \d+\): (.+)$/.exec(line);
+    if (g) {
+      entries.at(-1)!.generators = g[1] === 'none' ? [] : [...g[1].matchAll(/\((\d+)\)/g)].map((m) => Number(m[1]));
       continue;
     }
     if (line.startsWith('## ')) throw new Error(`Unreadable heading: ${line}`);
@@ -197,9 +211,9 @@ describe('describeOperations against the symmetry operations printed in ITA', ()
       const x = expected(p, b);
       // line (n) is the n-th triplet of the general position (W in lattice coordinates)
       expect(sameM(x.matrix, mul(mul(b, general[i]), inverse(b)))).toBe(true);
-      // and exactly one operation of the setting
+      // and exactly one operation of the setting, the n-th: operations() keeps ITA's numbering
       const hits = ops.map((o, k) => (sameM(x.matrix, o.matrix) ? k : -1)).filter((k) => k >= 0);
-      expect(hits).toHaveLength(1);
+      expect(hits).toEqual([i]);
       expect(used.has(hits[0])).toBe(false);
       used.add(hits[0]);
 
@@ -210,5 +224,10 @@ describe('describeOperations against the symmetry operations printed in ITA', ()
       else if (x.direction) expect(parallel(d.axis!.lattice, x.direction)).toBe(true);
     });
     expect(used.size).toBe(ops.length);
+
+    // the library's ITA generators are the printed ones: line (n) of each selected n, in order
+    expect(itaGenerators(key, setting)?.map((w) => w.map((r) => [...r]))).toEqual(
+      e.generators.map((n) => general[n - 1]),
+    );
   });
 });
