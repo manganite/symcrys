@@ -12,23 +12,30 @@ All notable changes to symcrys are recorded here. The format follows
 
 - The 32 crystallographic point groups (crystal classes): `pointGroups`, `pointGroup`,
   `POINT_GROUP_KEYS`, `isPointGroupKey`, `findPointGroup`; their settings (`settings`), operations
-  and generators as Cartesian matrices (`operations`, `generators`; in the ITC convention in ITA's
-  order, the numbering of the general position in ITA Table 3.2.3.2, and ITA's selected generators
-  in printed order, ITA 5th ed. Part 7, crystallography-common#99; in the Birss convention
-  birss-app's order and generators), and short, full and
-  Schoenflies symbols (`symbol`), each in the ITC convention (default) or the Birss convention;
-  with the types `Convention`, `PointGroup`, `PointGroupKey`, `Setting`, `Operation`, `Mat3`,
-  `Vec3` and others.
+  and generators as Cartesian matrices (`operations`, `generators`) and short, full and Schoenflies
+  symbols (`symbol`), each in the ITC convention (default) or the Birss convention; with the types
+  `Convention`, `PointGroup`, `PointGroupInSetting`, `PointGroupKey`, `PointGroupType`, `Setting`,
+  `SettingOptions`, `SymbolOptions`, `Operation`, `Mat3`, `Vec3`.
+- Order of the operations and generators (crystallography-common#99): in the ITC convention ITA's
+  order, identity first and then as ITA Table 3.2.3.2 numbers the general position, and ITA's
+  selected generators in printed order without the identity (ITA 5th ed. Part 7; empty for `1`); in
+  the Birss convention birss-app's order, in which the identity need not come first, and birss-app's
+  generators (for `1` the identity).
 - Properties that follow from the operations: `isCentrosymmetric`, `isPolar`, `isChiral`,
   `laueClass`.
-- `latticeBasis` and `crystalFamily`: the conventional lattice basis in the Cartesian frame
-  (hexagonal family: x ∥ a, z ∥ c).
-- `docs/conventions.md`: frames, settings, symbols and the differences between ITC and Birss.
-- Symmetry directions and elements: `LATTICE_SYMMETRY_DIRECTIONS` (ITA Table 2.1.3.1; monoclinic: the axes a, b,
-  c of the full symbol; with the type `Uvw`), `symmetryDirections` (per position of the full symbol, the elements along each direction)
-  and `describeOperations` (kind, n, axis as [uvw] and Cartesian, sense of each operation, as in the
-  symmetry operations printed in ITA; in the Birss convention with birss-app's axis signs), with the types `Axis`, `DirectionElements`,
-  `OperationDescription`, `OperationKind`, `SymmetryDirection` (#16).
+- `crystalFamily` (crystal system → family) and `latticeBasis` (conventional basis a, b, c as
+  columns, unit edge lengths, for the families with fixed cell angles; hexagonal: x ∥ a, z ∥ c),
+  with the types `CrystalFamily`, `CrystalSystem`, `FixedAngleFamily`.
+- Symmetry directions and elements (#16): `LATTICE_SYMMETRY_DIRECTIONS` (ITA Table 2.1.3.1;
+  monoclinic: the axes a, b, c of the full symbol; with the type `Uvw`), `symmetryDirections` (per
+  position of the full symbol, the elements along each direction; in the Birss convention the
+  hexagonal positions 2 and 3 read along y and x) and `describeOperations` (per operation kind,
+  `order` (the n of n or n̄), axis as [uvw] and Cartesian, sense and time reversal, as in the
+  symmetry operations printed in ITA; in the Birss convention axes signed as birss-app signs them),
+  with the types `Axis`, `DirectionElements`, `OperationDescription`, `OperationKind`,
+  `SymmetryDirection`.
+- `docs/conventions.md`: frames, settings, symbols, order of the operations and generators, and the
+  differences between ITC and Birss.
 
 ## [0.1.1] - 2026-11-08
 
