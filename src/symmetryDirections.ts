@@ -2,7 +2,7 @@
  * The symmetry directions of the crystal families: the lattice directions along which the
  * symmetry elements of a crystallographic point group lie, grouped by their position in the full
  * Hermann–Mauguin symbol. Data from ITA Table 2.1.3.1 (docs/conventions.md, "Symmetry
- * directions"); `symmetryDirections.reference.test.ts` re-reads the transcription and requires the
+ * directions and elements"); `symmetryDirections.reference.test.ts` re-reads the transcription and requires the
  * same directions, in the same order and with the same signs.
  */
 

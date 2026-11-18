@@ -19,8 +19,8 @@ All notable changes to symcrys are recorded here. The format follows
 - `latticeBasis` and `crystalFamily`: the conventional lattice basis in the Cartesian frame
   (hexagonal family: x ∥ a, z ∥ c).
 - `docs/conventions.md`: frames, settings, symbols and the differences between ITC and Birss.
-- Symmetry directions and elements: `LATTICE_SYMMETRY_DIRECTIONS` (ITA Table 2.1.3.1, with the type
-  `Uvw`), `symmetryDirections` (per position of the full symbol, the elements along each direction)
+- Symmetry directions and elements: `LATTICE_SYMMETRY_DIRECTIONS` (ITA Table 2.1.3.1; monoclinic: the axes a, b,
+  c of the full symbol; with the type `Uvw`), `symmetryDirections` (per position of the full symbol, the elements along each direction)
   and `describeOperations` (kind, n, axis as [uvw] and Cartesian, sense of each operation, as in the
   symmetry operations printed in ITA), with the types `Axis`, `DirectionElements`,
   `OperationDescription`, `OperationKind`, `SymmetryDirection` (#16).

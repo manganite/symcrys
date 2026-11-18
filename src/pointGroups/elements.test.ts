@@ -9,6 +9,7 @@ import { describe, expect, it } from 'vitest';
 import { mirrorNormal, mul, neg, rotationAbout, sameM, I3, type M } from '../testUtils/independentGroups.js';
 import { hmTokens } from '../testUtils/hermannMauguin.js';
 import { describeOperations, symmetryDirections, type OperationDescription } from './elements.js';
+import { LATTICE_SYMMETRY_DIRECTIONS } from '../symmetryDirections.js';
 import {
   POINT_GROUP_KEYS,
   operations,
@@ -24,6 +25,12 @@ const HEXAGONAL: M = [
   [0, Math.sqrt(3) / 2, 0],
   [0, 0, 1],
 ];
+
+/** The crystal family of a key, mapped here independently of src/lattice.ts. */
+const familyOf = (key: PointGroupKey) => {
+  const s = pointGroup(key).crystalSystem;
+  return s === 'trigonal' ? 'hexagonal' : s;
+};
 
 function cartesianOf(key: PointGroupKey, uvw: readonly number[]): number[] {
   const system = pointGroup(key).crystalSystem;
@@ -73,6 +80,10 @@ describe('describeOperations', () => {
         const c = cartesianOf(key, d.axis!.lattice);
         expect(c.every((x, k) => Math.abs(x - d.axis!.cartesian[k]) < 1e-9)).toBe(true);
         expect(d.axis!.lattice.every(Number.isInteger)).toBe(true);
+        // the sign of ITA Table 2.1.3.1, also for twofold axes and mirror normals
+        expect(LATTICE_SYMMETRY_DIRECTIONS[familyOf(key)].flat().map((u) => [...u])).toContainEqual([
+          ...d.axis!.lattice,
+        ]);
       }
       expect(d.sense !== undefined).toBe(d.order >= 3);
     });

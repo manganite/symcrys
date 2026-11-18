@@ -4,9 +4,8 @@ Crystallographic symmetry calculations in TypeScript: point groups, both crystal
 magnetic, with their settings, symbols and properties, and the property tensors they allow. A
 library without runtime dependencies that runs unbundled in browsers and in Node.
 
-> **Status: pre-release.** So far: the 32 crystallographic point groups with their symmetry
-> elements. The API will change
-> without notice until 1.0.0.
+> **Status: pre-release.** So far: the 32 crystallographic point groups with their symmetry elements.
+> The API will change without notice until 1.0.0.
 
 ## Scope
 

@@ -2,7 +2,7 @@
  * The geometry of a point group's operations: what each operation is (rotation, mirror, …), about
  * which axis and in which sense, and which symmetry elements lie along each symmetry direction of
  * the full Hermann–Mauguin symbol. Structured data only; symbols such as `3⁺ x,x,x` or `2_z` are
- * left to the applications (docs/conventions.md, "Symmetry elements").
+ * left to the applications (docs/conventions.md, "Symmetry directions and elements").
  */
 
 import { det, trace, type Mat3, type Vec3 } from '../linalg.js';
@@ -25,7 +25,10 @@ export type OperationKind = 'identity' | 'inversion' | 'rotation' | 'rotoinversi
 export interface Axis {
   /** Integer coordinates in the conventional basis, sign as in ITA Table 2.1.3.1. */
   readonly lattice: Uvw;
-  /** Unit vector in the Cartesian frame of symcrys. */
+  /**
+   * Unit vector in the Cartesian frame of symcrys. Monoclinic: a, b, c taken along x, y, z, exact for
+   * the unique axis only (docs/conventions.md, "Symmetry directions and elements").
+   */
   readonly cartesian: Vec3;
 }
 
