@@ -204,7 +204,18 @@ The conventions themselves are in `docs/conventions.md`; here, what was decided 
 - **Order of work** (maintainer, 2026-11-08, #13): first the 32 crystal classes (type I) with
   settings, both conventions, symbols and the properties that follow from the operations; the 90
   magnetic groups (types II and III) in a second step. Data and code are shared; the split only
-  keeps reviews small.
+  keeps reviews small. **The magnetic groups come after stereography has moved onto symcrys**
+  (maintainer, 2026-11-18, crystallography-common#99): the teaching apps do not need them and
+  birss-app rests; their transcription needs ITC Vol. D from Thomas; adding them is additive
+  (`Operation.timeReversal` and `PointGroupType` exist), and the first real consumer tests the API
+  early.
+- **Symmetry elements as structured data** (maintainer, 2026-11-18, #16): symcrys describes each
+  operation (`describeOperations`: kind, n, axis, sense, time reversal) and the elements along each
+  symmetry direction (`symmetryDirections`); strings such as `4⁺ 0,0,z` or `2_z` stay in the
+  applications, which also translate them. An axis is given both as a lattice direction [uvw] and as
+  a Cartesian unit vector, with the sign of ITA Table 2.1.3.1, which fixes what the sense refers to
+  and reproduces ITA's printed operation symbols (`docs/conventions.md`, "Symmetry directions and
+  elements").
 - **Cartesian floating-point matrices with snapping** (maintainer, 2026-11-08, #13), as in
   birss-app, so its tests carry over; exact lattice-basis matrices when a consumer needs them.
 - **Properties that need tensors** (piezoelectric, piezomagnetic, magnetoelectric, ferromagnetic)

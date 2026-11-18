@@ -4,7 +4,8 @@ Crystallographic symmetry calculations in TypeScript: point groups, both crystal
 magnetic, with their settings, symbols and properties, and the property tensors they allow. A
 library without runtime dependencies that runs unbundled in browsers and in Node.
 
-> **Status: pre-release.** So far: the 32 crystallographic point groups. The API will change
+> **Status: pre-release.** So far: the 32 crystallographic point groups with their symmetry
+> elements. The API will change
 > without notice until 1.0.0.
 
 ## Scope
@@ -41,12 +42,14 @@ npm install symcrys
 Each release on GitHub also carries the package as `symcrys-X.Y.Z.tgz`.
 
 ```ts
-import { operations, settings, symbol } from 'symcrys';
+import { describeOperations, operations, settings, symbol, symmetryDirections } from 'symcrys';
 
 symbol('32'); // '321': ITC short symbol of the default setting
 symbol('32', { convention: 'birss' }); // '32'
 settings('32'); // setting 1: 312, setting 2: 321 (the ITC default)
 operations('-3m'); // 12 operations, Cartesian matrices; x ∥ a, z ∥ c
+describeOperations('4')[1]; // { kind: 'rotation', order: 4, sense: '+', axis: { lattice: [0, 0, 1], … } }
+symmetryDirections('4mm')[1]; // position 2: symbol 'm', directions [100] and [010], each with a mirror
 ```
 
 Conventions, frames and symbols: [`docs/conventions.md`](docs/conventions.md).

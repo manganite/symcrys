@@ -4,8 +4,8 @@ How symcrys represents the crystallographic point groups, and where the two supp
 ITC and Birss, differ. The print sources behind each statement are listed in "Sources" at the end;
 the tests named there re-check them against the transcriptions in `references/`.
 
-So far symcrys holds the 32 crystallographic point groups (crystal classes, type I). The magnetic
-point groups (types II and III) follow.
+So far symcrys holds the 32 crystallographic point groups (crystal classes, type I), with their
+symmetry directions and elements. The magnetic point groups (types II and III) follow.
 
 ## Conventions
 
@@ -155,6 +155,44 @@ a consumer needs them (decision on #13).
 not depend on setting or convention. Properties that need tensors (piezoelectric, and the magnetic
 ones) come with the tensor module.
 
+## Symmetry directions and elements
+
+**Symmetry directions** (`LATTICE_SYMMETRY_DIRECTIONS`) are the lattice directions of ITA Table
+2.1.3.1, grouped by position of the full symbol, in the printed order and with the printed signs:
+primary, secondary, tertiary (hexagonal family: the row "Hexagonal", also for the trigonal classes
+with hexagonal axes). The monoclinic full symbol reads along a, b, c, so the monoclinic family has
+the orthorhombic positions; the triclinic family has none.
+
+`symmetryDirections(key, options)` lists, for a setting, every position of the family with the
+symbol at that position (if the full symbol has it) and, for each direction, the elements along
+it: the highest rotation n, the highest rotoinversion n̄ (n = 3, 4, 6) and whether a mirror is
+perpendicular. In the Birss convention the hexagonal positions 2 and 3 are read along y (a tertiary
+direction) and x (a secondary one), as for the symbols ("Where ITC and Birss differ").
+
+`describeOperations(key, options)` describes each operation, in the order of `operations`:
+
+| Field          | Meaning                                                                                                  |
+| -------------- | -------------------------------------------------------------------------------------------------------- |
+| `kind`         | `identity`, `inversion`, `rotation`, `rotoinversion` (n̄ = inversion × rotation n, n = 3, 4, 6), `mirror` |
+| `order`        | the n of n or n̄; 1 for the identity and the inversion, 2 for a mirror (m = 2̄)                            |
+| `axis`         | rotation or rotoinversion axis, or mirror normal: `lattice` [uvw] and `cartesian` unit vector            |
+| `sense`        | for n ≥ 3: `+` or `-`                                                                                    |
+| `timeReversal` | as in the operation                                                                                      |
+
+- **Axis.** Every axis and mirror normal of a crystal class lies along one of its symmetry
+  directions; the axis is that direction, as [uvw] with the sign of Table 2.1.3.1 and as a
+  Cartesian unit vector in the frame of the setting. For the monoclinic family, which has no fixed
+  basis, a, b, c are taken along x, y, z; this is exact for the unique axis, the only direction
+  that carries an element.
+- **Sense** follows ITA § 11.1.2 (5th ed., pp. 810–811): `+` if the rotation is counter-clockwise
+  seen from the tip of the axis looking towards the origin, i.e. by +360°/n about it; for a
+  rotoinversion, angle and sense refer to the rotation part. Because the axis carries the sign of
+  Table 2.1.3.1, the sense refers to that sign. For all 40 settings of ITA's tables the printed
+  axis of every operation with n ≥ 3 has exactly this sign, so `sense` equals the printed one
+  (test below).
+- Symbols built from these data (`4⁺ 0,0,z`, `3⁻`, `2_z`, axis names in another frame) are left to
+  the applications.
+
 ## Sources
 
 | What                                                    | Print source                                                                                                                                                                                                                                                                                              | Test                                                             |
@@ -165,6 +203,9 @@ ones) come with the tensor module.
 | ITC operations of every setting                         | the general positions of ITA Table 3.2.3.2 (pp. 745–769), in the frame of #6; `2mm`, `m2m`, which ITA does not list: their ITC symbol along the symmetry directions of ITA Table 2.1.3.1 (p. 151)                                                                                                         | `itcGeneralPositions.reference.test.ts`, `itc.reference.test.ts` |
 | ITC default settings                                    | see "Settings" above                                                                                                                                                                                                                                                                                      | `itcSettings.fixtures.ts`                                        |
 | centrosymmetric, polar, chiral, Laue class, Schoenflies | ITA Table 2.1.1.1 (p. 143, Laue groups), Table 3.2.2.1 (p. 738), Table 3.2.3.2                                                                                                                                                                                                                            | `properties.reference.test.ts`, `itc.reference.test.ts`          |
+| symmetry directions                                     | ITA Table 2.1.3.1 (p. 151)                                                                                                                                                                                                                                                                                | `symmetryDirections.reference.test.ts`                           |
+| operations described (kind, n, axis, sense)             | the symmetry operations of the symmorphic P space groups, ITA 5th ed. (2006), Part 7, one per ITC setting (pages in `references/itc/vol-a-2006-symmetry-operations.md`); symbols as defined in § 11.1.2, pp. 810–811; numbering checked against the general positions of Table 3.2.3.2                    | `elements.reference.test.ts`, `elements.test.ts`                 |
 
 Each file in `references/` names its source and the printed page. ITA means Vol. A, 6th edition
-(2016).
+(2016), unless the 5th edition (2006) is named: its space-group tables are the source for the
+symbols of the operations.
