@@ -93,8 +93,8 @@ Carried over from birss-app, where the calculations come from.
   correctness authority; regenerate them only by re-capture, never edit one to turn it green.
 - **Safety net first.** For any data or math change: extend the relevant fixture first, require
   it green, then change the code.
-- Files in `references/` change only to correct them against print; Prettier and ESLint leave
-  them alone.
+- Files in `references/` change only by transcription from print or by correction against it
+  (maintainer, 2026-11-18); Prettier and ESLint leave them alone.
 
 ## Tests
 
