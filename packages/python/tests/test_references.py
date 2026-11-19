@@ -18,11 +18,25 @@ def spec(rank: int, parity: str = "polar", intrinsic: str = "none") -> dict[str,
 
 
 def count(cell: str) -> int:
+    if cell == "-":
+        return 0
     m = re.match(r"^\+ \((\d+)\)", cell)
-    return int(m.group(1)) if m else 0
+    if not m:
+        raise ValueError(f"Table 3.2.2.1: no count in {cell!r}")
+    return int(m.group(1))
 
 
-ITA_3221 = [r for r in table_rows(reference("itc/vol-a-table-3.2.2.1.md"))[1:] if symcrys.is_point_group_key(r[2].replace("-62m", "-6m2"))]
+ROWS_3221 = table_rows(reference("itc/vol-a-table-3.2.2.1.md"))
+ITA_3221 = [r for r in ROWS_3221[1:] if r[2] not in ("235 (532)", "2-inf (inf inf)")]
+
+
+def test_ita_3221_as_read() -> None:
+    assert ROWS_3221[0] == [
+        "System", "Laue class", "Group", "Rank-1 (pyroelectricity)", "Rank-3 (piezo/SHG)",
+        "Enantiomorphism", "Axial rank-2 (optical activity)",
+    ]
+    keys = sorted(r[2].replace("-62m", "-6m2") for r in ITA_3221)
+    assert keys == sorted(k for k in symcrys.POINT_GROUP_KEYS if not symcrys.is_centrosymmetric(k))
 
 
 @pytest.mark.parametrize("row", ITA_3221, ids=[r[2] for r in ITA_3221])

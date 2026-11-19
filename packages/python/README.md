@@ -6,7 +6,7 @@ the forms of property tensors of rank 0 to 4 they allow, checked against print (
 
 This package is the TypeScript library [symcrys](https://github.com/manganite/symcrys) of the same
 version, run in an embedded JavaScript engine ([quickjs-ng](https://pypi.org/project/quickjs-ng/)).
-The results are identical by construction; the names follow a fixed rule (`tensorForm` →
+The results are those of the TypeScript library (up to rounding in the last bit of a float); the names follow a fixed rule (`tensorForm` →
 `tensor_form`), and matrices and vectors are NumPy arrays.
 
 ```bash
@@ -48,4 +48,5 @@ forms and operations once, then compute with NumPy.
 - Functions: the docstrings here, and the TypeScript API they call (same names in camelCase).
 - Errors from the library raise `symcrys.SymcrysError`, a subclass of `ValueError`.
 
-Python 3.10 or later. Licence: MIT.
+Python 3.10 or later. quickjs-ng has no wheel for macOS on Intel; pip builds it from source there
+(a C compiler is needed). Licence: MIT.

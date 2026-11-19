@@ -61,12 +61,14 @@ jobs:
         run: echo "file=$(npm pack --silent --ignore-scripts -w symcrys)" >> "$GITHUB_OUTPUT"
       # The Python package carries the dist/ just checked (bundle:python checks the versions).
       - name: Python gate and build
+        env:
+          PIP_CONSTRAINT: packages/python/requirements-ci.txt
         run: |
           npm run bundle:python
-          python -m pip install --upgrade pip build
+          python -m pip install build
           python -m build --outdir python-dist packages/python
           python -m venv /tmp/venv
-          /tmp/venv/bin/pip install python-dist/*.whl 'pytest>=8' 'mypy>=1.13'
+          /tmp/venv/bin/pip install python-dist/*.whl pytest mypy -c packages/python/requirements-ci.txt
           (cd packages/python && /tmp/venv/bin/mypy && /tmp/venv/bin/pytest -p no:cacheprovider)
       - name: Extract changelog section
         id: changelog

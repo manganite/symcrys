@@ -18,7 +18,9 @@ All notable changes to symcrys are recorded here. The format follows
 ### Changed
 
 - Repository layout: the npm package moved to `packages/ts`, the Python package is
-  `packages/python`; the npm package itself (name, files, release tarball) is unchanged. A
+  `packages/python`; the npm package keeps its name, files and release tarball; its README on npm is now a short
+  one (`packages/ts/README.md`) pointing to the repository, and `repository.directory` names
+  `packages/ts`. A
   checkout for crystallography-common's `sync.mjs --kern` is now `packages/ts` of the checkout.
 
 ## [0.4.0] - 2026-11-19

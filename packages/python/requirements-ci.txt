@@ -1,0 +1,6 @@
+# Pinned tools for building and testing the Python package in CI and in release.yml (not runtime
+# dependencies). Also used as PIP_CONSTRAINT, so the isolated build environment gets this hatchling.
+build==1.6.1
+hatchling==1.33.0
+pytest==9.2.0
+mypy==2.4.1

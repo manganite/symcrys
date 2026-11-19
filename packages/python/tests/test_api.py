@@ -17,7 +17,7 @@ SHG = {"rank": 3, "parity": "polar", "time_parity": "i", "intrinsic": "jk"}
 def test_every_export_of_the_library_has_its_python_name() -> None:
     exported = _engine.exports()
     expected = {name if kind == "value" else snake(name) for name, kind in exported}
-    assert set(symcrys.__all__) == expected | {"SymcrysError"}
+    assert set(symcrys.__all__) == expected | {"SymcrysError", "TensorForm", "TensorSpec"}
     for name in expected:
         assert hasattr(symcrys, name), name
 

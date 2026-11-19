@@ -35,6 +35,7 @@ artifacts = ["src/symcrys/_bundle.js"]
 
 [tool.hatch.build.targets.sdist]
 include = ["src/symcrys", "README.md", "LICENSE"]
+exclude = [".gitignore"]
 artifacts = ["src/symcrys/_bundle.js"]
 
 [tool.pytest.ini_options]

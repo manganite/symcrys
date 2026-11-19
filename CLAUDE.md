@@ -16,8 +16,8 @@ apply here. Where this file and another document disagree on process, this file 
   (identifiers, comments, docs, commit messages).
 - **Two packages, one implementation** (maintainer, 2026-11-19, #30): the TypeScript library
   (`packages/ts`, npm) and a thin Python layer (`packages/python`, PyPI) that runs the bundled
-  `dist/` of the same version in an embedded JavaScript engine. Results are identical by
-  construction; every calculation is written, tested and documented once, in TypeScript.
+  `dist/` of the same version in an embedded JavaScript engine. Results agree by construction
+  (up to rounding in the last bit of a float, from the engines' `Math`); every calculation is written, tested and documented once, in TypeScript.
 
 ## Layout
 

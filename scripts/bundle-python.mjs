@@ -14,7 +14,7 @@
 // own version.
 
 import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { build } from 'esbuild';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
@@ -22,7 +22,7 @@ const tsPackage = JSON.parse(readFileSync(`${root}packages/ts/package.json`, 'ut
 const pyproject = readFileSync(`${root}packages/python/pyproject.toml`, 'utf8');
 const pyVersion = pyproject.match(/^version = "([^"]+)"$/m)?.[1];
 const dist = `${root}packages/ts/dist/index.js`;
-const { VERSION } = await import(dist);
+const { VERSION } = await import(pathToFileURL(dist).href);
 
 const errors = [];
 if (VERSION !== tsPackage.version)
@@ -35,7 +35,7 @@ if (errors.length > 0) {
 }
 
 const entry = `
-import * as symcrys from ${JSON.stringify(dist)};
+import * as symcrys from ${JSON.stringify(dist.replaceAll('\\', '/'))};
 const failure = (e) => ({ error: { name: (e && e.name) || 'Error', message: String((e && e.message) || e) } });
 globalThis.__symcrys = {
   call(name, argsJson) {
