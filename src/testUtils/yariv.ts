@@ -91,37 +91,55 @@ function partitionString(classes: string[][]): string {
     .join(' | ');
 }
 
-/**
- * The scheme of a basis (rows of length 27, symmetric in jk): cells whose columns over the basis are
- * proportional form a class; the sign is the ratio to the first cell of the class, which must be ±1
- * for a scheme drawn with dots and circles.
- */
+/** The scheme of a basis (rows of length 27, symmetric in jk) on Yariv's 3×6 grid. */
 export function basisScheme(basis: readonly (readonly number[])[]): Scheme {
-  const column = (c: number) => basis.map((row) => row[c]);
+  const cells = [1, 2, 3].flatMap((i) =>
+    [1, 2, 3, 4, 5, 6].map((mu) => ({ name: cellName(i, mu), index: cellIndex(i, mu) })),
+  );
+  return schemeOf(basis, cells);
+}
+
+/**
+ * The scheme of a basis on a grid of cells, each a named component (flat index): cells whose
+ * columns over the basis are proportional form a class; the sign is the ratio to the first cell of
+ * the class in the order given, which must be ±1 for a scheme drawn with dots and circles.
+ */
+export function schemeOf(
+  basis: readonly (readonly number[])[],
+  cells: readonly { readonly name: string; readonly index: number }[],
+): Scheme {
   const classes: { cells: string[]; ref: number[] }[] = [];
   const signs = new Map<string, number>();
-  for (let i = 1; i <= 3; i++) {
-    for (let mu = 1; mu <= 6; mu++) {
-      const v = column(cellIndex(i, mu));
-      if (v.every((x) => Math.abs(x) < 1e-9)) continue;
-      let placed = false;
-      for (const cls of classes) {
-        const k = cls.ref.findIndex((x) => Math.abs(x) > 1e-9);
-        const ratio = v[k] / cls.ref[k];
-        if (v.every((x, n) => Math.abs(x - ratio * cls.ref[n]) < 1e-9)) {
-          cls.cells.push(cellName(i, mu));
-          signs.set(cellName(i, mu), ratio);
-          placed = true;
-          break;
-        }
-      }
-      if (!placed) {
-        classes.push({ cells: [cellName(i, mu)], ref: v });
-        signs.set(cellName(i, mu), 1);
-      }
+  for (const { name, index } of cells) {
+    const v = basis.map((row) => row[index]);
+    if (v.every((x) => Math.abs(x) < 1e-9)) continue;
+    const cls = classes.find((c) => {
+      const k = c.ref.findIndex((x) => Math.abs(x) > 1e-9);
+      const ratio = v[k] / c.ref[k];
+      return v.every((x, n) => Math.abs(x - ratio * c.ref[n]) < 1e-9);
+    });
+    if (cls) {
+      const k = cls.ref.findIndex((x) => Math.abs(x) > 1e-9);
+      cls.cells.push(name);
+      signs.set(name, v[k] / cls.ref[k]);
+    } else {
+      classes.push({ cells: [name], ref: v });
+      signs.set(name, 1);
     }
   }
   return { partition: partitionString(classes.map((c) => c.cells)), signs };
+}
+
+/** The scheme of printed link groups: each group a class, signs relative to its first mark in reading order. */
+export function linkScheme(links: readonly (readonly { readonly name: string; readonly filled: boolean }[])[]): Scheme {
+  const signs = new Map<string, number>();
+  const classes = links.map((g) => {
+    const ordered = [...g].sort((a, b) => (a.name < b.name ? -1 : 1));
+    const ref = ordered[0].filled ? 1 : -1;
+    for (const m of ordered) signs.set(m.name, (m.filled ? 1 : -1) / ref);
+    return ordered.map((m) => m.name);
+  });
+  return { partition: partitionString(classes), signs };
 }
 
 /** The nonzero cells of a scheme, sorted. */

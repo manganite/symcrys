@@ -387,7 +387,11 @@ snapped ("Numbers" above): for the 32 classes in all their settings every entry 
 
 **Print anchors.** Birss convention: Birss's Tables 4a–4f (pp. 56–66) for ranks 0 to 4, polar and
 axial, in Birss's frame. ITC convention: ITA Table 3.2.2.1 (counts of three tensors and the direction
-of the pyroelectric vector, in the ITC default setting). Index symmetries: Yariv's Table 16.1 (rank 3,
+of the pyroelectric vector, in the ITC default setting); ITC Vol. D § 1.1.4.10.7 (the full forms of
+axial tensors of rank 2, general and symmetric, in the ITC default setting and, for the monoclinic
+classes, also with the axis along z); ITC Vol. D § 1.1.4.10.6 (numbers of independent components of
+`'ij_kl'` and `'voigt'` tensors of rank 4). ITC Vol. D § 1.1.4.10.6.7 (i) prints the cubic class m-3 as
+`3m`, a misprint. Index symmetries: Yariv's Table 16.1 (rank 3,
 `'jk'`, all 21 noncentrosymmetric classes; it prints d_ijk without the Voigt factor 2, so its 3×6
 grid is the tensor itself; the panels Yariv calls the standard orientation are the ITC default
 settings), Hoshi et al. (1995) (rank 4, `'ij_kl'`, 6/mmm and 6mm, with Hoshi's tracelessness Q_ii = 0
@@ -414,6 +418,7 @@ independent components.
 | tensor forms, ITC convention: counts, pyroelectric direction, piezoelectric classes             | ITA Table 3.2.2.1 (p. 738)                                                                                                                                                                                                                                                                                | `tensors/itc.reference.test.ts`                                  |
 | rank 3, `'jk'` (SHG, piezoelectric d_ijk): cells, classes, signs; the forms at m-3m surfaces    | Yariv, _Quantum Electronics_, 2nd ed., Table 16.1 (pp. 410–411): `references/yariv/table-16.1.md`                                                                                                                                                                                                         | `tensors/yariv.reference.test.ts`, `tensors/tensorForm.test.ts`  |
 | rank 4, `'ij_kl'` (electric-quadrupole SHG) for 6/mmm, 6mm                                      | Hoshi et al., Phys. Rev. B 52, 12355 (1995), Eqs. (11)–(12): `references/hoshi/eqs-11-12.md`                                                                                                                                                                                                              | `tensors/hoshi.reference.test.ts`                                |
+| ITC: axial tensors of rank 2 (forms); rank 4 `'ij_kl'`, `'voigt'` (counts)                      | ITC Vol. D (2013) § 1.1.4.10.7 (pp. 29–31), § 1.1.4.10.6 (pp. 27–29): `references/itc/vol-d-*.md`                                                                                                                                                                                                         | `tensors/itcVolD.reference.test.ts`                              |
 | Birss: free parameters of the tensor forms                                                      | none: birss-app 2be5fe3, behavioural pins (class (c)) captured by `audit/birss-app`                                                                                                                                                                                                                       | `tensors/birssApp.pins.test.ts`                                  |
 
 Each file in `references/` names its source and the printed page. ITA means Vol. A, 6th edition

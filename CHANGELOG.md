@@ -18,8 +18,8 @@ All notable changes to symcrys are recorded here. The format follows
   `TimeParity`, `IntrinsicSymmetry`. In the Birss convention the forms and free parameters are
   birss-app's.
 - `isPiezoelectric`, from the form of the piezoelectric tensor (20 classes, ITA Table 3.2.2.1).
-- `references/`: Birss Tables 4a–4f, Yariv Table 16.1 and Hoshi et al. (1995) Eqs. (11)–(12),
-  re-parsed by the tests of the tensor forms.
+- `references/`: Birss Tables 4a–4f, Yariv Table 16.1, Hoshi et al. (1995) Eqs. (11)–(12) and ITC
+  Vol. D §§ 1.1.4.10.6–1.1.4.10.7, re-parsed by the tests of the tensor forms.
 
 ### Changed
 
