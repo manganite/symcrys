@@ -139,7 +139,22 @@ expectHeader(birssRows, [
 ]);
 const errataRows = tableRows(section(table6, '## Errata'));
 expectHeader(errataRows, ['Group', 'Column', 'Printed', 'Correct', 'Evidence']);
-const ERRATA = new Map(errataRows.slice(1).map((r) => [r[0], r]));
+/** Errata by group and column. */
+const ERRATA = new Map(errataRows.slice(1).map((r) => [`${r[0]} | ${r[1]}`, r]));
+
+/**
+ * A printed cell with its erratum applied, if there is one for this group and column: the printed
+ * entry (the whole cell, or one term of a list) is replaced by the correct one.
+ */
+function corrected(group: string, column: string, cell: string): string {
+  const erratum = ERRATA.get(`${group} | ${column}`);
+  if (!erratum) return cell;
+  const terms = cell.split(', ');
+  const at = terms.lastIndexOf(erratum[2]);
+  if (at < 0) throw new Error(`Erratum for ${group}, ${column} does not match the printed row`);
+  terms[at] = erratum[3];
+  return terms.join(', ');
+}
 
 /**
  * From Birss's printed symbol to the symcrys key. Birss prints the cubic groups without the overbar
@@ -186,7 +201,11 @@ describe('Birss Table 6 (printed pp. 91–98) against symcrys, Birss convention'
   });
 
   it('applies every erratum to an existing row', () => {
-    for (const printed of ERRATA.keys()) expect(rows.some((r) => r[1] === printed)).toBe(true);
+    expect(ERRATA.size).toBe(errataRows.length - 1);
+    for (const [, [group, column]] of ERRATA) {
+      expect(rows.some((r) => r[1] === group)).toBe(true);
+      expect(['Symmetry operators', 'Additional generating matrix']).toContain(column);
+    }
   });
 
   it('the Shubnikov symbols are those of ITC Vol. D Table 1.5.2.3', () => {
@@ -194,20 +213,16 @@ describe('Birss Table 6 (printed pp. 91–98) against symcrys, Birss convention'
     // the transcriptions write the underline as a prime (Birss) and as a leading underscore (ITC).
     const itc = new Map(itcRows.slice(1).map((r) => [r[3], r[2].replace(/_(-?[0-9m])/g, "$1'")]));
     for (const r of rows) expect(r[2], r[1]).toBe(itc.get(KEY_OF_PRINTED[r[1]] ?? r[1]));
+    // The classical subgroup is a crystal class: its symbols are those of its own row.
+    const own = new Map(rows.map((r) => [r[1], r[2]]));
+    for (const r of rows.filter((x) => x[3] !== '-')) expect(r[4], `subgroup of ${r[1]}`).toBe(own.get(r[3]));
   });
 
   for (const r of rows) {
     const printed = r[1];
     const key = magneticKey(KEY_OF_PRINTED[printed] ?? printed, 'Table 6');
     describe(printed, () => {
-      let additional = r[7];
-      const erratum = ERRATA.get(printed);
-      if (erratum) {
-        if (erratum[1] !== 'Additional generating matrix' || additional !== erratum[2]) {
-          throw new Error(`Erratum for ${printed} does not match the printed row`);
-        }
-        additional = erratum[3];
-      }
+      const additional = corrected(printed, 'Additional generating matrix', r[7]);
       const subgroup = close(sigmas(r[6], false));
       const group = close([...sigmas(r[6], false), ...sigmas(additional, true)]);
 
@@ -228,7 +243,7 @@ describe('Birss Table 6 (printed pp. 91–98) against symcrys, Birss convention'
         const system = r[0].toLowerCase();
         expect(pointGroup(key).crystalSystem).toBe(system);
         const actual = describeOperations(key, { convention: 'birss' }).map((d) => operationLabel(system, d));
-        expect(sorted(actual)).toEqual(sorted(printedLabels(r[5])));
+        expect(sorted(actual)).toEqual(sorted(printedLabels(corrected(printed, 'Symmetry operators', r[5]))));
       });
 
       it('the Birss symbol of the default setting is the printed symbol', () => {

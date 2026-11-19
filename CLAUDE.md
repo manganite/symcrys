@@ -372,7 +372,8 @@ The conventions themselves are in `docs/conventions.md`; here, what was decided 
   komplett") has two printed pages on each PDF page; Table 6 (printed pp. 91–98) is on PDF pages
   55–59, rotated by 90°. Time reversal is an underline there, easy to miss at low resolution: read
   the pages enlarged. Its Shubnikov symbols agree with those of ITC Vol. D Table 1.5.2.3 for all 90
-  groups, which a test now checks (two independent prints).
+  groups, which a test now checks (two independent prints). The table has two misprints, kept as printed
+  with errata in `references/birss/table-6.md`.
 
 ### Tensors
 
