@@ -14,9 +14,10 @@
  *   (getFrameDisplayName / getGroupDisplayName); per group its type, its crystal class
  *   (getFamilyClass), the default setting of birss-app's Birss and ITC modes (getDefaultSetting)
  *   and the property flags.
- * - src/tensors/birssApp.pins.json: per crystal class, setting and tensor specification, the tensor form
+ * - src/tensors/birssApp.pins.json: per group, setting and tensor specification, the tensor form
  *   (computeTensorForm) as birss-app presents it: reduced to row echelon form with birss-app's own
- *   `rref`, so the pivots are birss-app's free parameters (Q0), in its order.
+ *   `rref`, so the pivots are birss-app's free parameters (Q0), in its order. `classes`: the 32
+ *   crystal classes, time-even tensors; `magnetic`: the 58 black-and-white groups, time-odd tensors.
  *
  * Run by hand: npm run audit:birss-app. Not part of the build, the tests or CI (CLAUDE.md, "Hard
  * constraints"). Regenerate the pins only by re-running this script against a known-good birss-app
@@ -55,8 +56,9 @@ const matrix = (m: number[][]): number[][] => m.map((r) => r.map((x) => (Object.
 
 /**
  * The tensor specifications pinned: every rank with every index symmetry birss-app applies at it,
- * polar and axial. Time-even only: the 32 classes have no time reversal, so `c` equals `i` (tested
- * in symcrys).
+ * polar and axial. For the 32 classes time-even only: they have no time reversal, so `c` equals `i`
+ * (tested in symcrys). For the 58 groups with operations combined with time reversal, time-odd
+ * (`c`): their time-even forms are those of their class.
  */
 const INTRINSIC_BY_RANK: Record<number, TensorSpec['intrinsic'][]> = {
   0: ['none'],
@@ -75,6 +77,7 @@ const SPECS: TensorSpec[] = [0, 1, 2, 3, 4].flatMap((rank) =>
     })),
   ),
 );
+const TIME_ODD_SPECS: TensorSpec[] = SPECS.map((spec) => ({ ...spec, timeParity: 'c' as const }));
 
 /** A basis row as [flat index, value] pairs of its nonzero entries, rounded to 12 decimals. */
 const sparse = (row: number[]): [number, number][] =>
@@ -120,11 +123,11 @@ it('captures the Birss-mode pins from birss-app', () => {
     };
   });
 
-  const forms = POINT_GROUP_KEYS.map((key) => ({
+  const formsOf = (key: string, specs: TensorSpec[]) => ({
     key,
     settings: Array.from({ length: settingCount(key) }, (_, i) => ({
       setting: i + 1,
-      forms: SPECS.map((spec) => {
+      forms: specs.map((spec) => {
         const form = computeTensorForm(key, i + 1, spec);
         if (!form) throw new Error(`birss-app has no form for ${key} setting ${i + 1}`);
         const basis = form.basisResults.length === 0 ? [] : rref(form.basisResults, 3 ** spec.rank);
@@ -137,19 +140,23 @@ it('captures the Birss-mode pins from birss-app', () => {
         };
       }),
     })),
-  }));
+  });
+  const forms = POINT_GROUP_KEYS.map((key) => formsOf(key, SPECS));
+  const magneticForms = POINT_GROUPS.filter((g) => g.type === 'III').map((g) => formsOf(g.name, TIME_ODD_SPECS));
 
   const header = (what: string, which: string) =>
     `Behavioural pins (fixture class (c), CLAUDE.md): ${what} birss-app shows for ${which}. ` +
     'Captured by audit/birss-app/capture.run.ts (npm run audit:birss-app); regenerate only by re-capture, never edit.';
 
   // One entry per line, so that a re-capture shows as a diff per class.
-  const write = (path: string, doc: Record<string, unknown>, listKey: string, list: unknown[]) => {
+  const write = (path: string, doc: Record<string, unknown>, lists: Record<string, unknown[]>) => {
     const head = Object.entries(doc)
       .map(([k, v]) => `  ${JSON.stringify(k)}: ${JSON.stringify(v)},`)
       .join('\n');
-    const body = list.map((x) => `    ${JSON.stringify(x)}`).join(',\n');
-    writeFileSync(path, `{\n${head}\n  ${JSON.stringify(listKey)}: [\n${body}\n  ]\n}\n`);
+    const body = Object.entries(lists)
+      .map(([k, list]) => `  ${JSON.stringify(k)}: [\n${list.map((x) => `    ${JSON.stringify(x)}`).join(',\n')}\n  ]`)
+      .join(',\n');
+    writeFileSync(path, `{\n${head}\n${body}\n}\n`);
   };
 
   write(
@@ -161,19 +168,17 @@ it('captures the Birss-mode pins from birss-app', () => {
         'operations are listed beside them, in the same order.',
       revision: commit,
     },
-    'groups',
-    groups,
+    { groups },
   );
   write(
     `${here}../../packages/ts/src/tensors/birssApp.pins.json`,
     {
       note:
-        `${header('the tensor forms', 'the 32 crystal classes')} Per class, setting and specification (time-even): the basis in reduced row ` +
+        `${header('the tensor forms', 'the 32 crystal classes (`classes`, time-even tensors) and its 58 black-and-white groups (`magnetic`, time-odd tensors, under its own keys)')} Per group, setting and specification: the basis in reduced row ` +
         "echelon form (birss-app's rref of computeTensorForm), each row as [flat index, value] pairs of its nonzero " +
         'entries rounded to 12 decimals, and the free parameters (flat index of the pivot of each row).',
       revision: commit,
     },
-    'classes',
-    forms,
+    { classes: forms, magnetic: magneticForms },
   );
 });

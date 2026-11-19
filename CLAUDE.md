@@ -295,10 +295,8 @@ The conventions themselves are in `docs/conventions.md`; here, what was decided 
   convention (`docs/conventions.md`, "Generators").
 - **Cartesian floating-point matrices with snapping** (maintainer, 2026-11-08, #13), as in
   birss-app, so its tests carry over; exact lattice-basis matrices when a consumer needs them.
-- **Properties that need tensors** come with the tensor module (maintainer, 2026-11-08, #13):
-  piezoelectric is there ("Tensors" below); piezomagnetic, magnetoelectric and ferromagnetic need
-  the magnetic point groups and come as named tensor properties (#41), once the tensor forms of
-  the magnetic point groups are anchored in print.
+- **Properties that need tensors** come with the tensor module (maintainer, 2026-11-08, #13), as
+  named tensor properties ("Tensors" below, #41).
 - **Hexagonal frame x ∥ a, z ∥ c** (maintainer, 2026-11-08, #6): birss-app's frame, in which its
   print-verified tensor tests hold; ITC Vol. D puts the secondary direction of the trigonal groups
   along x₁ as well.
@@ -386,13 +384,13 @@ The conventions are in `docs/conventions.md` ("Tensors"); here, what was decided
   applications. Numbers serve every consumer (birss-app, the teaching apps, Python with NumPy);
   strings would fix one presentation, and this is the decision that is expensive to change later.
 - **Scope: symmetry only** (maintainer, 2026-11-19): the form for a point group and for any list of
-  operations, piezoelectric, rotation of a tensor. birss-app's SHG source terms (`computeShg`),
+  operations, the named properties, rotation of a tensor. birss-app's SHG source terms (`computeShg`),
   lab geometry, simulator and polarimetry are applications of the forms and stay in birss-app.
 - **Ranks 0 to 4 with all index symmetries of birss-app in the first step** (maintainer,
   2026-11-19): the print anchors for rank 4 (Birss Table 4f, Hoshi 1995) exist, and electric-
   quadrupole SHG of centrosymmetric crystals needs rank 4.
 - **Names** (maintainer, 2026-11-19): `tensorForm(key, spec, options)`,
-  `tensorFormOf(operations, spec)`, `rotateTensor(tensor, rotation, spec)`, `isPiezoelectric(key)`; `TensorSpec` with
+  `tensorFormOf(operations, spec)`, `rotateTensor(tensor, rotation, spec)`; `TensorSpec` with
   birss-app's fields (`rank`, `parity`, `timeParity`, `intrinsic`), so birss-app passes its
   specifications unchanged.
 - **Free parameters are the pivots of the reduced row echelon form**: the lowest component
@@ -404,8 +402,33 @@ The conventions are in `docs/conventions.md` ("Tensors"); here, what was decided
   `'voigt'` at rank 3 and the like; a library call with it is a mistake of the caller, and silently
   computing another tensor would hide it.
 - **Time reversal is built in** (#13): an operation with `timeReversal` changes the sign of a
-  `'c'`-tensor, so the magnetic point groups need no change to the tensor code. Until their
-  forms are anchored in print, `tensorForm` and `isPiezoelectric` take the crystal classes only.
+  `'c'`-tensor, so the magnetic point groups needed no change to the tensor code. Their forms are
+  anchored in print in both conventions: Birss's Table 7 with Tables 4b–4f, and ITC Vol. D Tables
+  1.5.2.4, 1.5.7.1 and 1.5.8.1 (`docs/conventions.md`, "Tensors"); since then `tensorForm` takes all
+  122 keys.
+- **Named tensor properties, one generic call** (maintainer, 2026-11-19, #41; names asked before
+  implementation, 2026-11-20): a property that is the question whether a tensor is allowed is an
+  entry of the table `TENSOR_PROPERTIES` (name → `TensorSpec`, description, print source), not a
+  function of its own, so a new property is a line of data, and the same call serves a key and any
+  list of operations: `allowsProperty(key, name)`, `allowedProperties(key)`,
+  `allowsPropertyOf(operations, name)`, `allowedPropertiesOf(operations)`; `tensorForm` and
+  `tensorFormOf` take a name in place of a specification. `isPiezoelectric` is removed (MINOR).
+  Chosen by Thomas among the proposals: `allows…` rather than `has…`, because symmetry allows a
+  property and does not say the crystal has it; names as adjectives (`'pyroelectric'`,
+  `'piezoelectric'`, `'gyrotropic'` for optical activity, `'ferromagnetic'`, `'magnetoelectric'`,
+  `'piezomagnetic'`); these six and no more for now; `allowedProperties` returns the names only (the
+  form is one `tensorForm` call away); one name per kind of tensor, so second-harmonic generation,
+  which has the tensor of `'piezoelectric'`, gets no name of its own.
+- **A printed form is compared in the setting its symbol names** (2026-11-20): ITC Vol. D § 1.5.7.1
+  (p. 134) ties each form to the orientation given by the Hermann–Mauguin symbol and lists further
+  orientations in square brackets, so the tests look every printed symbol up among the ITC symbols
+  of the settings instead of assuming the default setting; this also tests the symbols of the
+  non-default settings against print.
+- **Reading Birss Table 7** (2026-11-20): printed pp. 103–108, PDF pages 61–64 of the scan
+  (`WKMPAPCY`), rotated by 90°. The transcription of manganite/birss-tables agrees with the book in
+  all 90 rows; the book itself leaves out parentheses in two rows (errata in
+  `references/birss/table-7.md`, found in birss-app, confirmed by building Birss's associated groups
+  A and B from the operations).
 - **Speed** (#30, measured 2026-11-19): birss-app's reduction, bundled, takes under QuickJS
   (`quickjs-ng`) 3–112 ms per class for the SHG tensor and up to about 0.3 s at rank 4 (m-3m), 10–35
   times Node; enough for a Python layer that calls symcrys a few times per material. Forms per

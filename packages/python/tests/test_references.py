@@ -1,6 +1,7 @@
 """Print anchors through Python, read from references/ as the TypeScript tests read them: ITA
-Table 3.2.2.1, ITC Vol. D § 1.1.4.10.6, ITC Vol. D Table 1.5.2.3 (magnetic point groups), and Yariv
-Table 16.1 with the use case of #30 (SHG at the (001), (110) and (111) surfaces of an m-3m
+Table 3.2.2.1, ITC Vol. D § 1.1.4.10.6, ITC Vol. D Table 1.5.2.3 (magnetic point groups), Tables
+1.5.2.4, 1.5.7.1 and 1.5.8.1 (ferromagnetic, piezomagnetic, magnetoelectric), and
+Yariv Table 16.1 with the use case of #30 (SHG at the (001), (110) and (111) surfaces of an m-3m
 crystal)."""
 
 import re
@@ -9,7 +10,7 @@ import numpy as np
 import pytest
 
 import symcrys
-from conftest import reference, table_rows
+from conftest import reference, section, table_rows
 
 SHG = {"rank": 3, "parity": "polar", "time_parity": "i", "intrinsic": "jk"}
 
@@ -51,7 +52,7 @@ def test_ita_3221_counts(row: list[str]) -> None:
 def test_ita_3221_piezoelectric_classes() -> None:
     printed = sorted(r[2].replace("-62m", "-6m2") for r in ITA_3221 if count(r[4]) > 0)
     assert len(printed) == 20
-    assert sorted(k for k in symcrys.POINT_GROUP_KEYS if symcrys.is_piezoelectric(k)) == printed
+    assert sorted(k for k in symcrys.POINT_GROUP_KEYS if symcrys.allows_property(k, "piezoelectric")) == printed
 
 
 ABBREVIATION = {"42": "422", "62": "622", "4m": "4mm", "6m": "6mm", "4/mm": "4/mmm", "6/mm": "6/mmm", "-62m": "-6m2", "2mm": "mm2"}
@@ -140,3 +141,79 @@ def test_itc_vol_d_1523_symbols_and_order(row: list[str]) -> None:
     ops = symcrys.operations(key)
     primed = sum(1 for o in ops if o["time_reversal"])
     assert primed == (len(ops) // 2 if "(" in schoenflies else 0)
+
+
+# --- ITC Vol. D Tables 1.5.2.4, 1.5.7.1, 1.5.8.1: the magnetic tensor properties -------------------
+
+
+def orientations(cell: str) -> list[str]:
+    """The orientations a Hermann–Mauguin cell names: ``2 (= 121)`` → 121; ``mm2 [2mm, m2m]`` → three."""
+    m = re.match(r"^([^(\[]+?)(?: \(= ([^)]+)\))?(?: \[([^\]]+)\])?$", cell)
+    assert m, cell
+    return [m.group(2) or m.group(1)] + (m.group(3).split(", ") if m.group(3) else [])
+
+
+def printed_space(matrix: list[str], shape: tuple[int, ...]) -> np.ndarray:
+    """Spanning vectors of a printed matrix (rows of cells such as ``0``, ``L14``, ``-2L22``), one per symbol."""
+    vectors: dict[str, np.ndarray] = {}
+    for i, row in enumerate(matrix):
+        for a, cell in enumerate(row.split(" ")):
+            if cell == "0":
+                continue
+            m = re.match(r"^(-?)(\d?)([a-zL]\d\d)$", cell)
+            assert m, cell
+            value = (-1 if m.group(1) else 1) * int(m.group(2) or 1)
+            v = vectors.setdefault(m.group(3), np.zeros(shape))
+            if len(shape) == 2:
+                v[i, a] += value
+            else:  # Voigt column of ITC Vol. D eq. (1.5.7.4): Λ_iα = 2 Λ_ijk for α = 4, 5, 6
+                j, k = VOIGT[a]
+                v[i, j, k] += value if a < 3 else value / 2
+                if a >= 3:
+                    v[i, k, j] += value / 2
+    return np.array([v.reshape(-1) for v in vectors.values()])
+
+
+def same_space(a: np.ndarray, b: np.ndarray) -> bool:
+    rank = np.linalg.matrix_rank
+    return bool(len(a) == len(b) == 0 or (len(a) and len(b) and rank(a) == rank(b) == rank(np.vstack([a, b]))))
+
+
+FORM_TABLES = [
+    ("itc/vol-d-table-1.5.7.1.md", "piezomagnetic", 66, (3, 3, 3)),
+    ("itc/vol-d-table-1.5.8.1.md", "magnetoelectric", 58, (3, 3)),
+]
+NOT_GREY = [g["key"] for g in symcrys.magnetic_point_groups() if g["type"] != "II"]
+
+
+@pytest.mark.parametrize(("file", "name", "count", "shape"), FORM_TABLES, ids=[t[1] for t in FORM_TABLES])
+def test_itc_vol_d_magnetic_forms(file: str, name: str, count: int, shape: tuple[int, ...]) -> None:
+    text = reference(file)
+    groups = table_rows(section(text, "## Groups"))[1:]
+    matrices = {r[0]: r[1:] for r in table_rows(section(text, "## Matrices"))[1:]}
+    keys = []
+    for block, _, cell in groups:
+        printed = printed_space(matrices[block], shape)
+        found = [symcrys.find_magnetic_point_group(s) for s in orientations(cell)]
+        assert any(found), cell
+        for where in filter(None, found):
+            form = symcrys.tensor_form(where["key"], name, setting=where["setting"])
+            assert same_space(form["basis"], printed), cell
+        keys.append(next(filter(None, found))["key"])
+    assert len(keys) == count
+    assert sorted(keys) == sorted(k for k in NOT_GREY if symcrys.allows_property(k, name))
+
+
+def test_itc_vol_d_1524_ferromagnetic_groups() -> None:
+    rows = table_rows(reference("itc/vol-d-table-1.5.2.4.md"))[1:]
+    dimension = {"Any": 3, "∥ m'": 2, "⊥ 2'": 2}
+    keys = []
+    for _, _, hm, direction in rows:
+        where = symcrys.find_magnetic_point_group(hm)
+        assert where, hm
+        form = symcrys.tensor_form(where["key"], "ferromagnetic", setting=where["setting"])
+        assert len(form["basis"]) == dimension.get(direction, 1), hm
+        keys.append(where["key"])
+    assert len(keys) == 31
+    assert sorted(keys) == sorted(k for k in symcrys.MAGNETIC_POINT_GROUP_KEYS if symcrys.allows_property(k, "ferromagnetic"))
+

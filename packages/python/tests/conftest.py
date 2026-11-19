@@ -28,6 +28,14 @@ def table_rows(text: str) -> list[list[str]]:
     return rows
 
 
+def section(text: str, heading: str) -> str:
+    """The text from the line starting with ``heading`` up to the next line starting with ``## ``."""
+    lines = text.splitlines()
+    start = next(i for i, line in enumerate(lines) if line.startswith(heading))
+    end = next((i for i in range(start + 1, len(lines)) if lines[i].startswith("## ")), len(lines))
+    return "\n".join(lines[start:end])
+
+
 def reference(path: str) -> str:
     return (REFERENCES / path).read_text(encoding="utf-8")
 

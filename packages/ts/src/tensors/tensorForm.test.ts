@@ -9,7 +9,6 @@ import { describe, expect, it } from 'vitest';
 import { det, type Mat3, type Vec3 } from '../linalg.js';
 import { operation, type Operation } from '../operations.js';
 import { POINT_GROUP_KEYS, generators, operations, settings, type PointGroupKey } from '../pointGroups/pointGroups.js';
-import { isPiezoelectric } from '../pointGroups/properties.js';
 import { siteSymmetry } from '../siteSymmetry.js';
 import { matrixRank, satisfies } from '../testUtils/rank.js';
 import { YARIV_PANELS, basisScheme, printedScheme } from '../testUtils/yariv.js';
@@ -385,12 +384,15 @@ describe('use case of #30: SHG at the surfaces of an m-3m crystal, against Yariv
 });
 
 describe('magnetic point groups', () => {
-  it('tensorForm and isPiezoelectric take the crystal classes only, until the forms are anchored (#13, #41)', () => {
+  it('tensorForm takes magnetic keys and agrees with tensorFormOf of their operations', () => {
     const spec = { rank: 1, parity: 'axial', timeParity: 'c', intrinsic: 'none' } as const;
-    for (const key of ["m'm'2", "2221'"]) {
-      expect(() => tensorForm(key as never, spec)).toThrow(/32 crystal classes so far/);
-      expect(() => isPiezoelectric(key as never)).toThrow(RangeError);
+    for (const key of ["m'm'2", "2221'", "-6'2m'"] as const) {
+      for (const convention of ['itc', 'birss'] as const) {
+        expect(tensorForm(key, spec, { convention })).toEqual(tensorFormOf(operations(key, { convention }), spec));
+      }
     }
+    expect(tensorForm("m'm'2", spec).basis).toHaveLength(1);
+    expect(tensorForm("2221'", spec).basis).toHaveLength(0);
     expect(() => tensorForm('nonsense' as never, spec)).toThrow(/Unknown point group key/);
   });
 

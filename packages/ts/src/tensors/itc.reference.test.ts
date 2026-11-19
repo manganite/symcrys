@@ -13,7 +13,8 @@
 
 import { describe, expect, it } from 'vitest';
 import { POINT_GROUP_KEYS, isPointGroupKey, type PointGroupKey } from '../pointGroups/pointGroups.js';
-import { isCentrosymmetric, isPiezoelectric } from '../pointGroups/properties.js';
+import { isCentrosymmetric } from '../pointGroups/properties.js';
+import { allowsProperty } from './tensorProperties.js';
 import { expectHeader, readReference, tableRows } from '../testUtils/references.js';
 import { matrixRank } from '../testUtils/rank.js';
 import { tensorForm, type TensorSpec } from './tensorForm.js';
@@ -95,9 +96,9 @@ describe('ITA Table 3.2.2.1', () => {
     },
   );
 
-  it('isPiezoelectric: the 20 piezoelectric classes as printed (432 is not one)', () => {
+  it("allowsProperty 'piezoelectric': the 20 piezoelectric classes as printed (432 is not one)", () => {
     const printed = ROWS.filter((r) => r.piezo > 0).map((r) => r.key);
     expect(printed).toHaveLength(20);
-    expect(POINT_GROUP_KEYS.filter((k) => isPiezoelectric(k)).sort()).toEqual([...printed].sort());
+    expect(POINT_GROUP_KEYS.filter((k) => allowsProperty(k, 'piezoelectric')).sort()).toEqual([...printed].sort());
   });
 });

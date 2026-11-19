@@ -12,13 +12,13 @@
  *
  * birss-app's keys are the Birss short symbols of its default settings; symcrys's keys are ITC
  * short symbols (docs/conventions.md, "Keys"). They differ for two groups, named in
- * `SYMCRYS_KEY` below.
+ * `SYMCRYS_KEY` (testUtils/birssAppPins.ts).
  */
 
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import type { Vec3 } from '../linalg.js';
-import { BIRSS_APP_GROUPS, BIRSS_APP_REVISION } from '../testUtils/birssAppPins.js';
+import { BIRSS_APP_GROUPS, BIRSS_APP_REVISION, SYMCRYS_KEY } from '../testUtils/birssAppPins.js';
 import { describeOperations, type OperationDescription } from './elements.js';
 import { isCentrosymmetric, isChiral, isPolar, laueClass } from './properties.js';
 import {
@@ -77,7 +77,6 @@ function birssAppSymbol(d: OperationDescription): string {
  * The symcrys key of a group birss-app names differently: D2h(C2h) and D6h(D3h), whose ITC short
  * symbols (ITC Vol. D Table 1.5.2.3) differ from Birss's (docs/conventions.md, "Keys").
  */
-const SYMCRYS_KEY: Readonly<Record<string, MagneticPointGroupKey>> = { "m'm'm": "mm'm'", "6'/mm'm": "6'/mmm'" };
 
 function symcrysKey(birssAppKey: string): MagneticPointGroupKey {
   const key = SYMCRYS_KEY[birssAppKey] ?? birssAppKey;

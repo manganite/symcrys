@@ -38,7 +38,7 @@ export {
   type SettingOptions,
   type SymbolOptions,
 } from './pointGroups/pointGroups.js';
-export { isCentrosymmetric, isChiral, isPiezoelectric, isPolar, laueClass } from './pointGroups/properties.js';
+export { isCentrosymmetric, isChiral, isPolar, laueClass } from './pointGroups/properties.js';
 export { LATTICE_SYMMETRY_DIRECTIONS, type Uvw } from './symmetryDirections.js';
 export {
   describeOperations,
@@ -68,3 +68,10 @@ export {
   type TensorSpec,
   type TimeParity,
 } from './tensors/tensorForm.js';
+export { TENSOR_PROPERTIES, type TensorProperty, type TensorPropertyName } from './tensors/propertyTable.js';
+export {
+  allowedProperties,
+  allowedPropertiesOf,
+  allowsProperty,
+  allowsPropertyOf,
+} from './tensors/tensorProperties.js';

@@ -24,7 +24,7 @@ def test_every_export_of_the_library_has_its_python_name() -> None:
 
 @pytest.mark.parametrize(
     ("js", "py"),
-    [("timeReversal", "time_reversal"), ("isPiezoelectric", "is_piezoelectric"), ("siteSymmetryOperations", "site_symmetry_operations"), ("rank", "rank")],
+    [("timeReversal", "time_reversal"), ("allowsPropertyOf", "allows_property_of"), ("siteSymmetryOperations", "site_symmetry_operations"), ("rank", "rank")],
 )
 def test_name_rule_both_ways(js: str, py: str) -> None:
     assert snake(js) == py
@@ -60,6 +60,24 @@ def test_operations_go_back_into_the_library_unchanged() -> None:
 def test_camel_case_keys_are_accepted_in_a_spec() -> None:
     spec = {"rank": 3, "parity": "polar", "timeParity": "i", "intrinsic": "jk"}
     assert np.array_equal(symcrys.tensor_form("4mm", spec)["basis"], symcrys.tensor_form("4mm", SHG)["basis"])
+
+
+def test_named_tensor_properties() -> None:
+    assert list(symcrys.TENSOR_PROPERTIES) == [
+        "pyroelectric", "piezoelectric", "gyrotropic", "ferromagnetic", "magnetoelectric", "piezomagnetic"
+    ]
+    piezo = symcrys.TENSOR_PROPERTIES["piezoelectric"]
+    assert piezo["spec"] == SHG and set(piezo) == {"spec", "description", "source"}
+    assert symcrys.allowed_properties("432") == ["gyrotropic", "magnetoelectric"]
+    assert symcrys.allows_property("432", "piezoelectric") is False
+    ops = symcrys.operations("m'm'2")
+    assert symcrys.allowed_properties_of(ops) == symcrys.allowed_properties("m'm'2") == list(symcrys.TENSOR_PROPERTIES)
+    assert symcrys.allows_property_of(ops, "ferromagnetic") is True
+    by_name = symcrys.tensor_form("32", "piezoelectric")
+    assert np.array_equal(by_name["basis"], symcrys.tensor_form("32", SHG)["basis"])
+    assert np.array_equal(symcrys.tensor_form_of(symcrys.operations("32"), "piezoelectric")["basis"], by_name["basis"])
+    with pytest.raises(symcrys.SymcrysError, match="Unknown tensor property"):
+        symcrys.allows_property("1", "piezo")  # type: ignore[arg-type]
 
 
 def test_rotate_tensor_takes_arrays_of_any_shape() -> None:
