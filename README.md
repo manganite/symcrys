@@ -41,7 +41,15 @@ npm install symcrys
 Each release on GitHub also carries the package as `symcrys-X.Y.Z.tgz`.
 
 ```ts
-import { describeOperations, operations, settings, symbol, symmetryDirections } from 'symcrys';
+import {
+  describeOperations,
+  operations,
+  settings,
+  symbol,
+  symmetryDirections,
+  wyckoffPositionOf,
+  wyckoffPositions,
+} from 'symcrys';
 
 symbol('32'); // '321': ITC short symbol of the default setting
 symbol('32', { convention: 'birss' }); // '32'
@@ -49,6 +57,8 @@ settings('32'); // setting 1: 312, setting 2: 321 (the ITC default)
 operations('-3m'); // 12 operations, Cartesian matrices; x ∥ a, z ∥ c
 describeOperations('4')[2]; // { kind: 'rotation', order: 4, sense: '+', axis: { lattice: [0, 0, 1], … } }
 symmetryDirections('4mm')[1]; // position 2: symbol 'm', directions [100] and [010], each with a mirror
+wyckoffPositions('4mm')[2]; // { letter: 'b', multiplicity: 4, siteSymmetry: '..m', millerIndices: 'h,h,l', … }
+wyckoffPositionOf('4mm', [0, 0, -1]).letter; // 'a'
 ```
 
 Conventions, frames and symbols: [`docs/conventions.md`](docs/conventions.md).
