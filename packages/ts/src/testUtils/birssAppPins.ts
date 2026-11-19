@@ -12,14 +12,25 @@ export interface BirssAppSetting {
   readonly setting: number;
   readonly symbol: string;
   readonly generators: readonly Matrix[];
+  /** Time reversal of each generator, in the order of `generators`. */
+  readonly generatorTimeReversal: readonly boolean[];
   readonly operations: readonly Matrix[];
+  /** Time reversal of each operation, in the order of `operations`. */
+  readonly operationTimeReversal: readonly boolean[];
   readonly generatorSymbols: readonly string[];
   readonly operationSymbols: readonly string[];
 }
 
-export interface BirssAppClass {
+/** One of birss-app's 122 magnetic point groups (the 32 crystal classes included). */
+export interface BirssAppGroup {
+  /** birss-app's key: the Birss short symbol of its default setting. */
   readonly key: string;
+  readonly type: 'I' | 'II' | 'III';
+  /** birss-app's key of the crystal class (getFamilyClass). */
+  readonly crystalClass: string;
   readonly defaultSetting: number;
+  /** The default setting of birss-app's ITC mode. */
+  readonly itcDefaultSetting: number;
   readonly centrosymmetric: boolean;
   readonly polar: boolean;
   readonly chiral: boolean;
@@ -43,21 +54,25 @@ export interface BirssAppTensorClass {
   readonly settings: readonly { readonly setting: number; readonly forms: readonly BirssAppTensorForm[] }[];
 }
 
-interface PinFile<T> {
+interface PinFile {
   readonly note: string;
   readonly revision: string;
-  readonly classes: readonly T[];
 }
 
-const read = <T>(path: string): PinFile<T> =>
-  JSON.parse(readFileSync(new URL(path, import.meta.url), 'utf8')) as PinFile<T>;
+const read = <T extends PinFile>(path: string): T =>
+  JSON.parse(readFileSync(new URL(path, import.meta.url), 'utf8')) as T;
 
-const pointGroupPins = read<BirssAppClass>('../pointGroups/birssApp.pins.json');
-const tensorPins = read<BirssAppTensorClass>('../tensors/birssApp.pins.json');
+const pointGroupPins = read<PinFile & { readonly groups: readonly BirssAppGroup[] }>(
+  '../pointGroups/birssApp.pins.json',
+);
+const tensorPins = read<PinFile & { readonly classes: readonly BirssAppTensorClass[] }>(
+  '../tensors/birssApp.pins.json',
+);
 
 /** birss-app revision and date the point-group pins come from, e.g. `2be5fe3 2026-11-07`. */
 export const BIRSS_APP_REVISION = pointGroupPins.revision;
-export const BIRSS_APP_CLASSES = pointGroupPins.classes;
+/** All 122 groups: types I, II, III, in birss-app's order. */
+export const BIRSS_APP_GROUPS = pointGroupPins.groups;
 
 /** birss-app revision the tensor pins come from. */
 export const BIRSS_APP_TENSOR_REVISION = tensorPins.revision;

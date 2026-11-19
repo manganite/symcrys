@@ -14,7 +14,7 @@ import {
   pointGroup,
   symbol,
   type Convention,
-  type PointGroupKey,
+  type MagneticPointGroupKey,
   type SettingOptions,
 } from './pointGroups.js';
 
@@ -55,7 +55,10 @@ export interface OperationDescription {
 
 /** The symmetry elements along one symmetry direction. */
 export interface DirectionElements extends Axis {
-  /** Highest n of a rotation n about this direction; 1 if there is none. */
+  /**
+   * Highest n of a rotation n about this direction; 1 if there is none. Rotations, rotoinversions
+   * and mirrors count with and without time reversal; `describeOperations` tells them apart.
+   */
   readonly rotation: number;
   /** Highest n of a rotoinversion n̄ (n = 3, 4, 6) about this direction; 0 if there is none. */
   readonly rotoinversion: number;
@@ -67,7 +70,10 @@ export interface DirectionElements extends Axis {
 export interface SymmetryDirection {
   /** 1-based position in the full symbol. */
   readonly position: number;
-  /** The symbol at this position of the full symbol, if the full symbol has this position. */
+  /**
+   * The symbol at this position of the full symbol, if the full symbol has this position; for a
+   * magnetic group with its primes (`4'/m`).
+   */
   readonly symbol?: string;
   readonly directions: readonly DirectionElements[];
 }
@@ -173,7 +179,7 @@ interface Analysis {
 
 const cache = new Map<string, Analysis>();
 
-function analysis(key: PointGroupKey, options?: SettingOptions): Analysis {
+function analysis(key: MagneticPointGroupKey, options?: SettingOptions): Analysis {
   const ops = operations(key, options); // checks key, convention and setting
   const c = options?.convention ?? 'itc';
   const setting = options?.setting ?? 0;
@@ -187,7 +193,13 @@ function analysis(key: PointGroupKey, options?: SettingOptions): Analysis {
   const what = `Point group ${key}`;
   const descriptions = Object.freeze(ops.map((op) => describe(op, all, what)));
 
-  const tokens = family === 'triclinic' ? [] : symbol(key, { ...options, form: 'full' }).split(' ');
+  // The full symbol of a grey group ends in 1', which is no position of the symbol.
+  const tokens =
+    family === 'triclinic'
+      ? []
+      : symbol(key, { ...options, form: 'full' })
+          .split(' ')
+          .filter((t) => t !== "1'");
   const directions = Object.freeze(
     positions.map((axes, i) => {
       const elements = axes.map((a) => {
@@ -247,7 +259,10 @@ function birssSigned(d: OperationDescription): OperationDescription {
  * convention with the sign of ITA Table 2.1.3.1, in the Birss convention signed as birss-app signs
  * them (first non-zero Cartesian component positive); the sign fixes what the sense refers to.
  */
-export function describeOperations(key: PointGroupKey, options?: SettingOptions): readonly OperationDescription[] {
+export function describeOperations(
+  key: MagneticPointGroupKey,
+  options?: SettingOptions,
+): readonly OperationDescription[] {
   return analysis(key, options).descriptions;
 }
 
@@ -259,6 +274,6 @@ export function describeOperations(key: PointGroupKey, options?: SettingOptions)
  * in both conventions; in the Birss convention an axis of `describeOperations` may be reversed, so
  * match it to a direction by |dot| = 1, not by identity.
  */
-export function symmetryDirections(key: PointGroupKey, options?: SettingOptions): readonly SymmetryDirection[] {
+export function symmetryDirections(key: MagneticPointGroupKey, options?: SettingOptions): readonly SymmetryDirection[] {
   return analysis(key, options).directions;
 }
