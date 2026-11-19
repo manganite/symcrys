@@ -375,7 +375,9 @@ magnetic point groups (#13).
 **Rotation.** `rotateTensor(tensor, R, spec)` gives the components in a frame rotated by the
 orthogonal matrix R (rows: the new axes in the old frame), with the factor det(R) for an axial
 tensor. For the form at a surface: the site symmetry of the normal (`siteSymmetry`), its form
-(`tensorFormOf`), and the basis rotated into a frame with z along the normal.
+(`tensorFormOf`), and the basis rotated into a frame with z along the normal. Both functions take
+Cartesian matrices only and throw for a matrix that is not orthogonal (e.g. one in the lattice
+basis).
 
 **Numbers.** The form is computed in floating point: each component's unit tensor, symmetrised over
 the index symmetry, is averaged over the group, and the averages are row-reduced (pivot threshold
@@ -388,8 +390,8 @@ axial, in Birss's frame. ITC convention: ITA Table 3.2.2.1 (counts of three tens
 of the pyroelectric vector, in the ITC default setting). Index symmetries: Yariv's Table 16.1 (rank 3,
 `'jk'`, all 21 noncentrosymmetric classes; it prints d_ijk without the Voigt factor 2, so its 3×6
 grid is the tensor itself; the panels Yariv calls the standard orientation are the ITC default
-settings), Hoshi et al. (1995) (rank 4, `'ij_kl'`, 6/mmm and 6mm, after removing the tracelessness
-Hoshi adds). The surface use case of #30 is checked against Yariv: an m-3m crystal has no SHG in
+settings), Hoshi et al. (1995) (rank 4, `'ij_kl'`, 6/mmm and 6mm, with Hoshi's tracelessness Q_ii = 0
+added to the form). The surface use case of #30 is checked against Yariv: an m-3m crystal has no SHG in
 the bulk, its (001), (110) and (111) surfaces have the forms of 4mm, mm2 and 3m with 3, 5 and 4
 independent components.
 

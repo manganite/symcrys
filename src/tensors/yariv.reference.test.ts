@@ -51,6 +51,8 @@ describe('Yariv Table 16.1: forms', () => {
       `${p.id}: one matching setting per class, got ${JSON.stringify(matches)}`,
     ).toEqual(p.groups);
     for (const m of matches) {
+      const n = tensorForm(m.key as PointGroupKey, SHG, { setting: m.setting }).basis.length;
+      expect(n, `${p.id}: number of independent components`).toBe(p.printedCount);
       const got = schemeAt(m.key, m.setting);
       const want = printedScheme(p);
       expect(got.partition, `${p.id}: classes`).toBe(want.partition);

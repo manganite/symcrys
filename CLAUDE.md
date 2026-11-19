@@ -106,7 +106,8 @@ Carried over from birss-app, where the calculations come from.
 ## Tests
 
 - Tests sit next to their module (`foo.ts`, `foo.test.ts`), as in birss-app.
-- **Test-only code** is `*.test.ts`, `*.fixtures.ts` and anything in a `testUtils/` folder. It is
+- **Test-only code** is `*.test.ts`, `*.fixtures.ts`, `*.pins.json` and anything in a `testUtils/`
+  folder. It is
   type-checked with Node types (tests read `references/` from disk), may import Node built-ins,
   and is left out of `dist/` and the npm package; `check:dist` fails if any of it is built. Any
   other file in `src/` is library code.
@@ -245,8 +246,9 @@ The conventions themselves are in `docs/conventions.md`; here, what was decided 
   convention (`docs/conventions.md`, "Generators").
 - **Cartesian floating-point matrices with snapping** (maintainer, 2026-11-08, #13), as in
   birss-app, so its tests carry over; exact lattice-basis matrices when a consumer needs them.
-- **Properties that need tensors** (piezoelectric, piezomagnetic, magnetoelectric, ferromagnetic)
-  come with the tensor module (maintainer, 2026-11-08, #13).
+- **Properties that need tensors** come with the tensor module (maintainer, 2026-11-08, #13):
+  piezoelectric is there ("Tensors" below); piezomagnetic, magnetoelectric and ferromagnetic need
+  the magnetic point groups and come with them.
 - **Hexagonal frame x ∥ a, z ∥ c** (maintainer, 2026-11-08, #6): birss-app's frame, in which its
   print-verified tensor tests hold; ITC Vol. D puts the secondary direction of the trigonal groups
   along x₁ as well.

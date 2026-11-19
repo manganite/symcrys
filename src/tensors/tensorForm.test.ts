@@ -314,6 +314,24 @@ describe('input checks', () => {
         spec(1),
       ),
     ).toThrow(RangeError);
+    // Not Cartesian: a threefold axis in the lattice basis, a stretch.
+    const threefold: Operation = operation([
+      [0, -1, 0],
+      [1, -1, 0],
+      [0, 0, 1],
+    ]);
+    expect(() => tensorFormOf([threefold], spec(1))).toThrow(RangeError);
+    expect(() =>
+      rotateTensor(
+        [1, 0, 0],
+        [
+          [2, 0, 0],
+          [0, 1, 0],
+          [0, 0, 1],
+        ],
+        spec(1),
+      ),
+    ).toThrow(RangeError);
   });
 
   it('returns frozen results', () => {

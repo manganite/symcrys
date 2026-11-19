@@ -101,6 +101,18 @@ function checkSpec(spec: TensorSpec): number[][] {
   }
 }
 
+/** Throws unless `m` is orthogonal (mᵀm = 1 within `EPSILON`): the code assumes Cartesian matrices. */
+function checkOrthogonal(m: Mat3, what: string): void {
+  for (let i = 0; i < 3; i++) {
+    for (let j = 0; j < 3; j++) {
+      const dot = m[0][i] * m[0][j] + m[1][i] * m[1][j] + m[2][i] * m[2][j];
+      if (Math.abs(dot - (i === j ? 1 : 0)) > EPSILON) {
+        throw new RangeError(`${what} is not an orthogonal (Cartesian) matrix: ${JSON.stringify(m)}`);
+      }
+    }
+  }
+}
+
 /** The indices (x, y, z = 0, 1, 2) of every flat index at a rank, first index first. */
 const digitTables = new Map<number, readonly (readonly number[])[]>();
 function digits(rank: number): readonly (readonly number[])[] {
@@ -170,7 +182,8 @@ function project(group: readonly Operation[], spec: TensorSpec, perms: number[][
         averaged[out] += sign * acc;
       }
     }
-    if (averaged.some((x) => Math.abs(x) >= EPSILON)) spanning.push(averaged.map((x) => x / ops.length));
+    for (let k = 0; k < dim; k++) averaged[k] /= ops.length;
+    if (averaged.some((x) => Math.abs(x) >= EPSILON)) spanning.push(averaged);
   }
 
   const basis = reducedRowEchelon(spanning, dim).map((row) => row.map(snapEntry));
@@ -234,6 +247,7 @@ export function tensorForm(key: PointGroupKey, spec: TensorSpec, options?: Setti
  */
 export function tensorFormOf(operations: readonly Operation[], spec: TensorSpec): TensorForm {
   const perms = checkSpec(spec);
+  operations.forEach((op, i) => checkOrthogonal(op.matrix, `Operation ${i}`));
   return project(closeGroup(operations), spec, perms);
 }
 
@@ -245,6 +259,7 @@ export function tensorFormOf(operations: readonly Operation[], spec: TensorSpec)
  */
 export function rotateTensor(tensor: readonly number[], rotation: Mat3, spec: TensorSpec): number[] {
   checkSpec(spec);
+  checkOrthogonal(rotation, 'The rotation');
   const { rank } = spec;
   const dim = 3 ** rank;
   if (tensor.length !== dim)
