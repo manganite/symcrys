@@ -5,7 +5,8 @@ ITC and Birss, differ. The print sources behind each statement are listed in "So
 the tests named there re-check them against the transcriptions in `references/`.
 
 So far symcrys holds the 32 crystallographic point groups (crystal classes, type I), with their
-symmetry directions and elements, and the site symmetry and Wyckoff positions of directions. The magnetic point groups (types II and III) follow.
+symmetry directions and elements, and the site symmetry and Wyckoff positions of directions. The
+magnetic point groups (types II and III) follow.
 
 ## Conventions
 
@@ -258,8 +259,9 @@ any list (a point group, or for example the operations left after distorting a c
 the direction: those that move its unit vector by less than `tolerance` (default `EPSILON`,
 10⁻⁶). It also sets the direction onto the fixed space of these operations (the mean of its
 images, normalised), which removes rounding errors within the tolerance, and gives the
-multiplicity, the number of operations divided by the order of the site symmetry. Time reversal is
-ignored, since it does not change a direction. Site symmetry is plain computation and works in both
+multiplicity, the number of operations divided by the order of the site symmetry. Projection and
+multiplicity are meaningful when the operations form a group (then so do the fixing ones). Time
+reversal is ignored, since it does not change a direction. Site symmetry is plain computation and works in both
 conventions.
 
 **Wyckoff positions** are ITA's: a Wyckoff position is the set of directions whose site
@@ -283,7 +285,8 @@ prints them for that setting (ITA 6th ed., Table 3.2.3.2, pp. 745–769):
 | `siteSymmetryOperations` | indices into `operations` (same setting, ITC convention) of the operations fixing the representative                                  |
 
 - The **point at the origin** (letter o, site symmetry the whole group), which ITA 2016 prints for
-  the centrosymmetric and some other groups, is not a direction and is left out.
+  every group except the ten polar ones (1, 2, m, mm2, 4, 4mm, 3, 3m, 6, 6mm), is not a direction
+  and is left out.
 - The printed point and the printed face of a position may lie on **different, conjugate
   elements**: in 321, position b prints the point x,0,0 (on the twofold axis along a) and the face
   (112̄0) (on the twofold axis along [110]). Both belong to the position; the representative of
@@ -292,8 +295,9 @@ prints them for that setting (ITA 6th ed., Table 3.2.3.2, pp. 745–769):
   belong to the same Wyckoff position (ITA 6th ed., § 3.2.1.2.4 (i), p. 729); the first is the
   representative.
 - **Monoclinic and triclinic:** the Cartesian normal takes a, b, c along x, y, z, as
-  `describeOperations` does; this is exact for the unique axis and for the faces of the zone
-  around it, and the site symmetry does not depend on the cell angles.
+  `describeOperations` does, since a point group does not fix the cell angles. This is exact for the
+  unique axis; for any other face it is the normal for orthogonal axes, not the true pole for
+  β ≠ 90°, but it gives the correct site symmetry, which does not depend on the cell angles.
 - **Settings ITA does not print** (`mm2` settings 2 and 3, `2mm` and `m2m`): the positions of
   setting 1 carried into their frame, a permutation of the axes (maintainer decision, 2026-11-18,
   #24): same letters and multiplicities, the positions of the oriented symbol permuted, the

@@ -32,7 +32,10 @@ export interface WyckoffPosition {
   /** A representative face with numbers: `millerIndices` with h = 3, k = 2, l = 1. */
   readonly representative: {
     readonly hkl: Hkl;
-    /** Its face normal, a Cartesian unit vector. */
+    /**
+     * Its face normal, a Cartesian unit vector. Monoclinic and triclinic: the normal for a, b, c along
+     * x, y, z (no cell angles), exact for the unique axis only, but with the correct site symmetry.
+     */
     readonly cartesian: Vec3;
   };
   /** Indices into `operations` (same setting, ITC convention) of the site symmetry of the representative. */
@@ -80,8 +83,9 @@ const XYZ = 'xyz';
 const HKL = 'hkl';
 
 /**
- * A printed pattern carried by a signed permutation r of the axes (new axis i = r[i][j] × old axis j):
- * a component is `0`, a number, or a letter with an optional `-`; a letter is renamed after its new position.
+ * A printed pattern carried by a signed permutation r of the axes (new axis i = r[i][j] × old axis j).
+ * Only for components that are `0`, a number, or a plain letter with an optional `-` (as in `mm2`); a
+ * letter is renamed after its new position. A factor such as `2x` throws.
  */
 function permutePattern(pattern: string, r: Mat3, letters: string): string {
   const old = pattern.split(',');
@@ -94,6 +98,7 @@ function permutePattern(pattern: string, r: Mat3, letters: string): string {
       if (c === '0') return '0';
       const negative = c.startsWith('-') !== r[i][j] < 0;
       const body = c.replace(/^-/, '');
+      if (!/^(\d+|[a-z])$/.test(body)) throw new Error(`Cannot carry ${pattern} into another setting`);
       const renamed = /^\d+$/.test(body) ? body : letters[i];
       return (negative ? '-' : '') + renamed;
     })
@@ -207,7 +212,8 @@ const sortedKey = (list: readonly number[]): string => [...list].sort((a, b) => 
 /**
  * The Wyckoff position of a direction (any non-zero Cartesian vector) in a point group, ITC
  * convention only: the position whose representative has a site symmetry conjugate to that of the
- * direction (ITA's definition). `tolerance` as for `siteSymmetry`.
+ * direction (ITA's definition). `tolerance` as for `siteSymmetry`; throws a RangeError if the
+ * operations found within it do not match any position (a tolerance too large).
  */
 export function wyckoffPositionOf(key: PointGroupKey, direction: Vec3, options?: WyckoffOptions): WyckoffPosition {
   const tolerance = siteTolerance(options);
@@ -221,5 +227,7 @@ export function wyckoffPositionOf(key: PointGroupKey, direction: Vec3, options?:
     const row = candidates.find((r) => sortedKey(r.siteSymmetryOperations) === k);
     if (row) return row;
   }
-  throw new Error(`Point group ${key}, setting ${setting}: no Wyckoff position for ${JSON.stringify(direction)}`);
+  throw new RangeError(
+    `Point group ${key}, setting ${setting}: no Wyckoff position for ${JSON.stringify(direction)} (tolerance too large?)`,
+  );
 }

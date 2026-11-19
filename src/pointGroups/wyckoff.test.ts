@@ -93,6 +93,13 @@ describe('siteSymmetry', () => {
     expect(siteSymmetry(primed, [0, 0, 1]).operations).toHaveLength(8);
   });
 
+  it('is not general if a non-identity operation alone fixes the direction', () => {
+    const mirrorOnly = operations('m', { setting: 1 }).filter((o) => o.matrix[2][2] === -1);
+    expect(mirrorOnly).toHaveLength(1);
+    expect(siteSymmetry(mirrorOnly, [1, 2, 0]).general).toBe(false);
+    expect(siteSymmetry(mirrorOnly, [1, 2, 3]).general).toBe(true);
+  });
+
   it('rejects a zero vector and an invalid tolerance', () => {
     expect(() => siteSymmetry(ops, [0, 0, 0])).toThrow(RangeError);
     expect(() => siteSymmetry(ops, [0, 0, 1], { tolerance: 0 })).toThrow(RangeError);

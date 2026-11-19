@@ -420,7 +420,11 @@ describe('Settings ITA does not print: mm2 as 2mm and m2m', () => {
           ),
         ).toBe(true);
         const p = point(ORTHONORMAL, w.coordinates);
-        expect(stabilizerOf(group, p).length).toBe(stab.length);
+        const conj = group.some((g) => {
+          const s2 = stabilizerOf(group, apply(g.m, p));
+          return s2.length === stab.length && s2.every((x) => stab.some((y) => sameM(x.m, y.m)));
+        });
+        expect(conj, `point ${w.coordinates} in the same position`).toBe(true);
       }
     });
   }

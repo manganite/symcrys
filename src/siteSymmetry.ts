@@ -28,7 +28,7 @@ export interface SiteSymmetry {
   readonly direction: Vec3;
   /** Number of operations divided by the order of the site symmetry: the number of equivalent directions. */
   readonly multiplicity: number;
-  /** True if only the identity leaves the direction fixed (general position). */
+  /** True if no operation other than the identity leaves the direction fixed (general position). */
   readonly general: boolean;
 }
 
@@ -43,6 +43,10 @@ function fixes(op: Operation, v: Vec3, tolerance: number): boolean {
   return Math.hypot(w[0] - v[0], w[1] - v[1], w[2] - v[2]) < tolerance;
 }
 
+function isIdentity(op: Operation): boolean {
+  return op.matrix.every((row, i) => row.every((v, j) => Math.abs(v - (i === j ? 1 : 0)) < EPSILON));
+}
+
 /** The tolerance of the options, checked. */
 export function siteTolerance(options?: SiteSymmetryOptions): number {
   const t = options?.tolerance ?? EPSILON;
@@ -52,9 +56,10 @@ export function siteTolerance(options?: SiteSymmetryOptions): number {
 
 /**
  * The site symmetry of `direction` (any non-zero vector, Cartesian) under `operations`, which may
- * be any list of point operations, a group or not (for instance those of a distorted crystal).
- * Time reversal is ignored: a direction or a face normal is not changed by it. The operations must
- * contain the identity for `multiplicity` to be meaningful; throws a RangeError for a zero vector.
+ * be any list of point operations (for instance those of a distorted crystal). Time reversal is
+ * ignored: a direction or a face normal is not changed by it. `direction` and `multiplicity` are
+ * meaningful when the operations form a group (then the fixing ones do too); for another list
+ * `multiplicity` may not be an integer. Throws a RangeError for a zero vector.
  */
 export function siteSymmetry(
   operations: readonly Operation[],
@@ -79,6 +84,6 @@ export function siteSymmetry(
     operations: Object.freeze(indices),
     direction: Object.freeze(projected) as Vec3,
     multiplicity: indices.length > 0 ? operations.length / indices.length : operations.length,
-    general: indices.length <= 1,
+    general: indices.every((i) => isIdentity(operations[i])),
   });
 }
