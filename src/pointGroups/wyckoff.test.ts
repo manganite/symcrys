@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { apply, type Vec3 } from '../linalg.js';
+import { apply, matricesEqual, multiply, type Vec3 } from '../linalg.js';
 import { siteSymmetry } from '../siteSymmetry.js';
 import { POINT_GROUP_KEYS, operations, settings } from './pointGroups.js';
 import { wyckoffPositionOf, wyckoffPositions } from './wyckoff.js';
@@ -62,6 +62,43 @@ describe('wyckoffPositionOf', () => {
     expect(wyckoffPositionOf('2', [0, -1, 0]).letter).toBe('a');
   });
 
+  it('gives a group and a position for directions near an element, at the edge of the tolerance too', () => {
+    let seed = 7;
+    const rnd = () => ((seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648) * 2 - 1;
+    const tolerance = 1e-4;
+    for (const { key, s } of ALL_SETTINGS) {
+      const ops = operations(key, { setting: s.index });
+      for (const w of wyckoffPositions(key, { setting: s.index })) {
+        for (const g of ops) {
+          const image = apply(g.matrix, w.representative.cartesian);
+          for (const delta of [tolerance / 4, tolerance, 2 * tolerance]) {
+            const near: Vec3 = [image[0] + rnd() * delta, image[1] + rnd() * delta, image[2] + rnd() * delta];
+            const site = siteSymmetry(ops, near, { tolerance });
+            const label = `${key} #${s.index} ${w.letter} δ=${delta}`;
+            expect(Number.isInteger(site.multiplicity), label).toBe(true);
+            // A subgroup: closed under products; and each of its operations fixes the set direction.
+            for (const i of site.operations) {
+              const moved = apply(ops[i].matrix, site.direction);
+              expect(Math.hypot(...moved.map((x, k) => x - site.direction[k])), label).toBeLessThan(1e-9);
+              for (const j of site.operations) {
+                const product = multiply(ops[i].matrix, ops[j].matrix);
+                expect(
+                  site.operations.some((k) => matricesEqual(ops[k].matrix, product)),
+                  label,
+                ).toBe(true);
+              }
+            }
+            const letter = wyckoffPositionOf(key, near, { setting: s.index, tolerance }).letter;
+            if (delta <= tolerance / 4) {
+              // Every element fixing the image moves the perturbed direction by less than 2·√3·δ < tolerance.
+              expect(letter, `${key} #${s.index} ${w.letter}`).toBe(w.letter);
+            }
+          }
+        }
+      }
+    }
+  });
+
   it('uses the tolerance for directions rounded near an element', () => {
     const near: Vec3 = [1, 0.5, 0.00005];
     expect(wyckoffPositionOf('4/mmm', near).letter).toBe('g');
@@ -88,6 +125,17 @@ describe('siteSymmetry', () => {
     expect(s.multiplicity).toBe(8);
   });
 
+  it('closes the fixing operations to a group and sets the direction exactly on its axis', () => {
+    // 6 × 10⁻⁵ off the sixfold axis: the sixfold rotations move it by 0.6 × 10⁻⁴ (fixing within the tolerance),
+    // the threefold ones by 1.04 × 10⁻⁴ and the twofold one by 1.2 × 10⁻⁴ (not fixing): not a group.
+    const near: Vec3 = [-0.0000424264, 0.0000424264, 1];
+    const six = operations('6/mmm', { setting: 1 });
+    const s = siteSymmetry(six, near, { tolerance: 1e-4 });
+    expect(s.operations).toHaveLength(12);
+    expect(s.multiplicity).toBe(2);
+    expect(Math.abs(s.direction[0]) + Math.abs(s.direction[1])).toBeLessThan(1e-12);
+  });
+
   it('works on any list of operations, ignoring time reversal', () => {
     const primed = ops.map((o) => ({ matrix: o.matrix, timeReversal: true }));
     expect(siteSymmetry(primed, [0, 0, 1]).operations).toHaveLength(8);
@@ -98,6 +146,12 @@ describe('siteSymmetry', () => {
     expect(mirrorOnly).toHaveLength(1);
     expect(siteSymmetry(mirrorOnly, [1, 2, 0]).general).toBe(false);
     expect(siteSymmetry(mirrorOnly, [1, 2, 3]).general).toBe(true);
+  });
+
+  it('throws if the operations fixing within a far too large tolerance fix no common direction', () => {
+    // 422, tolerance 0.95: operations that move this direction by up to 0.95 generate a group fixing no
+    // direction (found by a scan; a tolerance far beyond any use).
+    expect(() => siteSymmetry(operations('422'), [0.9018, 0.3462, 0.2588], { tolerance: 0.95 })).toThrow(RangeError);
   });
 
   it('rejects a zero vector and an invalid tolerance', () => {

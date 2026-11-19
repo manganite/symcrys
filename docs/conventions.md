@@ -257,12 +257,16 @@ point group acts on. A direction is a non-zero Cartesian vector; its length does
 **Site symmetry.** `siteSymmetry(operations, direction, { tolerance })` returns the operations of
 any list (a point group, or for example the operations left after distorting a crystal) that fix
 the direction: those that move its unit vector by less than `tolerance` (default `EPSILON`,
-10⁻⁶). It also sets the direction onto the fixed space of these operations (the mean of its
-images, normalised), which removes rounding errors within the tolerance, and gives the
-multiplicity, the number of operations divided by the order of the site symmetry. Projection and
-multiplicity are meaningful when the operations form a group (then so do the fixing ones). Time
-reversal is ignored, since it does not change a direction. Site symmetry is plain computation and works in both
-conventions.
+10⁻⁶). Near an element, the operations fixing a direction within the tolerance need not form a
+group (a sixfold rotation can count as fixing while its square, which moves the direction further,
+does not), so symcrys closes them under the products found in the list, sets the given direction
+onto the fixed space of that group (the mean of its images, normalised), takes the operations
+fixing that set direction, and repeats until the group no longer changes. If the group fixes no
+common direction (only with a tolerance far too large), it throws. The result is the site symmetry of the set direction,
+which removes rounding errors within the tolerance; the multiplicity is the number of operations
+divided by its order. For a list that is not a group, the closure keeps only products in the list,
+and the multiplicity may not be an integer. Time reversal is ignored, since it does not change a
+direction. Site symmetry is plain computation and works in both conventions.
 
 **Wyckoff positions** are ITA's: a Wyckoff position is the set of directions whose site
 symmetries are conjugate in the point group (ITA, 6th ed., § 3.2.1.2.2, "Definition", p. 722). They are

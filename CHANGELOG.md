@@ -6,6 +6,18 @@ All notable changes to symcrys are recorded here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- `siteSymmetry` (and so `wyckoffPositionOf`) for a direction near an element at the edge of the
+  tolerance: the operations fixing it within the tolerance were taken as they were, which need not
+  be a group (e.g. 6 × 10⁻⁵ off the sixfold axis of 6/mmm with tolerance 10⁻⁴, the sixfold rotations
+  count as fixing but the threefold ones not). The direction was then set off the element, the
+  multiplicity could be fractional, and `wyckoffPositionOf` threw. Now the fixing operations are
+  closed under products and the direction is set onto the fixed space of that group, repeated until
+  stable; with a tolerance so large that the group fixes no common direction it throws. Wrong
+  since 0.3.0, fixed in 0.3.1; for a group and directions on an element or clearly off it the
+  results are unchanged.
+
 ## [0.3.0] - 2026-11-19
 
 ### Added
