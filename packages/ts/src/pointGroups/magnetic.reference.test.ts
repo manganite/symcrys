@@ -25,6 +25,7 @@ import { close, sameGroup, type M, type RefOp } from '../testUtils/independentGr
 import { operationLabel, printedLabels } from '../testUtils/operatorLists.js';
 import { expectHeader, readReference, section, tableRows } from '../testUtils/references.js';
 import { describeOperations } from './elements.js';
+import { isCentrosymmetric, isChiral, isPolar, laueClass } from './properties.js';
 import {
   MAGNETIC_POINT_GROUP_KEYS,
   POINT_GROUP_KEYS,
@@ -397,5 +398,29 @@ describe('the 122 magnetic point groups', () => {
     expect(findMagneticPointGroup("m'm'm", 'birss')).toEqual({ key: "mm'm'", setting: 1 });
     expect(findMagneticPointGroup("6'/mm'm", 'birss')).toEqual({ key: "6'/mmm'", setting: 1 });
     expect(findMagneticPointGroup('nonsense')).toBeUndefined();
+  });
+});
+
+// --- Properties -------------------------------------------------------------------------------------
+
+describe('properties of the magnetic point groups', () => {
+  it('centrosymmetric needs the inversion without time reversal', () => {
+    expect(isCentrosymmetric('mmm')).toBe(true);
+    expect(isCentrosymmetric("mmm1'")).toBe(true);
+    expect(isCentrosymmetric("mm'm'")).toBe(true);
+    // m'm'm' and mmm' contain the inversion only combined with time reversal.
+    expect(isCentrosymmetric("m'm'm'")).toBe(false);
+    expect(isCentrosymmetric("mmm'")).toBe(false);
+  });
+
+  it('polar, chiral and Laue class are those of the crystal class', () => {
+    for (const key of MAGNETIC_POINT_GROUP_KEYS) {
+      const classKey = crystalClassOf(key);
+      expect([isPolar(key), isChiral(key), laueClass(key)], key).toEqual([
+        isPolar(classKey),
+        isChiral(classKey),
+        laueClass(classKey),
+      ]);
+    }
   });
 });

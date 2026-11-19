@@ -160,3 +160,19 @@ describe('siteSymmetry', () => {
     expect(() => siteSymmetry(ops, [0, 0, 1], { tolerance: Number.NaN })).toThrow(RangeError);
   });
 });
+
+describe('magnetic point groups', () => {
+  it('have no Wyckoff positions: ITA gives them for the crystal classes only', () => {
+    for (const key of ["4'/mmm'", "2221'"]) {
+      expect(() => wyckoffPositions(key as never)).toThrow(/32 crystal classes only/);
+      expect(() => wyckoffPositionOf(key as never, [0, 0, 1])).toThrow(RangeError);
+    }
+    expect(() => wyckoffPositions('nonsense' as never)).toThrow(/Unknown point group key/);
+  });
+
+  it('site symmetry of a direction ignores the time reversal of their operations', () => {
+    const site = siteSymmetry(operations("4'/mmm'"), [0, 0, 1]);
+    expect(site.operations).toHaveLength(8);
+    expect(site.multiplicity).toBe(2);
+  });
+});

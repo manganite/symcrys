@@ -264,7 +264,9 @@ The conventions themselves are in `docs/conventions.md`; here, what was decided 
 
 - **Keys are ITC short symbols of the class** (maintainer, 2026-11-08, #13): ITC is the default
   convention, and birss-app selects `'birss'` anyway. For the 32 classes they equal birss-app's
-  keys; for the magnetic groups the mapping is checked against ITC Vol. D Table 1.5.2.3.
+  keys; for the magnetic groups they are the short symbols of ITC Vol. D Table 1.5.2.3,
+  which differ from birss-app's keys for D2h(C2h) (`mm'm'`, birss-app `m'm'm`) and D6h(D3h)
+  (`6'/mmm'`, birss-app `6'/mm'm`); a grey group is the class key followed by `1'`.
 - **Order of work** (maintainer, 2026-11-08, #13): first the 32 crystal classes (type I) with
   settings, both conventions, symbols and the properties that follow from the operations; the 90
   magnetic groups (types II and III) in a second step. Data and code are shared; the split only
@@ -272,7 +274,10 @@ The conventions themselves are in `docs/conventions.md`; here, what was decided 
   (maintainer, 2026-11-18, crystallography-common#99): the teaching apps do not need them and
   birss-app rests; their transcription needs ITC Vol. D from Thomas; adding them is additive
   (`Operation.timeReversal` and `PointGroupType` exist), and the first real consumer tests the API
-  early.
+  early. **Magnetic groups and group properties in three PRs** (maintainer, 2026-11-19, #13, #41):
+  data, symbols and operations; then the `'c'`-tensors and the named tensor properties; then the
+  fixed properties of a class as fields of `pointGroup()`; released together as one MINOR. The
+  rank-4 forms of ITC Vol. D (#39) follow in a PR of their own.
 - **Symmetry elements as structured data** (maintainer, 2026-11-18, #16): symcrys describes each
   operation (`describeOperations`: kind, n, axis, sense, time reversal) and the elements along each
   symmetry direction (`symmetryDirections`); strings such as `4⁺ 0,0,z` or `2_z` stay in the
@@ -334,6 +339,36 @@ The conventions themselves are in `docs/conventions.md`; here, what was decided 
   and Wyckoff positions").
 - **`latticeBasis` only for families with fixed cell angles** (2026-11-09, #14): for monoclinic
   and triclinic a Cartesian basis would need the cell angles, which a point group does not fix.
+- **Magnetic point groups: a list of their own beside the classes** (maintainer, 2026-11-19, #13;
+  asked before implementation): `POINT_GROUP_KEYS` and `pointGroups()` stay the 32 crystal classes,
+  so the teaching apps, which loop over them, change nothing; `MAGNETIC_POINT_GROUP_KEYS` and
+  `magneticPointGroups()` hold all 122, the classes first, and `MagneticPointGroupKey` is a
+  superset of `PointGroupKey`. `operations`, `generators`, `settings`, `symbol`, `pointGroup`,
+  `describeOperations`, `symmetryDirections` and the properties that follow from the operations take
+  any of the 122 keys. Chosen while implementing, for the same reason: `findPointGroup` keeps
+  finding classes only and `findMagneticPointGroup` finds all groups (stereography accepts whatever
+  `findPointGroup` knows as a group of its catalogue); Wyckoff positions stay with the classes,
+  because ITA tabulates them for these only.
+- **Magnetic point groups: order and generators in the ITC convention** (maintainer, 2026-11-19,
+  #13; asked before implementation): ITC Vol. D prints neither (Table 1.5.2.3 groups the operators),
+  so an operation of a black-and-white group keeps the number ITA gives it in the crystal class,
+  time reversal being a mark on the operation, and a grey group lists the class first, then the
+  same sequence with time reversal. The other proposal, the subgroup without time reversal first
+  and its coset after it (ITC Vol. D eq. (1.5.2.2)), would have changed the numbers against the
+  class. The generators follow the same idea: those of the class with their time reversal, for a
+  grey group followed by `1'` (chosen while implementing).
+- **Magnetic point groups: data** (2026-11-19, #13): stored like the classes, in the Birss frame
+  with birss-app's generators and settings (birss-app 2be5fe3), ITC derived. Not stored: the grey
+  groups (class and time reversal, ITC Vol. D eq. (1.5.2.1)) and the symbols of the black-and-white
+  groups, which are the symbols of the class in the same frame with the primes of the operations;
+  one rule then serves all settings and both conventions, and the print (58 full symbols of ITC
+  Vol. D Table 1.5.2.3, 58 symbols of Birss Table 6) checks the rule instead of a list of strings.
+  The types are named `'I'`, `'II'`, `'III'` as in birss-app; ITC Vol. D numbers them differently
+  (`docs/conventions.md`, "Types").
+- **Reading ITC Vol. D** (2026-11-19): the volume in Zotero (`YQKTNYVN`) is one PDF of 541 pages;
+  the printed page number is the PDF page number plus 1 (checked at Table 1.5.2.3: PDF pages
+  110–111 are printed pp. 111–112). Its text layer loses primes, overbars and underlines, so tables
+  are transcribed from page images, not from extracted text.
 
 ### Tensors
 

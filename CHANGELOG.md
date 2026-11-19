@@ -6,6 +6,31 @@ All notable changes to symcrys are recorded here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- The 90 magnetic point groups with time reversal (#13): the 32 grey groups (type II, `2221'`) and
+  the 58 black-and-white groups (type III, `4'/mmm'`), with their settings, symbols, operations and
+  generators in both conventions. Keys are the short symbols of ITC Vol. D Table 1.5.2.3 with a
+  prime `'` for time reversal; a grey group is the key of its class followed by `1'`. New:
+  `MAGNETIC_POINT_GROUP_KEYS` (all 122 keys, the 32 classes first), `magneticPointGroups()`,
+  `isMagneticPointGroupKey`, `findMagneticPointGroup` and the type `MagneticPointGroupKey`.
+  `pointGroup`, `settings`, `operations`, `generators`, `symbol`, `describeOperations`,
+  `symmetryDirections`, `isCentrosymmetric`, `isPolar`, `isChiral` and `laueClass` take any of the
+  122 keys; `PointGroupType` is now `'I' | 'II' | 'III'`. In the ITC convention the operations of
+  a magnetic group are in the order of its crystal class; in the Birss convention operations,
+  generators, symbols and settings are birss-app's (docs/conventions.md, "Types", "Settings of the
+  magnetic groups").
+- Python: `MAGNETIC_POINT_GROUP_KEYS`, `magnetic_point_groups`, `is_magnetic_point_group_key`,
+  `find_magnetic_point_group`.
+
+### Changed
+
+- `POINT_GROUP_KEYS`, `pointGroups()`, `isPointGroupKey` and `findPointGroup` are unchanged: they
+  cover the 32 crystal classes. `PointGroup` and `PointGroupInSetting` are now generic in the key
+  type, with the class keys as default.
+- `wyckoffPositions` and `wyckoffPositionOf` throw a `RangeError` with a message of its own for a
+  magnetic point group with time reversal (before, such a key was unknown).
+
 ## [0.5.0] - 2026-11-19
 
 ### Added

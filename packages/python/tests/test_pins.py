@@ -9,23 +9,30 @@ import pytest
 import symcrys
 from conftest import pins
 
-POINT_GROUPS = pins("pointGroups/birssApp.pins.json")["classes"]
+POINT_GROUPS = pins("pointGroups/birssApp.pins.json")["groups"]
+# birss-app's keys are Birss symbols; for two groups the key of symcrys, the ITC short symbol, differs.
+SYMCRYS_KEY = {"m'm'm": "mm'm'", "6'/mm'm": "6'/mmm'"}
 TENSORS = pins("tensors/birssApp.pins.json")["classes"]
 
 
 @pytest.mark.parametrize("pin", POINT_GROUPS, ids=[c["key"] for c in POINT_GROUPS])
 def test_point_groups(pin: dict[str, Any]) -> None:
-    key = pin["key"]
+    key = SYMCRYS_KEY.get(pin["key"], pin["key"])
+    assert symcrys.point_group(key)["type"] == pin["type"]
+    assert symcrys.symbol(key, convention="birss") == pin["key"]
     birss = [s for s in symcrys.settings(key, "birss")]
     assert next(s["index"] for s in birss if s["is_default"]) == pin["defaultSetting"]
+    assert next(s["index"] for s in symcrys.settings(key) if s["is_default"]) == pin["itcDefaultSetting"]
     assert [symcrys.is_centrosymmetric(key), symcrys.is_polar(key), symcrys.is_chiral(key), symcrys.laue_class(key)] == [
         pin["centrosymmetric"], pin["polar"], pin["chiral"], pin["laueClass"]
     ]
     for s in pin["settings"]:
         ops = symcrys.operations(key, convention="birss", setting=s["setting"])
         assert np.allclose([o["matrix"] for o in ops], s["operations"], atol=1e-9)
+        assert [o["time_reversal"] for o in ops] == s["operationTimeReversal"]
         gens = symcrys.generators(key, convention="birss", setting=s["setting"])
         assert np.allclose([g["matrix"] for g in gens], s["generators"], atol=1e-9)
+        assert [g["time_reversal"] for g in gens] == s["generatorTimeReversal"]
         assert symcrys.symbol(key, convention="birss", setting=s["setting"]) == s["symbol"]
 
 

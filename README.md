@@ -10,8 +10,9 @@ package of the same version that runs it in an embedded JavaScript engine.
 | TypeScript / JavaScript | [`packages/ts`](packages/ts)         | `npm install symcrys`                                                  |
 | Python ≥ 3.10           | [`packages/python`](packages/python) | `pip install symcrys` (from the first release with the Python package) |
 
-> **Status: pre-release.** So far: the 32 crystallographic point groups with their symmetry elements,
-> site symmetry and Wyckoff positions, and the forms of property tensors of rank 0 to 4.
+> **Status: pre-release.** So far: the 32 crystallographic and the 90 magnetic point groups with
+> time reversal, with their symmetry elements; for the crystallographic point groups also site
+> symmetry, Wyckoff positions and the forms of property tensors of rank 0 to 4.
 > The API will change without notice until 1.0.0.
 
 ## Scope
@@ -138,7 +139,7 @@ Audits under `audit/` compare the code bases symcrys draws on. They are run by h
 [stereography](https://github.com/manganite/stereography) checked out next to this repository:
 `npm run audit:point-groups` writes `audit/point-groups/report.md`, and `npm run audit:birss-app`
 captures the pins of the Birss convention as JSON (`packages/ts/src/pointGroups/birssApp.pins.json`
-for the operations, `packages/ts/src/tensors/birssApp.pins.json` for the tensor forms).
+for the operations of all 122 magnetic point groups, `packages/ts/src/tensors/birssApp.pins.json` for the tensor forms).
 
 CI runs these seven gates on every pull request, on Node 22 and 24, and the gate `python` (bundle,
 build sdist and wheel, install the wheel, `mypy`, `pytest`) on Python 3.10 and the newest. Tests sit next to their
