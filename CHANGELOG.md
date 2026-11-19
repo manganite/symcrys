@@ -14,7 +14,8 @@ All notable changes to symcrys are recorded here. The format follows
   count as fixing but the threefold ones not). The direction was then set off the element, the
   multiplicity could be fractional, and `wyckoffPositionOf` threw. Now the fixing operations are
   closed under products and the direction is set onto the fixed space of that group, repeated until
-  stable. Wrong since 0.3.0, fixed in 0.3.1; for directions on an element or clearly off it the
+  stable; with a tolerance so large that the group fixes no common direction it throws. Wrong
+  since 0.3.0, fixed in 0.3.1; for a group and directions on an element or clearly off it the
   results are unchanged.
 
 ## [0.3.0] - 2026-11-19

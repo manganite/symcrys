@@ -50,18 +50,36 @@ function isIdentity(op: Operation): boolean {
   return op.matrix.every((row, i) => row.every((v, j) => Math.abs(v - (i === j ? 1 : 0)) < EPSILON));
 }
 
+/** Products already looked up, per list of operations: `i * n + j` → index of op[i]·op[j] in the list, or -1. */
+const productTables = new WeakMap<readonly Operation[], Map<number, number>>();
+
+function productIndex(operations: readonly Operation[], i: number, j: number): number {
+  let table = productTables.get(operations);
+  if (!table) {
+    table = new Map();
+    productTables.set(operations, table);
+  }
+  const key = i * operations.length + j;
+  let k = table.get(key);
+  if (k === undefined) {
+    const product = multiply(operations[i].matrix, operations[j].matrix);
+    k = operations.findIndex((op) => matricesEqual(op.matrix, product));
+    table.set(key, k);
+  }
+  return k;
+}
+
 /** The indices plus those of every product of two of them that is itself in the list, until closed. */
 function closeWithin(operations: readonly Operation[], indices: readonly number[]): number[] {
   const set = [...indices];
-  for (let changed = true; changed;) {
-    changed = false;
-    for (const a of [...set]) {
-      for (const b of [...set]) {
-        const product = multiply(operations[a].matrix, operations[b].matrix);
-        const k = operations.findIndex((op) => matricesEqual(op.matrix, product));
-        if (k >= 0 && !set.includes(k)) {
+  const inSet = new Set(set);
+  // Each element is multiplied with every element before it once, in both orders, as it is added.
+  for (let i = 0; i < set.length; i++) {
+    for (let j = 0; j <= i; j++) {
+      for (const k of [productIndex(operations, set[i], set[j]), productIndex(operations, set[j], set[i])]) {
+        if (k >= 0 && !inSet.has(k)) {
+          inSet.add(k);
           set.push(k);
-          changed = true;
         }
       }
     }
@@ -100,7 +118,8 @@ export function siteTolerance(options?: SiteSymmetryOptions): number {
  * within the tolerance are closed under the products found in the list and the direction is set onto
  * their fixed space, repeated until stable, so that for a group the result is a subgroup and the
  * set direction lies exactly on its elements. For a list that is not a group, `multiplicity` may
- * not be an integer. Throws a RangeError for a zero vector.
+ * not be an integer. Throws a RangeError for a zero vector, and if the closed operations fix no
+ * common direction (a tolerance far too large, e.g. 0.5).
  */
 export function siteSymmetry(
   operations: readonly Operation[],
@@ -125,7 +144,11 @@ export function siteSymmetry(
   let set = closeWithin(operations, indices);
   for (let pass = 0; pass < 8; pass++) {
     const mean = meanImage(operations, set, v);
-    if (mean === undefined) break; // no common fixed direction: keep the operations fixing v as they are
+    if (mean === undefined) {
+      throw new RangeError(
+        `No common fixed direction for the operations fixing ${JSON.stringify(direction)} within ${tolerance} (tolerance too large?)`,
+      );
+    }
     const next = closeWithin(operations, fixing(mean));
     if (sameIndices(next, set)) {
       indices = set;

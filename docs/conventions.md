@@ -259,9 +259,10 @@ any list (a point group, or for example the operations left after distorting a c
 the direction: those that move its unit vector by less than `tolerance` (default `EPSILON`,
 10⁻⁶). Near an element, the operations fixing a direction within the tolerance need not form a
 group (a sixfold rotation can count as fixing while its square, which moves the direction further,
-does not), so symcrys closes them under the products found in the list, sets the direction onto
-the fixed space of that group (the mean of its images, normalised), and repeats on the set
-direction until the group no longer changes. The result is the site symmetry of the set direction,
+does not), so symcrys closes them under the products found in the list, sets the given direction
+onto the fixed space of that group (the mean of its images, normalised), takes the operations
+fixing that set direction, and repeats until the group no longer changes. If the group fixes no
+common direction (only with a tolerance far too large), it throws. The result is the site symmetry of the set direction,
 which removes rounding errors within the tolerance; the multiplicity is the number of operations
 divided by its order. For a list that is not a group, the closure keeps only products in the list,
 and the multiplicity may not be an integer. Time reversal is ignored, since it does not change a
