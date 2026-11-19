@@ -60,7 +60,7 @@ function birssAppSymbol(d: OperationDescription): string {
 
 describe('Birss convention = birss-app (pins)', () => {
   it('docs/conventions.md names the birss-app revision the pins come from', () => {
-    const docs = readFileSync(new URL('../../docs/conventions.md', import.meta.url), 'utf8');
+    const docs = readFileSync(new URL('../../../../docs/conventions.md', import.meta.url), 'utf8');
     expect(docs).toContain(`birss-app ${BIRSS_APP_REVISION.split(' ')[0]}`);
   });
 

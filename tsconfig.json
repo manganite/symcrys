@@ -23,5 +23,5 @@
     "skipLibCheck": true,
     "noEmit": true
   },
-  "include": ["src", "scripts", "vitest.config.ts", "eslint.config.js"]
+  "include": ["packages/ts/src", "scripts", "vitest.config.ts", "eslint.config.js"]
 }

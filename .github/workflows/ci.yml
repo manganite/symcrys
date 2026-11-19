@@ -39,3 +39,47 @@ jobs:
         run: npm run build
       - name: Check dist
         run: npm run check:dist
+
+  # The Python package (packages/python) on the TypeScript build of the same commit: bundle,
+  # build sdist and wheel, install the wheel into a fresh environment, type check and test it.
+  # Python 3.10 (the oldest supported, quickjs-ng wheels are abi3 from 3.10) and the newest.
+  python:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ['3.10', '3.x']
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+      - name: Set up Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install Node dependencies
+        run: npm ci
+      - name: Build and bundle the TypeScript package
+        run: |
+          npm run build
+          npm run bundle:python
+      - name: Build sdist and wheel
+        run: |
+          python -m pip install --upgrade pip build
+          python -m build --outdir packages/python/dist packages/python
+      - name: Check the wheel
+        run: |
+          unzip -l packages/python/dist/*.whl | grep -q 'symcrys/_bundle.js' || { echo '::error::wheel has no _bundle.js'; exit 1; }
+      - name: Install the wheel and the test tools
+        run: |
+          python -m venv /tmp/venv
+          /tmp/venv/bin/pip install packages/python/dist/*.whl 'pytest>=8' 'mypy>=1.13'
+      - name: Type check (mypy)
+        working-directory: packages/python
+        run: /tmp/venv/bin/mypy
+      - name: Test (pytest, against the installed wheel)
+        working-directory: packages/python
+        run: /tmp/venv/bin/pytest -p no:cacheprovider
