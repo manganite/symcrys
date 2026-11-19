@@ -368,6 +368,11 @@ The conventions themselves are in `docs/conventions.md`; here, what was decided 
   the printed page number is the PDF page number plus 1 (checked at Table 1.5.2.3: PDF pages
   110–111 are printed pp. 111–112). Its text layer loses primes, overbars and underlines, so tables
   are transcribed from page images, not from extracted text.
+- **Reading Birss** (2026-11-19): the scan in Zotero (`WKMPAPCY`, "Birss Symmetry & Magnetism
+  komplett") has two printed pages on each PDF page; Table 6 (printed pp. 91–98) is on PDF pages
+  55–59, rotated by 90°. Time reversal is an underline there, easy to miss at low resolution: read
+  the pages enlarged. Its Shubnikov symbols agree with those of ITC Vol. D Table 1.5.2.3 for all 90
+  groups, which a test now checks (two independent prints).
 
 ### Tensors
 

@@ -11,8 +11,8 @@
  *   matrices σ(N) of eq. (2.17) (printed p. 48). For each of its 90 groups: the printed generators,
  *   those of the last column combined with time reversal, closed with the independent algebra of
  *   testUtils, give exactly the operations of the Birss default setting; the matrices of the
- *   classical subgroup generate half of them. The operator list of the transcription, which is
- *   partly derived (see the head of references/birss/table-6.md), names the same operations.
+ *   classical subgroup generate half of them; the operator list names the same operations; the
+ *   Shubnikov symbols agree with those of the ITC table.
  * - Both conventions, fixture class (b): the symbol of every setting of every grey and
  *   black-and-white group, read along the symmetry directions of its convention with a prime
  *   meaning time reversal, generates the operations of that setting. This covers what the tables
@@ -187,6 +187,13 @@ describe('Birss Table 6 (printed pp. 91–98) against symcrys, Birss convention'
 
   it('applies every erratum to an existing row', () => {
     for (const printed of ERRATA.keys()) expect(rows.some((r) => r[1] === printed)).toBe(true);
+  });
+
+  it('the Shubnikov symbols are those of ITC Vol. D Table 1.5.2.3', () => {
+    // Two independent prints: Birss underlines an element combined with time reversal, as ITC does;
+    // the transcriptions write the underline as a prime (Birss) and as a leading underscore (ITC).
+    const itc = new Map(itcRows.slice(1).map((r) => [r[3], r[2].replace(/_(-?[0-9m])/g, "$1'")]));
+    for (const r of rows) expect(r[2], r[1]).toBe(itc.get(KEY_OF_PRINTED[r[1]] ?? r[1]));
   });
 
   for (const r of rows) {
