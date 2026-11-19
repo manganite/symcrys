@@ -1,9 +1,15 @@
 # Birss Table 6: the magnetic point groups
 
 Source: R. R. Birss, _Symmetry and Magnetism_ (North-Holland, Amsterdam, 1966), Table 6, printed
-pp. 91–98 (printed rotated by 90°). Transcribed in manganite/birss-tables (`table-6.md`) and checked
-there against the scanned pages; taken over as printed, with the known misprint listed under
+pp. 91–98 (printed rotated by 90°). Transcribed in manganite/birss-tables (`table-6.md`, vendored
+in birss-app as `birss-tables/`) and taken over from there, with the known misprint listed under
 "Errata" instead of corrected in the table.
+
+How far the columns are print: the symbols and the generating matrices were checked there against
+the scanned pages. The column "Symmetry operators" is in the normalised notation described below
+(a prime for Birss's underline, placed on the operation); for the 58 black-and-white groups it was
+there partly derived from Table 3 as M = H ∪ (G∖H)′ and compared with the scan for six disputed
+rows, so it is a check of consistency rather than a transcription of every printed entry.
 
 What the table covers: 90 of the 122 magnetic point groups, the 32 crystallographic point groups
 (no classical subgroup, `-`) and the 58 black-and-white groups. The 32 grey groups are not listed;

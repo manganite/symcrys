@@ -10,8 +10,9 @@
  * - Birss convention, fixture class (a): Birss Table 6 (printed pp. 91–98) with the generating
  *   matrices σ(N) of eq. (2.17) (printed p. 48). For each of its 90 groups: the printed generators,
  *   those of the last column combined with time reversal, closed with the independent algebra of
- *   testUtils, give exactly the operations of the Birss default setting; the printed operator list
- *   names the same operations; the matrices of the classical subgroup generate half of them.
+ *   testUtils, give exactly the operations of the Birss default setting; the matrices of the
+ *   classical subgroup generate half of them. The operator list of the transcription, which is
+ *   partly derived (see the head of references/birss/table-6.md), names the same operations.
  * - Both conventions, fixture class (b): the symbol of every setting of every grey and
  *   black-and-white group, read along the symmetry directions of its convention with a prime
  *   meaning time reversal, generates the operations of that setting. This covers what the tables

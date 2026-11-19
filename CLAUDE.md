@@ -272,9 +272,7 @@ The conventions themselves are in `docs/conventions.md`; here, what was decided 
   magnetic groups (types II and III) in a second step. Data and code are shared; the split only
   keeps reviews small. **The magnetic groups come after stereography has moved onto symcrys**
   (maintainer, 2026-11-18, crystallography-common#99): the teaching apps do not need them and
-  birss-app rests; their transcription needs ITC Vol. D from Thomas; adding them is additive
-  (`Operation.timeReversal` and `PointGroupType` exist), and the first real consumer tests the API
-  early. **Magnetic groups and group properties in three PRs** (maintainer, 2026-11-19, #13, #41):
+  birss-app rests; adding them is additive, and the first real consumer tests the API early. **Magnetic groups and group properties in three PRs** (maintainer, 2026-11-19, #13, #41):
   data, symbols and operations; then the `'c'`-tensors and the named tensor properties; then the
   fixed properties of a class as fields of `pointGroup()`; released together as one MINOR. The
   rank-4 forms of ITC Vol. D (#39) follow in a PR of their own.
@@ -299,7 +297,8 @@ The conventions themselves are in `docs/conventions.md`; here, what was decided 
   birss-app, so its tests carry over; exact lattice-basis matrices when a consumer needs them.
 - **Properties that need tensors** come with the tensor module (maintainer, 2026-11-08, #13):
   piezoelectric is there ("Tensors" below); piezomagnetic, magnetoelectric and ferromagnetic need
-  the magnetic point groups and come with them.
+  the magnetic point groups and come as named tensor properties (#41), once the tensor forms of
+  the magnetic point groups are anchored in print.
 - **Hexagonal frame x ∥ a, z ∥ c** (maintainer, 2026-11-08, #6): birss-app's frame, in which its
   print-verified tensor tests hold; ITC Vol. D puts the secondary direction of the trigonal groups
   along x₁ as well.
@@ -399,8 +398,8 @@ The conventions are in `docs/conventions.md` ("Tensors"); here, what was decided
   `'voigt'` at rank 3 and the like; a library call with it is a mistake of the caller, and silently
   computing another tensor would hide it.
 - **Time reversal is built in** (#13): an operation with `timeReversal` changes the sign of a
-  `'c'`-tensor, so the magnetic point groups need no change to the tensor code. Piezomagnetic,
-  magnetoelectric and ferromagnetic come with them.
+  `'c'`-tensor, so the magnetic point groups need no change to the tensor code. Until their
+  forms are anchored in print, `tensorForm` and `isPiezoelectric` take the crystal classes only.
 - **Speed** (#30, measured 2026-11-19): birss-app's reduction, bundled, takes under QuickJS
   (`quickjs-ng`) 3–112 ms per class for the SHG tensor and up to about 0.3 s at rank 4 (m-3m), 10–35
   times Node; enough for a Python layer that calls symcrys a few times per material. Forms per

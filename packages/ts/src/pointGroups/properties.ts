@@ -70,7 +70,8 @@ export function laueClass(key: MagneticPointGroupKey): PointGroupKey {
 
 /**
  * Piezoelectric: the polarization can depend linearly on stress, i.e. a polar time-even tensor of
- * rank 3, symmetric in its last two indices, is allowed (ITA Table 3.2.2.1).
+ * rank 3, symmetric in its last two indices, is allowed (ITA Table 3.2.2.1). For the 32 crystal
+ * classes; throws a RangeError for a magnetic point group with time reversal, as `tensorForm` does.
  */
 export function isPiezoelectric(key: PointGroupKey): boolean {
   return (

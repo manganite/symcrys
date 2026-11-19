@@ -204,11 +204,9 @@ function settingGenerators(d: GroupData, index: number): readonly Operation[] {
   return result;
 }
 
-/** The operation of `ops` with the matrix of `op`; with `timeReversal` given, the one with that flag. */
-function withMatrix(ops: readonly Operation[], op: Operation, timeReversal?: boolean): Operation {
-  const found = ops.find(
-    (x) => (timeReversal === undefined || x.timeReversal === timeReversal) && matricesEqual(x.matrix, op.matrix),
-  );
+/** The operation of `ops` with the matrix of `op`, whatever its time reversal. */
+function withMatrix(ops: readonly Operation[], op: Operation): Operation {
+  const found = ops.find((x) => matricesEqual(x.matrix, op.matrix));
   if (!found) throw new Error('Operation of the crystal class missing in the magnetic group');
   return found;
 }

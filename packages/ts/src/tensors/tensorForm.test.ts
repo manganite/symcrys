@@ -9,6 +9,7 @@ import { describe, expect, it } from 'vitest';
 import { det, type Mat3, type Vec3 } from '../linalg.js';
 import { operation, type Operation } from '../operations.js';
 import { POINT_GROUP_KEYS, generators, operations, settings, type PointGroupKey } from '../pointGroups/pointGroups.js';
+import { isPiezoelectric } from '../pointGroups/properties.js';
 import { siteSymmetry } from '../siteSymmetry.js';
 import { matrixRank, satisfies } from '../testUtils/rank.js';
 import { YARIV_PANELS, basisScheme, printedScheme } from '../testUtils/yariv.js';
@@ -381,4 +382,26 @@ describe('use case of #30: SHG at the surfaces of an m-3m crystal, against Yariv
       for (const [cell, sign] of want.signs) expect(got.signs.get(cell), cell).toBeCloseTo(sign, 9);
     });
   }
+});
+
+describe('magnetic point groups', () => {
+  it('tensorForm and isPiezoelectric take the crystal classes only, until the forms are anchored (#13, #41)', () => {
+    const spec = { rank: 1, parity: 'axial', timeParity: 'c', intrinsic: 'none' } as const;
+    for (const key of ["m'm'2", "2221'"]) {
+      expect(() => tensorForm(key as never, spec)).toThrow(/32 crystal classes so far/);
+      expect(() => isPiezoelectric(key as never)).toThrow(RangeError);
+    }
+    expect(() => tensorForm('nonsense' as never, spec)).toThrow(/Unknown point group key/);
+  });
+
+  it('tensorFormOf takes their operations: a grey group allows no time-odd tensor', () => {
+    // Time reversal alone changes the sign of a time-odd tensor, so it must vanish.
+    for (const rank of [1, 2, 3] as const) {
+      for (const parity of ['polar', 'axial'] as const) {
+        const spec = { rank, parity, timeParity: 'c', intrinsic: 'none' } as const;
+        expect(tensorFormOf(operations("mm21'"), spec).basis).toHaveLength(0);
+        expect(tensorFormOf(operations("11'"), spec).basis).toHaveLength(0);
+      }
+    }
+  });
 });

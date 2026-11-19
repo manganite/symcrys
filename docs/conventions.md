@@ -480,8 +480,9 @@ setting index gives the same form in both conventions; the convention only picks
 default (unique axis b) and along z in the Birss default.
 
 **Time reversal.** An operation with time reversal changes the sign of a `'c'`-tensor. The 32
-classes have none, so their `'c'`-forms equal their `'i'`-forms. `tensorForm` takes the keys of the
-crystal classes; the forms of the magnetic point groups and their print anchors follow (#13, #41).
+classes have none, so their `'c'`-forms equal their `'i'`-forms. `tensorForm` and `isPiezoelectric`
+take the keys of the crystal classes and throw for a magnetic point group with time reversal; the
+forms of the magnetic point groups and their print anchors follow (#13, #41).
 `tensorFormOf` takes any operations, also those of a magnetic group.
 
 **Rotation.** `rotateTensor(tensor, R, spec)` gives the components in a frame rotated by the

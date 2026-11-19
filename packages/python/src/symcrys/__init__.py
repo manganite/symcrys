@@ -160,13 +160,13 @@ def find_magnetic_point_group(hm: str, convention: Optional[Convention] = None) 
 
 
 def settings(key: str, convention: Optional[Convention] = None) -> list[dict[str, Any]]:
-    """The settings of a class: index, symbols, unique axis, whether default in the convention."""
+    """The settings of a point group: index, symbols, unique axis, whether default in the convention."""
     args = [key] if convention is None else [key, convention]
     return list(_call("settings", *args))
 
 
 def operations(key: str, *, convention: Optional[Convention] = None, setting: Optional[int] = None) -> list[Operation]:
-    """All operations of a class in a setting: Cartesian 3×3 matrices and time reversal."""
+    """All operations of a point group in a setting: Cartesian 3×3 matrices and time reversal."""
     return list(_call("operations", key, _options(convention=convention, setting=setting)))
 
 

@@ -28,8 +28,10 @@ All notable changes to symcrys are recorded here. The format follows
 - `POINT_GROUP_KEYS`, `pointGroups()`, `isPointGroupKey` and `findPointGroup` are unchanged: they
   cover the 32 crystal classes. `PointGroup` and `PointGroupInSetting` are now generic in the key
   type, with the class keys as default.
-- `wyckoffPositions` and `wyckoffPositionOf` throw a `RangeError` with a message of its own for a
-  magnetic point group with time reversal (before, such a key was unknown).
+- `wyckoffPositions`, `wyckoffPositionOf`, `tensorForm` and `isPiezoelectric` throw a `RangeError`
+  with a message of its own for a magnetic point group with time reversal (before, such a key was
+  unknown). Wyckoff positions are given for the crystal classes only; the tensor forms of the
+  magnetic point groups follow.
 
 ## [0.5.0] - 2026-11-19
 

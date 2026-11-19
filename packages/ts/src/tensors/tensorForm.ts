@@ -12,7 +12,14 @@
 
 import { det, type Mat3 } from '../linalg.js';
 import { closeGroup, type Operation } from '../operations.js';
-import { operations, settings, type PointGroupKey, type SettingOptions } from '../pointGroups/pointGroups.js';
+import {
+  isMagneticPointGroupKey,
+  isPointGroupKey,
+  operations,
+  settings,
+  type PointGroupKey,
+  type SettingOptions,
+} from '../pointGroups/pointGroups.js';
 import { EPSILON, SNAP_EPSILON } from '../tolerances.js';
 import { reducedRowEchelon } from './rowEchelon.js';
 
@@ -226,8 +233,15 @@ const formCache = new Map<string, TensorForm>();
  * The form of a tensor under a point group in the requested setting (default: the default setting
  * of the convention, `'itc'` unless given). The convention matters only through the setting: the
  * same setting index gives the same form in both conventions (docs/conventions.md, "Tensors").
+ * For the 32 crystal classes; throws a RangeError for a magnetic point group with time reversal.
  */
 export function tensorForm(key: PointGroupKey, spec: TensorSpec, options?: SettingOptions): TensorForm {
+  if (isMagneticPointGroupKey(key) && !isPointGroupKey(key)) {
+    // The forms of the magnetic point groups come with their print anchors (#13, #41).
+    throw new RangeError(
+      `tensorForm takes the 32 crystal classes so far; ${JSON.stringify(key)} is a magnetic point group (use tensorFormOf with its operations)`,
+    );
+  }
   const perms = checkSpec(spec);
   const ops = operations(key, options); // checks key, convention and setting
   const index = options?.setting ?? settings(key, options?.convention).find((s) => s.isDefault)!.index;
