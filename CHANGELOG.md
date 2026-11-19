@@ -6,17 +6,20 @@ All notable changes to symcrys are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-19
+
 ### Added
 
 - Site symmetry and Wyckoff positions for directions (face normals), #24 item 1: `siteSymmetry`
   (the operations of any list that fix a direction, with the direction set onto their fixed space,
-  the multiplicity and an optional `tolerance`), `wyckoffPositions` (per point group and ITC setting
+  the multiplicity, whether the position is general, and an optional `tolerance`), `wyckoffPositions` (per point group and ITC setting
   ITA's letter, multiplicity, oriented site-symmetry symbol, printed representative point and face,
   a numeric face (hkl) with its Cartesian normal, and the indices of its site symmetry in
   `operations`) and `wyckoffPositionOf` (the Wyckoff position of any direction, by conjugate site
   symmetry); with the types `SiteSymmetry`, `SiteSymmetryOptions`, `WyckoffPosition`,
   `WyckoffOptions`, `Hkl`. Wyckoff positions exist in the ITC convention only; the point at the
-  origin (letter o) is not a direction and is left out.
+  origin (letter o) is not a direction and is left out. For `mm2` settings 2 and 3 (`2mm`, `m2m`),
+  which ITA does not print, they are derived from setting 1 by rotation.
 - `references/itc/vol-a-table-3.2.3.2-wyckoff-positions.md`: the Wyckoff positions of ITA (6th ed.)
   Table 3.2.3.2, re-parsed by `wyckoff.reference.test.ts`.
 
@@ -65,7 +68,8 @@ All notable changes to symcrys are recorded here. The format follows
 - Project scaffold: TypeScript build to `dist/` (ES modules with type declarations), tests, lint,
   format check, CI and release workflow. The only export so far is `VERSION`.
 
-[Unreleased]: https://github.com/manganite/symcrys/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/manganite/symcrys/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/manganite/symcrys/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/manganite/symcrys/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/manganite/symcrys/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/manganite/symcrys/releases/tag/v0.1.0
