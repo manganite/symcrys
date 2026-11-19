@@ -6,6 +6,8 @@ All notable changes to symcrys are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-19
+
 ### Added
 
 - Site symmetry and Wyckoff positions for directions (face normals), #24 item 1: `siteSymmetry`
@@ -65,7 +67,8 @@ All notable changes to symcrys are recorded here. The format follows
 - Project scaffold: TypeScript build to `dist/` (ES modules with type declarations), tests, lint,
   format check, CI and release workflow. The only export so far is `VERSION`.
 
-[Unreleased]: https://github.com/manganite/symcrys/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/manganite/symcrys/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/manganite/symcrys/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/manganite/symcrys/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/manganite/symcrys/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/manganite/symcrys/releases/tag/v0.1.0
