@@ -15,8 +15,8 @@ What the print fixes (§ 1.5.8.1):
   tensor of second rank whose components all change sign under time inversion (p. 140).
 - Cartesian axes: as in Table 1.5.7.1 (`vol-d-table-1.5.7.1.md`); square brackets give other
   orientations of the same group with the same form. The trigonal groups are printed without the
-  third entry; the text adds that the form is the same for 32 (= 321) and 312, 3m′1 and 31m′,
-  −3′m′1 and −3′1m′, and for 3m1 and 31m, 32′1 and 312′, −3′m1 and −3′1m.
+  third entry; the text names the orientation meant and a second one with the same form (third
+  table below).
 - Counts (p. 140): 21 magnetic point groups have a centre of symmetry and forbid the effect; among
   the remaining 69 there are 11 more for which it is forbidden, named in the text (second table
   below); the remaining 58 are those of the table. (The 32 groups with time reversal as an element
@@ -122,3 +122,18 @@ As named in the text of § 1.5.8.1, p. 140.
 | Td | -43m |
 | O(T) | 4'32' |
 | Oh(Td) | m'-3'm |
+
+## Trigonal orientations with the same form
+
+As named in the text of § 1.5.8.1, p. 140: "The tensor has the same form for 32 (= 321) and 312,
+3m′1 and 31m′, −3′m′1 and −3′1m′; it also has the same form for 3m1 and 31m, 32′1 and 312′, −3′m1
+and −3′1m."
+
+| Symbol in the table | Orientation | Second orientation |
+|---|---|---|
+| 32 | 321 | 312 |
+| 3m' | 3m'1 | 31m' |
+| -3'm' | -3'm'1 | -3'1m' |
+| 3m | 3m1 | 31m |
+| 32' | 32'1 | 312' |
+| -3'm | -3'm1 | -3'1m |

@@ -77,7 +77,6 @@ function birssAppSymbol(d: OperationDescription): string {
  * The symcrys key of a group birss-app names differently: D2h(C2h) and D6h(D3h), whose ITC short
  * symbols (ITC Vol. D Table 1.5.2.3) differ from Birss's (docs/conventions.md, "Keys").
  */
-
 function symcrysKey(birssAppKey: string): MagneticPointGroupKey {
   const key = SYMCRYS_KEY[birssAppKey] ?? birssAppKey;
   if (!isMagneticPointGroupKey(key)) throw new Error(`No symcrys key for birss-app's ${birssAppKey}`);

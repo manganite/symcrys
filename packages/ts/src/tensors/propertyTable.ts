@@ -26,7 +26,7 @@ const property = (spec: TensorSpec, description: string, source: string): Tensor
 export const TENSOR_PROPERTIES = Object.freeze({
   pyroelectric: property(
     { rank: 1, parity: 'polar', timeParity: 'i', intrinsic: 'none' },
-    'Electric polarization changing with temperature: a polar vector p_i.',
+    'Spontaneous electric polarization, which changes with temperature: a polar vector p_i.',
     'ITC Vol. D (2013), § 1.1.4.4.2, p. 12; classes: ITA (2016) Table 3.2.2.1, p. 738',
   ),
   piezoelectric: property(

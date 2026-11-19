@@ -7,8 +7,9 @@
  * in parentheses holds in a rotated setting and not in setting 1.
  *
  * Table 7 also names two classical groups, A and B, from which Birss reads the c-tensors. Both are
- * built here from the operations of the group and compared with the print, which identifies each
- * row independently of its symbol. For the 32 groups with time reversal itself, Birss gives no
+ * built here from the operations of the group, by a rule derived for this test (stated in
+ * references/birss/table-7.md) and compared with the print, symbol and parentheses, which
+ * identifies each row independently of its symbol in column 2. For the 32 groups with time reversal itself, Birss gives no
  * table: their c-tensors vanish and their i-tensors are those of the class (p. 102).
  */
 
@@ -35,7 +36,7 @@ import {
 } from '../testUtils/birssTensorTables.js';
 import { matrixRank, satisfies } from '../testUtils/rank.js';
 import { expectHeader, readReference, tableRows } from '../testUtils/references.js';
-import { tensorForm, type TensorParity, type TensorRank, type TimeParity } from './tensorForm.js';
+import { tensorForm, tensorFormOf, type TensorParity, type TensorRank, type TimeParity } from './tensorForm.js';
 
 const rows = tableRows(readReference('birss/table-7.md'));
 expectHeader(rows, [
@@ -62,6 +63,12 @@ const ERRATA: Record<string, string> = {
   "-6m'2' | 10": '(R_n)',
 };
 
+/**
+ * Rows whose associated group in parentheses carries the symbol of the class, not that of the
+ * rotated setting: `row | column`. The print has `(-42m)` here and `(-4m2)` in the row `4'mm'`.
+ */
+const CLASS_SYMBOL_IN_PARENTHESES = ["-42'm' | A"];
+
 /** Birss prints the cubic groups without the overbar (docs/conventions.md, "Where ITC and Birss differ"). */
 const CUBIC: Record<string, string> = {
   m3: 'm-3',
@@ -77,6 +84,7 @@ const GROUPS = MAGNETIC_POINT_GROUP_KEYS.filter((k) => pointGroup(k).type !== 'I
 const BY_BIRSS_SYMBOL = new Map(GROUPS.map((k) => [symbol(k, BIRSS), k]));
 
 interface Row {
+  /** Column 2 as printed, with its parentheses if it has them. */
   printed: string;
   key: MagneticPointGroupKey;
   cells: string[];
@@ -206,14 +214,45 @@ describe('Birss Table 7: tensor forms of the magnetic point groups in the Birss 
         const m = /^(\()?([^()]+)\)?$/.exec(cell)!;
         const rotated = m[1] !== undefined;
         // Printed without parentheses: the class in Birss's frame. With parentheses: in a rotated
-        // setting; Birss then prints either the symbol of that setting, `(-4m2)`, or the symbol of
-        // the class, `(-42m)`.
+        // setting, under the symbol of that setting, `(-4m2)`; in one row Birss prints the symbol
+        // of the class instead.
         expect(found!.setting === 1, `${row.printed} ${name} [${cell}]: setting`).toBe(!rotated);
-        const names = [found!.setting, ...(rotated ? [1] : [])].map((setting) =>
-          symbol(found!.key, { ...BIRSS, setting }),
-        );
-        expect(names, `${row.printed} ${name}`).toContain(CUBIC[m[2]] ?? m[2]);
+        const setting = CLASS_SYMBOL_IN_PARENTHESES.includes(`${row.printed} | ${name}`) ? 1 : found!.setting;
+        expect(symbol(found!.key, { ...BIRSS, setting }), `${row.printed} ${name}`).toBe(CUBIC[m[2]] ?? m[2]);
       });
+    }
+  });
+});
+
+describe('Birss Table 7: parentheses of column 2, and time-even forms', () => {
+  const magnetic = ROWS.filter((r) => pointGroup(r.key).type === 'III');
+
+  it('three groups are printed in parentheses: those with a time-even symbol class in parentheses', () => {
+    // The group as Table 6 defines it is in a setting rotated against that of its class in Table 4a,
+    // so the i-tensors of the class hold in the rotated setting (after the erratum for (-6'2m')).
+    const inParentheses = magnetic.filter((r) => r.printed.startsWith('('));
+    expect(inParentheses.map((r) => r.printed)).toEqual(["(2'm'm)", "(-4'm2')", "(-6'2m')"]);
+    expect(magnetic.filter((r) => r.cells.slice(4, 8).some((c) => c.startsWith('('))).map((r) => r.printed)).toEqual(
+      inParentheses.map((r) => r.printed),
+    );
+  });
+
+  it('a time-even form is the form under the operations with time reversal dropped, index symmetries included', () => {
+    const specs = [
+      { rank: 2, parity: 'axial', timeParity: 'i', intrinsic: 'ij' },
+      { rank: 3, parity: 'polar', timeParity: 'i', intrinsic: 'jk' },
+      { rank: 4, parity: 'polar', timeParity: 'i', intrinsic: 'voigt' },
+    ] as const;
+    for (const { key } of magnetic) {
+      for (const s of settings(key, 'birss')) {
+        const ops = operations(key, { ...BIRSS, setting: s.index });
+        const classical = ops.map((op) => ({ matrix: op.matrix, timeReversal: false }));
+        for (const spec of specs) {
+          expect(tensorForm(key, spec, { ...BIRSS, setting: s.index }), `${key} setting ${s.index}`).toEqual(
+            tensorFormOf(classical, spec),
+          );
+        }
+      }
     }
   });
 });

@@ -265,9 +265,15 @@ export function tensorFormOf(operations: readonly Operation[], spec: TensorSpec 
  * The components of `tensor` (length 3^rank, flat index) in a frame rotated by the orthogonal
  * matrix `rotation`: t′_{i…} = f·Σ R_{ia}…R_{…}·t_{a…}, with f = det(R) for an axial tensor and 1
  * for a polar one. To express a tensor in the frame of a surface, pass the matrix whose rows are
- * the new axes in the old frame. Time parity plays no part.
+ * the new axes in the old frame. Time parity plays no part. The kind of tensor is given by its
+ * specification or by the name of a property in `TENSOR_PROPERTIES`.
  */
-export function rotateTensor(tensor: readonly number[], rotation: Mat3, spec: TensorSpec): number[] {
+export function rotateTensor(
+  tensor: readonly number[],
+  rotation: Mat3,
+  specOrName: TensorSpec | TensorPropertyName,
+): number[] {
+  const spec = specOf(specOrName);
   checkSpec(spec);
   checkOrthogonal(rotation, 'The rotation');
   const { rank } = spec;

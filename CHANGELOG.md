@@ -28,11 +28,12 @@ All notable changes to symcrys are recorded here. The format follows
   `'piezoelectric'`, `'gyrotropic'`, `'ferromagnetic'`, `'magnetoelectric'`, `'piezomagnetic'`, each
   with its kind of tensor and print source) and `allowsProperty(key, name)`,
   `allowedProperties(key)`, `allowsPropertyOf(operations, name)`, `allowedPropertiesOf(operations)`.
-  `tensorForm` and `tensorFormOf` take the name of a property in place of a specification:
-  `tensorForm('32', 'piezoelectric')`. Types `TensorProperty`, `TensorPropertyName`.
+  `tensorForm`, `tensorFormOf` and `rotateTensor` take the name of a property in place of a
+  specification: `tensorForm('32', 'piezoelectric')`. Types `TensorProperty`, `TensorPropertyName`.
 - Python: `MAGNETIC_POINT_GROUP_KEYS`, `magnetic_point_groups`, `is_magnetic_point_group_key`,
   `find_magnetic_point_group`; `TENSOR_PROPERTIES`, `allows_property`, `allowed_properties`,
-  `allows_property_of`, `allowed_properties_of`, and names in `tensor_form` and `tensor_form_of`.
+  `allows_property_of`, `allowed_properties_of`, and names in `tensor_form`, `tensor_form_of` and
+  `rotate_tensor`.
 
 ### Changed
 

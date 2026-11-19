@@ -55,17 +55,24 @@ for (const key of GROUPS) {
 }
 
 /**
- * The orientation a printed symbol names: the setting with this symbol; a symbol several settings
- * of one group share (monoclinic `2`, trigonal `32`) is the default setting, which is the one ITC
- * means by it (unique axis y; 32 = 321).
+ * The orientation a printed symbol names: the setting with this symbol. The monoclinic short
+ * symbols (`2`, `m'`) belong to both settings of their group and stand for the default one, unique
+ * axis y, as the tables say. A trigonal symbol without its third entry (`32`, `-3'm`) is no symbol
+ * of a setting: it is the key of the group and stands for its default setting, which is the
+ * orientation ITC means by it (Table 1.5.7.1: 32 = 321; text of § 1.5.8.1, tested below).
  */
 function orientation(printed: string): Orientation | null {
   const found = BY_SYMBOL.get(compact(printed)) ?? [];
   const keys = new Set(found.map((o) => o.key));
   if (keys.size > 1) throw new Error(`${printed}: a symbol of several groups (${[...keys].join(', ')})`);
   if (found.length === 1) return found[0];
-  if (found.length > 1) return DEFAULT.get(found[0].key)!;
-  return DEFAULT.get(printed) ?? null;
+  if (found.length > 1) {
+    if (pointGroup(found[0].key).crystalSystem !== 'monoclinic') throw new Error(`${printed}: several settings`);
+    return DEFAULT.get(found[0].key)!;
+  }
+  const byKey = DEFAULT.get(printed);
+  if (byKey && pointGroup(byKey.key).crystalSystem !== 'trigonal') throw new Error(`${printed}: no setting`);
+  return byKey ?? null;
 }
 
 interface Printed {
@@ -215,6 +222,34 @@ describe('ITC Vol. D Table 1.5.8.1: linear magnetoelectric effect', () => {
   });
 });
 
+describe('ITC Vol. D § 1.5.8.1: the trigonal orientations the text names', () => {
+  const content = readReference('itc/vol-d-table-1.5.8.1.md');
+  const rows = tableRows(section(content, '## Trigonal orientations with the same form')).slice(1);
+  const blocks = new Map(printedGroups(content).map((g) => [g.symbols[0], g.block]));
+  const matrices = printedMatrices(content);
+
+  it.each(rows.map((r) => [r[0], r[1], r[2]] as const))(
+    '%s is %s, and %s has the same form',
+    (short, first, second) => {
+      const meant = orientation(short)!;
+      // The symbol with three entries is a symbol of a setting, found without the fallback by key.
+      expect(BY_SYMBOL.get(first)).toEqual([meant]);
+      const other = BY_SYMBOL.get(second)!;
+      expect(other).toHaveLength(1);
+      expect(other[0].key).toBe(meant.key);
+      expect(other[0].setting).not.toBe(meant.setting);
+      const printed = printedSpace(matrices.get(blocks.get(short)!)!, 9, placeRank2);
+      for (const o of [meant, other[0]]) {
+        expect(sameSpace(tensorForm(o.key, 'magnetoelectric', { setting: o.setting }).basis, printed, 9)).toBe(true);
+      }
+    },
+  );
+
+  it('are the six trigonal groups of the table with two settings', () => {
+    expect(rows).toHaveLength(6);
+  });
+});
+
 describe('ITC Vol. D Table 1.5.2.4: ferromagnetism', () => {
   const rows = tableRows(readReference('itc/vol-d-table-1.5.2.4.md')).slice(1);
 
@@ -274,8 +309,10 @@ describe('ITC Vol. D Table 1.5.2.4: ferromagnetism', () => {
       for (const b of basis) expect(Math.abs(b.reduce((s, x, i) => s + x * axis[i], 0))).toBeLessThan(1e-9);
     }
   });
+});
 
-  it('the description in TENSOR_PROPERTIES names the tensors these tables are compared with', () => {
+describe('the tensors these tables are compared with', () => {
+  it('are those of TENSOR_PROPERTIES: axial, time-odd, of rank 1, 3 (symmetric in j, k) and 2', () => {
     expect(TENSOR_PROPERTIES.ferromagnetic.spec).toEqual({
       rank: 1,
       parity: 'axial',

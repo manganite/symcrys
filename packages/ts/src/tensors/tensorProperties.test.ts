@@ -16,7 +16,8 @@ import {
 import { isCentrosymmetric, isChiral, isPolar } from '../pointGroups/properties.js';
 import { siteSymmetry } from '../siteSymmetry.js';
 import { TENSOR_PROPERTIES, TENSOR_PROPERTY_NAMES, type TensorPropertyName } from './propertyTable.js';
-import { tensorForm, tensorFormOf } from './tensorForm.js';
+import type { Mat3 } from '../linalg.js';
+import { rotateTensor, tensorForm, tensorFormOf } from './tensorForm.js';
 import { allowedProperties, allowedPropertiesOf, allowsProperty, allowsPropertyOf } from './tensorProperties.js';
 
 const count = (name: TensorPropertyName, type: 'I' | 'II' | 'III') =>
@@ -58,6 +59,12 @@ describe('allowsProperty and allowedProperties', () => {
     expect(count('ferromagnetic', 'I') + count('ferromagnetic', 'III')).toBe(31);
     expect(count('magnetoelectric', 'I') + count('magnetoelectric', 'III')).toBe(58);
     expect(count('piezomagnetic', 'I') + count('piezomagnetic', 'III')).toBe(66);
+    // The time-even properties of a magnetic group are those of its class: 11, 26 and 17 of the 58
+    // black-and-white groups, and each grey group with its class.
+    expect((['pyroelectric', 'piezoelectric', 'gyrotropic'] as const).map((n) => count(n, 'III'))).toEqual([
+      11, 26, 17,
+    ]);
+    expect((['pyroelectric', 'piezoelectric', 'gyrotropic'] as const).map((n) => count(n, 'II'))).toEqual([10, 20, 15]);
   });
 
   it('pyroelectric is polar; chiral groups are gyrotropic, and so are m, mm2, -4, -42m', () => {
@@ -92,17 +99,18 @@ describe('allowsProperty and allowedProperties', () => {
     expect(allowedProperties("mm21'")).toEqual(['pyroelectric', 'piezoelectric', 'gyrotropic']);
   });
 
-  it('do not depend on setting or convention, and agree with the functions for operations', () => {
+  it('do not depend on the setting, and agree with the functions for operations', () => {
+    // A setting holds the same operations in both conventions (docs/conventions.md, "Settings"), so
+    // the settings of one convention are all frames there are.
     for (const key of MAGNETIC_POINT_GROUP_KEYS) {
       const allowed = allowedProperties(key);
-      for (const convention of ['itc', 'birss'] as const) {
-        for (const s of settings(key, convention)) {
-          const ops = operations(key, { convention, setting: s.index });
-          expect(allowedPropertiesOf(ops), `${key} ${convention} ${s.index}`).toEqual(allowed);
-        }
+      for (const s of settings(key)) {
+        const ops = operations(key, { setting: s.index });
+        expect(allowedPropertiesOf(ops), `${key} setting ${s.index}`).toEqual(allowed);
       }
-      for (const name of TENSOR_PROPERTY_NAMES) {
-        expect(allowsPropertyOf(operations(key), name), `${key} ${name}`).toBe(allowed.includes(name));
+      const birss = operations(key, { convention: 'birss' });
+      for (const name of ['ferromagnetic', 'magnetoelectric'] as const) {
+        expect(allowsPropertyOf(birss, name), `${key} ${name}`).toBe(allowed.includes(name));
       }
     }
   });
@@ -120,6 +128,7 @@ describe('allowsProperty and allowedProperties', () => {
   });
 
   it('throw a RangeError for an unknown key or name', () => {
+    expect(() => allowsProperty('1', TENSOR_PROPERTIES.piezoelectric.spec as never)).toThrow(/Unknown tensor property/);
     expect(() => allowsProperty('nonsense' as never, 'piezoelectric')).toThrow(/Unknown point group key/);
     expect(() => allowsProperty('1', 'piezo' as never)).toThrow(
       /Unknown tensor property: "piezo" \(known: pyroelectric/,
@@ -148,6 +157,16 @@ describe('tensorForm and tensorFormOf with the name of a property', () => {
       [0, 0, 0],
       [0, 1, 2],
     ]);
+  });
+
+  it('rotateTensor takes a name too', () => {
+    const rz: Mat3 = [
+      [0, -1, 0],
+      [1, 0, 0],
+      [0, 0, 1],
+    ];
+    const t = tensorForm('32', 'piezoelectric').basis[0];
+    expect(rotateTensor(t, rz, 'piezoelectric')).toEqual(rotateTensor(t, rz, TENSOR_PROPERTIES.piezoelectric.spec));
   });
 
   it('throw a RangeError for an unknown name', () => {

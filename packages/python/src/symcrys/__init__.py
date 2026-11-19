@@ -327,7 +327,9 @@ def allowed_properties_of(operations: Sequence[Mapping[str, Any]]) -> list[str]:
     return list(_call("allowedPropertiesOf", list(operations)))
 
 
-def rotate_tensor(tensor: ArrayLike, rotation: ArrayLike, spec: TensorSpec | Mapping[str, Any]) -> NDArray[np.float64]:
+def rotate_tensor(
+    tensor: ArrayLike, rotation: ArrayLike, spec: TensorSpec | Mapping[str, Any] | TensorPropertyName
+) -> NDArray[np.float64]:
     """The components (flat, length 3**rank) in a frame rotated by the orthogonal matrix ``rotation``."""
     flat = np.asarray(tensor, dtype=np.float64).reshape(-1)
-    return np.asarray(_call("rotateTensor", flat, np.asarray(rotation), dict(spec), floats=True), dtype=np.float64)
+    return np.asarray(_call("rotateTensor", flat, np.asarray(rotation), _spec(spec), floats=True), dtype=np.float64)

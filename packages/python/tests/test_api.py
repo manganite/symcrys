@@ -78,6 +78,10 @@ def test_named_tensor_properties() -> None:
     assert np.array_equal(symcrys.tensor_form_of(symcrys.operations("32"), "piezoelectric")["basis"], by_name["basis"])
     with pytest.raises(symcrys.SymcrysError, match="Unknown tensor property"):
         symcrys.allows_property("1", "piezo")  # type: ignore[arg-type]
+    rz = np.array([[0.0, -1.0, 0.0], [1.0, 0.0, 0.0], [0.0, 0.0, 1.0]])
+    assert np.array_equal(
+        symcrys.rotate_tensor(by_name["basis"][0], rz, "piezoelectric"), symcrys.rotate_tensor(by_name["basis"][0], rz, SHG)
+    )
 
 
 def test_rotate_tensor_takes_arrays_of_any_shape() -> None:

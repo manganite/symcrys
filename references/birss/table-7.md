@@ -23,8 +23,16 @@ Notation used in this transcription:
 - Parentheses are Birss's: a group or symbol class in parentheses is referred to axes rotated
   against those of the same group or class without parentheses (as `(m2m)`, `(-4m2)`, `(-62m)`
   against `mm2`, `-42m`, `-6m2`). Three groups of column 2 are themselves printed in parentheses.
-- Associated classical group A (Birss's script A): the operations without time reversal together
-  with those with time reversal multiplied by the inversion. B (script B) is as printed.
+- Associated classical groups A and B (Birss's script letters) are transcribed as printed. The
+  tests rebuild them by a rule that is derived, not quoted from Birss: A consists of the operations
+  without time reversal and of those with time reversal multiplied by the inversion; B of the
+  rotation parts of the former and of the rotation parts of the latter multiplied by the inversion.
+  This follows from eqs. (3.23a), (3.23b) (p. 102): a c-tensor takes the factor −1 under an
+  operation with time reversal, an axial tensor the factor |S|, a tensor of odd rank the factor −1
+  under the inversion. So polar c-tensors of odd rank and axial ones of even rank have the form of
+  the polar and axial i-tensors of A, and polar ones of even rank and axial ones of odd rank that of
+  the axial and polar i-tensors of B. The rule reproduces all 58 printed pairs, with the exception
+  noted under "Errata".
 
 | System | Magnetic point group (International) | Associated classical group A (International) | Associated classical group B (International) | i-tensor: Polar even rank m | i-tensor: Axial even rank m | i-tensor: Polar odd rank n | i-tensor: Axial odd rank n | c-tensor: Polar even rank m | c-tensor: Axial even rank m | c-tensor: Polar odd rank n | c-tensor: Axial odd rank n |
 |---|---|---|---|---|---|---|---|---|---|---|---|
@@ -121,18 +129,22 @@ Notation used in this transcription:
 
 ## Errata of the book
 
-Two rows of the print leave out parentheses that the table's own rule requires. The transcription
-keeps the print; the tests apply the corrections.
+Two rows of the print leave out parentheses that the rest of the table uses. The transcription keeps
+the print; the tests apply the corrections. They are corrections of the print: the tests then
+expect something other than the book, on the maintainer's decision.
 
-- `(-6'2m')`, columns 6 and 7 (i-tensors, axial of even rank and polar of odd rank): printed `R_m`,
-  `R_n`; correct `(R_m)`, `(R_n)`. The group is in the rotated setting, as its parentheses in column 2
-  say, and so are these symbol classes; the rows `(2'm'm)` and `(-4'm2')` print them so.
 - `-6m'2'`, column 3 (associated group A) and columns 10 and 11 (c-tensors, axial of even rank and
-  polar of odd rank): printed `-6m2`, `R_m`, `R_n`; correct `(-62m)`, `(R_m)`, `(R_n)`. With the
-  generators of Table 6, the operations without time reversal and those with time reversal
-  multiplied by the inversion form `-6m2` with its twofold axes along the mirror normals of the
-  setting of Table 4a, that is `(-62m)`; the tetragonal row `-42'm'` prints `(-42m)`, `(J_m)`,
-  `(J_n)` accordingly.
+  polar of odd rank): printed `-6m2`, `R_m`, `R_n`; correct `(-62m)`, `(R_m)`, `(R_n)`. Independent of
+  any software: the operations combined with time reversal are the three vertical mirrors and the
+  three twofold axes; multiplied by the inversion, a mirror becomes a twofold axis along its normal
+  and a twofold axis a mirror normal to it, so A is `-6m2` with twofold axes and mirror normals
+  exchanged, which the table writes `(-62m)`. The tetragonal row `-42'm'`, built the same way,
+  prints `(-42m)`, `(J_m)`, `(J_n)`.
+- `(-6'2m')`, columns 6 and 7 (i-tensors, axial of even rank and polar of odd rank): printed `R_m`,
+  `R_n`; correct `(R_m)`, `(R_n)`. The i-tensors of a magnetic group are those of its class; the
+  parentheses of column 2 say that the group is referred to axes rotated against those of `-6m2`
+  in Table 4a, and the other two rows with parentheses in column 2, `(2'm'm)` and `(-4'm2')`, print
+  these two symbol classes in parentheses. This correction rests on that analogy and on the
+  generators of Table 6 for the group.
 
-Both were found in birss-app (its `docs/findings/`, 2026-07-04) and are confirmed here by the tests,
-which build A and B from the operations of each group.
+Both were found in birss-app (its `docs/findings/`, 2026-07-04). The tests fail without them.
