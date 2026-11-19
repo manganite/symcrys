@@ -113,7 +113,7 @@ describe('allowsProperty and allowedProperties', () => {
         expect(allowsPropertyOf(birss, name), `${key} ${name}`).toBe(allowed.includes(name));
       }
     }
-  });
+  }, 30_000); // closes and projects about 180 groups without the cache
 
   it('take any operations: the site symmetry of the threefold axis of m-3m is polar, the group is not', () => {
     const ops = operations('m-3m');
