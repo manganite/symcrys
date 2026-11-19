@@ -14,7 +14,8 @@ interchangeable). Only the counts are transcribed here, not the diagrams. Where 
 separate diagrams for p, π and Q (trigonal, hexagonal (i)), their counts agree, and so do those of c
 and s.
 
-Transcription conventions: groups as printed, a leading minus sign for the overbar. `Count p` is
+Transcription conventions: groups as printed (`4/mm`, `6/mm` for 4/mmm, 6/mmm; `2mm` and `-62m` for the
+classes mm2 and -6m2), a leading minus sign for the overbar. `Count p` is
 the count for p_αβ, π_αβ, Q_αβ; `Count c` for c_αβ, s_αβ.
 
 | Section | Groups (as printed) | Count p | Count c | Note |
@@ -25,9 +26,9 @@ the count for p_αβ, π_αβ, Q_αβ; `Count c` for c_αβ, s_αβ.
 | 1.1.4.10.6.4 (i) | 3, -3 | 12 | 7 | |
 | 1.1.4.10.6.4 (ii) | 32, 3m, -3m | 8 | 6 | |
 | 1.1.4.10.6.5 (i) | 4, -4, 4/m | 10 | 7 | |
-| 1.1.4.10.6.5 (ii) | 422, 4mm, -42m, 4/mmm | 7 | 6 | |
+| 1.1.4.10.6.5 (ii) | 422, 4mm, -42m, 4/mm | 7 | 6 | |
 | 1.1.4.10.6.6 (i) | 6, -6, 6/m | 8 | 5 | |
-| 1.1.4.10.6.6 (ii) | 622, 6mm, -62m, 6/mmm | 6 | 5 | |
+| 1.1.4.10.6.6 (ii) | 622, 6mm, -62m, 6/mm | 6 | 5 | |
 | 1.1.4.10.6.7 (i) | 23, 3m | 4 | 3 | printed "3m" (no overbar), in the cubic system; misprint for m-3, the only other cubic class not in (ii) |
 | 1.1.4.10.6.7 (ii) | 432, -43m, m-3m | 3 | 3 | |
 | 1.1.4.10.6.8 | all tensors (spherical system) | 2 | 2 | not a crystal class |
