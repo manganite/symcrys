@@ -62,6 +62,30 @@ describe('wyckoffPositionOf', () => {
     expect(wyckoffPositionOf('2', [0, -1, 0]).letter).toBe('a');
   });
 
+  it('gives a group and a position for directions near an element, at the edge of the tolerance too', () => {
+    let seed = 7;
+    const rnd = () => ((seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648) * 2 - 1;
+    const tolerance = 1e-4;
+    for (const { key, s } of ALL_SETTINGS) {
+      const ops = operations(key, { setting: s.index });
+      for (const w of wyckoffPositions(key, { setting: s.index })) {
+        for (const g of ops) {
+          const image = apply(g.matrix, w.representative.cartesian);
+          for (const delta of [tolerance / 4, tolerance, 2 * tolerance]) {
+            const near: Vec3 = [image[0] + rnd() * delta, image[1] + rnd() * delta, image[2] + rnd() * delta];
+            const site = siteSymmetry(ops, near, { tolerance });
+            expect(Number.isInteger(site.multiplicity), `${key} #${s.index} ${w.letter}`).toBe(true);
+            const letter = wyckoffPositionOf(key, near, { setting: s.index, tolerance }).letter;
+            if (delta <= tolerance / 4) {
+              // Every element fixing the image moves the perturbed direction by less than 2·√3·δ < tolerance.
+              expect(letter, `${key} #${s.index} ${w.letter}`).toBe(w.letter);
+            }
+          }
+        }
+      }
+    }
+  });
+
   it('uses the tolerance for directions rounded near an element', () => {
     const near: Vec3 = [1, 0.5, 0.00005];
     expect(wyckoffPositionOf('4/mmm', near).letter).toBe('g');
@@ -86,6 +110,17 @@ describe('siteSymmetry', () => {
     expect(s.operations).toEqual([0]);
     expect(s.general).toBe(true);
     expect(s.multiplicity).toBe(8);
+  });
+
+  it('closes the fixing operations to a group and sets the direction exactly on its axis', () => {
+    // 6 × 10⁻⁵ off the sixfold axis: the sixfold rotations move it by 0.6 × 10⁻⁴ (fixing within the tolerance),
+    // the threefold ones by 1.04 × 10⁻⁴ and the twofold one by 1.2 × 10⁻⁴ (not fixing): not a group.
+    const near: Vec3 = [-0.0000424264, 0.0000424264, 1];
+    const six = operations('6/mmm', { setting: 1 });
+    const s = siteSymmetry(six, near, { tolerance: 1e-4 });
+    expect(s.operations).toHaveLength(12);
+    expect(s.multiplicity).toBe(2);
+    expect(Math.abs(s.direction[0]) + Math.abs(s.direction[1])).toBeLessThan(1e-12);
   });
 
   it('works on any list of operations, ignoring time reversal', () => {
