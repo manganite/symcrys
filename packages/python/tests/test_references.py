@@ -1,6 +1,7 @@
 """Print anchors through Python, read from references/ as the TypeScript tests read them: ITA
-Table 3.2.2.1, ITC Vol. D § 1.1.4.10.6, and Yariv Table 16.1 with the use case of #30 (SHG at the
-(001), (110) and (111) surfaces of an m-3m crystal)."""
+Table 3.2.2.1, ITC Vol. D § 1.1.4.10.6, ITC Vol. D Table 1.5.2.3 (magnetic point groups), and Yariv
+Table 16.1 with the use case of #30 (SHG at the (001), (110) and (111) surfaces of an m-3m
+crystal)."""
 
 import re
 
@@ -101,3 +102,41 @@ def test_shg_at_m3m_surfaces_is_yarivs_form(normal: list[int], x: list[int], pan
     row = YARIV[panel]
     assert len(basis) == int(row[3])
     assert cells(basis) == printed_cells(row)
+
+
+# --- ITC Vol. D Table 1.5.2.3: the magnetic point groups -----------------------------------------
+
+ROWS_1523 = table_rows(reference("itc/vol-d-table-1.5.2.3.md"))
+
+
+def printed_count(operators: str) -> int:
+    """Number of operations in a printed list such as ``1, 2_z, ±4'_z, 3(2_⊥), 4(±3)``."""
+    total = 0
+    for term in (t.strip() for t in operators.split(",")):
+        m = re.match(r"^(\d)\((.+)\)$", term)
+        n, inner = (int(m.group(1)), m.group(2)) if m else (1, term)
+        total += n * (2 if inner.startswith("±") else 1)
+    return total
+
+
+def test_itc_vol_d_1523_as_read() -> None:
+    assert ROWS_1523[0] == ["System", "Schoenflies", "Shubnikov", "Short", "Full", "Symmetry operators"]
+    keys = [r[3] for r in ROWS_1523[1:]]
+    assert len(keys) == 90
+    groups = {g["key"]: g for g in symcrys.magnetic_point_groups()}
+    assert [k for k in keys if groups[k]["type"] == "I"] == list(symcrys.POINT_GROUP_KEYS)
+    assert [k for k in keys if groups[k]["type"] == "III"] == [k for k, g in groups.items() if g["type"] == "III"]
+    assert len([g for g in groups.values() if g["type"] == "II"]) == 32
+
+
+@pytest.mark.parametrize("row", ROWS_1523[1:], ids=[r[3] for r in ROWS_1523[1:]])
+def test_itc_vol_d_1523_symbols_and_order(row: list[str]) -> None:
+    system, schoenflies, _, key, full, operators = row
+    group = symcrys.point_group(key)
+    assert group["crystal_system"] == system.lower()
+    assert group["order"] == printed_count(operators)
+    assert symcrys.symbol(key, form="full") == full
+    assert symcrys.symbol(key, form="schoenflies") == schoenflies.replace("S6", "C3i")
+    ops = symcrys.operations(key)
+    primed = sum(1 for o in ops if o["time_reversal"])
+    assert primed == (len(ops) // 2 if "(" in schoenflies else 0)

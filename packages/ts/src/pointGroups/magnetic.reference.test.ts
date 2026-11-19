@@ -1,0 +1,427 @@
+/**
+ * The magnetic point groups against their print sources.
+ *
+ * - ITC convention, fixture class (a): ITC Vol. D (2013) Table 1.5.2.3 (printed pp. 111–112),
+ *   re-parsed from references/. For each of its 90 groups (the 32 crystal classes and the 58
+ *   black-and-white groups): the key is the printed short symbol; crystal system, Schoenflies symbol
+ *   and full symbol as printed; and the operations of the ITC default setting are the printed
+ *   symmetry operators, compared as far as the print names them (kind, time reversal, and the axis
+ *   where it is printed: fully in the triclinic to tetragonal systems).
+ * - Birss convention, fixture class (a): Birss Table 6 (printed pp. 91–98) with the generating
+ *   matrices σ(N) of eq. (2.17) (printed p. 48). For each of its 90 groups: the printed generators,
+ *   those of the last column combined with time reversal, closed with the independent algebra of
+ *   testUtils, give exactly the operations of the Birss default setting; the matrices of the
+ *   classical subgroup generate half of them. The operator list of the transcription, which is
+ *   partly derived (see the head of references/birss/table-6.md), names the same operations.
+ * - Both conventions, fixture class (b): the symbol of every setting of every grey and
+ *   black-and-white group, read along the symmetry directions of its convention with a prime
+ *   meaning time reversal, generates the operations of that setting. This covers what the tables
+ *   do not print: the grey groups, the settings other than the default, and the axes of the
+ *   trigonal, hexagonal and cubic operations.
+ */
+
+import { describe, expect, it } from 'vitest';
+import { groupOfSymbol, hmTokens } from '../testUtils/hermannMauguin.js';
+import { close, sameGroup, type M, type RefOp } from '../testUtils/independentGroups.js';
+import { operationLabel, printedLabels } from '../testUtils/operatorLists.js';
+import { expectHeader, readReference, section, tableRows } from '../testUtils/references.js';
+import { describeOperations } from './elements.js';
+import { isCentrosymmetric, isChiral, isPolar, laueClass } from './properties.js';
+import {
+  MAGNETIC_POINT_GROUP_KEYS,
+  POINT_GROUP_KEYS,
+  crystalClassOf,
+  findMagneticPointGroup,
+  findPointGroup,
+  generators,
+  isMagneticPointGroupKey,
+  isPointGroupKey,
+  magneticPointGroups,
+  operations,
+  pointGroup,
+  pointGroups,
+  settings,
+  symbol,
+  type MagneticPointGroupKey,
+} from './pointGroups.js';
+
+const sorted = (labels: readonly string[]) => [...labels].sort();
+
+function magneticKey(s: string, what: string): MagneticPointGroupKey {
+  if (!isMagneticPointGroupKey(s)) throw new Error(`${what}: ${s} is not a symcrys key`);
+  return s;
+}
+
+// --- ITC Vol. D Table 1.5.2.3 --------------------------------------------------------------------
+
+const itcRows = tableRows(readReference('itc/vol-d-table-1.5.2.3.md'));
+expectHeader(itcRows, ['System', 'Schoenflies', 'Shubnikov', 'Short', 'Full', 'Symmetry operators']);
+
+/**
+ * ITC Vol. D writes S6 for the class -3 and its magnetic groups; symcrys writes C3i in both
+ * conventions, as ITA and Birss do (docs/conventions.md, "Symbols").
+ */
+const schoenfliesOfPrint = (s: string) => s.replace(/S6/g, 'C3i');
+
+describe('ITC Vol. D Table 1.5.2.3 (printed pp. 111–112) against symcrys, ITC convention', () => {
+  const rows = itcRows.slice(1);
+
+  it('lists 90 groups: the 32 crystal classes and the 58 black-and-white groups, each once', () => {
+    expect(rows).toHaveLength(90);
+    const keys = rows.map((r) => magneticKey(r[3], 'Table 1.5.2.3'));
+    expect(new Set(keys).size).toBe(90);
+    expect(keys.filter((k) => pointGroup(k).type === 'I')).toEqual([...POINT_GROUP_KEYS]);
+    // The black-and-white keys of symcrys are in the order of the table.
+    expect(keys.filter((k) => pointGroup(k).type === 'III')).toEqual(
+      MAGNETIC_POINT_GROUP_KEYS.filter((k) => pointGroup(k).type === 'III'),
+    );
+    expect(keys.filter((k) => pointGroup(k).type === 'II')).toHaveLength(0);
+  });
+
+  it('prints a black-and-white group as G(H), a crystal class as G', () => {
+    for (const r of rows) {
+      expect(/\(.+\)$/.test(r[1]), r[3]).toBe(pointGroup(magneticKey(r[3], 'Table 1.5.2.3')).type === 'III');
+    }
+  });
+
+  for (const r of rows) {
+    const [system, schoenflies, , short, full, operators] = r;
+    const key = magneticKey(short, 'Table 1.5.2.3');
+    describe(short, () => {
+      it('crystal system, Schoenflies symbol and full symbol as printed', () => {
+        expect(pointGroup(key).crystalSystem).toBe(system.toLowerCase());
+        expect(symbol(key, { form: 'schoenflies' })).toBe(schoenfliesOfPrint(schoenflies));
+        expect(symbol(key, { form: 'full' })).toBe(full);
+        // The Schoenflies symbol G(H) names the crystal class G.
+        expect(symbol(crystalClassOf(key), { form: 'schoenflies' })).toBe(
+          schoenfliesOfPrint(schoenflies).replace(/\(.+\)$/, ''),
+        );
+      });
+
+      it('operations of the ITC default setting = the printed symmetry operators', () => {
+        const printed = printedLabels(operators);
+        const actual = describeOperations(key).map((d) => operationLabel(system.toLowerCase(), d));
+        expect(sorted(actual)).toEqual(sorted(printed));
+        expect(pointGroup(key).order).toBe(printed.length);
+      });
+    });
+  }
+});
+
+// --- Birss Table 6 --------------------------------------------------------------------------------
+
+function entry(s: string): number {
+  const sign = s.startsWith('-') ? -1 : 1;
+  const body = s.replace(/^-/, '');
+  if (body === '√3/2') return (sign * Math.sqrt(3)) / 2;
+  if (body === '1/2') return sign * 0.5;
+  if (/^\d$/.test(body)) return sign * Number(body);
+  throw new Error(`Unreadable matrix entry: ${s}`);
+}
+
+const sigmaRows = tableRows(readReference('birss/sigma-matrices.md'));
+expectHeader(sigmaRows, ['N', 'Symbol', 'Row 1', 'Row 2', 'Row 3', 'Operation']);
+const SIGMA = new Map<number, M>(
+  sigmaRows.slice(1).map((r) => [Number(r[0]), [r[2], r[3], r[4]].map((row) => row.split(/\s+/).map(entry))]),
+);
+
+const table6 = readReference('birss/table-6.md');
+const birssRows = tableRows(table6);
+expectHeader(birssRows, [
+  'System',
+  'Magnetic point group (International)',
+  'Magnetic point group (Shubnikov)',
+  'Classical subgroup (International)',
+  'Classical subgroup (Shubnikov)',
+  'Symmetry operators',
+  'Generating matrices of subgroup',
+  'Additional generating matrix',
+]);
+const errataRows = tableRows(section(table6, '## Errata'));
+expectHeader(errataRows, ['Group', 'Column', 'Printed', 'Correct', 'Evidence']);
+const ERRATA = new Map(errataRows.slice(1).map((r) => [r[0], r]));
+
+/**
+ * From Birss's printed symbol to the symcrys key. Birss prints the cubic groups without the overbar
+ * on the 3. For D2h(C2h) and D6h(D3h) the Birss short symbol differs from the ITC short symbol,
+ * which is the key (docs/conventions.md, "Keys"); `symbol(key, { convention: 'birss' })` must give
+ * Birss's symbol back (tested below).
+ */
+const KEY_OF_PRINTED: Record<string, string> = {
+  m3: 'm-3',
+  "m'3": "m'-3'",
+  m3m: 'm-3m',
+  "m3m'": "m-3m'",
+  "m'3m'": "m'-3'm'",
+  "m'3m": "m'-3'm",
+  "m'm'm": "mm'm'",
+  "6'/mm'm": "6'/mmm'",
+};
+/** Birss's symbol as symcrys writes it in the Birss convention: with the overbar on the cubic 3. */
+const BIRSS_SYMBOL_OF_PRINTED: Record<string, string> = {
+  m3: 'm-3',
+  "m'3": "m'-3'",
+  m3m: 'm-3m',
+  "m3m'": "m-3m'",
+  "m'3m'": "m'-3'm'",
+  "m'3m": "m'-3'm",
+};
+
+const sigmas = (cell: string, t: boolean): RefOp[] =>
+  [...cell.matchAll(/σ'?\((\d)\)/g)].map((m) => {
+    const matrix = SIGMA.get(Number(m[1]));
+    if (!matrix) throw new Error(`Unknown σ(${m[1]})`);
+    return { m: matrix, t };
+  });
+
+describe('Birss Table 6 (printed pp. 91–98) against symcrys, Birss convention', () => {
+  const rows = birssRows.slice(1);
+
+  it('lists 90 groups, each once: the 32 crystal classes and the 58 black-and-white groups', () => {
+    expect(rows).toHaveLength(90);
+    const keys = rows.map((r) => magneticKey(KEY_OF_PRINTED[r[1]] ?? r[1], 'Table 6'));
+    expect(new Set(keys).size).toBe(90);
+    expect(keys.filter((k) => pointGroup(k).type === 'I')).toHaveLength(32);
+    expect(keys.filter((k) => pointGroup(k).type === 'III')).toHaveLength(58);
+  });
+
+  it('applies every erratum to an existing row', () => {
+    for (const printed of ERRATA.keys()) expect(rows.some((r) => r[1] === printed)).toBe(true);
+  });
+
+  for (const r of rows) {
+    const printed = r[1];
+    const key = magneticKey(KEY_OF_PRINTED[printed] ?? printed, 'Table 6');
+    describe(printed, () => {
+      let additional = r[7];
+      const erratum = ERRATA.get(printed);
+      if (erratum) {
+        if (erratum[1] !== 'Additional generating matrix' || additional !== erratum[2]) {
+          throw new Error(`Erratum for ${printed} does not match the printed row`);
+        }
+        additional = erratum[3];
+      }
+      const subgroup = close(sigmas(r[6], false));
+      const group = close([...sigmas(r[6], false), ...sigmas(additional, true)]);
+
+      it('operations of the Birss default setting = closure of the printed σ and σ′ generators', () => {
+        expect(sameGroup(group, operations(key, { convention: 'birss' }))).toBe(true);
+        expect(settings(key, 'birss').find((s) => s.isDefault)?.index).toBe(1);
+      });
+
+      it('the classical subgroup holds the operations without time reversal', () => {
+        const unprimed = operations(key, { convention: 'birss' }).filter((op) => !op.timeReversal);
+        expect(sameGroup(subgroup, unprimed)).toBe(true);
+        const blackWhite = r[3] !== '-';
+        expect(pointGroup(key).type).toBe(blackWhite ? 'III' : 'I');
+        expect(unprimed).toHaveLength(blackWhite ? pointGroup(key).order / 2 : pointGroup(key).order);
+      });
+
+      it('the printed symmetry operators name the operations', () => {
+        const system = r[0].toLowerCase();
+        expect(pointGroup(key).crystalSystem).toBe(system);
+        const actual = describeOperations(key, { convention: 'birss' }).map((d) => operationLabel(system, d));
+        expect(sorted(actual)).toEqual(sorted(printedLabels(r[5])));
+      });
+
+      it('the Birss symbol of the default setting is the printed symbol', () => {
+        expect(symbol(key, { convention: 'birss' })).toBe(BIRSS_SYMBOL_OF_PRINTED[printed] ?? printed);
+      });
+    });
+  }
+});
+
+// --- Symbols of every setting, read independently -----------------------------------------------
+
+const X = [1, 0, 0];
+const Y = [0, 1, 0];
+const Z = [0, 0, 1];
+/** Hexagonal [1-10] with a along x and b at 120°: a tertiary direction, 30° below x. */
+const HEX_TERTIARY = [1.5, -Math.sqrt(3) / 2, 0];
+
+/**
+ * A representative Cartesian direction for each position of the symbol. ITC: ITA Table 2.1.3.1 in
+ * the frame of symcrys (docs/conventions.md, "Cartesian frame"; the table itself is re-read by
+ * symmetryDirections.reference.test.ts). Birss: as ITC, except that in the hexagonal family
+ * position 2 is y and position 3 is x (docs/conventions.md, "Where ITC and Birss differ").
+ */
+const DIRECTIONS: Record<'itc' | 'birss', Record<string, number[][]>> = {
+  itc: {
+    triclinic: [Z],
+    monoclinic: [X, Y, Z],
+    orthorhombic: [X, Y, Z],
+    tetragonal: [Z, X, [1, -1, 0]],
+    trigonal: [Z, X, HEX_TERTIARY],
+    hexagonal: [Z, X, HEX_TERTIARY],
+    cubic: [X, [1, 1, 1], [1, -1, 0]],
+  },
+  birss: {
+    triclinic: [Z],
+    monoclinic: [X, Y, Z],
+    orthorhombic: [X, Y, Z],
+    tetragonal: [Z, X, [1, -1, 0]],
+    trigonal: [Z, Y, X],
+    hexagonal: [Z, Y, X],
+    cubic: [X, [1, 1, 1], [1, -1, 0]],
+  },
+};
+const AXIS: Record<string, number[]> = { a: X, b: Y, c: Z };
+
+describe('symbols of every setting of the magnetic groups generate its operations', () => {
+  for (const key of MAGNETIC_POINT_GROUP_KEYS) {
+    const group = pointGroup(key);
+    if (group.type === 'I') continue; // the classes: itc.reference.test.ts, birss.reference.test.ts
+    for (const convention of ['itc', 'birss'] as const) {
+      for (const s of settings(key, convention)) {
+        it(`${key}, ${convention}, setting ${s.index}: ${s.symbol} (${s.fullSymbol})`, () => {
+          const system = group.crystalSystem;
+          const ops = operations(key, { convention, setting: s.index });
+          const directions = DIRECTIONS[convention][system];
+          // A monoclinic short symbol has one position, along the unique axis.
+          const positions = hmTokens(s.symbol).filter((t) => t !== "1'");
+          const shortDirections =
+            system === 'monoclinic' && positions.length === 1 ? [AXIS[s.uniqueAxis!]] : directions;
+          expect(sameGroup(groupOfSymbol(s.symbol, shortDirections), ops)).toBe(true);
+          expect(sameGroup(groupOfSymbol(s.fullSymbol, directions), ops)).toBe(true);
+          expect(findMagneticPointGroup(s.fullSymbol, convention)).toEqual({ key, setting: s.index });
+        });
+      }
+    }
+  }
+});
+
+// --- Structure --------------------------------------------------------------------------------------
+
+describe('the 122 magnetic point groups', () => {
+  it('are 32 crystal classes, 32 grey and 58 black-and-white groups, classes first', () => {
+    const all = magneticPointGroups();
+    expect(all.map((g) => g.key)).toEqual([...MAGNETIC_POINT_GROUP_KEYS]);
+    expect(all).toHaveLength(122);
+    expect(new Set(all.map((g) => g.key)).size).toBe(122);
+    expect(all.slice(0, 32)).toEqual(pointGroups());
+    expect(all.slice(32, 64).every((g) => g.type === 'II')).toBe(true);
+    expect(all.slice(64).every((g) => g.type === 'III')).toBe(true);
+    expect(all.slice(64)).toHaveLength(58);
+  });
+
+  it('a grey group is its class with and without time reversal (ITC Vol. D, eq. (1.5.2.1))', () => {
+    POINT_GROUP_KEYS.forEach((classKey, i) => {
+      const key = MAGNETIC_POINT_GROUP_KEYS[32 + i];
+      expect(key).toBe(`${classKey}1'`);
+      expect(crystalClassOf(key)).toBe(classKey);
+      expect(pointGroup(key).crystalSystem).toBe(pointGroup(classKey).crystalSystem);
+      for (const convention of ['itc', 'birss'] as const) {
+        const classSettings = settings(classKey, convention);
+        const greySettings = settings(key, convention);
+        expect(greySettings.map((s) => [s.index, s.isDefault, s.uniqueAxis])).toEqual(
+          classSettings.map((s) => [s.index, s.isDefault, s.uniqueAxis]),
+        );
+        expect(greySettings.map((s) => s.symbol)).toEqual(classSettings.map((s) => `${s.symbol}1'`));
+        for (const s of classSettings) {
+          const classOps = operations(classKey, { convention, setting: s.index });
+          const ops = operations(key, { convention, setting: s.index });
+          expect(ops).toHaveLength(2 * classOps.length);
+          for (const t of [false, true]) {
+            const part: RefOp[] = classOps.map((op) => ({ m: op.matrix.map((row) => [...row]), t }));
+            expect(part.every((p) => ops.some((o) => sameGroup([p], [o])))).toBe(true);
+          }
+        }
+      }
+    });
+  });
+
+  it('in a black-and-white group half of the operations of its class carry time reversal', () => {
+    for (const key of MAGNETIC_POINT_GROUP_KEYS.slice(64)) {
+      const classKey = crystalClassOf(key);
+      expect(isPointGroupKey(classKey)).toBe(true);
+      for (const s of settings(key)) {
+        const ops = operations(key, { setting: s.index });
+        expect(ops.filter((op) => op.timeReversal)).toHaveLength(ops.length / 2);
+        // Without time reversal the operations are those of the class in one of its settings.
+        const stripped = ops.map((op) => ({ matrix: op.matrix, timeReversal: false }));
+        const match = settings(classKey).filter((c) =>
+          sameGroup(
+            operations(classKey, { setting: c.index }).map((op) => ({ m: op.matrix.map((row) => [...row]), t: false })),
+            stripped,
+          ),
+        );
+        expect(match, `${key} setting ${s.index}`).toHaveLength(1);
+      }
+    }
+  });
+
+  it('ITC convention: operations in the order of the class, a grey group class first', () => {
+    for (const key of MAGNETIC_POINT_GROUP_KEYS.slice(32)) {
+      const group = pointGroup(key);
+      const classKey = crystalClassOf(key);
+      for (const s of settings(key)) {
+        const ops = operations(key, { setting: s.index });
+        const classSetting = settings(classKey).find((c) => {
+          const classOps = operations(classKey, { setting: c.index });
+          return classOps.every((x) =>
+            ops.some((o) => sameGroup([{ m: x.matrix.map((r) => [...r]), t: o.timeReversal }], [o])),
+          );
+        })!;
+        const classOps = operations(classKey, { setting: classSetting.index });
+        const expected = group.type === 'II' ? [...classOps, ...classOps] : classOps;
+        expect(ops.map((o) => o.matrix)).toEqual(expected.map((o) => o.matrix));
+        if (group.type === 'II') {
+          expect(ops.map((o) => o.timeReversal)).toEqual([...classOps.map(() => false), ...classOps.map(() => true)]);
+        }
+        // The generators are those of the class, with the time reversal they have in the group.
+        const gens = generators(key, { setting: s.index });
+        const classGens = generators(classKey, { setting: classSetting.index });
+        const expectedGens =
+          group.type === 'II' ? [...classGens.map((g) => g.matrix), ops[0].matrix] : classGens.map((g) => g.matrix);
+        expect(gens.map((g) => g.matrix)).toEqual(expectedGens);
+        if (group.type === 'II') expect(gens[gens.length - 1].timeReversal).toBe(true);
+        expect(sameGroup(close(gens.map((g) => ({ m: g.matrix.map((r) => [...r]), t: g.timeReversal }))), ops)).toBe(
+          true,
+        );
+      }
+    }
+  });
+
+  it('findPointGroup finds crystal classes only, findMagneticPointGroup all groups', () => {
+    for (const key of MAGNETIC_POINT_GROUP_KEYS) {
+      const isClass = pointGroup(key).type === 'I';
+      for (const convention of ['itc', 'birss'] as const) {
+        const def = settings(key, convention).find((s) => s.isDefault)!.index;
+        expect(findMagneticPointGroup(key, convention)).toEqual({ key, setting: def });
+        expect(findPointGroup(key, convention)).toEqual(isClass ? { key, setting: def } : undefined);
+        for (const s of settings(key, convention)) {
+          // A symbol names one group; a key wins over the symbol of a setting.
+          const found = findMagneticPointGroup(s.symbol, convention);
+          expect(found?.key === key || found?.key === s.symbol, `${convention} ${s.symbol}`).toBe(true);
+        }
+      }
+    }
+    expect(findMagneticPointGroup("m'm'm", 'birss')).toEqual({ key: "mm'm'", setting: 1 });
+    expect(findMagneticPointGroup("6'/mm'm", 'birss')).toEqual({ key: "6'/mmm'", setting: 1 });
+    expect(findMagneticPointGroup('nonsense')).toBeUndefined();
+  });
+});
+
+// --- Properties -------------------------------------------------------------------------------------
+
+describe('properties of the magnetic point groups', () => {
+  it('centrosymmetric needs the inversion without time reversal', () => {
+    expect(isCentrosymmetric('mmm')).toBe(true);
+    expect(isCentrosymmetric("mmm1'")).toBe(true);
+    expect(isCentrosymmetric("mm'm'")).toBe(true);
+    // m'm'm' and mmm' contain the inversion only combined with time reversal.
+    expect(isCentrosymmetric("m'm'm'")).toBe(false);
+    expect(isCentrosymmetric("mmm'")).toBe(false);
+  });
+
+  it('polar, chiral and Laue class are those of the crystal class', () => {
+    for (const key of MAGNETIC_POINT_GROUP_KEYS) {
+      const classKey = crystalClassOf(key);
+      expect([isPolar(key), isChiral(key), laueClass(key)], key).toEqual([
+        isPolar(classKey),
+        isChiral(classKey),
+        laueClass(classKey),
+      ]);
+    }
+  });
+});

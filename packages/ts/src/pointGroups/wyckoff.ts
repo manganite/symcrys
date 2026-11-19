@@ -7,7 +7,14 @@
 import { apply, inverse, transpose, type Mat3, type Vec3 } from '../linalg.js';
 import { crystalFamily, latticeBasis } from '../lattice.js';
 import { POINT_GROUP_DATA } from './data.js';
-import { operations, settings, type PointGroupKey, type SettingOptions } from './pointGroups.js';
+import {
+  isMagneticPointGroupKey,
+  isPointGroupKey,
+  operations,
+  settings,
+  type PointGroupKey,
+  type SettingOptions,
+} from './pointGroups.js';
 import { siteSymmetry, siteTolerance, type SiteSymmetryOptions } from '../siteSymmetry.js';
 import { ITA_WYCKOFF, type WyckoffRow } from './wyckoffData.js';
 
@@ -150,6 +157,11 @@ function printedRows(key: PointGroupKey, setting: number): readonly WyckoffRow[]
 const cache = new Map<string, readonly WyckoffPosition[]>();
 
 function itcSetting(key: PointGroupKey, options?: SettingOptions): number {
+  if (isMagneticPointGroupKey(key) && !isPointGroupKey(key)) {
+    throw new RangeError(
+      `Wyckoff positions are given for the 32 crystal classes only; ${JSON.stringify(key)} is a magnetic point group`,
+    );
+  }
   if ((options?.convention ?? 'itc') !== 'itc') {
     throw new RangeError("Wyckoff positions exist in the ITC convention only (convention 'itc')");
   }
@@ -161,7 +173,8 @@ function itcSetting(key: PointGroupKey, options?: SettingOptions): number {
 
 /**
  * The Wyckoff positions of a point group for directions, in ITA's printed order (general position
- * first), in the ITC convention only (throws a RangeError for `'birss'`). The point at the origin
+ * first), for the 32 crystal classes and in the ITC convention only (throws a RangeError for a
+ * magnetic point group with time reversal and for `'birss'`). The point at the origin
  * (letter o) is not a direction and is left out. For `mm2` settings 2 and 3 (`2mm`, `m2m`), which
  * ITA does not print, the positions of setting 1 carried into their frame.
  */

@@ -1,8 +1,9 @@
 # symcrys for Python
 
-Crystallographic symmetry calculations: the 32 crystallographic point groups with their settings
-(ITC and Birss conventions), symbols, symmetry elements, site symmetry and Wyckoff positions, and
-the forms of property tensors of rank 0 to 4 they allow, checked against print (ITC, Birss, Yariv).
+Crystallographic symmetry calculations: the 32 crystallographic and the 90 magnetic point groups
+with their settings (ITC and Birss conventions), symbols and symmetry elements, and for the
+crystallographic point groups site symmetry, Wyckoff positions and the forms of property tensors of
+rank 0 to 4 they allow, checked against print (ITC, Birss, Yariv).
 
 This package is the TypeScript library [symcrys](https://github.com/manganite/symcrys) of the same
 version, run in an embedded JavaScript engine ([quickjs-ng](https://pypi.org/project/quickjs-ng/)).

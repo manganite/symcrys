@@ -60,6 +60,7 @@ class SiteSymmetry(TypedDict):
 
 __all__ = [
     "LATTICE_SYMMETRY_DIRECTIONS",
+    "MAGNETIC_POINT_GROUP_KEYS",
     "POINT_GROUP_KEYS",
     "VERSION",
     "SymcrysError",
@@ -67,15 +68,18 @@ __all__ = [
     "TensorSpec",
     "crystal_family",
     "describe_operations",
+    "find_magnetic_point_group",
     "find_point_group",
     "generators",
     "is_centrosymmetric",
     "is_chiral",
+    "is_magnetic_point_group_key",
     "is_piezoelectric",
     "is_point_group_key",
     "is_polar",
     "lattice_basis",
     "laue_class",
+    "magnetic_point_groups",
     "operations",
     "point_group",
     "point_groups",
@@ -93,6 +97,9 @@ __all__ = [
 VERSION: str = _engine.value("VERSION")
 __version__ = VERSION
 POINT_GROUP_KEYS: tuple[str, ...] = tuple(_engine.value("POINT_GROUP_KEYS"))
+"""Keys of the 32 crystal classes."""
+MAGNETIC_POINT_GROUP_KEYS: tuple[str, ...] = tuple(_engine.value("MAGNETIC_POINT_GROUP_KEYS"))
+"""Keys of the 122 magnetic point groups: the 32 crystal classes, 32 grey, 58 black-and-white groups."""
 LATTICE_SYMMETRY_DIRECTIONS: dict[str, list[NDArray[np.int64]]] = {
     family: [np.asarray(d, dtype=np.int64).reshape(-1, 3) for d in positions]
     for family, positions in _engine.value("LATTICE_SYMMETRY_DIRECTIONS").items()
@@ -118,30 +125,48 @@ def point_groups() -> list[dict[str, Any]]:
     return list(_call("pointGroups"))
 
 
+def magnetic_point_groups() -> list[dict[str, Any]]:
+    """The 122 magnetic point groups (types I, II, III): key, type, crystal system, order."""
+    return list(_call("magneticPointGroups"))
+
+
 def point_group(key: str) -> dict[str, Any]:
-    """One crystal class by its key (ITC short symbol, e.g. ``'-3m'``)."""
+    """One point group by its key: a crystal class (``'-3m'``) or a magnetic point group (``"4'/mmm'"``)."""
     return dict(_call("pointGroup", key))
 
 
 def is_point_group_key(key: str) -> bool:
+    """True for the key of one of the 32 crystal classes."""
     return bool(_call("isPointGroupKey", key))
 
 
+def is_magnetic_point_group_key(key: str) -> bool:
+    """True for the key of one of the 122 magnetic point groups (the 32 crystal classes included)."""
+    return bool(_call("isMagneticPointGroupKey", key))
+
+
 def find_point_group(hm: str, convention: Optional[Convention] = None) -> Optional[dict[str, Any]]:
-    """Key and setting for a Hermann–Mauguin symbol, or None."""
+    """Key and setting of the crystal class with this Hermann–Mauguin symbol, or None."""
     args = [hm] if convention is None else [hm, convention]
     result = _call("findPointGroup", *args)
     return None if result is None else dict(result)
 
 
+def find_magnetic_point_group(hm: str, convention: Optional[Convention] = None) -> Optional[dict[str, Any]]:
+    """Key and setting of the magnetic point group with this symbol (a prime ``'`` for time reversal), or None."""
+    args = [hm] if convention is None else [hm, convention]
+    result = _call("findMagneticPointGroup", *args)
+    return None if result is None else dict(result)
+
+
 def settings(key: str, convention: Optional[Convention] = None) -> list[dict[str, Any]]:
-    """The settings of a class: index, symbols, unique axis, whether default in the convention."""
+    """The settings of a point group: index, symbols, unique axis, whether default in the convention."""
     args = [key] if convention is None else [key, convention]
     return list(_call("settings", *args))
 
 
 def operations(key: str, *, convention: Optional[Convention] = None, setting: Optional[int] = None) -> list[Operation]:
-    """All operations of a class in a setting: Cartesian 3×3 matrices and time reversal."""
+    """All operations of a point group in a setting: Cartesian 3×3 matrices and time reversal."""
     return list(_call("operations", key, _options(convention=convention, setting=setting)))
 
 

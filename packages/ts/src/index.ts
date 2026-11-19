@@ -15,16 +15,21 @@ export {
 } from './lattice.js';
 
 export {
+  MAGNETIC_POINT_GROUP_KEYS,
   POINT_GROUP_KEYS,
+  findMagneticPointGroup,
   findPointGroup,
   generators,
+  isMagneticPointGroupKey,
   isPointGroupKey,
+  magneticPointGroups,
   operations,
   pointGroup,
   pointGroups,
   settings,
   symbol,
   type Convention,
+  type MagneticPointGroupKey,
   type PointGroup,
   type PointGroupInSetting,
   type PointGroupKey,

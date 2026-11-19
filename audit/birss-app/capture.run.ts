@@ -1,17 +1,20 @@
 /**
- * Captures what birss-app shows for the 32 crystal classes, as behavioural pins (fixture class (c),
- * CLAUDE.md) for symcrys's Birss convention: in its Birss mode symcrys must give what birss-app
- * gives (maintainer, 2026-11-18). Reads ../birss-app (sibling checkout) and writes two JSON files,
- * read by the tests of both languages (#30):
+ * Captures what birss-app shows for its 122 magnetic point groups (the 32 crystal classes
+ * included), as behavioural pins (fixture class (c), CLAUDE.md) for symcrys's Birss convention: in
+ * its Birss mode symcrys must give what birss-app gives (maintainer, 2026-11-18). Reads
+ * ../birss-app (sibling checkout) and writes two JSON files, read by the tests of both languages
+ * (#30):
  *
- * - src/pointGroups/birssApp.pins.json: per class and per setting birss-app offers, the generators
- *   (getTransformedGenerators), the operations in birss-app's order (getFullGroup of those
- *   generators, as getSymmetryOperations and isCentrosymmetric build them), the generator symbols
- *   (getGeneratorSymbols, in generator order), the operation symbols (getSymmetryOperations, in
- *   birss-app's display order), the Birss-mode symbol of the setting (getFrameDisplayName /
- *   getGroupDisplayName); per class the Birss default setting (getDefaultSetting) and the property
- *   flags.
- * - src/tensors/birssApp.pins.json: per class, setting and tensor specification, the tensor form
+ * - src/pointGroups/birssApp.pins.json: per group, under birss-app's key, and per setting
+ *   birss-app offers, the generators (getTransformedGenerators) and the operations in birss-app's
+ *   order (getFullGroup of those generators, as getSymmetryOperations and isCentrosymmetric build
+ *   them), each list with the time-reversal flags of its entries (isAntiUnitary), the generator
+ *   symbols (getGeneratorSymbols, in generator order), the operation symbols
+ *   (getSymmetryOperations, in birss-app's display order), the Birss-mode symbol of the setting
+ *   (getFrameDisplayName / getGroupDisplayName); per group its type, its crystal class
+ *   (getFamilyClass), the default setting of birss-app's Birss and ITC modes (getDefaultSetting)
+ *   and the property flags.
+ * - src/tensors/birssApp.pins.json: per crystal class, setting and tensor specification, the tensor form
  *   (computeTensorForm) as birss-app presents it: reduced to row echelon form with birss-app's own
  *   `rref`, so the pivots are birss-app's free parameters (Q0), in its order.
  *
@@ -38,6 +41,8 @@ import {
   getGroupDisplayName,
 } from '../../../birss-app/src/services/conventionMapping';
 import { getLaueClass, isChiral, isPolar } from '../../../birss-app/src/services/propertyFlags';
+import { POINT_GROUPS } from '../../../birss-app/src/data/pointGroups';
+import { getFamilyClass } from '../../../birss-app/src/data/groupNotation';
 import { computeTensorForm, type TensorSpec } from '../../../birss-app/src/services/tensorForms';
 import { rref } from '../../../birss-app/src/services/linalg';
 import { POINT_GROUP_KEYS } from '../../packages/ts/src/pointGroups/pointGroups';
@@ -85,7 +90,7 @@ it('captures the Birss-mode pins from birss-app', () => {
 
   const settingCount = (key: string) => (ALTERNATE_SETTINGS[key]?.length ?? 0) + 1;
 
-  const classes = POINT_GROUP_KEYS.map((key) => {
+  const groups = POINT_GROUPS.map(({ name: key, type }) => {
     const count = settingCount(key);
     const settings = Array.from({ length: count }, (_, i) => {
       const setting = i + 1;
@@ -94,14 +99,19 @@ it('captures the Birss-mode pins from birss-app', () => {
         setting,
         symbol: count > 1 ? getFrameDisplayName(key, setting, 'birss').primary : getGroupDisplayName(key, 'birss'),
         generators: gens.map((g) => matrix(g.m)),
+        generatorTimeReversal: gens.map((g) => g.isAntiUnitary === true),
         operations: getFullGroup(gens, key).map((g) => matrix(g.m)),
+        operationTimeReversal: getFullGroup(gens, key).map((g) => g.isAntiUnitary === true),
         generatorSymbols: getGeneratorSymbols(key, setting),
         operationSymbols: getSymmetryOperations(key, setting),
       };
     });
     return {
       key,
+      type,
+      crystalClass: getFamilyClass(key),
       defaultSetting: getDefaultSetting(key, 'birss'),
+      itcDefaultSetting: getDefaultSetting(key, 'itc'),
       centrosymmetric: isCentrosymmetric(key),
       polar: isPolar(key),
       chiral: isChiral(key),
@@ -129,8 +139,8 @@ it('captures the Birss-mode pins from birss-app', () => {
     })),
   }));
 
-  const header = (what: string) =>
-    `Behavioural pins (fixture class (c), CLAUDE.md): ${what} birss-app shows for the 32 crystal classes. ` +
+  const header = (what: string, which: string) =>
+    `Behavioural pins (fixture class (c), CLAUDE.md): ${what} birss-app shows for ${which}. ` +
     'Captured by audit/birss-app/capture.run.ts (npm run audit:birss-app); regenerate only by re-capture, never edit.';
 
   // One entry per line, so that a re-capture shows as a diff per class.
@@ -145,17 +155,20 @@ it('captures the Birss-mode pins from birss-app', () => {
   write(
     `${here}../../packages/ts/src/pointGroups/birssApp.pins.json`,
     {
-      note: `${header('what')} Matrices are birss-app's Cartesian matrices (Birss frame), rows first.`,
+      note:
+        `${header('what', 'its 122 magnetic point groups (types I, II, III), under its own keys')} Matrices are ` +
+        "birss-app's Cartesian matrices (Birss frame), rows first; the time-reversal flags of generators and " +
+        'operations are listed beside them, in the same order.',
       revision: commit,
     },
-    'classes',
-    classes,
+    'groups',
+    groups,
   );
   write(
     `${here}../../packages/ts/src/tensors/birssApp.pins.json`,
     {
       note:
-        `${header('the tensor forms')} Per class, setting and specification (time-even): the basis in reduced row ` +
+        `${header('the tensor forms', 'the 32 crystal classes')} Per class, setting and specification (time-even): the basis in reduced row ` +
         "echelon form (birss-app's rref of computeTensorForm), each row as [flat index, value] pairs of its nonzero " +
         'entries rounded to 12 decimals, and the free parameters (flat index of the pivot of each row).',
       revision: commit,
