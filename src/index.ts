@@ -33,7 +33,7 @@ export {
   type SettingOptions,
   type SymbolOptions,
 } from './pointGroups/pointGroups.js';
-export { isCentrosymmetric, isChiral, isPolar, laueClass } from './pointGroups/properties.js';
+export { isCentrosymmetric, isChiral, isPiezoelectric, isPolar, laueClass } from './pointGroups/properties.js';
 export { LATTICE_SYMMETRY_DIRECTIONS, type Uvw } from './symmetryDirections.js';
 export {
   describeOperations,
@@ -52,3 +52,14 @@ export {
   type WyckoffOptions,
   type WyckoffPosition,
 } from './pointGroups/wyckoff.js';
+export {
+  rotateTensor,
+  tensorForm,
+  tensorFormOf,
+  type IntrinsicSymmetry,
+  type TensorForm,
+  type TensorParity,
+  type TensorRank,
+  type TensorSpec,
+  type TimeParity,
+} from './tensors/tensorForm.js';

@@ -32,6 +32,7 @@
     "src",
     "!src/**/*.test.ts",
     "!src/**/*.fixtures.ts",
+    "!src/**/*.pins.json",
     "!src/**/testUtils/**"
   ],
   "sideEffects": false,
@@ -48,7 +49,7 @@
     "check:dist": "node scripts/check-dist.mjs",
     "prepack": "npm run build",
     "audit:point-groups": "vitest run --config audit/point-groups/vitest.config.ts",
-    "audit:birss-app": "vitest run --config audit/birss-app/vitest.config.ts && prettier --write src/pointGroups/birssApp.pins.fixtures.ts",
+    "audit:birss-app": "vitest run --config audit/birss-app/vitest.config.ts",
     "audit:wyckoff-2006": "vitest run --config audit/wyckoff-2006/vitest.config.ts"
   },
   "devDependencies": {

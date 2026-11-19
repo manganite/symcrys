@@ -4,7 +4,8 @@ Crystallographic symmetry calculations in TypeScript: point groups, both crystal
 magnetic, with their settings, symbols and properties, and the property tensors they allow. A
 library without runtime dependencies that runs unbundled in browsers and in Node.
 
-> **Status: pre-release.** So far: the 32 crystallographic point groups with their symmetry elements.
+> **Status: pre-release.** So far: the 32 crystallographic point groups with their symmetry elements,
+> site symmetry and Wyckoff positions, and the forms of property tensors of rank 0 to 4.
 > The API will change without notice until 1.0.0.
 
 ## Scope
@@ -17,9 +18,10 @@ symcrys holds calculations, not presentation. Planned, in this order:
 2. Plane groups.
 3. Space groups.
 
-The tensor calculations of birss-app (tensor forms, projections) move here as well; their place in
-this order is not yet fixed. Rendering (LaTeX, SVG, view models) and translated
-display names stay in the applications that use symcrys.
+Property tensors: the symmetry-reduced form of a tensor of rank 0 to 4 under a point group or any
+set of operations, from birss-app; results are numbers (coefficient matrices). Rendering (LaTeX,
+SVG, relation strings, view models) and translated display names stay in the applications that use
+symcrys.
 
 **Conventions.** Point groups follow the _International Tables for Crystallography_ by default
 (Vol. A for the crystal classes, Vol. D Ch. 1.5 for the magnetic point groups). The convention of
@@ -43,10 +45,14 @@ Each release on GitHub also carries the package as `symcrys-X.Y.Z.tgz`.
 ```ts
 import {
   describeOperations,
+  isPiezoelectric,
   operations,
   settings,
+  siteSymmetry,
   symbol,
   symmetryDirections,
+  tensorForm,
+  tensorFormOf,
   wyckoffPositionOf,
   wyckoffPositions,
 } from 'symcrys';
@@ -59,7 +65,22 @@ describeOperations('4')[2]; // { kind: 'rotation', order: 4, sense: '+', axis: {
 symmetryDirections('4mm')[1]; // position 2: symbol 'm', directions [100] and [010], each with a mirror
 wyckoffPositions('4mm')[2]; // { letter: 'b', multiplicity: 4, siteSymmetry: '..m', millerIndices: 'h,h,l', … }
 wyckoffPositionOf('4mm', [0, 0, -1]).letter; // 'a'
+
+const SHG = { rank: 3, parity: 'polar', timeParity: 'i', intrinsic: 'jk' } as const;
+tensorForm('mm2', SHG).parameters; // [[0,0,2], [1,1,2], [2,0,0], [2,1,1], [2,2,2]]: xxz, yyz, zxx, zyy, zzz
+tensorForm('3m', SHG, { convention: 'birss' }).parameters[0]; // [0, 0, 0]: xxx (ITC default 3m1: xxy)
+isPiezoelectric('432'); // false
+// SHG at the (111) surface of an m-3m crystal: the form under the site symmetry of the normal
+const ops = operations('m-3m');
+tensorFormOf(
+  siteSymmetry(ops, [1, 1, 1]).operations.map((i) => ops[i]),
+  SHG,
+).basis.length; // 4
 ```
+
+A form gives the components by flat index (first index slowest: xyz of rank 3 is 5), the basis in
+reduced row echelon form and the relations as coefficient rows; see
+[`docs/conventions.md`](docs/conventions.md), "Tensors".
 
 Conventions, frames and symbols: [`docs/conventions.md`](docs/conventions.md).
 
@@ -87,8 +108,8 @@ Audits under `audit/` compare the code bases symcrys draws on. They are run by h
 [birss-app](https://github.com/manganite/birss-app) and
 [stereography](https://github.com/manganite/stereography) checked out next to this repository:
 `npm run audit:point-groups` writes `audit/point-groups/report.md`, and `npm run audit:birss-app`
-captures the pins of the Birss convention (`src/pointGroups/birssApp.pins.fixtures.ts`, formatted
-with Prettier by the same script).
+captures the pins of the Birss convention as JSON (`src/pointGroups/birssApp.pins.json` for the
+operations, `src/tensors/birssApp.pins.json` for the tensor forms).
 
 CI runs these seven gates on every pull request, on Node 22 and 24. Tests sit next to their
 module (`foo.ts`, `foo.test.ts`). Working rules for contributors, human or agent: `CLAUDE.md`.

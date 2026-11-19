@@ -13,7 +13,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import type { Vec3 } from '../linalg.js';
-import { BIRSS_APP_CLASSES, BIRSS_APP_REVISION } from './birssApp.pins.fixtures.js';
+import { BIRSS_APP_CLASSES, BIRSS_APP_REVISION } from '../testUtils/birssAppPins.js';
 import { describeOperations, type OperationDescription } from './elements.js';
 import { isCentrosymmetric, isChiral, isPolar, laueClass } from './properties.js';
 import { generators, operations, settings, symbol, type PointGroupKey } from './pointGroups.js';

@@ -1,7 +1,7 @@
 /**
- * Properties of a point group that follow from its operations alone. They do not depend on the
- * setting or the convention. Properties that need tensors (piezoelectric, …) come with the tensor
- * module (CLAUDE.md, decision of 2026-11-08 on #13).
+ * Properties of a point group that follow from its operations, directly or through the form of a
+ * tensor (piezoelectric). They do not depend on the setting or the convention. Piezomagnetic,
+ * magnetoelectric and ferromagnetic follow with the magnetic point groups (#13).
  */
 
 import { INVERSION, det, matricesEqual } from '../linalg.js';
@@ -9,6 +9,7 @@ import { EPSILON } from '../tolerances.js';
 import { compose, operation, operationsEqual, type Operation } from '../operations.js';
 import { POINT_GROUP_KEYS, type PointGroupKey } from './data.js';
 import { operations } from './pointGroups.js';
+import { tensorForm } from '../tensors/tensorForm.js';
 
 /** Operations in setting 1, the frame all stored data share. */
 const stored = (key: PointGroupKey): readonly Operation[] => operations(key, { setting: 1 });
@@ -59,4 +60,14 @@ export function laueClass(key: PointGroupKey): PointGroupKey {
   if (!laue) throw new Error(`laueClass: no centrosymmetric class matches ${key}`);
   laueCache.set(key, laue);
   return laue;
+}
+
+/**
+ * Piezoelectric: the polarization can depend linearly on stress, i.e. a polar time-even tensor of
+ * rank 3, symmetric in its last two indices, is allowed (ITA Table 3.2.2.1).
+ */
+export function isPiezoelectric(key: PointGroupKey): boolean {
+  return (
+    tensorForm(key, { rank: 3, parity: 'polar', timeParity: 'i', intrinsic: 'jk' }, { setting: 1 }).basis.length > 0
+  );
 }
