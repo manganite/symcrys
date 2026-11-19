@@ -5,8 +5,8 @@ ITC and Birss, differ. The print sources behind each statement are listed in "So
 the tests named there re-check them against the transcriptions in `references/`.
 
 So far symcrys holds the 32 crystallographic point groups (crystal classes, type I), with their
-symmetry directions and elements, and the site symmetry and Wyckoff positions of directions. The
-magnetic point groups (types II and III) follow.
+symmetry directions and elements, the site symmetry and Wyckoff positions of directions, and the
+forms of property tensors of rank 0 to 4. The magnetic point groups (types II and III) follow.
 
 ## Conventions
 
@@ -155,9 +155,10 @@ a consumer needs them (decision on #13).
 
 ## Properties
 
-`isCentrosymmetric`, `isPolar`, `isChiral` and `laueClass` follow from the operations alone and do
-not depend on setting or convention. Properties that need tensors (piezoelectric, and the magnetic
-ones) come with the tensor module.
+`isCentrosymmetric`, `isPolar`, `isChiral` and `laueClass` follow from the operations alone,
+`isPiezoelectric` from the form of the piezoelectric tensor ("Tensors"); none depends on setting or
+convention. The magnetic properties that need tensors (piezomagnetic, magnetoelectric,
+ferromagnetic) come with the magnetic point groups.
 
 ## Order of the operations
 
@@ -200,13 +201,18 @@ choices that Birss's print leaves open:
   still a symmetry direction of ITA Table 2.1.3.1, possibly reversed; `symmetryDirections` keeps
   the sign of the table, so in this convention an axis is matched to a direction by |dot| = 1, not
   by identity.
+- **Free parameters of a tensor form** ("Tensors"): the components birss-app names as free
+  parameters, in its order. Here symcrys's rule (the pivots of the reduced row echelon form) gives
+  birss-app's choice in every setting, so the Birss convention needs nothing of its own.
 
 `birssApp.pins.test.ts` checks this against behavioural pins captured from birss-app
-(`audit/birss-app`, fixture class (c); the revision is `BIRSS_APP_REVISION` in the fixture, at
-present 2be5fe3, and the test requires this text to name it): for all 32 classes and all settings
-the generators and the operations in order, the symbols, the default setting, the property flags,
-and the operation symbols birss-app writes, rebuilt from `describeOperations` with birss-app's
-labelling rules. For these choices birss-app is the specification (maintainer decision), so here its
+(`audit/birss-app`, fixture class (c); the revision is the `revision` of
+`src/pointGroups/birssApp.pins.json`, at present 2be5fe3, and the test requires this text to name
+it): for all 32 classes and all settings the generators and the operations in order, the symbols,
+the default setting, the property flags, and the operation symbols birss-app writes, rebuilt from
+`describeOperations` with birss-app's labelling rules. `src/tensors/birssApp.pins.test.ts` checks
+the tensor forms the same way, against `src/tensors/birssApp.pins.json` from the same revision: for
+all classes, settings and 26 kinds of tensor, the basis and the free parameters. For these choices birss-app is the specification (maintainer decision), so here its
 pins are the reference, not only a regression detector. The strings themselves (`2_z`, `3_[111]⁺`,
 `m_60°`) and the order birss-app sorts them into for display stay in birss-app.
 
@@ -318,6 +324,75 @@ multiplicities and oriented site-symmetry symbols of all face positions agree wi
 5th edition). One misprint in the 6th edition: the site symmetry of the origin of 6/mmm reads
 `6mmm` (p. 764); it concerns the origin only, which symcrys leaves out.
 
+## Tensors
+
+`tensorForm(key, spec, options)` gives the form of a property tensor under a point group:
+which Cartesian components it may have and how they depend on each other. `tensorFormOf(operations, spec)`
+does the same for any list of operations (closed into a group first), e.g. the site symmetry
+of a surface normal from `siteSymmetry`. Moved from birss-app (`tensorForms.ts`,
+`tensorProjection.ts`, `linalg.ts`, revision 2be5fe3).
+
+**Kind of tensor** (`TensorSpec`, as in birss-app): rank 0 to 4; `'polar'` (transforms with R) or
+`'axial'` (with det(R)·R); `'i'` (time-even) or `'c'` (time-odd: changes sign under an operation
+with time reversal); and the symmetry of the tensor under permutation of its own indices,
+independent of the crystal: `'none'`, `'ij'` (first two indices), `'jk'` (last two; the index
+symmetry of SHG and of the piezoelectric tensor), and at rank 4 `'ij_kl'` (both pairs symmetric, the
+pairs not interchangeable: electric-quadrupole SHG, photoelasticity) and `'voigt'` (`'ij_kl'` and the
+pairs interchangeable: elastic stiffness). An index symmetry that does not apply at the rank
+(`'ij'`, `'jk'` below rank 2; `'ij_kl'`, `'voigt'` other than at rank 4) is an error; birss-app
+ignores it.
+
+**Components** are numbered by a flat index: indices (i₁, …, iₙ) with x, y, z = 0, 1, 2 give
+i₁·3ⁿ⁻¹ + … + iₙ, the first index varying slowest (the order of a NumPy array of shape (3,)·n in C
+order). For rank 3, xyz is 0·9 + 1·3 + 2 = 5.
+
+**The form** (`TensorForm`) is plain numbers (CLAUDE.md, "Tensors"):
+
+- `basis`: the allowed tensors as the span of rows of length 3ⁿ, in reduced row echelon form: one
+  row per free parameter, 1 at its own component and 0 at the components of the other parameters.
+  Every allowed tensor is Σₖ pₖ·basis[k], pₖ the value of component `parameters[k]`. The form is
+  unique for the span, so it does not depend on how the span was found.
+- `parameters`: the free parameters as index lists (`[0, 1, 1]` for xyy), one per basis row: each is
+  the lowest component that is independent of those before it (the pivot). birss-app names its free
+  parameters by the same rule (its "Q0" reduction), so they agree in name and order.
+- `relations`: one row r per component that is not a parameter, with r·t = 0 for every allowed
+  tensor t: t_c − Σₖ basis[k][c]·t_{parameters[k]} = 0. A row with a single 1 says the component
+  vanishes.
+
+Relation strings (`\chi_{xxx} = -\chi_{xyy}`), Voigt matrices, Nye diagrams and LaTeX are
+presentation and stay in the applications; they follow from these numbers.
+
+**Settings and conventions.** A tensor form is Cartesian, so it depends on the setting, and the same
+setting index gives the same form in both conventions; the convention only picks the default setting
+(above, "Settings"). The ITC and Birss defaults differ for `2`, `m`, `2/m`, `32`, `3m`, `-3m` and
+`-6m2`, and so do the components that survive: for `2` the polar vector lies along y in the ITC
+default (unique axis b) and along z in the Birss default.
+
+**Time reversal.** An operation with time reversal changes the sign of a `'c'`-tensor. The 32
+classes have none, so their `'c'`-forms equal their `'i'`-forms; the distinction matters for the
+magnetic point groups (#13).
+
+**Rotation.** `rotateTensor(tensor, R, spec)` gives the components in a frame rotated by the
+orthogonal matrix R (rows: the new axes in the old frame), with the factor det(R) for an axial
+tensor. For the form at a surface: the site symmetry of the normal (`siteSymmetry`), its form
+(`tensorFormOf`), and the basis rotated into a frame with z along the normal.
+
+**Numbers.** The form is computed in floating point: each component's unit tensor, symmetrised over
+the index symmetry, is averaged over the group, and the averages are row-reduced (pivot threshold
+10⁻⁷). An entry of the result within 10⁻⁹ of a multiple of 1/12 is set to it, as matrices are
+snapped ("Numbers" above): for the 32 classes in all their settings every entry of every form is 0,
+±1/2, ±1 or ±2, which then come out exact; other values, e.g. in a rotated frame, are kept.
+
+**Print anchors.** Birss convention: Birss's Tables 4a–4f (pp. 56–66) for ranks 0 to 4, polar and
+axial, in Birss's frame. ITC convention: ITA Table 3.2.2.1 (counts of three tensors and the direction
+of the pyroelectric vector, in the ITC default setting). Index symmetries: Yariv's Table 16.1 (rank 3,
+`'jk'`, all 21 noncentrosymmetric classes; it prints d_ijk without the Voigt factor 2, so its 3×6
+grid is the tensor itself; the panels Yariv calls the standard orientation are the ITC default
+settings), Hoshi et al. (1995) (rank 4, `'ij_kl'`, 6/mmm and 6mm, after removing the tracelessness
+Hoshi adds). The surface use case of #30 is checked against Yariv: an m-3m crystal has no SHG in
+the bulk, its (001), (110) and (111) surfaces have the forms of 4mm, mm2 and 3m with 3, 5 and 4
+independent components.
+
 ## Sources
 
 | What                                                                                            | Print source                                                                                                                                                                                                                                                                                              | Test                                                             |
@@ -333,6 +408,11 @@ multiplicities and oriented site-symmetry symbols of all face positions agree wi
 | Birss: order of the operations, generators, axis signs                                          | none: birss-app 2be5fe3, behavioural pins (class (c)) captured by `audit/birss-app`                                                                                                                                                                                                                       | `birssApp.pins.test.ts`                                          |
 | operations described (kind, n, axis, sense)                                                     | the symmetry operations of the symmorphic P space groups, ITA 5th ed. (2006), Part 7, one per ITC setting (pages in `references/itc/vol-a-2006-symmetry-operations.md`); symbols as defined in § 11.1.2, pp. 810–811; numbering checked against the general positions of Table 3.2.3.2                    | `elements.reference.test.ts`, `elements.test.ts`                 |
 | Wyckoff positions (letter, multiplicity, oriented site symmetry, representative point and face) | ITA Table 3.2.3.2 (pp. 745–769): `references/itc/vol-a-table-3.2.3.2-wyckoff-positions.md`; the oriented symbols read along ITA Table 2.1.3.1 (p. 151); `2mm`, `m2m`: derived (above); additional check against the 5th ed. (2006), Table 10.1.2.2, by `audit/wyckoff-2006`                               | `wyckoff.reference.test.ts`                                      |
+| tensor forms, Birss convention                                                                  | Birss Tables 4a–4f (pp. 56–66): `references/birss/table-4a.md` … `table-4f.md`                                                                                                                                                                                                                            | `tensors/birss.reference.test.ts`                                |
+| tensor forms, ITC convention: counts, pyroelectric direction, piezoelectric classes             | ITA Table 3.2.2.1 (p. 738)                                                                                                                                                                                                                                                                                | `tensors/itc.reference.test.ts`                                  |
+| rank 3, `'jk'` (SHG, piezoelectric d_ijk): cells, classes, signs; the forms at m-3m surfaces    | Yariv, _Quantum Electronics_, 2nd ed., Table 16.1 (pp. 410–411): `references/yariv/table-16.1.md`                                                                                                                                                                                                         | `tensors/yariv.reference.test.ts`, `tensors/tensorForm.test.ts`  |
+| rank 4, `'ij_kl'` (electric-quadrupole SHG) for 6/mmm, 6mm                                      | Hoshi et al., Phys. Rev. B 52, 12355 (1995), Eqs. (11)–(12): `references/hoshi/eqs-11-12.md`                                                                                                                                                                                                              | `tensors/hoshi.reference.test.ts`                                |
+| Birss: free parameters of the tensor forms                                                      | none: birss-app 2be5fe3, behavioural pins (class (c)) captured by `audit/birss-app`                                                                                                                                                                                                                       | `tensors/birssApp.pins.test.ts`                                  |
 
 Each file in `references/` names its source and the printed page. ITA means Vol. A, 6th edition
 (2016), unless the 5th edition (2006) is named: its space-group tables are the source for the

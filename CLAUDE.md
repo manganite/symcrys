@@ -114,11 +114,19 @@ Carried over from birss-app, where the calculations come from.
   `*.audit.test.ts` (exhaustive coverage), `*.pins.test.ts` (behavioural pins), plain `*.test.ts`;
   further suffixes from birss-app may come along. `npm test` runs all of them; no subset is a
   gate of its own.
+- **Captured fixtures are JSON** (maintainer, 2026-11-19, #30): a capture script writes
+  `*.pins.json` (one entry per line, left alone by Prettier, not in the npm package), so that the
+  tests of another language read the same files; `src/testUtils/` reads them for the TypeScript
+  tests. Hand-written fixtures in `.ts` move to JSON when they are next touched.
 
 ## Public API and versions
 
 - Public API = everything exported from `src/index.ts` (and from any later entry in `exports` of
   `package.json`). Everything else is internal and may change freely.
+- **Plain data at the API boundary** (maintainer, 2026-11-19, #30): exported functions take and
+  return numbers, strings, booleans, arrays and plain objects; no classes, no functions, no `Map` or
+  `Set` as arguments or results. A thin layer in another language (Python, #30) can then pass
+  everything as JSON without knowing the module.
 - SemVer. Before 1.0.0: MINOR for new features and for any breaking change, PATCH for fixes.
   From 1.0.0 on: MAJOR for breaking changes.
 - `CHANGELOG.md` gets an entry for every change to the public API or to calculated results. A
@@ -278,3 +286,39 @@ The conventions themselves are in `docs/conventions.md`; here, what was decided 
   and Wyckoff positions").
 - **`latticeBasis` only for families with fixed cell angles** (2026-11-09, #14): for monoclinic
   and triclinic a Cartesian basis would need the cell angles, which a point group does not fix.
+
+### Tensors
+
+The conventions are in `docs/conventions.md` ("Tensors"); here, what was decided and why.
+
+- **Results as numbers, not text** (maintainer, 2026-11-19, #30; asked before implementation):
+  `tensorForm` and `tensorFormOf` return the basis in reduced row echelon form, the free parameters
+  as index lists and the relations as coefficient rows. Relation strings
+  (`\chi_{xxx} = -\chi_{xyy}`), LaTeX, Nye diagrams, Voigt matrices and trigonometric polynomials stay in the
+  applications. Numbers serve every consumer (birss-app, the teaching apps, Python with NumPy);
+  strings would fix one presentation, and this is the decision that is expensive to change later.
+- **Scope: symmetry only** (maintainer, 2026-11-19): the form for a point group and for any list of
+  operations, piezoelectric, rotation of a tensor. birss-app's SHG source terms (`computeShg`),
+  lab geometry, simulator and polarimetry are applications of the forms and stay in birss-app.
+- **Ranks 0 to 4 with all index symmetries of birss-app in the first step** (maintainer,
+  2026-11-19): the print anchors for rank 4 (Birss Table 4f, Hoshi 1995) exist, and electric-
+  quadrupole SHG of centrosymmetric crystals needs rank 4.
+- **Names** (maintainer, 2026-11-19): `tensorForm(key, spec, options)`,
+  `tensorFormOf(operations, spec)`, `rotateTensor(tensor, rotation, spec)`, `isPiezoelectric(key)`; `TensorSpec` with
+  birss-app's fields (`rank`, `parity`, `timeParity`, `intrinsic`), so birss-app passes its
+  specifications unchanged.
+- **Free parameters are the pivots of the reduced row echelon form**: the lowest component
+  independent of those before it. This is birss-app's rule since its Q0 reduction, so in the Birss
+  convention the parameters agree with birss-app by name and order without a rule of their own
+  (behavioural pins, `src/tensors/birssApp.pins.json`), and in the ITC convention the same rule
+  applies to the ITC setting.
+- **An index symmetry that does not apply at the rank is an error** (2026-11-19): birss-app ignores
+  `'voigt'` at rank 3 and the like; a library call with it is a mistake of the caller, and silently
+  computing another tensor would hide it.
+- **Time reversal is built in** (#13): an operation with `timeReversal` changes the sign of a
+  `'c'`-tensor, so the magnetic point groups need no change to the tensor code. Piezomagnetic,
+  magnetoelectric and ferromagnetic come with them.
+- **Speed** (#30, measured 2026-11-19): birss-app's reduction, bundled, takes under QuickJS
+  (`quickjs-ng`) 3–112 ms per class for the SHG tensor and up to about 0.3 s at rank 4 (m-3m), 10–35
+  times Node; enough for a Python layer that calls symcrys a few times per material. Forms per
+  class, setting and kind of tensor are cached.
