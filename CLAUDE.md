@@ -262,5 +262,19 @@ The conventions themselves are in `docs/conventions.md`; here, what was decided 
   improved, symcrys improves on it only after clarifying with Thomas; `docs/conventions.md` records
   the difference with its reason, and #19 collects what birss-app takes over when it moves onto
   symcrys.
+- **Site symmetry and Wyckoff positions** (maintainer, 2026-11-18, #24 item 1; asked before
+  implementation): Wyckoff positions in the ITC convention only, because neither Birss nor birss-app
+  has them (no Birss output to follow); the site symmetry itself, plain computation, in both. The
+  representative is ITA's printed point and face as strings plus one numeric face (hkl) with its
+  Cartesian normal, since the apps work with face poles. "Lies on the element" uses an optional
+  `tolerance`, default `EPSILON`, so that stereography can pass 10⁻⁴ for its rounded links while
+  symcrys projects onto the fixed space. `mm2` settings 2 and 3, which ITA does not print, are
+  derived from setting 1 by rotation, with a test that reads the oriented symbol independently, as
+  for the symbols. `siteSymmetry` takes any list of operations, so that a consumer can use it for
+  the operations of a distorted crystal (stereography, `analyzeGroup`); whether stereography uses it
+  so is decided when stereography moves (#24). The print anchor is ITA 6th ed. Table 3.2.3.2
+  (`references/`); the 5th edition (Table 10.1.2.2, via stereography's form catalogue) is an
+  additional check by `audit/wyckoff-2006`, not the reference (docs/conventions.md, "Site symmetry
+  and Wyckoff positions").
 - **`latticeBasis` only for families with fixed cell angles** (2026-11-09, #14): for monoclinic
   and triclinic a Cartesian basis would need the cell angles, which a point group does not fix.

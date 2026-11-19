@@ -5,7 +5,8 @@ ITC and Birss, differ. The print sources behind each statement are listed in "So
 the tests named there re-check them against the transcriptions in `references/`.
 
 So far symcrys holds the 32 crystallographic point groups (crystal classes, type I), with their
-symmetry directions and elements. The magnetic point groups (types II and III) follow.
+symmetry directions and elements, and the site symmetry and Wyckoff positions of directions. The
+magnetic point groups (types II and III) follow.
 
 ## Conventions
 
@@ -248,20 +249,86 @@ direction) and x (a secondary one), as for the symbols ("Where ITC and Birss dif
 - Symbols built from these data (`4⁺ 0,0,z`, `3⁻`, `2_z`, axis names in another frame) are left to
   the applications.
 
+## Site symmetry and Wyckoff positions
+
+These functions treat **directions**: face normals (poles) and lattice directions, the vectors a
+point group acts on. A direction is a non-zero Cartesian vector; its length does not matter.
+
+**Site symmetry.** `siteSymmetry(operations, direction, { tolerance })` returns the operations of
+any list (a point group, or for example the operations left after distorting a crystal) that fix
+the direction: those that move its unit vector by less than `tolerance` (default `EPSILON`,
+10⁻⁶). It also sets the direction onto the fixed space of these operations (the mean of its
+images, normalised), which removes rounding errors within the tolerance, and gives the
+multiplicity, the number of operations divided by the order of the site symmetry. Projection and
+multiplicity are meaningful when the operations form a group (then so do the fixing ones). Time
+reversal is ignored, since it does not change a direction. Site symmetry is plain computation and works in both
+conventions.
+
+**Wyckoff positions** are ITA's: a Wyckoff position is the set of directions whose site
+symmetries are conjugate in the point group (ITA, 6th ed., § 3.2.1.2.2, "Definition", p. 722). They are
+defined in the **ITC convention only**: neither Birss (1966) nor birss-app has them, so there is no
+Birss output to follow (maintainer decision, 2026-11-18, #24); in the Birss convention
+`wyckoffPositions` and `wyckoffPositionOf` throw. The setting index still names the same frame, so
+a Birss caller reaches a frame through its index with `'itc'`.
+
+`wyckoffPositions(key, { setting })` lists them in ITA's order, general position first, as ITA
+prints them for that setting (ITA 6th ed., Table 3.2.3.2, pp. 745–769):
+
+| Field                    | Meaning                                                                                                                               |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `letter`                 | ITA's Wyckoff letter                                                                                                                  |
+| `multiplicity`           | number of equivalent directions (faces of the form)                                                                                   |
+| `siteSymmetry`           | oriented site-symmetry symbol as printed, e.g. `..m`, `4m.m`; the positions are those of the symmetry directions of ITA Table 2.1.3.1 |
+| `coordinates`            | the first printed coordinate triplet, e.g. `x,x,z` (a representative point)                                                           |
+| `millerIndices`          | the first printed face, e.g. `h,h,l`, Bravais–Miller indices for hexagonal axes, e.g. `h,h,-2h,l`                                     |
+| `representative`         | that face with h = 3, k = 2, l = 1: `hkl` (three indices, without i) and its Cartesian unit normal h a\* + k b\* + l c\*              |
+| `siteSymmetryOperations` | indices into `operations` (same setting, ITC convention) of the operations fixing the representative                                  |
+
+- The **point at the origin** (letter o, site symmetry the whole group), which ITA 2016 prints for
+  every group except the ten polar ones (1, 2, m, mm2, 4, 4mm, 3, 3m, 6, 6mm), is not a direction
+  and is left out.
+- The printed point and the printed face of a position may lie on **different, conjugate
+  elements**: in 321, position b prints the point x,0,0 (on the twofold axis along a) and the face
+  (112̄0) (on the twofold axis along [110]). Both belong to the position; the representative of
+  symcrys is the face, as the applications work with face poles.
+- Where ITA prints a face with "or", e.g. (001) or (001̄) for the pedion of 4mm, the two faces
+  belong to the same Wyckoff position (ITA 6th ed., § 3.2.1.2.4 (i), p. 729); the first is the
+  representative.
+- **Monoclinic and triclinic:** the Cartesian normal takes a, b, c along x, y, z, as
+  `describeOperations` does, since a point group does not fix the cell angles. This is exact for the
+  unique axis; for any other face it is the normal for orthogonal axes, not the true pole for
+  β ≠ 90°, but it gives the correct site symmetry, which does not depend on the cell angles.
+- **Settings ITA does not print** (`mm2` settings 2 and 3, `2mm` and `m2m`): the positions of
+  setting 1 carried into their frame, a permutation of the axes (maintainer decision, 2026-11-18,
+  #24): same letters and multiplicities, the positions of the oriented symbol permuted, the
+  coordinates and Miller indices permuted and their letters renamed after their new position (`m..`,
+  `0,y,z`, `0,k,l` in `mm2` become `.m.`, `x,0,z`, `h,0,l` in `2mm`).
+
+`wyckoffPositionOf(key, direction, { setting, tolerance })` gives the Wyckoff position of any
+direction: the one whose representative has a site symmetry conjugate to that of the direction.
+
+**ITA 2006 and 2016.** The 5th edition prints these data as Table 10.1.2.2, without coordinates
+("for point coordinates see text", § 10.1.2.3) and without the point at the origin. Letters,
+multiplicities and oriented site-symmetry symbols of all face positions agree with the 6th edition
+(`audit/wyckoff-2006/report.md`, compared with stereography's form catalogue, which follows the
+5th edition). One misprint in the 6th edition: the site symmetry of the origin of 6/mmm reads
+`6mmm` (p. 764); it concerns the origin only, which symcrys leaves out.
+
 ## Sources
 
-| What                                                    | Print source                                                                                                                                                                                                                                                                                              | Test                                                             |
-| ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| Birss operations, symbols, Schoenflies, orders          | Birss Table 3 (pp. 36–39), generating matrices eq. (2.17) (p. 48): `references/birss/`                                                                                                                                                                                                                    | `birss.reference.test.ts`                                        |
-| Birss symbols of other settings, full symbols           | derived along Birss's directions (position 2 from Birss Table 4a, pp. 56–57)                                                                                                                                                                                                                              | `birss.reference.test.ts`                                        |
-| ITC symbols of the settings                             | ITA Table 3.2.3.2 (headlines, pp. 745–769); ITC Vol. D Table 1.5.2.3 for monoclinic full symbols; the symbol rule (positions: ITA § 2.1.3.4, p. 151; `1` for a direction without symmetry: 5th ed. § 2.2.4.1 (iv), p. 18; monoclinic full symbols: § 2.1.3.15, p. 171) for `2mm`, `m2m` and unique axis c | `itc.reference.test.ts`                                          |
-| ITC operations of every setting                         | the general positions of ITA Table 3.2.3.2 (pp. 745–769), in the frame of #6; `2mm`, `m2m`, which ITA does not list: their ITC symbol along the symmetry directions of ITA Table 2.1.3.1 (p. 151)                                                                                                         | `itcGeneralPositions.reference.test.ts`, `itc.reference.test.ts` |
-| ITC default settings                                    | see "Settings" above                                                                                                                                                                                                                                                                                      | `itcSettings.fixtures.ts`                                        |
-| centrosymmetric, polar, chiral, Laue class, Schoenflies | ITA Table 2.1.1.1 (p. 143, Laue groups), Table 3.2.2.1 (p. 738), Table 3.2.3.2                                                                                                                                                                                                                            | `properties.reference.test.ts`, `itc.reference.test.ts`          |
-| symmetry directions                                     | ITA Table 2.1.3.1 (p. 151)                                                                                                                                                                                                                                                                                | `symmetryDirections.reference.test.ts`                           |
-| ITC: order of the operations, generators                | ITA's selected generators, ITA 5th ed. (2006), Part 7 (pages in `references/itc/vol-a-2006-symmetry-operations.md`), § 2.2.11 (iv) p. 27, § 8.3.5 p. 737, giving the numbering of Table 3.2.3.2                                                                                                           | `elements.reference.test.ts`                                     |
-| Birss: order of the operations, generators, axis signs  | none: birss-app 2be5fe3, behavioural pins (class (c)) captured by `audit/birss-app`                                                                                                                                                                                                                       | `birssApp.pins.test.ts`                                          |
-| operations described (kind, n, axis, sense)             | the symmetry operations of the symmorphic P space groups, ITA 5th ed. (2006), Part 7, one per ITC setting (pages in `references/itc/vol-a-2006-symmetry-operations.md`); symbols as defined in § 11.1.2, pp. 810–811; numbering checked against the general positions of Table 3.2.3.2                    | `elements.reference.test.ts`, `elements.test.ts`                 |
+| What                                                                                            | Print source                                                                                                                                                                                                                                                                                              | Test                                                             |
+| ----------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| Birss operations, symbols, Schoenflies, orders                                                  | Birss Table 3 (pp. 36–39), generating matrices eq. (2.17) (p. 48): `references/birss/`                                                                                                                                                                                                                    | `birss.reference.test.ts`                                        |
+| Birss symbols of other settings, full symbols                                                   | derived along Birss's directions (position 2 from Birss Table 4a, pp. 56–57)                                                                                                                                                                                                                              | `birss.reference.test.ts`                                        |
+| ITC symbols of the settings                                                                     | ITA Table 3.2.3.2 (headlines, pp. 745–769); ITC Vol. D Table 1.5.2.3 for monoclinic full symbols; the symbol rule (positions: ITA § 2.1.3.4, p. 151; `1` for a direction without symmetry: 5th ed. § 2.2.4.1 (iv), p. 18; monoclinic full symbols: § 2.1.3.15, p. 171) for `2mm`, `m2m` and unique axis c | `itc.reference.test.ts`                                          |
+| ITC operations of every setting                                                                 | the general positions of ITA Table 3.2.3.2 (pp. 745–769), in the frame of #6; `2mm`, `m2m`, which ITA does not list: their ITC symbol along the symmetry directions of ITA Table 2.1.3.1 (p. 151)                                                                                                         | `itcGeneralPositions.reference.test.ts`, `itc.reference.test.ts` |
+| ITC default settings                                                                            | see "Settings" above                                                                                                                                                                                                                                                                                      | `itcSettings.fixtures.ts`                                        |
+| centrosymmetric, polar, chiral, Laue class, Schoenflies                                         | ITA Table 2.1.1.1 (p. 143, Laue groups), Table 3.2.2.1 (p. 738), Table 3.2.3.2                                                                                                                                                                                                                            | `properties.reference.test.ts`, `itc.reference.test.ts`          |
+| symmetry directions                                                                             | ITA Table 2.1.3.1 (p. 151)                                                                                                                                                                                                                                                                                | `symmetryDirections.reference.test.ts`                           |
+| ITC: order of the operations, generators                                                        | ITA's selected generators, ITA 5th ed. (2006), Part 7 (pages in `references/itc/vol-a-2006-symmetry-operations.md`), § 2.2.11 (iv) p. 27, § 8.3.5 p. 737, giving the numbering of Table 3.2.3.2                                                                                                           | `elements.reference.test.ts`                                     |
+| Birss: order of the operations, generators, axis signs                                          | none: birss-app 2be5fe3, behavioural pins (class (c)) captured by `audit/birss-app`                                                                                                                                                                                                                       | `birssApp.pins.test.ts`                                          |
+| operations described (kind, n, axis, sense)                                                     | the symmetry operations of the symmorphic P space groups, ITA 5th ed. (2006), Part 7, one per ITC setting (pages in `references/itc/vol-a-2006-symmetry-operations.md`); symbols as defined in § 11.1.2, pp. 810–811; numbering checked against the general positions of Table 3.2.3.2                    | `elements.reference.test.ts`, `elements.test.ts`                 |
+| Wyckoff positions (letter, multiplicity, oriented site symmetry, representative point and face) | ITA Table 3.2.3.2 (pp. 745–769): `references/itc/vol-a-table-3.2.3.2-wyckoff-positions.md`; the oriented symbols read along ITA Table 2.1.3.1 (p. 151); `2mm`, `m2m`: derived (above); additional check against the 5th ed. (2006), Table 10.1.2.2, by `audit/wyckoff-2006`                               | `wyckoff.reference.test.ts`                                      |
 
 Each file in `references/` names its source and the printed page. ITA means Vol. A, 6th edition
 (2016), unless the 5th edition (2006) is named: its space-group tables are the source for the
