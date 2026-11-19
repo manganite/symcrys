@@ -6,8 +6,8 @@ on:
     tags:
       - 'v*.*.*'
 
-# Two jobs, so that only the short npm job can obtain an OIDC token for npm: the release job runs
-# the dev dependencies (install scripts, tests, lint) and never sees that token.
+# Three jobs, so that only the short npm and pypi jobs can obtain an OIDC token for publishing: the
+# release job runs the dev dependencies (install scripts, tests, lint) and never sees such a token.
 permissions: {}
 
 jobs:
@@ -32,13 +32,18 @@ jobs:
         uses: actions/setup-node@v5
         with:
           node-version: 22
-      - name: Tag matches package.json
+      - name: Tag matches both packages
         run: |
-          VERSION="$(node -p "require('./package.json').version")"
-          if [ "v${VERSION}" != "${GITHUB_REF_NAME}" ]; then
-            echo "::error::Tag ${GITHUB_REF_NAME} does not match package.json version ${VERSION}."
+          VERSION="$(node -p "require('./packages/ts/package.json').version")"
+          PY_VERSION="$(sed -n 's/^version = "\(.*\)"$/\1/p' packages/python/pyproject.toml)"
+          if [ "v${VERSION}" != "${GITHUB_REF_NAME}" ] || [ "${PY_VERSION}" != "${VERSION}" ]; then
+            echo "::error::Tag ${GITHUB_REF_NAME} does not match packages/ts/package.json (${VERSION}) and pyproject.toml (${PY_VERSION})."
             exit 1
           fi
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.x'
       - name: Install dependencies
         run: npm ci
       - name: Gates
@@ -53,7 +58,18 @@ jobs:
       # --ignore-scripts: pack the dist/ that the gates just checked, without rebuilding it (prepack)
       - name: Pack
         id: pack
-        run: echo "file=$(npm pack --silent --ignore-scripts)" >> "$GITHUB_OUTPUT"
+        run: echo "file=$(npm pack --silent --ignore-scripts -w symcrys)" >> "$GITHUB_OUTPUT"
+      # The Python package carries the dist/ just checked (bundle:python checks the versions).
+      - name: Python gate and build
+        env:
+          PIP_CONSTRAINT: packages/python/requirements-ci.txt
+        run: |
+          npm run bundle:python
+          python -m pip install build
+          python -m build --outdir python-dist packages/python
+          python -m venv /tmp/venv
+          /tmp/venv/bin/pip install python-dist/*.whl pytest mypy -c packages/python/requirements-ci.txt
+          (cd packages/python && /tmp/venv/bin/mypy && /tmp/venv/bin/pytest -p no:cacheprovider)
       - name: Extract changelog section
         id: changelog
         run: |
@@ -80,12 +96,20 @@ jobs:
         with:
           name: ${{ github.ref_name }}
           body: ${{ steps.changelog.outputs.notes }}
-          files: ${{ steps.pack.outputs.file }}
+          files: |
+            ${{ steps.pack.outputs.file }}
+            python-dist/*
       - name: Keep the tarball for the npm job
         uses: actions/upload-artifact@v6
         with:
           name: package
           path: ${{ steps.pack.outputs.file }}
+          if-no-files-found: error
+      - name: Keep sdist and wheel for the PyPI job
+        uses: actions/upload-artifact@v6
+        with:
+          name: python
+          path: python-dist/
           if-no-files-found: error
 
   # Submits the version to npm for approval (staged publishing). The trusted publisher on npmjs.com
@@ -118,3 +142,26 @@ jobs:
       - name: Stage on npm
         # verbose: the log shows the OIDC exchange if authentication fails (npm redacts tokens)
         run: npm stage publish "./${{ needs.release.outputs.file }}" --loglevel verbose
+
+  # Publishes sdist and wheel to PyPI by trusted publishing (no token). The environment `pypi`
+  # requires Thomas' approval of each run (GitHub, Settings › Environments), so nothing reaches PyPI
+  # without it; the trusted publisher on pypi.org names this repository, release.yml and `pypi`.
+  # Same files as attached to the GitHub release.
+  pypi:
+    needs: release
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/project/symcrys/
+    permissions:
+      id-token: write # OIDC token for PyPI trusted publishing
+    steps:
+      - name: Get sdist and wheel
+        uses: actions/download-artifact@v7
+        with:
+          name: python
+          path: python-dist
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: python-dist/

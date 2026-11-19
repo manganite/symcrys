@@ -14,13 +14,35 @@ apply here. Where this file and another document disagree on process, this file 
   models, display strings in other languages).
 - A library in its own right: easily extensible, distributable on its own, English throughout
   (identifiers, comments, docs, commit messages).
+- **Two packages, one implementation** (maintainer, 2026-11-19, #30): the TypeScript library
+  (`packages/ts`, npm) and a thin Python layer (`packages/python`, PyPI) that runs the bundled
+  `dist/` of the same version in an embedded JavaScript engine. Results agree by construction
+  (up to rounding in the last bit of a float, from the engines' `Math`); every calculation is written, tested and documented once, in TypeScript.
+
+## Layout
+
+| Path                   | What                                                                                                |
+| ---------------------- | --------------------------------------------------------------------------------------------------- |
+| `packages/ts`          | the npm package `symcrys`: `src/`, `dist/`, `package.json`, `tsconfig.build.json`, a README for npm |
+| `packages/python`      | the PyPI package `symcrys`: `pyproject.toml`, `src/symcrys/`, `tests/`, `examples/`                 |
+| `references/`, `docs/` | shared by both packages                                                                             |
+| `scripts/`, `audit/`   | repository tools: `check-dist.mjs`, `bundle-python.mjs`; the audits against sibling checkouts       |
+| root `package.json`    | private npm workspace: the dev dependencies and the gates                                           |
+
+Below, `src/`, `dist/` and `tsconfig.build.json` without a prefix are those of `packages/ts`.
+Decision on the layout (maintainer, 2026-11-19, #30): two package folders, as first proposed in
+#30, rather than a `python/` folder beside the TypeScript package. The npm package, its release
+tarball and the trusted publisher on npm stay as they were; a checkout for
+crystallography-common's `sync.mjs --kern` is `packages/ts` of a symcrys checkout.
 
 ## Hard constraints
 
 - **No DOM, no UI, no I/O in library code** (everything in `src/` except test-only code, see
   "Tests"). `tsconfig.build.json` type-checks it with neither DOM nor Node types, and ESLint
   forbids a list of environment globals and any non-relative import there.
-- **No runtime dependencies** unless Thomas agrees. The apps copy `dist/` and run it unbundled in
+- **No runtime dependencies** unless Thomas agrees. The TypeScript package has none. The Python
+  package depends on `quickjs-ng` (the JavaScript engine; MIT, wheels `abi3` from Python 3.10) and
+  NumPy (maintainer, 2026-11-19). The apps copy `dist/` and run it unbundled in
   the browser; `scripts/check-dist.mjs` fails on any import or type reference in `dist/` that is
   not a relative `.js` path.
 - **One-way dependency.** symcrys knows nothing about crystallography-common, the apps or
@@ -107,7 +129,7 @@ Carried over from birss-app, where the calculations come from.
 
 - Tests sit next to their module (`foo.ts`, `foo.test.ts`), as in birss-app.
 - **Test-only code** is `*.test.ts`, `*.fixtures.ts`, `*.pins.json` and anything in a `testUtils/`
-  folder. It is
+  folder (in `packages/ts/src`). It is
   type-checked with Node types (tests read `references/` from disk), may import Node built-ins,
   and is left out of `dist/` and the npm package; `check:dist` fails if any of it is built. Any
   other file in `src/` is library code.
@@ -119,6 +141,9 @@ Carried over from birss-app, where the calculations come from.
   `*.pins.json` (one entry per line, left alone by Prettier, not in the npm package), so that the
   tests of another language read the same files; `src/testUtils/` reads them for the TypeScript
   tests. Hand-written fixtures in `.ts` move to JSON when they are next touched.
+- **Python tests** (`packages/python/tests`, pytest) read the same `references/` and `*.pins.json`
+  and have no expected values of their own (#30); in addition they test the layer itself (names,
+  conversions, errors) and run the example notebooks.
 
 ## Public API and versions
 
@@ -133,7 +158,19 @@ Carried over from birss-app, where the calculations come from.
 - `CHANGELOG.md` gets an entry for every change to the public API or to calculated results. A
   correction says what was wrong and since which version it is fixed (consumers need this to
   judge old results).
-- `src/version.ts` holds the version; a test checks it against `package.json`.
+- **One version for both packages** (maintainer, 2026-11-19): `src/version.ts`,
+  `packages/ts/package.json` and `packages/python/pyproject.toml`; tests in both languages check
+  that they agree, and `npm run bundle:python` refuses to bundle otherwise.
+- **The Python API follows the TypeScript API by fixed rules** (#30; `packages/python/src/symcrys/_convert.py`):
+  function names and object keys camelCase → snake_case; an options object becomes keyword-only
+  arguments; arrays of numbers become NumPy arrays (`float64` for matrices, Cartesian vectors,
+  tensor bases and relations; `int64` for index lists, Miller indices and lattice directions);
+  errors of the library raise `SymcrysError`, a `ValueError`. A new export of `src/index.ts` gets
+  its Python function in the same PR; a test fails until it has one.
+- **The engine stays replaceable** (#30): the whole boundary is one function, `call(name,
+argsJson) → resultJson` (`_engine.py`, `scripts/bundle-python.mjs`), so another backend
+  (Pyodide in JupyterLite) replaces one module. Not now: that second backend and a display layer
+  such as `_repr_latex_` (presentation; ideas in #30).
 
 ## Git, PRs and releases
 
@@ -141,8 +178,11 @@ Carried over from birss-app, where the calculations come from.
   branch (`feature/`, `fix/`, `refactor/`, `docs/`, `chore/`, `audit/`), Conventional Commits
   (`type(scope): summary`), PR to `main`, merged with a merge commit (no squash).
 - **Gates**, run by CI on every PR on Node 22 and 24: `typecheck`, `typecheck:ts7`, `lint`,
-  `format:check`, `test`, `build`, `check:dist`. A report names all seven with their result; a
-  skipped one is named as skipped.
+  `format:check`, `test`, `build`, `check:dist`; and `python` on Python 3.10 and the newest
+  (bundle, build sdist and wheel, install the wheel into a fresh environment, `mypy --strict`,
+  `pytest`; maintainer, 2026-11-19, from the first PR of the Python package). A report names all
+  eight with their result; a skipped one is named as skipped. Locally: `npm run build && npm run
+bundle:python`, then in `packages/python` `pip install -e ".[test]"`, `mypy` and `pytest`.
 - **Review by an independent agent** before reporting to Thomas, on every PR without exception:
   an agent that does not know the work gets only repository, branch and purpose and checks the
   diff for errors, edge cases, contradictions with this file, and domain claims against code and
@@ -161,6 +201,11 @@ Carried over from birss-app, where the calculations come from.
   allowed action "stage" only); **Thomas approves it** with 2FA (maintainer, 2026-11-08). Never
   publish from a working copy other than a clean checkout of the tag; a stale checkout put `0.0.0`
   on npm (issue #3). No placeholder packages.
+- **PyPI** (maintainer, 2026-11-19): the same tag builds sdist and wheel, attaches them to the
+  GitHub release, and the job `pypi` of `release.yml` publishes them by trusted publishing. It runs
+  in the GitHub environment `pypi`, which needs **Thomas' approval** of each run; the trusted
+  publisher on pypi.org names this repository, `release.yml` and `pypi`. The name `symcrys` is
+  taken on PyPI only by the first real release (pending publisher, no placeholder).
 - Commits end with `Co-Authored-By: …`; in sessions with a link (claude.ai) also with
   `Claude-Session: …`. On Thomas' computer commit with
   `git config user.email 6277652+manganite@users.noreply.github.com` (GitHub rejects the private
@@ -172,6 +217,7 @@ Carried over from birss-app, where the calculations come from.
 - GraphQL is blocked, so no `gh pr create` or `gh issue view`. Use REST:
   `gh api repos/manganite/symcrys/pulls -f title=… -f head=<branch> -f base=main -f body=…`;
   merge `gh api -X PUT repos/manganite/symcrys/pulls/N/merge -f merge_method=merge`.
+- A draft PR cannot be marked ready (GraphQL only), so open PRs as regular PRs, not drafts.
 - The session's GitHub access rewrites the "Generated with Claude Code" footer of PR texts; put
   the session link on its own line above it.
 
@@ -312,7 +358,7 @@ The conventions are in `docs/conventions.md` ("Tensors"); here, what was decided
 - **Free parameters are the pivots of the reduced row echelon form**: the lowest component
   independent of those before it. This is birss-app's rule since its Q0 reduction, so in the Birss
   convention the parameters agree with birss-app by name and order without a rule of their own
-  (behavioural pins, `src/tensors/birssApp.pins.json`), and in the ITC convention the same rule
+  (behavioural pins, `packages/ts/src/tensors/birssApp.pins.json`), and in the ITC convention the same rule
   applies to the ITC setting.
 - **An index symmetry that does not apply at the rank is an error** (2026-11-19): birss-app ignores
   `'voigt'` at rank 3 and the like; a library call with it is a mistake of the caller, and silently

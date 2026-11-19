@@ -24,10 +24,14 @@ const RESTRICTED_GLOBALS = [
 ].map((name) => ({ name, message: 'symcrys runs in browsers and in Node: no environment APIs in library code.' }));
 
 // Test-only code (CLAUDE.md, "Tests"): not shipped, may use Node.
-const TEST_ONLY = ['src/**/*.test.ts', 'src/**/*.fixtures.ts', 'src/**/testUtils/**'];
+const TEST_ONLY = [
+  'packages/ts/src/**/*.test.ts',
+  'packages/ts/src/**/*.fixtures.ts',
+  'packages/ts/src/**/testUtils/**',
+];
 
 export default defineConfig([
-  { ignores: ['dist/', 'coverage/', 'node_modules/', 'references/'] },
+  { ignores: ['**/dist/', 'coverage/', '**/node_modules/', 'references/', 'packages/python/'] },
   { linterOptions: { reportUnusedDisableDirectives: 'error' } },
   js.configs.recommended,
   tseslint.configs.recommended,
@@ -41,7 +45,7 @@ export default defineConfig([
   },
   {
     // Library code: relative imports only (no runtime dependencies), no environment APIs.
-    files: ['src/**/*.ts'],
+    files: ['packages/ts/src/**/*.ts'],
     ignores: TEST_ONLY,
     rules: {
       'no-restricted-globals': ['error', ...RESTRICTED_GLOBALS],

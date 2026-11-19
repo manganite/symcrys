@@ -6,6 +6,23 @@ All notable changes to symcrys are recorded here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- The Python package `symcrys` (`packages/python`, #30): the TypeScript library of the same
+  version, bundled and run in quickjs-ng, with every export under its snake_case name
+  (`tensor_form`, `site_symmetry`, …), matrices and vectors as NumPy arrays, type hints
+  (`py.typed`) and errors as `SymcrysError` (a `ValueError`); for Python 3.10 or later, depending
+  on `quickjs-ng` and NumPy. Example notebook `examples/surface-shg.ipynb` (SHG at the surfaces of
+  m-3m). Published on PyPI from the first release that carries it.
+
+### Changed
+
+- Repository layout: the npm package moved to `packages/ts`, the Python package is
+  `packages/python`; the npm package keeps its name, files and release tarball; its README on npm is now a short
+  one (`packages/ts/README.md`) pointing to the repository, and `repository.directory` names
+  `packages/ts`. A
+  checkout for crystallography-common's `sync.mjs --kern` is now `packages/ts` of the checkout.
+
 ## [0.4.0] - 2026-11-19
 
 ### Added

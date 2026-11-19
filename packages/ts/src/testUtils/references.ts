@@ -5,7 +5,7 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
-const ROOT = new URL('../../references/', import.meta.url);
+const ROOT = new URL('../../../../references/', import.meta.url);
 
 /** The content of a file in references/, e.g. `birss/table-3.md`. */
 export function readReference(path: string): string {

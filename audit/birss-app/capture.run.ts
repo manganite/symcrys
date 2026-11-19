@@ -40,7 +40,7 @@ import {
 import { getLaueClass, isChiral, isPolar } from '../../../birss-app/src/services/propertyFlags';
 import { computeTensorForm, type TensorSpec } from '../../../birss-app/src/services/tensorForms';
 import { rref } from '../../../birss-app/src/services/linalg';
-import { POINT_GROUP_KEYS } from '../../src/pointGroups/pointGroups';
+import { POINT_GROUP_KEYS } from '../../packages/ts/src/pointGroups/pointGroups';
 
 const here = fileURLToPath(new URL('.', import.meta.url));
 const birssApp = `${here}../../../birss-app`;
@@ -143,7 +143,7 @@ it('captures the Birss-mode pins from birss-app', () => {
   };
 
   write(
-    `${here}../../src/pointGroups/birssApp.pins.json`,
+    `${here}../../packages/ts/src/pointGroups/birssApp.pins.json`,
     {
       note: `${header('what')} Matrices are birss-app's Cartesian matrices (Birss frame), rows first.`,
       revision: commit,
@@ -152,7 +152,7 @@ it('captures the Birss-mode pins from birss-app', () => {
     classes,
   );
   write(
-    `${here}../../src/tensors/birssApp.pins.json`,
+    `${here}../../packages/ts/src/tensors/birssApp.pins.json`,
     {
       note:
         `${header('the tensor forms')} Per class, setting and specification (time-even): the basis in reduced row ` +

@@ -1,4 +1,4 @@
-// Checks the built output in dist/ (npm run check:dist, after npm run build).
+// Checks the built output in packages/ts/dist/ (npm run check:dist, after npm run build).
 //
 // The apps copy dist/ into lib/kern/ and load it unbundled in the browser, so every module must
 // import only relative paths ending in .js: no bare package names (no runtime dependencies) and no
@@ -11,7 +11,7 @@ import { join, relative, sep } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import ts from 'typescript';
 
-const root = fileURLToPath(new URL('..', import.meta.url));
+const root = fileURLToPath(new URL('../packages/ts/', import.meta.url));
 const dist = join(root, 'dist');
 const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
 /** @type {string[]} */

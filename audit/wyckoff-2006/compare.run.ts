@@ -17,7 +17,7 @@ import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { it } from 'vitest';
 import { FORMEN } from '../../../stereography/js/formen.js';
-import { POINT_GROUP_KEYS, settings, wyckoffPositions } from '../../src/index.js';
+import { POINT_GROUP_KEYS, settings, wyckoffPositions } from '../../packages/ts/src/index.js';
 
 const here = fileURLToPath(new URL('.', import.meta.url));
 const stereo = new URL('../../../stereography/', import.meta.url);

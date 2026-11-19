@@ -2,7 +2,13 @@
 
 Crystallographic symmetry calculations in TypeScript: point groups, both crystallographic and
 magnetic, with their settings, symbols and properties, and the property tensors they allow. A
-library without runtime dependencies that runs unbundled in browsers and in Node.
+library without runtime dependencies that runs unbundled in browsers and in Node, and a Python
+package of the same version that runs it in an embedded JavaScript engine.
+
+| Package                 | Folder                               | Install                                                                |
+| ----------------------- | ------------------------------------ | ---------------------------------------------------------------------- |
+| TypeScript / JavaScript | [`packages/ts`](packages/ts)         | `npm install symcrys`                                                  |
+| Python ≥ 3.10           | [`packages/python`](packages/python) | `pip install symcrys` (from the first release with the Python package) |
 
 > **Status: pre-release.** So far: the 32 crystallographic point groups with their symmetry elements,
 > site symmetry and Wyckoff positions, and the forms of property tensors of rank 0 to 4.
@@ -84,14 +90,27 @@ reduced row echelon form and the relations as coefficient rows; see
 
 Conventions, frames and symbols: [`docs/conventions.md`](docs/conventions.md).
 
-Without a build step, copy `dist/` (from the tarball, or built with `npm run build`) next to your
-code and import `dist/index.js` directly: every module in `dist/` imports only relative `.js`
-paths.
+**Python.** The same functions with snake_case names, matrices as NumPy arrays; details and an
+example for SHG at a surface in [`packages/python/README.md`](packages/python/README.md) and the
+notebook [`packages/python/examples/surface-shg.ipynb`](packages/python/examples/surface-shg.ipynb).
+
+```python
+import symcrys
+
+SHG = {"rank": 3, "parity": "polar", "time_parity": "i", "intrinsic": "jk"}
+symcrys.tensor_form("mm2", SHG)["parameters"]   # array([[0, 0, 2], [1, 1, 2], [2, 0, 0], [2, 1, 1], [2, 2, 2]])
+```
+
+Without a build step, copy `dist/` (from the tarball, or built with `npm run build` into
+`packages/ts/dist/`) next to your code and import `dist/index.js` directly: every module in `dist/`
+imports only relative `.js` paths. With crystallography-common's `sync.mjs --kern`, a checkout is
+given as `packages/ts` of the symcrys checkout.
 
 ## Development
 
 Development requires Node 22 (22.13 or later) or 24; CI runs on both. The library itself needs only
-an ES2022 runtime with ES modules.
+an ES2022 runtime with ES modules. All commands run in the root of the repository (an npm
+workspace with `packages/ts`).
 
 ```bash
 npm install
@@ -100,32 +119,44 @@ npm run typecheck:ts7  # the same with TypeScript 7
 npm run lint           # ESLint
 npm run format:check   # Prettier (npm run format fixes)
 npm test               # vitest
-npm run build          # dist/: JavaScript, .d.ts, source maps
+npm run build          # packages/ts/dist/: JavaScript, .d.ts, source maps
 npm run check:dist     # dist/ loads, imports only relative .js paths, has no test-only code
+```
+
+The Python package (Python 3.10 or later) needs the built `dist/`, bundled into one script:
+
+```bash
+npm run build && npm run bundle:python   # packages/python/src/symcrys/_bundle.js
+cd packages/python
+pip install -e ".[test]"
+mypy                                     # type check, strict
+pytest                                   # reads the same references/ and pins as the TypeScript tests
 ```
 
 Audits under `audit/` compare the code bases symcrys draws on. They are run by hand, with
 [birss-app](https://github.com/manganite/birss-app) and
 [stereography](https://github.com/manganite/stereography) checked out next to this repository:
 `npm run audit:point-groups` writes `audit/point-groups/report.md`, and `npm run audit:birss-app`
-captures the pins of the Birss convention as JSON (`src/pointGroups/birssApp.pins.json` for the
-operations, `src/tensors/birssApp.pins.json` for the tensor forms).
+captures the pins of the Birss convention as JSON (`packages/ts/src/pointGroups/birssApp.pins.json`
+for the operations, `packages/ts/src/tensors/birssApp.pins.json` for the tensor forms).
 
-CI runs these seven gates on every pull request, on Node 22 and 24. Tests sit next to their
+CI runs these seven gates on every pull request, on Node 22 and 24, and the gate `python` (bundle,
+build sdist and wheel, install the wheel, `mypy`, `pytest`) on Python 3.10 and the newest. Tests sit next to their
 module (`foo.ts`, `foo.test.ts`). Working rules for contributors, human or agent: `CLAUDE.md`.
 
 ## Releases
 
-1. Release PR: version in `package.json`, `package-lock.json` (`npm install --package-lock-only`)
-   and `src/version.ts`; move the `Unreleased` entries of `CHANGELOG.md` under
+1. Release PR: version in `packages/ts/package.json`, `package-lock.json` (`npm install
+--package-lock-only`), `packages/ts/src/version.ts` and `packages/python/pyproject.toml`; move the `Unreleased` entries of `CHANGELOG.md` under
    `## [X.Y.Z] - YYYY-MM-DD` and update the link definitions at the bottom (`[Unreleased]` compares
    `vX.Y.Z...HEAD`, `[X.Y.Z]` compares the previous tag with `vX.Y.Z`).
 2. After the merge: `git fetch origin`, check that `origin/main` is the merge commit of the release PR,
    then `git tag -a vX.Y.Z -m "symcrys X.Y.Z" origin/main && git push origin vX.Y.Z`.
-3. The tag runs `.github/workflows/release.yml`: it checks that the tag matches `package.json`,
+3. The tag runs `.github/workflows/release.yml`: it checks that the tag matches both packages,
    runs all gates, and creates the GitHub release with the `CHANGELOG.md` section as notes and the
-   `npm pack` tarball attached. Check that the workflow is green and the release carries
-   `symcrys-X.Y.Z.tgz`.
+   `npm pack` tarball, the Python sdist and the wheel attached. Check that the workflow is green
+   and the release carries `symcrys-X.Y.Z.tgz`, `symcrys-X.Y.Z.tar.gz` and
+   `symcrys-X.Y.Z-py3-none-any.whl`.
 
 **npm.** The `npm` job of `release.yml` submits the same tarball to npm as a staged version
 (trusted publishing, no token). Its log shows the tarball's shasum and integrity and the stage id. The version
@@ -143,6 +174,19 @@ If staging fails, re-run the `npm` job (a staged version cannot be staged twice,
 does not match (repository, workflow `release.yml`); the stage step runs with `--loglevel verbose`,
 so its log shows the OIDC exchange. As a fallback, stage the release asset by hand:
 `npm stage publish ./symcrys-X.Y.Z.tgz` (then without provenance, which only CI can attest).
+
+**PyPI.** The `pypi` job of `release.yml` waits for approval in the GitHub environment `pypi`
+(Actions › the run › "Review deployments"), then publishes the same sdist and wheel by trusted
+publishing (no token). Check `pip index versions symcrys` afterwards.
+
+Once, before the first release with the Python package:
+
+1. GitHub, Settings › Environments › New environment `pypi`: "Required reviewers" Thomas,
+   deployment branches and tags limited to tags `v*.*.*`.
+2. pypi.org, Account › Publishing › "Add a new pending publisher": PyPI project name `symcrys`,
+   owner `manganite`, repository `symcrys`, workflow `release.yml`, environment `pypi`. The first
+   upload creates the project; until then the job fails without publishing anything.
+3. Add `python (3.10)` and `python (3.x)` to the required checks of the ruleset `main`.
 
 ## Licence
 

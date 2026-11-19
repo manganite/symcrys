@@ -179,7 +179,7 @@ In the ITC convention `generators` returns ITA's selected generators of the sett
 selected" of the symmorphic P group, 5th ed., Part 7), in printed order and without the identity;
 for `mm2` settings 2 and 3, which ITA does not list, those of setting 1 carried into their frame. In
 the Birss convention it returns birss-app's generators (for `1` the identity, as in birss-app),
-which are the generators stored in `src/pointGroups/data.ts` carried into the frame of the setting
+which are the generators stored in `packages/ts/src/pointGroups/data.ts` carried into the frame of the setting
 ("Birss convention and birss-app"). Neither are Birss's printed generating matrices (Birss Table 3,
 pp. 36–39, σ(N) of eq. (2.17), p. 48), which differ for some classes in choice and order (e.g.
 `222`: birss-app 2_z, 2_x; Birss σ(2), σ(3) = 2_y, 2_z); Birss's tests check only the group they
@@ -207,11 +207,11 @@ choices that Birss's print leaves open:
 
 `birssApp.pins.test.ts` checks this against behavioural pins captured from birss-app
 (`audit/birss-app`, fixture class (c); the revision is the `revision` of
-`src/pointGroups/birssApp.pins.json`, at present 2be5fe3, and the test requires this text to name
+`packages/ts/src/pointGroups/birssApp.pins.json`, at present 2be5fe3, and the test requires this text to name
 it): for all 32 classes and all settings the generators and the operations in order, the symbols,
 the default setting, the property flags, and the operation symbols birss-app writes, rebuilt from
-`describeOperations` with birss-app's labelling rules. `src/tensors/birssApp.pins.test.ts` checks
-the tensor forms the same way, against `src/tensors/birssApp.pins.json` from the same revision: for
+`describeOperations` with birss-app's labelling rules. `packages/ts/src/tensors/birssApp.pins.test.ts` checks
+the tensor forms the same way, against `packages/ts/src/tensors/birssApp.pins.json` from the same revision: for
 all classes, settings and 26 kinds of tensor, the basis and the free parameters. For these choices birss-app is the specification (maintainer decision), so here its
 pins are the reference, not only a regression detector. The strings themselves (`2_z`, `3_[111]⁺`,
 `m_60°`) and the order birss-app sorts them into for display stay in birss-app.
