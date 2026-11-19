@@ -6,6 +6,8 @@ All notable changes to symcrys are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-11-19
+
 ### Added
 
 - The Python package `symcrys` (`packages/python`, #30): the TypeScript library of the same
@@ -13,7 +15,7 @@ All notable changes to symcrys are recorded here. The format follows
   (`tensor_form`, `site_symmetry`, …), matrices and vectors as NumPy arrays, type hints
   (`py.typed`) and errors as `SymcrysError` (a `ValueError`); for Python 3.10 or later, depending
   on `quickjs-ng` and NumPy. Example notebook `examples/surface-shg.ipynb` (SHG at the surfaces of
-  m-3m). Published on PyPI from the first release that carries it.
+  m-3m). First release on PyPI.
 
 ### Changed
 
@@ -121,7 +123,8 @@ All notable changes to symcrys are recorded here. The format follows
 - Project scaffold: TypeScript build to `dist/` (ES modules with type declarations), tests, lint,
   format check, CI and release workflow. The only export so far is `VERSION`.
 
-[Unreleased]: https://github.com/manganite/symcrys/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/manganite/symcrys/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/manganite/symcrys/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/manganite/symcrys/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/manganite/symcrys/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/manganite/symcrys/compare/v0.2.0...v0.3.0
