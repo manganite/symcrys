@@ -9,6 +9,7 @@ How far the columns are print: all 90 rows were compared with the scanned pages 
 every column. Seven Shubnikov entries of birss-tables were corrected against the print (`4/mm'm'`,
 `4/m'mm`, `4'/m'm'm`, `6'/m'mm'`, `m'3m'`, `m'3m`, and the classical subgroup of `m'3m`), and one
 operator of `4/m'mm` that birss-tables had silently corrected is given as printed again (Errata).
+The differences are reported upstream in manganite/birss-tables#3.
 The column "Symmetry operators" holds the printed operations in the notation described below (a
 prime for Birss's underline, placed on the operation); the order of the terms within a row is not
 always the printed one.
