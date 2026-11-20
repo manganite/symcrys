@@ -3,10 +3,11 @@
  * describes it (`TENSOR_PROPERTIES`) has a non-zero form under the group. Symmetry only allows a
  * property; whether a crystal shows it is a question of the material.
  *
- * The key of a crystal class (`'432'`) is the magnetic point group in which time reversal does not
- * occur at all, one of the groups of magnetic crystals: it allows time-odd properties (`'432'` is
- * magnetoelectric). A crystal without magnetic order has the grey group of its class (`"4321'"`),
- * which allows none of them; for the time-even properties the two agree (Birss pp. 84, 102).
+ * A key of type `'I'` (`'432'`) is a crystal class and, in magnetism, the white group with the same
+ * operations: the symmetry of a magnetically ordered crystal in which time reversal does not occur
+ * at all. For a time-odd property it is read as that group (`'432'` is magnetoelectric). A crystal
+ * without magnetic order has the grey group of its class (`"4321'"`), which allows no time-odd
+ * property; for the time-even properties the two agree (docs/conventions.md, "Types").
  */
 
 import type { Operation } from '../operations.js';

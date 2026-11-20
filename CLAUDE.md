@@ -418,8 +418,15 @@ The conventions are in `docs/conventions.md` ("Tensors"); here, what was decided
   `'c'`-tensor, so the magnetic point groups use the same tensor code, and `tensorForm` and the
   functions for named properties take all 122 keys. Their forms are anchored in print in both
   conventions: Birss's Table 7 with Tables 4b–4f, and ITC Vol. D Tables 1.5.2.4, 1.5.7.1 and 1.5.8.1
-  (`docs/conventions.md`, "Tensors"). A class key is the magnetic group without time reversal; a
-  crystal without magnetic order has the grey group.
+  (`docs/conventions.md`, "Tensors").
+- **Crystal class and white group are two readings of one key** (maintainer, 2026-11-20): the 32
+  crystal classes are not simply the 32 white magnetic groups. In a purely crystallographic context
+  quartz has the class `32`; in the context of magnetism it has the grey group `321'`, and `32`
+  there means a magnetically ordered crystal without any time reversal in its symmetry (Birss p. 84,
+  Paufler p. 60). The operations are the same, so symcrys keeps one key and computes with the
+  operations: a time-odd tensor or property asked for a key of type `'I'` is that of the white
+  group, and the documentation says to ask the grey group for a crystal without magnetic order.
+  birss-app does not make the distinction clear yet (#19).
 - **Named tensor properties, one generic call** (maintainer, 2026-11-19, #41; names asked before
   implementation, 2026-11-20): a property that is the question whether a tensor is allowed is an
   entry of the table `TENSOR_PROPERTIES` (name → `TensorSpec`, description, print source), not a

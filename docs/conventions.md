@@ -53,11 +53,25 @@ ITC Vol. D Table 1.5.2.3.
 
 ## Types
 
-| `type`  | Name                  | Operations                                                            | Number |
-| ------- | --------------------- | --------------------------------------------------------------------- | -----: |
-| `'I'`   | crystal class         | none with time reversal                                               |     32 |
-| `'II'`  | grey group            | every operation of a crystal class, with and without time reversal    |     32 |
-| `'III'` | black-and-white group | half of the operations of a crystal class combined with time reversal |     58 |
+| `type`  | Name                                        | Operations                                                            | Number |
+| ------- | ------------------------------------------- | --------------------------------------------------------------------- | -----: |
+| `'I'`   | crystal class; in magnetism the white group | none with time reversal                                               |     32 |
+| `'II'`  | grey group                                  | every operation of a crystal class, with and without time reversal    |     32 |
+| `'III'` | black-and-white group                       | half of the operations of a crystal class combined with time reversal |     58 |
+
+**Crystal class and white group.** A key of type `'I'` stands for two things that have the same
+operations and are not to be equated (maintainer, 2026-11-20):
+
+- the **crystal class**, as crystallography uses it: time reversal is not considered at all. Quartz
+  has the class `32`;
+- the **white (single-colour) magnetic group**, as magnetism uses it: time reversal is considered,
+  and no operation of the group involves it. This is the symmetry of a magnetically ordered
+  crystal, one of the 90 magnetic groups of Birss's Tables 6 and 7 and of ITC Vol. D Chapter 1.5.
+
+Where magnetic properties are discussed, a crystal without magnetic order has the **grey group** of
+its class: quartz is `321'`, not `32` (Birss p. 84; Paufler p. 60). symcrys computes with the
+operations, so a time-odd tensor or property asked for a key of type `'I'` is that of the white
+group ("Tensors", "Time reversal"); for a crystal without magnetic order, ask the grey group.
 
 The **crystal class** of a magnetic group is the class it becomes when time reversal is dropped
 from every operation. The numbers I, II, III are the usual ones (birss-app uses them). ITC Vol. D
@@ -492,8 +506,8 @@ default (unique axis b) and along z in the Birss default.
 classes have none, so their `'c'`-forms equal their `'i'`-forms. A grey group contains time reversal
 itself, so all its `'c'`-tensors vanish, and its `'i'`-forms are those of its class. This is Birss's
 reading (pp. 84, 102) and birss-app's: the grey groups are the groups of non-magnetic crystals; the
-32 classes are, like the 58 black-and-white groups, groups of magnetic crystals, the limiting case
-in which time reversal does not occur. Litvin (_Acta Cryst._ A**64**, 419 (2008), p. 419) says the
+32 groups without time reversal (the white groups: "Types") are, like the 58 black-and-white
+groups, groups of magnetic crystals, the limiting case in which time reversal does not occur. Litvin (_Acta Cryst._ A**64**, 419 (2008), p. 419) says the
 same of the space groups: a group without time inversion is also the invariance group of an
 arrangement of non-zero magnetic moments, while the product of a group with the time-inversion
 group is not a magnetic group, because time inversion as an element excludes such moments. Paufler
@@ -526,9 +540,9 @@ tensor relates (`description`) and the print source of the definition (`source`)
 names a group allows, in the order of the table; `allowsPropertyOf(operations, name)` and
 `allowedPropertiesOf(operations)` do the same for any list of operations. None depends on setting
 or convention. `tensorForm(key, 'piezoelectric')` is the form of the tensor the name stands for.
-The key of a crystal class is the magnetic point group without any time reversal, a symmetry of a
-magnetically ordered crystal ("Time reversal" above): `'432'` is magnetoelectric. **A crystal
-without magnetic order has the grey group of its class** (`"4321'"`), which allows none of the three time-odd
+For a time-odd property a key of type `'I'` is read as the white magnetic group, the symmetry of a
+magnetically ordered crystal ("Types"): `'432'` is magnetoelectric. **A crystal without magnetic
+order has the grey group of its class** (`"4321'"`; quartz `"321'"`), which allows none of the three time-odd
 properties; for the three time-even ones a class, its grey group and the black-and-white groups of
 the class agree. `rotateTensor` takes a name as well.
 Each kind of tensor has one name: second-harmonic generation has the tensor of
