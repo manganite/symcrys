@@ -6,11 +6,12 @@ in birss-app as `birss-tables/`) and taken over from there, with the known mispr
 "Errata" instead of corrected in the table.
 
 How far the columns are print: all 90 rows were compared with the scanned pages on 2026-11-19, in
-every column. Seven Shubnikov entries of birss-tables were corrected against the print (`4/mm'm'`,
+every column. Seven Shubnikov entries of birss-tables were corrected here against the print (`4/mm'm'`,
 `4/m'mm`, `4'/m'm'm`, `6'/m'mm'`, `m'3m'`, `m'3m`, and the classical subgroup of `m'3m`), and one
 operator of `4/m'mm` that birss-tables held corrected without a note is given as printed again
 (Errata). The differences were reported in manganite/birss-tables#3; since manganite/birss-tables#4
-birss-tables has the same Shubnikov entries and records the operator of `4/m'mm` as a misprint. Two
+birss-tables has the same Shubnikov entries and records the operator of `4/m'mm` as a misprint,
+as it does the additional generating matrix of `6'/m'mm'`. Two
 cells differ by design: for the operator of `4/m'mm` and the additional generating matrix of
 `6'/m'mm'` birss-tables enters the corrected value, this file keeps the print and lists the
 correction under "Errata".

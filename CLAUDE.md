@@ -137,9 +137,9 @@ Carried over from birss-app, where the calculations come from.
 - **Safety net first.** For any data or math change: extend the relevant fixture first, require
   it green, then change the code.
 - Files in `references/` change only by transcription from print or by correction against it
-  (maintainer, 2026-11-18); Prettier and ESLint leave them alone. The notes on provenance in their
-  head (where a transcription came from, what was reported where) follow the current state of the
-  source they name; the transcribed values do not (maintainer, 2026-11-20).
+  (maintainer, 2026-11-18). The one exception is the note on provenance in a file's head (where a
+  transcription came from, what was reported where): it follows the current state of the source it
+  names (maintainer, 2026-11-20). Prettier and ESLint leave these files alone.
 
 ## Tests
 
