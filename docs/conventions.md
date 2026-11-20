@@ -55,9 +55,9 @@ black-and-white groups in the order of ITC Vol. D Table 1.5.2.3.
   In the Birss convention each of these two keys is, as a string, the Birss symbol of setting 2 of
   its group (the Birss symbol of the default setting 1 is the one in the third column). A key
   passed to `operations`, `symbol` and the other functions is always the key and gives the default
-  setting; `findPointGroup`, which reads its argument as a symbol, gives the setting the symbol
-  names, so `findPointGroup("mm'm'", 'birss')` is setting 2 and `findPointGroup("m'm'm", 'birss')`
-  setting 1. For every other key, and for all keys in the ITC convention, `findPointGroup(key)` is
+  setting; `findPointGroup` of the magnetic API, which reads its argument as a symbol, gives the
+  setting the symbol names, so `findPointGroup("mm'm'", 'birss')` is setting 2 and
+  `findPointGroup("m'm'm", 'birss')` setting 1. For every other key, and for all keys in the ITC convention, `findPointGroup(key)` is
   the default setting.
 
 - **Grey groups:** the key of the crystal class followed by `1'`: `2221'`, `m-3m1'`, and `321'`,

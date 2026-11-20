@@ -201,8 +201,10 @@ export function pointGroups(): readonly PointGroup[] {
 
 /**
  * Finds a crystal class by a Hermann–Mauguin symbol in the given convention (default `'itc'`): the
- * key (giving the default setting), the short symbol of a setting, or a full symbol (spaces are
- * ignored). Returns undefined if nothing matches, also for a value that is not a string and for the
+ * short symbol of a setting, a full symbol, or the key (spaces are ignored). A symbol that names
+ * one setting gives that setting; the key, and a short symbol that several settings share (the
+ * monoclinic ones: `2` for unique axis b and c), give the default setting of the convention.
+ * Returns undefined if nothing matches, also for a value that is not a string and for the
  * symbol of a magnetic group with time reversal. Symbols are written as in this library: `-` for
  * the overbar, also in the Birss convention (`m-3m`, where Birss prints `m3m`; docs/conventions.md,
  * "Where ITC and Birss differ").

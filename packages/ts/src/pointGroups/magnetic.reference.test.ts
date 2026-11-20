@@ -569,6 +569,24 @@ describe('the 122 magnetic point groups', () => {
         expect(findPointGroup(key, convention)).toEqual(isClass ? found : undefined);
       }
     }
+    expect(findMagneticPointGroup('nonsense')).toBeUndefined();
+  });
+
+  it('a printed symbol finds its group in the default setting of the convention it is printed in', () => {
+    // Birss Table 6 in the Birss convention (the 90 groups without the grey ones) …
+    for (const r of birssRows.slice(1)) {
+      const printed = r[1];
+      const key = magneticKey(KEY_OF_PRINTED[printed] ?? printed, 'Birss Table 6');
+      const written = BIRSS_SYMBOL_OF_PRINTED[printed] ?? printed;
+      expect(findMagneticPointGroup(written, 'birss'), `Birss ${printed}`).toEqual({ key, setting: 1 });
+    }
+    // … and ITC Vol. D Table 1.5.2.3 in the ITC convention, short and full symbol.
+    for (const r of itcRows.slice(1)) {
+      const key = magneticKey(r[3], 'ITC Vol. D Table 1.5.2.3');
+      const def = settings(key, 'itc').find((s) => s.isDefault)!.index;
+      expect(findMagneticPointGroup(r[3], 'itc'), `ITC ${r[3]}`).toEqual({ key, setting: def });
+      expect(findMagneticPointGroup(r[4], 'itc'), `ITC ${r[4]}`).toEqual({ key, setting: def });
+    }
   });
 
   it('a symbol finds the setting it names; a symbol that several settings share, the default', () => {
@@ -597,12 +615,14 @@ describe('the 122 magnetic point groups', () => {
       }
     }
     // Only the monoclinic groups share a short symbol between settings (unique axis b and c).
-    const sharing = MAGNETIC_POINT_GROUP_KEYS.filter((key) => {
-      const symbols = settings(key).map((s) => s.symbol);
-      return new Set(symbols).size < symbols.length;
-    });
-    expect(sharing.map((key) => pointGroup(key).crystalSystem)).toEqual(sharing.map(() => 'monoclinic'));
-    expect(sharing).toHaveLength(11);
+    for (const convention of ['itc', 'birss'] as const) {
+      const sharing = MAGNETIC_POINT_GROUP_KEYS.filter((key) => {
+        const symbols = settings(key, convention).map((s) => s.symbol);
+        return new Set(symbols).size < symbols.length;
+      });
+      expect(sharing.map((key) => pointGroup(key).crystalSystem)).toEqual(sharing.map(() => 'monoclinic'));
+      expect(sharing).toHaveLength(11);
+    }
   });
 
   it('Birss convention: the two keys that are the Birss symbol of the second setting find that setting', () => {
@@ -631,7 +651,6 @@ describe('the 122 magnetic point groups', () => {
         expect(findMagneticPointGroup(key, convention), `${convention} ${key}`).toEqual({ key, setting: def });
       }
     }
-    expect(findMagneticPointGroup('nonsense')).toBeUndefined();
   });
 });
 

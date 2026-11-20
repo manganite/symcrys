@@ -529,11 +529,17 @@ export function findPointGroup(hm: string, conventionName: Convention = 'itc'): 
 }
 
 /**
- * Finds one of the 122 magnetic point groups (the 32 crystal classes included) by a symbol, as
- * `findPointGroup` does for the classes. A prime `'` marks time reversal: `4'/mmm'`, `2221'`.
- * In the Birss convention two keys are the Birss symbol of a setting that is not the default
+ * Finds one of the 122 magnetic point groups (the 32 crystal classes included) by a symbol in the
+ * given convention (default `'itc'`): the short symbol of a setting, a full symbol, or the key
+ * (spaces are ignored). A prime `'` marks time reversal: `4'/mmm'`, `2221'`. A symbol that names
+ * one setting gives that setting; the key, and a short symbol that several settings share (the
+ * monoclinic ones: `2'` for unique axis b and c), give the default setting of the convention. In
+ * the Birss convention two keys are the Birss symbol of a setting that is not the default
  * (`mm'm'` and `6'/mmm'`, setting 2; Birss prints `m'm'm` and `6'/mm'm` for these groups) and give
- * that setting, like any symbol.
+ * that setting, like any symbol. Returns undefined if nothing matches, also for a value that is
+ * not a string. Symbols are written as in this library: `-` for the overbar, also in the Birss
+ * convention (`m'-3'm`, where Birss prints `m'3m`; docs/conventions.md, "Where ITC and Birss
+ * differ").
  */
 export function findMagneticPointGroup(
   hm: string,
