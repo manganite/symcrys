@@ -51,6 +51,20 @@ def test_crystal_classes_here_magnetic_point_groups_there() -> None:
     assert magnetic.describe_operations("321'")[-1]["time_reversal"] is True
 
 
+def test_the_magnetic_api_asks_every_operation_for_its_time_reversal() -> None:
+    # Operations of the crystallographic API do not say; read as a group they would give wrong forms.
+    for ops in (symcrys.generators("m-3m"), symcrys.operations("32"), [{"matrix": -np.eye(3)}]):
+        with pytest.raises(symcrys.SymcrysError, match="timeReversal must be true or false, not undefined"):
+            magnetic.allowed_properties_of(ops)
+        with pytest.raises(symcrys.SymcrysError, match="timeReversal must be true or false"):
+            magnetic.tensor_form_of(ops, "pyroelectric")
+    with pytest.raises(symcrys.SymcrysError, match="timeReversal must be true or false, not 1"):
+        magnetic.tensor_form_of([{"matrix": np.eye(3), "time_reversal": 1}], "ferromagnetic")
+    inversion = [{"matrix": -np.eye(3), "time_reversal": False}]
+    assert magnetic.tensor_form_of(inversion, "pyroelectric")["basis"].shape == (0, 3)
+    assert magnetic.allowed_properties_of(magnetic.generators("m-3m")) == magnetic.allowed_properties("m-3m") == []
+
+
 def test_quartz_is_the_class_32_and_the_grey_group() -> None:
     assert symcrys.allowed_properties("32") == ["piezoelectric", "gyrotropic"]
     assert magnetic.allowed_properties("321'") == ["piezoelectric", "gyrotropic"]
@@ -67,6 +81,8 @@ def test_the_crystallographic_api_refuses_time_reversal() -> None:
         symcrys.tensor_form("3", {"rank": 1, "parity": "axial", "time_parity": "c", "intrinsic": "none"})
     with pytest.raises(symcrys.SymcrysError, match="Operation 6 is combined with time reversal.*" + use_magnetic):
         symcrys.tensor_form_of(magnetic.operations("321'"), "piezoelectric")
+    with pytest.raises(symcrys.SymcrysError, match="timeReversal must be false or absent"):
+        symcrys.tensor_form_of([{"matrix": -np.eye(3), "time_reversal": 1}], "pyroelectric")
     white = symcrys.tensor_form_of(magnetic.operations("32"), "piezoelectric")
     assert np.array_equal(white["basis"], symcrys.tensor_form("32", "piezoelectric", setting=2)["basis"])
     assert np.array_equal(symcrys.tensor_form("32", MAGNETIC_SHG)["basis"], symcrys.tensor_form("32", SHG)["basis"])

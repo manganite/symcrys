@@ -16,14 +16,7 @@ import type { Mat3, Vec3 } from './linalg.js';
 import type { Operation as MagneticOperation } from './operations.js';
 import * as elements from './pointGroups/elements.js';
 import * as groups from './pointGroups/pointGroups.js';
-import type {
-  Convention,
-  PointGroupInSetting,
-  PointGroupKey,
-  Setting,
-  SettingOptions,
-  SymbolOptions,
-} from './pointGroups/pointGroups.js';
+import type { Convention, PointGroupKey, Setting, SettingOptions, SymbolOptions } from './pointGroups/pointGroups.js';
 import * as properties from './pointGroups/properties.js';
 import * as wyckoff from './pointGroups/wyckoff.js';
 import * as site from './siteSymmetry.js';
@@ -48,6 +41,12 @@ export interface PointGroup {
   readonly order: number;
 }
 
+/** A crystal class in a given setting. */
+export interface PointGroupInSetting {
+  readonly key: PointGroupKey;
+  readonly setting: number;
+}
+
 /** One point operation described geometrically. */
 export type OperationDescription = Omit<elements.OperationDescription, 'timeReversal'>;
 
@@ -57,6 +56,16 @@ export interface TensorSpec {
   readonly parity: TensorParity;
   readonly intrinsic: IntrinsicSymmetry;
 }
+
+/**
+ * An operation as a caller may pass it: its matrix. `timeReversal: false` is accepted, so that an
+ * operation of the magnetic API without time reversal can be handed on from plain JavaScript; with
+ * `timeReversal: true` it is refused, at compile time and at run time.
+ */
+type OperationArgument = Operation & { readonly timeReversal?: false };
+
+/** A tensor specification as a caller may pass it; `timeParity: 'i'` is accepted, `'c'` refused. */
+type TensorSpecArgument = TensorSpec & { readonly timeParity?: 'i' };
 
 export interface TensorProperty {
   /** The kind of tensor whose non-zero form means that the property is allowed. */
@@ -115,7 +124,7 @@ function propertyName(name: TensorPropertyName): TensorPropertyName {
 }
 
 /** The time-even tensor of a specification or of a property name, as the shared modules take it. */
-function timeEven(specOrName: TensorSpec | TensorPropertyName): tensors.TensorSpec | TensorPropertyName {
+function timeEven(specOrName: TensorSpecArgument | TensorPropertyName): tensors.TensorSpec | TensorPropertyName {
   if (typeof specOrName === 'string') return propertyName(specOrName);
   if (typeof specOrName !== 'object' || specOrName === null) {
     throw new RangeError(`Not a tensor specification: ${JSON.stringify(specOrName)}`);
@@ -128,14 +137,23 @@ function timeEven(specOrName: TensorSpec | TensorPropertyName): tensors.TensorSp
   return { rank: specOrName.rank, parity: specOrName.parity, timeParity: 'i', intrinsic: specOrName.intrinsic };
 }
 
-/** A list of operations as the shared modules take it; an operation with time reversal is an error. */
-function unitary(operations: readonly Operation[]): MagneticOperation[] {
-  return operations.map((op, i) => {
-    if ((op as Partial<MagneticOperation>).timeReversal === true) {
+/** Checks a list of operations of a caller: an operation with time reversal is an error. */
+function checkUnitary(operations: readonly OperationArgument[]): void {
+  operations.forEach((op, i) => {
+    const timeReversal = (op as { readonly timeReversal?: unknown }).timeReversal;
+    if (timeReversal === true) {
       throw new RangeError(`Operation ${i} is combined with time reversal: ${USE_MAGNETIC}`);
     }
-    return { matrix: op.matrix, timeReversal: false };
+    if (timeReversal !== undefined && timeReversal !== false) {
+      throw new RangeError(`Operation ${i}: timeReversal must be false or absent, not ${JSON.stringify(timeReversal)}`);
+    }
   });
+}
+
+/** A list of operations as the shared modules take it. */
+function unitary(operations: readonly OperationArgument[]): MagneticOperation[] {
+  checkUnitary(operations);
+  return operations.map((op) => ({ matrix: op.matrix, timeReversal: false }));
 }
 
 // --- what goes back --------------------------------------------------------------------------------
@@ -295,11 +313,14 @@ export function symmetryDirections(
  * closed operations fix no common direction (a tolerance far too large, e.g. 0.5).
  */
 export function siteSymmetry(
-  operations: readonly Operation[],
+  operations: readonly OperationArgument[],
   direction: Vec3,
   options?: site.SiteSymmetryOptions,
 ): site.SiteSymmetry {
-  return site.siteSymmetry(unitary(operations), direction, options);
+  checkUnitary(operations);
+  // The shared function reads the matrices only, and it keeps the products of a list by the identity
+  // of the list, so the list of the caller is passed on as it is.
+  return site.siteSymmetry(operations as readonly MagneticOperation[], direction, options);
 }
 
 /**
@@ -334,7 +355,7 @@ export function wyckoffPositionOf(
  */
 export function tensorForm(
   key: PointGroupKey,
-  spec: TensorSpec | TensorPropertyName,
+  spec: TensorSpecArgument | TensorPropertyName,
   options?: SettingOptions,
 ): TensorForm {
   return tensors.tensorForm(classKey(key), timeEven(spec), options);
@@ -346,7 +367,10 @@ export function tensorForm(
  * its specification or by the name of a property in `TENSOR_PROPERTIES`. The operations are
  * Cartesian and orthogonal; a list that is not closed is closed first.
  */
-export function tensorFormOf(operations: readonly Operation[], spec: TensorSpec | TensorPropertyName): TensorForm {
+export function tensorFormOf(
+  operations: readonly OperationArgument[],
+  spec: TensorSpecArgument | TensorPropertyName,
+): TensorForm {
   return tensors.tensorFormOf(unitary(operations), timeEven(spec));
 }
 
@@ -360,7 +384,7 @@ export function tensorFormOf(operations: readonly Operation[], spec: TensorSpec 
 export function rotateTensor(
   tensor: readonly number[],
   rotation: Mat3,
-  specOrName: TensorSpec | TensorPropertyName,
+  specOrName: TensorSpecArgument | TensorPropertyName,
 ): number[] {
   return tensors.rotateTensor(tensor, rotation, timeEven(specOrName));
 }
@@ -385,12 +409,12 @@ export function allowedProperties(key: PointGroupKey): TensorPropertyName[] {
  * True if the group generated by `operations` allows the named property, e.g. for the site
  * symmetry of a surface normal or the operations of a distorted crystal.
  */
-export function allowsPropertyOf(operations: readonly Operation[], name: TensorPropertyName): boolean {
+export function allowsPropertyOf(operations: readonly OperationArgument[], name: TensorPropertyName): boolean {
   return tensors.tensorFormOf(unitary(operations), propertyName(name)).basis.length > 0;
 }
 
 /** The named properties the group generated by `operations` allows. */
-export function allowedPropertiesOf(operations: readonly Operation[]): TensorPropertyName[] {
+export function allowedPropertiesOf(operations: readonly OperationArgument[]): TensorPropertyName[] {
   const ops = unitary(operations);
   return TENSOR_PROPERTY_NAMES.filter((name) => tensors.tensorFormOf(ops, name).basis.length > 0);
 }

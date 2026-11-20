@@ -11,6 +11,7 @@ import { describe, expect, it } from 'vitest';
 import pkg from '../package.json' with { type: 'json' };
 import * as classes from './index.js';
 import * as magnetic from './magnetic.js';
+import * as wyckoff from './pointGroups/wyckoff.js';
 
 const CONVENTIONS = ['itc', 'birss'] as const;
 const MAGNETIC_API = /symcrys\/magnetic/;
@@ -67,6 +68,27 @@ describe('keys', () => {
       expect(classes.pointGroup(key)).toBe(g);
       expect(Object.isFrozen(g)).toBe(true);
     }
+    classes.pointGroups().forEach((g, i) => expect(g).toBe(classes.pointGroup(classes.POINT_GROUP_KEYS[i])));
+  });
+
+  it('a class is found by the symbol of each of its settings, in the convention asked for', () => {
+    for (const key of classes.POINT_GROUP_KEYS) {
+      for (const convention of CONVENTIONS) {
+        for (const setting of classes.settings(key, convention)) {
+          for (const hm of [setting.symbol, setting.fullSymbol]) {
+            const found = classes.findPointGroup(hm, convention);
+            const what = `${hm} (${key}, ${convention})`;
+            expect(found?.key, what).toBe(key);
+            const again = classes.settings(key, convention)[found!.setting - 1];
+            expect([again.symbol, again.fullSymbol], what).toContain(hm);
+          }
+        }
+      }
+    }
+    // D3h: the two conventions give the same symbol to different settings (docs/conventions.md, "Keys").
+    expect(classes.findPointGroup('-62m')).toEqual({ key: '-6m2', setting: 1 });
+    expect(classes.findPointGroup('-62m', 'itc')).toEqual({ key: '-6m2', setting: 1 });
+    expect(classes.findPointGroup('-62m', 'birss')).toEqual({ key: '-6m2', setting: 2 });
   });
 });
 
@@ -121,6 +143,28 @@ describe('the crystallographic API returns nothing about time reversal', () => {
       expect(classes.isChiral(key)).toBe(magnetic.isChiral(key));
       expect(classes.laueClass(key)).toBe(magnetic.laueClass(key));
     }
+  });
+
+  it('Wyckoff positions and site symmetry take their options', () => {
+    for (const key of classes.POINT_GROUP_KEYS) {
+      for (const { index: setting } of classes.settings(key)) {
+        const positions = classes.wyckoffPositions(key, { setting });
+        expect(positions, `${key}, setting ${setting}`).toBe(wyckoff.wyckoffPositions(key, { setting }));
+        const special = positions[positions.length - 1];
+        expect(classes.wyckoffPositionOf(key, special.representative.cartesian, { setting }).letter).toBe(
+          special.letter,
+        );
+      }
+    }
+    // 32: the twofold axes lie along other directions in the two settings.
+    expect(classes.wyckoffPositions('32', { setting: 1 })).not.toEqual(classes.wyckoffPositions('32', { setting: 2 }));
+    // A direction 0.06° off the fourfold axis of 4mm: general by default, on the axis within 10⁻².
+    const off = [0.001, 0.0005, 1] as const;
+    const ops = classes.operations('4mm');
+    expect(classes.siteSymmetry(ops, off).multiplicity).toBe(8);
+    expect(classes.siteSymmetry(ops, off, { tolerance: 1e-2 }).multiplicity).toBe(1);
+    expect(classes.wyckoffPositionOf('4mm', off).letter).toBe('d');
+    expect(classes.wyckoffPositionOf('4mm', off, { tolerance: 1e-2 }).letter).toBe('a');
   });
 
   it('the named properties are those of time-even tensors, their specifications without time parity', () => {
@@ -220,12 +264,117 @@ describe('the crystallographic API refuses what involves time reversal', () => {
       (ops: readonly classes.Operation[]) => classes.allowsPropertyOf(ops, 'piezoelectric'),
       (ops: readonly classes.Operation[]) => classes.allowedPropertiesOf(ops),
     ];
+    const marked = (timeReversal: unknown) => [{ matrix: white[0].matrix, timeReversal } as classes.Operation];
     for (const call of calls) {
       expect(() => call(grey)).toThrow(RangeError);
       expect(() => call(grey)).toThrow(/Operation 6 is combined with time reversal/);
       expect(() => call(grey)).toThrow(MAGNETIC_API);
       expect(call(white)).toEqual(call(classes.operations('32')));
+      // Neither true nor false nor absent: an error, not "no time reversal".
+      for (const value of [1, 'true', null, 0]) {
+        expect(() => call(marked(value)), JSON.stringify(value)).toThrow(
+          /Operation 0: timeReversal must be false or absent/,
+        );
+      }
     }
+  });
+});
+
+describe('the magnetic API asks every operation whether it is combined with time reversal', () => {
+  // Without the check, an operation without `timeReversal` is composed as if it had it in every
+  // second product: the inversion alone then "allows" a polar vector.
+  const calls = [
+    (ops: readonly magnetic.Operation[]) => magnetic.tensorFormOf(ops, 'pyroelectric'),
+    (ops: readonly magnetic.Operation[]) => magnetic.allowsPropertyOf(ops, 'pyroelectric'),
+    (ops: readonly magnetic.Operation[]) => magnetic.allowedPropertiesOf(ops),
+  ];
+  const asMagnetic = (ops: readonly unknown[]) => ops as readonly magnetic.Operation[];
+
+  it('operations of the crystallographic API are refused, not read as a white group', () => {
+    for (const key of ['-1', 'm-3m', '32'] as const) {
+      for (const list of [classes.generators(key), classes.operations(key)]) {
+        for (const call of calls) {
+          expect(() => call(asMagnetic(list)), key).toThrow(RangeError);
+          expect(() => call(asMagnetic(list)), key).toThrow(
+            /Operation 0: timeReversal must be true or false, not undefined/,
+          );
+        }
+      }
+    }
+    const inversion = classes.generators('-1')[0].matrix;
+    for (const value of [1, 'false', null]) {
+      expect(() => calls[0](asMagnetic([{ matrix: inversion, timeReversal: value }]))).toThrow(
+        /timeReversal must be true or false/,
+      );
+    }
+  });
+
+  it('with the answer given, the form is that of the group: inversion forbids a polar vector, 1̄′ does not', () => {
+    const inversion = classes.generators('-1')[0].matrix;
+    expect(magnetic.tensorFormOf([{ matrix: inversion, timeReversal: false }], 'pyroelectric').basis).toHaveLength(0);
+    expect(magnetic.tensorFormOf([{ matrix: inversion, timeReversal: true }], 'pyroelectric').basis).toHaveLength(0);
+    expect(magnetic.tensorFormOf([{ matrix: inversion, timeReversal: true }], 'magnetoelectric').basis).toHaveLength(9);
+    expect(magnetic.tensorFormOf(magnetic.generators('-1'), 'pyroelectric')).toEqual(
+      magnetic.tensorForm('-1', 'pyroelectric'),
+    );
+  });
+});
+
+describe('the types keep the two entry points apart', () => {
+  // Each line marked @ts-expect-error must fail the type check (gate `typecheck`); at run time it
+  // throws or gives undefined, which this test does not look at.
+  const attempt = (f: () => unknown): void => {
+    try {
+      f();
+    } catch {
+      // refused at run time as well
+    }
+  };
+
+  it('what the crystallographic API returns has no time reversal', () => {
+    // @ts-expect-error an operation of a crystal class has no timeReversal
+    attempt(() => classes.operations('32')[0].timeReversal);
+    // @ts-expect-error nor has its description
+    attempt(() => classes.describeOperations('32')[0].timeReversal);
+    // @ts-expect-error a crystal class has no type
+    attempt(() => classes.pointGroup('32').type);
+    // @ts-expect-error the table has no time-odd property
+    attempt(() => classes.TENSOR_PROPERTIES.magnetoelectric);
+    // @ts-expect-error a specification has no time parity
+    attempt(() => classes.TENSOR_PROPERTIES.piezoelectric.spec.timeParity);
+    // @ts-expect-error a class in a setting is not generic in the key
+    const _magnetic: classes.PointGroupInSetting<"4'/mmm'"> | undefined = undefined;
+    expect(_magnetic).toBeUndefined();
+  });
+
+  it('what involves time reversal is not accepted by the crystallographic API', () => {
+    // @ts-expect-error the key of a magnetic point group
+    attempt(() => classes.pointGroup("321'"));
+    // @ts-expect-error the name of a time-odd property
+    attempt(() => classes.allowsProperty('32', 'magnetoelectric'));
+    // @ts-expect-error a time-odd specification
+    attempt(() => classes.tensorForm('32', { rank: 1, parity: 'axial', timeParity: 'c', intrinsic: 'none' }));
+    const magneticSpec: magnetic.TensorSpec = { rank: 1, parity: 'polar', timeParity: 'i', intrinsic: 'none' };
+    // @ts-expect-error a specification of the magnetic API, whose time parity may be 'c'
+    attempt(() => classes.tensorForm('32', magneticSpec));
+    // @ts-expect-error operations of the magnetic API, which may be combined with time reversal
+    attempt(() => classes.tensorFormOf(magnetic.operations("321'"), 'piezoelectric'));
+    // @ts-expect-error also for the site symmetry
+    attempt(() => classes.siteSymmetry(magnetic.operations('32'), [0, 0, 1]));
+    // Accepted: time parity 'i' and no time reversal, stated.
+    attempt(() => classes.tensorForm('32', { rank: 1, parity: 'polar', timeParity: 'i', intrinsic: 'none' }));
+    attempt(() =>
+      classes.tensorFormOf([{ matrix: classes.operations('1')[0].matrix, timeReversal: false }], 'pyroelectric'),
+    );
+  });
+
+  it('what lacks time reversal is not accepted by the magnetic API', () => {
+    // @ts-expect-error operations of the crystallographic API do not say whether they have time reversal
+    attempt(() => magnetic.tensorFormOf(classes.operations('32'), 'piezoelectric'));
+    // @ts-expect-error a specification without time parity
+    attempt(() => magnetic.tensorForm('32', { rank: 1, parity: 'polar', intrinsic: 'none' }));
+    // @ts-expect-error the Wyckoff positions are crystallographic
+    attempt(() => magnetic.wyckoffPositions('32'));
   });
 });
 

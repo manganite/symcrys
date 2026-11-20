@@ -74,7 +74,9 @@ operations and are not to be equated (maintainer, 2026-11-20):
   crystal, one of the 90 magnetic groups of Birss's Tables 6 and 7 and of ITC Vol. D Chapter 1.5.
 
 Where magnetic properties are discussed, a crystal without magnetic order has the **grey group** of
-its class: quartz is `321'`, not `32` (Birss p. 84; Paufler p. 60). symcrys keeps the two readings
+its class: quartz is `321'`, not `32` (Birss p. 84; Paufler p. 60; ITC Vol. D § 1.5.2.1, p. 111: all
+dia- and paramagnets belong to the grey groups, and of the 32 white groups 13 allow ferromagnetism
+and 19 describe antiferromagnets). symcrys keeps the two readings
 apart by its two entry points ("Two entry points", below).
 
 The **crystal class** of a magnetic group is the class it becomes when time reversal is dropped
@@ -101,8 +103,9 @@ tensors (`'pyroelectric'`, `'piezoelectric'`, `'gyrotropic'`). A question that i
 reversal is a `RangeError` that names the magnetic API: the key of a magnetic point group, the name
 of a time-odd property (`'ferromagnetic'`), a tensor specification with `timeParity: 'c'`, and an
 operation with `timeReversal: true` in a list of operations. `timeParity: 'i'` and
-`timeReversal: false` are accepted, so data of the magnetic API without time reversal can be passed
-on.
+`timeReversal: false` are accepted at run time, so that data of the magnetic API without time
+reversal can be passed on from JavaScript and Python; the TypeScript types take a value whose time
+parity may be `'c'` or whose `timeReversal` may be `true` only after it is narrowed.
 
 **The magnetic API** takes all 122 keys; operations carry `timeReversal`, a tensor specification
 its `timeParity`, and `TENSOR_PROPERTIES` holds all six properties. For a crystal without magnetic
@@ -112,11 +115,21 @@ may be magnetoelectric and piezomagnetic. It has every function of the crystallo
 the Wyckoff positions, which ITA tabulates for the crystal classes.
 
 **The two agree where both can be asked.** A question without time reversal has one answer for a
-crystal class, its white group and its grey group: the same settings, symbols, matrices in the same
-order, symmetry elements, site symmetries, and forms of time-even tensors. The crystallographic API
-is computed by the same code and returns the answer of the white group with time reversal left out;
-`entryPoints.test.ts` checks this for all 32 classes, and that the allowed properties of a class
-are those of its grey group.
+crystal class and its white group, which have the same operations: the same settings, symbols,
+matrices in the same order, generators, symmetry elements, site symmetries, and forms of time-even
+tensors. The crystallographic API is computed by the same code and returns the answer of the white
+group with time reversal left out. The grey group of the class has other symbols (`3211'`) and
+twice the operations, but the same settings, the same properties of the operations
+(centrosymmetric, polar, chiral, Laue class), the same multiplicity of a direction, the same forms
+of time-even tensors and so the same time-even properties. `entryPoints.test.ts` checks both for
+all 32 classes.
+
+**Operations passed in.** Where a function takes a list of operations (`tensorFormOf`,
+`allowsPropertyOf`, `allowedPropertiesOf`), the magnetic API asks every operation whether it is
+combined with time reversal: `timeReversal` must be `true` or `false`. Operations of the
+crystallographic API, which do not say, are refused there and not read as a white group; a caller
+who means the white group adds `timeReversal: false`, one who means a crystal without magnetic
+order builds the grey group. `siteSymmetry` does not depend on time reversal and takes either.
 
 ## Cartesian frame
 
@@ -428,7 +441,7 @@ direction) and x (a secondary one), as for the symbols ("Where ITC and Birss dif
 | `order`        | the n of n or n̄; 1 for the identity and the inversion, 2 for a mirror (m = 2̄)                            |
 | `axis`         | rotation or rotoinversion axis, or mirror normal: `lattice` [uvw] and `cartesian` unit vector            |
 | `sense`        | for n ≥ 3: `+` or `-`                                                                                    |
-| `timeReversal` | as in the operation                                                                                      |
+| `timeReversal` | magnetic API: as in the operation                                                                        |
 
 - **Axis.** Every axis and mirror normal of a crystal class lies along one of its symmetry
   directions; the axis is that direction, as [uvw] with the sign of Table 2.1.3.1 (Birss

@@ -16,14 +16,7 @@ export {
   type FixedAngleFamily,
 } from './lattice.js';
 
-export type {
-  Convention,
-  PointGroupInSetting,
-  PointGroupKey,
-  Setting,
-  SettingOptions,
-  SymbolOptions,
-} from './pointGroups/pointGroups.js';
+export type { Convention, PointGroupKey, Setting, SettingOptions, SymbolOptions } from './pointGroups/pointGroups.js';
 export { LATTICE_SYMMETRY_DIRECTIONS, type Uvw } from './symmetryDirections.js';
 export type { Axis, DirectionElements, OperationKind, SymmetryDirection } from './pointGroups/elements.js';
 export type { SiteSymmetry, SiteSymmetryOptions } from './siteSymmetry.js';
@@ -60,6 +53,7 @@ export {
   type Operation,
   type OperationDescription,
   type PointGroup,
+  type PointGroupInSetting,
   type TensorProperty,
   type TensorPropertyName,
   type TensorSpec,

@@ -294,7 +294,7 @@ The conventions themselves are in `docs/conventions.md`; here, what was decided 
   fixed properties of a class as fields of `pointGroup()`; released together as one MINOR. The
   rank-4 forms of ITC Vol. D (#39) follow in a PR of their own.
 - **Symmetry elements as structured data** (maintainer, 2026-11-18, #16): symcrys describes each
-  operation (`describeOperations`: kind, n, axis, sense, time reversal) and the elements along each
+  operation (`describeOperations`: kind, n, axis, sense, and in the magnetic API time reversal) and the elements along each
   symmetry direction (`symmetryDirections`); strings such as `4⁺ 0,0,z` or `2_z` stay in the
   applications, which also translate them. An axis is given both as a lattice direction [uvw] and as
   a Cartesian unit vector. In the ITC convention it has the sign of ITA Table 2.1.3.1, which fixes
@@ -365,7 +365,11 @@ The conventions themselves are in `docs/conventions.md`; here, what was decided 
   only), and a question that involves time reversal is an error that names the magnetic API,
   because a wrong reading should fail, not answer. Chosen while implementing: `timeParity: 'i'` and
   `timeReversal: false` are accepted in what a caller passes in, so that data of the magnetic API
-  without time reversal can be handed on; the magnetic API has the names of the crystallographic
+  without time reversal can be handed on; for the same reason, in the other direction, the
+  magnetic API refuses an operation that does not say whether it is combined with time reversal
+  (operations of the crystallographic API), instead of reading it as a white group; a search
+  (`findPointGroup`, `isPointGroupKey`) answers "not found" for a magnetic symbol, because not
+  finding is the correct answer there; the magnetic API has the names of the crystallographic
   one also for the lists (`POINT_GROUP_KEYS` are there the 122 keys, `findPointGroup` finds all
   groups); Wyckoff positions stay with the crystallographic API, because ITA tabulates them for
   the classes only. One implementation serves both: the modules compute for all 122 groups, as
@@ -428,9 +432,9 @@ The conventions are in `docs/conventions.md` ("Tensors"); here, what was decided
   2026-11-19): the print anchors for rank 4 (Birss Table 4f, Hoshi 1995) exist, and electric-
   quadrupole SHG of centrosymmetric crystals needs rank 4.
 - **Names** (maintainer, 2026-11-19): `tensorForm(key, spec, options)`,
-  `tensorFormOf(operations, spec)`, `rotateTensor(tensor, rotation, spec)`; `TensorSpec` with
-  birss-app's fields (`rank`, `parity`, `timeParity`, `intrinsic`), so birss-app passes its
-  specifications unchanged.
+  `tensorFormOf(operations, spec)`, `rotateTensor(tensor, rotation, spec)`; in the magnetic API
+  `TensorSpec` with birss-app's fields (`rank`, `parity`, `timeParity`, `intrinsic`), so birss-app
+  passes its specifications unchanged; in the crystallographic API without `timeParity` (#47).
 - **Free parameters are the pivots of the reduced row echelon form**: the lowest component
   independent of those before it. This is birss-app's rule since its Q0 reduction, so in the Birss
   convention the parameters agree with birss-app by name and order without a rule of their own
