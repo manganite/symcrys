@@ -161,8 +161,9 @@ Carried over from birss-app, where the calculations come from.
 
 ## Public API and versions
 
-- Public API = everything exported from `src/index.ts` (and from any later entry in `exports` of
-  `package.json`). Everything else is internal and may change freely.
+- Public API = everything exported from the entries in `exports` of `package.json`: `src/index.ts`
+  (`symcrys`, the crystallographic API) and `src/magnetic.ts` (`symcrys/magnetic`, the magnetic
+  API; "Point groups" below). Everything else is internal and may change freely.
 - **Plain data at the API boundary** (maintainer, 2026-11-19, #30): exported functions take and
   return numbers, strings, booleans, arrays and plain objects; no classes, no functions, no `Map` or
   `Set` as arguments or results. A thin layer in another language (Python, #30) can then pass
@@ -180,9 +181,11 @@ Carried over from birss-app, where the calculations come from.
   arguments; arrays of numbers become NumPy arrays (`float64` for matrices, Cartesian vectors,
   tensor bases and relations; `int64` for index lists, Miller indices and lattice directions);
   errors of the library raise `SymcrysError`, a `ValueError`. A new export of `src/index.ts` gets
-  its Python function in the same PR; a test fails until it has one.
+  its Python function in `symcrys`, one of `src/magnetic.ts` in `symcrys.magnetic`, in the same PR;
+  a test fails until it has one.
 - **The engine stays replaceable** (#30): the whole boundary is one function, `call(name,
-argsJson) → resultJson` (`_engine.py`, `scripts/bundle-python.mjs`), so another backend
+argsJson) → resultJson` (`_engine.py`, `scripts/bundle-python.mjs`; a name of the magnetic API has
+  the prefix `magnetic.`), so another backend
   (Pyodide in JupyterLite) replaces one module. Not now: that second backend and a display layer
   such as `_repr_latex_` (presentation; ideas in #30).
 
@@ -350,16 +353,28 @@ The conventions themselves are in `docs/conventions.md`; here, what was decided 
   and Wyckoff positions").
 - **`latticeBasis` only for families with fixed cell angles** (2026-11-09, #14): for monoclinic
   and triclinic a Cartesian basis would need the cell angles, which a point group does not fix.
-- **Magnetic point groups: a list of their own beside the classes** (maintainer, 2026-11-19, #13;
-  asked before implementation): `POINT_GROUP_KEYS` and `pointGroups()` stay the 32 crystal classes,
-  so the teaching apps, which loop over them, change nothing; `MAGNETIC_POINT_GROUP_KEYS` and
-  `magneticPointGroups()` hold all 122, the classes first, and `MagneticPointGroupKey` is a
-  superset of `PointGroupKey`. `operations`, `generators`, `settings`, `symbol`, `pointGroup`,
-  `describeOperations`, `symmetryDirections` and the properties that follow from the operations take
-  any of the 122 keys. Chosen while implementing, for the same reason: `findPointGroup` keeps
-  finding classes only and `findMagneticPointGroup` finds all groups (stereography accepts whatever
-  `findPointGroup` knows as a group of its catalogue); Wyckoff positions stay with the classes,
-  because ITA tabulates them for these only.
+- **Two entry points, `symcrys` and `symcrys/magnetic`** (maintainer, 2026-11-20, #47): the
+  crystallographic and the magnetic reading of a key are separated in the API, not only in the
+  documentation. Thomas: someone who writes a purely crystallographic application deals with the 32
+  crystal classes, and `32` is one of them; in an application in which magnetism plays a part, `32`
+  is a colourless group, and for the properties of quartz one has to give the grey group `321'`.
+  Chosen by Thomas among three proposals: two entry points with the same function names (the import
+  decides the reading), rather than two families of names in one entry point
+  (`tensorForm` / `magneticTensorForm`) or a context option. The crystallographic API has no time
+  reversal at all (operations `{ matrix }`, no time parity, no `type`, the time-even properties
+  only), and a question that involves time reversal is an error that names the magnetic API,
+  because a wrong reading should fail, not answer. Chosen while implementing: `timeParity: 'i'` and
+  `timeReversal: false` are accepted in what a caller passes in, so that data of the magnetic API
+  without time reversal can be handed on; the magnetic API has the names of the crystallographic
+  one also for the lists (`POINT_GROUP_KEYS` are there the 122 keys, `findPointGroup` finds all
+  groups); Wyckoff positions stay with the crystallographic API, because ITA tabulates them for
+  the classes only. One implementation serves both: the modules compute for all 122 groups, as
+  the magnetic API exports them, and `crystalClasses.ts` checks what comes in and leaves time
+  reversal out of what goes back, so the two agree by construction and every print-verified test
+  serves both (`entryPoints.test.ts` checks the agreement). This replaces the first design of #13,
+  one set of functions taking all 122 keys with a list of magnetic keys beside the classes. A new
+  function is added to the shared modules and exported by both entry points, with its wrapper in
+  `crystalClasses.ts` if a key, an operation or a tensor passes through it.
 - **Magnetic point groups: order and generators in the ITC convention** (maintainer, 2026-11-19,
   #13; asked before implementation): ITC Vol. D prints neither (Table 1.5.2.3 groups the operators),
   so an operation of a black-and-white group keeps the number ITA gives it in the crystal class,
@@ -425,18 +440,17 @@ The conventions are in `docs/conventions.md` ("Tensors"); here, what was decided
   `'voigt'` at rank 3 and the like; a library call with it is a mistake of the caller, and silently
   computing another tensor would hide it.
 - **Time reversal is built in** (#13): an operation with `timeReversal` changes the sign of a
-  `'c'`-tensor, so the magnetic point groups use the same tensor code, and `tensorForm` and the
-  functions for named properties take all 122 keys. Their forms are anchored in print in both
+  `'c'`-tensor, so the magnetic point groups use the same tensor code, and in the magnetic API
+  `tensorForm` and the functions for named properties take all 122 keys. Their forms are anchored in print in both
   conventions: Birss's Table 7 with Tables 4b–4f, and ITC Vol. D Tables 1.5.2.4, 1.5.7.1 and 1.5.8.1
   (`docs/conventions.md`, "Tensors").
 - **Crystal class and white group are two readings of one key** (maintainer, 2026-11-20): the 32
   crystal classes are not simply the 32 white magnetic groups. In a purely crystallographic context
   quartz has the class `32`; in the context of magnetism it has the grey group `321'`, and `32`
   there means a magnetically ordered crystal without any time reversal in its symmetry (Birss p. 84,
-  Paufler p. 60). The operations are the same, so symcrys keeps one key and computes with the
-  operations: a time-odd tensor or property asked for a key of type `'I'` is that of the white
-  group, and the documentation says to ask the grey group for a crystal without magnetic order.
-  birss-app does not make the distinction clear yet (#19).
+  Paufler p. 60). The operations are the same, so the key is the same string, and the entry point
+  says which reading is meant ("Two entry points" above). birss-app does not make the distinction
+  clear yet (#19).
 - **Named tensor properties, one generic call** (maintainer, 2026-11-19, #41; names asked before
   implementation, 2026-11-20): a property that is the question whether a tensor is allowed is an
   entry of the table `TENSOR_PROPERTIES` (name → `TensorSpec`, description, print source), not a
@@ -448,7 +462,8 @@ The conventions are in `docs/conventions.md` ("Tensors"); here, what was decided
   Chosen by Thomas among the proposals: `allows…` rather than `has…`, because symmetry allows a
   property and does not say the crystal has it; names as adjectives (`'pyroelectric'`,
   `'piezoelectric'`, `'gyrotropic'` for optical activity, `'ferromagnetic'`, `'magnetoelectric'`,
-  `'piezomagnetic'`); these six and no more for now; `allowedProperties` returns the names only (the
+  `'piezomagnetic'`; the three time-odd ones in the magnetic API only, #47); these six and no more
+  for now; `allowedProperties` returns the names only (the
   form is one `tensorForm` call away); one name per kind of tensor, so second-harmonic generation,
   which has the tensor of `'piezoelectric'`, gets no name of its own.
 - **A printed form is compared in the setting its symbol names** (2026-11-20): ITC Vol. D § 1.5.7.1

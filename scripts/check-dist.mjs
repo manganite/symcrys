@@ -33,8 +33,8 @@ const all = files(dist);
 const rel = (/** @type {string} */ file) => relative(root, file);
 
 // Entry points named in package.json
-const entry = pkg.exports['.'];
-for (const target of new Set([pkg.main, pkg.types, entry.types, entry.default])) {
+const entries = Object.entries(pkg.exports).filter(([name]) => name !== './package.json');
+for (const target of new Set([pkg.main, pkg.types, ...entries.flatMap(([, e]) => [e.types, e.default])])) {
   if (!existsSync(join(root, target))) errors.push(`entry point ${target} does not exist`);
 }
 
@@ -63,9 +63,11 @@ for (const file of all.filter((f) => f.endsWith('.js') || f.endsWith('.d.ts'))) 
 }
 
 // The built module loads and carries the right version
-const mod = await import(pathToFileURL(join(root, entry.default)).href);
-if (mod.VERSION !== pkg.version) {
-  errors.push(`dist reports VERSION ${mod.VERSION}, package.json has ${pkg.version}`);
+for (const [name, e] of entries) {
+  const mod = await import(pathToFileURL(join(root, e.default)).href);
+  if (mod.VERSION !== pkg.version) {
+    errors.push(`dist entry '${name}' reports VERSION ${mod.VERSION}, package.json has ${pkg.version}`);
+  }
 }
 
 if (errors.length > 0) {
