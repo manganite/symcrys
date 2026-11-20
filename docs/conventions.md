@@ -695,7 +695,7 @@ of the pyroelectric vector, in the ITC default setting); ITC Vol. D § 1.1.4.10.
 axial tensors of rank 2, general and symmetric, in the ITC default setting and, for the monoclinic
 classes, also with the axis along z); ITC Vol. D § 1.1.4.10.6 (`'ij_kl'` and `'voigt'` tensors of
 rank 4 in the ITC default setting: the numbers of independent components and the full forms of the
-6 × 6 matrices of p, π, Q, c and s, 30 diagrams, with the factors 2 and 4 that the two-index notation
+6 × 6 matrices of p, π, Q, c and s, 29 diagrams for the classes, with the factors 2 and 4 that the two-index notation
 gives π, Q and s, and the element 66 of the trigonal and hexagonal classes, ⊗, as ½(p₁₁ − p₁₂),
 π₁₁ − π₁₂, 2(Q₁₁ − Q₁₂), ½(c₁₁ − c₁₂), 2(s₁₁ − s₁₂)). ITC Vol. D § 1.1.4.10.6.7 (i) prints the cubic class m-3 as
 `3m`, a misprint. Index symmetries: Yariv's Table 16.1 (rank 3,

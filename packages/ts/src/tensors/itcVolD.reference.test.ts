@@ -7,15 +7,16 @@
  *   classes also with the axis parallel to Ox3 (unique axis c, setting 1);
  * - § 1.1.4.10.6: fourth-rank tensors with both index pairs symmetric (`'ij_kl'`: p, π, Q) and with
  *   the pairs also interchangeable (`'voigt'`: c, s): the numbers of independent components, and
- *   the full forms (cells, links, signs and factors of the 6 × 6 matrices), in the ITC default
- *   setting.
+ *   the full forms (cells, links, signs and factors of the 6 × 6 matrices) of the 29 diagrams for
+ *   crystal classes, in the ITC default setting. The diagram of the spherical system, for which
+ *   the library has no group, is compared with the two isotropic tensors written out by hand.
  */
 
 import { describe, expect, it } from 'vitest';
-import { isPointGroupKey, settings, type PointGroupKey } from '../pointGroups/pointGroups.js';
+import { isPointGroupKey, settings, symbol, type PointGroupKey } from '../pointGroups/pointGroups.js';
 import { expectHeader, readReference, tableRows } from '../testUtils/references.js';
 import { linkScheme, schemeOf, type Scheme } from '../testUtils/yariv.js';
-import { tensorForm, type TensorSpec } from './tensorForm.js';
+import { rotateTensor, tensorForm, type TensorSpec } from './tensorForm.js';
 
 /** Abbreviations of § 1.1.4.10.6 and § 1.1.4.10.7 (see the transcriptions), and D3h printed as -62m. */
 const ABBREVIATION: Record<string, string> = {
@@ -169,7 +170,7 @@ const DIAGRAMS = FORMS.slice(1).map((r) => ({
   cross: r[5] ? r[5].split(/\s+/) : [],
 }));
 
-/** The index pair of α = 1…6 (two-index notation, p. 27): 11, 22, 33, 23, 31, 12. */
+/** The index pair of α = 1…6 (Voigt's notation, § 1.1.4.10.2, p. 24): 11, 22, 33, 23, 31, 12. */
 const PAIR: readonly (readonly [number, number])[] = [
   [0, 0],
   [1, 1],
@@ -238,48 +239,94 @@ describe('ITC Vol. D § 1.1.4.10.6: fourth-rank tensors, forms of the matrices',
     }
   });
 
+  /** Compares a basis (rows of 81 components) with a diagram for one of its tensors. */
+  function expectDiagram(
+    d: (typeof DIAGRAMS)[number],
+    tensor: Tensor4,
+    basis: readonly (readonly number[])[],
+    what: string,
+  ) {
+    expect(basis, `${what}: independent components`).toHaveLength(d.count);
+    const rows = matrixRows(basis, tensor);
+    // ⊗ = k (t11 − t12), in every basis tensor.
+    for (const cell of d.cross) {
+      const x = rows.get(cell)!;
+      const t11 = rows.get('11')!;
+      const t12 = rows.get('12')!;
+      x.forEach((v, n) => expect(v, `${what}: ⊗ at ${cell}`).toBeCloseTo(CROSS_FACTOR[tensor] * (t11[n] - t12[n]), 9));
+      expect(
+        x.some((v) => Math.abs(v) > 1e-9),
+        `${what}: ⊗ at ${cell} is not zero`,
+      ).toBe(true);
+    }
+    // c and s are drawn as the upper triangle; so is the one diagram for all five tensors (cubic (ii),
+    // spherical), where the matrix of p, π and Q is read as symmetric (see the transcription).
+    const upperOnly = d.tensors.includes('c') || d.tensors.includes('s');
+    if (upperOnly && tensor !== 'c' && tensor !== 's') {
+      for (const [name, row] of rows) {
+        const mirrored = rows.get(`${name[1]}${name[0]}`)!;
+        row.forEach((v, n) => expect(v, `${what}: ${name} = ${name[1]}${name[0]}`).toBeCloseTo(mirrored[n], 9));
+      }
+    }
+    // All other cells: the marked ones are nonzero and linked as printed, the others vanish.
+    const cells = [...rows.keys()]
+      .filter((name) => !d.cross.includes(name) && (!upperOnly || name[0] <= name[1]))
+      .map((name) => ({ name, row: rows.get(name)! }));
+    const got = schemeOf(
+      basis.map((_b, n) => cells.map((c) => c.row[n])),
+      cells.map((c, index) => ({ name: c.name, index })),
+    );
+    const want = printedScheme4(d.links);
+    expect(got.partition, what).toBe(want.partition);
+    for (const [cell, factor] of want.signs)
+      expect(got.signs.get(cell), `${what}: factor of ${cell}`).toBeCloseTo(factor, 9);
+  }
+
   for (const d of DIAGRAMS.filter((x) => !x.spherical)) {
     const groups = d.printedGroups
       .split(',')
       .map((g) => keyOf(g.trim(), d.section.startsWith('1.1.4.10.6.7') ? CUBIC_MISPRINT : {}));
-    // c and s are drawn as the upper triangle; so is the one diagram for all five tensors (cubic (ii)).
-    const upperOnly = d.tensors.includes('c') || d.tensors.includes('s');
-    const want = printedScheme4(d.links);
     for (const tensor of d.tensors) {
       it(`${d.section} ${groups.join(', ')}: ${tensor}`, () => {
         const intrinsic = tensor === 'c' || tensor === 's' ? 'voigt' : 'ij_kl';
         for (const key of groups) {
           const basis = tensorForm(key, { rank: 4, parity: 'polar', timeParity: 'i', intrinsic }).basis;
-          expect(basis, `${key}: independent components`).toHaveLength(d.count);
-          const rows = matrixRows(basis, tensor);
-          // ⊗ = k (t11 − t12), in every basis tensor.
-          for (const cell of d.cross) {
-            const x = rows.get(cell)!;
-            const t11 = rows.get('11')!;
-            const t12 = rows.get('12')!;
-            x.forEach((v, n) =>
-              expect(v, `${key}: ⊗ at ${cell}`).toBeCloseTo(CROSS_FACTOR[tensor] * (t11[n] - t12[n]), 9),
-            );
-            expect(
-              x.some((v) => Math.abs(v) > 1e-9),
-              `${key}: ⊗ at ${cell} is not zero`,
-            ).toBe(true);
-          }
-          // All other cells: the marked ones are nonzero and linked as printed, the others vanish.
-          const cells = [...rows.keys()]
-            .filter((name) => !d.cross.includes(name) && (!upperOnly || name[0] <= name[1]))
-            .map((name) => ({ name, row: rows.get(name)! }));
-          const got = schemeOf(
-            basis.map((_b, n) => cells.map((c) => c.row[n])),
-            cells.map((c, index) => ({ name: c.name, index })),
-          );
-          expect(got.partition, key).toBe(want.partition);
-          for (const [cell, factor] of want.signs)
-            expect(got.signs.get(cell), `${key}: factor of ${cell}`).toBeCloseTo(factor, 9);
+          expectDiagram(d, tensor, basis, key);
         }
       });
     }
   }
+
+  it('1.1.4.10.6.8 spherical system: the two isotropic tensors, written out by hand', () => {
+    // λ δ_ij δ_kl and μ (δ_ik δ_jl + δ_il δ_jk): the isotropic fourth-rank tensors with both index
+    // pairs symmetric (an independent derivation, fixture class (b); the library has no such group).
+    const delta = (i: number, j: number) => (i === j ? 1 : 0);
+    const build = (f: (i: number, j: number, k: number, l: number) => number) =>
+      Array.from({ length: 81 }, (_x, n) => f(Math.floor(n / 27), Math.floor(n / 9) % 3, Math.floor(n / 3) % 3, n % 3));
+    const isotropic = [
+      build((i, j, k, l) => delta(i, j) * delta(k, l)),
+      build((i, j, k, l) => delta(i, k) * delta(j, l) + delta(i, l) * delta(j, k)),
+    ];
+    // They are isotropic: unchanged by a rotation about an axis in no special direction.
+    const [x, y, z, angle] = [1 / 3, 2 / 3, 2 / 3, 0.7];
+    const [c, s, t] = [Math.cos(angle), Math.sin(angle), 1 - Math.cos(angle)];
+    const rotation = [
+      [t * x * x + c, t * x * y - s * z, t * x * z + s * y],
+      [t * x * y + s * z, t * y * y + c, t * y * z - s * x],
+      [t * x * z - s * y, t * y * z + s * x, t * z * z + c],
+    ] as const;
+    const spec = { rank: 4, parity: 'polar', timeParity: 'i', intrinsic: 'ij_kl' } as const;
+    for (const tensor of isotropic) {
+      rotateTensor(tensor, rotation, spec).forEach((v, n) => expect(v).toBeCloseTo(tensor[n], 9));
+    }
+    const d = DIAGRAMS.find((x) => x.spherical)!;
+    expect(d.tensors).toHaveLength(5);
+    for (const tensor of d.tensors) expectDiagram(d, tensor, isotropic, `spherical ${tensor}`);
+  });
+
+  it('32, 3m, -3m are drawn with the twofold axis along Ox1 and the mirror normal to it (p. 25): the ITC default setting', () => {
+    expect((['32', '3m', '-3m'] as const).map((key) => symbol(key))).toEqual(['321', '3m1', '-3m1']);
+  });
 
   it('the monoclinic diagrams ("twofold axis parallel to Ox2") are the ITC default setting', () => {
     for (const key of ['2', 'm', '2/m'] as const) expect(settings(key).find((s) => s.isDefault)!.uniqueAxis).toBe('b');

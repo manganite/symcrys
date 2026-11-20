@@ -9,8 +9,9 @@ Thomas' Zotero (item YQKTNYVN), read from page images at 330 and 550 dpi, diagra
 the forms computed by symcrys for these tensors were compared. The numbers of independent
 components alone are also in `vol-d-table-1.1.4.10.6-rank-4-counts.md` (transcribed 2026-11-19).
 
-**The matrices.** Each diagram is a 6 × 6 matrix in the two-index notation of p. 27 (α, β = 1…6
-for the index pairs 11, 22, 33, 23, 31, 12). The section draws 30 diagrams for five tensors:
+**The matrices.** Each diagram is a 6 × 6 matrix in the two-index notation of p. 27, with
+α, β = 1…6 for the index pairs 11, 22, 33, 23, 31, 12 (Voigt's notation, § 1.1.4.10.2, eq. (1.1.4.6),
+p. 24). The section draws 30 diagrams for five tensors:
 
 - p_αβ (elasto-optic) and c_αβ (elastic stiffnesses): p_αβ = p_ijkl, c_αβ = c_ijkl, without factors;
 - π_αβ (piezo-optic): π_αβ = π_ijkl for β = 1, 2, 3 and π_ijkl + π_ijlk = 2π_ijkl for β = 4, 5, 6;
@@ -22,8 +23,8 @@ p, π and Q are symmetric in the first and in the last index pair, the pairs not
 the full matrix is drawn. For c and s the pairs are interchangeable and only the upper triangle is
 drawn.
 
-**The symbols** (key on p. 28): a heavy dot is a nonzero component; a line links components of
-equal magnitude; ⊖ "is a component numerically equal but opposite in sign to the heavy dot component
+**The symbols** (key on p. 28; the first two are not spelled out there): a heavy dot is a nonzero
+component; a line links related components; ⊖ "is a component numerically equal but opposite in sign to the heavy dot component
 to which it is linked"; ⊕ is "equal to twice the heavy dot component to which it is linked"; ⊙ is
 "equal to minus twice the heavy dot component to which it is linked"; ⊗ "is equal to 1/2(p11 − p12),
 (π11 − π12), 2(Q11 − Q12), 1/2(c11 − c12) and 2(s11 − s12), respectively". A cell without a mark is
@@ -47,6 +48,15 @@ Notes on the reading:
   45 to 54 (⊖).
 - In the hexagonal groups 6, -6, 6/m the long line runs from 26 to 62 and passes 44 with a bridge
   (a half circle around the dot): 44 is not on it.
+- In the diagrams of p, π and Q of the groups 3, -3 the same line 26–62 is drawn straight through
+  the dot 44, without a bridge. It is read as passing, not as a link: 44 has its own line to 55, the
+  printed count is 12 (11 if 44 were linked), and the hexagonal diagrams bridge the same line.
+- Where only the upper triangle is drawn for all five tensors (cubic (ii), spherical), the matrix
+  of p, π and Q is read as symmetric, as for c and s.
+- The section does not state the orientation of the axes for 32, 3m, -3m. The chapter states it for
+  the third-rank tensors (§ 1.1.4.10.4.4, p. 25): "Group 32, twofold axis parallel to Ox1", "Group
+  3m, mirror perpendicular to Ox1"; the diagrams here (14, 24 and 56 or 65 nonzero, 15 zero) are in
+  that orientation.
 - Cubic (i): beside the three diagonal lines, a line runs from 31 along the left and the top of the
   block to 12, and one from 13 along the right and the bottom to 32, so that 12, 23, 31 are linked,
   and 13, 21, 32.
