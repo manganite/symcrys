@@ -7,36 +7,40 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { settings, type PointGroupKey } from '../pointGroups/pointGroups.js';
-import { BIRSS_APP_REVISION, BIRSS_APP_TENSOR_CLASSES, BIRSS_APP_TENSOR_REVISION } from '../testUtils/birssAppPins.js';
-import { tensorForm } from './tensorForm.js';
+import { pointGroup, settings, type MagneticPointGroupKey } from '../pointGroups/pointGroups.js';
+import {
+  BIRSS_APP_REVISION,
+  BIRSS_APP_TENSOR_CLASSES,
+  BIRSS_APP_TENSOR_MAGNETIC,
+  BIRSS_APP_TENSOR_REVISION,
+  SYMCRYS_KEY,
+  type BirssAppTensorClass,
+} from '../testUtils/birssAppPins.js';
+import { tensorForm, type TimeParity } from './tensorForm.js';
 
 const TOL = 1e-9;
 
 const indicesOf = (flat: number, rank: number): number[] =>
   Array.from({ length: rank }, (_, k) => Math.floor(flat / 3 ** (rank - 1 - k)) % 3);
 
-describe('tensor forms in the Birss convention = birss-app (pins)', () => {
-  it('come from the same birss-app revision as the point-group pins', () => {
-    expect(BIRSS_APP_TENSOR_REVISION).toBe(BIRSS_APP_REVISION);
-  });
+const keyOf = (c: BirssAppTensorClass) => (SYMCRYS_KEY[c.key] ?? c.key) as MagneticPointGroupKey;
 
-  it('cover the 32 classes, all their settings and 26 specifications each', () => {
-    expect(BIRSS_APP_TENSOR_CLASSES).toHaveLength(32);
-    for (const c of BIRSS_APP_TENSOR_CLASSES) {
-      expect(settings(c.key as PointGroupKey, 'birss').map((s) => s.index)).toEqual(c.settings.map((s) => s.setting));
+function describePins(list: readonly BirssAppTensorClass[], timeParity: TimeParity): void {
+  it('cover all settings of each group and 26 specifications each', () => {
+    for (const c of list) {
+      expect(settings(keyOf(c), 'birss').map((s) => s.index)).toEqual(c.settings.map((s) => s.setting));
       for (const s of c.settings) expect(s.forms).toHaveLength(26);
     }
   });
 
-  for (const c of BIRSS_APP_TENSOR_CLASSES) {
+  for (const c of list) {
     it(`${c.key}: basis and free parameters in every setting`, () => {
       for (const s of c.settings) {
         for (const pin of s.forms) {
           const what = `${c.key} setting ${s.setting} rank ${pin.rank} ${pin.parity} ${pin.intrinsic}`;
           const form = tensorForm(
-            c.key as PointGroupKey,
-            { rank: pin.rank, parity: pin.parity, timeParity: 'i', intrinsic: pin.intrinsic },
+            keyOf(c),
+            { rank: pin.rank, parity: pin.parity, timeParity, intrinsic: pin.intrinsic },
             { convention: 'birss', setting: s.setting },
           );
           expect(form.parameters, `${what}: parameters`).toEqual(pin.parameters.map((p) => indicesOf(p, pin.rank)));
@@ -52,4 +56,24 @@ describe('tensor forms in the Birss convention = birss-app (pins)', () => {
       }
     });
   }
+}
+
+describe('tensor forms in the Birss convention = birss-app (pins)', () => {
+  it('come from the same birss-app revision as the point-group pins', () => {
+    expect(BIRSS_APP_TENSOR_REVISION).toBe(BIRSS_APP_REVISION);
+  });
+
+  describe('the 32 crystal classes, time-even tensors', () => {
+    it('are 32', () => expect(BIRSS_APP_TENSOR_CLASSES).toHaveLength(32));
+    describePins(BIRSS_APP_TENSOR_CLASSES, 'i');
+  });
+
+  describe('the 58 black-and-white groups, time-odd tensors', () => {
+    it('are the 58 groups of type III', () => {
+      expect(BIRSS_APP_TENSOR_MAGNETIC).toHaveLength(58);
+      for (const c of BIRSS_APP_TENSOR_MAGNETIC) expect(pointGroup(keyOf(c)).type, c.key).toBe('III');
+      expect(new Set(BIRSS_APP_TENSOR_MAGNETIC.map(keyOf)).size).toBe(58);
+    });
+    describePins(BIRSS_APP_TENSOR_MAGNETIC, 'c');
+  });
 });

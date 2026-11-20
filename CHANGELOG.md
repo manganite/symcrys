@@ -20,18 +20,35 @@ All notable changes to symcrys are recorded here. The format follows
   a magnetic group are in the order of its crystal class; in the Birss convention operations,
   generators, symbols and settings are birss-app's (docs/conventions.md, "Types", "Settings of the
   magnetic groups").
+- Tensor forms of the magnetic point groups (#13): `tensorForm` takes any of the 122 keys. A grey
+  group allows no time-odd (`'c'`) tensor; the forms of the black-and-white groups are checked
+  against Birss's Table 7 (Birss convention, ranks 0 to 4) and against ITC Vol. D Tables 1.5.2.4,
+  1.5.7.1 and 1.5.8.1 (ITC convention).
+- Named tensor properties (#41): the table `TENSOR_PROPERTIES` (`'pyroelectric'`,
+  `'piezoelectric'`, `'gyrotropic'`, `'ferromagnetic'`, `'magnetoelectric'`, `'piezomagnetic'`, each
+  with its kind of tensor and print source) and `allowsProperty(key, name)`,
+  `allowedProperties(key)`, `allowsPropertyOf(operations, name)`, `allowedPropertiesOf(operations)`.
+  `tensorForm`, `tensorFormOf` and `rotateTensor` take the name of a property in place of a
+  specification: `tensorForm('32', 'piezoelectric')`. Types `TensorProperty`, `TensorPropertyName`.
 - Python: `MAGNETIC_POINT_GROUP_KEYS`, `magnetic_point_groups`, `is_magnetic_point_group_key`,
-  `find_magnetic_point_group`.
+  `find_magnetic_point_group`; `TENSOR_PROPERTIES`, `allows_property`, `allowed_properties`,
+  `allows_property_of`, `allowed_properties_of`, and names in `tensor_form`, `tensor_form_of` and
+  `rotate_tensor`.
 
 ### Changed
 
 - `POINT_GROUP_KEYS`, `pointGroups()`, `isPointGroupKey` and `findPointGroup` are unchanged: they
   cover the 32 crystal classes. `PointGroup` and `PointGroupInSetting` are now generic in the key
   type, with the class keys as default.
-- `wyckoffPositions`, `wyckoffPositionOf`, `tensorForm` and `isPiezoelectric` throw a `RangeError`
-  with a message of its own for a magnetic point group with time reversal (before, such a key was
-  unknown). Wyckoff positions are given for the crystal classes only; the tensor forms of the
-  magnetic point groups follow.
+- `wyckoffPositions` and `wyckoffPositionOf` throw a `RangeError` with a message of its own for a
+  magnetic point group with time reversal (before, such a key was unknown): Wyckoff positions are
+  given for the crystal classes only.
+
+### Removed
+
+- `isPiezoelectric` (Python: `is_piezoelectric`): use `allowsProperty(key, 'piezoelectric')`
+  (`allows_property(key, "piezoelectric")`), which gives the same for the 32 crystal classes and
+  also takes the magnetic point groups (#41).
 
 ## [0.5.0] - 2026-11-19
 

@@ -12,7 +12,9 @@ from conftest import pins
 POINT_GROUPS = pins("pointGroups/birssApp.pins.json")["groups"]
 # birss-app's keys are Birss symbols; for two groups the key of symcrys, the ITC short symbol, differs.
 SYMCRYS_KEY = {"m'm'm": "mm'm'", "6'/mm'm": "6'/mmm'"}
-TENSORS = pins("tensors/birssApp.pins.json")["classes"]
+TENSORS = [(c, "i") for c in pins("tensors/birssApp.pins.json")["classes"]] + [
+    (c, "c") for c in pins("tensors/birssApp.pins.json")["magnetic"]
+]
 
 
 @pytest.mark.parametrize("pin", POINT_GROUPS, ids=[c["key"] for c in POINT_GROUPS])
@@ -36,12 +38,14 @@ def test_point_groups(pin: dict[str, Any]) -> None:
         assert symcrys.symbol(key, convention="birss", setting=s["setting"]) == s["symbol"]
 
 
-@pytest.mark.parametrize("pin", TENSORS, ids=[c["key"] for c in TENSORS])
-def test_tensor_forms(pin: dict[str, Any]) -> None:
+@pytest.mark.parametrize(("pin", "time_parity"), TENSORS, ids=[f"{c['key']} {t}" for c, t in TENSORS])
+def test_tensor_forms(pin: dict[str, Any], time_parity: str) -> None:
+    """Time-even forms of the 32 classes, time-odd forms of the 58 black-and-white groups."""
+    key = SYMCRYS_KEY.get(pin["key"], pin["key"])
     for s in pin["settings"]:
         for f in s["forms"]:
-            spec = {"rank": f["rank"], "parity": f["parity"], "time_parity": "i", "intrinsic": f["intrinsic"]}
-            form = symcrys.tensor_form(pin["key"], spec, convention="birss", setting=s["setting"])
+            spec = {"rank": f["rank"], "parity": f["parity"], "time_parity": time_parity, "intrinsic": f["intrinsic"]}
+            form = symcrys.tensor_form(key, spec, convention="birss", setting=s["setting"])
             rank = f["rank"]
             want_parameters = [[(p // 3 ** (rank - 1 - k)) % 3 for k in range(rank)] for p in f["parameters"]]
             assert form["parameters"].tolist() == want_parameters

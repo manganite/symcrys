@@ -37,6 +37,10 @@ basis = np.array([symcrys.rotate_tensor(b, frame, SHG) for b in form["basis"]])
 chi = basis.reshape(-1, 3, 3, 3)                  # chi[k] is the k-th basis tensor chi_ijk
 ```
 
+A property has a name where its tensor has one (`symcrys.TENSOR_PROPERTIES`):
+`symcrys.allows_property("432", "piezoelectric")` is `False`, `symcrys.allowed_properties("m'm'2")`
+lists all six names, and `symcrys.tensor_form("32", "piezoelectric")` is the form of that tensor.
+
 A tensor form has `basis` (rows of length 3**rank in reduced row echelon form, components in C
 order, so `reshape((3,)*rank)` gives the tensor), `parameters` (the free components as index
 lists) and `relations` (rows r with r @ t = 0). Each call costs about a millisecond or more: fetch

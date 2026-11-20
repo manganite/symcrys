@@ -51,8 +51,9 @@ Each release on GitHub also carries the package as `symcrys-X.Y.Z.tgz`.
 
 ```ts
 import {
+  allowedProperties,
+  allowsProperty,
   describeOperations,
-  isPiezoelectric,
   operations,
   settings,
   siteSymmetry,
@@ -76,7 +77,9 @@ wyckoffPositionOf('4mm', [0, 0, -1]).letter; // 'a'
 const SHG = { rank: 3, parity: 'polar', timeParity: 'i', intrinsic: 'jk' } as const;
 tensorForm('mm2', SHG).parameters; // [[0,0,2], [1,1,2], [2,0,0], [2,1,1], [2,2,2]]: xxz, yyz, zxx, zyy, zzz
 tensorForm('3m', SHG, { convention: 'birss' }).parameters[0]; // [0, 0, 0]: xxx (ITC default 3m1: xxy)
-isPiezoelectric('432'); // false
+tensorForm('32', 'piezoelectric').parameters; // [[0,0,0], [0,1,2]]: a property by name, d_111 and d_123
+allowsProperty('432', 'piezoelectric'); // false
+allowedProperties("m'm'2"); // all six: pyroelectric, piezoelectric, gyrotropic, ferromagnetic, magnetoelectric, piezomagnetic
 // SHG at the (111) surface of an m-3m crystal: the form under the site symmetry of the normal
 const ops = operations('m-3m');
 tensorFormOf(

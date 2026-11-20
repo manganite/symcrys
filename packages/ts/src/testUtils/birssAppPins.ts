@@ -65,9 +65,9 @@ const read = <T extends PinFile>(path: string): T =>
 const pointGroupPins = read<PinFile & { readonly groups: readonly BirssAppGroup[] }>(
   '../pointGroups/birssApp.pins.json',
 );
-const tensorPins = read<PinFile & { readonly classes: readonly BirssAppTensorClass[] }>(
-  '../tensors/birssApp.pins.json',
-);
+const tensorPins = read<
+  PinFile & { readonly classes: readonly BirssAppTensorClass[]; readonly magnetic: readonly BirssAppTensorClass[] }
+>('../tensors/birssApp.pins.json');
 
 /** birss-app revision and date the point-group pins come from, e.g. `2be5fe3 2026-11-07`. */
 export const BIRSS_APP_REVISION = pointGroupPins.revision;
@@ -76,4 +76,10 @@ export const BIRSS_APP_GROUPS = pointGroupPins.groups;
 
 /** birss-app revision the tensor pins come from. */
 export const BIRSS_APP_TENSOR_REVISION = tensorPins.revision;
+/** The 32 crystal classes: time-even forms (`timeParity: 'i'`). */
 export const BIRSS_APP_TENSOR_CLASSES = tensorPins.classes;
+/** The 58 black-and-white groups, under birss-app's keys: time-odd forms (`timeParity: 'c'`). */
+export const BIRSS_APP_TENSOR_MAGNETIC = tensorPins.magnetic;
+
+/** birss-app's keys are Birss symbols; for two groups the key of symcrys, the ITC short symbol, differs. */
+export const SYMCRYS_KEY: Readonly<Record<string, string>> = { "m'm'm": "mm'm'", "6'/mm'm": "6'/mmm'" };
