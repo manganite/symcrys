@@ -9,9 +9,8 @@
  *   and fails if a cited symbol is missing. Where the table prints no full symbol, the full symbol
  *   is the short one ("if different", § 3.2.1.2.1, p. 721), except for the monoclinic groups,
  *   whose full symbols the table does not print (they come from Vol. D or are derived).
- * - (a) `vol-d-table-1.5.2.3`: ITC Vol. D Table 1.5.2.3 (full Hermann–Mauguin symbols), as
- *   transcribed in manganite/birss-tables (`tools/generate_nomenclature.py`); not yet in
- *   references/ and so not re-parsed: it comes with the magnetic groups (#13).
+ * - (a) `vol-d-table-1.5.2.3`: ITC Vol. D Table 1.5.2.3 (full Hermann–Mauguin symbols), transcribed
+ *   in `references/itc/vol-d-table-1.5.2.3.md`, which `magnetic.reference.test.ts` re-parses.
  * - (b) `derived`: follows from the rule for Hermann–Mauguin symbols: positions follow the
  *   symmetry directions of Table 2.1.3.1 (ITA 6th ed. § 2.1.3.4, p. 151); a direction without
  *   symmetry is written '1' (ITA 5th ed. § 2.2.4.1 (iv), p. 18: P3m1, P31m); the monoclinic full
