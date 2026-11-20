@@ -427,11 +427,17 @@ The conventions are in `docs/conventions.md` ("Tensors"); here, what was decided
   of the settings instead of assuming the default setting; this also tests the symbols of the
   non-default settings against print.
 - **Reading Birss Table 7** (2026-11-20): printed pp. 103–108, PDF pages 61–64 of the scan
-  (`WKMPAPCY`), rotated by 90°. The transcription of manganite/birss-tables agrees with the book in
-  all 90 rows; the book itself leaves out parentheses in two rows. The tests expect the corrected
-  cells (errata with their reasons in `references/birss/table-7.md`; found in birss-app; the one for
-  `-6m'2'` follows from the operations by hand, the one for `(-6'2m')` from the analogy with the
-  other two rows in parentheses). Corrections of print need Thomas' confirmation (asked with #44).
+  (`WKMPAPCY`), rotated by 90°; the text that explains it is on pp. 102 and 109–110 (group A by
+  eq. (3.24), group B, the meaning of the parentheses). The transcription of birss-app agrees with
+  the book in all 90 rows. The book leaves out parentheses in two rows; both are recorded printing
+  errors (birss-app, `docs/findings/`, 2026-07-04), kept as printed with errata in
+  `references/birss/table-7.md`, and the tests expect the corrected cells.
+- **birss-app's documentation first** (2026-11-20, on Thomas' question whether it had been read): what looks like an open question
+  on Birss's tables, the settings or the three types of groups is usually decided and reasoned
+  there. Before asking Thomas or deciding anew, read birss-app's `STATUS.md` (standing decisions),
+  `docs/references/` (conventions, Birss/ITC divergences), `docs/findings/` (book errors, bracket
+  semantics) and the notes in its copy of the tables, `birss-tables/`, which is ahead of the
+  repository manganite/birss-tables. What symcrys finds beyond that goes to #19.
 - **Speed** (#30, measured 2026-11-19): birss-app's reduction, bundled, takes under QuickJS
   (`quickjs-ng`) 3–112 ms per class for the SHG tensor and up to about 0.3 s at rank 4 (m-3m), 10–35
   times Node; enough for a Python layer that calls symcrys a few times per material. Forms per

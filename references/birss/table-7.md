@@ -1,38 +1,54 @@
 # Birss Table 7: symbol classes of the 90 magnetic point groups for i- and c-tensors
 
 Source: R. R. Birss, _Symmetry and Magnetism_ (North-Holland, Amsterdam, 1966), Table 7, printed
-pp. 103–108. Transcribed in manganite/birss-tables (`table-7.md`, there with columns 3–12 taken from
-R. R. Birss, _Proc. Phys. Soc._ **79**, 946 (1962), Table 2(a)); taken over and compared row by row
-with the scan of the book in Thomas' Zotero (item WKMPAPCY, PDF pages 61–64, the table rotated by
-90°) on 2026-11-20: columns 3–12 of all 90 rows agree with the book. Column 2 was read with the
-order of the rows; the tests identify each group again from its column 3 (see below).
+pp. 103–108, with the text of Ch. 3, § 3.1, pp. 102 and 109–110. The transcription is that of
+birss-app (`birss-tables/table-7.md`, there with columns 3–12 first taken from R. R. Birss, _Proc.
+Phys. Soc._ **79**, 946 (1962), Table 2(a), then checked against the book); it was compared again
+row by row with the scan of the book in Thomas' Zotero (item WKMPAPCY, PDF pages 61–64, the table
+rotated by 90°) on 2026-11-20: columns 3–12 of all 90 rows agree with the book. Column 2 was read
+with the order of the rows; the tests identify each group again from its column 3 (see below).
 
-The table lists the 32 crystal classes and the 58 magnetic point groups with operations combined
-with time reversal (Birss: "additional magnetic point groups"), not the 32 groups that contain
-time reversal itself. For each it gives the symbol class (a letter A–U, a row key into Tables
-4b–4f) of the i-tensors (invariant under time reversal) and of the c-tensors (changing sign under
-time reversal), polar and axial, of even rank m and of odd rank n.
+The table lists the 32 classical groups and the 58 additional magnetic groups, not the 32
+non-magnetic groups that contain time reversal itself. For each it gives the symbol class (a letter
+A–U, a row key into Tables 4b–4f) of the i-tensors (invariant under time reversal) and of the
+c-tensors (changing sign under time reversal), polar and axial, of even rank m and of odd rank n.
+
+What the book says about the table:
+
+- Which groups (p. 84): a group that contains time reversal R itself belongs to a non-magnetic
+  crystal ("non-magnetic groups"); the magnetic groups, for magnetic crystals, are the 58
+  additional ones and, as the limiting case in which R does not occur at all, the 32 classical
+  groups.
+- Their tensors (p. 102): for non-magnetic crystals all time-antisymmetric tensors vanish and the
+  time-symmetric ones are those of Table 4. For the 32 classical groups R is not a symmetry
+  operator, so both kinds are those of Table 4. For an additional magnetic group the i-tensors are
+  those of the corresponding classical group; the c-tensors obey eqs. (3.23a), (3.23b), which carry
+  a factor −1 for an operator combined with time reversal.
+- Associated group A (p. 109, eq. (3.24)): the group obtained by multiplying every operator
+  combined with time reversal by −R, that is the operators without time reversal and the spatial
+  parts of the others times the inversion. Polar c-tensors of odd rank and axial ones of even rank
+  have the form of the tensors of A (column 3).
+- Associated group B (pp. 109–110): polar c-tensors of even rank have the form of the axial tensors
+  of even rank of B, axial c-tensors of odd rank that of its polar tensors of odd rank (column 4).
+  The book refers to Birss (1962) for its construction. The tests build B by a rule that is
+  derived, not quoted: the rotation parts of the operators without time reversal, and the rotation
+  parts of the others times the inversion; it reproduces the printed B of all 58 groups.
+- Parentheses (p. 110): the symbols of the group 2′m′m and of its associated group A are printed
+  in brackets, `(2'm'm)` and `(m2m)`, and so are its tensor symbols E_m and E_n, to say that the
+  reference axes are not those of mm2; likewise −4m2 and −4′m2′ are referred to axes rotated by π/4
+  against those of −42m, and −62m and −6′2m′ to axes rotated by π/6 against those of −6m2.
 
 Notation used in this transcription:
 
 - Overbar is written with a leading minus sign; Birss's underline (an element combined with time
   reversal) is written as a prime after the element (`4'/mm'm`). Birss prints `m3`, `m3m` for the
   cubic groups.
-- A dash (`-`) means the entry is blank: for a class, no associated group; for a tensor, it
-  vanishes.
-- Parentheses are Birss's: a group or symbol class in parentheses is referred to axes rotated
-  against those of the same group or class without parentheses (as `(m2m)`, `(-4m2)`, `(-62m)`
-  against `mm2`, `-42m`, `-6m2`). Three groups of column 2 are themselves printed in parentheses.
-- Associated classical groups A and B (Birss's script letters) are transcribed as printed. The
-  tests rebuild them by a rule that is derived, not quoted from Birss: A consists of the operations
-  without time reversal and of those with time reversal multiplied by the inversion; B of the
-  rotation parts of the former and of the rotation parts of the latter multiplied by the inversion.
-  This follows from eqs. (3.23a), (3.23b) (p. 102): a c-tensor takes the factor −1 under an
-  operation with time reversal, an axial tensor the factor |S|, a tensor of odd rank the factor −1
-  under the inversion. So polar c-tensors of odd rank and axial ones of even rank have the form of
-  the polar and axial i-tensors of A, and polar ones of even rank and axial ones of odd rank that of
-  the axial and polar i-tensors of B. The rule reproduces all 58 printed pairs, with the exception
-  noted under "Errata".
+- A dash (`-`) means the entry is blank: for a classical group, no associated group; for a tensor,
+  it vanishes.
+- Parentheses are Birss's. A tensor symbol is in parentheses where its source (the group itself for
+  i-tensors, A or B for c-tensors) is, and the form of that symbol class changes under the rotation
+  (E, J, R; not D, H, I, P, Q). The spelling inside the parentheses of a group is not uniform: the
+  same rotated group is `(-4m2)` in the row `4'mm'` and `(-42m)` in the row `-42'm'`.
 
 | System | Magnetic point group (International) | Associated classical group A (International) | Associated classical group B (International) | i-tensor: Polar even rank m | i-tensor: Axial even rank m | i-tensor: Polar odd rank n | i-tensor: Axial odd rank n | c-tensor: Polar even rank m | c-tensor: Axial even rank m | c-tensor: Polar odd rank n | c-tensor: Axial odd rank n |
 |---|---|---|---|---|---|---|---|---|---|---|---|
@@ -129,22 +145,19 @@ Notation used in this transcription:
 
 ## Errata of the book
 
-Two rows of the print leave out parentheses that the rest of the table uses. The transcription keeps
-the print; the tests apply the corrections. They are corrections of the print: the tests then
-expect something other than the book, on the maintainer's decision.
+Two rows of the print leave out parentheses. Both are recorded in birss-app as printing errors of
+the book (its `docs/findings/`, session of 2026-07-04, nos. 4 and 5 of its inventory, checked there
+against the maintainer's scans). The transcription keeps the print; the tests apply the
+corrections and fail without them.
 
-- `-6m'2'`, column 3 (associated group A) and columns 10 and 11 (c-tensors, axial of even rank and
-  polar of odd rank): printed `-6m2`, `R_m`, `R_n`; correct `(-62m)`, `(R_m)`, `(R_n)`. Independent of
-  any software: the operations combined with time reversal are the three vertical mirrors and the
-  three twofold axes; multiplied by the inversion, a mirror becomes a twofold axis along its normal
-  and a twofold axis a mirror normal to it, so A is `-6m2` with twofold axes and mirror normals
-  exchanged, which the table writes `(-62m)`. The tetragonal row `-42'm'`, built the same way,
-  prints `(-42m)`, `(J_m)`, `(J_n)`.
 - `(-6'2m')`, columns 6 and 7 (i-tensors, axial of even rank and polar of odd rank): printed `R_m`,
-  `R_n`; correct `(R_m)`, `(R_n)`. The i-tensors of a magnetic group are those of its class; the
-  parentheses of column 2 say that the group is referred to axes rotated against those of `-6m2`
-  in Table 4a, and the other two rows with parentheses in column 2, `(2'm'm)` and `(-4'm2')`, print
-  these two symbol classes in parentheses. This correction rests on that analogy and on the
-  generators of Table 6 for the group.
-
-Both were found in birss-app (its `docs/findings/`, 2026-07-04). The tests fail without them.
+  `R_n`; correct `(R_m)`, `(R_n)`. The book itself says (p. 110) that −6′2m′ is referred to axes
+  rotated by π/6 against those of −6m2, and the form of R changes under that rotation; the rows
+  `(2'm'm)` and `(-4'm2')` print the corresponding symbols in parentheses.
+- `-6m'2'`, column 3 (associated group A) and columns 10 and 11 (c-tensors, axial of even rank and
+  polar of odd rank): printed `-6m2`, `R_m`, `R_n`; correct `(-62m)`, `(R_m)`, `(R_n)`. With the
+  generator of Table 6 for this row, a mirror normal to y combined with time reversal, eq. (3.24)
+  gives for A a twofold axis along y: `-6m2` with twofold axes and mirror normals exchanged, which
+  the table writes `(-62m)`. Directly: under that mirror a polar c-tensor of rank 3 must equal
+  minus its mirror image, which removes the component xxx and keeps yyy, the form of R in the
+  rotated axes. The neighbouring row `-6'm2'` prints `(-62m)`, `(R_m)`, `(R_n)`.

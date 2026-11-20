@@ -158,10 +158,11 @@ A **black-and-white group** has the settings birss-app gives it (#17), setting 1
   `-6m'2'`, `6'/m'mm'`, `6'/mmm'`: two settings 30° apart about z;
 - all other groups: one setting.
 
-For `2'm'm`, whose three elements all differ, the three settings are three of six orientations;
-the other three (x and y exchanged: `m'2'm`, `2'mm'`, `mm'2'`) are no setting, as in birss-app. ITC
-Vol. D prints two of them (`m'2'm` in Table 1.5.7.1, `2'mm'` in Table 1.5.8.1), each beside an
-orientation that is a setting and has the same form.
+The orthorhombic settings are those of birss-app: which of x, y, z carries the unique element
+(c-, a-, b-unique), at most three. For `2'm'm`, whose three elements all differ, these are three of
+six orientations; the other three (two axes exchanged: `m'2'm`, `2'mm'`, `mm'2'`) are no setting.
+ITC Vol. D prints two of them (`m'2'm` in Table 1.5.7.1, `2'mm'` in Table 1.5.8.1), each beside an
+orientation that is a setting and has the same form of that tensor.
 
 A setting of a black-and-white group is a frame of its crystal class, but not always the one with
 the same index: setting 1 of `-6'2m'` (Birss's frame: twofold axes along y) is the frame of setting
@@ -487,12 +488,16 @@ default (unique axis b) and along z in the Birss default.
 
 **Time reversal.** An operation with time reversal changes the sign of a `'c'`-tensor. The 32
 classes have none, so their `'c'`-forms equal their `'i'`-forms. A grey group contains time reversal
-itself, so all its `'c'`-tensors vanish, and its `'i'`-forms are those of its class (Birss p. 102).
+itself, so all its `'c'`-tensors vanish, and its `'i'`-forms are those of its class. This is Birss's
+reading (pp. 84, 102) and birss-app's: the grey groups are the groups of non-magnetic crystals; the
+32 classes are, like the 58 black-and-white groups, groups of magnetic crystals, the limiting case
+in which time reversal does not occur.
 In a black-and-white group the `'i'`-forms are those of the crystal class in the same frame, and
 the `'c'`-forms are those of two other crystal classes, possibly in a rotated frame, which Birss's
-Table 7 names: polar `'c'`-tensors of odd rank and axial ones of even rank have the form of the
-`'i'`-tensors of his group A (the operations without time reversal and those with time reversal
-times the inversion), the others that of the `'i'`-tensors of opposite parity of his group B. The
+Table 7 names (pp. 109–110): polar `'c'`-tensors of odd rank and axial ones of even rank have the
+form of the `'i'`-tensors of his group A (eq. (3.24): the operations without time reversal and
+those with time reversal times the inversion), the others that of the `'i'`-tensors of opposite
+parity of his group B. The
 table prints a symbol class in parentheses where the frame is rotated.
 
 **Named properties.** A physical property that a group allows if and only if a tensor of a certain
@@ -512,9 +517,9 @@ tensor relates (`description`) and the print source of the definition (`source`)
 names a group allows, in the order of the table; `allowsPropertyOf(operations, name)` and
 `allowedPropertiesOf(operations)` do the same for any list of operations. None depends on setting
 or convention. `tensorForm(key, 'piezoelectric')` is the form of the tensor the name stands for.
-The key of a crystal class is the magnetic point group without any time reversal, a symmetry a
-magnetically ordered crystal can have: `'432'` is magnetoelectric. **A crystal without magnetic
-order has the grey group of its class** (`"4321'"`), which allows none of the three time-odd
+The key of a crystal class is the magnetic point group without any time reversal, a symmetry of a
+magnetically ordered crystal ("Time reversal" above): `'432'` is magnetoelectric. **A crystal
+without magnetic order has the grey group of its class** (`"4321'"`), which allows none of the three time-odd
 properties; for the three time-even ones a class, its grey group and the black-and-white groups of
 the class agree. `rotateTensor` takes a name as well.
 Each kind of tensor has one name: second-harmonic generation has the tensor of
@@ -555,9 +560,9 @@ independent components.
 Magnetic point groups, Birss convention: Birss's Table 7 (pp. 103–108) names for each of the 58
 black-and-white groups the symbol class of Tables 4b–4f for i- and c-tensors, polar and axial, of
 even and odd rank; all ranks 0 to 4 are compared in Birss's frame, a class in parentheses in a
-rotated setting. Two rows of the table, `(-6'2m')` and `-6m'2'`, lack parentheses the rest of the
-table uses; the tests apply these corrections of the print (errata with their reasons in
-`references/birss/table-7.md`). ITC convention: ITC Vol. D Table 1.5.2.4 (the 31 ferromagnetic
+rotated setting (Birss p. 110). Two rows of the table, `(-6'2m')` and `-6m'2'`, lack parentheses;
+both are recorded printing errors of the book (found in birss-app; errata with their reasons in
+`references/birss/table-7.md`), and the tests apply the corrections. ITC convention: ITC Vol. D Table 1.5.2.4 (the 31 ferromagnetic
 groups and the direction of M_s), Table 1.5.7.1 (the piezomagnetic matrix Λ_iα of 66 groups, with
 Λ_i4 = 2Λ_i23 and so on, eq. (1.5.7.4)) and Table 1.5.8.1 (the magnetoelectric tensor of 58 groups).
 A printed form belongs to the orientation its symbol names (ITC Vol. D § 1.5.7.1, p. 134: x, y, z

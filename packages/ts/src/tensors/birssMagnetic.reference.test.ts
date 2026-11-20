@@ -7,9 +7,9 @@
  * in parentheses holds in a rotated setting and not in setting 1.
  *
  * Table 7 also names two classical groups, A and B, from which Birss reads the c-tensors. Both are
- * built here from the operations of the group, by a rule derived for this test (stated in
- * references/birss/table-7.md) and compared with the print, symbol and parentheses, which
- * identifies each row independently of its symbol in column 2. For the 32 groups with time reversal itself, Birss gives no
+ * built here from the operations of the group, A by Birss's eq. (3.24) (p. 109), B by a rule
+ * derived for this test (references/birss/table-7.md), and compared with the print, symbol and
+ * parentheses, which identifies each row independently of its symbol in column 2. For the 32 groups with time reversal itself, Birss gives no
  * table: their c-tensors vanish and their i-tensors are those of the class (p. 102).
  */
 
@@ -202,7 +202,7 @@ describe('Birss Table 7: tensor forms of the magnetic point groups in the Birss 
     for (const row of ROWS.filter((r) => pointGroup(r.key).type === 'III')) {
       const ops = operations(row.key, { ...BIRSS, setting: 1 });
       const built = {
-        // A: operations without time reversal, and those with time reversal times the inversion.
+        // A, eq. (3.24): operations without time reversal, and those with time reversal times the inversion.
         A: ops.map((op) => scaled(op, op.timeReversal ? -1 : 1)),
         // B: the rotation part of the former, and the rotation part times the inversion of the latter.
         B: ops.map((op) => scaled(op, (op.timeReversal ? -1 : 1) * det(op.matrix as Mat3))),
@@ -228,8 +228,8 @@ describe('Birss Table 7: parentheses of column 2, and time-even forms', () => {
   const magnetic = ROWS.filter((r) => pointGroup(r.key).type === 'III');
 
   it('three groups are printed in parentheses: those with a time-even symbol class in parentheses', () => {
-    // The group as Table 6 defines it is in a setting rotated against that of its class in Table 4a,
-    // so the i-tensors of the class hold in the rotated setting (after the erratum for (-6'2m')).
+    // Birss p. 110: these groups are referred to axes rotated against those of their class in Table
+    // 4a, so the i-tensors of the class hold in the rotated setting (after the erratum for (-6'2m')).
     const inParentheses = magnetic.filter((r) => r.printed.startsWith('('));
     expect(inParentheses.map((r) => r.printed)).toEqual(["(2'm'm)", "(-4'm2')", "(-6'2m')"]);
     expect(magnetic.filter((r) => r.cells.slice(4, 8).some((c) => c.startsWith('('))).map((r) => r.printed)).toEqual(
