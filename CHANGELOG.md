@@ -18,8 +18,8 @@ All notable changes to symcrys are recorded here. The format follows
   `symmetryDirections`, `isCentrosymmetric`, `isPolar`, `isChiral` and `laueClass` take any of the
   122 keys; `PointGroupType` is now `'I' | 'II' | 'III'`. In the ITC convention the operations of
   a magnetic group are in the order of its crystal class; in the Birss convention operations,
-  generators, symbols and settings are birss-app's (docs/conventions.md, "Types", "Settings of the
-  magnetic groups").
+  generators, symbols and settings are birss-app's, with three settings of `2'm'm` beyond them
+  (docs/conventions.md, "Types", "Settings of the magnetic groups").
 - Tensor forms of the magnetic point groups (#13): `tensorForm` takes any of the 122 keys. A grey
   group allows no time-odd (`'c'`) tensor; the forms of the black-and-white groups are checked
   against Birss's Table 7 (Birss convention, ranks 0 to 4) and against ITC Vol. D Tables 1.5.2.4,
@@ -30,9 +30,10 @@ All notable changes to symcrys are recorded here. The format follows
   `allowedProperties(key)`, `allowsPropertyOf(operations, name)`, `allowedPropertiesOf(operations)`.
   `tensorForm`, `tensorFormOf` and `rotateTensor` take the name of a property in place of a
   specification: `tensorForm('32', 'piezoelectric')`. Types `TensorProperty`, `TensorPropertyName`.
-- Three further settings of the magnetic point group `2'm'm` (4: `m'2'm`, 5: `mm'2'`, 6: `2'mm'`):
-  the group has six orientations of its axes, and ITC Vol. D and Paufler print these three.
-  Settings 1 to 3 are unchanged.
+- `2'm'm` has six settings, one for every orientation of its axes: 1 to 3 as in birss-app, and 4
+  `m'2'm`, 5 `mm'2'`, 6 `2'mm'`, which ITC Vol. D and Paufler print. Two settings share each
+  `uniqueAxis` (the normal of the mirror plane without time reversal), so for this group the symbol
+  or the index identifies a setting, not the axis.
 - Python: `MAGNETIC_POINT_GROUP_KEYS`, `magnetic_point_groups`, `is_magnetic_point_group_key`,
   `find_magnetic_point_group`; `TENSOR_PROPERTIES`, `allows_property`, `allowed_properties`,
   `allows_property_of`, `allowed_properties_of`, and names in `tensor_form`, `tensor_form_of` and

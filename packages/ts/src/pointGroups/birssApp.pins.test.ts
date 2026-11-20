@@ -89,7 +89,7 @@ describe('Birss convention = birss-app (pins)', () => {
     expect(docs).toContain(`birss-app ${BIRSS_APP_REVISION.split(' ')[0]}`);
   });
 
-  it('covers the 122 groups and all their settings', () => {
+  it('covers the 122 groups and all settings birss-app has', () => {
     expect(BIRSS_APP_GROUPS).toHaveLength(122);
     expect(new Set(BIRSS_APP_GROUPS.map((g) => symcrysKey(g.key)))).toEqual(new Set(MAGNETIC_POINT_GROUP_KEYS));
     expect(BIRSS_APP_GROUPS.filter((g) => g.type === 'I')).toHaveLength(32);

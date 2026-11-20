@@ -168,7 +168,7 @@ function blackWhite(
 /**
  * The 58 black-and-white groups. The generators are birss-app's (CLAUDE.md, "birss-app is the
  * reference where print leaves a choice open"); the group they generate is checked against Birss's
- * Table 6 and against ITC Vol. D Table 1.5.2.3. Setting frames as for the classes (data.ts); the
+ * Table 6 and against ITC Vol. D Table 1.5.2.3. Setting frames as for the classes (data.ts), with three more for `2'm'm`; the
  * ITC default is the frame in which the key, read along ITA's symmetry directions, describes the
  * group, which is the frame of the operators printed in Table 1.5.2.3.
  */

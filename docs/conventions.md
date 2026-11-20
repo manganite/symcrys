@@ -159,7 +159,8 @@ The classes `222` and `mmm` have one setting only: their three axes are equivale
 
 A **grey group** has the settings of its class, with the same indices, frames and defaults.
 
-A **black-and-white group** has the settings birss-app gives it (#17), setting 1 being Birss's frame:
+A **black-and-white group** has the settings birss-app gives it (#17), setting 1 being Birss's frame,
+and `2'm'm` three more:
 
 - monoclinic (5 groups): setting 1 with unique axis c, setting 2 with unique axis b, as the classes;
 - orthorhombic `2'2'2`, `m'm'2`, `mm'm'`, `mmm'`: three settings, the cyclic permutations of the axes
@@ -179,16 +180,20 @@ element (at most three). `2'm'm` (C2v(Cs)) is the one orthorhombic group whose t
 differ, so exchanging the other two axes gives a further orientation: six in all, and print uses
 every one of them. Settings 1 to 3 are birss-app's, with their indices; 4 to 6 exchange the other
 two axes at the same unique axis (maintainer, 2026-11-20). `uniqueAxis` is the normal of the mirror
-plane without time reversal, the direction a spontaneous magnetization may have.
+plane without time reversal, the direction a spontaneous magnetization may have; two settings share
+each axis, so for this group it does not identify a setting: the symbol or the index does.
 
-| Setting | Symbol  | Axis | Operations besides 1 | Printed in                                          |
-| ------- | ------- | ---- | -------------------- | --------------------------------------------------- |
-| 1       | `2'm'm` | c    | 2′_x, m′_y, m_z      | Birss Table 6; ITC Vol. D Table 1.5.2.3             |
-| 2       | `m2'm'` | a    | m_x, 2′_y, m′_z      | ITC Vol. D Table 1.5.8.1 (in brackets)              |
-| 3       | `m'm2'` | b    | m′_x, m_y, 2′_z      | ITC Vol. D Table 1.5.2.4                            |
-| 4       | `m'2'm` | c    | m′_x, 2′_y, m_z      | ITC Vol. D Table 1.5.7.1                            |
-| 5       | `mm'2'` | a    | m_x, m′_y, 2′_z      | Paufler (1986), p. 62 and Table A 6, no. 15, p. 316 |
-| 6       | `2'mm'` | b    | 2′_x, m_y, m′_z      | ITC Vol. D Table 1.5.8.1                            |
+| Setting | Symbol  | Axis | Operations besides 1 | Symbol printed in                                               |
+| ------- | ------- | ---- | -------------------- | --------------------------------------------------------------- |
+| 1       | `2'm'm` | c    | 2′_x, m′_y, m_z      | Birss Table 6; ITC Vol. D Tables 1.5.2.3, 1.5.7.1 (in brackets) |
+| 2       | `m2'm'` | a    | m_x, 2′_y, m′_z      | ITC Vol. D Table 1.5.8.1 (in brackets)                          |
+| 3       | `m'm2'` | b    | m′_x, m_y, 2′_z      | ITC Vol. D Table 1.5.2.4                                        |
+| 4       | `m'2'm` | c    | m′_x, 2′_y, m_z      | ITC Vol. D Table 1.5.7.1                                        |
+| 5       | `mm'2'` | a    | m_x, m′_y, 2′_z      | Paufler (1986), p. 62 and Table A 6, no. 15, p. 316             |
+| 6       | `2'mm'` | b    | 2′_x, m_y, m′_z      | ITC Vol. D Table 1.5.8.1                                        |
+
+Birss (Table 6) and Paufler (Table A 6) print the operations with the symbol; for the other rows
+the operations are those the symbol names, each position read along x, y, z.
 
 Setting 1 is the default in both conventions; the symbols are the same in both, an orthorhombic
 symbol being read along x, y, z in each. birss-app has settings 1 to 3 (its standing decision of at
@@ -344,7 +349,7 @@ choices that Birss's print leaves open:
 `birssApp.pins.test.ts` checks this against behavioural pins captured from birss-app
 (`audit/birss-app`, fixture class (c); the revision is the `revision` of
 `packages/ts/src/pointGroups/birssApp.pins.json`, at present 2be5fe3, and the test requires this text to name
-it): for all 122 groups and all settings the generators and the operations in order with their
+it): for all 122 groups and all settings birss-app has the generators and the operations in order with their
 time reversal, the symbols, the type, the crystal class, the default setting (also that of
 birss-app's ITC mode), the property flags, and the operation symbols birss-app writes, rebuilt from
 `describeOperations` with birss-app's labelling rules. The pins carry birss-app's keys; the test
@@ -354,6 +359,14 @@ all classes, settings and 26 kinds of tensor, the basis and the free parameters 
 forms, and for the 58 black-and-white groups those of the time-odd forms. For these choices birss-app is the specification (maintainer decision), so here its
 pins are the reference, not only a regression detector. The strings themselves (`2_z`, `3_[111]⁺`,
 `m_60°`) and the order birss-app sorts them into for display stay in birss-app.
+
+**Settings birss-app does not have.** Settings 4 to 6 of `2'm'm` exist in symcrys only ("Settings
+of the magnetic groups"), so for them there is no birss-app output to give and no pin. They follow
+the same rules: the stored generators carried into the frame, and birss-app's closure for the order;
+this makes them settings 1 to 3 with two axes exchanged, generators and order included, which a test
+checks. When birss-app takes the three settings over (#19), with the same frames and indices, the
+pins are captured again and the list of settings beyond birss-app's (`SETTINGS_BEYOND_BIRSS_APP` in
+`packages/ts/src/testUtils/birssAppPins.ts`) becomes empty.
 
 ## Symmetry directions and elements
 
@@ -632,6 +645,7 @@ ITC symbol, and so are the second trigonal orientations the text of § 1.5.8.1 n
 | ITC: axial tensors of rank 2 (forms); rank 4 `'ij_kl'`, `'voigt'` (counts)                                                  | ITC Vol. D (2013) § 1.1.4.10.7 (pp. 29–31), § 1.1.4.10.6 (pp. 27–29): `references/itc/vol-d-*.md`                                                                                                                                                                                                         | `tensors/itcVolD.reference.test.ts`                                                                     |
 | tensor forms of the magnetic groups, Birss convention: i- and c-tensors, ranks 0 to 4; associated groups A, B               | Birss Table 7 (pp. 103–108): `references/birss/table-7.md`, with Tables 4a–4f; grey groups: p. 102                                                                                                                                                                                                        | `tensors/birssMagnetic.reference.test.ts`                                                               |
 | ferromagnetic, piezomagnetic, magnetoelectric: the groups and the forms, ITC convention                                     | ITC Vol. D (2013) Table 1.5.2.4 (p. 113), Table 1.5.7.1 (p. 135, conventions p. 134), Table 1.5.8.1 (p. 139, text p. 140): `references/itc/vol-d-table-1.5.*.md`                                                                                                                                          | `tensors/itcMagnetic.reference.test.ts`                                                                 |
+| orthorhombic settings: one for every orientation of the axes; the six orientations of `2'm'm`                               | counted by hand; Paufler (1986) Table A 6, rows 12–20 (p. 316): `references/paufler/table-a6-orthorhombic.md`; the symbols of `2'm'm` in Birss Table 6, ITC Vol. D Tables 1.5.2.3, 1.5.2.4, 1.5.7.1, 1.5.8.1 and Paufler                                                                                  | `pointGroups/magnetic.reference.test.ts`, `tensors/itcMagnetic.reference.test.ts`                       |
 | the three types of magnetic point groups; which describes a non-magnetic crystal                                            | Birss (1966) pp. 84, 102; Litvin, _Acta Cryst._ A**64**, 419 (2008), p. 419; Paufler, _Physikalische Kristallographie_ (Akademie-Verlag, Berlin, 1986), pp. 60–62                                                                                                                                         | `tensors/birssMagnetic.reference.test.ts` (classes: c-forms equal i-forms; grey groups: c-forms vanish) |
 | named tensor properties: the kind of tensor behind each name                                                                | ITC Vol. D (2013) §§ 1.1.4.4.2, 1.1.4.4.3 (p. 12), 1.1.4.10.7.2 (p. 30), 1.5.2.1 (p. 113), 1.5.7.1 (p. 134), 1.5.8.1 (pp. 139–140); the `source` of each entry of `TENSOR_PROPERTIES`                                                                                                                     | `tensors/tensorProperties.test.ts`                                                                      |
 | Birss: free parameters of the tensor forms                                                                                  | none: birss-app 2be5fe3, behavioural pins (class (c)) captured by `audit/birss-app`: time-even forms of the 32 classes, time-odd forms of the 58 black-and-white groups                                                                                                                                   | `tensors/birssApp.pins.test.ts`                                                                         |

@@ -27,7 +27,7 @@ const indicesOf = (flat: number, rank: number): number[] =>
 const keyOf = (c: BirssAppTensorClass) => (SYMCRYS_KEY[c.key] ?? c.key) as MagneticPointGroupKey;
 
 function describePins(list: readonly BirssAppTensorClass[], timeParity: TimeParity): void {
-  it('cover all settings of each group and 26 specifications each', () => {
+  it('cover all settings birss-app has of each group and 26 specifications each', () => {
     for (const c of list) {
       expect(
         birssAppSettings(

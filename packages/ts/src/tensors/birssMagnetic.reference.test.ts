@@ -34,6 +34,7 @@ import {
   relationsLowRank,
   type Relation,
 } from '../testUtils/birssTensorTables.js';
+import { birssAppSettings } from '../testUtils/birssAppPins.js';
 import { matrixRank, satisfies } from '../testUtils/rank.js';
 import { expectHeader, readReference, tableRows } from '../testUtils/references.js';
 import { tensorForm, tensorFormOf, type TensorParity, type TensorRank, type TimeParity } from './tensorForm.js';
@@ -176,9 +177,12 @@ describe('Birss Table 7: the transcription as read', () => {
 describe('Birss Table 7: tensor forms of the magnetic point groups in the Birss frame', () => {
   for (const row of ROWS.filter((r) => pointGroup(r.key).type === 'III')) {
     it(`${row.printed}: i- and c-tensors of ranks 0–4, polar and axial`, () => {
-      const others = settings(row.key, 'birss')
-        .map((s) => s.index)
-        .filter((i) => i !== 1);
+      // The rotated settings Birss's parentheses can mean are birss-app's: a cyclic permutation of
+      // the axes, or 45° or 30° about z. The three further settings of 2'm'm are left out.
+      const others = birssAppSettings(
+        row.key,
+        settings(row.key, 'birss').map((s) => s.index),
+      ).filter((i) => i !== 1);
       for (const c of COLUMNS) {
         const cell = row.cells[c.column];
         const m = /^(\()?([A-U])_[mn]\)?$/.exec(cell);

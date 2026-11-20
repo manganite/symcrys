@@ -121,7 +121,8 @@ convention or the process updates this file (or the `docs/` file) in the same PR
   the operations, sign of an axis), birss-app's choice holds. Behavioural pins captured from
   birss-app check it (`docs/conventions.md`, "Birss convention and birss-app"); for these choices
   they are the reference, not only regression detectors, because birss-app defines them. In `'itc'`
-  the output follows ITA.
+  the output follows ITA. Where symcrys has a setting birss-app lacks (`2'm'm`, settings 4 to 6),
+  the Birss output follows the same rules and is unpinned until birss-app has the setting.
 
 ## Correctness and provenance
 
@@ -373,7 +374,7 @@ The conventions themselves are in `docs/conventions.md`; here, what was decided 
   elements all differ; it has six orientations, and print uses all of them (Birss, four tables of
   ITC Vol. D, Paufler), so a reader who takes a symbol from print must be able to select it.
   Settings 1 to 3 keep birss-app's frames and indices, so its pins hold unchanged; 4 to 6 are added
-  after them. This goes beyond birss-app with Thomas' agreement (the rule above); #19 records it for
+  after them. This goes beyond birss-app with Thomas' agreement to the proposal (the rule above); #19 records it for
   birss-app. Not changed: the monoclinic groups keep two settings (unique axis b and c; a is not a
   standard setting, as in birss-app).
 - **Magnetic point groups: data** (2026-11-19, #13): stored like the classes, in the Birss frame
