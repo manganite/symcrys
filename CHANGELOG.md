@@ -6,6 +6,8 @@ All notable changes to symcrys are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-11-20
+
 ### Added
 
 - Two entry points with the same function names (#47). `symcrys` is the crystallographic API: the
@@ -207,7 +209,8 @@ All notable changes to symcrys are recorded here. The format follows
 - Project scaffold: TypeScript build to `dist/` (ES modules with type declarations), tests, lint,
   format check, CI and release workflow. The only export so far is `VERSION`.
 
-[Unreleased]: https://github.com/manganite/symcrys/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/manganite/symcrys/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/manganite/symcrys/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/manganite/symcrys/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/manganite/symcrys/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/manganite/symcrys/compare/v0.3.0...v0.3.1

@@ -5,15 +5,15 @@ magnetic, with their settings, symbols and properties, and the property tensors 
 library without runtime dependencies that runs unbundled in browsers and in Node, and a Python
 package of the same version that runs it in an embedded JavaScript engine.
 
-| Package                 | Folder                               | Install                                                                |
-| ----------------------- | ------------------------------------ | ---------------------------------------------------------------------- |
-| TypeScript / JavaScript | [`packages/ts`](packages/ts)         | `npm install symcrys`                                                  |
-| Python ≥ 3.10           | [`packages/python`](packages/python) | `pip install symcrys` (from the first release with the Python package) |
+| Package                 | Folder                               | Install               |
+| ----------------------- | ------------------------------------ | --------------------- |
+| TypeScript / JavaScript | [`packages/ts`](packages/ts)         | `npm install symcrys` |
+| Python ≥ 3.10           | [`packages/python`](packages/python) | `pip install symcrys` |
 
-> **Status: pre-release.** So far: the 32 crystallographic and the 90 magnetic point groups with
-> time reversal, with their symmetry elements; for the crystallographic point groups also site
-> symmetry, Wyckoff positions and the forms of property tensors of rank 0 to 4.
-> The API will change without notice until 1.0.0.
+> **Status: pre-release.** So far: the 32 crystal classes and the 122 magnetic point groups, with
+> their settings, symbols, symmetry elements, site symmetry, the forms of property tensors of rank 0
+> to 4 and named properties (piezoelectric, ferroaxial, ferromagnetic, …); for the crystal classes
+> also Wyckoff positions. The API will change without notice until 1.0.0.
 
 ## Scope
 
