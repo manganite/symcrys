@@ -94,8 +94,8 @@ convention or the process updates this file (or the `docs/` file) in the same PR
   (2004), Paufler, _Physikalische Kristallographie_, and for group theory Wipf, Rosebrock,
   Brückler and Glosauer (editions and page offsets in `CLAUDE.md` of crystallography-common,
   "Literatur"). State of the files (2026-11-20): Liboff has no PDF in Zotero. The PDF of Paufler
-  (`7SL8TECS`) is wrapped in an upload envelope (a multipart header before `%PDF`), so the Zotero
-  tools reject it; staged from its folder and with the envelope cut off it reads normally. The scan
+  (`7SL8TECS`) reads through the Zotero tools since its repair on 2026-11-20 (it had been stored
+  inside an upload envelope). The scan
   repeats pages, so the offset between PDF and printed page grows (22 at p. 60, 40 at p. 316): read
   the printed number on the page. Its counts for the magnetic properties (31, 58, 66 groups;
   pp. 66, 140, 240) agree with ITC Vol. D; its Tables 6.11 (p. 141) and 7.6 (pp. 240 ff.) give the forms after
