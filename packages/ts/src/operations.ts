@@ -24,6 +24,21 @@ export function operation(matrix: Mat3): Operation {
   return { matrix, timeReversal: false };
 }
 
+/**
+ * Checks operations that a caller passes in: each must say whether it is combined with time
+ * reversal. Without this, an operation that lacks `timeReversal` (as the crystallographic API
+ * returns them) would be composed as if it had it in every second product.
+ */
+export function checkTimeReversal(operations: readonly Operation[]): void {
+  operations.forEach((op, i) => {
+    if (typeof op.timeReversal !== 'boolean') {
+      throw new RangeError(
+        `Operation ${i}: timeReversal must be true or false, not ${JSON.stringify(op.timeReversal)}; an operation of the magnetic API says whether it is combined with time reversal`,
+      );
+    }
+  });
+}
+
 /** The product a·b: first b, then a. */
 export function compose(a: Operation, b: Operation): Operation {
   return { matrix: snap(multiply(a.matrix, b.matrix)), timeReversal: a.timeReversal !== b.timeReversal };

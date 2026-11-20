@@ -24,6 +24,10 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
+    "./magnetic": {
+      "types": "./dist/magnetic.d.ts",
+      "default": "./dist/magnetic.js"
+    },
     "./package.json": "./package.json"
   },
   "main": "./dist/index.js",

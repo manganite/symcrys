@@ -8,51 +8,60 @@ All notable changes to symcrys are recorded here. The format follows
 
 ### Added
 
-- The 90 magnetic point groups with time reversal (#13): the 32 grey groups (type II, `2221'`) and
-  the 58 black-and-white groups (type III, `4'/mmm'`), with their settings, symbols, operations and
-  generators in both conventions. Keys are the short symbols of ITC Vol. D Table 1.5.2.3 with a
-  prime `'` for time reversal; a grey group is the key of its class followed by `1'`. New:
-  `MAGNETIC_POINT_GROUP_KEYS` (all 122 keys, the 32 classes first), `magneticPointGroups()`,
-  `isMagneticPointGroupKey`, `findMagneticPointGroup` and the type `MagneticPointGroupKey`.
-  `pointGroup`, `settings`, `operations`, `generators`, `symbol`, `describeOperations`,
-  `symmetryDirections`, `isCentrosymmetric`, `isPolar`, `isChiral` and `laueClass` take any of the
-  122 keys; `PointGroupType` is now `'I' | 'II' | 'III'`. In the ITC convention the operations of
-  a magnetic group are in the order of its crystal class; in the Birss convention operations,
-  generators, symbols and settings are birss-app's, with three settings of `2'm'm` beyond them
-  (docs/conventions.md, "Types", "Settings of the magnetic groups").
-- Tensor forms of the magnetic point groups (#13): `tensorForm` takes any of the 122 keys. A grey
-  group allows no time-odd (`'c'`) tensor; the forms of the black-and-white groups are checked
-  against Birss's Table 7 (Birss convention, ranks 0 to 4) and against ITC Vol. D Tables 1.5.2.4,
-  1.5.7.1 and 1.5.8.1 (ITC convention).
-- Named tensor properties (#41): the table `TENSOR_PROPERTIES` (`'pyroelectric'`,
-  `'piezoelectric'`, `'gyrotropic'`, `'ferromagnetic'`, `'magnetoelectric'`, `'piezomagnetic'`, each
-  with its kind of tensor and print source) and `allowsProperty(key, name)`,
-  `allowedProperties(key)`, `allowsPropertyOf(operations, name)`, `allowedPropertiesOf(operations)`.
-  `tensorForm`, `tensorFormOf` and `rotateTensor` take the name of a property in place of a
-  specification: `tensorForm('32', 'piezoelectric')`. Types `TensorProperty`, `TensorPropertyName`.
+- Two entry points with the same function names (#47). `symcrys` is the crystallographic API: the
+  32 crystal classes, without time reversal. `symcrys/magnetic` (Python: `symcrys.magnetic`) is the
+  magnetic API: the 122 magnetic point groups. The import decides how a key is read: in `symcrys`,
+  `'32'` is a crystal class (quartz); in `symcrys/magnetic` it is a white group, the symmetry of a
+  magnetically ordered crystal, and a crystal without magnetic order has the grey group of its
+  class (quartz: `"321'"`). The magnetic API has every function of the crystallographic one except
+  `wyckoffPositions` and `wyckoffPositionOf` (docs/conventions.md, "Two entry points").
+- In the magnetic API, the 90 magnetic point groups with time reversal (#13): the 32 grey groups
+  (type II, `2221'`) and the 58 black-and-white groups (type III, `4'/mmm'`), with their settings,
+  symbols, operations and generators in both conventions. Keys are the short symbols of ITC Vol. D
+  Table 1.5.2.3 with a prime `'` for time reversal; a grey group is the key of its class followed
+  by `1'`. `POINT_GROUP_KEYS` holds all 122 keys, the 32 classes first; `pointGroup` gives the
+  `type` (`'I' | 'II' | 'III'`). In the ITC convention the operations of a magnetic group are in
+  the order of its crystal class; in the Birss convention operations, generators, symbols and
+  settings are birss-app's, with three settings of `2'm'm` beyond them (docs/conventions.md,
+  "Types", "Settings of the magnetic groups").
+- In the magnetic API, tensor forms of the magnetic point groups (#13). A grey group allows no
+  time-odd (`'c'`) tensor; the forms of the black-and-white groups are checked against Birss's
+  Table 7 (Birss convention, ranks 0 to 4) and against ITC Vol. D Tables 1.5.2.4, 1.5.7.1 and
+  1.5.8.1 (ITC convention).
+- Named tensor properties (#41): the table `TENSOR_PROPERTIES` (name, kind of tensor, print source)
+  and `allowsProperty(key, name)`, `allowedProperties(key)`, `allowsPropertyOf(operations, name)`,
+  `allowedPropertiesOf(operations)`. `tensorForm`, `tensorFormOf` and `rotateTensor` take the name
+  of a property in place of a specification: `tensorForm('32', 'piezoelectric')`. The
+  crystallographic API has the properties of time-even tensors, `'pyroelectric'`,
+  `'piezoelectric'` and `'gyrotropic'`; the magnetic API has in addition `'ferromagnetic'`,
+  `'magnetoelectric'` and `'piezomagnetic'`. Types `TensorProperty`, `TensorPropertyName`.
 - `2'm'm` has six settings, one for every orientation of its axes: 1 to 3 as in birss-app, and 4
   `m'2'm`, 5 `mm'2'`, 6 `2'mm'`, which ITC Vol. D and Paufler print. Two settings share each
   `uniqueAxis` (the normal of the mirror plane without time reversal), so for this group the symbol
   or the index identifies a setting, not the axis.
-- Python: `MAGNETIC_POINT_GROUP_KEYS`, `magnetic_point_groups`, `is_magnetic_point_group_key`,
-  `find_magnetic_point_group`; `TENSOR_PROPERTIES`, `allows_property`, `allowed_properties`,
-  `allows_property_of`, `allowed_properties_of`, and names in `tensor_form`, `tensor_form_of` and
-  `rotate_tensor`.
+- Python: the module `symcrys.magnetic`; `TENSOR_PROPERTIES`, `allows_property`,
+  `allowed_properties`, `allows_property_of`, `allowed_properties_of`, and names in `tensor_form`,
+  `tensor_form_of` and `rotate_tensor`, in both modules.
 
 ### Changed
 
-- `POINT_GROUP_KEYS`, `pointGroups()`, `isPointGroupKey` and `findPointGroup` are unchanged: they
-  cover the 32 crystal classes. `PointGroup` and `PointGroupInSetting` are now generic in the key
-  type, with the class keys as default.
-- `wyckoffPositions` and `wyckoffPositionOf` throw a `RangeError` with a message of its own for a
-  magnetic point group with time reversal (before, such a key was unknown): Wyckoff positions are
-  given for the crystal classes only.
+- The crystallographic API (`symcrys`) no longer mentions time reversal (#47); what 0.5.0 had of
+  it is now in the magnetic API:
+  - An operation is `{ matrix }`: `Operation` and `OperationDescription` have no `timeReversal`
+    (Python: no `time_reversal`). A list of operations passed in may still carry
+    `timeReversal: false`; `true` is a `RangeError`.
+  - `TensorSpec` has no `timeParity` (Python: no `time_parity`). `timeParity: 'i'` is still
+    accepted; `'c'` is a `RangeError` (in 0.5.0 it gave the form of the time-even tensor).
+  - `PointGroup` has no `type` (it was `'I'` for every class). The types `PointGroupType` and
+    `TimeParity` are exported by the magnetic API only.
+  - A key of a magnetic point group, the name of a time-odd property, a time-odd tensor and an
+    operation with time reversal are a `RangeError` (Python: `SymcrysError`) that names the
+    magnetic API.
 
 ### Removed
 
 - `isPiezoelectric` (Python: `is_piezoelectric`): use `allowsProperty(key, 'piezoelectric')`
-  (`allows_property(key, "piezoelectric")`), which gives the same for the 32 crystal classes and
-  also takes the magnetic point groups (#41).
+  (`allows_property(key, "piezoelectric")`), which gives the same for the 32 crystal classes (#41).
 
 ## [0.5.0] - 2026-11-19
 

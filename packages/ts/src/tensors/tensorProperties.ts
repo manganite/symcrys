@@ -3,11 +3,12 @@
  * describes it (`TENSOR_PROPERTIES`) has a non-zero form under the group. Symmetry only allows a
  * property; whether a crystal shows it is a question of the material.
  *
- * A key of type `'I'` (`'432'`) is a crystal class and, in magnetism, the white group with the same
- * operations: the symmetry of a magnetically ordered crystal in which time reversal does not occur
- * at all. For a time-odd property it is read as that group (`'432'` is magnetoelectric). A crystal
- * without magnetic order has the grey group of its class (`"4321'"`), which allows no time-odd
- * property; for the time-even properties the two agree (docs/conventions.md, "Types").
+ * These functions serve the magnetic API (`magnetic.ts`), where a key of type `'I'` (`'432'`) is the
+ * white group: the symmetry of a magnetically ordered crystal in which time reversal does not occur
+ * at all (`'432'` is magnetoelectric). A crystal without magnetic order has the grey group of its
+ * class (`"4321'"`), which allows no time-odd property; for the time-even properties the two agree.
+ * The crystallographic API (`crystalClasses.ts`) knows the time-even properties only
+ * (docs/conventions.md, "Two entry points").
  */
 
 import type { Operation } from '../operations.js';

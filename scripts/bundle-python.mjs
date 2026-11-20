@@ -8,6 +8,9 @@
 //   __symcrys.value(name) → json                   an exported constant
 //   __symcrys.exports() → json                     names and kinds ("function", "value") of all exports
 //
+// A plain name (`tensorForm`) is an export of the crystallographic API (dist/index.js), a name with
+// the prefix `magnetic.` (`magnetic.tensorForm`) one of the magnetic API (dist/magnetic.js).
+//
 // Writes packages/python/src/symcrys/_bundle.js (not committed; built for every Python build and
 // test). Checks that dist/ reports the version of packages/ts/package.json and of
 // packages/python/pyproject.toml, so the Python package always carries the TypeScript code of its
@@ -35,12 +38,20 @@ if (errors.length > 0) {
 }
 
 const entry = `
-import * as symcrys from ${JSON.stringify(dist.replaceAll('\\', '/'))};
+import * as classes from ${JSON.stringify(dist.replaceAll('\\', '/'))};
+import * as magnetic from ${JSON.stringify(dist.replaceAll('\\', '/').replace(/index\.js$/, 'magnetic.js'))};
 const failure = (e) => ({ error: { name: (e && e.name) || 'Error', message: String((e && e.message) || e) } });
+const entries = { '': classes, 'magnetic.': magnetic };
+const find = (name) => {
+  const prefix = name.slice(0, name.indexOf('.') + 1);
+  const entry = Object.hasOwn(entries, prefix) ? entries[prefix] : undefined;
+  const key = name.slice(prefix.length);
+  return entry && Object.hasOwn(entry, key) ? entry[key] : undefined;
+};
 globalThis.__symcrys = {
   call(name, argsJson) {
     try {
-      const f = symcrys[name];
+      const f = find(name);
       if (typeof f !== 'function') throw new TypeError(name + ' is not a function of symcrys');
       return JSON.stringify({ result: f(...JSON.parse(argsJson)) });
     } catch (e) {
@@ -48,11 +59,16 @@ globalThis.__symcrys = {
     }
   },
   value(name) {
-    if (!(name in symcrys) || typeof symcrys[name] === 'function') throw new TypeError(name + ' is not a value of symcrys');
-    return JSON.stringify(symcrys[name]);
+    const v = find(name);
+    if (v === undefined || typeof v === 'function') throw new TypeError(name + ' is not a value of symcrys');
+    return JSON.stringify(v);
   },
   exports() {
-    return JSON.stringify(Object.keys(symcrys).map((name) => [name, typeof symcrys[name] === 'function' ? 'function' : 'value']));
+    return JSON.stringify(
+      Object.entries(entries).flatMap(([prefix, entry]) =>
+        Object.keys(entry).map((name) => [prefix + name, typeof entry[name] === 'function' ? 'function' : 'value']),
+      ),
+    );
   },
 };
 `;

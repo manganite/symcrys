@@ -7,8 +7,13 @@ the tests named there re-check them against the transcriptions in `references/`.
 symcrys holds the 122 magnetic point groups: the 32 crystallographic point groups (crystal classes,
 type I) and the 90 groups with time reversal (32 grey groups, type II; 58 black-and-white groups,
 type III). For all of them: settings, symbols, operations, generators and symmetry elements in both
-conventions. For the crystal classes also the Wyckoff positions of directions and the forms of
-property tensors of rank 0 to 4.
+conventions, and the forms of property tensors of rank 0 to 4. For the crystal classes also the
+Wyckoff positions of directions.
+
+The library has two entry points with the same function names: `symcrys`, the crystallographic API
+for the 32 crystal classes, and `symcrys/magnetic`, the magnetic API for all 122 groups ("Two entry
+points"). Where a section below speaks of time reversal, of the types or of a magnetic group, it
+describes the magnetic API.
 
 ## Conventions
 
@@ -34,9 +39,9 @@ For D3h the key is `-6m2`, as in ITC Vol. D Table 1.5.2.3. ITA lists both orient
 first (§ 3.2.1.2.1 (b), p. 721; Table 3.2.3.2, pp. 762–763), but its tables of classes print `-62m`
 (Tables 2.1.1.1, 3.2.1.2, 3.2.2.1). symcrys keeps `-6m2`, as birss-app does (decision on #17).
 
-The 32 class keys are `POINT_GROUP_KEYS`; `MAGNETIC_POINT_GROUP_KEYS` holds all 122 keys: the 32
-classes, the 32 grey groups in the same order, and the 58 black-and-white groups in the order of
-ITC Vol. D Table 1.5.2.3.
+The 32 class keys are the `POINT_GROUP_KEYS` of the crystallographic API. The `POINT_GROUP_KEYS` of
+the magnetic API are all 122 keys: the 32 classes, the 32 grey groups in the same order, and the 58
+black-and-white groups in the order of ITC Vol. D Table 1.5.2.3.
 
 - **Black-and-white groups:** the short Hermann–Mauguin symbol printed in ITC Vol. D Table 1.5.2.3,
   with a prime `'` for time reversal: `4'/mmm'`, `-6'2m'`, `m'-3'm`. These are birss-app's keys (the
@@ -69,9 +74,10 @@ operations and are not to be equated (maintainer, 2026-11-20):
   crystal, one of the 90 magnetic groups of Birss's Tables 6 and 7 and of ITC Vol. D Chapter 1.5.
 
 Where magnetic properties are discussed, a crystal without magnetic order has the **grey group** of
-its class: quartz is `321'`, not `32` (Birss p. 84; Paufler p. 60). symcrys computes with the
-operations, so a time-odd tensor or property asked for a key of type `'I'` is that of the white
-group ("Tensors", "Time reversal"); for a crystal without magnetic order, ask the grey group.
+its class: quartz is `321'`, not `32` (Birss p. 84; Paufler p. 60; ITC Vol. D § 1.5.2.1, p. 111: all
+dia- and paramagnets belong to the grey groups, and of the 32 white groups 13 allow ferromagnetism
+and 19 describe antiferromagnets). symcrys keeps the two readings
+apart by its two entry points ("Two entry points", below).
 
 The **crystal class** of a magnetic group is the class it becomes when time reversal is dropped
 from every operation. The numbers I, II, III are the usual ones (birss-app uses them). ITC Vol. D
@@ -79,6 +85,51 @@ Ch. 1.5 numbers differently: its first type are the grey groups (§ 1.5.2.1, eq.
 second type the crystal classes, its third type the black-and-white groups; its Table 1.5.2.3,
 "The 90 magnetic point groups of types 2 and 3", therefore lists the 32 classes and the 58
 black-and-white groups, not the grey groups. Birss's Table 6 lists the same 90 groups.
+
+## Two entry points
+
+The two readings of a class key ("Types") are two entry points of the library, with the same
+function names (maintainer, 2026-11-20, #47). The import decides which reading a key has:
+
+| Entry point                                                     | Groups                        | The key `'32'`                                              |
+| --------------------------------------------------------------- | ----------------------------- | ----------------------------------------------------------- |
+| `symcrys` (crystallographic API)                                | the 32 crystal classes        | the crystal class; quartz                                   |
+| `symcrys/magnetic` (magnetic API; in Python `symcrys.magnetic`) | the 122 magnetic point groups | the white group: a magnetically ordered crystal, not quartz |
+
+**The crystallographic API has no time reversal.** An operation is its matrix (`{ matrix }`), the
+description of an operation has no `timeReversal`, a point group has no `type`, a tensor
+specification has no time parity, and `TENSOR_PROPERTIES` holds the properties of time-even
+tensors (`'pyroelectric'`, `'piezoelectric'`, `'gyrotropic'`). A question that involves time
+reversal is a `RangeError` that names the magnetic API: the key of a magnetic point group, the name
+of a time-odd property (`'ferromagnetic'`), a tensor specification with `timeParity: 'c'`, and an
+operation with `timeReversal: true` in a list of operations. `timeParity: 'i'` and
+`timeReversal: false` are accepted at run time, so that data of the magnetic API without time
+reversal can be passed on from JavaScript and Python; the TypeScript types take a value whose time
+parity may be `'c'` or whose `timeReversal` may be `true` only after it is narrowed.
+
+**The magnetic API** takes all 122 keys; operations carry `timeReversal`, a tensor specification
+its `timeParity`, and `TENSOR_PROPERTIES` holds all six properties. For a crystal without magnetic
+order ask the grey group of its class: `allowedProperties("321'")` gives the properties of quartz,
+`allowedProperties('32')` those of a magnetically ordered crystal with the white group `32`, which
+may be magnetoelectric and piezomagnetic. It has every function of the crystallographic API except
+the Wyckoff positions, which ITA tabulates for the crystal classes.
+
+**The two agree where both can be asked.** A question without time reversal has one answer for a
+crystal class and its white group, which have the same operations: the same settings, symbols,
+matrices in the same order, generators, symmetry elements, site symmetries, and forms of time-even
+tensors. The crystallographic API is computed by the same code and returns the answer of the white
+group with time reversal left out. The grey group of the class has other symbols (`3211'`) and
+twice the operations, but the same settings, the same properties of the operations
+(centrosymmetric, polar, chiral, Laue class), the same multiplicity of a direction, the same forms
+of time-even tensors and so the same time-even properties. `entryPoints.test.ts` checks both for
+all 32 classes.
+
+**Operations passed in.** Where a function takes a list of operations (`tensorFormOf`,
+`allowsPropertyOf`, `allowedPropertiesOf`), the magnetic API asks every operation whether it is
+combined with time reversal: `timeReversal` must be `true` or `false`. Operations of the
+crystallographic API, which do not say, are refused there and not read as a white group; a caller
+who means the white group adds `timeReversal: false`, one who means a crystal without magnetic
+order builds the grey group. `siteSymmetry` does not depend on time reversal and takes either.
 
 ## Cartesian frame
 
@@ -279,7 +330,7 @@ a consumer needs them (decision on #13).
 ## Properties
 
 `isCentrosymmetric`, `isPolar`, `isChiral` and `laueClass` follow from the operations alone; none
-depends on setting or convention. For a magnetic point group, as in birss-app:
+depends on setting or convention. For a magnetic point group (magnetic API), as in birss-app:
 
 - `isCentrosymmetric`: the group contains the inversion without time reversal. `m'm'm'`, which
   contains only the inversion combined with time reversal, is not centrosymmetric in this sense;
@@ -390,7 +441,7 @@ direction) and x (a secondary one), as for the symbols ("Where ITC and Birss dif
 | `order`        | the n of n or n̄; 1 for the identity and the inversion, 2 for a mirror (m = 2̄)                            |
 | `axis`         | rotation or rotoinversion axis, or mirror normal: `lattice` [uvw] and `cartesian` unit vector            |
 | `sense`        | for n ≥ 3: `+` or `-`                                                                                    |
-| `timeReversal` | as in the operation                                                                                      |
+| `timeReversal` | magnetic API: as in the operation                                                                        |
 
 - **Axis.** Every axis and mirror normal of a crystal class lies along one of its symmetry
   directions; the axis is that direction, as [uvw] with the sign of Table 2.1.3.1 (Birss
@@ -404,7 +455,7 @@ direction) and x (a secondary one), as for the symbols ("Where ITC and Birss dif
   axis. For all 40 settings of ITA's tables the printed
   axis of every operation with n ≥ 3 has exactly this sign, so `sense` equals the printed one
   (test below).
-- **Time reversal** is the `timeReversal` of each described operation. The elements along a
+- **Time reversal** (magnetic API) is the `timeReversal` of each described operation. The elements along a
   direction (`symmetryDirections`) count rotations, rotoinversions and mirrors with and without
   time reversal alike; the `symbol` of the position carries the primes (`4'/m`). The full symbol of
   a grey group ends in `1'`, which is no position.
@@ -494,8 +545,9 @@ into a group first), e.g. the site symmetry of a surface normal from `siteSymmet
 `tensorProjection.ts`, `linalg.ts`, revision 2be5fe3).
 
 **Kind of tensor** (`TensorSpec`, as in birss-app): rank 0 to 4; `'polar'` (transforms with R) or
-`'axial'` (with det(R)·R); `'i'` (time-even) or `'c'` (time-odd: changes sign under an operation
-with time reversal); and the symmetry of the tensor under permutation of its own indices,
+`'axial'` (with det(R)·R); in the magnetic API `'i'` (time-even) or `'c'` (time-odd: changes sign
+under an operation with time reversal), while a specification of the crystallographic API has no
+time parity and means a time-even tensor ("Two entry points"); and the symmetry of the tensor under permutation of its own indices,
 independent of the crystal: `'none'`, `'ij'` (first two indices), `'jk'` (last two; the index
 symmetry of SHG and of the piezoelectric tensor), and at rank 4 `'ij_kl'` (both pairs symmetric, the
 pairs not interchangeable: electric-quadrupole SHG, photoelasticity) and `'voigt'` (`'ij_kl'` and the
@@ -529,8 +581,8 @@ setting index gives the same form in both conventions; the convention only picks
 `-6m2`, and so do the components that survive: for `2` the polar vector lies along y in the ITC
 default (unique axis b) and along z in the Birss default.
 
-**Time reversal.** An operation with time reversal changes the sign of a `'c'`-tensor. The 32
-classes have none, so their `'c'`-forms equal their `'i'`-forms. A grey group contains time reversal
+**Time reversal** (magnetic API). An operation with time reversal changes the sign of a `'c'`-tensor.
+The 32 white groups have none, so their `'c'`-forms equal their `'i'`-forms. A grey group contains time reversal
 itself, so all its `'c'`-tensors vanish, and its `'i'`-forms are those of its class. This is Birss's
 reading (pp. 84, 102) and birss-app's: the grey groups are the groups of non-magnetic crystals; the
 32 groups without time reversal (the white groups: "Types") are, like the 58 black-and-white
@@ -567,7 +619,8 @@ tensor relates (`description`) and the print source of the definition (`source`)
 names a group allows, in the order of the table; `allowsPropertyOf(operations, name)` and
 `allowedPropertiesOf(operations)` do the same for any list of operations. None depends on setting
 or convention. `tensorForm(key, 'piezoelectric')` is the form of the tensor the name stands for.
-For a time-odd property a key of type `'I'` is read as the white magnetic group, the symmetry of a
+The crystallographic API has the three time-even names, the magnetic API all six ("Two entry
+points"). In the magnetic API a key of type `'I'` is the white group, the symmetry of a
 magnetically ordered crystal ("Types"): `'432'` is magnetoelectric. **A crystal without magnetic
 order has the grey group of its class** (`"4321'"`; quartz `"321'"`), which allows none of the three time-odd
 properties; for the three time-even ones a class, its grey group and the black-and-white groups of
@@ -647,6 +700,7 @@ ITC symbol, and so are the second trigonal orientations the text of § 1.5.8.1 n
 | ferromagnetic, piezomagnetic, magnetoelectric: the groups and the forms, ITC convention                                     | ITC Vol. D (2013) Table 1.5.2.4 (p. 113), Table 1.5.7.1 (p. 135, conventions p. 134), Table 1.5.8.1 (p. 139, text p. 140): `references/itc/vol-d-table-1.5.*.md`                                                                                                                                          | `tensors/itcMagnetic.reference.test.ts`                                                                 |
 | orthorhombic settings: one for every orientation of the axes; the six orientations of `2'm'm`                               | counted by hand; Paufler (1986) Table A 6, rows 12–20 (p. 316): `references/paufler/table-a6-orthorhombic.md`; the symbols of `2'm'm` in Birss Table 6, ITC Vol. D Tables 1.5.2.3, 1.5.2.4, 1.5.7.1, 1.5.8.1 and Paufler                                                                                  | `pointGroups/magnetic.reference.test.ts`, `tensors/itcMagnetic.reference.test.ts`                       |
 | the three types of magnetic point groups; which describes a non-magnetic crystal                                            | Birss (1966) pp. 84, 102; Litvin, _Acta Cryst._ A**64**, 419 (2008), p. 419; Paufler, _Physikalische Kristallographie_ (Akademie-Verlag, Berlin, 1986), pp. 60–62                                                                                                                                         | `tensors/birssMagnetic.reference.test.ts` (classes: c-forms equal i-forms; grey groups: c-forms vanish) |
+| the two entry points: a time-even question has one answer for a class, its white group and its grey group                   | none needed: the same operations (Birss pp. 84, 102, as the row above); checked by comparing the two entry points                                                                                                                                                                                         | `entryPoints.test.ts`                                                                                   |
 | named tensor properties: the kind of tensor behind each name                                                                | ITC Vol. D (2013) §§ 1.1.4.4.2, 1.1.4.4.3 (p. 12), 1.1.4.10.7.2 (p. 30), 1.5.2.1 (p. 113), 1.5.7.1 (p. 134), 1.5.8.1 (pp. 139–140); the `source` of each entry of `TENSOR_PROPERTIES`                                                                                                                     | `tensors/tensorProperties.test.ts`                                                                      |
 | Birss: free parameters of the tensor forms                                                                                  | none: birss-app 2be5fe3, behavioural pins (class (c)) captured by `audit/birss-app`: time-even forms of the 32 classes, time-odd forms of the 58 black-and-white groups                                                                                                                                   | `tensors/birssApp.pins.test.ts`                                                                         |
 

@@ -56,8 +56,9 @@ export interface OperationDescription {
 /** The symmetry elements along one symmetry direction. */
 export interface DirectionElements extends Axis {
   /**
-   * Highest n of a rotation n about this direction; 1 if there is none. Rotations, rotoinversions
-   * and mirrors count with and without time reversal; `describeOperations` tells them apart.
+   * Highest n of a rotation n about this direction; 1 if there is none. In a magnetic group
+   * rotations, rotoinversions and mirrors count with and without time reversal;
+   * `describeOperations` tells them apart.
    */
   readonly rotation: number;
   /** Highest n of a rotoinversion n̄ (n = 3, 4, 6) about this direction; 0 if there is none. */

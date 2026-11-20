@@ -35,6 +35,14 @@ symcrys.
 Birss, _Symmetry and Magnetism_ (1966), is available as an option. Where the two differ is
 documented in [`docs/conventions.md`](docs/conventions.md).
 
+**Two entry points.** `symcrys` is the crystallographic API: the 32 crystal classes, without time
+reversal. `symcrys/magnetic` is the magnetic API: the 122 magnetic point groups, under the same
+function names. The import decides how a key is read. In a purely crystallographic application
+`'32'` is a crystal class, that of quartz. Where magnetism plays a part, `'32'` is a white group,
+the symmetry of a magnetically ordered crystal, and quartz has the grey group `"321'"`. A question
+that involves time reversal is an error in the crystallographic API
+([`docs/conventions.md`](docs/conventions.md), "Two entry points").
+
 symcrys is the computational core of the crystallography teaching apps
 ([stereography](https://github.com/manganite/stereography),
 [plane-groups](https://github.com/manganite/plane-groups)) and of
@@ -74,18 +82,32 @@ symmetryDirections('4mm')[1]; // position 2: symbol 'm', directions [100] and [0
 wyckoffPositions('4mm')[2]; // { letter: 'b', multiplicity: 4, siteSymmetry: '..m', millerIndices: 'h,h,l', … }
 wyckoffPositionOf('4mm', [0, 0, -1]).letter; // 'a'
 
-const SHG = { rank: 3, parity: 'polar', timeParity: 'i', intrinsic: 'jk' } as const;
+const SHG = { rank: 3, parity: 'polar', intrinsic: 'jk' } as const;
 tensorForm('mm2', SHG).parameters; // [[0,0,2], [1,1,2], [2,0,0], [2,1,1], [2,2,2]]: xxz, yyz, zxx, zyy, zzz
 tensorForm('3m', SHG, { convention: 'birss' }).parameters[0]; // [0, 0, 0]: xxx (ITC default 3m1: xxy)
 tensorForm('32', 'piezoelectric').parameters; // [[0,0,0], [0,1,2]]: a property by name, d_111 and d_123
 allowsProperty('432', 'piezoelectric'); // false
-allowedProperties("m'm'2"); // all six: pyroelectric, piezoelectric, gyrotropic, ferromagnetic, magnetoelectric, piezomagnetic
+allowedProperties('32'); // ['piezoelectric', 'gyrotropic']: quartz
 // SHG at the (111) surface of an m-3m crystal: the form under the site symmetry of the normal
 const ops = operations('m-3m');
 tensorFormOf(
   siteSymmetry(ops, [1, 1, 1]).operations.map((i) => ops[i]),
   SHG,
 ).basis.length; // 4
+```
+
+The magnetic point groups, with time reversal:
+
+```ts
+import { allowedProperties, operations, pointGroup, tensorForm } from 'symcrys/magnetic';
+
+pointGroup("4'/mmm'"); // { key: "4'/mmm'", type: 'III', crystalSystem: 'tetragonal', order: 16 }
+operations("4'/mmm'")[2]; // { matrix: …, timeReversal: true }
+allowedProperties("m'm'2"); // all six: pyroelectric, piezoelectric, gyrotropic, ferromagnetic, magnetoelectric, piezomagnetic
+allowedProperties("321'"); // ['piezoelectric', 'gyrotropic']: quartz, the grey group of class 32
+allowedProperties('32'); // the white group 32: also 'magnetoelectric', 'piezomagnetic'
+tensorForm("m'm'2", 'ferromagnetic').parameters; // [[2]]: M_s along z
+tensorForm('mm2', { rank: 3, parity: 'polar', timeParity: 'i', intrinsic: 'jk' }); // a specification names its time parity
 ```
 
 A form gives the components by flat index (first index slowest: xyz of rank 3 is 5), the basis in
@@ -101,13 +123,14 @@ notebook [`packages/python/examples/surface-shg.ipynb`](packages/python/examples
 ```python
 import symcrys
 
-SHG = {"rank": 3, "parity": "polar", "time_parity": "i", "intrinsic": "jk"}
+SHG = {"rank": 3, "parity": "polar", "intrinsic": "jk"}
 symcrys.tensor_form("mm2", SHG)["parameters"]   # array([[0, 0, 2], [1, 1, 2], [2, 0, 0], [2, 1, 1], [2, 2, 2]])
+symcrys.magnetic.allowed_properties("321'")     # ['piezoelectric', 'gyrotropic']: the magnetic API
 ```
 
 Without a build step, copy `dist/` (from the tarball, or built with `npm run build` into
-`packages/ts/dist/`) next to your code and import `dist/index.js` directly: every module in `dist/`
-imports only relative `.js` paths. With crystallography-common's `sync.mjs --kern`, a checkout is
+`packages/ts/dist/`) next to your code and import `dist/index.js` (the magnetic API:
+`dist/magnetic.js`) directly: every module in `dist/` imports only relative `.js` paths. With crystallography-common's `sync.mjs --kern`, a checkout is
 given as `packages/ts` of the symcrys checkout.
 
 ## Development

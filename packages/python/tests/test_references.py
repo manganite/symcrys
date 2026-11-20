@@ -10,13 +10,14 @@ import numpy as np
 import pytest
 
 import symcrys
+from symcrys import magnetic
 from conftest import reference, section, table_rows
 
-SHG = {"rank": 3, "parity": "polar", "time_parity": "i", "intrinsic": "jk"}
+SHG = {"rank": 3, "parity": "polar", "intrinsic": "jk"}
 
 
 def spec(rank: int, parity: str = "polar", intrinsic: str = "none") -> dict[str, object]:
-    return {"rank": rank, "parity": parity, "time_parity": "i", "intrinsic": intrinsic}
+    return {"rank": rank, "parity": parity, "intrinsic": intrinsic}
 
 
 def count(cell: str) -> int:
@@ -124,7 +125,7 @@ def test_itc_vol_d_1523_as_read() -> None:
     assert ROWS_1523[0] == ["System", "Schoenflies", "Shubnikov", "Short", "Full", "Symmetry operators"]
     keys = [r[3] for r in ROWS_1523[1:]]
     assert len(keys) == 90
-    groups = {g["key"]: g for g in symcrys.magnetic_point_groups()}
+    groups = {g["key"]: g for g in magnetic.point_groups()}
     assert [k for k in keys if groups[k]["type"] == "I"] == list(symcrys.POINT_GROUP_KEYS)
     assert [k for k in keys if groups[k]["type"] == "III"] == [k for k, g in groups.items() if g["type"] == "III"]
     assert len([g for g in groups.values() if g["type"] == "II"]) == 32
@@ -133,12 +134,12 @@ def test_itc_vol_d_1523_as_read() -> None:
 @pytest.mark.parametrize("row", ROWS_1523[1:], ids=[r[3] for r in ROWS_1523[1:]])
 def test_itc_vol_d_1523_symbols_and_order(row: list[str]) -> None:
     system, schoenflies, _, key, full, operators = row
-    group = symcrys.point_group(key)
+    group = magnetic.point_group(key)
     assert group["crystal_system"] == system.lower()
     assert group["order"] == printed_count(operators)
-    assert symcrys.symbol(key, form="full") == full
-    assert symcrys.symbol(key, form="schoenflies") == schoenflies.replace("S6", "C3i")
-    ops = symcrys.operations(key)
+    assert magnetic.symbol(key, form="full") == full
+    assert magnetic.symbol(key, form="schoenflies") == schoenflies.replace("S6", "C3i")
+    ops = magnetic.operations(key)
     primed = sum(1 for o in ops if o["time_reversal"])
     assert primed == (len(ops) // 2 if "(" in schoenflies else 0)
 
@@ -183,7 +184,7 @@ FORM_TABLES = [
     ("itc/vol-d-table-1.5.7.1.md", "piezomagnetic", 66, (3, 3, 3)),
     ("itc/vol-d-table-1.5.8.1.md", "magnetoelectric", 58, (3, 3)),
 ]
-NOT_GREY = [g["key"] for g in symcrys.magnetic_point_groups() if g["type"] != "II"]
+NOT_GREY = [g["key"] for g in magnetic.point_groups() if g["type"] != "II"]
 
 
 @pytest.mark.parametrize(("file", "name", "count", "shape"), FORM_TABLES, ids=[t[1] for t in FORM_TABLES])
@@ -194,14 +195,14 @@ def test_itc_vol_d_magnetic_forms(file: str, name: str, count: int, shape: tuple
     keys = []
     for block, _, cell in groups:
         printed = printed_space(matrices[block], shape)
-        found = [symcrys.find_magnetic_point_group(s) for s in orientations(cell)]
+        found = [magnetic.find_point_group(s) for s in orientations(cell)]
         assert any(found), cell
         for where in filter(None, found):
-            form = symcrys.tensor_form(where["key"], name, setting=where["setting"])
+            form = magnetic.tensor_form(where["key"], name, setting=where["setting"])
             assert same_space(form["basis"], printed), cell
         keys.append(next(filter(None, found))["key"])
     assert len(keys) == count
-    assert sorted(keys) == sorted(k for k in NOT_GREY if symcrys.allows_property(k, name))
+    assert sorted(keys) == sorted(k for k in NOT_GREY if magnetic.allows_property(k, name))
 
 
 def test_itc_vol_d_1524_ferromagnetic_groups() -> None:
@@ -209,11 +210,11 @@ def test_itc_vol_d_1524_ferromagnetic_groups() -> None:
     dimension = {"Any": 3, "∥ m'": 2, "⊥ 2'": 2}
     keys = []
     for _, _, hm, direction in rows:
-        where = symcrys.find_magnetic_point_group(hm)
+        where = magnetic.find_point_group(hm)
         assert where, hm
-        form = symcrys.tensor_form(where["key"], "ferromagnetic", setting=where["setting"])
+        form = magnetic.tensor_form(where["key"], "ferromagnetic", setting=where["setting"])
         assert len(form["basis"]) == dimension.get(direction, 1), hm
         keys.append(where["key"])
     assert len(keys) == 31
-    assert sorted(keys) == sorted(k for k in symcrys.MAGNETIC_POINT_GROUP_KEYS if symcrys.allows_property(k, "ferromagnetic"))
+    assert sorted(keys) == sorted(k for k in magnetic.POINT_GROUP_KEYS if magnetic.allows_property(k, "ferromagnetic"))
 

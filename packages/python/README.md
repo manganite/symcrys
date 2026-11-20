@@ -20,7 +20,7 @@ pip install symcrys
 import numpy as np
 import symcrys
 
-SHG = {"rank": 3, "parity": "polar", "time_parity": "i", "intrinsic": "jk"}
+SHG = {"rank": 3, "parity": "polar", "intrinsic": "jk"}
 
 symcrys.tensor_form("m-3m", SHG)["basis"].shape   # (0, 27): no SHG from the bulk
 
@@ -38,8 +38,30 @@ chi = basis.reshape(-1, 3, 3, 3)                  # chi[k] is the k-th basis ten
 ```
 
 A property has a name where its tensor has one (`symcrys.TENSOR_PROPERTIES`):
-`symcrys.allows_property("432", "piezoelectric")` is `False`, `symcrys.allowed_properties("m'm'2")`
-lists all six names, and `symcrys.tensor_form("32", "piezoelectric")` is the form of that tensor.
+`symcrys.allows_property("432", "piezoelectric")` is `False`, `symcrys.allowed_properties("32")` is
+`["piezoelectric", "gyrotropic"]`, and `symcrys.tensor_form("32", "piezoelectric")` is the form of
+that tensor.
+
+## Crystal classes and magnetic point groups
+
+`symcrys` is the crystallographic API: the 32 crystal classes, without time reversal.
+`symcrys.magnetic` is the magnetic API: the 122 magnetic point groups, under the same function
+names, with `time_reversal` in an operation and `time_parity` in a tensor specification. The module
+decides how a key is read: in `symcrys`, `"32"` is a crystal class, that of quartz; in
+`symcrys.magnetic` it is a white group, the symmetry of a magnetically ordered crystal, and quartz
+has the grey group `"321'"`.
+
+```python
+from symcrys import magnetic
+
+magnetic.allowed_properties("321'")    # ['piezoelectric', 'gyrotropic']: quartz
+magnetic.allowed_properties("32")      # the white group: also 'magnetoelectric', 'piezomagnetic'
+magnetic.allowed_properties("m'm'2")   # all six names of magnetic.TENSOR_PROPERTIES
+magnetic.tensor_form("m'm'2", "ferromagnetic")["parameters"]   # [[2]]: M_s along z
+```
+
+A question that involves time reversal (a magnetic key, a time-odd tensor or property, an operation
+with time reversal) raises `SymcrysError` in `symcrys`.
 
 A tensor form has `basis` (rows of length 3**rank in reduced row echelon form, components in C
 order, so `reshape((3,)*rank)` gives the tensor), `parameters` (the free components as index
