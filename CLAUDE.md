@@ -526,8 +526,11 @@ The conventions are in `docs/conventions.md` ("Tensors"); here, what was decided
   on Birss's tables, the settings or the three types of groups is usually decided and reasoned
   there. Before asking Thomas or deciding anew, read birss-app's `STATUS.md` (standing decisions),
   `docs/references/` (conventions, Birss/ITC divergences), `docs/findings/` (book errors, bracket
-  semantics) and the notes in its copy of the tables, `birss-tables/`, which is ahead of the
-  repository manganite/birss-tables. What symcrys finds beyond that goes to #19.
+  semantics) and the notes in its copy of the tables, `birss-tables/`. The repository
+  manganite/birss-tables holds the same tables (synchronized in manganite/birss-tables#4); only in
+  birss-app are `table-nomenclature.md` and the scripts in `birss-tables/tools/` that generate it
+  (with a transcription of ITC Vol. D Table 1.5.2.3 in `generate_nomenclature.py`) and birss-app's
+  data. What symcrys finds beyond that goes to #19.
 - **Speed** (#30, measured 2026-11-19): birss-app's reduction, bundled, takes under QuickJS
   (`quickjs-ng`) 3–112 ms per class for the SHG tensor and up to about 0.3 s at rank 4 (m-3m), 10–35
   times Node; enough for a Python layer that calls symcrys a few times per material. Forms per
