@@ -564,19 +564,93 @@ describe('the 122 magnetic point groups', () => {
     for (const key of MAGNETIC_POINT_GROUP_KEYS) {
       const isClass = pointGroup(key).type === 'I';
       for (const convention of ['itc', 'birss'] as const) {
-        const def = settings(key, convention).find((s) => s.isDefault)!.index;
-        expect(findMagneticPointGroup(key, convention)).toEqual({ key, setting: def });
-        expect(findPointGroup(key, convention)).toEqual(isClass ? { key, setting: def } : undefined);
-        for (const s of settings(key, convention)) {
-          // A symbol names one group; a key wins over the symbol of a setting.
-          const found = findMagneticPointGroup(s.symbol, convention);
-          expect(found?.key === key || found?.key === s.symbol, `${convention} ${s.symbol}`).toBe(true);
-        }
+        const found = findMagneticPointGroup(key, convention);
+        expect(found?.key, `${convention} ${key}`).toBe(key);
+        expect(findPointGroup(key, convention)).toEqual(isClass ? found : undefined);
       }
     }
-    expect(findMagneticPointGroup("m'm'm", 'birss')).toEqual({ key: "mm'm'", setting: 1 });
-    expect(findMagneticPointGroup("6'/mm'm", 'birss')).toEqual({ key: "6'/mmm'", setting: 1 });
     expect(findMagneticPointGroup('nonsense')).toBeUndefined();
+  });
+
+  it('a printed symbol finds its group in the default setting of the convention it is printed in', () => {
+    // Birss Table 6 in the Birss convention (the 90 groups without the grey ones) …
+    for (const r of birssRows.slice(1)) {
+      const printed = r[1];
+      const key = magneticKey(KEY_OF_PRINTED[printed] ?? printed, 'Birss Table 6');
+      const written = BIRSS_SYMBOL_OF_PRINTED[printed] ?? printed;
+      expect(findMagneticPointGroup(written, 'birss'), `Birss ${printed}`).toEqual({ key, setting: 1 });
+    }
+    // … and ITC Vol. D Table 1.5.2.3 in the ITC convention, short and full symbol.
+    for (const r of itcRows.slice(1)) {
+      const key = magneticKey(r[3], 'ITC Vol. D Table 1.5.2.3');
+      const def = settings(key, 'itc').find((s) => s.isDefault)!.index;
+      expect(findMagneticPointGroup(r[3], 'itc'), `ITC ${r[3]}`).toEqual({ key, setting: def });
+      expect(findMagneticPointGroup(r[4], 'itc'), `ITC ${r[4]}`).toEqual({ key, setting: def });
+    }
+  });
+
+  it('a symbol finds the setting it names; a symbol that several settings share, the default', () => {
+    for (const key of MAGNETIC_POINT_GROUP_KEYS) {
+      for (const convention of ['itc', 'birss'] as const) {
+        const all = settings(key, convention);
+        const def = all.find((s) => s.isDefault)!.index;
+        for (const s of all) {
+          const what = `${convention} ${key} setting ${s.index}`;
+          const shared = all.filter((t) => t.symbol === s.symbol).length > 1;
+          expect(findMagneticPointGroup(s.symbol, convention), `${what}: ${s.symbol}`).toEqual({
+            key,
+            setting: shared ? def : s.index,
+          });
+          expect(findMagneticPointGroup(s.fullSymbol, convention), `${what}: ${s.fullSymbol}`).toEqual({
+            key,
+            setting: s.index,
+          });
+        }
+        // The key gives the default setting, unless it is the symbol of exactly one other setting.
+        const named = all.filter((s) => s.symbol === key);
+        expect(findMagneticPointGroup(key, convention), `${convention} ${key}`).toEqual({
+          key,
+          setting: named.length === 1 ? named[0].index : def,
+        });
+      }
+    }
+    // Only the monoclinic groups share a short symbol between settings (unique axis b and c).
+    for (const convention of ['itc', 'birss'] as const) {
+      const sharing = MAGNETIC_POINT_GROUP_KEYS.filter((key) => {
+        const symbols = settings(key, convention).map((s) => s.symbol);
+        return new Set(symbols).size < symbols.length;
+      });
+      expect(sharing.map((key) => pointGroup(key).crystalSystem)).toEqual(sharing.map(() => 'monoclinic'));
+      expect(sharing).toHaveLength(11);
+    }
+  });
+
+  it('Birss convention: the two keys that are the Birss symbol of the second setting find that setting', () => {
+    // The key is the ITC short symbol (docs/conventions.md, "Keys"); Birss prints m′m′m and 6′/mm′m
+    // for these groups, the symbols of setting 1, and the key reads there as the symbol of setting 2.
+    for (const [key, birss] of [
+      ["mm'm'", "m'm'm"],
+      ["6'/mmm'", "6'/mm'm"],
+    ] as const) {
+      expect(symbol(key, { convention: 'birss', setting: 1 })).toBe(birss);
+      expect(symbol(key, { convention: 'birss', setting: 2 })).toBe(key);
+      expect(findMagneticPointGroup(birss, 'birss')).toEqual({ key, setting: 1 });
+      expect(findMagneticPointGroup(key, 'birss')).toEqual({ key, setting: 2 });
+      // In the ITC convention the key is the symbol of the default setting.
+      const itcDefault = settings(key, 'itc').find((s) => s.isDefault)!.index;
+      expect(findMagneticPointGroup(key, 'itc')).toEqual({ key, setting: itcDefault });
+      expect(symbol(key, { convention: 'itc', setting: itcDefault })).toBe(key);
+      // The Birss default is setting 1, which the key does not give there.
+      expect(settings(key, 'birss').find((s) => s.isDefault)!.index).toBe(1);
+    }
+    // For every other key the default setting, in both conventions.
+    for (const key of MAGNETIC_POINT_GROUP_KEYS) {
+      if (key === "mm'm'" || key === "6'/mmm'") continue;
+      for (const convention of ['itc', 'birss'] as const) {
+        const def = settings(key, convention).find((s) => s.isDefault)!.index;
+        expect(findMagneticPointGroup(key, convention), `${convention} ${key}`).toEqual({ key, setting: def });
+      }
+    }
   });
 });
 

@@ -379,6 +379,16 @@ The conventions themselves are in `docs/conventions.md`; here, what was decided 
   one set of functions taking all 122 keys with a list of magnetic keys beside the classes. A new
   function is added to the shared modules and exported by both entry points, with its wrapper in
   `crystalClasses.ts` if a key, an operation or a tensor passes through it.
+- **A search reads its argument as a symbol** (maintainer, 2026-11-20, #46): `findPointGroup`
+  gives the setting a symbol names, also where the string is a key, so that
+  `findPointGroup(symbol(key, { convention, setting }), convention)` returns the setting. It
+  matters for two keys in the Birss convention (`mm'm'`, `6'/mmm'`: the Birss symbols of setting
+  2). Thomas on the alternative, a key always giving the default setting, which would have left
+  these two symbols unfindable as symbols: it makes no sense, and in the end birss-app has to give
+  the same as it does now, as far as that is mathematically correct; only real errors are fixed.
+  birss-app names setting 2 of the two groups by exactly these symbols (2be5fe3:
+  `conventionMapping.ts`, `symmetryGroups.ts`; in symcrys the pins of the setting symbols).
+  Everywhere else a key is the key and means the default setting.
 - **Magnetic point groups: order and generators in the ITC convention** (maintainer, 2026-11-19,
   #13; asked before implementation): ITC Vol. D prints neither (Table 1.5.2.3 groups the operators),
   so an operation of a black-and-white group keeps the number ITA gives it in the crystal class,

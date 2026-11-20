@@ -52,6 +52,14 @@ black-and-white groups in the order of ITC Vol. D Table 1.5.2.3.
   | D2h(C2h) | `mm'm'`   | `m'm'm`                       | the two books put the twofold axis without time reversal along different axes: x in ITC, z in Birss          |
   | D6h(D3h) | `6'/mmm'` | `6'/mm'm`                     | the same frame in both books; the strings differ because position 2 is read along x in ITC, along y in Birss |
 
+  In the Birss convention each of these two keys is, as a string, the Birss symbol of setting 2 of
+  its group (the Birss symbol of the default setting 1 is the one in the third column). A key
+  passed to `operations`, `symbol` and the other functions is always the key and gives the default
+  setting; `findPointGroup` of the magnetic API, which reads its argument as a symbol, gives the
+  setting the symbol names, so `findPointGroup("mm'm'", 'birss')` is setting 2 and
+  `findPointGroup("m'm'm", 'birss')` setting 1. For every other key, and for all keys in the ITC convention, `findPointGroup(key)` is
+  the default setting.
+
 - **Grey groups:** the key of the crystal class followed by `1'`: `2221'`, `m-3m1'`, and `321'`,
   `3m1'`, `-3m1'` for the classes `32`, `3m`, `-3m`. ITC Vol. D writes the grey groups this way
   (Table 1.5.2.1: `4221'`); so does birss-app.

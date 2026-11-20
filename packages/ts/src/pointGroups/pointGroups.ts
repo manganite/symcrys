@@ -495,12 +495,20 @@ function find(
   if (typeof hm !== 'string') return undefined;
   const target = compact(hm);
   const candidates = [...BY_KEY.values()].filter((d) => !classesOnly || d.type === 'I');
+  /** The settings of `d` whose symbol of this form is the target. */
+  const named = (d: GroupData, form: 'short' | 'full'): number[] =>
+    d.settings.map((_, j) => j + 1).filter((i) => compact(settingSymbols(d, i, c)[form]) === target);
+  /** One setting named: that one. Several (a monoclinic short symbol) or none (a key): the default. */
+  const pick = (d: GroupData, settingsNamed: number[]): PointGroupInSetting<MagneticPointGroupKey> => ({
+    key: d.key,
+    setting: settingsNamed.length === 1 ? settingsNamed[0]! : defaultSetting(d, c),
+  });
   const byKey = candidates.find((d) => d.key === target);
-  if (byKey) return { key: byKey.key, setting: defaultSetting(byKey, c) };
+  if (byKey) return pick(byKey, named(byKey, 'short'));
   for (const form of ['short', 'full'] as const) {
     for (const d of candidates) {
-      const i = d.settings.findIndex((_, j) => compact(settingSymbols(d, j + 1, c)[form]) === target);
-      if (i >= 0) return { key: d.key, setting: i + 1 };
+      const settingsNamed = named(d, form);
+      if (settingsNamed.length > 0) return pick(d, settingsNamed);
     }
   }
   return undefined;
@@ -508,8 +516,10 @@ function find(
 
 /**
  * Finds a crystal class by a Hermann–Mauguin symbol in the given convention (default `'itc'`): the
- * key (giving the default setting), the short symbol of a setting, or a full symbol (spaces are
- * ignored). Returns undefined if nothing matches, also for a value that is not a string and for the
+ * short symbol of a setting, a full symbol, or the key (spaces are ignored). A symbol that names
+ * one setting gives that setting; the key, and a short symbol that several settings share (the
+ * monoclinic ones: `2` for unique axis b and c), give the default setting of the convention.
+ * Returns undefined if nothing matches, also for a value that is not a string and for the
  * symbol of a magnetic group with time reversal (`findMagneticPointGroup`). Symbols are written as
  * in this library: `-` for the overbar, also in the Birss convention (`m-3m`, where Birss prints
  * `m3m`; docs/conventions.md, "Where ITC and Birss differ").
@@ -519,8 +529,17 @@ export function findPointGroup(hm: string, conventionName: Convention = 'itc'): 
 }
 
 /**
- * Finds one of the 122 magnetic point groups (the 32 crystal classes included) by a symbol, as
- * `findPointGroup` does for the classes. A prime `'` marks time reversal: `4'/mmm'`, `2221'`.
+ * Finds one of the 122 magnetic point groups (the 32 crystal classes included) by a symbol in the
+ * given convention (default `'itc'`): the short symbol of a setting, a full symbol, or the key
+ * (spaces are ignored). A prime `'` marks time reversal: `4'/mmm'`, `2221'`. A symbol that names
+ * one setting gives that setting; the key, and a short symbol that several settings share (the
+ * monoclinic ones: `2'` for unique axis b and c), give the default setting of the convention. In
+ * the Birss convention two keys are the Birss symbol of a setting that is not the default
+ * (`mm'm'` and `6'/mmm'`, setting 2; Birss prints `m'm'm` and `6'/mm'm` for these groups) and give
+ * that setting, like any symbol. Returns undefined if nothing matches, also for a value that is
+ * not a string. Symbols are written as in this library: `-` for the overbar, also in the Birss
+ * convention (`m'-3'm`, where Birss prints `m'3m`; docs/conventions.md, "Where ITC and Birss
+ * differ").
  */
 export function findMagneticPointGroup(
   hm: string,
