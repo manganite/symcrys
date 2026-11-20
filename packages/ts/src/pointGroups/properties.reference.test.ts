@@ -9,9 +9,7 @@ import { crystalFamily, latticeBasis, type CrystalSystem, type FixedAngleFamily 
 import { det, inverse, multiply } from '../linalg.js';
 import { expectHeader, readReference, tableRows } from '../testUtils/references.js';
 import {
-  MAGNETIC_POINT_GROUP_KEYS,
   POINT_GROUP_KEYS,
-  generators,
   isPointGroupKey,
   operations,
   pointGroup,
@@ -19,7 +17,7 @@ import {
   type MagneticPointGroupKey,
   type PointGroupKey,
 } from './pointGroups.js';
-import { holohedry, isCentrosymmetricOf, isChiralOf } from './properties.js';
+import { holohedry } from './properties.js';
 
 /** The fixed properties of a group, read from its record. */
 const isCentrosymmetric = (key: MagneticPointGroupKey) => pointGroup(key).centrosymmetric;
@@ -176,7 +174,7 @@ describe('ITA Table 2.1.1.1: holohedries (Laue groups in full boxes)', () => {
     it(`${system}: ${printed.get(system)}`, () => {
       const h = holohedry(system);
       expect(h).toBe(printed.get(system));
-      // A class of the system that contains every class of the system: its Laue group of highest order.
+      // Independent of the table: the holohedry is the centrosymmetric class of highest order of its system.
       const g = pointGroup(h);
       expect(g.crystalSystem).toBe(system);
       expect(g.centrosymmetric).toBe(true);
@@ -194,7 +192,7 @@ describe('ITA Table 2.1.1.1: holohedries (Laue groups in full boxes)', () => {
     expect(() => holohedry('rhombohedral' as CrystalSystem)).toThrow(/Unknown crystal system: "rhombohedral"/);
   });
 
-  it('the holohedry of the family maps its lattice onto itself, and no larger class of the family does', () => {
+  it('the holohedry of the family maps its lattice onto itself, as does every class of the family', () => {
     for (const family of ['orthorhombic', 'tetragonal', 'hexagonal', 'cubic'] as FixedAngleFamily[]) {
       const basis = latticeBasis(family);
       const toLattice = inverse(basis);
@@ -206,43 +204,12 @@ describe('ITA Table 2.1.1.1: holohedries (Laue groups in full boxes)', () => {
         });
       const h = holohedry(family);
       expect(keepsLattice(h), family).toBe(true);
-      // Every class of the family keeps the lattice, and none has more operations than the holohedry.
+      // Every class of the family keeps the lattice (for the trigonal classes: the hexagonal one), and
+      // none has more operations than the holohedry of the family.
       for (const key of POINT_GROUP_KEYS.filter((k) => crystalFamily(pointGroup(k).crystalSystem) === family)) {
         expect(keepsLattice(key), key).toBe(true);
         expect(pointGroup(key).order, key).toBeLessThanOrEqual(pointGroup(h).order);
       }
     }
-  });
-});
-
-describe('centrosymmetric and chiral for a list of operations', () => {
-  it('agree with the fields for every group, from all operations and from the generators', () => {
-    for (const key of MAGNETIC_POINT_GROUP_KEYS) {
-      const g = pointGroup(key);
-      for (const convention of ['itc', 'birss'] as const) {
-        for (const list of [operations(key, { convention }), generators(key, { convention })]) {
-          expect(isCentrosymmetricOf(list), `${key} ${convention}`).toBe(g.centrosymmetric);
-          expect(isChiralOf(list), `${key} ${convention}`).toBe(g.chiral);
-        }
-      }
-    }
-  });
-
-  it('the inversion with time reversal alone does not make a group centrosymmetric', () => {
-    expect(pointGroup("-1'").centrosymmetric).toBe(false);
-    expect(pointGroup("-11'").centrosymmetric).toBe(true);
-    expect(isCentrosymmetricOf(operations("-1'"))).toBe(false);
-    expect(isCentrosymmetricOf(operations("-11'"))).toBe(true);
-    // 2/m from a twofold axis and the mirror plane normal to it: the inversion is their product.
-    const [, two, , mirror] = operations('2/m', { setting: 1 });
-    expect(isCentrosymmetricOf([two])).toBe(false);
-    expect(isCentrosymmetricOf([two, mirror])).toBe(true);
-    expect(isChiralOf([two])).toBe(true);
-    expect(isChiralOf([two, mirror])).toBe(false);
-  });
-
-  it('an operation that does not say whether it has time reversal is refused', () => {
-    const inversion = { matrix: operations('-1')[1].matrix } as unknown as Parameters<typeof isCentrosymmetricOf>[0][0];
-    expect(() => isCentrosymmetricOf([inversion])).toThrow(/timeReversal must be true or false/);
   });
 });

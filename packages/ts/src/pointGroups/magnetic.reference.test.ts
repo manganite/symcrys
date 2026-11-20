@@ -492,6 +492,7 @@ describe('the 122 magnetic point groups', () => {
       const key = MAGNETIC_POINT_GROUP_KEYS[32 + i];
       expect(key).toBe(`${classKey}1'`);
       expect(crystalClassOf(key)).toBe(classKey);
+      expect(pointGroup(key).crystalClass).toBe(classKey);
       expect(pointGroup(key).crystalSystem).toBe(pointGroup(classKey).crystalSystem);
       for (const convention of ['itc', 'birss'] as const) {
         const classSettings = settings(classKey, convention);

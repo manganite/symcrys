@@ -11,7 +11,7 @@
  */
 
 import { det, type Mat3 } from '../linalg.js';
-import { checkTimeReversal, closeGroup, type Operation } from '../operations.js';
+import { checkOrthogonal, checkTimeReversal, closeGroup, type Operation } from '../operations.js';
 import { operations, settings, type MagneticPointGroupKey, type SettingOptions } from '../pointGroups/pointGroups.js';
 import { specOf, type TensorPropertyName } from './propertyTable.js';
 import { EPSILON, SNAP_EPSILON } from '../tolerances.js';
@@ -99,18 +99,6 @@ function checkSpec(spec: TensorSpec): number[][] {
       return intrinsic === 'ij_kl' ? [swap(0, 1), swap(2, 3)] : [swap(0, 1), swap(2, 3), [2, 3, 0, 1]];
     default:
       throw new RangeError(`Unknown intrinsic symmetry: ${JSON.stringify(intrinsic)}`);
-  }
-}
-
-/** Throws unless `m` is orthogonal (mᵀm = 1 within `EPSILON`): the code assumes Cartesian matrices. */
-function checkOrthogonal(m: Mat3, what: string): void {
-  for (let i = 0; i < 3; i++) {
-    for (let j = 0; j < 3; j++) {
-      const dot = m[0][i] * m[0][j] + m[1][i] * m[1][j] + m[2][i] * m[2][j];
-      if (Math.abs(dot - (i === j ? 1 : 0)) > EPSILON) {
-        throw new RangeError(`${what} is not an orthogonal (Cartesian) matrix: ${JSON.stringify(m)}`);
-      }
-    }
   }
 }
 

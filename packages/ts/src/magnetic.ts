@@ -22,11 +22,17 @@ export {
 } from './lattice.js';
 
 import type {
+  PointGroupKey as ClassKey,
   MagneticPointGroupKey,
   PointGroup as PointGroupOf,
   PointGroupInSetting as PointGroupInSettingOf,
 } from './pointGroups/pointGroups.js';
 
+/**
+ * The key of a crystal class, one of the 32: the type of `crystalClass` and `laueClass` of a point
+ * group and of `holohedry()`. In the crystallographic API this is `PointGroupKey`.
+ */
+export type CrystalClassKey = ClassKey;
 /** The key of a magnetic point group: a crystal class (white group), a grey or a black-and-white group. */
 export type PointGroupKey = MagneticPointGroupKey;
 export type PointGroup<K extends PointGroupKey = PointGroupKey> = PointGroupOf<K>;

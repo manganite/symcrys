@@ -61,6 +61,11 @@ def test_the_magnetic_api_asks_every_operation_for_its_time_reversal() -> None:
             magnetic.allowed_properties_of(ops)
         with pytest.raises(symcrys.SymcrysError, match="timeReversal must be true or false"):
             magnetic.tensor_form_of(ops, "pyroelectric")
+        for call in (magnetic.is_centrosymmetric_of, magnetic.is_chiral_of):
+            with pytest.raises(symcrys.SymcrysError, match="timeReversal must be true or false, not undefined"):
+                call(ops)
+    with pytest.raises(symcrys.SymcrysError, match="not an orthogonal"):
+        symcrys.is_chiral_of([{"matrix": np.diag([2.0, 1.0, 1.0])}])
     with pytest.raises(symcrys.SymcrysError, match="timeReversal must be true or false, not 1"):
         magnetic.tensor_form_of([{"matrix": np.eye(3), "time_reversal": 1}], "ferromagnetic")
     inversion = [{"matrix": -np.eye(3), "time_reversal": False}]

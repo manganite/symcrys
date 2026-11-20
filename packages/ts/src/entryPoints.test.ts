@@ -311,6 +311,8 @@ describe('the magnetic API asks every operation whether it is combined with time
     (ops: readonly magnetic.Operation[]) => magnetic.tensorFormOf(ops, 'pyroelectric'),
     (ops: readonly magnetic.Operation[]) => magnetic.allowsPropertyOf(ops, 'pyroelectric'),
     (ops: readonly magnetic.Operation[]) => magnetic.allowedPropertiesOf(ops),
+    (ops: readonly magnetic.Operation[]) => magnetic.isCentrosymmetricOf(ops),
+    (ops: readonly magnetic.Operation[]) => magnetic.isChiralOf(ops),
   ];
   const asMagnetic = (ops: readonly unknown[]) => ops as readonly magnetic.Operation[];
 

@@ -300,7 +300,8 @@ The conventions themselves are in `docs/conventions.md`; here, what was decided 
   `isPolar`, `isChiral` and `laueClass` are removed, so that there is one way to ask (MINOR; a
   consumer that passes a function writes `(key) => pointGroup(key).polar`). A key and a list of
   operations are two cases: for the operations of a distorted crystal or a site symmetry there are
-  `isCentrosymmetricOf(operations)` and `isChiralOf(operations)`, named like `tensorFormOf`; polar
+  `isCentrosymmetricOf(operations)` and `isChiralOf(operations)`, named like `tensorFormOf` and
+  asking of the list what it asks (orthogonal matrices; in the magnetic API `timeReversal`); polar
   is there `allowsPropertyOf(operations, 'pyroelectric')`, and a Laue class needs the group
   identified first. **`holohedry(system)` is a function of the crystal system**, not a field:
   the holohedry depends on the group only through its system, and both readings for the trigonal

@@ -133,7 +133,8 @@ of time-even tensors and so the same time-even properties. `entryPoints.test.ts`
 all 32 classes.
 
 **Operations passed in.** Where a function takes a list of operations (`tensorFormOf`,
-`allowsPropertyOf`, `allowedPropertiesOf`), the magnetic API asks every operation whether it is
+`allowsPropertyOf`, `allowedPropertiesOf`, `isCentrosymmetricOf`, `isChiralOf`), the matrices must
+be orthogonal (Cartesian), and the magnetic API asks every operation whether it is
 combined with time reversal: `timeReversal` must be `true` or `false`. Operations of the
 crystallographic API, which do not say, are refused there and not read as a white group; a caller
 who means the white group adds `timeReversal: false`, one who means a crystal without magnetic
@@ -351,7 +352,8 @@ on setting or convention. For a magnetic point group, as in birss-app:
 
 **For a list of operations** (a site symmetry, the operations of a distorted crystal):
 `isCentrosymmetricOf(operations)` and `isChiralOf(operations)`, for the group the operations
-generate. Polar is there the named property: `allowsPropertyOf(operations, 'pyroelectric')`. A
+generate, with what `tensorFormOf` asks of the list ("Two entry points", "Operations passed in").
+Polar is there the named property: `allowsPropertyOf(operations, 'pyroelectric')`. A
 list of operations has no Laue class as a key; a consumer that needs it identifies the group first.
 
 **Holohedry.** `holohedry(system)` is the class that is the point symmetry of the lattice of a
@@ -664,7 +666,7 @@ group (ITC Vol. D Tables 1.5.2.4, 1.5.8.1, 1.5.7.1).
 sign under time reversal, e.g. a net rotation of structural units about an axis (NiTiO₃, class
 `-3`). The tensor is that of `'ferromagnetic'` with the other time parity, so the 13 classes are
 the white groups among the 31 ferromagnetic groups: `1`, `-1`, `2`, `m`, `2/m`, `4`, `-4`, `4/m`,
-`3`, `-3`, `6`, `-6`, `6/m`, the classes whose Hermann–Mauguin symbol has a single position; the
+`3`, `-3`, `6`, `-6`, `6/m`, the classes whose short Hermann–Mauguin symbol (the key) has a single position; the
 vector lies along that symmetry direction (any direction in `1` and `-1`). Seven of them are neither polar nor chiral (`-1`,
 `2/m`, `-4`, `4/m`, `-3`, `-6`, `6/m`). Over the 122 groups: 43 (13 classes, their 13 grey groups,
 17 black-and-white groups). The name is that of Hlinka, Privratska, Ondrejkovic & Janovec, _Phys.
@@ -734,7 +736,7 @@ ITC symbol, and so are the second trigonal orientations the text of § 1.5.8.1 n
 | Wyckoff positions (letter, multiplicity, oriented site symmetry, representative point and face)                             | ITA Table 3.2.3.2 (pp. 745–769): `references/itc/vol-a-table-3.2.3.2-wyckoff-positions.md`; the oriented symbols read along ITA Table 2.1.3.1 (p. 151); `2mm`, `m2m`: derived (above); additional check against the 5th ed. (2006), Table 10.1.2.2, by `audit/wyckoff-2006`                               | `wyckoff.reference.test.ts`                                                                             |
 | tensor forms, Birss convention                                                                                              | Birss Tables 4a–4f (pp. 56–66): `references/birss/table-4a.md` … `table-4f.md`                                                                                                                                                                                                                            | `tensors/birss.reference.test.ts`                                                                       |
 | tensor forms, ITC convention: counts, pyroelectric direction, piezoelectric classes                                         | ITA Table 3.2.2.1 (p. 738)                                                                                                                                                                                                                                                                                | `tensors/itc.reference.test.ts`                                                                         |
-| ferroaxial classes (axial vector, time-even)                                                                                | Birss Table 4a (pp. 56–57) with Table 4c (p. 58): `references/birss/`; the term: Hlinka, Privratska, Ondrejkovic & Janovec, _Phys. Rev. Lett._ **116**, 177602 (2016)                                                                                                                                     |
+| ferroaxial classes (axial vector, time-even)                                                                                | Birss Table 4a (pp. 56–57) with Table 4c (p. 58): `references/birss/`; the term: Hlinka, Privratska, Ondrejkovic & Janovec, _Phys. Rev. Lett._ **116**, 177602 (2016)                                                                                                                                     | `tensors/tensorProperties.test.ts`                                                                      |
 | rank 3, `'jk'` (SHG, piezoelectric d_ijk): cells, classes, signs; the forms at m-3m surfaces                                | Yariv, _Quantum Electronics_, 2nd ed. (Wiley, 1975), Table 16.1 (pp. 410–411): `references/yariv/table-16.1.md`                                                                                                                                                                                           | `tensors/yariv.reference.test.ts`, `tensors/tensorForm.test.ts`                                         |
 | rank 4, `'ij_kl'` (electric-quadrupole SHG) for 6/mmm, 6mm                                                                  | Hoshi et al., Phys. Rev. B 52, 12355 (1995), Eqs. (11)–(12): `references/hoshi/eqs-11-12.md`                                                                                                                                                                                                              | `tensors/hoshi.reference.test.ts`                                                                       |
 | ITC: axial tensors of rank 2 (forms); rank 4 `'ij_kl'`, `'voigt'` (counts)                                                  | ITC Vol. D (2013) § 1.1.4.10.7 (pp. 29–31), § 1.1.4.10.6 (pp. 27–29): `references/itc/vol-d-*.md`                                                                                                                                                                                                         | `tensors/itcVolD.reference.test.ts`                                                                     |

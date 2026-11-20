@@ -117,6 +117,7 @@ describe('Birss convention = birss-app (pins)', () => {
       it('type, crystal class, default settings, symbols and properties', () => {
         expect(pointGroup(key).type).toBe(g.type);
         expect(crystalClassOf(key)).toBe(g.crystalClass);
+        expect(pointGroup(key).crystalClass).toBe(g.crystalClass);
         expect(settings(key, 'birss').find((s) => s.isDefault)?.index).toBe(g.defaultSetting);
         // The key of birss-app is the Birss symbol of its default setting.
         expect(symbol(key, { convention: 'birss' })).toBe(g.key);
