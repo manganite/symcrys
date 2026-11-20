@@ -10,7 +10,8 @@ The section draws the 6 × 6 matrices of Nye's scheme for two kinds of tensor an
 of independent components under each: p_αβ, π_αβ, Q_αβ (elasto-optic, piezo-optic,
 electrostriction: symmetric in the first and in the last index pair, the pairs not
 interchangeable) and c_αβ, s_αβ (elastic stiffnesses and compliances: in addition the pairs
-interchangeable). Only the counts are transcribed here, not the diagrams. Where the section prints
+interchangeable). Only the counts are transcribed here; the diagrams are in
+`vol-d-1.1.4.10.6-rank-4-forms.md` (transcribed 2026-11-20). Where the section prints
 separate diagrams for p, π and Q (trigonal, hexagonal (i)), their counts agree, and so do those of c
 and s.
 

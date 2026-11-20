@@ -5,14 +5,16 @@
  * - § 1.1.4.10.7: the full forms (cells, links, signs) of axial tensors of rank 2, general and
  *   symmetric, in the frame ITC draws them: in the ITC default setting, and for the monoclinic
  *   classes also with the axis parallel to Ox3 (unique axis c, setting 1);
- * - § 1.1.4.10.6: the numbers of independent components of fourth-rank tensors with both index pairs
- *   symmetric (`'ij_kl'`: p, π, Q) and with the pairs also interchangeable (`'voigt'`: c, s).
+ * - § 1.1.4.10.6: fourth-rank tensors with both index pairs symmetric (`'ij_kl'`: p, π, Q) and with
+ *   the pairs also interchangeable (`'voigt'`: c, s): the numbers of independent components, and
+ *   the full forms (cells, links, signs and factors of the 6 × 6 matrices), in the ITC default
+ *   setting.
  */
 
 import { describe, expect, it } from 'vitest';
 import { isPointGroupKey, settings, type PointGroupKey } from '../pointGroups/pointGroups.js';
 import { expectHeader, readReference, tableRows } from '../testUtils/references.js';
-import { linkScheme, schemeOf } from '../testUtils/yariv.js';
+import { linkScheme, schemeOf, type Scheme } from '../testUtils/yariv.js';
 import { tensorForm, type TensorSpec } from './tensorForm.js';
 
 /** Abbreviations of § 1.1.4.10.6 and § 1.1.4.10.7 (see the transcriptions), and D3h printed as -62m. */
@@ -132,5 +134,154 @@ describe('ITC Vol. D § 1.1.4.10.6: fourth-rank tensors, numbers of independent 
       expect(n('ij_kl'), `${key}: p, π, Q`).toBe(r.p);
       expect(n('voigt'), `${key}: c, s`).toBe(r.c);
     }
+  });
+});
+
+// --- § 1.1.4.10.6: forms of fourth-rank tensors ------------------------------------------------------
+
+const FORMS = tableRows(readReference('itc/vol-d-1.1.4.10.6-rank-4-forms.md'));
+expectHeader(FORMS, ['Section', 'Groups (as printed)', 'Tensors', 'Count', 'Links', 'Cross', 'Note']);
+
+type Tensor4 = 'p' | 'π' | 'Q' | 'c' | 's';
+
+/** The factor of a printed mark relative to the heavy dot it is linked to (key on p. 28). */
+const MARK: Record<string, number> = { f: 1, o: -1, d: 2, m: -2 };
+
+/** ⊗ = k·(t11 − t12), with k as printed for each tensor (key on p. 28). */
+const CROSS_FACTOR: Record<Tensor4, number> = { p: 1 / 2, π: 1, Q: 2, c: 1 / 2, s: 2 };
+
+const DIAGRAMS = FORMS.slice(1).map((r) => ({
+  section: r[0],
+  printedGroups: r[1],
+  spherical: r[0] === '1.1.4.10.6.8',
+  tensors: r[2].split(',').map((t) => t.trim() as Tensor4),
+  count: Number(r[3]),
+  links: r[4].split(';').map((g) =>
+    g
+      .trim()
+      .split(/\s+/)
+      .map((m) => {
+        const x = m.match(/^([1-6][1-6])([fodm])$/);
+        if (!x) throw new Error(`ITC Vol. D 1.1.4.10.6: mark ${m}`);
+        return { name: x[1], factor: MARK[x[2]] };
+      }),
+  ),
+  cross: r[5] ? r[5].split(/\s+/) : [],
+}));
+
+/** The index pair of α = 1…6 (two-index notation, p. 27): 11, 22, 33, 23, 31, 12. */
+const PAIR: readonly (readonly [number, number])[] = [
+  [0, 0],
+  [1, 1],
+  [2, 2],
+  [1, 2],
+  [2, 0],
+  [0, 1],
+];
+
+/** The factor between the matrix element t_αβ and the tensor component t_ijkl (p. 27). */
+function matrixFactor(tensor: Tensor4, alpha: number, beta: number): number {
+  if (tensor === 'p' || tensor === 'c') return 1;
+  if (tensor === 'π') return beta > 3 ? 2 : 1;
+  return (alpha > 3 ? 2 : 1) * (beta > 3 ? 2 : 1); // s and Q, eq. (1.1.4.12)
+}
+
+/** The basis of a form as rows over the matrix elements `αβ` of the tensor. */
+function matrixRows(basis: readonly (readonly number[])[], tensor: Tensor4): Map<string, number[]> {
+  const out = new Map<string, number[]>();
+  for (let a = 1; a <= 6; a++) {
+    for (let b = 1; b <= 6; b++) {
+      const [i, j] = PAIR[a - 1];
+      const [k, l] = PAIR[b - 1];
+      const flat = ((i * 3 + j) * 3 + k) * 3 + l;
+      out.set(
+        `${a}${b}`,
+        basis.map((row) => matrixFactor(tensor, a, b) * row[flat]),
+      );
+    }
+  }
+  return out;
+}
+
+/** The printed scheme: classes of linked cells, each cell with its factor relative to the first cell by name. */
+function printedScheme4(links: (typeof DIAGRAMS)[number]['links']): Scheme {
+  const plain = linkScheme(links.map((g) => g.map((m) => ({ name: m.name, filled: true }))));
+  const signs = new Map<string, number>();
+  for (const g of links) {
+    const first = [...g].sort((x, y) => (x.name < y.name ? -1 : 1))[0];
+    for (const m of g) signs.set(m.name, m.factor / first.factor);
+  }
+  return { partition: plain.partition, signs };
+}
+
+describe('ITC Vol. D § 1.1.4.10.6: fourth-rank tensors, forms of the matrices', () => {
+  it('30 diagrams; the link groups of each are as many as its printed count, which is that of the table of counts', () => {
+    expect(DIAGRAMS).toHaveLength(30);
+    for (const d of DIAGRAMS) {
+      expect(d.links, `${d.section} ${d.tensors.join(', ')}`).toHaveLength(d.count);
+      const row = COUNTS.slice(1).find((r) => r[0] === d.section)!;
+      expect(row[1], d.section).toBe(d.printedGroups);
+      for (const t of d.tensors) expect(d.count, `${d.section} ${t}`).toBe(Number(row[t === 'c' || t === 's' ? 3 : 2]));
+    }
+  });
+
+  it('every section draws each of the five tensors once; a cell is marked at most once in a diagram', () => {
+    for (const section of new Set(DIAGRAMS.map((d) => d.section))) {
+      const tensors = DIAGRAMS.filter((d) => d.section === section).flatMap((d) => d.tensors);
+      expect([...tensors].sort(), section).toEqual(['Q', 'c', 'p', 's', 'π']);
+    }
+    for (const d of DIAGRAMS) {
+      const cells = [...d.links.flatMap((g) => g.map((m) => m.name)), ...d.cross];
+      expect(new Set(cells).size, `${d.section} ${d.tensors.join(', ')}`).toBe(cells.length);
+      // A linked group has at least one heavy dot, to which the other marks refer.
+      for (const g of d.links) expect(g.some((m) => m.factor === 1)).toBe(true);
+    }
+  });
+
+  for (const d of DIAGRAMS.filter((x) => !x.spherical)) {
+    const groups = d.printedGroups
+      .split(',')
+      .map((g) => keyOf(g.trim(), d.section.startsWith('1.1.4.10.6.7') ? CUBIC_MISPRINT : {}));
+    // c and s are drawn as the upper triangle; so is the one diagram for all five tensors (cubic (ii)).
+    const upperOnly = d.tensors.includes('c') || d.tensors.includes('s');
+    const want = printedScheme4(d.links);
+    for (const tensor of d.tensors) {
+      it(`${d.section} ${groups.join(', ')}: ${tensor}`, () => {
+        const intrinsic = tensor === 'c' || tensor === 's' ? 'voigt' : 'ij_kl';
+        for (const key of groups) {
+          const basis = tensorForm(key, { rank: 4, parity: 'polar', timeParity: 'i', intrinsic }).basis;
+          expect(basis, `${key}: independent components`).toHaveLength(d.count);
+          const rows = matrixRows(basis, tensor);
+          // ⊗ = k (t11 − t12), in every basis tensor.
+          for (const cell of d.cross) {
+            const x = rows.get(cell)!;
+            const t11 = rows.get('11')!;
+            const t12 = rows.get('12')!;
+            x.forEach((v, n) =>
+              expect(v, `${key}: ⊗ at ${cell}`).toBeCloseTo(CROSS_FACTOR[tensor] * (t11[n] - t12[n]), 9),
+            );
+            expect(
+              x.some((v) => Math.abs(v) > 1e-9),
+              `${key}: ⊗ at ${cell} is not zero`,
+            ).toBe(true);
+          }
+          // All other cells: the marked ones are nonzero and linked as printed, the others vanish.
+          const cells = [...rows.keys()]
+            .filter((name) => !d.cross.includes(name) && (!upperOnly || name[0] <= name[1]))
+            .map((name) => ({ name, row: rows.get(name)! }));
+          const got = schemeOf(
+            basis.map((_b, n) => cells.map((c) => c.row[n])),
+            cells.map((c, index) => ({ name: c.name, index })),
+          );
+          expect(got.partition, key).toBe(want.partition);
+          for (const [cell, factor] of want.signs)
+            expect(got.signs.get(cell), `${key}: factor of ${cell}`).toBeCloseTo(factor, 9);
+        }
+      });
+    }
+  }
+
+  it('the monoclinic diagrams ("twofold axis parallel to Ox2") are the ITC default setting', () => {
+    for (const key of ['2', 'm', '2/m'] as const) expect(settings(key).find((s) => s.isDefault)!.uniqueAxis).toBe('b');
   });
 });

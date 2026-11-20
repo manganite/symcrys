@@ -292,7 +292,7 @@ The conventions themselves are in `docs/conventions.md`; here, what was decided 
   birss-app rests; adding them is additive, and the first real consumer tests the API early. **Magnetic groups and group properties in three PRs** (maintainer, 2026-11-19, #13, #41):
   data, symbols and operations; then the `'c'`-tensors and the named tensor properties; then the
   fixed properties of a class as fields of `pointGroup()`; released together as one MINOR. The
-  rank-4 forms of ITC Vol. D (#39) follow in a PR of their own.
+  rank-4 forms of ITC Vol. D (#39) came in a PR of their own.
 - **Fixed properties are fields of `pointGroup()`** (maintainer, 2026-11-20, #41; decided on the
   call sites of stereography and birss-app, listed in #41): what is fixed once the group is named
   (`crystalSystem`, `order`, `centrosymmetric`, `polar`, `chiral`, `laueClass`; in the magnetic API
@@ -455,7 +455,10 @@ The conventions are in `docs/conventions.md` ("Tensors"); here, what was decided
   lab geometry, simulator and polarimetry are applications of the forms and stay in birss-app.
 - **Ranks 0 to 4 with all index symmetries of birss-app in the first step** (maintainer,
   2026-11-19): the print anchors for rank 4 (Birss Table 4f, Hoshi 1995) exist, and electric-
-  quadrupole SHG of centrosymmetric crystals needs rank 4.
+  quadrupole SHG of centrosymmetric crystals needs rank 4. In the ITC convention rank 4 is anchored
+  by the 30 diagrams of ITC Vol. D § 1.1.4.10.6 (#39; printed pp. 27–29, PDF pages 26–28): crossing
+  lines are read at 550 dpi and followed end to end, and a dot with a half circle around it is
+  passed by the line, not linked (`references/itc/vol-d-1.1.4.10.6-rank-4-forms.md`).
 - **Names** (maintainer, 2026-11-19): `tensorForm(key, spec, options)`,
   `tensorFormOf(operations, spec)`, `rotateTensor(tensor, rotation, spec)`; in the magnetic API
   `TensorSpec` with birss-app's fields (`rank`, `parity`, `timeParity`, `intrinsic`), so birss-app

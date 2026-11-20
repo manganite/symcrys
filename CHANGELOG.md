@@ -57,6 +57,10 @@ All notable changes to symcrys are recorded here. The format follows
   `m'2'm`, 5 `mm'2'`, 6 `2'mm'`, which ITC Vol. D and Paufler print. Two settings share each
   `uniqueAxis` (the normal of the mirror plane without time reversal), so for this group the symbol
   or the index identifies a setting, not the axis.
+- `references/`: the 30 diagrams of ITC Vol. D § 1.1.4.10.6 (pp. 27–29), the matrices of the
+  fourth-rank tensors p, π, Q, c and s for all 32 classes; the tests now check the full rank-4 forms
+  of the ITC convention against them, not only the numbers of independent components (#39). No
+  calculated result changed.
 - Python: the module `symcrys.magnetic`; `TENSOR_PROPERTIES`, `allows_property`,
   `allowed_properties`, `allows_property_of`, `allowed_properties_of`, and names in `tensor_form`,
   `tensor_form_of` and `rotate_tensor`, in both modules; `holohedry`, `is_centrosymmetric_of`,
