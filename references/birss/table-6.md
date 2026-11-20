@@ -2,18 +2,17 @@
 
 Source: R. R. Birss, _Symmetry and Magnetism_ (North-Holland, Amsterdam, 1966), Table 6, printed
 pp. 91–98 (printed rotated by 90°). Transcribed in manganite/birss-tables (`table-6.md`, vendored
-in birss-app as `birss-tables/`) and taken over from there, with the known misprint listed under
+in birss-app as `birss-tables/`) and taken over from there, with the known misprints listed under
 "Errata" instead of corrected in the table.
 
-How far the columns are print: the symbols and the generating matrices were checked there against
-the scanned pages. The column "Symmetry operators" is in the normalised notation described below
-(a prime for Birss's underline, placed on the operation); for the 58 black-and-white groups it was
-there partly derived from Table 3 as M = H ∪ (G∖H)′ and compared with the scan for six disputed
-rows, so it is a check of consistency rather than a transcription of every printed entry.
-
-What the table covers: 90 of the 122 magnetic point groups, the 32 crystallographic point groups
-(no classical subgroup, `-`) and the 58 black-and-white groups. The 32 grey groups are not listed;
-each is a crystallographic point group together with all its operations combined with time reversal.
+How far the columns are print: all 90 rows were compared with the scanned pages on 2026-11-19, in
+every column. Seven Shubnikov entries of birss-tables were corrected against the print (`4/mm'm'`,
+`4/m'mm`, `4'/m'm'm`, `6'/m'mm'`, `m'3m'`, `m'3m`, and the classical subgroup of `m'3m`), and one
+operator of `4/m'mm` that birss-tables had silently corrected is given as printed again (Errata).
+The differences are reported upstream in manganite/birss-tables#3.
+The column "Symmetry operators" holds the printed operations in the notation described below (a
+prime for Birss's underline, placed on the operation); the order of the terms within a row is not
+always the printed one.
 
 Notation, as in `table-3.md`:
 
@@ -70,10 +69,10 @@ Notation, as in `table-3.md`:
 | Tetragonal | -42'm' | -4.m' | -4 | -4 | 1, 2_z, ±-4_z, 2'_x, 2'_y, -2'_xy, -2'_-xy | σ(8) | σ'(2) |
 | Tetragonal | 4/mmm | m.4:m | - | - | 1, -1, 2_x, 2_y, 2_z, 2_xy, 2_-xy, -2_x, -2_y, -2_z, -2_xy, -2_-xy, ±4_z, ±-4_z | σ(1), σ(2), σ(7) | - |
 | Tetragonal | 4'/mmm' | m.4':m | mmm | m.2:m | 1, -1, 2_x, 2_y, 2_z, -2_x, -2_y, -2_z, 2'_xy, 2'_-xy, -2'_xy, -2'_-xy, ±4'_z, ±-4'_z | σ(1), σ(2), σ(3) | σ'(7) |
-| Tetragonal | 4/mm'm' | m.4:m' | 4/m | 4:m | 1, -1, 2_z, -2_z, ±4_z, ±-4_z, 2'_x, 2'_y, 2'_xy, 2'_-xy, -2'_x, -2'_y, -2'_xy, -2'_-xy | σ(1), σ(7) | σ'(2) |
+| Tetragonal | 4/mm'm' | m'.4:m | 4/m | 4:m | 1, -1, 2_z, -2_z, ±4_z, ±-4_z, 2'_x, 2'_y, 2'_xy, 2'_-xy, -2'_x, -2'_y, -2'_xy, -2'_-xy | σ(1), σ(7) | σ'(2) |
 | Tetragonal | 4/m'm'm' | m'.4:m' | 422 | 4:2 | 1, 2_x, 2_y, 2_z, 2_xy, 2_-xy, ±4_z, -1', -2'_x, -2'_y, -2'_z, -2'_xy, -2'_-xy, ±-4'_z | σ(2), σ(7) | σ'(1) |
-| Tetragonal | 4/m'mm | m'.4:m | 4mm | 4.m | 1, 2_z, -2_x, -2_y, -2_xy, -2_-xy, ±4_z, -1', 2'_x, 2'_y, -2'_z, 2'_xy, 2'_-xy, ±-4'_z | σ(4), σ(7) | σ'(1) |
-| Tetragonal | 4'/m'm'm | m'.4':m' | -42m | -4.m | 1, 2_x, 2_y, 2_z, -2_xy, -2_-xy, ±-4_z, -1', -2'_x, -2'_y, -2'_z, 2'_xy, 2'_-xy, ±4'_z | σ(2), σ(8) | σ'(1) |
+| Tetragonal | 4/m'mm | m.4:m' | 4mm | 4.m | 1, 2_z, -2_x, -2_y, -2_xy, -2_-xy, ±4_z, -1', 2'_x, 2'_y, 2'_xy, 2'_-xy, -2'_z, ±4'_z | σ(4), σ(7) | σ'(1) |
+| Tetragonal | 4'/m'm'm | m.4':m' | -42m | -4.m | 1, 2_x, 2_y, 2_z, -2_xy, -2_-xy, ±-4_z, -1', -2'_x, -2'_y, -2'_z, 2'_xy, 2'_-xy, ±4'_z | σ(2), σ(8) | σ'(1) |
 | Trigonal | 3 | 3 | - | - | 1, ±3_z | σ(6) | - |
 | Trigonal | -3 | -6 | - | - | 1, -1, ±3_z, ±-3_z | σ(1), σ(6) | - |
 | Trigonal | -3' | -6' | 3 | 3 | 1, ±3_z, -1', ±-3'_z | σ(6) | σ'(1) |
@@ -104,7 +103,7 @@ Notation, as in `table-3.md`:
 | Hexagonal | -6'm2' | m.3:m' | 3m | 3.m | 1, 3(-2⊥), ±3_z, 3(2'⊥), -2'_z, ±-6'_z | σ(4), σ(6) | σ'(5) |
 | Hexagonal | -6m'2' | m'.3:m | -6 | 3:m | 1, -2_z, ±3_z, ±-6_z, 3(2'⊥), 3(-2'⊥) | σ(5), σ(6) | σ'(4) |
 | Hexagonal | 6/mmm | m.6:m | - | - | 1, -1, 6(2⊥), 2_z, 6(-2⊥), -2_z, ±3_z, ±-3_z, ±6_z, ±-6_z | σ(1), σ(2), σ(3), σ(6) | - |
-| Hexagonal | 6'/m'mm' | m'.6':m' | -3m | -6.m | 1, -1, 3(2⊥), 3(-2⊥), ±3_z, ±-3_z, 3(2'⊥), 2'_z, 3(-2'⊥), -2'_z, ±6'_z, ±-6'_z | σ(1), σ(2), σ(6) | σ'(2) |
+| Hexagonal | 6'/m'mm' | m.6':m' | -3m | -6.m | 1, -1, 3(2⊥), 3(-2⊥), ±3_z, ±-3_z, 3(2'⊥), 2'_z, 3(-2'⊥), -2'_z, ±6'_z, ±-6'_z | σ(1), σ(2), σ(6) | σ'(2) |
 | Hexagonal | 6/mm'm' | m'.6:m | 6/m | 6:m | 1, -1, 2_z, -2_z, ±3_z, ±-3_z, ±6_z, ±-6_z, 6(2'⊥), 6(-2'⊥) | σ(1), σ(3), σ(6) | σ'(2) |
 | Hexagonal | 6/m'm'm' | m'.6:m' | 622 | 6:2 | 1, 6(2⊥), 2_z, ±3_z, ±6_z, -1', -2'_z, ±-3'_z, ±-6'_z, 6(-2'⊥) | σ(2), σ(3), σ(6) | σ'(1) |
 | Hexagonal | 6/m'mm | m.6:m' | 6mm | 6.m | 1, 2_z, 6(-2⊥), ±3_z, ±6_z, -1', -2'_z, 6(2'⊥), ±-3'_z, ±-6'_z | σ(3), σ(4), σ(6) | σ'(1) |
@@ -118,8 +117,8 @@ Notation, as in `table-3.md`:
 | Cubic | -4'3m' | 3/-4' | 23 | 3/2 | 1, 3(2), 4(±3), 6(-2'), 3(±-4') | σ(3), σ(9) | σ'(8) |
 | Cubic | m3m | -6/4 | - | - | 1, -1, 9(2), 9(-2), 4(±3), 4(±-3), 3(±4), 3(±-4) | σ(1), σ(7), σ(9) | - |
 | Cubic | m3m' | -6/4' | m3 | -6/2 | 1, -1, 3(2), 3(-2), 4(±3), 4(±-3), 6(2'), 6(-2'), 3(±4'), 3(±-4') | σ(1), σ(3), σ(9) | σ'(7) |
-| Cubic | m'3m' | -6'/4' | 432 | 3/4 | 1, 9(2), 4(±3), 3(±4), -1', 9(-2'), 4(±-3'), 3(±-4') | σ(7), σ(9) | σ'(1) |
-| Cubic | m'3m | -6'/4 | -43m | 3/4 | 1, 3(2), 6(-2), 4(±3), 3(±-4), -1', 3(-2'), 6(2'), 4(±-3'), 3(±4') | σ(8), σ(9) | σ'(1) |
+| Cubic | m'3m' | -6'/4 | 432 | 3/4 | 1, 9(2), 4(±3), 3(±4), -1', 9(-2'), 4(±-3'), 3(±-4') | σ(7), σ(9) | σ'(1) |
+| Cubic | m'3m | -6'/4' | -43m | 3/-4 | 1, 3(2), 6(-2), 4(±3), 3(±-4), -1', 3(-2'), 6(2'), 4(±-3'), 3(±4') | σ(8), σ(9) | σ'(1) |
 
 ## Errata
 
@@ -127,4 +126,5 @@ Printed entries that are wrong. The table above keeps the print; tests apply the
 
 | Group | Column | Printed | Correct | Evidence |
 |---|---|---|---|---|
+| 4/m'mm | Symmetry operators | ±4'_z | ±-4'_z | The row prints ±4_z among the operations of its classical subgroup 4mm and again, underlined, among those with time reversal; an operation cannot occur with and without time reversal in a black-and-white group, and the row then has no fourfold rotoinversion although it contains the inversion (-1') and ±4_z. The printed generators σ(4), σ(7) and σ'(1) give ±-4'_z. |
 | 6'/m'mm' | Additional generating matrix | σ'(2) | σ'(3) | σ(2) = 2_y is already an operation of the classical subgroup -3m printed for this row (generators σ(1), σ(2), σ(6)), so σ'(2) adds time reversal alone and generates the grey group of -3m (24 operations, all of -3m with and without time reversal) instead of the 24 operations printed in the row, which contain 2'_z and ±6'_z. σ'(3) = 2'_z generates the printed operators. |
