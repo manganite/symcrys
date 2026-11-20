@@ -40,8 +40,11 @@ def test_crystal_classes_here_magnetic_point_groups_there() -> None:
     assert magnetic.POINT_GROUP_KEYS[:32] == symcrys.POINT_GROUP_KEYS
     assert [g["key"] for g in symcrys.point_groups()] == list(symcrys.POINT_GROUP_KEYS)
     assert [g["key"] for g in magnetic.point_groups()] == list(magnetic.POINT_GROUP_KEYS)
-    assert symcrys.point_group("32") == {"key": "32", "crystal_system": "trigonal", "order": 6}
-    assert magnetic.point_group("32") == {"key": "32", "type": "I", "crystal_system": "trigonal", "order": 6}
+    fixed = {"centrosymmetric": False, "polar": False, "chiral": True, "laue_class": "-3m"}
+    assert symcrys.point_group("32") == {"key": "32", "crystal_system": "trigonal", "order": 6, **fixed}
+    assert magnetic.point_group("32") == {
+        "key": "32", "type": "I", "crystal_class": "32", "crystal_system": "trigonal", "order": 6, **fixed
+    }  # fmt: skip
     assert symcrys.is_point_group_key("321'") is False and magnetic.is_point_group_key("321'") is True
     assert symcrys.find_point_group("4'/mmm'") is None
     assert magnetic.find_point_group("4'/mmm'") == {"key": "4'/mmm'", "setting": 1}
@@ -130,18 +133,20 @@ def test_camel_case_keys_are_accepted_in_a_spec() -> None:
 
 
 def test_named_tensor_properties() -> None:
-    assert list(symcrys.TENSOR_PROPERTIES) == ["pyroelectric", "piezoelectric", "gyrotropic"]
+    assert list(symcrys.TENSOR_PROPERTIES) == ["pyroelectric", "ferroaxial", "piezoelectric", "gyrotropic"]
     assert list(magnetic.TENSOR_PROPERTIES) == [
-        "pyroelectric", "piezoelectric", "gyrotropic", "ferromagnetic", "magnetoelectric", "piezomagnetic"
+        "pyroelectric", "ferroaxial", "piezoelectric", "gyrotropic", "ferromagnetic", "magnetoelectric", "piezomagnetic"
     ]
+    assert symcrys.allowed_properties("-3") == ["ferroaxial"]
+    assert symcrys.tensor_form("-3", "ferroaxial")["parameters"].tolist() == [[2]]
     piezo = symcrys.TENSOR_PROPERTIES["piezoelectric"]
     assert piezo["spec"] == SHG and set(piezo) == {"spec", "description", "source"}
     assert magnetic.TENSOR_PROPERTIES["piezoelectric"]["spec"] == MAGNETIC_SHG
     assert symcrys.allowed_properties("432") == ["gyrotropic"]
     assert magnetic.allowed_properties("432") == ["gyrotropic", "magnetoelectric"]
     assert symcrys.allows_property("432", "piezoelectric") is False
-    ops = magnetic.operations("m'm'2")
-    assert magnetic.allowed_properties_of(ops) == magnetic.allowed_properties("m'm'2") == list(magnetic.TENSOR_PROPERTIES)
+    ops = magnetic.operations("2'")
+    assert magnetic.allowed_properties_of(ops) == magnetic.allowed_properties("2'") == list(magnetic.TENSOR_PROPERTIES)
     assert magnetic.allows_property_of(ops, "ferromagnetic") is True
     assert symcrys.allowed_properties_of(symcrys.operations("mm2")) == symcrys.allowed_properties("mm2")
     assert symcrys.allows_property_of(symcrys.operations("mm2"), "pyroelectric") is True
@@ -154,6 +159,27 @@ def test_named_tensor_properties() -> None:
     assert np.array_equal(
         symcrys.rotate_tensor(by_name["basis"][0], rz, "piezoelectric"), symcrys.rotate_tensor(by_name["basis"][0], rz, SHG)
     )
+
+
+def test_fixed_properties_are_fields_of_the_point_group() -> None:
+    assert symcrys.point_group("-3") == {
+        "key": "-3", "crystal_system": "trigonal", "order": 6,
+        "centrosymmetric": True, "polar": False, "chiral": False, "laue_class": "-3",
+    }  # fmt: skip
+    assert magnetic.point_group("-3'") == {
+        "key": "-3'", "type": "III", "crystal_class": "-3", "crystal_system": "trigonal", "order": 6,
+        "centrosymmetric": False, "polar": False, "chiral": False, "laue_class": "-3",
+    }  # fmt: skip
+    for module in (symcrys, magnetic):
+        assert not any(hasattr(module, name) for name in ("is_centrosymmetric", "is_polar", "is_chiral", "laue_class"))
+        assert module.holohedry("trigonal") == "-3m"
+        assert module.holohedry(module.crystal_family("trigonal")) == "6/mmm"
+        ops = module.generators("2/m")
+        assert module.is_centrosymmetric_of(ops) is True and module.is_chiral_of(ops) is False
+        assert module.is_chiral_of(module.operations("32")) is True
+    assert magnetic.is_centrosymmetric_of(magnetic.operations("-1'")) is False
+    with pytest.raises(symcrys.SymcrysError, match="symcrys/magnetic|magnetic"):
+        symcrys.is_centrosymmetric_of(magnetic.operations("-1'"))
 
 
 def test_rotate_tensor_takes_arrays_of_any_shape() -> None:

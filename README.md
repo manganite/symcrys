@@ -61,8 +61,11 @@ Each release on GitHub also carries the package as `symcrys-X.Y.Z.tgz`.
 import {
   allowedProperties,
   allowsProperty,
+  crystalFamily,
   describeOperations,
+  holohedry,
   operations,
+  pointGroup,
   settings,
   siteSymmetry,
   symbol,
@@ -88,6 +91,9 @@ tensorForm('3m', SHG, { convention: 'birss' }).parameters[0]; // [0, 0, 0]: xxx 
 tensorForm('32', 'piezoelectric').parameters; // [[0,0,0], [0,1,2]]: a property by name, d_111 and d_123
 allowsProperty('432', 'piezoelectric'); // false
 allowedProperties('32'); // ['piezoelectric', 'gyrotropic']: quartz
+allowedProperties('-3'); // ['ferroaxial']: NiTiO₃; tensorForm('-3', 'ferroaxial').parameters is [[2]], along z
+pointGroup('32'); // { key: '32', crystalSystem: 'trigonal', order: 6, centrosymmetric: false, polar: false, chiral: true, laueClass: '-3m' }
+holohedry('trigonal'); // '-3m'; with hexagonal axes holohedry(crystalFamily('trigonal')): '6/mmm'
 // SHG at the (111) surface of an m-3m crystal: the form under the site symmetry of the normal
 const ops = operations('m-3m');
 tensorFormOf(
@@ -101,9 +107,9 @@ The magnetic point groups, with time reversal:
 ```ts
 import { allowedProperties, operations, pointGroup, tensorForm } from 'symcrys/magnetic';
 
-pointGroup("4'/mmm'"); // { key: "4'/mmm'", type: 'III', crystalSystem: 'tetragonal', order: 16 }
+pointGroup("4'/mmm'"); // { key: "4'/mmm'", type: 'III', crystalClass: '4/mmm', crystalSystem: 'tetragonal', order: 16, centrosymmetric: true, … }
 operations("4'/mmm'")[2]; // { matrix: …, timeReversal: true }
-allowedProperties("m'm'2"); // all six: pyroelectric, piezoelectric, gyrotropic, ferromagnetic, magnetoelectric, piezomagnetic
+allowedProperties("m'm'2"); // six of the seven names: all but 'ferroaxial'
 allowedProperties("321'"); // ['piezoelectric', 'gyrotropic']: quartz, the grey group of class 32
 allowedProperties('32'); // the white group 32: also 'magnetoelectric', 'piezomagnetic'
 tensorForm("m'm'2", 'ferromagnetic').parameters; // [[2]]: M_s along z

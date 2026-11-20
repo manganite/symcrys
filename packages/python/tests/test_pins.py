@@ -26,7 +26,8 @@ def test_point_groups(pin: dict[str, Any]) -> None:
     birss = [s for s in magnetic.settings(key, "birss")]
     assert next(s["index"] for s in birss if s["is_default"]) == pin["defaultSetting"]
     assert next(s["index"] for s in magnetic.settings(key) if s["is_default"]) == pin["itcDefaultSetting"]
-    assert [magnetic.is_centrosymmetric(key), magnetic.is_polar(key), magnetic.is_chiral(key), magnetic.laue_class(key)] == [
+    group = magnetic.point_group(key)
+    assert [group["centrosymmetric"], group["polar"], group["chiral"], group["laue_class"]] == [
         pin["centrosymmetric"], pin["polar"], pin["chiral"], pin["laueClass"]
     ]
     for s in pin["settings"]:

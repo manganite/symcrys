@@ -49,7 +49,7 @@ export {
   type SettingOptions,
   type SymbolOptions,
 } from './pointGroups/pointGroups.js';
-export { isCentrosymmetric, isChiral, isPolar, laueClass } from './pointGroups/properties.js';
+export { holohedry, isCentrosymmetricOf, isChiralOf } from './pointGroups/properties.js';
 export { LATTICE_SYMMETRY_DIRECTIONS, type Uvw } from './symmetryDirections.js';
 export {
   describeOperations,

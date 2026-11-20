@@ -33,7 +33,6 @@ import { operationLabel, printedLabels } from '../testUtils/operatorLists.js';
 import { expectHeader, readReference, section, tableRows } from '../testUtils/references.js';
 import { tensorForm } from '../tensors/tensorForm.js';
 import { describeOperations } from './elements.js';
-import { isCentrosymmetric, isChiral, isPolar, laueClass } from './properties.js';
 import {
   MAGNETIC_POINT_GROUP_KEYS,
   POINT_GROUP_KEYS,
@@ -51,6 +50,12 @@ import {
   symbol,
   type MagneticPointGroupKey,
 } from './pointGroups.js';
+
+/** The fixed properties of a group, read from its record. */
+const isCentrosymmetric = (key: MagneticPointGroupKey) => pointGroup(key).centrosymmetric;
+const isChiral = (key: MagneticPointGroupKey) => pointGroup(key).chiral;
+const isPolar = (key: MagneticPointGroupKey) => pointGroup(key).polar;
+const laueClass = (key: MagneticPointGroupKey) => pointGroup(key).laueClass;
 
 const sorted = (labels: readonly string[]) => [...labels].sort();
 

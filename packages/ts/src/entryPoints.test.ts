@@ -58,13 +58,25 @@ describe('keys', () => {
     expect(classes.findPointGroup('321')).toEqual(magnetic.findPointGroup('321'));
   });
 
-  it('a crystal class has no type, a magnetic point group has one', () => {
+  it('a crystal class has no type and is its own class; a magnetic point group has both', () => {
     for (const key of classes.POINT_GROUP_KEYS) {
       const g = classes.pointGroup(key);
       const m = magnetic.pointGroup(key);
-      expect(Object.keys(g).sort()).toEqual(['crystalSystem', 'key', 'order']);
+      expect(Object.keys(g).sort()).toEqual([
+        'centrosymmetric',
+        'chiral',
+        'crystalSystem',
+        'key',
+        'laueClass',
+        'order',
+        'polar',
+      ]);
+      expect(Object.keys(m).sort()).toEqual([...Object.keys(g), 'crystalClass', 'type'].sort());
       expect(m.type).toBe('I');
-      expect(g).toEqual({ key: m.key, crystalSystem: m.crystalSystem, order: m.order });
+      expect(m.crystalClass).toBe(key);
+      // The fixed properties of a class are those of its white group.
+      const { type: _type, crystalClass: _crystalClass, ...shared } = m;
+      expect(g).toEqual(shared);
       expect(classes.pointGroup(key)).toBe(g);
       expect(Object.isFrozen(g)).toBe(true);
     }
@@ -138,11 +150,20 @@ describe('the crystallographic API returns nothing about time reversal', () => {
           expect(classes.symbol(key, { convention, form })).toBe(magnetic.symbol(key, { convention, form }));
         }
       }
-      expect(classes.isCentrosymmetric(key)).toBe(magnetic.isCentrosymmetric(key));
-      expect(classes.isPolar(key)).toBe(magnetic.isPolar(key));
-      expect(classes.isChiral(key)).toBe(magnetic.isChiral(key));
-      expect(classes.laueClass(key)).toBe(magnetic.laueClass(key));
+      // … and for a list of operations: the same answers as the fields, and as the magnetic API.
+      const g = classes.pointGroup(key);
+      for (const list of ['operations', 'generators'] as const) {
+        expect(classes.isCentrosymmetricOf(classes[list](key)), `${key} ${list}`).toBe(g.centrosymmetric);
+        expect(classes.isChiralOf(classes[list](key)), `${key} ${list}`).toBe(g.chiral);
+        expect(magnetic.isCentrosymmetricOf(magnetic[list](key)), `${key} ${list}`).toBe(g.centrosymmetric);
+        expect(magnetic.isChiralOf(magnetic[list](key)), `${key} ${list}`).toBe(g.chiral);
+        expect(classes.allowsPropertyOf(classes[list](key), 'pyroelectric'), `${key} ${list}`).toBe(g.polar);
+      }
     }
+  });
+
+  it('the holohedry of a crystal system is the same function in both', () => {
+    expect(classes.holohedry).toBe(magnetic.holohedry);
   });
 
   it('Wyckoff positions and site symmetry take their options', () => {
@@ -170,8 +191,13 @@ describe('the crystallographic API returns nothing about time reversal', () => {
   it('the named properties are those of time-even tensors, their specifications without time parity', () => {
     const timeEven = Object.entries(magnetic.TENSOR_PROPERTIES).filter(([, p]) => p.spec.timeParity === 'i');
     expect(Object.keys(classes.TENSOR_PROPERTIES)).toEqual(timeEven.map(([name]) => name));
-    expect(Object.keys(classes.TENSOR_PROPERTIES)).toEqual(['pyroelectric', 'piezoelectric', 'gyrotropic']);
-    expect(Object.keys(magnetic.TENSOR_PROPERTIES)).toHaveLength(6);
+    expect(Object.keys(classes.TENSOR_PROPERTIES)).toEqual([
+      'pyroelectric',
+      'ferroaxial',
+      'piezoelectric',
+      'gyrotropic',
+    ]);
+    expect(Object.keys(magnetic.TENSOR_PROPERTIES)).toHaveLength(7);
     for (const [name, p] of timeEven) {
       const { timeParity: _timeParity, ...spec } = p.spec;
       const own = classes.TENSOR_PROPERTIES[name as classes.TensorPropertyName];
@@ -193,10 +219,6 @@ describe('the crystallographic API refuses what involves time reversal', () => {
       classes.operations,
       classes.generators,
       classes.symbol,
-      classes.isCentrosymmetric,
-      classes.isPolar,
-      classes.isChiral,
-      classes.laueClass,
       classes.describeOperations,
       classes.symmetryDirections,
       classes.wyckoffPositions,
@@ -234,7 +256,7 @@ describe('the crystallographic API refuses what involves time reversal', () => {
       }
     }
     expect(() => classes.allowsProperty('3', 'magnetic' as classes.TensorPropertyName)).toThrow(
-      /Unknown tensor property: "magnetic" \(known: pyroelectric, piezoelectric, gyrotropic\)/,
+      /Unknown tensor property: "magnetic" \(known: pyroelectric, ferroaxial, piezoelectric, gyrotropic\)/,
     );
     expect(() => classes.allowsProperty('3', { rank: 1 } as unknown as classes.TensorPropertyName)).toThrow(
       /Unknown tensor property/,
@@ -263,6 +285,8 @@ describe('the crystallographic API refuses what involves time reversal', () => {
       (ops: readonly classes.Operation[]) => classes.tensorFormOf(ops, 'piezoelectric'),
       (ops: readonly classes.Operation[]) => classes.allowsPropertyOf(ops, 'piezoelectric'),
       (ops: readonly classes.Operation[]) => classes.allowedPropertiesOf(ops),
+      (ops: readonly classes.Operation[]) => classes.isCentrosymmetricOf(ops),
+      (ops: readonly classes.Operation[]) => classes.isChiralOf(ops),
     ];
     const marked = (timeReversal: unknown) => [{ matrix: white[0].matrix, timeReversal } as classes.Operation];
     for (const call of calls) {
