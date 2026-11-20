@@ -6,6 +6,8 @@ All notable changes to symcrys are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-11-20
+
 ### Added
 
 - Two entry points with the same function names (#47). `symcrys` is the crystallographic API: the
@@ -57,7 +59,9 @@ All notable changes to symcrys are recorded here. The format follows
   `m'2'm`, 5 `mm'2'`, 6 `2'mm'`, which ITC Vol. D and Paufler print. Two settings share each
   `uniqueAxis` (the normal of the mirror plane without time reversal), so for this group the symbol
   or the index identifies a setting, not the axis.
-- `references/`: the 30 diagrams of ITC Vol. D § 1.1.4.10.6 (pp. 27–29), the matrices of the
+- `references/`: Birss Tables 6 and 7, ITC Vol. D Tables 1.5.2.3, 1.5.2.4, 1.5.7.1 and 1.5.8.1 and
+  Paufler's Table A 6 (orthorhombic rows), re-parsed by the tests of the magnetic point groups and
+  their tensor forms; and the 30 diagrams of ITC Vol. D § 1.1.4.10.6 (pp. 27–29), the matrices of the
   fourth-rank tensors p, π, Q, c and s for all 32 classes and the spherical system; the tests now check the full rank-4 forms
   of the ITC convention against them, not only the numbers of independent components (#39). No
   calculated result changed.
@@ -74,12 +78,25 @@ All notable changes to symcrys are recorded here. The format follows
     (Python: no `time_reversal`). A list of operations passed in may still carry
     `timeReversal: false`; `true` is a `RangeError`.
   - `TensorSpec` has no `timeParity` (Python: no `time_parity`). `timeParity: 'i'` is still
-    accepted; `'c'` is a `RangeError` (in 0.5.0 it gave the form of the time-even tensor).
+    accepted; `'c'` is a `RangeError` (in 0.5.0 `tensorForm` gave the form of the time-even tensor
+    for it).
   - `PointGroup` has no `type` (it was `'I'` for every class). The types `PointGroupType` and
     `TimeParity` are exported by the magnetic API only.
   - A key of a magnetic point group, the name of a time-odd property, a time-odd tensor and an
     operation with time reversal are a `RangeError` (Python: `SymcrysError`) that names the
     magnetic API.
+- A matrix that contains NaN is refused as not orthogonal by `tensorFormOf` and `rotateTensor`
+  (0.5.0 computed with it).
+
+### Fixed
+
+- `tensorFormOf` (Python: `tensor_form_of`) for operations given without `timeReversal`
+  (`time_reversal`) that are not a complete group, e.g. generators: the closure combined them with
+  time-reversed copies, and the form had too many components (a twofold axis alone: three free
+  components of a polar vector instead of one). Wrong since 0.4.0, in Python since 0.5.0; fixed in
+  0.6.0. Not affected: a complete group, operations with `timeReversal: false`, and TypeScript
+  callers, for whom the type required `timeReversal`. The crystallographic API now reads such an
+  operation as its matrix; the magnetic API refuses it and asks for `timeReversal`.
 
 ### Removed
 
@@ -207,7 +224,8 @@ All notable changes to symcrys are recorded here. The format follows
 - Project scaffold: TypeScript build to `dist/` (ES modules with type declarations), tests, lint,
   format check, CI and release workflow. The only export so far is `VERSION`.
 
-[Unreleased]: https://github.com/manganite/symcrys/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/manganite/symcrys/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/manganite/symcrys/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/manganite/symcrys/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/manganite/symcrys/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/manganite/symcrys/compare/v0.3.0...v0.3.1

@@ -206,8 +206,8 @@ bundle:python`, then in `packages/python` `pip install -e ".[test]"`, `mypy` and
   sources. Findings are verified, then fixed or answered, and listed in the PR ("Review").
 - **Merge only on Thomas' explicit OK.**
 - **Repository settings** (maintainer, 2026-11-08): the ruleset `main` allows changes only
-  through a pull request, merged with a merge commit, with `gates (22)` and `gates (24)` green on
-  a branch up to date with `main`; no force push, no deletion. It requires no approval, because
+  through a pull request, merged with a merge commit, with `gates (22)`, `gates (24)`,
+  `python (3.10)` and `python (3.x)` green on a branch up to date with `main`; no force push, no deletion. It requires no approval, because
   GitHub does not let Thomas approve his own PRs; his OK stays a process rule. Admins may bypass
   only through a pull request (e.g. when a check itself is broken), never by pushing directly.
   Squash and rebase merges are off, head branches are deleted after merge.
@@ -221,8 +221,8 @@ bundle:python`, then in `packages/python` `pip install -e ".[test]"`, `mypy` and
 - **PyPI** (maintainer, 2026-11-19): the same tag builds sdist and wheel, attaches them to the
   GitHub release, and the job `pypi` of `release.yml` publishes them by trusted publishing. It runs
   in the GitHub environment `pypi`, which needs **Thomas' approval** of each run; the trusted
-  publisher on pypi.org names this repository, `release.yml` and `pypi`. The name `symcrys` is
-  taken on PyPI only by the first real release (pending publisher, no placeholder).
+  publisher on pypi.org names this repository, `release.yml` and `pypi`. No placeholder package:
+  the name `symcrys` was taken on PyPI by the first real release, 0.5.0.
 - Commits end with `Co-Authored-By: …`; in sessions with a link (claude.ai) also with
   `Claude-Session: …`. On Thomas' computer commit with
   `git config user.email 6277652+manganite@users.noreply.github.com` (GitHub rejects the private

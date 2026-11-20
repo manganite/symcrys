@@ -5,15 +5,15 @@ build-backend = "hatchling.build"
 [project]
 name = "symcrys"
 # Equal to packages/ts/package.json (one version for both packages; checked by the tests of both).
-version = "0.5.0"
-description = "Crystallographic symmetry calculations: point groups, their settings, symbols, site symmetry and Wyckoff positions, and the forms of property tensors. The TypeScript library symcrys of the same version, in an embedded JavaScript engine."
+version = "0.6.0"
+description = "Crystallographic symmetry calculations: point groups (crystallographic and magnetic), their settings, symbols, site symmetry and Wyckoff positions, and the forms of property tensors. The TypeScript library symcrys of the same version, in an embedded JavaScript engine."
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
 authors = [{ name = "Thomas Lottermoser" }]
 requires-python = ">=3.10"
 dependencies = ["quickjs-ng>=0.18", "numpy>=1.23"]
-keywords = ["crystallography", "symmetry", "point-groups", "tensors", "second-harmonic-generation"]
+keywords = ["crystallography", "symmetry", "point-groups", "magnetic-point-groups", "tensors", "second-harmonic-generation"]
 classifiers = [
   "Programming Language :: Python :: 3",
   "Topic :: Scientific/Engineering :: Physics",
