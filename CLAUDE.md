@@ -318,12 +318,12 @@ Decided by Thomas on 2026-11-20 (#29), asked before implementation.
   `TENSOR_PROPERTIES`. A failing example fails the gate `docs`.
 - **Conventions are included, not copied**: `docs/conventions.md` is a page of the site.
 - **Only the newest version** on the site, which names it in its title; versioned pages from 1.0.0
-  on, when the API holds still.
+  on, when the API holds still (#57).
 - **Short READMEs** (root, `packages/ts` for npm, `packages/python` for PyPI): what symcrys is, how
   to install, one short example, the link to the site. The root README keeps development and
   releases.
 - **An API report** (`@microsoft/api-extractor`, which ships TypeScript 6.0.3 itself) comes later,
-  in a PR of its own.
+  in a PR of its own (#56).
 - **A PATCH release of its own** (0.6.1) puts the site online with the generated docstrings.
 
 ### Point groups
