@@ -21,11 +21,11 @@ MAGNETIC = "magnetic."
 class TensorForm(TypedDict):
     rank: int
     basis: NDArray[np.float64]
-    """Shape (number of parameters, 3**rank): reduced row echelon form, flat index in C order."""
+    """Of shape (number of parameters, 3**rank), in reduced row echelon form; flat index in C order."""
     parameters: NDArray[np.int64]
-    """Shape (number of parameters, rank): the components that are the free parameters."""
+    """Of shape (number of parameters, rank); the components that are the free parameters."""
     relations: NDArray[np.float64]
-    """Shape (3**rank - number of parameters, 3**rank): rows r with r @ t = 0 for every allowed t."""
+    """Of shape (3**rank - number of parameters, 3**rank); rows r with r @ t = 0 for every allowed t."""
 
 
 class SiteSymmetry(TypedDict):

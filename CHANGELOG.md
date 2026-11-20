@@ -6,6 +6,23 @@ All notable changes to symcrys are recorded here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- A documentation site, [manganite.github.io/symcrys](https://manganite.github.io/symcrys/) (#29):
+  getting started in TypeScript and Python, the two readings of a key (crystal class or magnetic
+  point group), the conventions, tensors and named properties (the table made from
+  `TENSOR_PROPERTIES`), the example notebook on SHG at surfaces, and the reference for both
+  languages. Built from the tag and published on GitHub Pages with each release; every example and
+  notebook on it is executed when it is built.
+
+### Changed
+
+- The docstrings of the Python package are written from the TSDoc comments of the TypeScript
+  sources (#29), so both languages have the same description of every function; they gained a
+  section on the keyword arguments and, where NumPy arrays come back, their shapes and dtypes.
+  Every export has a TSDoc comment. No change to the API or to calculated results.
+- `homepage` of the npm package and `Documentation` of the Python package point to the site.
+
 ## [0.6.0] - 2026-11-20
 
 ### Added

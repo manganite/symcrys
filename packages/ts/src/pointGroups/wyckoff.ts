@@ -38,6 +38,7 @@ export interface WyckoffPosition {
   readonly millerIndices: string;
   /** A representative face with numbers: `millerIndices` with h = 3, k = 2, l = 1. */
   readonly representative: {
+    /** The Miller indices (hkl) of the face. */
     readonly hkl: Hkl;
     /**
      * Its face normal, a Cartesian unit vector. Monoclinic and triclinic: the normal for a, b, c along
@@ -49,6 +50,7 @@ export interface WyckoffPosition {
   readonly siteSymmetryOperations: readonly number[];
 }
 
+/** Convention and setting (`SettingOptions`) and the tolerance of `siteSymmetry` (`SiteSymmetryOptions`). */
 export type WyckoffOptions = SettingOptions & SiteSymmetryOptions;
 
 /** The values substituted into ITA's Miller indices for the numeric representative. */

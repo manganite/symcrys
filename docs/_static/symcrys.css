@@ -1,0 +1,15 @@
+/* Output of a TypeScript example (docs/_ext/symcrys_docs.py, ts-example). */
+p.ts-output-label {
+  margin-bottom: 0.25rem;
+  font-size: 0.85em;
+  color: var(--color-foreground-secondary);
+}
+div.ts-output pre,
+pre.ts-output {
+  background: var(--color-background-secondary);
+}
+/* The generated table of named properties scrolls on narrow screens instead of overflowing. */
+table.tensor-properties {
+  display: block;
+  overflow-x: auto;
+}

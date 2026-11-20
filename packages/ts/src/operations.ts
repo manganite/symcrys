@@ -11,7 +11,9 @@ import { EPSILON } from './tolerances.js';
  * combined with time reversal if `timeReversal` is true (a primed operation).
  */
 export interface Operation {
+  /** The orthogonal Cartesian 3×3 matrix, rows first. */
   readonly matrix: Mat3;
+  /** True if the operation is combined with time reversal (a primed operation). */
   readonly timeReversal: boolean;
 }
 

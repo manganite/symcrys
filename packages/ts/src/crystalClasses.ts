@@ -30,6 +30,7 @@ const USE_MAGNETIC =
 
 /** A point operation: an orthogonal Cartesian matrix (rotation, rotoinversion, mirror, inversion). */
 export interface Operation {
+  /** The orthogonal Cartesian 3×3 matrix, rows first. */
   readonly matrix: Mat3;
 }
 
@@ -38,7 +39,9 @@ export interface Operation {
  * the setting or the convention (docs/conventions.md, "Properties").
  */
 export interface PointGroup {
+  /** The key (docs/conventions.md, "Keys"). */
   readonly key: PointGroupKey;
+  /** The crystal system. */
   readonly crystalSystem: CrystalSystem;
   /** Number of operations. */
   readonly order: number;
@@ -54,7 +57,9 @@ export interface PointGroup {
 
 /** A crystal class in a given setting. */
 export interface PointGroupInSetting {
+  /** The key of the crystal class. */
   readonly key: PointGroupKey;
+  /** The 1-based index of the setting. */
   readonly setting: number;
 }
 
@@ -63,8 +68,11 @@ export type OperationDescription = Omit<elements.OperationDescription, 'timeReve
 
 /** The kind of tensor. */
 export interface TensorSpec {
+  /** Number of indices, 0 to 4. */
   readonly rank: TensorRank;
+  /** `'polar'` or `'axial'`: whether an improper operation changes the sign (factor det R). */
   readonly parity: TensorParity;
+  /** The index symmetry of the tensor. */
   readonly intrinsic: IntrinsicSymmetry;
 }
 
@@ -73,11 +81,18 @@ export interface TensorSpec {
  * operation of the magnetic API without time reversal can be handed on from plain JavaScript; with
  * `timeReversal: true` it is refused, at compile time and at run time.
  */
-type OperationArgument = Operation & { readonly timeReversal?: false };
+type OperationArgument = Operation & {
+  /** Accepted if false; an operation with time reversal belongs to the magnetic API. */
+  readonly timeReversal?: false;
+};
 
 /** A tensor specification as a caller may pass it; `timeParity: 'i'` is accepted, `'c'` refused. */
-type TensorSpecArgument = TensorSpec & { readonly timeParity?: 'i' };
+type TensorSpecArgument = TensorSpec & {
+  /** Accepted if `'i'`; a time-odd tensor belongs to the magnetic API. */
+  readonly timeParity?: 'i';
+};
 
+/** A named property: the tensor that describes it, what it is and where it is defined. */
 export interface TensorProperty {
   /** The kind of tensor whose non-zero form means that the property is allowed. */
   readonly spec: TensorSpec;
@@ -308,7 +323,7 @@ export function describeOperations(key: PointGroupKey, options?: SettingOptions)
  * positions of the crystal family are listed, also those the symbol of the class leaves out (then
  * without `symbol`); the triclinic family has none. The directions keep the sign of Table 2.1.3.1
  * in both conventions; in the Birss convention an axis of `describeOperations` may be reversed, so
- * match it to a direction by |dot| = 1, not by identity.
+ * match it to a direction whose dot product with it is ±1, not by identity.
  */
 export function symmetryDirections(
   key: PointGroupKey,

@@ -45,13 +45,16 @@ export type PointGroupType = 'I' | 'II' | 'III';
  * setting or the convention (docs/conventions.md, "Properties").
  */
 export interface PointGroup<K extends MagneticPointGroupKey = PointGroupKey> {
+  /** The key (docs/conventions.md, "Keys"). */
   readonly key: K;
+  /** `'I'` crystal class (white group), `'II'` grey group, `'III'` black-and-white group (docs/conventions.md, "Types"). */
   readonly type: PointGroupType;
   /**
    * The crystal class of the group: the group itself for a class, otherwise the class it becomes
    * when time reversal is dropped from every operation.
    */
   readonly crystalClass: PointGroupKey;
+  /** The crystal system of the crystal class. */
   readonly crystalSystem: CrystalSystem;
   /** Number of operations. */
   readonly order: number;
@@ -68,6 +71,7 @@ export interface PointGroup<K extends MagneticPointGroupKey = PointGroupKey> {
   readonly laueClass: PointGroupKey;
 }
 
+/** A setting of a point group: an orientation of its symmetry directions in the Cartesian frame (docs/conventions.md, "Settings"). */
 export interface Setting {
   /** 1-based; the same physical frame in both conventions. */
   readonly index: number;
@@ -86,6 +90,7 @@ export interface Setting {
   readonly isDefault: boolean;
 }
 
+/** Which convention and which setting a function answers in. */
 export interface SettingOptions {
   /** Default `'itc'`. */
   readonly convention?: Convention;
@@ -93,6 +98,7 @@ export interface SettingOptions {
   readonly setting?: number;
 }
 
+/** Convention, setting and form of a symbol. */
 export interface SymbolOptions extends SettingOptions {
   /**
    * `'short'` (default): short symbol of the setting, e.g. `321` (ITC) for class `32`.
@@ -475,7 +481,7 @@ export function pointGroups(): readonly PointGroup[] {
 }
 
 /**
- * All 122 magnetic point groups, in the order of `MAGNETIC_POINT_GROUP_KEYS`: the 32 crystal
+ * All 122 magnetic point groups, in the order of `POINT_GROUP_KEYS` of the magnetic API: the 32 crystal
  * classes (type I), the 32 grey groups (type II) in the same order, and the 58 black-and-white
  * groups (type III) in the order of ITC Vol. D Table 1.5.2.3.
  */
@@ -528,7 +534,7 @@ export function operations(key: MagneticPointGroupKey, options?: SettingOptions)
  * convention: ITA's selected generators in printed order, without the identity and ITA's lattice
  * translations, so the list is empty for `1`; for `mm2` settings 2 and 3, which ITA does not list,
  * those of setting 1 carried into their frame; for a magnetic group, those of its class with the
- * time reversal they have in the group, for a grey group followed by 1'. Birss convention:
+ * time reversal they have in the group, for a grey group followed by `1'`. Birss convention:
  * birss-app's generators (for `1` the identity, as in birss-app).
  */
 export function generators(key: MagneticPointGroupKey, options?: SettingOptions): readonly Operation[] {
@@ -550,7 +556,9 @@ export function symbol(key: MagneticPointGroupKey, options?: SymbolOptions): str
 
 /** A point group in a given setting. */
 export interface PointGroupInSetting<K extends MagneticPointGroupKey = PointGroupKey> {
+  /** The key of the point group. */
   readonly key: K;
+  /** The 1-based index of the setting. */
   readonly setting: number;
 }
 

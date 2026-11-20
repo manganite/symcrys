@@ -21,13 +21,13 @@ apply here. Where this file and another document disagree on process, this file 
 
 ## Layout
 
-| Path                   | What                                                                                                |
-| ---------------------- | --------------------------------------------------------------------------------------------------- |
-| `packages/ts`          | the npm package `symcrys`: `src/`, `dist/`, `package.json`, `tsconfig.build.json`, a README for npm |
-| `packages/python`      | the PyPI package `symcrys`: `pyproject.toml`, `src/symcrys/`, `tests/`, `examples/`                 |
-| `references/`, `docs/` | shared by both packages                                                                             |
-| `scripts/`, `audit/`   | repository tools: `check-dist.mjs`, `bundle-python.mjs`; the audits against sibling checkouts       |
-| root `package.json`    | private npm workspace: the dev dependencies and the gates                                           |
+| Path                   | What                                                                                                                   |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `packages/ts`          | the npm package `symcrys`: `src/`, `dist/`, `package.json`, `tsconfig.build.json`, a README for npm                    |
+| `packages/python`      | the PyPI package `symcrys`: `pyproject.toml`, `src/symcrys/`, `tests/`, `examples/`                                    |
+| `references/`, `docs/` | shared by both packages; `docs/` is also the source of the documentation site                                          |
+| `scripts/`, `audit/`   | repository tools: `check-dist.mjs`, `bundle-python.mjs`, `python-docstrings.mjs`; the audits against sibling checkouts |
+| root `package.json`    | private npm workspace: the dev dependencies and the gates                                                              |
 
 Below, `src/`, `dist/` and `tsconfig.build.json` without a prefix are those of `packages/ts`.
 Decision on the layout (maintainer, 2026-11-19, #30): two package folders, as first proposed in
@@ -63,7 +63,9 @@ crystallography-common's `sync.mjs --kern` is `packages/ts` of a symcrys checkou
 | Changes per version                                                                      | `CHANGELOG.md` (Keep a Changelog)           |
 | Supported versions, how to report a vulnerability                                        | `SECURITY.md`                               |
 | Open work, ideas, open questions                                                         | GitHub issues of this repository            |
-| Conventions (axis frames, settings, symbols, ITC vs Birss) with their literature anchors | `docs/`                                     |
+| Conventions (axis frames, settings, symbols, ITC vs Birss) with their literature anchors | `docs/conventions.md`                       |
+| Guides and examples for users (the documentation site)                                   | `docs/` (Sphinx with MyST)                  |
+| What a function or type does                                                             | its TSDoc comment in `packages/ts/src`      |
 | Transcribed reference tables re-parsed by tests                                          | `references/`, with source and printed page |
 
 Documentation describes the **current state**, not how it was reached. Material taken over from
@@ -185,6 +187,18 @@ Carried over from birss-app, where the calculations come from.
   errors of the library raise `SymcrysError`, a `ValueError`. A new export of `src/index.ts` gets
   its Python function in `symcrys`, one of `src/magnetic.ts` in `symcrys.magnetic`, in the same PR;
   a test fails until it has one.
+- **One description of every export: its TSDoc comment** (maintainer, 2026-11-20, #29). The
+  TypeScript reference is generated from it (TypeDoc), and so are the docstrings of the Python
+  functions and constants (`scripts/python-docstrings.mjs`, `npm run docs:python`, which rewrites
+  them in `symcrys/__init__.py` and `symcrys/magnetic.py`), by the rules above: names in
+  snake_case, the options object as a "Parameters" section of keyword arguments, `RangeError` as
+  `SymcrysError`, `undefined`/`true`/`false` as `None`/`True`/`False`. Hand-written for Python is
+  only what Python alone has, the shapes and dtypes of the NumPy arrays
+  (`packages/python/docstrings.json`), and the module docstrings. So the summary of a TSDoc comment
+  is written for both languages; what holds for TypeScript only (a frozen result, a test that keeps
+  a value in step) goes into `@remarks`, which the Python docstrings leave out. The docstrings are
+  committed, so that editors show them; the gate `docs` fails if one is missing or stale, or if a
+  TypeScript name is left in it. A PR that changes a TSDoc comment runs `npm run docs:python`.
 - **The engine stays replaceable** (#30): the whole boundary is one function, `call(name,
 argsJson) → resultJson` (`_engine.py`, `scripts/bundle-python.mjs`; a name of the magnetic API has
   the prefix `magnetic.`), so another backend
@@ -199,8 +213,12 @@ argsJson) → resultJson` (`_engine.py`, `scripts/bundle-python.mjs`; a name of 
 - **Gates**, run by CI on every PR on Node 22 and 24: `typecheck`, `typecheck:ts7`, `lint`,
   `format:check`, `test`, `build`, `check:dist`; and `python` on Python 3.10 and the newest
   (bundle, build sdist and wheel, install the wheel into a fresh environment, `mypy --strict`,
-  `pytest`; maintainer, 2026-11-19, from the first PR of the Python package). A report names all
-  eight with their result; a skipped one is named as skipped. Locally: `npm run build && npm run
+  `pytest`; maintainer, 2026-11-19, from the first PR of the Python package); and `docs` (#29):
+  `npm run docs:check` (TypeDoc with every warning an error: an undocumented export, a broken
+  link, a referenced type that is not exported; the Python docstrings current; the TypeScript
+  examples of the site type-check), `npm run docs:site` (Sphinx with `-W -n`: every example and
+  notebook executed, every reference resolved) and `npm run docs:linkcheck` (external links). A
+  report names all nine with their result; a skipped one is named as skipped. Locally: `npm run build && npm run
 bundle:python`, then in `packages/python` `pip install -e ".[test]"`, `mypy` and `pytest`.
 - **Review by an independent agent** before reporting to Thomas, on every PR without exception:
   an agent that does not know the work gets only repository, branch and purpose and checks the
@@ -213,6 +231,11 @@ bundle:python`, then in `packages/python` `pip install -e ".[test]"`, `mypy` and
   GitHub does not let Thomas approve his own PRs; his OK stays a process rule. Admins may bypass
   only through a pull request (e.g. when a check itself is broken), never by pushing directly.
   Squash and rebase merges are off, head branches are deleted after merge.
+- **Documentation site** (#29): built from the tag by `release.yml` (jobs `site` and `pages`) and
+  published on GitHub Pages, [manganite.github.io/symcrys](https://manganite.github.io/symcrys/).
+  Settings by Thomas: Pages with the source "GitHub Actions", and a deployment rule for tags
+  `v*.*.*` on the environment `github-pages`. Whether the ruleset `main` requires the check `docs`
+  is Thomas' decision (open as of 2026-11-21).
 - **Releases:** procedure in `README.md`. The release PR is merged on Thomas' OK; **Thomas sets
   the tag by hand** (maintainer, 2026-11-08). Before tagging, `origin/main` must be the release
   PR's merge commit; afterwards `release.yml` must be green.
@@ -276,6 +299,32 @@ bundle:python`, then in `packages/python` `pip install -e ".[test]"`, `mypy` and
   maps resolve; the apps copy only `dist/`.
 - **`exports` with `default`, not `import`** (2026-11-08): `require('symcrys')` then works too
   (Node 22.12+ can require ES modules), and so do tools that resolve only `default`.
+
+### Documentation
+
+Decided by Thomas on 2026-11-20 (#29), asked before implementation.
+
+- **Sphinx with MyST** for the site, `myst-nb` for the notebooks and the pages with Python code
+  cells, autodoc with napoleon for the Python reference, and the HTML of TypeDoc beside it (`ts/`).
+  Material for MkDocs, first proposed in #29, reached its end of life on 2026-11-05, and its
+  successor Zensical was at 0.1 with preliminary support for API references. The tools are pinned
+  in `docs/requirements.txt` and the dev dependencies (TypeDoc 0.28, which accepts TypeScript 6.0,
+  and `typedoc-plugin-missing-exports`, which documents the internal types that public signatures
+  name), never dependencies of the packages.
+- **Everything shown runs**: a TypeScript example of the site is a file in `docs/examples`, run
+  with Node against the build when the site is built (directive `ts-example`,
+  `docs/_ext/symcrys_docs.py`), its output shown as printed; Python code cells and the notebooks of
+  `packages/python/examples` are executed; the table of named properties is made from
+  `TENSOR_PROPERTIES`. A failing example fails the gate `docs`.
+- **Conventions are included, not copied**: `docs/conventions.md` is a page of the site.
+- **Only the newest version** on the site, which names it in its title; versioned pages from 1.0.0
+  on, when the API holds still (#57).
+- **Short READMEs** (root, `packages/ts` for npm, `packages/python` for PyPI): what symcrys is, how
+  to install, one short example, the link to the site. The root README keeps development and
+  releases.
+- **An API report** (`@microsoft/api-extractor`, which ships TypeScript 6.0.3 itself) comes later,
+  in a PR of its own (#56).
+- **A PATCH release of its own** (0.6.1) puts the site online with the generated docstrings.
 
 ### Point groups
 

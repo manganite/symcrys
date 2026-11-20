@@ -112,11 +112,17 @@ export const BLACK_WHITE_POINT_GROUP_KEYS = Object.freeze([
   "m'-3'm",
 ] as const);
 
-export type BlackWhitePointGroupKey = (typeof BLACK_WHITE_POINT_GROUP_KEYS)[number];
+/** The key of one of the 58 black-and-white magnetic point groups. */
+// `Extract<…, string>`: the same type, named by the documentation (see `PointGroupKey`).
+export type BlackWhitePointGroupKey = Extract<(typeof BLACK_WHITE_POINT_GROUP_KEYS)[number], string>;
 
 /** Keys of all 122 magnetic point groups: the 32 crystal classes, the 32 grey groups, the 58 black-and-white groups. */
 export type MagneticPointGroupKey = PointGroupKey | GreyPointGroupKey | BlackWhitePointGroupKey;
 
+/**
+ * Keys of the 122 magnetic point groups: the 32 crystal classes (white groups), the 32 grey groups
+ * and the 58 black-and-white groups, in this order (docs/conventions.md, "Keys").
+ */
 export const MAGNETIC_POINT_GROUP_KEYS: readonly MagneticPointGroupKey[] = Object.freeze([
   ...POINT_GROUP_KEYS,
   ...GREY_POINT_GROUP_KEYS,

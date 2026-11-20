@@ -31,7 +31,7 @@ const TEST_ONLY = [
 ];
 
 export default defineConfig([
-  { ignores: ['**/dist/', 'coverage/', '**/node_modules/', 'references/', 'packages/python/'] },
+  { ignores: ['**/dist/', 'coverage/', '**/node_modules/', 'references/', 'packages/python/', 'build/'] },
   { linterOptions: { reportUnusedDisableDirectives: 'error' } },
   js.configs.recommended,
   tseslint.configs.recommended,
@@ -63,7 +63,7 @@ export default defineConfig([
     },
   },
   {
-    files: [...TEST_ONLY, 'scripts/**', 'audit/**', '*.config.{js,ts}'],
+    files: [...TEST_ONLY, 'scripts/**', 'audit/**', 'docs/examples/**', '*.config.{js,ts}'],
     languageOptions: { globals: globals.node },
   },
 ]);

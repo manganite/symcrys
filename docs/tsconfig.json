@@ -1,0 +1,7 @@
+{
+  // Type check of the TypeScript examples of the site (docs/examples), against the build of this
+  // checkout: run by the gate docs after `npm run build` (the examples import 'symcrys').
+  "extends": "../tsconfig.json",
+  "compilerOptions": { "allowImportingTsExtensions": true },
+  "include": ["examples/**/*.ts"]
+}

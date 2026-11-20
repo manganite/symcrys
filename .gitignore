@@ -9,3 +9,6 @@ __pycache__/
 .pytest_cache/
 .mypy_cache/
 .venv/
+# Documentation site (npm run docs:ts, docs:site; the notebooks are copied in by the Sphinx build)
+build/
+docs/examples/notebooks/
