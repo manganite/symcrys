@@ -91,4 +91,5 @@ html_theme_options = {
 }
 html_show_sourcelink = False
 
-linkcheck_ignore = [r"https://github\.com/manganite/symcrys/(issues|pull)/.*"]
+# The site itself goes online with the release that builds it; its pages are checked as documents.
+linkcheck_ignore = [r"https://github\.com/manganite/symcrys/(issues|pull)/.*", r"https://manganite\.github\.io/symcrys/.*"]

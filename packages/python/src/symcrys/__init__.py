@@ -280,8 +280,7 @@ def symmetry_directions(
     positions of the crystal family are listed, also those the symbol of the class leaves out (then
     without ``symbol``); the triclinic family has none. The directions keep the sign of Table
     2.1.3.1 in both conventions; in the Birss convention an axis of ``describe_operations`` may be
-    reversed, so match it to a direction by the absolute value of their dot product (1), not by
-    identity.
+    reversed, so match it to a direction whose dot product with it is ±1, not by identity.
 
     Parameters
     ----------
@@ -336,8 +335,8 @@ def site_symmetry(
     ----------
     tolerance : keyword-only, optional
         A direction counts as fixed by an operation if the operation moves its unit vector by less
-        than this (Euclidean distance). Default ``EPSILON`` (10⁻⁶); a caller whose directions carry
-        rounding errors (e.g. read from a rounded link) passes a larger value.
+        than this (Euclidean distance). Default 10⁻⁶; a caller whose directions carry rounding
+        errors (e.g. read from a rounded link) passes a larger value.
 
     Returns
     -------
@@ -393,8 +392,8 @@ def wyckoff_position_of(
         1-based setting index; default: the default setting of the convention.
     tolerance : keyword-only, optional
         A direction counts as fixed by an operation if the operation moves its unit vector by less
-        than this (Euclidean distance). Default ``EPSILON`` (10⁻⁶); a caller whose directions carry
-        rounding errors (e.g. read from a rounded link) passes a larger value.
+        than this (Euclidean distance). Default 10⁻⁶; a caller whose directions carry rounding
+        errors (e.g. read from a rounded link) passes a larger value.
 
     Returns
     -------

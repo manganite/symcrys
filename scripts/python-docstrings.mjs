@@ -51,14 +51,21 @@ const problems = [];
 /** Converts the inside of a code span from TypeScript to Python. */
 /** @param {string} code */
 function codeToPython(code) {
-  return code
-    .replace(/symcrys\/magnetic/g, 'symcrys.magnetic')
-    .replace(/\)\.([A-Za-z_]\w*)/g, (_, /** @type {string} */ key) => `)["${snake(key)}"]`)
-    .replace(/\b[a-z][a-z0-9]*(?:[A-Z][a-z0-9]*)+\b/g, snake)
-    .replace(/\bundefined\b/g, 'None')
-    .replace(/\btrue\b/g, 'True')
-    .replace(/\bfalse\b/g, 'False')
-    .replace(/\bRangeError\b/g, 'SymcrysError');
+  return (
+    code
+      .replace(/symcrys\/magnetic/g, 'symcrys.magnetic')
+      .replace(/\)\.([A-Za-z_]\w*)/g, (_, /** @type {string} */ key) => `)["${snake(key)}"]`)
+      // camelCase names outside quoted strings: a string value goes to Python as it is.
+      .replace(
+        /('[^']*'|"[^"]*")|\b([a-z][a-z0-9]*(?:[A-Z][a-z0-9]*)+)\b/g,
+        (/** @type {string} */ m, /** @type {string | undefined} */ quoted, /** @type {string} */ name) =>
+          quoted ?? snake(name),
+      )
+      .replace(/\bundefined\b/g, 'None')
+      .replace(/\btrue\b/g, 'True')
+      .replace(/\bfalse\b/g, 'False')
+      .replace(/\bRangeError\b/g, 'SymcrysError')
+  );
 }
 
 /** Converts running text: the few TypeScript words that name something else in Python. */
@@ -69,13 +76,7 @@ function textToPython(text) {
     .replace(/\bthrows a RangeError\b/g, 'raises SymcrysError')
     .replace(/\bis a RangeError\b/g, 'raises SymcrysError')
     .replace(/\bRangeError\b/g, 'SymcrysError')
-    .replace(/\bReturns undefined\b/g, 'Returns None')
-    .replace(
-      /\b(the )?magnetic API \(`?magnetic\.ts`?, `symcrys\/magnetic`\)/g,
-      '$1magnetic API (``symcrys.magnetic``)',
-    )
-    .replace(/\(`index\.ts`\)/g, '(``symcrys``)')
-    .replace(/\(`magnetic\.ts`\)/g, '(``symcrys.magnetic``)');
+    .replace(/\bReturns undefined\b/g, 'Returns None');
 }
 
 /** TypeDoc's comment parts as reStructuredText (double backticks for code). */
@@ -92,6 +93,12 @@ function render(parts, where) {
       out += '``' + codeToPython(inner) + '``';
     } else if (part.kind === 'inline-tag') out += '``' + codeToPython(part.text) + '``';
     else problems.push(`${where}: unknown comment part ${part.kind}`);
+  }
+  // A Python string literal: no backslash (an escape), no triple quote (the end of the docstring).
+  if (/\\|"""/.test(out)) problems.push(`${where}: backslash or triple quote in the text`);
+  // In running text these are TypeScript values; written as code, they are converted.
+  if (/\b(true|false|undefined)\b/.test(out.replace(/``[^`]*``/g, ''))) {
+    problems.push(`${where}: true, false or undefined outside code`);
   }
   // reStructuredText would read |…| as a substitution.
   if (/\|/.test(out.replace(/``[^`]*``/g, '')))
@@ -252,6 +259,7 @@ function quote(lines, indent) {
  */
 function docstringEnd(src, i) {
   const line = src[i]?.trim() ?? '';
+  if (/^([rRuU]+"""|''')/.test(line)) throw new Error(`line ${i + 1}: write a docstring as plain """…"""`);
   if (!line.startsWith('"""')) return i;
   if (line.length > 3 && line.endsWith('"""') && line !== '"""') return i + 1;
   let j = i + 1;
@@ -298,9 +306,8 @@ function update(module) {
         problems.push(`${where}: no function ${py} in ${module.py}`);
         continue;
       }
-      let body = def;
-      while (!/\)\s*(->.*)?:\s*$/.test(src[body])) body++;
-      body++;
+      // The body starts after the line on which the signature closes (brackets balanced).
+      const body = statementEnd(src, def);
       const want = quote(functionDocstring(decl, extra, where, '    '), '    ');
       const end = docstringEnd(src, body);
       if (src.slice(body, end).join('\n') !== want.join('\n')) stale.push(py);

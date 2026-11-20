@@ -202,9 +202,14 @@ jobs:
         with:
           path: build/docs/html
 
+  # Published only after both packages were submitted (npm staged, PyPI approved), so that the site
+  # does not show a version that pip cannot install.
   pages:
-    needs: site
+    needs: [site, npm, pypi]
     runs-on: ubuntu-latest
+    concurrency:
+      group: pages
+      cancel-in-progress: false
     environment:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}

@@ -534,7 +534,7 @@ export function operations(key: MagneticPointGroupKey, options?: SettingOptions)
  * convention: ITA's selected generators in printed order, without the identity and ITA's lattice
  * translations, so the list is empty for `1`; for `mm2` settings 2 and 3, which ITA does not list,
  * those of setting 1 carried into their frame; for a magnetic group, those of its class with the
- * time reversal they have in the group, for a grey group followed by 1'. Birss convention:
+ * time reversal they have in the group, for a grey group followed by `1'`. Birss convention:
  * birss-app's generators (for `1` the identity, as in birss-app).
  */
 export function generators(key: MagneticPointGroupKey, options?: SettingOptions): readonly Operation[] {

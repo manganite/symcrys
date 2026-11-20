@@ -246,7 +246,7 @@ export function tensorForm(
  * surface normal (`siteSymmetry`) or the operations of a distorted crystal. The tensor is given by
  * its specification or by the name of a property in `TENSOR_PROPERTIES`. The operations are
  * Cartesian and orthogonal, and each says whether it is combined with time reversal
- * (`timeReversal`, true or false); a list that is not closed is closed first.
+ * (`timeReversal`, `true` or `false`); a list that is not closed is closed first.
  */
 export function tensorFormOf(operations: readonly Operation[], spec: TensorSpec | TensorPropertyName): TensorForm {
   const resolved = specOf(spec);

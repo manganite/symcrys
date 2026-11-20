@@ -276,8 +276,7 @@ export function describeOperations(
  * positions of the crystal family are listed, also those the symbol of the class leaves out (then
  * without `symbol`); the triclinic family has none. The directions keep the sign of Table 2.1.3.1
  * in both conventions; in the Birss convention an axis of `describeOperations` may be reversed, so
- * match it to a direction by the absolute value of their dot product (1), not by
- * identity.
+ * match it to a direction whose dot product with it is ±1, not by identity.
  */
 export function symmetryDirections(key: MagneticPointGroupKey, options?: SettingOptions): readonly SymmetryDirection[] {
   return analysis(key, options).directions;

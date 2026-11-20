@@ -178,7 +178,7 @@ def generators(key: str, *, convention: Optional[Convention] = None, setting: Op
     ITC convention: ITA's selected generators in printed order, without the identity and ITA's
     lattice translations, so the list is empty for ``1``; for ``mm2`` settings 2 and 3, which ITA
     does not list, those of setting 1 carried into their frame; for a magnetic group, those of its
-    class with the time reversal they have in the group, for a grey group followed by 1'. Birss
+    class with the time reversal they have in the group, for a grey group followed by ``1'``. Birss
     convention: birss-app's generators (for ``1`` the identity, as in birss-app).
 
     Parameters
@@ -284,8 +284,7 @@ def symmetry_directions(
     positions of the crystal family are listed, also those the symbol of the class leaves out (then
     without ``symbol``); the triclinic family has none. The directions keep the sign of Table
     2.1.3.1 in both conventions; in the Birss convention an axis of ``describe_operations`` may be
-    reversed, so match it to a direction by the absolute value of their dot product (1), not by
-    identity.
+    reversed, so match it to a direction whose dot product with it is ±1, not by identity.
 
     Parameters
     ----------
@@ -341,8 +340,8 @@ def site_symmetry(
     ----------
     tolerance : keyword-only, optional
         A direction counts as fixed by an operation if the operation moves its unit vector by less
-        than this (Euclidean distance). Default ``EPSILON`` (10⁻⁶); a caller whose directions carry
-        rounding errors (e.g. read from a rounded link) passes a larger value.
+        than this (Euclidean distance). Default 10⁻⁶; a caller whose directions carry rounding
+        errors (e.g. read from a rounded link) passes a larger value.
 
     Returns
     -------
@@ -397,7 +396,7 @@ def tensor_form_of(
     surface normal (``site_symmetry``) or the operations of a distorted crystal. The tensor is given
     by its specification or by the name of a property in ``TENSOR_PROPERTIES``. The operations are
     Cartesian and orthogonal, and each says whether it is combined with time reversal
-    (``time_reversal``, true or false); a list that is not closed is closed first.
+    (``time_reversal``, ``True`` or ``False``); a list that is not closed is closed first.
 
     Returns
     -------

@@ -85,8 +85,9 @@ except symcrys.SymcrysError as e:
     print(e)
 ```
 
-Each call costs about a millisecond, the forms of rank-4 tensors up to a few tenths of a second: fetch
-operations and forms once, then compute with NumPy.
+A call costs about a millisecond once its result is cached; the first call for a group takes up to
+about 0.1 s, the form of a rank-4 tensor up to a few tenths of a second. Fetch operations and forms
+once, then compute with NumPy.
 
 ## What to read next
 

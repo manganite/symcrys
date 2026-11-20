@@ -21,13 +21,13 @@ apply here. Where this file and another document disagree on process, this file 
 
 ## Layout
 
-| Path                   | What                                                                                                |
-| ---------------------- | --------------------------------------------------------------------------------------------------- |
-| `packages/ts`          | the npm package `symcrys`: `src/`, `dist/`, `package.json`, `tsconfig.build.json`, a README for npm |
-| `packages/python`      | the PyPI package `symcrys`: `pyproject.toml`, `src/symcrys/`, `tests/`, `examples/`                 |
-| `references/`, `docs/` | shared by both packages; `docs/` is also the source of the documentation site                       |
-| `scripts/`, `audit/`   | repository tools: `check-dist.mjs`, `bundle-python.mjs`; the audits against sibling checkouts       |
-| root `package.json`    | private npm workspace: the dev dependencies and the gates                                           |
+| Path                   | What                                                                                                                   |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `packages/ts`          | the npm package `symcrys`: `src/`, `dist/`, `package.json`, `tsconfig.build.json`, a README for npm                    |
+| `packages/python`      | the PyPI package `symcrys`: `pyproject.toml`, `src/symcrys/`, `tests/`, `examples/`                                    |
+| `references/`, `docs/` | shared by both packages; `docs/` is also the source of the documentation site                                          |
+| `scripts/`, `audit/`   | repository tools: `check-dist.mjs`, `bundle-python.mjs`, `python-docstrings.mjs`; the audits against sibling checkouts |
+| root `package.json`    | private npm workspace: the dev dependencies and the gates                                                              |
 
 Below, `src/`, `dist/` and `tsconfig.build.json` without a prefix are those of `packages/ts`.
 Decision on the layout (maintainer, 2026-11-19, #30): two package folders, as first proposed in
@@ -324,7 +324,7 @@ Decided by Thomas on 2026-11-20 (#29), asked before implementation.
   releases.
 - **An API report** (`@microsoft/api-extractor`, which ships TypeScript 6.0.3 itself) comes later,
   in a PR of its own.
-- **A PATCH release of its own** (0.6.1) put the site online with the generated docstrings.
+- **A PATCH release of its own** (0.6.1) puts the site online with the generated docstrings.
 
 ### Point groups
 

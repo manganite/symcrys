@@ -2,8 +2,9 @@
 
 Crystallographic symmetry calculations: the 32 crystal classes and the 122 magnetic point groups,
 with their settings, symbols, symmetry elements, site symmetry and Wyckoff positions, and the forms
-of the property tensors (rank 0 to 4) they allow. Every result is checked against print: the
-_International Tables for Crystallography_ (ITC) and Birss, _Symmetry and Magnetism_ (1966).
+of the property tensors (rank 0 to 4) they allow. The results are checked against print, the
+_International Tables for Crystallography_ (ITC) and Birss, _Symmetry and Magnetism_ (1966), and,
+where print leaves a choice open, against birss-app.
 
 One implementation, two packages of the same version:
 
