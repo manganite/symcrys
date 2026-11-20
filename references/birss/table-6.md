@@ -11,10 +11,9 @@ every column. Seven Shubnikov entries of birss-tables were corrected here agains
 operator of `4/m'mm` that birss-tables held corrected without a note is given as printed again
 (Errata). The differences were reported in manganite/birss-tables#3; since manganite/birss-tables#4
 birss-tables has the same Shubnikov entries and records the operator of `4/m'mm` as a misprint,
-as it does the additional generating matrix of `6'/m'mm'`. Two
-cells differ by design: for the operator of `4/m'mm` and the additional generating matrix of
-`6'/m'mm'` birss-tables enters the corrected value, this file keeps the print and lists the
-correction under "Errata".
+as it does the additional generating matrix of `6'/m'mm'`. Two cells differ by design: for the
+operator of `4/m'mm` and the additional generating matrix of `6'/m'mm'` birss-tables enters the
+corrected value, this file keeps the print and lists the correction under "Errata".
 The column "Symmetry operators" holds the printed operations in the notation described below (a
 prime for Birss's underline, placed on the operation); the order of the terms within a row is not
 always the printed one.
