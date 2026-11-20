@@ -22,7 +22,7 @@ classifiers = [
 
 [project.urls]
 Homepage = "https://github.com/manganite/symcrys"
-Documentation = "https://github.com/manganite/symcrys/blob/main/docs/conventions.md"
+Documentation = "https://manganite.github.io/symcrys/"
 Issues = "https://github.com/manganite/symcrys/issues"
 
 [project.optional-dependencies]

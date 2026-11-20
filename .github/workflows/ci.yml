@@ -85,3 +85,42 @@ jobs:
       - name: Test (pytest, against the installed wheel)
         working-directory: packages/python
         run: /tmp/venv/bin/pytest -p no:cacheprovider
+
+  # The documentation site (docs/, #29): TypeDoc fails on an undocumented export, a broken link
+  # or a referenced type that is not exported; the Python docstrings must be those written from
+  # the TSDoc comments; the TypeScript examples type-check; Sphinx builds the site with every
+  # example and notebook executed and every reference resolved, then checks the external links.
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+      - name: Set up Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.x'
+      - name: Install Node dependencies
+        run: npm ci
+      - name: Build and bundle the TypeScript package
+        run: |
+          npm run build
+          npm run bundle:python
+      - name: Install the Python package and the documentation tools
+        run: python -m pip install -e packages/python -r docs/requirements.txt
+      - name: TypeDoc, Python docstrings, examples
+        run: npm run docs:check
+      - name: Build the site
+        run: npm run docs:site
+      - name: Check the links
+        run: npm run docs:linkcheck
+      - name: Keep the site
+        uses: actions/upload-artifact@v6
+        with:
+          name: site
+          path: build/docs/html
+          if-no-files-found: error

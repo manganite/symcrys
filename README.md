@@ -30,18 +30,10 @@ set of operations, from birss-app; results are numbers (coefficient matrices). R
 SVG, relation strings, view models) and translated display names stay in the applications that use
 symcrys.
 
-**Conventions.** Point groups follow the _International Tables for Crystallography_ by default
-(Vol. A for the crystal classes, Vol. D Ch. 1.5 for the magnetic point groups). The convention of
-Birss, _Symmetry and Magnetism_ (1966), is available as an option. Where the two differ is
-documented in [`docs/conventions.md`](docs/conventions.md).
-
-**Two entry points.** `symcrys` is the crystallographic API: the 32 crystal classes, without time
-reversal. `symcrys/magnetic` is the magnetic API: the 122 magnetic point groups, under the same
-function names. The import decides how a key is read. In a purely crystallographic application
-`'32'` is a crystal class, that of quartz. Where magnetism plays a part, `'32'` is a white group,
-the symmetry of a magnetically ordered crystal, and quartz has the grey group `"321'"`. A question
-that involves time reversal is an error in the crystallographic API
-([`docs/conventions.md`](docs/conventions.md), "Two entry points").
+**Conventions.** Point groups follow the _International Tables for Crystallography_ by default;
+the convention of Birss, _Symmetry and Magnetism_ (1966), is an option. **Two entry points:**
+`symcrys` for the 32 crystal classes, `symcrys/magnetic` for the 122 magnetic point groups, under the
+same function names; the import decides how a key such as `'32'` is read.
 
 symcrys is the computational core of the crystallography teaching apps
 ([stereography](https://github.com/manganite/stereography),
@@ -49,95 +41,28 @@ symcrys is the computational core of the crystallography teaching apps
 [birss-app](https://github.com/manganite/birss-app); its calculations start from those of
 birss-app.
 
-## Use
+## Documentation
 
-```bash
-npm install symcrys
-```
-
-Each release on GitHub also carries the package as `symcrys-X.Y.Z.tgz`.
+**[manganite.github.io/symcrys](https://manganite.github.io/symcrys/)**: getting started in
+TypeScript and Python, the two readings of a key, the conventions, tensors and named properties,
+examples (second-harmonic generation at surfaces) and the reference for both languages. The
+conventions with their print sources are kept in [`docs/conventions.md`](docs/conventions.md),
+which the site includes.
 
 ```ts
-import {
-  allowedProperties,
-  allowsProperty,
-  crystalFamily,
-  describeOperations,
-  holohedry,
-  operations,
-  pointGroup,
-  settings,
-  siteSymmetry,
-  symbol,
-  symmetryDirections,
-  tensorForm,
-  tensorFormOf,
-  wyckoffPositionOf,
-  wyckoffPositions,
-} from 'symcrys';
+import { allowedProperties, symbol, tensorForm } from 'symcrys';
 
 symbol('32'); // '321': ITC short symbol of the default setting
-symbol('32', { convention: 'birss' }); // '32'
-settings('32'); // setting 1: 312, setting 2: 321 (the ITC default)
-operations('-3m'); // 12 operations, Cartesian matrices; x ∥ a, z ∥ c
-describeOperations('4')[2]; // { kind: 'rotation', order: 4, sense: '+', axis: { lattice: [0, 0, 1], … } }
-symmetryDirections('4mm')[1]; // position 2: symbol 'm', directions [100] and [010], each with a mirror
-wyckoffPositions('4mm')[2]; // { letter: 'b', multiplicity: 4, siteSymmetry: '..m', millerIndices: 'h,h,l', … }
-wyckoffPositionOf('4mm', [0, 0, -1]).letter; // 'a'
-
-const SHG = { rank: 3, parity: 'polar', intrinsic: 'jk' } as const;
-tensorForm('mm2', SHG).parameters; // [[0,0,2], [1,1,2], [2,0,0], [2,1,1], [2,2,2]]: xxz, yyz, zxx, zyy, zzz
-tensorForm('3m', SHG, { convention: 'birss' }).parameters[0]; // [0, 0, 0]: xxx (ITC default 3m1: xxy)
-tensorForm('32', 'piezoelectric').parameters; // [[0,0,0], [0,1,2]]: a property by name, d_111 and d_123
-allowsProperty('432', 'piezoelectric'); // false
+tensorForm('mm2', { rank: 3, parity: 'polar', intrinsic: 'jk' }).parameters; // xxz, yyz, zxx, zyy, zzz
 allowedProperties('32'); // ['piezoelectric', 'gyrotropic']: quartz
-allowedProperties('-3'); // ['ferroaxial']: NiTiO₃; tensorForm('-3', 'ferroaxial').parameters is [[2]], along z
-pointGroup('32'); // { key: '32', crystalSystem: 'trigonal', order: 6, centrosymmetric: false, polar: false, chiral: true, laueClass: '-3m' }
-holohedry('trigonal'); // '-3m'; with hexagonal axes holohedry(crystalFamily('trigonal')): '6/mmm'
-// SHG at the (111) surface of an m-3m crystal: the form under the site symmetry of the normal
-const ops = operations('m-3m');
-tensorFormOf(
-  siteSymmetry(ops, [1, 1, 1]).operations.map((i) => ops[i]),
-  SHG,
-).basis.length; // 4
 ```
-
-The magnetic point groups, with time reversal:
-
-```ts
-import { allowedProperties, operations, pointGroup, tensorForm } from 'symcrys/magnetic';
-
-pointGroup("4'/mmm'"); // { key: "4'/mmm'", type: 'III', crystalClass: '4/mmm', crystalSystem: 'tetragonal', order: 16, centrosymmetric: true, … }
-operations("4'/mmm'")[2]; // { matrix: …, timeReversal: true }
-allowedProperties("m'm'2"); // six of the seven names: all but 'ferroaxial'
-allowedProperties("321'"); // ['piezoelectric', 'gyrotropic']: quartz, the grey group of class 32
-allowedProperties('32'); // the white group 32: also 'magnetoelectric', 'piezomagnetic'
-tensorForm("m'm'2", 'ferromagnetic').parameters; // [[2]]: M_s along z
-tensorForm('mm2', { rank: 3, parity: 'polar', timeParity: 'i', intrinsic: 'jk' }); // a specification names its time parity
-```
-
-A form gives the components by flat index (first index slowest: xyz of rank 3 is 5), the basis in
-reduced row echelon form and the relations as coefficient rows; see
-[`docs/conventions.md`](docs/conventions.md), "Tensors".
-
-Conventions, frames and symbols: [`docs/conventions.md`](docs/conventions.md).
-
-**Python.** The same functions with snake_case names, matrices as NumPy arrays; details and an
-example for SHG at a surface in [`packages/python/README.md`](packages/python/README.md) and the
-notebook [`packages/python/examples/surface-shg.ipynb`](packages/python/examples/surface-shg.ipynb).
 
 ```python
 import symcrys
 
-SHG = {"rank": 3, "parity": "polar", "intrinsic": "jk"}
-symcrys.tensor_form("mm2", SHG)["parameters"]   # array([[0, 0, 2], [1, 1, 2], [2, 0, 0], [2, 1, 1], [2, 2, 2]])
-symcrys.magnetic.allowed_properties("321'")     # ['piezoelectric', 'gyrotropic']: the magnetic API
+symcrys.tensor_form("mm2", {"rank": 3, "parity": "polar", "intrinsic": "jk"})["parameters"]
+symcrys.magnetic.allowed_properties("321'")  # ['piezoelectric', 'gyrotropic']: quartz, the grey group
 ```
-
-Without a build step, copy `dist/` (from the tarball, or built with `npm run build` into
-`packages/ts/dist/`) next to your code and import `dist/index.js` (the magnetic API:
-`dist/magnetic.js`) directly: every module in `dist/` imports only relative `.js` paths. With crystallography-common's `sync.mjs --kern`, a checkout is
-given as `packages/ts` of the symcrys checkout.
 
 ## Development
 
@@ -166,6 +91,22 @@ mypy                                     # type check, strict
 pytest                                   # reads the same references/ and pins as the TypeScript tests
 ```
 
+The documentation site (`docs/`, Sphinx with MyST; the TypeScript reference by TypeDoc) needs
+the built package installed in Python and the documentation tools (`docs/requirements.txt`, not
+dependencies of the packages):
+
+```bash
+npm run build && npm run bundle:python
+python -m pip install -e packages/python -r docs/requirements.txt
+npm run docs:check     # TypeDoc (fails on warnings), Python docstrings current, examples type-check
+npm run docs:site      # build/docs/html: every example and notebook executed, every reference resolved
+npm run docs:linkcheck # external links
+```
+
+The docstrings of the Python package are written from the TSDoc comments: after changing a TSDoc
+comment, run `npm run docs:python` and commit the result (`scripts/python-docstrings.mjs`;
+what only Python has, the shapes of the NumPy arrays, is in `packages/python/docstrings.json`).
+
 Audits under `audit/` compare the code bases symcrys draws on. They are run by hand, with
 [birss-app](https://github.com/manganite/birss-app) and
 [stereography](https://github.com/manganite/stereography) checked out next to this repository:
@@ -173,8 +114,9 @@ Audits under `audit/` compare the code bases symcrys draws on. They are run by h
 captures the pins of the Birss convention as JSON (`packages/ts/src/pointGroups/birssApp.pins.json`
 for the operations of all 122 magnetic point groups, `packages/ts/src/tensors/birssApp.pins.json` for the tensor forms).
 
-CI runs these seven gates on every pull request, on Node 22 and 24, and the gate `python` (bundle,
-build sdist and wheel, install the wheel, `mypy`, `pytest`) on Python 3.10 and the newest. Tests sit next to their
+CI runs these seven gates on every pull request, on Node 22 and 24, the gate `python` (bundle,
+build sdist and wheel, install the wheel, `mypy`, `pytest`) on Python 3.10 and the newest, and the
+gate `docs` (the three `docs:` commands above). Tests sit next to their
 module (`foo.ts`, `foo.test.ts`). Working rules for contributors, human or agent: `CLAUDE.md`.
 
 ## Releases
@@ -191,6 +133,13 @@ module (`foo.ts`, `foo.test.ts`). Working rules for contributors, human or agent
    `npm pack` tarball, the Python sdist and the wheel attached. Check that the workflow is green
    and the release carries `symcrys-X.Y.Z.tgz`, `symcrys-X.Y.Z.tar.gz` and
    `symcrys-X.Y.Z-py3-none-any.whl`.
+
+**Documentation site.** The jobs `site` and `pages` of `release.yml` build the site from the tag
+and publish it on GitHub Pages (environment `github-pages`, no approval). Afterwards the site shows
+the new version in its title: [manganite.github.io/symcrys](https://manganite.github.io/symcrys/).
+This rests on two settings (Thomas): Settings › Pages, source "GitHub Actions"; Settings ›
+Environments › `github-pages`, a deployment rule for tags `v*.*.*` (without it the deployment from
+a tag is refused).
 
 **npm.** The `npm` job of `release.yml` submits the same tarball to npm as a staged version
 (trusted publishing, no token). Its log shows the tarball's shasum and integrity and the stage id. The version

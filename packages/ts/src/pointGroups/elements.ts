@@ -37,6 +37,7 @@ export interface Axis {
 
 /** One point operation described geometrically. */
 export interface OperationDescription {
+  /** What the operation is, without time reversal. */
   readonly kind: OperationKind;
   /**
    * The n of the symbol n or n̄: 1 for the identity and the inversion, 2 for a mirror (m = 2̄),
@@ -50,6 +51,7 @@ export interface OperationDescription {
    * from the tip of `axis` looking towards the origin), `'-'` if by −360°/n.
    */
   readonly sense?: '+' | '-';
+  /** True if the operation is combined with time reversal (a primed operation). */
   readonly timeReversal: boolean;
 }
 
@@ -76,6 +78,7 @@ export interface SymmetryDirection {
    * magnetic group with its primes (`4'/m`).
    */
   readonly symbol?: string;
+  /** The symmetry directions of this position (ITA Table 2.1.3.1), each with the elements along it. */
   readonly directions: readonly DirectionElements[];
 }
 
@@ -273,7 +276,8 @@ export function describeOperations(
  * positions of the crystal family are listed, also those the symbol of the class leaves out (then
  * without `symbol`); the triclinic family has none. The directions keep the sign of Table 2.1.3.1
  * in both conventions; in the Birss convention an axis of `describeOperations` may be reversed, so
- * match it to a direction by |dot| = 1, not by identity.
+ * match it to a direction by the absolute value of their dot product (1), not by
+ * identity.
  */
 export function symmetryDirections(key: MagneticPointGroupKey, options?: SettingOptions): readonly SymmetryDirection[] {
   return analysis(key, options).directions;

@@ -1,0 +1,78 @@
+---
+file_format: mystnb
+kernelspec:
+  name: python3
+  display_name: Python 3
+---
+
+# Tensors and named properties
+
+`tensorForm` (Python `tensor_form`) gives the form of a property tensor under a point group: which
+components are allowed and how they are related. `tensorFormOf` does the same for any list of
+operations, for instance the site symmetry of a surface normal.
+
+## The kind of tensor
+
+A tensor is given by its specification:
+
+| Field        | Values                                         | Meaning                                                               |
+| ------------ | ---------------------------------------------- | --------------------------------------------------------------------- |
+| `rank`       | 0 to 4                                         | number of indices                                                     |
+| `parity`     | `'polar'`, `'axial'`                           | an axial tensor changes sign under improper operations (factor det R) |
+| `timeParity` | `'i'`, `'c'` (magnetic API only)               | a `'c'`-tensor changes sign under time reversal                       |
+| `intrinsic`  | `'none'`, `'ij'`, `'jk'`, `'ij_kl'`, `'voigt'` | the index symmetry                                                    |
+
+Second-harmonic generation, for example, is `{ rank: 3, parity: 'polar', intrinsic: 'jk' }`:
+χ<sub>ijk</sub> = χ<sub>ikj</sub>. The index symmetries are explained in the reference
+(`IntrinsicSymmetry`) and in [Conventions, "Tensors"](conventions.md#tensors).
+
+## The result
+
+A form has
+
+- `basis`: the allowed tensors as rows of length 3<sup>rank</sup>, in reduced row echelon form,
+  components by flat index with the first index slowest (xyz of rank 3 is 5). Every allowed tensor
+  is Σ<sub>k</sub> p<sub>k</sub> · basis[k];
+- `parameters`: the free components as index lists, one per row of `basis`, each the lowest
+  component independent of those before it;
+- `relations`: rows r with r · t = 0 for every allowed tensor t.
+
+```{code-cell} ipython3
+import symcrys
+
+form = symcrys.tensor_form("3m", {"rank": 3, "parity": "polar", "intrinsic": "jk"})
+form["parameters"]
+```
+
+The components depend on the frame, so on the **setting** and on the **convention**: the default
+setting of `3m` is `3m1` in the ITC convention and setting 1 in the Birss convention, which Birss
+writes `3m` and ITC `31m`. The free components differ:
+
+```{code-cell} ipython3
+SHG = {"rank": 3, "parity": "polar", "intrinsic": "jk"}
+[symcrys.tensor_form("3m", SHG, convention=c)["parameters"][0] for c in ("itc", "birss")]
+```
+
+The same setting index gives the same form in both conventions; only the default differs. Settings
+and frames: [Conventions, "Settings"](conventions.md#settings) and
+[Conventions, "Cartesian frame"](conventions.md#cartesian-frame).
+
+## Named properties
+
+A property that is the question whether a tensor is allowed has a name, an entry of
+`TENSOR_PROPERTIES`. The name stands in for the specification in `tensorForm`, `tensorFormOf` and
+`rotateTensor`, and `allowsProperty`, `allowedProperties` (and their `…Of` forms for a list of
+operations) answer whether symmetry allows it. Symmetry only allows a property; whether a crystal
+shows it is a question of the material.
+
+The table is made from `TENSOR_PROPERTIES` of this version:
+
+```{tensor-properties}
+
+```
+
+Second-harmonic generation has the tensor of `'piezoelectric'` and so no name of its own.
+
+```{code-cell} ipython3
+symcrys.allows_property("432", "piezoelectric"), symcrys.tensor_form("-3", "ferroaxial")["parameters"]
+```

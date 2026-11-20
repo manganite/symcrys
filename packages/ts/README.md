@@ -28,5 +28,6 @@ allowedProperties("321'"); // ['piezoelectric', 'gyrotropic']: quartz
 allowedProperties("m'm'2"); // six of the seven names, 'ferromagnetic' among them
 ```
 
-Documentation, conventions (ITC and Birss) and their print sources, and the Python package of the
-same version: [github.com/manganite/symcrys](https://github.com/manganite/symcrys).
+Documentation (getting started, conventions, tensors, examples, reference):
+[manganite.github.io/symcrys](https://manganite.github.io/symcrys/). Source, issues and the Python
+package of the same version: [github.com/manganite/symcrys](https://github.com/manganite/symcrys).

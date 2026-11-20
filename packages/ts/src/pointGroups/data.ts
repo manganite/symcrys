@@ -47,7 +47,10 @@ export const POINT_GROUP_KEYS = Object.freeze([
   'm-3m',
 ] as const);
 
-export type PointGroupKey = (typeof POINT_GROUP_KEYS)[number];
+/** The key of one of the 32 crystal classes (`POINT_GROUP_KEYS`). */
+// `Extract<…, string>` is the same type; written so, the documentation (TypeDoc) names it instead of
+// listing the 32 keys at every use.
+export type PointGroupKey = Extract<(typeof POINT_GROUP_KEYS)[number], string>;
 
 /** A symbol in one convention: the short symbol of the setting and the full symbol, positions separated by spaces. */
 interface SymbolForms {

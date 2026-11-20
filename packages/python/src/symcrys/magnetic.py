@@ -74,14 +74,25 @@ __all__ = [
 ]
 
 VERSION: str = _shared.value(MAGNETIC + "VERSION")
+"""The version of symcrys, the same for the TypeScript and the Python package."""
 POINT_GROUP_KEYS: tuple[str, ...] = tuple(_shared.value(MAGNETIC + "POINT_GROUP_KEYS"))
-"""Keys of the 122 magnetic point groups: the 32 crystal classes (white groups), 32 grey, 58 black-and-white groups."""
+"""Keys of the 122 magnetic point groups: the 32 crystal classes (white groups), the 32 grey groups
+and the 58 black-and-white groups, in this order (docs/conventions.md, "Keys").
+"""
 LATTICE_SYMMETRY_DIRECTIONS: dict[str, list[NDArray[np.int64]]] = _shared.lattice_symmetry_directions(
     MAGNETIC + "LATTICE_SYMMETRY_DIRECTIONS"
 )
-"""Per crystal family, per position of the symbol: the lattice directions [uvw], shape (n, 3)."""
+"""The directions of each position of the full symbol, per family, as printed in ITA Table 2.1.3.1
+(hexagonal family: the row "Hexagonal", which also serves the trigonal classes with hexagonal axes).
+Monoclinic: the full symbol reads along a, b, c (ITA 6th ed. § 2.1.3.15, p. 171), the orthorhombic
+row. Triclinic: no symmetry direction.
+
+In Python: family → one int64 array of shape (n, 3) per position, the n directions [uvw] as rows.
+"""
 TENSOR_PROPERTIES: dict[str, dict[str, Any]] = from_js(_shared.value(MAGNETIC + "TENSOR_PROPERTIES"))
-"""The named tensor properties: name → ``{"spec", "description", "source"}`` (``"gyrotropic"`` is optical activity)."""
+"""The named tensor properties. For each name, the tensor that describes the property, what it is,
+and its print source. ``'gyrotropic'`` is optical activity.
+"""
 
 
 def _call(name: str, *args: Any, floats: bool = False) -> Any:
@@ -92,40 +103,96 @@ def _call(name: str, *args: Any, floats: bool = False) -> Any:
 
 
 def point_groups() -> list[dict[str, Any]]:
-    """The 122 magnetic point groups (types I, II, III): key, type, crystal class, crystal system, order
-    and the properties fixed by the operations (centrosymmetric, polar, chiral, Laue class)."""
+    """All 122 magnetic point groups, in the order of ``POINT_GROUP_KEYS`` of the magnetic API: the
+    32 crystal classes (type I), the 32 grey groups (type II) in the same order, and the 58
+    black-and-white groups (type III) in the order of ITC Vol. D Table 1.5.2.3.
+    """
     return list(_call("pointGroups"))
 
 
 def point_group(key: str) -> dict[str, Any]:
-    """One magnetic point group by its key (``"4'/mmm'"``; ``"32"`` is the white group)."""
+    """The point group with this key: a crystal class or a magnetic point group. Raises SymcrysError
+    for an unknown key.
+    """
     return dict(_call("pointGroup", key))
 
 
 def is_point_group_key(key: str) -> bool:
-    """True for the key of one of the 122 magnetic point groups."""
+    """True if ``key`` is the key of one of the 122 magnetic point groups (the 32 crystal classes
+    included).
+    """
     return bool(_call("isPointGroupKey", key))
 
 
 def find_point_group(hm: str, convention: Optional[Convention] = None) -> Optional[dict[str, Any]]:
-    """Key and setting of the magnetic point group with this symbol (a prime ``'`` for time reversal), or None."""
+    """Finds one of the 122 magnetic point groups (the 32 crystal classes included) by a symbol in
+    the given convention (default ``'itc'``): the short symbol of a setting, a full symbol, or the
+    key (spaces are ignored). A prime ``'`` marks time reversal: ``4'/mmm'``, ``2221'``. A symbol
+    that names one setting gives that setting; the key, and a short symbol that several settings
+    share (the monoclinic ones: ``2'`` for unique axis b and c), give the default setting of the
+    convention. In the Birss convention two keys are the Birss symbol of a setting that is not the
+    default (``mm'm'`` and ``6'/mmm'``, setting 2; Birss prints ``m'm'm`` and ``6'/mm'm`` for these
+    groups) and give that setting, like any symbol. Returns None if nothing matches, also for a
+    value that is not a string. Symbols are written as in this library: ``-`` for the overbar, also
+    in the Birss convention (``m'-3'm``, where Birss prints ``m'3m``; docs/conventions.md, "Where
+    ITC and Birss differ").
+    """
     args = [hm] if convention is None else [hm, convention]
     result = _call("findPointGroup", *args)
     return None if result is None else dict(result)
 
 
 def settings(key: str, convention: Optional[Convention] = None) -> list[dict[str, Any]]:
-    """The settings of a magnetic point group: index, symbols, unique axis, whether default in the convention."""
+    """The settings of a point group, with symbols and the default of the given convention (default
+    ``'itc'``).
+    """
     args = [key] if convention is None else [key, convention]
     return list(_call("settings", *args))
 
 
 def operations(key: str, *, convention: Optional[Convention] = None, setting: Optional[int] = None) -> list[Operation]:
-    """All operations of a magnetic point group in a setting: Cartesian 3×3 matrices and time reversal."""
+    """All operations of the point group in the requested setting (default: the convention's default
+    setting). ITC convention: in ITA's order, identity first, then as ITA numbers the general
+    position of the crystal class; an operation of a magnetic group has the number it has in the
+    class, and a grey group lists the class first, then the same sequence with time reversal. Birss
+    convention: in birss-app's order (docs/conventions.md, "Order of the operations"). The matrices
+    are Cartesian (docs/conventions.md, "Cartesian frame").
+
+    Parameters
+    ----------
+    convention : keyword-only, optional
+        Default ``'itc'``.
+    setting : keyword-only, optional
+        1-based setting index; default: the default setting of the convention.
+
+    Returns
+    -------
+    list of dict
+        Dicts ``{"matrix", "time_reversal"}``; each matrix is a float64 array of shape (3, 3).
+    """
     return list(_call("operations", key, _shared.options(convention=convention, setting=setting)))
 
 
 def generators(key: str, *, convention: Optional[Convention] = None, setting: Optional[int] = None) -> list[Operation]:
+    """Generators of the point group in the requested setting (docs/conventions.md, "Generators").
+    ITC convention: ITA's selected generators in printed order, without the identity and ITA's
+    lattice translations, so the list is empty for ``1``; for ``mm2`` settings 2 and 3, which ITA
+    does not list, those of setting 1 carried into their frame; for a magnetic group, those of its
+    class with the time reversal they have in the group, for a grey group followed by 1'. Birss
+    convention: birss-app's generators (for ``1`` the identity, as in birss-app).
+
+    Parameters
+    ----------
+    convention : keyword-only, optional
+        Default ``'itc'``.
+    setting : keyword-only, optional
+        1-based setting index; default: the default setting of the convention.
+
+    Returns
+    -------
+    list of dict
+        Dicts ``{"matrix", "time_reversal"}``; each matrix is a float64 array of shape (3, 3).
+    """
     return list(_call("generators", key, _shared.options(convention=convention, setting=setting)))
 
 
@@ -136,37 +203,103 @@ def symbol(
     setting: Optional[int] = None,
     form: Optional[Literal["short", "full", "schoenflies"]] = None,
 ) -> str:
+    """A symbol of the point group in the requested convention and setting.
+
+    Parameters
+    ----------
+    convention : keyword-only, optional
+        Default ``'itc'``.
+    setting : keyword-only, optional
+        1-based setting index; default: the default setting of the convention.
+    form : keyword-only, optional
+        ``'short'`` (default): short symbol of the setting, e.g. ``321`` (ITC) for class ``32``.
+        ``'full'``: full symbol, positions separated by spaces, e.g. ``-3 2/m 1``.
+        ``'schoenflies'``: Schoenflies symbol, subscripts written inline (``C3v``, ``D2d``, ``Oh``).
+    """
     return str(_call("symbol", key, _shared.options(convention=convention, setting=setting, form=form)))
 
 
 def crystal_family(system: str) -> str:
+    """The crystal family of a crystal system: trigonal and hexagonal form the hexagonal family."""
     return str(_call("crystalFamily", system))
 
 
 def holohedry(system: str) -> str:
-    """The holohedry of a crystal system: the class that is the point symmetry of its lattice.
-
-    ``holohedry("trigonal")`` is ``"-3m"``; the symmetry of the hexagonal lattice, which the
-    trigonal classes also occur with, is ``holohedry(crystal_family("trigonal"))``, ``"6/mmm"``.
+    """The holohedry of a crystal system: the crystal class that is the point symmetry of a lattice
+    of the system (ITA Table 2.1.1.1, the Laue groups in full boxes). For the trigonal system it is
+    ``-3m``, the symmetry of the rhombohedral lattice. The trigonal classes also occur with the
+    hexagonal lattice, whose symmetry is ``6/mmm``: the holohedry of the crystal family is
+    ``holohedry(crystal_family(system))``, which is what the lattice basis of this library
+    (``lattice_basis``, hexagonal axes for both systems) has.
     """
     return str(_call("holohedry", system))
 
 
 def lattice_basis(family: str) -> NDArray[np.float64]:
-    """Columns a, b, c of the conventional basis in the Cartesian frame (families with fixed angles)."""
+    """The conventional basis vectors a, b, c as the **columns** of a Cartesian matrix, with unit
+    edge lengths. Hexagonal family (hexagonal axes): x ∥ a, z ∥ c, y = z × x, so b points at 120°
+    from a. Orthorhombic, tetragonal, cubic: x ∥ a, y ∥ b, z ∥ c.
+
+    The edge lengths are set to 1 because the symmetry directions of these families, and so the
+    point operations, do not depend on them. For a direction [uvw] that is not a symmetry direction,
+    scale the columns by the real edge lengths first.
+
+    Returns
+    -------
+    numpy.ndarray
+        A float64 array of shape (3, 3), a new array on each call; a, b, c are its columns.
+    """
     return np.asarray(_call("latticeBasis", family, floats=True), dtype=np.float64)
 
 
 def describe_operations(
     key: str, *, convention: Optional[Convention] = None, setting: Optional[int] = None
 ) -> list[dict[str, Any]]:
-    """Kind, order, axis, sense and time reversal of each operation, in the order of ``operations``."""
+    """Each operation of the point group described geometrically, in the order of ``operations`` for
+    the same key and options. Axes are named by the symmetry direction they lie along: in the ITC
+    convention with the sign of ITA Table 2.1.3.1, in the Birss convention signed as birss-app signs
+    them (first non-zero Cartesian component positive); the sign fixes what the sense refers to.
+
+    Parameters
+    ----------
+    convention : keyword-only, optional
+        Default ``'itc'``.
+    setting : keyword-only, optional
+        1-based setting index; default: the default setting of the convention.
+
+    Returns
+    -------
+    list of dict
+        In each, ``axis`` (if present) has ``lattice`` (int64, shape (3,)) and ``cartesian``
+        (float64, shape (3,)).
+    """
     return list(_call("describeOperations", key, _shared.options(convention=convention, setting=setting)))
 
 
 def symmetry_directions(
     key: str, *, convention: Optional[Convention] = None, setting: Optional[int] = None
 ) -> list[dict[str, Any]]:
+    """The positions of the full Hermann–Mauguin symbol in the requested convention and setting,
+    each with its symmetry directions (ITA Table 2.1.3.1) and the symmetry elements along them. All
+    positions of the crystal family are listed, also those the symbol of the class leaves out (then
+    without ``symbol``); the triclinic family has none. The directions keep the sign of Table
+    2.1.3.1 in both conventions; in the Birss convention an axis of ``describe_operations`` may be
+    reversed, so match it to a direction by the absolute value of their dot product (1), not by
+    identity.
+
+    Parameters
+    ----------
+    convention : keyword-only, optional
+        Default ``'itc'``.
+    setting : keyword-only, optional
+        1-based setting index; default: the default setting of the convention.
+
+    Returns
+    -------
+    list of dict
+        Each entry of ``directions`` has ``lattice`` (int64, shape (3,)) and ``cartesian`` (float64,
+        shape (3,)).
+    """
     return list(_call("symmetryDirections", key, _shared.options(convention=convention, setting=setting)))
 
 
@@ -174,18 +307,17 @@ def symmetry_directions(
 
 
 def is_centrosymmetric_of(operations: Sequence[Mapping[str, Any]]) -> bool:
-    """True if the group generated by the operations contains the inversion, not combined with time reversal.
-
-    For a point group given by its key, read ``point_group(key)["centrosymmetric"]``.
+    """True if the group generated by ``operations`` contains the inversion, not combined with time
+    reversal: e.g. for the operations of a distorted crystal. A list that is not closed is closed
+    first. For a point group given by its key, read ``point_group(key)["centrosymmetric"]``.
     """
     return bool(_call("isCentrosymmetricOf", list(operations)))
 
 
 def is_chiral_of(operations: Sequence[Mapping[str, Any]]) -> bool:
-    """True if the group generated by the operations has proper rotations only.
-
-    For a point group given by its key, read ``point_group(key)["chiral"]``. Polar is the named
-    property ``"pyroelectric"``: ``allows_property_of(operations, "pyroelectric")``.
+    """True if the group generated by ``operations`` is chiral: proper rotations only, with or
+    without time reversal (products of proper rotations are proper, so the list need not be closed).
+    For a point group given by its key, read ``point_group(key)["chiral"]``.
     """
     return bool(_call("isChiralOf", list(operations)))
 
@@ -196,7 +328,28 @@ def is_chiral_of(operations: Sequence[Mapping[str, Any]]) -> bool:
 def site_symmetry(
     operations: Sequence[Mapping[str, Any]], direction: ArrayLike, *, tolerance: Optional[float] = None
 ) -> SiteSymmetry:
-    """The operations (indices into ``operations``) that leave a direction fixed, and its multiplicity."""
+    """The site symmetry of ``direction`` (any non-zero vector, Cartesian) under ``operations``,
+    which may be any list of point operations (for instance those of a distorted crystal). Time
+    reversal is ignored: a direction or a face normal is not changed by it. The operations fixing
+    the direction within the tolerance are closed under the products found in the list and the
+    direction is set onto their fixed space, repeated until stable, so that for a group the result
+    is a subgroup and the set direction lies exactly on its elements. For a list that is not a
+    group, ``multiplicity`` may not be an integer. Raises SymcrysError for a zero vector, and if the
+    closed operations fix no common direction (a tolerance far too large, e.g. 0.5).
+
+    Parameters
+    ----------
+    tolerance : keyword-only, optional
+        A direction counts as fixed by an operation if the operation moves its unit vector by less
+        than this (Euclidean distance). Default ``EPSILON`` (10⁻⁶); a caller whose directions carry
+        rounding errors (e.g. read from a rounded link) passes a larger value.
+
+    Returns
+    -------
+    dict
+        ``operations`` int64 array of shape (n,), ``direction`` float64 array of shape (3,),
+        ``multiplicity``, ``general``.
+    """
     return _shared.site(
         _call("siteSymmetry", list(operations), np.asarray(direction), _shared.options(tolerance=tolerance))
     )
@@ -212,10 +365,25 @@ def tensor_form(
     convention: Optional[Convention] = None,
     setting: Optional[int] = None,
 ) -> TensorForm:
-    """The form of a property tensor under a magnetic point group (docs/conventions.md, "Tensors").
+    """The form of a tensor under a point group, a crystal class or a magnetic point group, in the
+    requested setting (default: the default setting of the convention, ``'itc'`` unless given). The
+    tensor is given by its specification or by the name of a property in ``TENSOR_PROPERTIES``
+    (``'piezoelectric'``). The convention matters only through the setting: the same setting index
+    gives the same form in both conventions (docs/conventions.md, "Tensors").
 
-    ``spec``: ``{"rank": 3, "parity": "polar", "time_parity": "i", "intrinsic": "jk"}`` or the name
-    of a property in ``TENSOR_PROPERTIES`` (``"piezoelectric"``).
+    Parameters
+    ----------
+    convention : keyword-only, optional
+        Default ``'itc'``.
+    setting : keyword-only, optional
+        1-based setting index; default: the default setting of the convention.
+
+    Returns
+    -------
+    dict
+        ``basis`` float64 array of shape (p, 3**rank), ``parameters`` int64 array of shape (p,
+        rank), ``relations`` float64 array of shape (3**rank - p, 3**rank), ``rank``; p is the
+        number of free parameters. A row of ``basis`` reshaped to ``(3,) * rank`` is a tensor.
     """
     return _shared.form(
         _call("tensorForm", key, _shared.spec(spec), _shared.options(convention=convention, setting=setting))
@@ -225,34 +393,62 @@ def tensor_form(
 def tensor_form_of(
     operations: Sequence[Mapping[str, Any]], spec: TensorSpec | Mapping[str, Any] | TensorPropertyName
 ) -> TensorForm:
-    """The form under the group generated by any Cartesian operations, e.g. a site symmetry."""
+    """The form of a tensor under the group generated by ``operations``, e.g. the site symmetry of a
+    surface normal (``site_symmetry``) or the operations of a distorted crystal. The tensor is given
+    by its specification or by the name of a property in ``TENSOR_PROPERTIES``. The operations are
+    Cartesian and orthogonal, and each says whether it is combined with time reversal
+    (``time_reversal``, true or false); a list that is not closed is closed first.
+
+    Returns
+    -------
+    dict
+        ``basis`` float64 array of shape (p, 3**rank), ``parameters`` int64 array of shape (p,
+        rank), ``relations`` float64 array of shape (3**rank - p, 3**rank), ``rank``; p is the
+        number of free parameters.
+    """
     return _shared.form(_call("tensorFormOf", list(operations), _shared.spec(spec)))
 
 
 def allows_property(key: str, name: TensorPropertyName) -> bool:
-    """True if the magnetic point group allows the named property (``TENSOR_PROPERTIES``), e.g. ``"piezoelectric"``."""
+    """True if the point group allows the named property, e.g. ``allows_property('-6m2',
+    'piezoelectric')``. It does not depend on setting or convention. Raises SymcrysError for an
+    unknown key or name.
+    """
     return bool(_call("allowsProperty", key, name))
 
 
 def allowed_properties(key: str) -> list[str]:
-    """The named properties the magnetic point group allows, in the order of ``TENSOR_PROPERTIES``."""
+    """The named properties the point group allows, in the order of ``TENSOR_PROPERTIES``."""
     return list(_call("allowedProperties", key))
 
 
 def allows_property_of(operations: Sequence[Mapping[str, Any]], name: TensorPropertyName) -> bool:
-    """True if the group generated by the operations allows the named property."""
+    """True if the group generated by ``operations`` allows the named property, e.g. for the site
+    symmetry of a surface normal or the operations of a distorted crystal.
+    """
     return bool(_call("allowsPropertyOf", list(operations), name))
 
 
 def allowed_properties_of(operations: Sequence[Mapping[str, Any]]) -> list[str]:
-    """The named properties the group generated by the operations allows."""
+    """The named properties the group generated by ``operations`` allows."""
     return list(_call("allowedPropertiesOf", list(operations)))
 
 
 def rotate_tensor(
     tensor: ArrayLike, rotation: ArrayLike, spec: TensorSpec | Mapping[str, Any] | TensorPropertyName
 ) -> NDArray[np.float64]:
-    """The components (flat, length 3**rank) in a frame rotated by the orthogonal matrix ``rotation``."""
+    """The components of ``tensor`` (length 3^rank, flat index) in a frame rotated by the orthogonal
+    matrix ``rotation``: t′_{i…} = f·Σ R_{ia}…R_{…}·t_{a…}, with f = det(R) for an axial tensor and
+    1 for a polar one. To express a tensor in the frame of a surface, pass the matrix whose rows are
+    the new axes in the old frame. Time parity plays no part. The kind of tensor is given by its
+    specification or by the name of a property in ``TENSOR_PROPERTIES``.
+
+    Returns
+    -------
+    numpy.ndarray
+        A float64 array of shape (3**rank,); ``tensor`` may have any shape with 3**rank entries (it
+        is flattened in C order).
+    """
     flat = np.asarray(tensor, dtype=np.float64).reshape(-1)
     return np.asarray(
         _call("rotateTensor", flat, np.asarray(rotation), _shared.spec(spec), floats=True), dtype=np.float64

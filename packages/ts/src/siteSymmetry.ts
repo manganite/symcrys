@@ -7,6 +7,7 @@ import { apply, matricesEqual, multiply, type Vec3 } from './linalg.js';
 import type { Operation } from './operations.js';
 import { EPSILON } from './tolerances.js';
 
+/** Options of `siteSymmetry` and `wyckoffPositionOf`. */
 export interface SiteSymmetryOptions {
   /**
    * A direction counts as fixed by an operation if the operation moves its unit vector by less

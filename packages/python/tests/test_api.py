@@ -29,6 +29,18 @@ def test_every_export_of_the_library_has_its_python_name() -> None:
             assert hasattr(module, name), name
 
 
+def test_every_function_has_its_docstring_from_the_tsdoc() -> None:
+    # Written from the TSDoc comments by scripts/python-docstrings.mjs (#29); whether they are
+    # current is checked by `npm run docs:check` in the gate docs, which needs the TypeScript sources.
+    for module in (symcrys, magnetic):
+        for name in module.__all__:
+            obj = getattr(module, name)
+            if callable(obj) and not isinstance(obj, type) and name not in TYPES:
+                doc = obj.__doc__ or ""
+                assert len(doc.strip()) > 20, f"{module.__name__}.{name} has no docstring"
+                assert not re.search(r"``[^`]*\b[a-z]+[A-Z]\w*[^`]*``", doc), f"{module.__name__}.{name}: camelCase"
+
+
 def test_the_two_modules_have_the_same_names() -> None:
     only_classes = {"magnetic", "wyckoff_position_of", "wyckoff_positions"}
     assert set(symcrys.__all__) - only_classes == set(magnetic.__all__)

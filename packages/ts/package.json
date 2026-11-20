@@ -17,7 +17,7 @@
     "directory": "packages/ts"
   },
   "bugs": "https://github.com/manganite/symcrys/issues",
-  "homepage": "https://github.com/manganite/symcrys#readme",
+  "homepage": "https://manganite.github.io/symcrys/",
   "type": "module",
   "exports": {
     ".": {

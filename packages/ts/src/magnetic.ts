@@ -35,6 +35,7 @@ import type {
 export type CrystalClassKey = ClassKey;
 /** The key of a magnetic point group: a crystal class (white group), a grey or a black-and-white group. */
 export type PointGroupKey = MagneticPointGroupKey;
+/** A magnetic point group with the properties that are fixed by its operations (docs/conventions.md, "Properties"). */
 export type PointGroup<K extends PointGroupKey = PointGroupKey> = PointGroupOf<K>;
 /** A point group in a given setting. */
 export type PointGroupInSetting = PointGroupInSettingOf<PointGroupKey>;

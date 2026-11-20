@@ -6,8 +6,9 @@ on:
     tags:
       - 'v*.*.*'
 
-# Three jobs, so that only the short npm and pypi jobs can obtain an OIDC token for publishing: the
-# release job runs the dev dependencies (install scripts, tests, lint) and never sees such a token.
+# Separate jobs, so that only the short npm, pypi and pages jobs can obtain an OIDC token for
+# publishing: the release and site jobs run the dev dependencies (install scripts, tests, lint) and
+# never see such a token.
 permissions: {}
 
 jobs:
@@ -165,3 +166,52 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: python-dist/
+
+  # The documentation site, built from the tag and published on GitHub Pages (#29). Two jobs, so
+  # that the one that runs the dev dependencies has no token for Pages. The environment
+  # `github-pages` needs a deployment rule for tags `v*.*.*` (GitHub, Settings › Environments),
+  # and Pages its source set to GitHub Actions.
+  site:
+    needs: release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Set up Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.x'
+      - name: Build the site
+        run: |
+          npm ci
+          npm run build
+          npm run bundle:python
+          python -m pip install -e packages/python -r docs/requirements.txt
+          npm run docs:check
+          npm run docs:site
+      - name: Keep the site for Pages
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: build/docs/html
+
+  pages:
+    needs: site
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    permissions:
+      pages: write
+      id-token: write # OIDC token for the Pages deployment
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@v5
