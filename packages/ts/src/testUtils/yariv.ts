@@ -68,7 +68,11 @@ export const cellName = (i: number, mu: number) => `d${i}${mu}`;
 export interface Scheme {
   /** Classes as sorted cell names, the classes sorted. */
   readonly partition: string;
-  /** Sign of each nonzero cell relative to the first cell of its class (reading order: row, then column). */
+  /**
+   * Ratio of each nonzero cell to the first cell of its class (reading order: row, then column): a
+   * sign, ±1, in a scheme drawn with dots and circles; other factors where the print has them
+   * (ITC Vol. D § 1.1.4.10.6: ±2, ±1/2).
+   */
   readonly signs: ReadonlyMap<string, number>;
 }
 
@@ -102,7 +106,7 @@ export function basisScheme(basis: readonly (readonly number[])[]): Scheme {
 /**
  * The scheme of a basis on a grid of cells, each a named component (flat index): cells whose
  * columns over the basis are proportional form a class; the sign is the ratio to the first cell of
- * the class in the order given, which must be ±1 for a scheme drawn with dots and circles.
+ * the class in the order given (±1 for a scheme drawn with dots and circles).
  */
 export function schemeOf(
   basis: readonly (readonly number[])[],
