@@ -12,12 +12,20 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { POINT_GROUP_KEYS, isPointGroupKey, type PointGroupKey } from '../pointGroups/pointGroups.js';
-import { isCentrosymmetric } from '../pointGroups/properties.js';
+import {
+  POINT_GROUP_KEYS,
+  isPointGroupKey,
+  pointGroup,
+  type MagneticPointGroupKey,
+  type PointGroupKey,
+} from '../pointGroups/pointGroups.js';
 import { allowsProperty } from './tensorProperties.js';
 import { expectHeader, readReference, tableRows } from '../testUtils/references.js';
 import { matrixRank } from '../testUtils/rank.js';
 import { tensorForm, type TensorSpec } from './tensorForm.js';
+
+/** The fixed properties of a group, read from its record. */
+const isCentrosymmetric = (key: MagneticPointGroupKey) => pointGroup(key).centrosymmetric;
 
 const PYRO: TensorSpec = { rank: 1, parity: 'polar', timeParity: 'i', intrinsic: 'none' };
 const PIEZO: TensorSpec = { rank: 3, parity: 'polar', timeParity: 'i', intrinsic: 'jk' };

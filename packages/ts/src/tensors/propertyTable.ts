@@ -29,6 +29,11 @@ export const TENSOR_PROPERTIES = Object.freeze({
     'Spontaneous electric polarization, which changes with temperature: a polar vector p_i.',
     'ITC Vol. D (2013), § 1.1.4.4.2, p. 12; classes: ITA (2016) Table 3.2.2.1, p. 738',
   ),
+  ferroaxial: property(
+    { rank: 1, parity: 'axial', timeParity: 'i', intrinsic: 'none' },
+    'Ferroaxial (ferro-rotational) order, e.g. a net rotation of structural units about an axis: an axial vector A_i.',
+    'Hlinka, Privratska, Ondrejkovic & Janovec, Phys. Rev. Lett. 116, 177602 (2016); classes: Birss (1966), Tables 4a and 4c, pp. 56–58',
+  ),
   piezoelectric: property(
     { rank: 3, parity: 'polar', timeParity: 'i', intrinsic: 'jk' },
     'Electric polarization linear in stress, P_i = d_ijk T_jk: a polar tensor of rank 3, symmetric in j, k.',

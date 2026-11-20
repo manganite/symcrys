@@ -1,13 +1,29 @@
 /**
  * Operation-based properties against print (fixture class (a)): ITA Table 2.1.1.1 (Laue groups
- * marked by boxes) and ITA Table 3.2.2.1 (Laue class, pyroelectricity, enantiomorphism of the 21
+ * and holohedries marked by boxes) and ITA Table 3.2.2.1 (Laue class, pyroelectricity, enantiomorphism of the 21
  * noncentrosymmetric classes), re-parsed from references/itc/.
  */
 
 import { describe, expect, it } from 'vitest';
+import { crystalFamily, latticeBasis, type CrystalSystem, type FixedAngleFamily } from '../lattice.js';
+import { det, inverse, multiply } from '../linalg.js';
 import { expectHeader, readReference, tableRows } from '../testUtils/references.js';
-import { POINT_GROUP_KEYS, isPointGroupKey, symbol, type PointGroupKey } from './pointGroups.js';
-import { isCentrosymmetric, isChiral, isPolar, laueClass } from './properties.js';
+import {
+  POINT_GROUP_KEYS,
+  isPointGroupKey,
+  operations,
+  pointGroup,
+  symbol,
+  type MagneticPointGroupKey,
+  type PointGroupKey,
+} from './pointGroups.js';
+import { holohedry } from './properties.js';
+
+/** The fixed properties of a group, read from its record. */
+const isCentrosymmetric = (key: MagneticPointGroupKey) => pointGroup(key).centrosymmetric;
+const isChiral = (key: MagneticPointGroupKey) => pointGroup(key).chiral;
+const isPolar = (key: MagneticPointGroupKey) => pointGroup(key).polar;
+const laueClass = (key: MagneticPointGroupKey) => pointGroup(key).laueClass;
 
 /** ITA Table 2.1.1.1 prints D3h as -62m; the key is -6m2 (docs/conventions.md, "Keys"). */
 const keyOf = (printed: string): PointGroupKey => {
@@ -133,4 +149,67 @@ describe('ITA Table 3.2.2.1: full symbols of the Laue classes', () => {
       expect(symbol(key, { form: 'full' }).replace(/\s+/g, '')).toBe(printed(full));
     });
   }
+});
+
+describe('ITA Table 2.1.1.1: holohedries (Laue groups in full boxes)', () => {
+  /** Crystal system → the class the table marks with a full box in the row of the system. */
+  const printed = new Map<string, PointGroupKey>();
+  for (const r of rows2111.slice(1)) {
+    const marked = r[3]
+      .split(',')
+      .map((s) => s.trim())
+      .filter((s) => /\(H\)$/.test(s));
+    if (marked.length === 0) continue;
+    if (marked.length > 1 || !r[2]) throw new Error(`Table 2.1.1.1: unexpected row ${r.join(' | ')}`);
+    printed.set(r[2].toLowerCase(), keyOf(marked[0].replace(/\s*\(H\)$/, '')));
+  }
+  const SYSTEMS = [...new Set(POINT_GROUP_KEYS.map((key) => pointGroup(key).crystalSystem))];
+
+  it('seven crystal systems, each with one holohedry', () => {
+    expect([...printed.keys()]).toEqual(SYSTEMS);
+    expect(SYSTEMS).toHaveLength(7);
+  });
+
+  for (const system of SYSTEMS) {
+    it(`${system}: ${printed.get(system)}`, () => {
+      const h = holohedry(system);
+      expect(h).toBe(printed.get(system));
+      // Independent of the table: the holohedry is the centrosymmetric class of highest order of its system.
+      const g = pointGroup(h);
+      expect(g.crystalSystem).toBe(system);
+      expect(g.centrosymmetric).toBe(true);
+      const inSystem = POINT_GROUP_KEYS.filter((key) => pointGroup(key).crystalSystem === system);
+      expect(g.order).toBe(Math.max(...inSystem.map((key) => pointGroup(key).order)));
+    });
+  }
+
+  it('the trigonal system has -3m, its family, with hexagonal axes, the lattice symmetry 6/mmm', () => {
+    expect(holohedry('trigonal')).toBe('-3m');
+    expect(holohedry(crystalFamily('trigonal'))).toBe('6/mmm');
+    for (const system of SYSTEMS) {
+      if (system !== 'trigonal') expect(holohedry(crystalFamily(system))).toBe(holohedry(system));
+    }
+    expect(() => holohedry('rhombohedral' as CrystalSystem)).toThrow(/Unknown crystal system: "rhombohedral"/);
+  });
+
+  it('the holohedry of the family maps its lattice onto itself, as does every class of the family', () => {
+    for (const family of ['orthorhombic', 'tetragonal', 'hexagonal', 'cubic'] as FixedAngleFamily[]) {
+      const basis = latticeBasis(family);
+      const toLattice = inverse(basis);
+      /** True if every operation, written in the lattice basis, is a matrix of integers of determinant ±1. */
+      const keepsLattice = (key: PointGroupKey) =>
+        operations(key).every((op) => {
+          const w = multiply(multiply(toLattice, op.matrix), basis);
+          return w.flat().every((x) => Math.abs(x - Math.round(x)) < 1e-9) && Math.abs(Math.abs(det(w)) - 1) < 1e-9;
+        });
+      const h = holohedry(family);
+      expect(keepsLattice(h), family).toBe(true);
+      // Every class of the family keeps the lattice (for the trigonal classes: the hexagonal one), and
+      // none has more operations than the holohedry of the family.
+      for (const key of POINT_GROUP_KEYS.filter((k) => crystalFamily(pointGroup(k).crystalSystem) === family)) {
+        expect(keepsLattice(key), key).toBe(true);
+        expect(pointGroup(key).order, key).toBeLessThanOrEqual(pointGroup(h).order);
+      }
+    }
+  });
 });

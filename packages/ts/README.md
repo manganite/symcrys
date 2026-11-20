@@ -25,7 +25,7 @@ white group, and a crystal without magnetic order has the grey group of its clas
 import { allowedProperties } from 'symcrys/magnetic';
 
 allowedProperties("321'"); // ['piezoelectric', 'gyrotropic']: quartz
-allowedProperties("m'm'2"); // all six, 'ferromagnetic' among them
+allowedProperties("m'm'2"); // six of the seven names, 'ferromagnetic' among them
 ```
 
 Documentation, conventions (ITC and Birss) and their print sources, and the Python package of the

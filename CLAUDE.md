@@ -293,6 +293,21 @@ The conventions themselves are in `docs/conventions.md`; here, what was decided 
   data, symbols and operations; then the `'c'`-tensors and the named tensor properties; then the
   fixed properties of a class as fields of `pointGroup()`; released together as one MINOR. The
   rank-4 forms of ITC Vol. D (#39) follow in a PR of their own.
+- **Fixed properties are fields of `pointGroup()`** (maintainer, 2026-11-20, #41; decided on the
+  call sites of stereography and birss-app, listed in #41): what is fixed once the group is named
+  (`crystalSystem`, `order`, `centrosymmetric`, `polar`, `chiral`, `laueClass`; in the magnetic API
+  also `type`, `crystalClass`) is data of the record, and the functions `isCentrosymmetric`,
+  `isPolar`, `isChiral` and `laueClass` are removed, so that there is one way to ask (MINOR; a
+  consumer that passes a function writes `(key) => pointGroup(key).polar`). A key and a list of
+  operations are two cases: for the operations of a distorted crystal or a site symmetry there are
+  `isCentrosymmetricOf(operations)` and `isChiralOf(operations)`, named like `tensorFormOf` and
+  asking of the list what it asks (orthogonal matrices; in the magnetic API `timeReversal`); polar
+  is there `allowsPropertyOf(operations, 'pyroelectric')`, and a Laue class needs the group
+  identified first. **`holohedry(system)` is a function of the crystal system**, not a field:
+  the holohedry depends on the group only through its system, and both readings for the trigonal
+  classes have a consumer (birss-app shows `-3m`, the holohedry of the trigonal system;
+  stereography needs `6/mmm`, the lattice symmetry in hexagonal axes:
+  `holohedry(crystalFamily(system))`); a field would have had to pick one.
 - **Symmetry elements as structured data** (maintainer, 2026-11-18, #16): symcrys describes each
   operation (`describeOperations`: kind, n, axis, sense, and in the magnetic API time reversal) and the elements along each
   symmetry direction (`symmetryDirections`); strings such as `4⁺ 0,0,z` or `2_z` stay in the
@@ -477,9 +492,19 @@ The conventions are in `docs/conventions.md` ("Tensors"); here, what was decided
   property and does not say the crystal has it; names as adjectives (`'pyroelectric'`,
   `'piezoelectric'`, `'gyrotropic'` for optical activity, `'ferromagnetic'`, `'magnetoelectric'`,
   `'piezomagnetic'`; the three time-odd ones in the magnetic API only, #47); these six and no more
-  for now; `allowedProperties` returns the names only (the
+  for now (`'ferroaxial'` came as the seventh, below); `allowedProperties` returns the names only (the
   form is one `tensorForm` call away); one name per kind of tensor, so second-harmonic generation,
   which has the tensor of `'piezoelectric'`, gets no name of its own.
+- **`'ferroaxial'`, the seventh property** (maintainer, 2026-11-20, #41): Thomas' group works on
+  ferroaxial materials beside chiral ones (NiTiO₃, class `-3`) and asked for a query for "axial".
+  It is a named property like the others, a time-even axial vector, in both APIs; Thomas agreed to
+  the name `'ferroaxial'` rather than "axial", because `'axial'` already is the parity of a tensor
+  and five of the seven properties have an axial tensor. Not a field of `pointGroup()`: a question
+  whether a tensor is allowed is a named property (above), which also serves a list of operations.
+  ITC Vol. D does not tabulate the property; the term is cited from Hlinka et al., _Phys. Rev.
+  Lett._ **116**, 177602 (2016) (in Zotero without PDF, so the 13 classes are not checked against
+  its table), and the print anchor of the classes is Birss's Tables 4a and 4c
+  (`docs/conventions.md`, "Named properties").
 - **A printed form is compared in the setting its symbol names** (2026-11-20): ITC Vol. D § 1.5.7.1
   (p. 134) ties each form to the orientation given by the Hermann–Mauguin symbol and lists further
   orientations in square brackets, so the tests look every printed symbol up among the ITC symbols

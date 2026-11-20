@@ -107,7 +107,7 @@ function names (maintainer, 2026-11-20, #47). The import decides which reading a
 **The crystallographic API has no time reversal.** An operation is its matrix (`{ matrix }`), the
 description of an operation has no `timeReversal`, a point group has no `type`, a tensor
 specification has no time parity, and `TENSOR_PROPERTIES` holds the properties of time-even
-tensors (`'pyroelectric'`, `'piezoelectric'`, `'gyrotropic'`). A question that involves time
+tensors (`'pyroelectric'`, `'ferroaxial'`, `'piezoelectric'`, `'gyrotropic'`). A question that involves time
 reversal is a `RangeError` that names the magnetic API: the key of a magnetic point group, the name
 of a time-odd property (`'ferromagnetic'`), a tensor specification with `timeParity: 'c'`, and an
 operation with `timeReversal: true` in a list of operations. `timeParity: 'i'` and
@@ -116,7 +116,7 @@ reversal can be passed on from JavaScript and Python; the TypeScript types take 
 parity may be `'c'` or whose `timeReversal` may be `true` only after it is narrowed.
 
 **The magnetic API** takes all 122 keys; operations carry `timeReversal`, a tensor specification
-its `timeParity`, and `TENSOR_PROPERTIES` holds all six properties. For a crystal without magnetic
+its `timeParity`, and `TENSOR_PROPERTIES` holds all seven properties. For a crystal without magnetic
 order ask the grey group of its class: `allowedProperties("321'")` gives the properties of quartz,
 `allowedProperties('32')` those of a magnetically ordered crystal with the white group `32`, which
 may be magnetoelectric and piezomagnetic. It has every function of the crystallographic API except
@@ -133,7 +133,8 @@ of time-even tensors and so the same time-even properties. `entryPoints.test.ts`
 all 32 classes.
 
 **Operations passed in.** Where a function takes a list of operations (`tensorFormOf`,
-`allowsPropertyOf`, `allowedPropertiesOf`), the magnetic API asks every operation whether it is
+`allowsPropertyOf`, `allowedPropertiesOf`, `isCentrosymmetricOf`, `isChiralOf`), the matrices must
+be orthogonal (Cartesian), and the magnetic API asks every operation whether it is
 combined with time reversal: `timeReversal` must be `true` or `false`. Operations of the
 crystallographic API, which do not say, are refused there and not read as a white group; a caller
 who means the white group adds `timeReversal: false`, one who means a crystal without magnetic
@@ -337,17 +338,36 @@ a consumer needs them (decision on #13).
 
 ## Properties
 
-`isCentrosymmetric`, `isPolar`, `isChiral` and `laueClass` follow from the operations alone; none
-depends on setting or convention. For a magnetic point group (magnetic API), as in birss-app:
+What is fixed once the group is named is a field of `pointGroup(key)`: `crystalSystem`, `order`,
+`centrosymmetric`, `polar`, `chiral`, `laueClass`, and in the magnetic API also `type` and
+`crystalClass` (maintainer, 2026-11-20, #41). They follow from the operations alone; none depends
+on setting or convention. For a magnetic point group, as in birss-app:
 
-- `isCentrosymmetric`: the group contains the inversion without time reversal. `m'm'm'`, which
+- `centrosymmetric`: the group contains the inversion without time reversal. `m'm'm'`, which
   contains only the inversion combined with time reversal, is not centrosymmetric in this sense;
   its crystal class `mmm` is.
-- `isPolar`, `isChiral`, `laueClass`: those of the crystal class. Time reversal changes neither a
-  polar vector nor handedness.
+- `polar`, `chiral`, `laueClass`: those of the crystal class (`crystalClass`). Time reversal
+  changes neither a polar vector nor handedness. `polar`: a direction is fixed by every operation;
+  `chiral`: proper rotations only; `laueClass`: the class with the inversion added.
 
-Properties that are the question whether a tensor is allowed (piezoelectric, ferromagnetic, …) are
-named tensor properties: `allowsProperty(key, 'piezoelectric')` ("Tensors", "Named properties").
+**For a list of operations** (a site symmetry, the operations of a distorted crystal):
+`isCentrosymmetricOf(operations)` and `isChiralOf(operations)`, for the group the operations
+generate, with what `tensorFormOf` asks of the list ("Two entry points", "Operations passed in").
+Polar is there the named property: `allowsPropertyOf(operations, 'pyroelectric')`. A
+list of operations has no Laue class as a key; a consumer that needs it identifies the group first.
+
+**Holohedry.** `holohedry(system)` is the class that is the point symmetry of the lattice of a
+crystal system, the Laue groups in full boxes of ITA Table 2.1.1.1 (p. 143): `-1`, `2/m`, `mmm`,
+`4/mmm`, `-3m`, `6/mmm`, `m-3m`. It is a function of the system and not a field of the point
+group, because there are two readings for the trigonal classes and both have a consumer: the
+holohedry of the trigonal system is `-3m` (the rhombohedral lattice; birss-app shows it), while
+with hexagonal axes, as symcrys stores the trigonal classes ("Cartesian frame"), the lattice has
+the symmetry `6/mmm`: `holohedry(crystalFamily('trigonal'))` (stereography uses it for the lattice
+of a crystal). For the other six systems the two calls agree.
+
+Properties that are the question whether a tensor is allowed (piezoelectric, ferroaxial,
+ferromagnetic, …) are named tensor properties: `allowsProperty(key, 'piezoelectric')` ("Tensors",
+"Named properties").
 
 ## Order of the operations
 
@@ -617,6 +637,7 @@ tensor relates (`description`) and the print source of the definition (`source`)
 | Name                | Tensor                                  | Property                                             |
 | ------------------- | --------------------------------------- | ---------------------------------------------------- |
 | `'pyroelectric'`    | rank 1, polar, `'i'`                    | spontaneous polarization                             |
+| `'ferroaxial'`      | rank 1, axial, `'i'`                    | ferroaxial (ferro-rotational) order: an axial vector |
 | `'piezoelectric'`   | rank 3, polar, `'i'`, symmetric in j, k | P_i = d_ijk T_jk                                     |
 | `'gyrotropic'`      | rank 2, axial, `'i'`, symmetric         | optical activity: the gyration tensor g_ij           |
 | `'ferromagnetic'`   | rank 1, axial, `'c'`                    | spontaneous magnetization (also ferri-, weak ferro-) |
@@ -627,11 +648,11 @@ tensor relates (`description`) and the print source of the definition (`source`)
 names a group allows, in the order of the table; `allowsPropertyOf(operations, name)` and
 `allowedPropertiesOf(operations)` do the same for any list of operations. None depends on setting
 or convention. `tensorForm(key, 'piezoelectric')` is the form of the tensor the name stands for.
-The crystallographic API has the three time-even names, the magnetic API all six ("Two entry
+The crystallographic API has the four time-even names, the magnetic API all seven ("Two entry
 points"). In the magnetic API a key of type `'I'` is the white group, the symmetry of a
 magnetically ordered crystal ("Types"): `'432'` is magnetoelectric. **A crystal without magnetic
 order has the grey group of its class** (`"4321'"`; quartz `"321'"`), which allows none of the three time-odd
-properties; for the three time-even ones a class, its grey group and the black-and-white groups of
+properties; for the four time-even ones a class, its grey group and the black-and-white groups of
 the class agree. `rotateTensor` takes a name as well.
 Each kind of tensor has one name: second-harmonic generation has the tensor of
 `'piezoelectric'` and is asked for by that name or by its specification. Symmetry only allows a
@@ -640,6 +661,20 @@ that the crystal is a ferromagnet. Counted over the 122 groups: pyroelectric 31,
 gyrotropic 47 (each twice the 10, 20 and 15 classes of ITA Table 3.2.2.1, plus 11, 26 and 17
 black-and-white groups); ferromagnetic 31, magnetoelectric 58, piezomagnetic 66, none of them a grey
 group (ITC Vol. D Tables 1.5.2.4, 1.5.8.1, 1.5.7.1).
+
+**Ferroaxial.** A crystal is ferroaxial if its symmetry allows an axial vector that does not change
+sign under time reversal, e.g. a net rotation of structural units about an axis (NiTiO₃, class
+`-3`). The tensor is that of `'ferromagnetic'` with the other time parity, so the 13 classes are
+the white groups among the 31 ferromagnetic groups: `1`, `-1`, `2`, `m`, `2/m`, `4`, `-4`, `4/m`,
+`3`, `-3`, `6`, `-6`, `6/m`, the classes whose short Hermann–Mauguin symbol (the key) has a single position; the
+vector lies along that symmetry direction (any direction in `1` and `-1`). Seven of them are neither polar nor chiral (`-1`,
+`2/m`, `-4`, `4/m`, `-3`, `-6`, `6/m`). Over the 122 groups: 43 (13 classes, their 13 grey groups,
+17 black-and-white groups). The name is that of Hlinka, Privratska, Ondrejkovic & Janovec, _Phys.
+Rev. Lett._ **116**, 177602 (2016); ITC Vol. D does not tabulate the property, so the print anchor
+of the classes is Birss: Table 4a (pp. 56–57) gives each class its form of an axial tensor of odd
+rank, Table 4c (p. 58) that form at rank 1. The name is `'ferroaxial'` and not "axial" (maintainer,
+2026-11-20): "axial" already names the parity of a tensor (`parity: 'axial'`), and five of the
+seven properties have an axial tensor.
 
 **Rotation.** `rotateTensor(tensor, R, spec)` gives the components in a frame rotated by the
 orthogonal matrix R (rows: the new axes in the old frame), with the factor det(R) for an axial
@@ -690,7 +725,7 @@ ITC symbol, and so are the second trigonal orientations the text of § 1.5.8.1 n
 | ITC symbols of the settings                                                                                                 | ITA Table 3.2.3.2 (headlines, pp. 745–769); ITC Vol. D Table 1.5.2.3 for monoclinic full symbols; the symbol rule (positions: ITA § 2.1.3.4, p. 151; `1` for a direction without symmetry: 5th ed. § 2.2.4.1 (iv), p. 18; monoclinic full symbols: § 2.1.3.15, p. 171) for `2mm`, `m2m` and unique axis c | `itc.reference.test.ts`                                                                                 |
 | ITC operations of every setting                                                                                             | the general positions of ITA Table 3.2.3.2 (pp. 745–769), in the frame of #6; `2mm`, `m2m`, which ITA does not list: their ITC symbol along the symmetry directions of ITA Table 2.1.3.1 (p. 151)                                                                                                         | `itcGeneralPositions.reference.test.ts`, `itc.reference.test.ts`                                        |
 | ITC default settings                                                                                                        | see "Settings" above                                                                                                                                                                                                                                                                                      | `itcSettings.fixtures.ts`                                                                               |
-| centrosymmetric, polar, chiral, Laue class, Schoenflies                                                                     | ITA Table 2.1.1.1 (p. 143, Laue groups), Table 3.2.2.1 (p. 738), Table 3.2.3.2                                                                                                                                                                                                                            | `properties.reference.test.ts`, `itc.reference.test.ts`                                                 |
+| centrosymmetric, polar, chiral, Laue class, holohedry, Schoenflies                                                          | ITA Table 2.1.1.1 (p. 143, Laue groups and holohedries), Table 3.2.2.1 (p. 738), Table 3.2.3.2                                                                                                                                                                                                            | `properties.reference.test.ts`, `itc.reference.test.ts`                                                 |
 | symmetry directions                                                                                                         | ITA Table 2.1.3.1 (p. 151)                                                                                                                                                                                                                                                                                | `symmetryDirections.reference.test.ts`                                                                  |
 | ITC: order of the operations, generators                                                                                    | ITA's selected generators, ITA 5th ed. (2006), Part 7 (pages in `references/itc/vol-a-2006-symmetry-operations.md`), § 2.2.11 (iv) p. 27, § 8.3.5 p. 737, giving the numbering of Table 3.2.3.2                                                                                                           | `elements.reference.test.ts`                                                                            |
 | Magnetic groups, ITC: keys, crystal system, Schoenflies and full symbols, operators of the default setting                  | ITC Vol. D (2013) Table 1.5.2.3 (pp. 111–112): `references/itc/vol-d-table-1.5.2.3.md`; grey groups: eq. (1.5.2.1), p. 110                                                                                                                                                                                | `magnetic.reference.test.ts`                                                                            |
@@ -701,6 +736,7 @@ ITC symbol, and so are the second trigonal orientations the text of § 1.5.8.1 n
 | Wyckoff positions (letter, multiplicity, oriented site symmetry, representative point and face)                             | ITA Table 3.2.3.2 (pp. 745–769): `references/itc/vol-a-table-3.2.3.2-wyckoff-positions.md`; the oriented symbols read along ITA Table 2.1.3.1 (p. 151); `2mm`, `m2m`: derived (above); additional check against the 5th ed. (2006), Table 10.1.2.2, by `audit/wyckoff-2006`                               | `wyckoff.reference.test.ts`                                                                             |
 | tensor forms, Birss convention                                                                                              | Birss Tables 4a–4f (pp. 56–66): `references/birss/table-4a.md` … `table-4f.md`                                                                                                                                                                                                                            | `tensors/birss.reference.test.ts`                                                                       |
 | tensor forms, ITC convention: counts, pyroelectric direction, piezoelectric classes                                         | ITA Table 3.2.2.1 (p. 738)                                                                                                                                                                                                                                                                                | `tensors/itc.reference.test.ts`                                                                         |
+| ferroaxial classes (axial vector, time-even)                                                                                | Birss Table 4a (pp. 56–57) with Table 4c (p. 58): `references/birss/`; the term: Hlinka, Privratska, Ondrejkovic & Janovec, _Phys. Rev. Lett._ **116**, 177602 (2016)                                                                                                                                     | `tensors/tensorProperties.test.ts`                                                                      |
 | rank 3, `'jk'` (SHG, piezoelectric d_ijk): cells, classes, signs; the forms at m-3m surfaces                                | Yariv, _Quantum Electronics_, 2nd ed. (Wiley, 1975), Table 16.1 (pp. 410–411): `references/yariv/table-16.1.md`                                                                                                                                                                                           | `tensors/yariv.reference.test.ts`, `tensors/tensorForm.test.ts`                                         |
 | rank 4, `'ij_kl'` (electric-quadrupole SHG) for 6/mmm, 6mm                                                                  | Hoshi et al., Phys. Rev. B 52, 12355 (1995), Eqs. (11)–(12): `references/hoshi/eqs-11-12.md`                                                                                                                                                                                                              | `tensors/hoshi.reference.test.ts`                                                                       |
 | ITC: axial tensors of rank 2 (forms); rank 4 `'ij_kl'`, `'voigt'` (counts)                                                  | ITC Vol. D (2013) § 1.1.4.10.7 (pp. 29–31), § 1.1.4.10.6 (pp. 27–29): `references/itc/vol-d-*.md`                                                                                                                                                                                                         | `tensors/itcVolD.reference.test.ts`                                                                     |

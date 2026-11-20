@@ -39,7 +39,7 @@ def test_ita_3221_as_read() -> None:
         "Enantiomorphism", "Axial rank-2 (optical activity)",
     ]
     keys = sorted(r[2].replace("-62m", "-6m2") for r in ITA_3221)
-    assert keys == sorted(k for k in symcrys.POINT_GROUP_KEYS if not symcrys.is_centrosymmetric(k))
+    assert keys == sorted(k for k in symcrys.POINT_GROUP_KEYS if not symcrys.point_group(k)["centrosymmetric"])
 
 
 @pytest.mark.parametrize("row", ITA_3221, ids=[r[2] for r in ITA_3221])

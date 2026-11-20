@@ -40,7 +40,8 @@ chi = basis.reshape(-1, 3, 3, 3)                  # chi[k] is the k-th basis ten
 A property has a name where its tensor has one (`symcrys.TENSOR_PROPERTIES`):
 `symcrys.allows_property("432", "piezoelectric")` is `False`, `symcrys.allowed_properties("32")` is
 `["piezoelectric", "gyrotropic"]`, and `symcrys.tensor_form("32", "piezoelectric")` is the form of
-that tensor.
+that tensor. What is fixed once the group is named is a key of `symcrys.point_group("32")`:
+`crystal_system`, `order`, `centrosymmetric`, `polar`, `chiral`, `laue_class`.
 
 ## Crystal classes and magnetic point groups
 
@@ -56,7 +57,7 @@ from symcrys import magnetic
 
 magnetic.allowed_properties("321'")    # ['piezoelectric', 'gyrotropic']: quartz
 magnetic.allowed_properties("32")      # the white group: also 'magnetoelectric', 'piezomagnetic'
-magnetic.allowed_properties("m'm'2")   # all six names of magnetic.TENSOR_PROPERTIES
+magnetic.allowed_properties("m'm'2")   # six of the seven names: all but 'ferroaxial'
 magnetic.tensor_form("m'm'2", "ferromagnetic")["parameters"]   # [[2]]: M_s along z
 ```
 

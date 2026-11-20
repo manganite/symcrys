@@ -4,6 +4,7 @@
  */
 
 import { IDENTITY, conjugate, matricesEqual, multiply, snap, type Mat3 } from './linalg.js';
+import { EPSILON } from './tolerances.js';
 
 /**
  * A point operation: an orthogonal Cartesian matrix (rotation, rotoinversion, mirror, inversion),
@@ -22,6 +23,19 @@ export const IDENTITY_OPERATION: Operation = { matrix: IDENTITY, timeReversal: f
 /** A unitary operation (no time reversal). */
 export function operation(matrix: Mat3): Operation {
   return { matrix, timeReversal: false };
+}
+
+/** Throws unless `m` is orthogonal (mᵀm = 1 within `EPSILON`): the code assumes Cartesian matrices. */
+export function checkOrthogonal(m: Mat3, what: string): void {
+  for (let i = 0; i < 3; i++) {
+    for (let j = 0; j < 3; j++) {
+      const dot = m[0][i] * m[0][j] + m[1][i] * m[1][j] + m[2][i] * m[2][j];
+      // A comparison that is false for NaN, so that a matrix with NaN is refused as well.
+      if (!(Math.abs(dot - (i === j ? 1 : 0)) <= EPSILON)) {
+        throw new RangeError(`${what} is not an orthogonal (Cartesian) matrix: ${JSON.stringify(m)}`);
+      }
+    }
+  }
 }
 
 /**

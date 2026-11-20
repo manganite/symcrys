@@ -20,7 +20,6 @@ import { describe, expect, it } from 'vitest';
 import type { Vec3 } from '../linalg.js';
 import { BIRSS_APP_GROUPS, BIRSS_APP_REVISION, SYMCRYS_KEY, birssAppSettings } from '../testUtils/birssAppPins.js';
 import { describeOperations, type OperationDescription } from './elements.js';
-import { isCentrosymmetric, isChiral, isPolar, laueClass } from './properties.js';
 import {
   MAGNETIC_POINT_GROUP_KEYS,
   crystalClassOf,
@@ -32,6 +31,12 @@ import {
   symbol,
   type MagneticPointGroupKey,
 } from './pointGroups.js';
+
+/** The fixed properties of a group, read from its record. */
+const isCentrosymmetric = (key: MagneticPointGroupKey) => pointGroup(key).centrosymmetric;
+const isChiral = (key: MagneticPointGroupKey) => pointGroup(key).chiral;
+const isPolar = (key: MagneticPointGroupKey) => pointGroup(key).polar;
+const laueClass = (key: MagneticPointGroupKey) => pointGroup(key).laueClass;
 
 const TOL = 1e-9;
 const sameMatrix = (a: readonly (readonly number[])[], b: readonly (readonly number[])[]) =>
@@ -112,6 +117,7 @@ describe('Birss convention = birss-app (pins)', () => {
       it('type, crystal class, default settings, symbols and properties', () => {
         expect(pointGroup(key).type).toBe(g.type);
         expect(crystalClassOf(key)).toBe(g.crystalClass);
+        expect(pointGroup(key).crystalClass).toBe(g.crystalClass);
         expect(settings(key, 'birss').find((s) => s.isDefault)?.index).toBe(g.defaultSetting);
         // The key of birss-app is the Birss symbol of its default setting.
         expect(symbol(key, { convention: 'birss' })).toBe(g.key);
