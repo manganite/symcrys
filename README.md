@@ -180,7 +180,8 @@ module (`foo.ts`, `foo.test.ts`). Working rules for contributors, human or agent
 ## Releases
 
 1. Release PR: version in `packages/ts/package.json`, `package-lock.json` (`npm install
---package-lock-only`), `packages/ts/src/version.ts` and `packages/python/pyproject.toml`; move the `Unreleased` entries of `CHANGELOG.md` under
+--package-lock-only`), `packages/ts/src/version.ts` and `packages/python/pyproject.toml`, and the stored output of
+   `symcrys.VERSION` in `packages/python/examples/surface-shg.ipynb`; move the `Unreleased` entries of `CHANGELOG.md` under
    `## [X.Y.Z] - YYYY-MM-DD` and update the link definitions at the bottom (`[Unreleased]` compares
    `vX.Y.Z...HEAD`, `[X.Y.Z]` compares the previous tag with `vX.Y.Z`).
 2. After the merge: `git fetch origin`, check that `origin/main` is the merge commit of the release PR,
@@ -212,14 +213,13 @@ so its log shows the OIDC exchange. As a fallback, stage the release asset by ha
 (Actions › the run › "Review deployments"), then publishes the same sdist and wheel by trusted
 publishing (no token). Check `pip index versions symcrys` afterwards.
 
-Once, before the first release with the Python package:
+What this rests on (set up for 0.5.0, the first release with the Python package):
 
-1. GitHub, Settings › Environments › New environment `pypi`: "Required reviewers" Thomas,
+1. GitHub, Settings › Environments: the environment `pypi` with Thomas as required reviewer,
    deployment branches and tags limited to tags `v*.*.*`.
-2. pypi.org, Account › Publishing › "Add a new pending publisher": PyPI project name `symcrys`,
-   owner `manganite`, repository `symcrys`, workflow `release.yml`, environment `pypi`. The first
-   upload creates the project; until then the job fails without publishing anything.
-3. Add `python (3.10)` and `python (3.x)` to the required checks of the ruleset `main`.
+2. pypi.org, project `symcrys` › Publishing: the trusted publisher with owner `manganite`,
+   repository `symcrys`, workflow `release.yml`, environment `pypi`.
+3. `python (3.10)` and `python (3.x)` among the required checks of the ruleset `main`.
 
 ## Licence
 
