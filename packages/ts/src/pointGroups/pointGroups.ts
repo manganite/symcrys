@@ -56,7 +56,9 @@ export interface Setting {
   readonly fullSymbol: string;
   /**
    * Monoclinic: the unique axis. Orthorhombic `mm2`: the axis of the twofold rotation. Orthorhombic
-   * magnetic groups with three settings: the axis that is c in setting 1.
+   * magnetic groups with three settings: the axis that is c in setting 1. `2'm'm`, with six
+   * settings, two for each axis: the normal of the mirror plane without time reversal (there the
+   * axis does not identify a setting).
    */
   readonly uniqueAxis?: 'a' | 'b' | 'c';
   /** True for the default setting of the requested convention. */

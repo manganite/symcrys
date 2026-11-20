@@ -81,5 +81,15 @@ export const BIRSS_APP_TENSOR_CLASSES = tensorPins.classes;
 /** The 58 black-and-white groups, under birss-app's keys: time-odd forms (`timeParity: 'c'`). */
 export const BIRSS_APP_TENSOR_MAGNETIC = tensorPins.magnetic;
 
+/**
+ * Settings symcrys has beyond birss-app's (docs/conventions.md, "Settings of the magnetic groups"):
+ * symcrys key → setting indices. They follow birss-app's settings, whose indices stay.
+ */
+export const SETTINGS_BEYOND_BIRSS_APP: Readonly<Record<string, readonly number[]>> = { "2'm'm": [4, 5, 6] };
+
+/** The setting indices birss-app is expected to have for a group, given those of symcrys. */
+export const birssAppSettings = (key: string, indices: readonly number[]): number[] =>
+  indices.filter((i) => !(SETTINGS_BEYOND_BIRSS_APP[key] ?? []).includes(i));
+
 /** birss-app's keys are Birss symbols; for two groups the key of symcrys, the ITC short symbol, differs. */
 export const SYMCRYS_KEY: Readonly<Record<string, string>> = { "m'm'm": "mm'm'", "6'/mm'm": "6'/mmm'" };

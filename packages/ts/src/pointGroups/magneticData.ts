@@ -18,8 +18,11 @@ import {
   MIRROR_Y,
   MIRROR_Z,
   MONOCLINIC_B,
+  ORTHO_SWAP,
   ORTHO_TO_A,
+  ORTHO_TO_A_SWAP,
   ORTHO_TO_B,
+  ORTHO_TO_B_SWAP,
   POINT_GROUP_DATA,
   POINT_GROUP_KEYS,
   ROT2_X,
@@ -165,7 +168,7 @@ function blackWhite(
 /**
  * The 58 black-and-white groups. The generators are birss-app's (CLAUDE.md, "birss-app is the
  * reference where print leaves a choice open"); the group they generate is checked against Birss's
- * Table 6 and against ITC Vol. D Table 1.5.2.3. Setting frames as for the classes (data.ts); the
+ * Table 6 and against ITC Vol. D Table 1.5.2.3. Setting frames as for the classes (data.ts), with three more for `2'm'm`; the
  * ITC default is the frame in which the key, read along ITA's symmetry directions, describes the
  * group, which is the frame of the operators printed in Table 1.5.2.3.
  */
@@ -186,11 +189,17 @@ export const BLACK_WHITE_DATA: readonly BlackWhiteData[] = [
     'a',
     'b',
   ]),
-  blackWhite("2'm'm", 'mm2', 'C2v(Cs)', [operation(MIRROR_Z), primed(ROT2_X)], [SAME, ORTHO_TO_A, ORTHO_TO_B], 1, [
-    'c',
-    'a',
-    'b',
-  ]),
+  // Its three elements all differ, so exchanging two axes gives another orientation: six settings.
+  // Settings 1 to 3 are birss-app's; 4 to 6 exchange the other two axes at the same unique axis.
+  blackWhite(
+    "2'm'm",
+    'mm2',
+    'C2v(Cs)',
+    [operation(MIRROR_Z), primed(ROT2_X)],
+    [SAME, ORTHO_TO_A, ORTHO_TO_B, ORTHO_SWAP, ORTHO_TO_A_SWAP, ORTHO_TO_B_SWAP],
+    1,
+    ['c', 'a', 'b', 'c', 'a', 'b'],
+  ),
   blackWhite(
     "mm'm'",
     'mmm',

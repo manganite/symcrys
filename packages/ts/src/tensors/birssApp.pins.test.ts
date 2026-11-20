@@ -14,6 +14,7 @@ import {
   BIRSS_APP_TENSOR_MAGNETIC,
   BIRSS_APP_TENSOR_REVISION,
   SYMCRYS_KEY,
+  birssAppSettings,
   type BirssAppTensorClass,
 } from '../testUtils/birssAppPins.js';
 import { tensorForm, type TimeParity } from './tensorForm.js';
@@ -26,9 +27,14 @@ const indicesOf = (flat: number, rank: number): number[] =>
 const keyOf = (c: BirssAppTensorClass) => (SYMCRYS_KEY[c.key] ?? c.key) as MagneticPointGroupKey;
 
 function describePins(list: readonly BirssAppTensorClass[], timeParity: TimeParity): void {
-  it('cover all settings of each group and 26 specifications each', () => {
+  it('cover all settings birss-app has of each group and 26 specifications each', () => {
     for (const c of list) {
-      expect(settings(keyOf(c), 'birss').map((s) => s.index)).toEqual(c.settings.map((s) => s.setting));
+      expect(
+        birssAppSettings(
+          keyOf(c),
+          settings(keyOf(c), 'birss').map((s) => s.index),
+        ),
+      ).toEqual(c.settings.map((s) => s.setting));
       for (const s of c.settings) expect(s.forms).toHaveLength(26);
     }
   });

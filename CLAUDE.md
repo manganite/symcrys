@@ -121,7 +121,8 @@ convention or the process updates this file (or the `docs/` file) in the same PR
   the operations, sign of an axis), birss-app's choice holds. Behavioural pins captured from
   birss-app check it (`docs/conventions.md`, "Birss convention and birss-app"); for these choices
   they are the reference, not only regression detectors, because birss-app defines them. In `'itc'`
-  the output follows ITA.
+  the output follows ITA. Where symcrys has a setting birss-app lacks (`2'm'm`, settings 4 to 6),
+  the Birss output follows the same rules and is unpinned until birss-app has the setting.
 
 ## Correctness and provenance
 
@@ -367,6 +368,15 @@ The conventions themselves are in `docs/conventions.md`; here, what was decided 
   and its coset after it (ITC Vol. D eq. (1.5.2.2)), would have changed the numbers against the
   class. The generators follow the same idea: those of the class with their time reversal, for a
   grey group followed by `1'` (chosen while implementing).
+- **Six settings of `2'm'm`** (maintainer, 2026-11-20, #19): an orthorhombic group gets a setting
+  for every distinct orientation of its axes. birss-app's standing decision (at most three settings
+  per group, by the axis that carries the unique element) does not cover the one group whose three
+  elements all differ; it has six orientations, and print uses all of them (Birss, four tables of
+  ITC Vol. D, Paufler), so a reader who takes a symbol from print must be able to select it.
+  Settings 1 to 3 keep birss-app's frames and indices, so its pins hold unchanged; 4 to 6 are added
+  after them. This goes beyond birss-app with Thomas' agreement to the proposal (the rule above); #19 records it for
+  birss-app. Not changed: the monoclinic groups keep two settings (unique axis b and c; a is not a
+  standard setting, as in birss-app).
 - **Magnetic point groups: data** (2026-11-19, #13): stored like the classes, in the Birss frame
   with birss-app's generators and settings (birss-app 2be5fe3), ITC derived. Not stored: the grey
   groups (class and time reversal, ITC Vol. D eq. (1.5.2.1)) and the symbols of the black-and-white
