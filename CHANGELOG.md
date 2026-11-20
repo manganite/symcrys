@@ -30,6 +30,9 @@ All notable changes to symcrys are recorded here. The format follows
   `allowedProperties(key)`, `allowsPropertyOf(operations, name)`, `allowedPropertiesOf(operations)`.
   `tensorForm`, `tensorFormOf` and `rotateTensor` take the name of a property in place of a
   specification: `tensorForm('32', 'piezoelectric')`. Types `TensorProperty`, `TensorPropertyName`.
+- Three further settings of the magnetic point group `2'm'm` (4: `m'2'm`, 5: `mm'2'`, 6: `2'mm'`):
+  the group has six orientations of its axes, and ITC Vol. D and Paufler print these three.
+  Settings 1 to 3 are unchanged.
 - Python: `MAGNETIC_POINT_GROUP_KEYS`, `magnetic_point_groups`, `is_magnetic_point_group_key`,
   `find_magnetic_point_group`; `TENSOR_PROPERTIES`, `allows_property`, `allowed_properties`,
   `allows_property_of`, `allowed_properties_of`, and names in `tensor_form`, `tensor_form_of` and

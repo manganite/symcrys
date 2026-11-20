@@ -7,13 +7,11 @@
  * A printed form belongs to the orientation its Hermann–Mauguin symbol names (§ 1.5.7.1, p. 134),
  * so each printed symbol, the alternatives in square brackets included, is looked up among the ITC
  * symbols of the settings, and the form is compared in that setting: the printed matrix and the
- * form must span the same space. Two printed orientations of C2v(Cs) are no setting of symcrys
- * (docs/conventions.md, "Settings of the magnetic groups"); their form is computed from the
- * operations the printed symbol names, read independently of the library.
+ * form must span the same space. Every printed orientation is a setting, also the two of C2v(Cs)
+ * that exchange two axes against Birss's (docs/conventions.md, "Settings of the magnetic groups").
  */
 
 import { describe, expect, it } from 'vitest';
-import type { Mat3 } from '../linalg.js';
 import {
   MAGNETIC_POINT_GROUP_KEYS,
   findMagneticPointGroup,
@@ -23,11 +21,10 @@ import {
   symbol,
   type MagneticPointGroupKey,
 } from '../pointGroups/pointGroups.js';
-import { groupOfSymbol } from '../testUtils/hermannMauguin.js';
 import { matrixRank } from '../testUtils/rank.js';
 import { readReference, section, tableRows } from '../testUtils/references.js';
 import { TENSOR_PROPERTIES, type TensorPropertyName } from './propertyTable.js';
-import { tensorForm, tensorFormOf } from './tensorForm.js';
+import { tensorForm } from './tensorForm.js';
 import { allowsProperty } from './tensorProperties.js';
 
 // --- printed symbols → group and setting ------------------------------------------------------------
@@ -134,18 +131,11 @@ const placeRank2 = (i: number, j: number, value: number, v: number[]) => {
 const sameSpace = (a: readonly (readonly number[])[], b: readonly (readonly number[])[], dim: number): boolean =>
   matrixRank(a, dim) === matrixRank(b, dim) && matrixRank([...a, ...b], dim) === matrixRank(a, dim);
 
-const AXES_XYZ = [
-  [1, 0, 0],
-  [0, 1, 0],
-  [0, 0, 1],
-];
-
 /** The form in the orientation a printed symbol names. */
-function formFor(printed: string, name: TensorPropertyName): { basis: readonly (readonly number[])[]; key?: string } {
+function formFor(printed: string, name: TensorPropertyName): readonly (readonly number[])[] {
   const o = orientation(printed);
-  if (o) return { basis: tensorForm(o.key, name, { setting: o.setting }).basis, key: o.key };
-  const ops = groupOfSymbol(printed, AXES_XYZ).map((op) => ({ matrix: op.m as unknown as Mat3, timeReversal: op.t }));
-  return { basis: tensorFormOf(ops, name).basis };
+  if (!o) throw new Error(`${printed}: no setting has this symbol`);
+  return tensorForm(o.key, name, { setting: o.setting }).basis;
 }
 
 function describeFormTable(
@@ -154,14 +144,13 @@ function describeFormTable(
   count: number,
   dim: number,
   place: (row: number, column: number, value: number, v: number[]) => void,
-  noSetting: string[],
 ): void {
   const content = readReference(file);
   const groups = printedGroups(content);
   const matrices = printedMatrices(content);
 
   it(`lists ${count} groups, exactly those that allow the property`, () => {
-    const keys = groups.map((g) => orientation(g.symbols.find((s) => orientation(s))!)!.key);
+    const keys = groups.map((g) => orientation(g.symbols[0])!.key);
     expect(keys).toHaveLength(count);
     expect([...keys].sort()).toEqual(GROUPS.filter((k) => allowsProperty(k, name)).sort());
   });
@@ -170,14 +159,14 @@ function describeFormTable(
     for (const g of groups) {
       for (const s of g.symbols) {
         const o = orientation(s);
-        if (o) expect(schoenflies(o.key), s).toBe(g.schoenflies);
+        expect(schoenflies(o!.key), s).toBe(g.schoenflies);
       }
     }
   });
 
-  it('names orientations that are settings, with the known exceptions; findMagneticPointGroup finds the same', () => {
-    expect(groups.flatMap((g) => g.symbols).filter((s) => !orientation(s))).toEqual(noSetting);
+  it('names only orientations that are settings; findMagneticPointGroup finds the same', () => {
     for (const s of groups.flatMap((g) => g.symbols)) {
+      expect(orientation(s), s).not.toBeNull();
       expect(findMagneticPointGroup(s) ?? null, s).toEqual(orientation(s));
     }
   });
@@ -186,18 +175,18 @@ function describeFormTable(
     it(`block ${g.block}, ${g.schoenflies}: ${g.symbols.join(', ')}`, () => {
       const printed = printedSpace(matrices.get(g.block)!, dim, place);
       for (const s of g.symbols) {
-        expect(sameSpace(formFor(s, name).basis, printed, dim), `${s}: form in the printed orientation`).toBe(true);
+        expect(sameSpace(formFor(s, name), printed, dim), `${s}: form in the printed orientation`).toBe(true);
       }
     });
   }
 }
 
 describe('ITC Vol. D Table 1.5.7.1: piezomagnetic effect', () => {
-  describeFormTable('itc/vol-d-table-1.5.7.1.md', 'piezomagnetic', 66, 27, placeVoigt, ["m'2'm"]);
+  describeFormTable('itc/vol-d-table-1.5.7.1.md', 'piezomagnetic', 66, 27, placeVoigt);
 });
 
 describe('ITC Vol. D Table 1.5.8.1: linear magnetoelectric effect', () => {
-  describeFormTable('itc/vol-d-table-1.5.8.1.md', 'magnetoelectric', 58, 9, placeRank2, ["2'mm'"]);
+  describeFormTable('itc/vol-d-table-1.5.8.1.md', 'magnetoelectric', 58, 9, placeRank2);
 
   it('the 11 groups without a centre of symmetry that the text names do not allow it', () => {
     const rows = tableRows(

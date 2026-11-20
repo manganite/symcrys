@@ -18,8 +18,11 @@ import {
   MIRROR_Y,
   MIRROR_Z,
   MONOCLINIC_B,
+  ORTHO_SWAP,
   ORTHO_TO_A,
+  ORTHO_TO_A_SWAP,
   ORTHO_TO_B,
+  ORTHO_TO_B_SWAP,
   POINT_GROUP_DATA,
   POINT_GROUP_KEYS,
   ROT2_X,
@@ -186,11 +189,17 @@ export const BLACK_WHITE_DATA: readonly BlackWhiteData[] = [
     'a',
     'b',
   ]),
-  blackWhite("2'm'm", 'mm2', 'C2v(Cs)', [operation(MIRROR_Z), primed(ROT2_X)], [SAME, ORTHO_TO_A, ORTHO_TO_B], 1, [
-    'c',
-    'a',
-    'b',
-  ]),
+  // Its three elements all differ, so exchanging two axes gives another orientation: six settings.
+  // Settings 1 to 3 are birss-app's; 4 to 6 exchange the other two axes at the same unique axis.
+  blackWhite(
+    "2'm'm",
+    'mm2',
+    'C2v(Cs)',
+    [operation(MIRROR_Z), primed(ROT2_X)],
+    [SAME, ORTHO_TO_A, ORTHO_TO_B, ORTHO_SWAP, ORTHO_TO_A_SWAP, ORTHO_TO_B_SWAP],
+    1,
+    ['c', 'a', 'b', 'c', 'a', 'b'],
+  ),
   blackWhite(
     "mm'm'",
     'mmm',

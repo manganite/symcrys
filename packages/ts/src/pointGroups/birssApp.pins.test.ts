@@ -18,7 +18,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import type { Vec3 } from '../linalg.js';
-import { BIRSS_APP_GROUPS, BIRSS_APP_REVISION, SYMCRYS_KEY } from '../testUtils/birssAppPins.js';
+import { BIRSS_APP_GROUPS, BIRSS_APP_REVISION, SYMCRYS_KEY, birssAppSettings } from '../testUtils/birssAppPins.js';
 import { describeOperations, type OperationDescription } from './elements.js';
 import { isCentrosymmetric, isChiral, isPolar, laueClass } from './properties.js';
 import {
@@ -96,7 +96,13 @@ describe('Birss convention = birss-app (pins)', () => {
     expect(BIRSS_APP_GROUPS.filter((g) => g.type === 'II')).toHaveLength(32);
     expect(BIRSS_APP_GROUPS.filter((g) => g.type === 'III')).toHaveLength(58);
     for (const g of BIRSS_APP_GROUPS) {
-      expect(settings(symcrysKey(g.key), 'birss').map((s) => s.index)).toEqual(g.settings.map((s) => s.setting));
+      const key = symcrysKey(g.key);
+      expect(
+        birssAppSettings(
+          key,
+          settings(key, 'birss').map((s) => s.index),
+        ),
+      ).toEqual(g.settings.map((s) => s.setting));
     }
   });
 

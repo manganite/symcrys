@@ -312,6 +312,100 @@ describe('symbols of every setting of the magnetic groups generate its operation
   }
 });
 
+// --- Orthorhombic settings --------------------------------------------------------------------------
+
+describe('orthorhombic groups: a setting for every orientation of the axes', () => {
+  const PERMUTATIONS = [
+    [0, 1, 2],
+    [1, 2, 0],
+    [2, 0, 1],
+    [1, 0, 2],
+    [0, 2, 1],
+    [2, 1, 0],
+  ];
+  /** The operations of an orthorhombic group are diagonal: sign pattern and time reversal identify one. */
+  const signature = (ops: readonly { matrix: readonly (readonly number[])[]; timeReversal: boolean }[], p: number[]) =>
+    ops
+      .map((op) => p.map((i) => Math.round(op.matrix[i][i])).join(',') + (op.timeReversal ? "'" : ''))
+      .sort()
+      .join(' ');
+  const SAME_AXES = [0, 1, 2];
+
+  /**
+   * Distinct orientations: six divided by the number of permutations of the three positions of the
+   * symbol that leave it unchanged (`222`: 6, `mm2`: 2, `2'm'm`: 1), counted by hand.
+   */
+  const ORIENTATIONS: Record<string, number> = {
+    '222': 1,
+    mm2: 3,
+    mmm: 1,
+    "2'2'2": 3,
+    "m'm'2": 3,
+    "2'm'm": 6,
+    "mm'm'": 3,
+    "m'm'm'": 1,
+    "mmm'": 3,
+  };
+
+  const orthorhombic = MAGNETIC_POINT_GROUP_KEYS.filter((k) => pointGroup(k).crystalSystem === 'orthorhombic');
+
+  it('are 3 classes, 3 grey and 6 black-and-white groups', () => {
+    expect(orthorhombic.filter((k) => pointGroup(k).type !== 'II').sort()).toEqual(Object.keys(ORIENTATIONS).sort());
+    expect(orthorhombic).toHaveLength(12);
+  });
+
+  it.each(orthorhombic)('%s: the settings are the distinct orientations, each once', (key) => {
+    const stored = operations(key, { setting: 1 });
+    const orientations = new Set(PERMUTATIONS.map((p) => signature(stored, p)));
+    const ofSettings = settings(key).map((s) => signature(operations(key, { setting: s.index }), SAME_AXES));
+    expect(orientations.size).toBe(ORIENTATIONS[key.replace(/1'$/, '')]);
+    expect(new Set(ofSettings).size).toBe(ofSettings.length);
+    expect([...ofSettings].sort()).toEqual([...orientations].sort());
+  });
+
+  /**
+   * C2v(Cs), the one orthorhombic group whose three elements all differ, in the six orientations as
+   * print names them. Operations as sign patterns of x, y, z, a prime for time reversal.
+   */
+  const C2V_CS: [symbolText: string, setting: number, axis: 'a' | 'b' | 'c', ops: string, source: string][] = [
+    ["2'm'm", 1, 'c', "1,-1,-1' 1,-1,1' 1,1,-1 1,1,1", 'Birss Table 6; ITC Vol. D Table 1.5.2.3'],
+    ["m2'm'", 2, 'a', "-1,1,-1' -1,1,1 1,1,-1' 1,1,1", 'ITC Vol. D Table 1.5.8.1 (in brackets)'],
+    ["m'm2'", 3, 'b', "-1,-1,1' -1,1,1' 1,-1,1 1,1,1", 'ITC Vol. D Table 1.5.2.4'],
+    ["m'2'm", 4, 'c', "-1,1,-1' -1,1,1' 1,1,-1 1,1,1", 'ITC Vol. D Table 1.5.7.1'],
+    // Paufler prints the operations: 1, 2'_z, m_x, m'_y.
+    ["mm'2'", 5, 'a', "-1,-1,1' -1,1,1 1,-1,1' 1,1,1", 'Paufler (1986), p. 62 and Table A 6, no. 15, p. 316'],
+    ["2'mm'", 6, 'b', "1,-1,-1' 1,-1,1 1,1,-1' 1,1,1", 'ITC Vol. D Table 1.5.8.1'],
+  ];
+
+  it.each(C2V_CS)("2'm'm as %s is setting %i (%s)", (symbolText, setting, axis, ops) => {
+    for (const convention of ['itc', 'birss'] as const) {
+      expect(findMagneticPointGroup(symbolText, convention)).toEqual({ key: "2'm'm", setting });
+      expect(symbol("2'm'm", { convention, setting })).toBe(symbolText);
+      expect(signature(operations("2'm'm", { convention, setting }), SAME_AXES)).toBe(ops);
+    }
+    // The axis of a setting is the normal of the mirror plane without time reversal.
+    const s = settings("2'm'm").find((x) => x.index === setting)!;
+    expect(s.uniqueAxis).toBe(axis);
+    const mirror = operations("2'm'm", { setting }).find(
+      (op) => !op.timeReversal && op.matrix[0][0] * op.matrix[1][1] * op.matrix[2][2] < 0,
+    )!;
+    expect(mirror.matrix['abc'.indexOf(axis)]['abc'.indexOf(axis)]).toBe(-1);
+  });
+
+  it("2'm'm: settings 1 to 3 are birss-app's, and setting 1 is the default of both conventions", () => {
+    for (const convention of ['itc', 'birss'] as const) {
+      expect(settings("2'm'm", convention).map((s) => [s.index, s.isDefault])).toEqual([
+        [1, true],
+        [2, false],
+        [3, false],
+        [4, false],
+        [5, false],
+        [6, false],
+      ]);
+    }
+  });
+});
+
 // --- Structure --------------------------------------------------------------------------------------
 
 describe('the 122 magnetic point groups', () => {

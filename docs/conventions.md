@@ -162,9 +162,10 @@ A **grey group** has the settings of its class, with the same indices, frames an
 A **black-and-white group** has the settings birss-app gives it (#17), setting 1 being Birss's frame:
 
 - monoclinic (5 groups): setting 1 with unique axis c, setting 2 with unique axis b, as the classes;
-- orthorhombic `2'2'2`, `m'm'2`, `2'm'm`, `mm'm'`, `mmm'`: three settings, the cyclic permutations of
-  the axes as for `mm2` (`uniqueAxis` c, a, b: the axis that is c in setting 1). The classes `222`
-  and `mmm` need one setting, but time reversal singles out one axis. `m'm'm'` has one setting;
+- orthorhombic `2'2'2`, `m'm'2`, `mm'm'`, `mmm'`: three settings, the cyclic permutations of the axes
+  as for `mm2` (`uniqueAxis` c, a, b: the axis that is c in setting 1). The classes `222` and `mmm`
+  need one setting, but time reversal singles out one axis. `m'm'm'` has one setting;
+- orthorhombic `2'm'm`: six settings (below);
 - tetragonal `4'22'`, `4'mm'`, `-4'2m'`, `-4'm2'`, `-42'm'`, `4'/mmm'`, `4'/m'm'm`: two settings 45°
   apart about z. For `422`, `4mm` and `4/mmm` the two frames hold the same operations; with time
   reversal on the fourfold rotation they differ in which lateral elements carry it;
@@ -172,13 +173,26 @@ A **black-and-white group** has the settings birss-app gives it (#17), setting 1
   `-6m'2'`, `6'/m'mm'`, `6'/mmm'`: two settings 30° apart about z;
 - all other groups: one setting.
 
-The orthorhombic settings are those of birss-app: which of x, y, z carries the unique element
-(c-, a-, b-unique), at most three. For `2'm'm`, whose three elements all differ, these are three of
-six orientations; the other three (two axes exchanged: `m'2'm`, `2'mm'`, `mm'2'`) are no setting.
-All three occur in print: ITC Vol. D has `m'2'm` in Table 1.5.7.1 and `2'mm'` in Table 1.5.8.1, each
-beside an orientation that is a setting and has the same form of that tensor, and Paufler (1986,
-p. 62 and Table A 6, no. 15, p. 316) writes the group `mm'2'`, with the operations 1, 2′_z, m_x,
-m′_y. Whether symcrys and birss-app should offer all six is open (#19).
+**The six settings of `2'm'm`.** An orthorhombic group has a setting for every distinct orientation
+of its axes. For all but one this is birss-app's scheme, which of x, y, z carries the unique
+element (at most three). `2'm'm` (C2v(Cs)) is the one orthorhombic group whose three elements all
+differ, so exchanging the other two axes gives a further orientation: six in all, and print uses
+every one of them. Settings 1 to 3 are birss-app's, with their indices; 4 to 6 exchange the other
+two axes at the same unique axis (maintainer, 2026-11-20). `uniqueAxis` is the normal of the mirror
+plane without time reversal, the direction a spontaneous magnetization may have.
+
+| Setting | Symbol  | Axis | Operations besides 1 | Printed in                                          |
+| ------- | ------- | ---- | -------------------- | --------------------------------------------------- |
+| 1       | `2'm'm` | c    | 2′_x, m′_y, m_z      | Birss Table 6; ITC Vol. D Table 1.5.2.3             |
+| 2       | `m2'm'` | a    | m_x, 2′_y, m′_z      | ITC Vol. D Table 1.5.8.1 (in brackets)              |
+| 3       | `m'm2'` | b    | m′_x, m_y, 2′_z      | ITC Vol. D Table 1.5.2.4                            |
+| 4       | `m'2'm` | c    | m′_x, 2′_y, m_z      | ITC Vol. D Table 1.5.7.1                            |
+| 5       | `mm'2'` | a    | m_x, m′_y, 2′_z      | Paufler (1986), p. 62 and Table A 6, no. 15, p. 316 |
+| 6       | `2'mm'` | b    | 2′_x, m_y, m′_z      | ITC Vol. D Table 1.5.8.1                            |
+
+Setting 1 is the default in both conventions; the symbols are the same in both, an orthorhombic
+symbol being read along x, y, z in each. birss-app has settings 1 to 3 (its standing decision of at
+most three settings per group); it takes the other three over when it moves onto symcrys (#19).
 
 A setting of a black-and-white group is a frame of its crystal class, but not always the one with
 the same index: setting 1 of `-6'2m'` (Birss's frame: twofold axes along y) is the frame of setting

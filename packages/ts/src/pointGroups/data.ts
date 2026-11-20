@@ -141,6 +141,13 @@ export const ORTHO_TO_B: Mat3 = [
   [0, 0, 1],
   [1, 0, 0],
 ];
+/**
+ * Orthorhombic, for a group whose three elements all differ: the frames above after exchanging the
+ * other two axes (a rotation by 90° about the stored z axis), so the same axis stays unique.
+ */
+export const ORTHO_SWAP: Mat3 = rotationZ(90);
+export const ORTHO_TO_A_SWAP: Mat3 = multiply(ORTHO_TO_A, ORTHO_SWAP);
+export const ORTHO_TO_B_SWAP: Mat3 = multiply(ORTHO_TO_B, ORTHO_SWAP);
 export const ROT45_Z = rotationZ(45);
 export const ROT30_Z = rotationZ(30);
 
