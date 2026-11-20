@@ -20,7 +20,9 @@ All notable changes to symcrys are recorded here. The format follows
   symbols, operations and generators in both conventions. Keys are the short symbols of ITC Vol. D
   Table 1.5.2.3 with a prime `'` for time reversal; a grey group is the key of its class followed
   by `1'`. `POINT_GROUP_KEYS` holds all 122 keys, the 32 classes first; `pointGroup` gives the
-  `type` (`'I' | 'II' | 'III'`). In the ITC convention the operations of a magnetic group are in
+  `type` (`'I' | 'II' | 'III'`). `findPointGroup` gives the setting a symbol names (#46): in the
+  Birss convention the keys `mm'm'` and `6'/mmm'` are the Birss symbols of setting 2 of their
+  groups and are found as such. In the ITC convention the operations of a magnetic group are in
   the order of its crystal class; in the Birss convention operations, generators, symbols and
   settings are birss-app's, with three settings of `2'm'm` beyond them (docs/conventions.md,
   "Types", "Settings of the magnetic groups").
