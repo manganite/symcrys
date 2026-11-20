@@ -87,6 +87,14 @@ convention or the process updates this file (or the `docs/` file) in the same PR
   import it by DOI or ISBN and check its metadata against the printed source (for a book: authors,
   year, edition and publisher against the title page).
   Ask Thomas for a volume that is not at hand.
+- **Further books for questions of convention and group theory** (Thomas, 2026-11-20), all in his
+  Zotero; consult them, beside ITC and Birss, before putting such a question to him: Litvin
+  (magnetic groups; _Acta Cryst._ A**64**, 419 (2008)), Koster, Dimmock, Wheeler & Statz,
+  _Properties of the Thirty-Two Point Groups_ (1963), Liboff, _Primer for Point and Space Groups_
+  (2004), Paufler, _Physikalische Kristallographie_, and for group theory Wipf, Rosebrock,
+  Brückler and Glosauer (editions and page offsets in `CLAUDE.md` of crystallography-common,
+  "Literatur"). State of the files (2026-11-20): Liboff has no PDF in Zotero, and the PDF of Paufler
+  could not be read through the Zotero tools.
 
 ## Two conventions: ITC (default) and Birss
 

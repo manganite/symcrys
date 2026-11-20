@@ -491,7 +491,10 @@ classes have none, so their `'c'`-forms equal their `'i'`-forms. A grey group co
 itself, so all its `'c'`-tensors vanish, and its `'i'`-forms are those of its class. This is Birss's
 reading (pp. 84, 102) and birss-app's: the grey groups are the groups of non-magnetic crystals; the
 32 classes are, like the 58 black-and-white groups, groups of magnetic crystals, the limiting case
-in which time reversal does not occur.
+in which time reversal does not occur. Litvin (_Acta Cryst._ A**64**, 419 (2008), p. 419) says the
+same of the space groups: a group without time inversion is also the invariance group of an
+arrangement of non-zero magnetic moments, while the product of a group with the time-inversion
+group is not a magnetic group, because time inversion as an element excludes such moments.
 In a black-and-white group the `'i'`-forms are those of the crystal class in the same frame, and
 the `'c'`-forms are those of two other crystal classes, possibly in a rotated frame, which Birss's
 Table 7 names (pp. 109–110): polar `'c'`-tensors of odd rank and axial ones of even rank have the
