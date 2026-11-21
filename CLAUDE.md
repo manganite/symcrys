@@ -210,8 +210,8 @@ argsJson) → resultJson` (`_engine.py`, `scripts/bundle-python.mjs`; a name of 
 - Never commit to `main` (the only exception was the initial commit that created it). Short-lived
   branch (`feature/`, `fix/`, `refactor/`, `docs/`, `chore/`, `audit/`), Conventional Commits
   (`type(scope): summary`), PR to `main`, merged with a merge commit (no squash).
-- **Gates**, run by CI on every PR on Node 22 and 24: `typecheck`, `typecheck:ts7`, `lint`,
-  `format:check`, `test`, `build`, `check:dist`; and `python` on Python 3.10 and the newest
+- **Gates**, run by CI on every PR, these seven on Node 22 and 24: `typecheck`, `typecheck:ts7`,
+  `lint`, `format:check`, `test`, `build`, `check:dist`; and `python` on Python 3.10 and the newest
   (bundle, build sdist and wheel, install the wheel into a fresh environment, `mypy --strict`,
   `pytest`; maintainer, 2026-11-19, from the first PR of the Python package); and `docs` (#29):
   `npm run docs:check` (TypeDoc with every warning an error: an undocumented export, a broken
@@ -238,8 +238,8 @@ build && npm run bundle:python`, then in `packages/python` `pip install -e ".[te
 - **Documentation site** (#29): built from the tag by `release.yml` (jobs `site` and `pages`) and
   published on GitHub Pages, [manganite.github.io/symcrys](https://manganite.github.io/symcrys/).
   Settings by Thomas: Pages with the source "GitHub Actions", and a deployment rule for tags
-  `v*.*.*` on the environment `github-pages`. The ruleset `main` requires the check `docs`, not
-  `linkcheck` (maintainer, 2026-11-21; above).
+  `v*.*.*` on the environment `github-pages`. Which checks the ruleset `main` requires: "Repository
+  settings" above.
 - **Releases:** procedure in `README.md`. The release PR is merged on Thomas' OK; **Thomas sets
   the tag by hand** (maintainer, 2026-11-08). Before tagging, `origin/main` must be the release
   PR's merge commit; afterwards `release.yml` must be green.

@@ -116,7 +116,8 @@ for the operations of all 122 magnetic point groups, `packages/ts/src/tensors/bi
 
 CI runs these seven gates on every pull request, on Node 22 and 24, the gate `python` (bundle,
 build sdist and wheel, install the wheel, `mypy`, `pytest`) on Python 3.10 and the newest, and the
-gate `docs` (the three `docs:` commands above). Tests sit next to their
+gate `docs` (`docs:check` and `docs:site` above); the external links (`docs:linkcheck`) are
+checked by the workflow Links, which is not a gate. Tests sit next to their
 module (`foo.ts`, `foo.test.ts`). Working rules for contributors, human or agent: `CLAUDE.md`.
 
 ## Releases
