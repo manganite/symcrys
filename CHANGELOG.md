@@ -6,6 +6,8 @@ All notable changes to symcrys are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-11-21
+
 ### Added
 
 - Crystal forms of the crystal classes, #24 item 2: `crystalForms(key, { setting })` gives, as ITA
@@ -28,7 +30,7 @@ All notable changes to symcrys are recorded here. The format follows
   direction, exactly, each entry with the operations that lead there) and
   `orbitOf(operations, direction, { tolerance })` (the orbit of a Cartesian direction under any list
   of operations, coinciding poles merged); types `FaceOrbitEntry`, `DirectionOrbitEntry`,
-  `OrbitPole`. In Python `lattice_operations`, `orbit`, `orbit_of`.
+  `OrbitPole`, `OrbitOptions`. In Python `lattice_operations`, `orbit`, `orbit_of`.
 - The point group of a list of operations, #24 item 3, in both entry points:
   `pointGroupOf(operations, { tolerance })` gives the key of the group the operations generate and
   the setting whose operations it equals (absent for another orientation), undefined if they
@@ -279,7 +281,8 @@ All notable changes to symcrys are recorded here. The format follows
 - Project scaffold: TypeScript build to `dist/` (ES modules with type declarations), tests, lint,
   format check, CI and release workflow. The only export so far is `VERSION`.
 
-[Unreleased]: https://github.com/manganite/symcrys/compare/v0.6.1...HEAD
+[Unreleased]: https://github.com/manganite/symcrys/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/manganite/symcrys/compare/v0.6.1...v0.7.0
 [0.6.1]: https://github.com/manganite/symcrys/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/manganite/symcrys/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/manganite/symcrys/compare/v0.4.0...v0.5.0
