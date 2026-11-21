@@ -7,8 +7,9 @@ the tests named there re-check them against the transcriptions in `references/`.
 symcrys holds the 122 magnetic point groups: the 32 crystallographic point groups (crystal classes,
 type I) and the 90 groups with time reversal (32 grey groups, type II; 58 black-and-white groups,
 type III). For all of them: settings, symbols, operations, generators and symmetry elements in both
-conventions, and the forms of property tensors of rank 0 to 4. For the crystal classes also the
-Wyckoff positions of directions and the crystal forms.
+conventions, operations in the lattice basis and orbits of faces and directions, and the forms of
+property tensors of rank 0 to 4. For the crystal classes also the Wyckoff positions of directions
+and the crystal forms.
 
 The library has two entry points with the same function names: `symcrys`, the crystallographic API
 for the 32 crystal classes, and `symcrys/magnetic`, the magnetic API for all 122 groups ("Two entry
@@ -629,6 +630,45 @@ tetragonal dipyramids of 422, (h0l) and (hhl)).
   eigensymmetry) and the basic forms with symcrys, without difference, so the two editions number
   the forms alike.
 
+## Lattice basis and orbits
+
+**Operations in the lattice basis.** `latticeOperations(key, { setting, convention })` gives the
+operations of a point group as integer matrices W in the conventional basis a, b, c (hexagonal axes
+for the trigonal classes): W = B⁻¹·R·B, with B the basis of `latticeBasis` (columns a, b, c) and R
+the Cartesian matrix of `operations`. W acts on the coordinates of a lattice direction [uvw]. The
+list has the shape of `operations` (`{ matrix }`, in the magnetic API with `timeReversal`) and its
+order, index for index, so that a caller can switch between the two. The matrices are not
+orthogonal in general (hexagonal axes), and the functions that take Cartesian operations refuse
+them.
+
+They do not depend on the cell angles: a point operation maps the lattice onto itself, and its
+matrix in the lattice basis is the same for every metric the point group allows (2 along b is
+diag(−1, 1, −1) for every β). So they exist for every family, the monoclinic and triclinic ones
+included, where a, b, c are taken along x, y, z as for the Wyckoff positions (maintainer,
+2026-11-21, #24). In the ITC convention they are, in order, the matrices of ITA's general position
+(6th ed., Table 3.2.3.2): its coordinate triplets are the rows of W. Cartesian matrices of a real
+monoclinic or triclinic cell need the cell parameters and belong to the geometry of a crystal
+(#24 item 4).
+
+**Orbits.** `orbit(key, { hkl } | { uvw }, options)` gives the orbit of a face (hkl) or of a lattice
+direction [uvw] exactly, in integers: the distinct faces (directions), in the order in which the
+operations reach them, each with the indices of the operations that map the given one onto it. A
+direction transforms with W, a face with the inverse transpose, h′ = W⁻ᵀ·h (Miller indices are
+coordinates in the reciprocal basis). The two differ in the hexagonal family: under the threefold
+rotation of class 3, [100] goes to [010], (100) to (1̄10). Indices for hexagonal axes are three,
+without i = −(h + k). The number of entries is the multiplicity, and in the ITC convention the
+first entry is the given face with its site symmetry. For the general face (321) the orbit is
+ITA's general form in the order of the general position; ITA prints the faces in that order for 14
+of the 16 entries with hexagonal axes, and for 6/m and 6mm with the third and fourth rows
+exchanged (`references/itc/vol-a-table-3.2.3.2-general-faces.md`).
+
+`orbitOf(operations, direction, { tolerance })` does the same for a Cartesian direction (a face
+normal, a pole) under any list of Cartesian operations, for instance those left after distorting a
+crystal: the images of its unit vector, coinciding images merged when closer than `tolerance`
+(default `EPSILON`, as for `siteSymmetry`; maintainer, 2026-11-21), each with the operations that
+lead there. The list is not closed into a group. For a group and a face of a crystal form, `orbit`
+and `orbitOf` give the same entries with the same operations.
+
 ## Tensors
 
 `tensorForm(key, spec, options)` gives the form of a property tensor under a point group, a
@@ -804,6 +844,7 @@ ITC symbol, and so are the second trigonal orientations the text of § 1.5.8.1 n
 | operations described (kind, n, axis, sense)                                                                                 | the symmetry operations of the symmorphic P space groups, ITA 5th ed. (2006), Part 7, one per ITC setting (pages in `references/itc/vol-a-2006-symmetry-operations.md`); symbols as defined in § 11.1.2, pp. 810–811; numbering checked against the general positions of Table 3.2.3.2                            | `elements.reference.test.ts`, `elements.test.ts`                                                        |
 | Wyckoff positions (letter, multiplicity, oriented site symmetry, representative point and face)                             | ITA Table 3.2.3.2 (pp. 745–769): `references/itc/vol-a-table-3.2.3.2-wyckoff-positions.md`; the oriented symbols read along ITA Table 2.1.3.1 (p. 151); `2mm`, `m2m`: derived (above); additional check against the 5th ed. (2006), Table 10.1.2.2, by `audit/wyckoff-2006`                                       | `wyckoff.reference.test.ts`                                                                             |
 | crystal forms: the forms of each Wyckoff position, basic and limiting; the 47 forms with number of faces and eigensymmetry  | ITA Table 3.2.3.2 (pp. 745–769): `references/itc/vol-a-table-3.2.3.2-face-forms.md`; ITA Table 3.2.1.3 (pp. 724–726): `references/itc/vol-a-table-3.2.1.3-crystal-forms.md`, the two checked against each other; additional check against the 5th ed. (2006), Tables 10.1.2.2 and 10.1.2.3, by `audit/forms-2006` | `crystalForms.reference.test.ts`                                                                        |
+| operations in the lattice basis; orbits of directions and faces                                                             | ITA Table 3.2.3.2 (pp. 745–769): the general positions, `references/itc/vol-a-table-3.2.3.2-general-positions.md`; the faces of the general form for hexagonal axes (pp. 752–764), `references/itc/vol-a-table-3.2.3.2-general-faces.md`                                                                          | `orbits.reference.test.ts`                                                                              |
 | tensor forms, Birss convention                                                                                              | Birss Tables 4a–4f (pp. 56–66): `references/birss/table-4a.md` … `table-4f.md`                                                                                                                                                                                                                                    | `tensors/birss.reference.test.ts`                                                                       |
 | tensor forms, ITC convention: counts, pyroelectric direction, piezoelectric classes                                         | ITA Table 3.2.2.1 (p. 738)                                                                                                                                                                                                                                                                                        | `tensors/itc.reference.test.ts`                                                                         |
 | ferroaxial classes (axial vector, time-even)                                                                                | Birss Table 4a (pp. 56–57) with Table 4c (p. 58): `references/birss/`; the term: Hlinka, Privratska, Ondrejkovic & Janovec, _Phys. Rev. Lett._ **116**, 177602 (2016)                                                                                                                                             | `tensors/tensorProperties.test.ts`                                                                      |

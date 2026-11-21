@@ -277,3 +277,46 @@ def test_ita_3232_face_forms(entry: tuple[str, str]) -> None:
         assert f["representative"]["cartesian"].dtype == np.float64
         faces = symcrys.CRYSTAL_FORM_TYPES[f["form_type"] - 1]["faces"]
         assert f["multiplicity"] == faces
+
+
+# --- ITA Table 3.2.3.2: operations in the lattice basis and orbits --------------------------------
+
+GENERAL = table_rows(reference("itc/vol-a-table-3.2.3.2-general-positions.md"))
+GENERAL_FACES = table_rows(reference("itc/vol-a-table-3.2.3.2-general-faces.md"))
+
+
+def _coefficients(expr: str) -> list[int]:
+    row = [0, 0, 0]
+    terms = re.findall(r"[+-]?\d*[xyz]", expr)
+    assert "".join(terms).lstrip("+") == expr, expr
+    for t in terms:
+        m = re.fullmatch(r"([+-]?)(\d*)([xyz])", t)
+        assert m
+        row["xyz".index(m.group(3))] += (-1 if m.group(1) == "-" else 1) * (int(m.group(2)) if m.group(2) else 1)
+    return row
+
+
+@pytest.mark.parametrize("row", GENERAL[1:], ids=[f"{r[0]} {r[1]}".strip() for r in GENERAL[1:]])
+def test_ita_3232_lattice_operations_and_orbit(row: list[str]) -> None:
+    assert GENERAL[0] == ["Short", "Axes", "Page", "Multiplicity", "General position"]
+    key, setting = _setting(row[0], row[1])
+    printed = [[_coefficients(c) for c in t.split(",")] for t in row[4].split()]
+    ops = symcrys.lattice_operations(key, setting=setting)
+    assert [op["matrix"].tolist() for op in ops] == printed
+    uvw = [e["uvw"].tolist() for e in symcrys.orbit(key, {"uvw": [3, 2, 1]}, setting=setting)]
+    assert uvw == [(np.array(w) @ [3, 2, 1]).tolist() for w in printed]
+
+
+@pytest.mark.parametrize("row", GENERAL_FACES[1:], ids=[r[0] for r in GENERAL_FACES[1:]])
+def test_ita_3232_general_faces_hexagonal(row: list[str]) -> None:
+    assert GENERAL_FACES[0] == ["Short", "Axes", "Page", "Faces"]
+    value = {"h": 3, "k": 2, "i": -5, "l": 1}
+    expected = []
+    for face in row[3].split():
+        v = [(-1 if c.startswith("-") else 1) * value[c.lstrip("-")] for c in face.split(",")]
+        expected.append([v[0], v[1], v[3]])
+    key, setting = _setting(row[0], row[1])
+    computed = [e["hkl"].tolist() for e in symcrys.orbit(key, {"hkl": [3, 2, 1]}, setting=setting)]
+    if row[0] in ("6/m", "6mm"):  # two rows printed in the other order (see the transcription, "Order")
+        computed = computed[:6] + computed[9:] + computed[6:9]
+    assert computed == expected

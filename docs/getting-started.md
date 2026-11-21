@@ -96,4 +96,5 @@ once, then compute with NumPy.
 - Which setting and which convention, and why the components of a tensor depend on them:
   [Conventions](conventions.md), in particular "Settings" and "Cartesian frame".
 - How a tensor form is given (basis, parameters, relations): [Tensors](tensors.md).
-- The crystal forms of a class, basic and limiting: [Crystal forms](forms.md).
+- The crystal forms of a class, basic and limiting, and orbits of faces:
+  [Crystal forms and orbits](forms.md).

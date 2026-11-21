@@ -21,7 +21,18 @@ All notable changes to symcrys are recorded here. The format follows
   `crystalForms.reference.test.ts`, which also checks the two tables against each other; two
   misprints of Table 3.2.1.3 recorded with errata. `audit/forms-2006` compares with stereography's
   catalogue (ITA 2006): no difference.
-- Documentation: the page "Crystal forms", with examples in TypeScript and Python.
+- Operations in the lattice basis and orbits, #24 item 3, in both entry points:
+  `latticeOperations(key, options)` (the operations as integer matrices in the conventional basis,
+  for every family, in the order and shape of `operations`, in the magnetic API with
+  `timeReversal`), `orbit(key, { hkl } | { uvw }, options)` (the orbit of a face or a lattice
+  direction, exactly, each entry with the operations that lead there) and
+  `orbitOf(operations, direction, { tolerance })` (the orbit of a Cartesian direction under any list
+  of operations, coinciding poles merged); types `FaceOrbitEntry`, `DirectionOrbitEntry`,
+  `OrbitPole`. In Python `lattice_operations`, `orbit`, `orbit_of`.
+- `references/itc/vol-a-table-3.2.3.2-general-faces.md`: the faces of the general form of the 16
+  entries of ITA Table 3.2.3.2 with hexagonal axes; with the general positions, the print anchor of
+  `orbits.reference.test.ts`.
+- Documentation: the page "Crystal forms and orbits", with examples in TypeScript and Python.
 
 ## [0.6.1] - 2026-11-21
 

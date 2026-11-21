@@ -69,6 +69,14 @@ export {
 } from './pointGroups/elements.js';
 export { siteSymmetry, type SiteSymmetry, type SiteSymmetryOptions } from './siteSymmetry.js';
 export {
+  latticeOperations,
+  orbit,
+  orbitOf,
+  type DirectionOrbitEntry,
+  type FaceOrbitEntry,
+  type OrbitPole,
+} from './pointGroups/orbits.js';
+export {
   rotateTensor,
   tensorForm,
   tensorFormOf,

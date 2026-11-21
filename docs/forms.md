@@ -5,7 +5,7 @@ kernelspec:
   display_name: Python 3
 ---
 
-# Crystal forms
+# Crystal forms and orbits
 
 A crystal form is a set of faces that a point group makes equivalent. ITA (6th ed.) lists, for every
 crystal class and every Wyckoff position, the forms that occur there: the **basic** form and the
@@ -39,4 +39,24 @@ in the frame of the setting, e.g. to draw its pole or to compute its site symmet
 ```{code-cell} ipython3
 f = symcrys.crystal_forms("-43m")[2]
 f["representative"]["hkl"], f["representative"]["cartesian"]
+```
+
+## Orbits and the lattice basis
+
+The faces of a form are the orbit of one face. `orbit` computes it exactly, in integers, from the
+operations in the lattice basis (`latticeOperations`); `orbitOf` computes it for a Cartesian
+direction under any list of operations, for instance those left after distorting a crystal. In
+hexagonal axes a face transforms otherwise than a lattice direction
+([Conventions](conventions.md), "Lattice basis and orbits").
+
+```{ts-example} orbits.ts
+
+```
+
+```{code-cell} ipython3
+[f["hkl"] for f in symcrys.orbit("-3m", {"hkl": [1, 0, 1]})]
+```
+
+```{code-cell} ipython3
+symcrys.lattice_operations("3")[1]["matrix"]  # integers, as a float64 array
 ```

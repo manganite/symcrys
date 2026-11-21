@@ -224,6 +224,8 @@ describe('the crystallographic API refuses what involves time reversal', () => {
       classes.wyckoffPositions,
       (key) => classes.wyckoffPositionOf(key, [0, 0, 1]),
       classes.crystalForms,
+      classes.latticeOperations,
+      (key) => classes.orbit(key, { hkl: [1, 0, 0] }),
       (key) => classes.tensorForm(key, 'piezoelectric'),
       (key) => classes.allowsProperty(key, 'piezoelectric'),
       classes.allowedProperties,
@@ -283,6 +285,7 @@ describe('the crystallographic API refuses what involves time reversal', () => {
     const white = magnetic.operations('32');
     const calls = [
       (ops: readonly classes.Operation[]) => classes.siteSymmetry(ops, [0, 0, 1]),
+      (ops: readonly classes.Operation[]) => classes.orbitOf(ops, [1, 2, 3]),
       (ops: readonly classes.Operation[]) => classes.tensorFormOf(ops, 'piezoelectric'),
       (ops: readonly classes.Operation[]) => classes.allowsPropertyOf(ops, 'piezoelectric'),
       (ops: readonly classes.Operation[]) => classes.allowedPropertiesOf(ops),
@@ -447,6 +450,25 @@ describe('a time-even question has one answer: class, white group and grey group
       'magnetoelectric',
       'piezomagnetic',
     ]);
+  });
+
+  it('lattice operations and orbits agree; the magnetic ones carry time reversal', () => {
+    for (const key of classes.POINT_GROUP_KEYS) {
+      for (const { index: setting } of classes.settings(key)) {
+        const lattice = magnetic.latticeOperations(key, { setting });
+        expect(classes.latticeOperations(key, { setting })).toEqual(lattice.map((w) => ({ matrix: w.matrix })));
+        expect(classes.orbit(key, { hkl: [3, 2, 1] }, { setting })).toEqual(
+          magnetic.orbit(key, { hkl: [3, 2, 1] }, { setting }),
+        );
+        const ops = classes.operations(key, { setting });
+        expect(classes.orbitOf(ops, [3, 2, 1])).toEqual(
+          magnetic.orbitOf(magnetic.operations(key, { setting }), [3, 2, 1]),
+        );
+      }
+    }
+    expect(magnetic.latticeOperations("4'mm'").map((w) => w.timeReversal)).toEqual(
+      magnetic.operations("4'mm'").map((op) => op.timeReversal),
+    );
   });
 
   it('site symmetry does not depend on time reversal', () => {

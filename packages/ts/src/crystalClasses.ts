@@ -19,8 +19,11 @@ import * as groups from './pointGroups/pointGroups.js';
 import type { Convention, PointGroupKey, Setting, SettingOptions, SymbolOptions } from './pointGroups/pointGroups.js';
 import * as properties from './pointGroups/properties.js';
 import * as forms from './pointGroups/crystalForms.js';
+import * as orbits from './pointGroups/orbits.js';
 import * as wyckoff from './pointGroups/wyckoff.js';
+import type { Hkl } from './pointGroups/wyckoff.js';
 import * as site from './siteSymmetry.js';
+import type { Uvw } from './symmetryDirections.js';
 import { TENSOR_PROPERTIES as ALL_TENSOR_PROPERTIES } from './tensors/propertyTable.js';
 import type { TensorPropertyName as MagneticTensorPropertyName } from './tensors/propertyTable.js';
 import * as tensors from './tensors/tensorForm.js';
@@ -374,6 +377,67 @@ export function wyckoffPositionOf(
   options?: wyckoff.WyckoffOptions,
 ): wyckoff.WyckoffPosition {
   return wyckoff.wyckoffPositionOf(classKey(key), direction, options);
+}
+
+// --- lattice basis and orbits ---------------------------------------------------------------------
+
+/**
+ * The operations of the crystal class in the conventional lattice basis (a, b, c; for the trigonal
+ * classes the hexagonal axes), in the order of `operations` for the same setting and convention:
+ * integer matrices W acting on the coordinates of a lattice direction [uvw], W = B⁻¹·R·B with the
+ * basis B of `latticeBasis` and the Cartesian matrix R of `operations`. They do not depend on the
+ * cell angles, so they exist for every family; for the monoclinic and triclinic families a, b, c
+ * are taken along x, y, z, as for the Wyckoff positions. In the ITC convention they are the
+ * matrices of ITA's general position (6th ed., Table 3.2.3.2). Not orthogonal in general: pass
+ * them to no function that takes Cartesian operations (docs/conventions.md, "Lattice basis and
+ * orbits").
+ */
+export function latticeOperations(key: PointGroupKey, options?: SettingOptions): readonly Operation[] {
+  return matricesOnly(orbits.latticeOperations(classKey(key), options));
+}
+
+/**
+ * The orbit of a face (hkl) or of a lattice direction [uvw] under a crystal class, exactly, in the
+ * lattice basis: the distinct faces (directions), in the order in which the operations reach them
+ * (so in the ITC convention the given face first), each with the indices of the operations that map
+ * the given one onto it. A face transforms with the inverse transpose of a lattice operation,
+ * h' = W⁻ᵀ·h, a direction with the operation itself, u' = W·u. The number of entries is the
+ * multiplicity of the face (direction). Throws a RangeError unless exactly one of `hkl` and `uvw` is
+ * given, as three integers not all zero (hexagonal axes: three indices, without i).
+ */
+export function orbit(
+  key: PointGroupKey,
+  indices: { readonly hkl: Hkl },
+  options?: SettingOptions,
+): readonly orbits.FaceOrbitEntry[];
+export function orbit(
+  key: PointGroupKey,
+  indices: { readonly uvw: Uvw },
+  options?: SettingOptions,
+): readonly orbits.DirectionOrbitEntry[];
+export function orbit(
+  key: PointGroupKey,
+  indices: { readonly hkl: Hkl } | { readonly uvw: Uvw },
+  options?: SettingOptions,
+): readonly orbits.FaceOrbitEntry[] | readonly orbits.DirectionOrbitEntry[] {
+  return orbits.orbit(classKey(key), indices as { readonly hkl: Hkl }, options);
+}
+
+/**
+ * The orbit of a direction (any non-zero vector, Cartesian, e.g. a face normal) under a list of
+ * operations, for instance those of a distorted crystal: the images of its unit vector under each
+ * operation, coinciding images merged (closer than `tolerance`, default `EPSILON`, as for
+ * `siteSymmetry`), in the order in which the operations reach them, each with the indices of the
+ * operations that map the direction there. The list is taken as it is, not closed into a group.
+ * Throws a RangeError for a zero vector and for a matrix that is not orthogonal.
+ */
+export function orbitOf(
+  operations: readonly OperationArgument[],
+  direction: Vec3,
+  options?: site.SiteSymmetryOptions,
+): readonly orbits.OrbitPole[] {
+  checkUnitary(operations);
+  return orbits.orbitOf(operations, direction, options);
 }
 
 // --- crystal forms ---------------------------------------------------------------------------------
