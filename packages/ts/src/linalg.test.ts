@@ -6,6 +6,7 @@ import {
   conjugate,
   det,
   inverse,
+  isSingular,
   matricesEqual,
   multiply,
   rotationX,
@@ -96,6 +97,35 @@ describe('linalg', () => {
           [0, 0, k],
         ]),
       ).toThrow(RangeError);
+    }
+  });
+
+  it('isSingular: relative to the product of the column lengths (10⁻⁹), NaN and Infinity singular', () => {
+    // diag(1, 1, r): |det| / ∏|columns| = r exactly, at every scale k and for columns of different length.
+    for (const k of [1e-10, 1, 1e10]) {
+      for (const [r, singular] of [
+        [1e-10, true],
+        [1e-8, false],
+      ] as const) {
+        const m: Mat3 = [
+          [k, 0, 0],
+          [0, k * 1e3, k * 1e3],
+          [0, 0, k * 1e3 * r],
+        ];
+        // columns (k,0,0), (0,1e3k,0), (0,1e3k,1e3kr): det = 1e6 k³ r, ∏ = 1e6 k³ √(1 + r²) ≈ 1e6 k³
+        expect(isSingular(m), `${k} ${r}`).toBe(singular);
+        if (singular) expect(() => inverse(m)).toThrow(RangeError);
+        else expect(matricesEqual(multiply(inverse(m), m), IDENTITY)).toBe(true);
+      }
+    }
+    for (const bad of [Number.NaN, Infinity]) {
+      const m: Mat3 = [
+        [bad, 0, 0],
+        [0, 1, 0],
+        [0, 0, 1],
+      ];
+      expect(isSingular(m), String(bad)).toBe(true);
+      expect(() => inverse(m)).toThrow(RangeError);
     }
   });
 

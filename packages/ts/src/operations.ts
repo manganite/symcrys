@@ -41,6 +41,26 @@ export function checkOrthogonal(m: Mat3, what: string): void {
 }
 
 /**
+ * Throws unless mᵀm = 1 within the tolerance: the check of `checkOrthogonal` for a function with a
+ * `tolerance` option, so that a matrix with rounding errors (e.g. rounded to 4 decimals) passes
+ * with a larger one. Never stricter than `checkOrthogonal`.
+ */
+export function checkOrthogonalWithin(m: Mat3, what: string, tolerance: number): void {
+  if (tolerance <= EPSILON) {
+    checkOrthogonal(m, what);
+    return;
+  }
+  for (let i = 0; i < 3; i++) {
+    for (let j = 0; j < 3; j++) {
+      const d = m[0][i] * m[0][j] + m[1][i] * m[1][j] + m[2][i] * m[2][j];
+      if (!(Math.abs(d - (i === j ? 1 : 0)) < tolerance)) {
+        throw new RangeError(`${what} is not an orthogonal (Cartesian) matrix: ${JSON.stringify(m)}`);
+      }
+    }
+  }
+}
+
+/**
  * Checks operations that a caller passes in: each must say whether it is combined with time
  * reversal. Without this, an operation that lacks `timeReversal` (as the crystallographic API
  * returns them) would be composed as if it had it in every second product.

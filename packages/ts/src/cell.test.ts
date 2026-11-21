@@ -23,8 +23,6 @@ import type { Mat3 } from './linalg.js';
 
 const DEG = Math.PI / 180;
 const column = (m: Mat3, j: number) => [m[0][j], m[1][j], m[2][j]];
-/** k·m as a mutable copy. */
-const times = (m: Mat3, k: number): number[][] => m.map((row) => row.map((x) => k * x));
 const closeMat = (m: Mat3 | number[][], e: number[][], digits = 12) =>
   e.forEach((row, i) => row.forEach((x, j) => expect(m[i][j]).toBeCloseTo(x, digits)));
 
@@ -132,18 +130,29 @@ describe('latticeParameters', () => {
 });
 
 describe('cells in any unit of length', () => {
-  // Hand calculation: for B = k·A the reciprocal basis is (A⁻¹)ᵀ / k, and angles do not change.
+  // The defining property of the reciprocal basis, a_i · a*_j = δ_ij (ITA Vol. A, 2006, 1.1.3), and
+  // angles that do not change with the unit: not symcrys output.
   const p = { a: 4.9, b: 4.9, c: 5.4, alpha: 90, beta: 90, gamma: 120 }; // quartz-like cell, ångström
+  /** a_i · a*_j for the columns of a basis and of its reciprocal basis. */
+  const duality = (basis: Mat3, rec: Mat3): number[][] =>
+    [0, 1, 2].map((i) => [0, 1, 2].map((j) => [0, 1, 2].reduce((s, r) => s + basis[r][i] * rec[r][j], 0)));
+  const I = [
+    [1, 0, 0],
+    [0, 1, 0],
+    [0, 0, 1],
+  ];
   for (const [unit, k] of [
     ['metres', 1e-10],
     ['nanometres', 0.1],
     ['ångström', 1],
     ['picometres', 100],
   ] as const) {
-    it(`gives the same reciprocal basis (scaled) and the same angles in ${unit}`, () => {
+    it(`gives the reciprocal basis and the same angles in ${unit}`, () => {
       const scaled = latticeFromParameters({ ...p, a: p.a * k, b: p.b * k, c: p.c * k });
-      const ref = reciprocalBasis(latticeFromParameters(p));
-      closeMat(times(reciprocalBasis(scaled), k), times(ref, 1), 10);
+      closeMat(duality(scaled, reciprocalBasis(scaled)), I, 10);
+      // |a*| = 1/(a sin γ) for γ = 120° and c ⊥ a, b: a* has length 2/(√3·a).
+      const ra = reciprocalBasis(scaled);
+      expect(Math.hypot(ra[0][0], ra[1][0], ra[2][0]) * p.a * k).toBeCloseTo(2 / Math.sqrt(3), 10);
       // (100) and (010) of a hexagonal cell: their normals a* and b* make 60°.
       expect(angleBetweenPlanes(scaled, [1, 0, 0], [0, 1, 0])).toBeCloseTo(60, 10);
       expect(angleBetweenDirections(scaled, [1, 0, 0], [0, 1, 0])).toBeCloseTo(120, 10);
@@ -166,6 +175,13 @@ describe('cells in any unit of length', () => {
       8,
     );
     expect(angleBetweenPlanes(tiny, [1, 0, 0], [1, 1, 0])).toBeCloseTo(45, 10);
+  });
+  it('a cell with very different edges is no singular basis (c/a = 10⁵, right angles)', () => {
+    // 0.8.0 refused it: the test was relative to the cube of the longest edge.
+    const long = latticeFromParameters({ a: 1, b: 1, c: 1e5, alpha: 90, beta: 90, gamma: 90 });
+    expect(latticeParameters(long).c).toBeCloseTo(1e5, 6);
+    closeMat(duality(long, reciprocalBasis(long)), I, 10);
+    expect(angleBetweenPlanes(long, [1, 0, 1], [0, 0, 1])).toBeCloseTo((Math.atan(1e5) * 180) / Math.PI, 8);
   });
 });
 

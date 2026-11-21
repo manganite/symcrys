@@ -12,26 +12,37 @@ All notable changes to symcrys are recorded here. The format follows
   orthogonal with a RangeError (Python: `SymcrysError`), as the other functions for a list of
   Cartesian operations do. Before, it gave a result that looked valid and was wrong: for the
   stretch diag(2, 1, 1), [100] came out as a general position and [010] as lying on an element.
-  Wrong since 0.3.0, in Python since 0.5.0; fixed in 0.8.1. Not affected: orthogonal operations,
-  such as those of `operations` or of a distorted crystal in Cartesian coordinates.
-- `reciprocalBasis`, `angleBetweenPlanes` and the other functions that invert a matrix now accept a
-  cell in any unit of length. The test for a singular matrix was absolute (|det| < 10⁻⁶), so a cell
-  with edges below about 0.01 of its unit, e.g. in metres, was refused as singular, although the
-  documentation allows any unit. It is now relative to the product of the column lengths (10⁻⁹,
-  the threshold the cell functions already apply, there relative to the cube of the longest edge),
-  so every basis they accept can be inverted. Refused wrongly since 0.8.0; fixed in 0.8.1. Results that were given
-  before are unchanged.
+  Wrong since 0.3.0, in Python since 0.5.0; fixed in 0.8.1. Orthogonal means within the
+  `tolerance` of the call, at least 10⁻⁶, as for `pointGroupOf`, so operations rounded to 4
+  decimals and passed with `tolerance: 1e-4` are still accepted. Not affected: orthogonal
+  operations, such as those of `operations` or of a distorted crystal in Cartesian coordinates.
+- A matrix counts as singular by one criterion, relative to the product of its column lengths
+  (|det| at most 10⁻⁹ times that product, i.e. V/(abc) ≤ 10⁻⁹ for a cell), so it depends neither
+  on the unit of length nor on how different the edges are. Before, `inverse` tested |det| < 10⁻⁶
+  absolutely, and the cell functions tested |det| against the cube of the longest edge. Since
+  0.8.0, fixed in 0.8.1:
+  - `reciprocalBasis` and `angleBetweenPlanes` refused a cell with edges below about 0.01 of its
+    unit (e.g. in metres) as singular, although any unit is allowed;
+  - all cell functions refused a cell whose edges differ by more than a factor of about 3·10⁴ (e.g.
+    c/a > 31 623 with right angles) as singular;
+  - `changeOfAxes` refused a matrix P with small entries (e.g. 0.001·I) and accepted a nearly
+    singular one with large entries (|det| ≥ 10⁻⁶ but ≤ 10⁻⁹ times the product of the column
+    lengths), which it now refuses with its own message.
+    Every other matrix is accepted as before, with the same result.
 - `isValidCell` (Python: `is_valid_cell`) refuses a `minVolumeRatio` outside 0 to 1 with a
   RangeError. Before, a negative ratio was accepted and had no effect, and `Infinity` or a ratio
   above 1 refused every cell. Since 0.8.0; fixed in 0.8.1.
 
 ### Changed
 
+- `orbitOf` (Python: `orbit_of`) checks orthogonality within its `tolerance` (at least 10⁻⁶), like
+  `siteSymmetry` and `pointGroupOf`; before, always within 10⁻⁶.
 - The TSDoc (and so the Python docstrings) of every function for a list of Cartesian operations
   states what it checks: orthogonal matrices, in the magnetic API also whether each operation is
-  combined with time reversal.
-- README: until 1.0.0 a MINOR version may change the API, and every change is recorded in the
-  CHANGELOG (it said "without notice").
+  combined with time reversal. The Python docstrings now say "Raises SymcrysError" also where the
+  TSDoc wraps "Throws a RangeError" across a line.
+- README: until 1.0.0 a MINOR version may change the API, and every change to the API or to
+  calculated results is recorded in the CHANGELOG (it said "without notice").
 
 ## [0.8.0] - 2026-11-21
 

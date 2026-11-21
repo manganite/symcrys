@@ -135,13 +135,13 @@ all 32 classes.
 
 **Operations passed in.** Where a function takes a list of operations (`tensorFormOf`,
 `allowsPropertyOf`, `allowedPropertiesOf`, `isCentrosymmetricOf`, `isChiralOf`, `pointGroupOf`,
-`describeOperationsOf`), the matrices must be orthogonal (Cartesian), and the magnetic API asks
+`describeOperationsOf`, `siteSymmetry`, `orbitOf`), the matrices must be orthogonal (Cartesian;
+within the `tolerance` of a function that has one, at least `EPSILON`), and the magnetic API asks
 every operation whether it is combined with time reversal: `timeReversal` must be `true` or `false`. Operations of the
 crystallographic API, which do not say, are refused there and not read as a white group; a caller
 who means the white group adds `timeReversal: false`, one who means a crystal without magnetic
 order builds the grey group. `siteSymmetry` and `orbitOf` do not depend on time reversal and take
-either in the magnetic API; `orbitOf` also requires orthogonal matrices, `siteSymmetry` does not
-check them.
+either in the magnetic API.
 
 ## Cartesian frame
 
@@ -677,8 +677,7 @@ the Cartesian matrix of `operations`. W acts on the coordinates of a lattice dir
 list has the shape of `operations` (`{ matrix }`, in the magnetic API with `timeReversal`) and its
 order, index for index, so that a caller can switch between the two. The matrices are not
 orthogonal in general (hexagonal axes) and must not be passed to a function that takes Cartesian
-operations; `tensorFormOf`, `isChiralOf` and `orbitOf`, among others, refuse them, but
-`siteSymmetry` does not check and would give a wrong result.
+operations; `tensorFormOf`, `isChiralOf`, `orbitOf` and `siteSymmetry`, among others, refuse them.
 
 They do not depend on the cell angles: a point operation maps the lattice onto itself, and its
 matrix in the lattice basis is the same for every metric the point group allows (2 along b is

@@ -339,6 +339,18 @@ describe('every function for a list of Cartesian operations refuses a matrix tha
       expect(call).toThrow(notOrthogonal);
     }
   });
+  it('within the tolerance of the call: operations rounded to 4 decimals pass with tolerance 10⁻⁴', () => {
+    // 6/mmm (order 24): [001] has site symmetry 6mm (order 12), [100] mm2 (order 4); ITA 6th ed.
+    // Table 3.2.3.2, multiplicities 2 and 6.
+    const rounded = classes.operations('6/mmm').map((op) => ({
+      matrix: op.matrix.map((row) => row.map((x) => Math.round(x * 1e4) / 1e4)),
+    })) as unknown as readonly classes.Operation[];
+    expect(() => classes.siteSymmetry(rounded, [0, 0, 1])).toThrow(/not an orthogonal/);
+    expect(classes.siteSymmetry(rounded, [0, 0, 1], { tolerance: 1e-4 }).multiplicity).toBe(2);
+    expect(classes.siteSymmetry(rounded, [1, 0, 0], { tolerance: 1e-4 }).multiplicity).toBe(6);
+    expect(() => classes.orbitOf(rounded, [1, 0, 0])).toThrow(/not an orthogonal/);
+    expect(classes.orbitOf(rounded, [1, 0, 0], { tolerance: 1e-4 })).toHaveLength(6);
+  });
   it('in the magnetic API', () => {
     const ops = [{ ...stretch, timeReversal: false }] as unknown as readonly magnetic.Operation[];
     for (const call of [

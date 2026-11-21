@@ -4,7 +4,7 @@
  * coordinates, as `latticeBasis` gives it; lengths in any unit, angles in degrees.
  */
 
-import { apply, det, inverse, multiply, transpose, type Mat3, type Vec3 } from './linalg.js';
+import { apply, inverse, isSingular, multiply, transpose, type Mat3, type Vec3 } from './linalg.js';
 import { checkTimeReversal, type Operation as MagneticOperation } from './operations.js';
 import { EPSILON } from './tolerances.js';
 
@@ -149,9 +149,7 @@ function checkBasis(basis: Mat3, who: string): void {
       (r) => Array.isArray(r) && r.length === 3 && r.every((x) => typeof x === 'number' && Number.isFinite(x)),
     );
   if (!ok) throw new RangeError(`${who}: the basis must be a 3×3 matrix of finite numbers`);
-  const cols = columns(basis);
-  const scale = Math.max(...cols.map(norm));
-  if (!(Math.abs(det(basis)) > 1e-9 * scale ** 3)) throw new RangeError(`${who}: singular basis`);
+  if (isSingular(basis)) throw new RangeError(`${who}: singular basis`);
 }
 
 /**

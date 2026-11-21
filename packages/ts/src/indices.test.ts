@@ -150,6 +150,25 @@ describe('changeOfAxes', () => {
       }
   });
 
+  it('does not depend on the scale of P, and refuses a P singular within rounding', () => {
+    // P = 0.001·I (a basis of edges 0.001): Q = P⁻¹ = 1000·I, plane indices with Pᵀ = 0.001·I.
+    const { direction, plane } = changeOfAxes([
+      [1e-3, 0, 0],
+      [0, 1e-3, 0],
+      [0, 0, 1e-3],
+    ]);
+    direction.forEach((row, i) => row.forEach((x, j) => expect(x).toBeCloseTo(i === j ? 1000 : 0, 9)));
+    plane.forEach((row, i) => row.forEach((x, j) => expect(x).toBe(i === j ? 1e-3 : 0)));
+    // det P = 30000² − 29999·30001 = 1, but the columns have length ≈ 4.2·10⁴: |det| / ∏ ≈ 5.6·10⁻¹⁰.
+    expect(() =>
+      changeOfAxes([
+        [30000, 29999, 0],
+        [30001, 30000, 0],
+        [0, 0, 1],
+      ]),
+    ).toThrow(/P is singular within rounding/);
+  });
+
   it('refuses a transformation of a left-handed or singular basis (det P ≤ 0, ITA 5.1.3)', () => {
     expect(() =>
       changeOfAxes([

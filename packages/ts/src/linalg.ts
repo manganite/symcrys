@@ -122,19 +122,27 @@ export function matricesEqual(a: Mat3, b: Mat3): boolean {
 
 /**
  * Below this ratio of |det| to the product of the column lengths (Hadamard's bound, the largest
- * |det| columns of these lengths can have) a matrix counts as singular. The ratio does not depend on
- * the unit of the entries; for a cell it is V/(abc). It is the threshold of `checkBasis` in
- * `cell.ts` taken relative to the product instead of the cube of the longest column, so every basis
- * that `checkBasis` accepts can be inverted.
+ * |det| columns of these lengths can have) a matrix counts as singular. The ratio depends neither
+ * on the unit of the entries nor on the lengths of the columns relative to each other; for a cell
+ * it is V/(abc).
  */
 const SINGULAR_RATIO = 1e-9;
 
-/** The inverse of a regular matrix (by the adjugate); throws for a singular one, whatever the scale of its entries. */
-export function inverse(a: Mat3): Mat3 {
-  const d = det(a);
+/**
+ * True if `a` is singular within rounding: |det a| at most `SINGULAR_RATIO` times the product of
+ * its column lengths. The one criterion for `inverse` and for the bases of the cell functions. Also
+ * true for a zero column and for a matrix with NaN or an infinite entry.
+ */
+export function isSingular(a: Mat3): boolean {
   const bound = [0, 1, 2].reduce((p, j) => p * Math.hypot(a[0][j], a[1][j], a[2][j]), 1);
-  // A comparison that is false for NaN and for a zero column (bound 0), so both are refused.
-  if (!(Math.abs(d) > SINGULAR_RATIO * bound)) throw new RangeError('inverse: singular matrix');
+  // A comparison that is false for NaN, so a matrix with NaN counts as singular.
+  return !(Number.isFinite(bound) && Math.abs(det(a)) > SINGULAR_RATIO * bound);
+}
+
+/** The inverse of a regular matrix (by the adjugate); throws for a singular one (`isSingular`), whatever the scale of its entries. */
+export function inverse(a: Mat3): Mat3 {
+  if (isSingular(a)) throw new RangeError('inverse: singular matrix');
+  const d = det(a);
   const c = (i: number, j: number): number => {
     const [r0, r1] = [0, 1, 2].filter((k) => k !== i);
     const [s0, s1] = [0, 1, 2].filter((k) => k !== j);
