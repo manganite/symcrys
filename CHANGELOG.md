@@ -23,8 +23,8 @@ All notable changes to symcrys are recorded here. The format follows
   0.8.0, fixed in 0.8.1:
   - `reciprocalBasis` and `angleBetweenPlanes` refused a cell with edges below about 0.01 of its
     unit (e.g. in metres) as singular, although any unit is allowed;
-  - all cell functions refused a cell whose edges differ by more than a factor of about 3·10⁴ (e.g.
-    c/a > 31 623 with right angles) as singular;
+  - all cell functions refused a cell with two edges more than about 3·10⁴ times shorter than the
+    third (e.g. c/a > 31 623 with a = b and right angles) as singular;
   - `changeOfAxes` refused a matrix P with small entries (e.g. 0.001·I) and accepted a nearly
     singular one with large entries (|det| ≥ 10⁻⁶ but ≤ 10⁻⁹ times the product of the column
     lengths), which it now refuses with its own message.

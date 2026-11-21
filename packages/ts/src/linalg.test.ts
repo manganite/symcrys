@@ -101,7 +101,7 @@ describe('linalg', () => {
   });
 
   it('isSingular: relative to the product of the column lengths (10⁻⁹), NaN and Infinity singular', () => {
-    // diag(1, 1, r): |det| / ∏|columns| = r exactly, at every scale k and for columns of different length.
+    // |det| / ∏|columns| = r/√(1 + r²) ≈ r, at every scale k and for columns of different length.
     for (const k of [1e-10, 1, 1e10]) {
       for (const [r, singular] of [
         [1e-10, true],
