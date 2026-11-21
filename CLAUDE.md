@@ -240,9 +240,12 @@ build && npm run bundle:python`, then in `packages/python` `pip install -e ".[te
   Settings by Thomas: Pages with the source "GitHub Actions", and a deployment rule for tags
   `v*.*.*` on the environment `github-pages`. Which checks the ruleset `main` requires: "Repository
   settings" above.
-- **Releases:** procedure in `README.md`. The release PR is merged on Thomas' OK; **Thomas sets
-  the tag by hand** (maintainer, 2026-11-08). Before tagging, `origin/main` must be the release
-  PR's merge commit; afterwards `release.yml` must be green.
+- **Releases:** procedure in `README.md`. The release PR is merged on Thomas' OK. **Who sets the
+  tag depends on where the release work runs** (maintainer, 2026-11-21; replaces "Thomas sets the
+  tag by hand", 2026-11-08): Claude Code on Thomas' computer sets it itself, after Thomas' release
+  OK and the merge of the release PR; in a cloud session, where pushing a tag fails
+  ("Cloud-session limits"), Thomas sets it. Before tagging, `origin/main` must be the release PR's
+  merge commit; afterwards `release.yml` must be green.
 - **npm:** `release.yml` submits each tagged version with `npm stage publish` (trusted publishing,
   allowed action "stage" only); **Thomas approves it** with 2FA (maintainer, 2026-11-08). Never
   publish from a working copy other than a clean checkout of the tag; a stale checkout put `0.0.0`
@@ -253,7 +256,7 @@ build && npm run bundle:python`, then in `packages/python` `pip install -e ".[te
   publisher on pypi.org names this repository, `release.yml` and `pypi`. No placeholder package:
   the name `symcrys` was taken on PyPI by the first real release, 0.5.0.
 - Commits end with `Co-Authored-By: …`; in sessions with a link (claude.ai) also with
-  `Claude-Session: …`. On Thomas' computer commit with
+  `Claude-Session: …`. On Thomas' computer commit and tag with
   `git config user.email 6277652+manganite@users.noreply.github.com` (GitHub rejects the private
   address, GH007). In a cloud session Claude commits with its own signed identity.
 
