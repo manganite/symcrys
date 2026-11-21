@@ -6,19 +6,22 @@ All notable changes to symcrys are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-11-21
+
 ### Added
 
 - Geometry of a cell and indices, #24 item 4: `latticeFromParameters` and `latticeParameters` (basis
   of a cell and back; a ∥ x, b in the xy plane, c towards +z), `isValidCell` (three angles give a
   cell, optional `minVolumeRatio`), `metricTensor`, `reciprocalBasis`, `angleBetweenDirections`,
   `angleBetweenPlanes`, `residualOperations` (the operations of a list that keep the metric; also
-  in the magnetic API, with `timeReversal` carried along), `reduceIndices`,
+  in the magnetic API, where every operation must say whether it has time reversal, as for the
+  other functions there; `timeReversal` is carried along), `reduceIndices`,
   `planeToFourIndices`, `planeFromFourIndices`, `directionToFourIndices`,
   `directionFromFourIndices`, `zoneAxis` and `changeOfAxes` (transformation of direction
   coordinates and plane indices for a change of basis P). In both entry points (the cell, metric and
   index functions need no group key); in Python the same names in snake_case. Types `LatticeParameters`,
   `CellAngles`, `CellOperation`, `IsValidCellOptions`, `ResidualOperationsOptions`, `AxisChange`,
-  `FourIndices`. Python: the key `plane` of a result is a float64 array like `matrix`.
+  `FourIndices`; in the magnetic API also `MagneticCellOperation`. Python: the key `plane` of a result is a float64 array like `matrix`.
   Rules in `docs/conventions.md`, "Cell, metric and indices"; page "Cells, metric, angles and
   indices" on the site.
 
@@ -297,7 +300,8 @@ All notable changes to symcrys are recorded here. The format follows
 - Project scaffold: TypeScript build to `dist/` (ES modules with type declarations), tests, lint,
   format check, CI and release workflow. The only export so far is `VERSION`.
 
-[Unreleased]: https://github.com/manganite/symcrys/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/manganite/symcrys/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/manganite/symcrys/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/manganite/symcrys/compare/v0.6.1...v0.7.0
 [0.6.1]: https://github.com/manganite/symcrys/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/manganite/symcrys/compare/v0.5.0...v0.6.0
