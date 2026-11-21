@@ -359,7 +359,6 @@ def site_symmetry(
     )
 
 
-
 def lattice_operations(
     key: str, *, convention: Optional[Convention] = None, setting: Optional[int] = None
 ) -> list[Operation]:
@@ -433,9 +432,9 @@ def orbit_of(
     Parameters
     ----------
     tolerance : keyword-only, optional
-        A direction counts as fixed by an operation if the operation moves its unit vector by less
-        than this (Euclidean distance). Default 10⁻⁶; a caller whose directions carry rounding
-        errors (e.g. read from a rounded link) passes a larger value.
+        Two images count as one pole if their unit vectors are closer than this (Euclidean
+        distance). Default 10⁻⁶; a caller whose directions carry rounding errors passes a larger
+        value.
 
     Returns
     -------
@@ -446,6 +445,7 @@ def orbit_of(
     return list(
         _call("orbitOf", list(operations), np.asarray(direction), _shared.options(tolerance=tolerance))
     )
+
 
 def wyckoff_positions(
     key: str, *, convention: Optional[Convention] = None, setting: Optional[int] = None

@@ -74,6 +74,7 @@ export {
   orbitOf,
   type DirectionOrbitEntry,
   type FaceOrbitEntry,
+  type OrbitOptions,
   type OrbitPole,
 } from './pointGroups/orbits.js';
 export {

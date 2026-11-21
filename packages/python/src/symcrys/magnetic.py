@@ -357,7 +357,6 @@ def site_symmetry(
     )
 
 
-
 def lattice_operations(
     key: str, *, convention: Optional[Convention] = None, setting: Optional[int] = None
 ) -> list[Operation]:
@@ -367,7 +366,9 @@ def lattice_operations(
     [uvw], W = B⁻¹·R·B with the basis B of ``lattice_basis`` and the Cartesian matrix R. They do not
     depend on the cell angles, so they exist for every family; for the monoclinic and triclinic
     families a, b, c are taken along x, y, z, as for the Wyckoff positions. In the ITC convention
-    they are the matrices of ITA's general position (6th ed., Table 3.2.3.2).
+    they are the matrices of ITA's general position (6th ed., Table 3.2.3.2). Not orthogonal in
+    general: pass them to no function that takes Cartesian operations (docs/conventions.md, "Lattice
+    basis and orbits").
 
     Parameters
     ----------
@@ -432,9 +433,9 @@ def orbit_of(
     Parameters
     ----------
     tolerance : keyword-only, optional
-        A direction counts as fixed by an operation if the operation moves its unit vector by less
-        than this (Euclidean distance). Default 10⁻⁶; a caller whose directions carry rounding
-        errors (e.g. read from a rounded link) passes a larger value.
+        Two images count as one pole if their unit vectors are closer than this (Euclidean
+        distance). Default 10⁻⁶; a caller whose directions carry rounding errors passes a larger
+        value.
 
     Returns
     -------
@@ -445,6 +446,7 @@ def orbit_of(
     return list(
         _call("orbitOf", list(operations), np.asarray(direction), _shared.options(tolerance=tolerance))
     )
+
 
 # --- tensors -------------------------------------------------------------------------------------
 
