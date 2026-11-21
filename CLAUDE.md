@@ -443,8 +443,9 @@ The conventions themselves are in `docs/conventions.md`; here, what was decided 
   `operations` (`{ matrix }`, index for index, in the magnetic API with `timeReversal`), so that a
   caller switches between the two lists, although Python then gives the integer matrices as float64
   under the fixed rule for `matrix`; `latticeOperations`, `orbit` and `orbitOf` are in both entry
-  points, by the rule for new functions (a face's orbit does not depend on time reversal).
-  other; stereography's catalogue (ITA 2006) is an additional check by `audit/forms-2006`, not the
+  points, by the rule for new functions (a face's orbit does not depend on time reversal). The
+  print anchor is ITA 6th ed. Tables 3.2.3.2 and 3.2.1.3, checked against each other;
+  stereography's catalogue (ITA 2006) is an additional check by `audit/forms-2006`, not the
   reference (docs/conventions.md, "Crystal forms").
 - **`latticeBasis` only for families with fixed cell angles** (2026-11-09, #14): for monoclinic
   and triclinic a Cartesian basis would need the cell angles, which a point group does not fix.
