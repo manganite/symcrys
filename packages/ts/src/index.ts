@@ -15,6 +15,31 @@ export {
   type CrystalSystem,
   type FixedAngleFamily,
 } from './lattice.js';
+export {
+  angleBetweenDirections,
+  angleBetweenPlanes,
+  isValidCell,
+  latticeFromParameters,
+  latticeParameters,
+  metricTensor,
+  reciprocalBasis,
+  type CellAngles,
+  type CellOperation,
+  type IsValidCellOptions,
+  type LatticeParameters,
+  type ResidualOperationsOptions,
+} from './cell.js';
+export {
+  changeOfAxes,
+  directionFromFourIndices,
+  directionToFourIndices,
+  planeFromFourIndices,
+  planeToFourIndices,
+  reduceIndices,
+  zoneAxis,
+  type AxisChange,
+  type FourIndices,
+} from './indices.js';
 
 export type { Convention, PointGroupKey, Setting, SettingOptions, SymbolOptions } from './pointGroups/pointGroups.js';
 export { LATTICE_SYMMETRY_DIRECTIONS, type Uvw } from './symmetryDirections.js';
@@ -44,6 +69,7 @@ export {
   isChiralOf,
   isPointGroupKey,
   latticeOperations,
+  residualOperations,
   operations,
   orbit,
   orbitOf,

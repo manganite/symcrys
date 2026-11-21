@@ -63,6 +63,21 @@ __all__ = [
     "is_point_group_key",
     "lattice_operations",
     "lattice_basis",
+    "lattice_from_parameters",
+    "lattice_parameters",
+    "is_valid_cell",
+    "metric_tensor",
+    "reciprocal_basis",
+    "angle_between_directions",
+    "angle_between_planes",
+    "residual_operations",
+    "reduce_indices",
+    "plane_to_four_indices",
+    "plane_from_four_indices",
+    "direction_to_four_indices",
+    "direction_from_four_indices",
+    "zone_axis",
+    "change_of_axes",
     "operations",
     "orbit",
     "orbit_of",
@@ -255,6 +270,152 @@ def lattice_basis(family: str) -> NDArray[np.float64]:
         A float64 array of shape (3, 3), a new array on each call; a, b, c are its columns.
     """
     return np.asarray(_call("latticeBasis", family, floats=True), dtype=np.float64)
+
+
+# --- cell, metric, indices ----------------------------------------------------------------------
+
+
+def lattice_from_parameters(parameters: Mapping[str, float]) -> NDArray[np.float64]:
+    """The Cartesian basis of a cell as the columns of a 3×3 matrix, in the frame of this library
+    for a general cell: a along x, b in the xy plane (y > 0 for γ < 180°), c towards +z. It is the
+    frame of ``lattice_basis`` where that exists (hexagonal axes: x ∥ a, z ∥ c), so a cell with the
+    angles of a family has that family's basis scaled by the edge lengths. For the monoclinic family
+    with unique axis b, b lies along y (docs/conventions.md, "Cell, metric and indices"). The basis
+    is right-handed. Raises SymcrysError for an edge that is not positive and for angles that give
+    no cell.
+    """
+    return np.asarray(_call("latticeFromParameters", dict(parameters), floats=True), dtype=np.float64)
+
+
+def lattice_parameters(basis: ArrayLike) -> dict[str, float]:
+    """The lattice parameters of a basis given as the columns of a Cartesian matrix: the edge
+    lengths and the angles in degrees. Independent of the orientation of the basis in the Cartesian
+    frame (and of its handedness). Raises SymcrysError for a singular matrix.
+    """
+    result: dict[str, float] = _call("latticeParameters", np.asarray(basis, dtype=np.float64))
+    return result
+
+
+def is_valid_cell(angles: Mapping[str, float], *, min_volume_ratio: Optional[float] = None) -> bool:
+    """Whether three angles (degrees) belong to a cell: each between 0° and 180°, and the three axes
+    not in one plane (the volume radicand 1 − cos²α − cos²β − cos²γ + 2 cos α cos β cos γ is
+    positive). With ``min_volume_ratio`` also refuses nearly flat cells, whose ratio V/(abc), the
+    square root of the radicand, is smaller.
+
+    Parameters
+    ----------
+    min_volume_ratio : keyword-only, optional
+        The smallest accepted ratio V/(abc) of the cell volume to the volume of the box of its edge
+        lengths; default 0, which accepts every cell that has a volume. A ratio near 0 is a nearly
+        flat cell.
+    """
+    return bool(_call("isValidCell", dict(angles), _shared.options(min_volume_ratio=min_volume_ratio)))
+
+
+def metric_tensor(basis: ArrayLike) -> NDArray[np.float64]:
+    """The metric tensor G = AᵀA of a basis A (columns a, b, c): g_ij = a_i · a_j, in the unit of
+    the edge lengths squared.
+    """
+    return np.asarray(_call("metricTensor", np.asarray(basis, dtype=np.float64), floats=True), dtype=np.float64)
+
+
+def reciprocal_basis(basis: ArrayLike) -> NDArray[np.float64]:
+    """The reciprocal basis B = A⁻ᵀ of a basis A (columns a, b, c) as the columns a*, b*, c*, with
+    a_i · a*_j = δ_ij (no factor 2π), in the inverse unit of the edge lengths.
+    """
+    return np.asarray(_call("reciprocalBasis", np.asarray(basis, dtype=np.float64), floats=True), dtype=np.float64)
+
+
+def angle_between_directions(basis: ArrayLike, u: ArrayLike, v: ArrayLike) -> float:
+    """The angle in degrees between two lattice directions [uvw] (coordinates in the basis, columns
+    a, b, c), 0° to 180°. Throws for a zero vector.
+    """
+    return float(_call("angleBetweenDirections", np.asarray(basis, dtype=np.float64), np.asarray(u), np.asarray(v)))
+
+
+def angle_between_planes(basis: ArrayLike, h: ArrayLike, k: ArrayLike) -> float:
+    """The angle in degrees between the normals of two planes (hkl), 0° to 180°: the angle between
+    the reciprocal vectors h·a* + k·b* + l·c*. For two faces this is 180° minus the interior
+    dihedral angle. Throws for a zero vector.
+    """
+    return float(_call("angleBetweenPlanes", np.asarray(basis, dtype=np.float64), np.asarray(h), np.asarray(k)))
+
+
+def residual_operations(
+    operations: Sequence[Mapping[str, Any]], basis: ArrayLike, *, tolerance: Optional[float] = None
+) -> list[Operation]:
+    """The operations that leave the metric of a cell unchanged: those W (integer matrices on the
+    coordinates of a lattice direction, as ``lattice_operations`` gives them) with WᵀGW = G, G the
+    metric tensor of ``basis``. It is the point symmetry of a distorted lattice among the operations
+    of a group; the list is taken as it is, not closed into a group, and the kept operations are the
+    ones of the list, in its order. The deviation counts relative to the largest entry of G
+    (``tolerance``, default ``EPSILON``), so the result does not depend on the unit of the edge
+    lengths.
+
+    Parameters
+    ----------
+    tolerance : keyword-only, optional
+        The largest accepted deviation of WᵀGW from G, relative to the largest entry of G; default
+        ``EPSILON``.
+    """
+    return list(
+        _call(
+            "residualOperations",
+            list(operations),
+            np.asarray(basis, dtype=np.float64),
+            _shared.options(tolerance=tolerance),
+        )
+    )
+
+
+def reduce_indices(indices: ArrayLike) -> NDArray[np.int64]:
+    """The indices divided by their greatest common divisor, signs kept. Raises SymcrysError for
+    non-integers and for all zeros.
+    """
+    return np.asarray(_call("reduceIndices", np.asarray(indices)), dtype=np.int64)
+
+
+def plane_to_four_indices(hkl: ArrayLike) -> NDArray[np.int64]:
+    """The plane (hkl) of hexagonal axes as (hkil) with i = −(h + k)."""
+    return np.asarray(_call("planeToFourIndices", np.asarray(hkl)), dtype=np.int64)
+
+
+def plane_from_four_indices(hkil: ArrayLike) -> NDArray[np.int64]:
+    """The plane (hkil) as (hkl); raises SymcrysError unless i = −(h + k)."""
+    return np.asarray(_call("planeFromFourIndices", np.asarray(hkil)), dtype=np.int64)
+
+
+def direction_to_four_indices(uvw: ArrayLike) -> NDArray[np.int64]:
+    """The direction [uvw] of hexagonal axes as [UVTW], reduced: U = (2u − v)/3, V = (2v − u)/3, T =
+    −(U + V), W = w, scaled to the smallest integers.
+    """
+    return np.asarray(_call("directionToFourIndices", np.asarray(uvw)), dtype=np.int64)
+
+
+def direction_from_four_indices(uvtw: ArrayLike) -> NDArray[np.int64]:
+    """The direction [UVTW] as [uvw], reduced: u = U − T, v = V − T, w = W; raises SymcrysError
+    unless T = −(U + V).
+    """
+    return np.asarray(_call("directionFromFourIndices", np.asarray(uvtw)), dtype=np.int64)
+
+
+def zone_axis(h1: ArrayLike, h2: ArrayLike) -> Optional[NDArray[np.int64]]:
+    """The zone axis [uvw] of two planes (hkl): the solution of the zone law hu + kv + lw = 0, the
+    cross product h₁ × h₂ reduced (so its sign follows the order of the planes), or ``null`` for
+    parallel planes.
+    """
+    result = _call("zoneAxis", np.asarray(h1), np.asarray(h2))
+    return None if result is None else np.asarray(result, dtype=np.int64)
+
+
+def change_of_axes(p: ArrayLike) -> dict[str, NDArray[np.float64]]:
+    """The transformation of indices for a change of basis (a′, b′, c′) = (a, b, c)·P (ITA Vol. A,
+    2006, Section 5.1.3): the columns of ``P`` are the new basis vectors in the old one. The
+    coordinates of a direction transform with Q = P⁻¹, the indices of a plane with Pᵀ, so that hu +
+    kv + lw is the same in both bases. Raises SymcrysError unless det P > 0 (a right-handed basis).
+    """
+    result: dict[str, NDArray[np.float64]] = _call("changeOfAxes", np.asarray(p, dtype=np.float64))
+    return result
 
 
 def describe_operations(

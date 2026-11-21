@@ -275,3 +275,42 @@ def test_boundary_is_one_function() -> None:
     answer = _engine.call("magnetic.symbol", '["4\'/mmm\'", {"form": "schoenflies"}]')
     assert re.fullmatch(r'\{"result":"D4h\(D2h\)"\}', answer)
     assert '"error"' in _engine.call("other.symbol", '["32"]') and '"error"' in _engine.call("magnetic.wyckoffPositions", '["32"]')
+
+
+def test_cell_metric_and_indices() -> None:
+    # No expected values of their own beyond the layer: types, shapes, names (the values are tested in TypeScript).
+    basis = symcrys.lattice_from_parameters({"a": 3, "b": 3, "c": 5, "alpha": 90, "beta": 90, "gamma": 120})
+    assert basis.dtype == np.float64 and basis.shape == (3, 3)
+    assert symcrys.lattice_parameters(basis)["gamma"] == pytest.approx(120)
+    assert symcrys.is_valid_cell({"alpha": 90, "beta": 90, "gamma": 90}) is True
+    assert symcrys.is_valid_cell({"alpha": 60, "beta": 60, "gamma": 120}) is False
+    assert symcrys.is_valid_cell({"alpha": 90, "beta": 90, "gamma": 30}, min_volume_ratio=0.6) is False
+    assert symcrys.metric_tensor(basis).dtype == np.float64
+    assert symcrys.reciprocal_basis(basis).shape == (3, 3)
+    assert symcrys.angle_between_directions(basis, [1, 0, 0], [0, 1, 0]) == pytest.approx(120)
+    assert symcrys.angle_between_planes(basis, [1, 0, 0], [0, 1, 0]) == pytest.approx(60)
+    reduced = symcrys.reduce_indices([2, -4, 6])
+    assert reduced.dtype == np.int64 and reduced.tolist() == [1, -2, 3]
+    assert symcrys.direction_to_four_indices([1, 0, 0]).tolist() == [2, -1, -1, 0]
+    assert symcrys.direction_from_four_indices([2, -1, -1, 0]).tolist() == [1, 0, 0]
+    assert symcrys.plane_to_four_indices([1, 1, 2]).tolist() == [1, 1, -2, 2]
+    assert symcrys.plane_from_four_indices([1, 1, -2, 2]).tolist() == [1, 1, 2]
+    zone = symcrys.zone_axis([1, 0, 0], [0, 1, 0])
+    assert zone is not None and zone.tolist() == [0, 0, 1]
+    assert symcrys.zone_axis([1, 1, 0], [2, 2, 0]) is None
+    change = symcrys.change_of_axes([[1, -1, 0], [1, 1, 0], [0, 0, 1]])
+    assert change["direction"].dtype == np.float64 and change["plane"].dtype == np.float64
+    with pytest.raises(ValueError):
+        symcrys.reduce_indices([0, 0, 0])
+
+
+def test_residual_operations_in_both_apis() -> None:
+    ops = symcrys.lattice_operations("4/mmm")
+    cell = symcrys.lattice_from_parameters({"a": 2, "b": 2.1, "c": 3, "alpha": 90, "beta": 90, "gamma": 90})
+    assert len(symcrys.residual_operations(ops, cell)) == 8
+    assert len(symcrys.residual_operations(ops, cell, tolerance=0.1)) == 16
+    mops = magnetic.lattice_operations("4/mmm")
+    assert len(magnetic.residual_operations(mops, cell)) == 8
+    assert all("time_reversal" in op for op in magnetic.residual_operations(mops, cell))
+    with pytest.raises(ValueError):
+        symcrys.residual_operations([{"matrix": np.eye(3), "time_reversal": True}], cell)

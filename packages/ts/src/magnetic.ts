@@ -20,6 +20,31 @@ export {
   type CrystalSystem,
   type FixedAngleFamily,
 } from './lattice.js';
+export {
+  angleBetweenDirections,
+  angleBetweenPlanes,
+  isValidCell,
+  latticeFromParameters,
+  latticeParameters,
+  metricTensor,
+  reciprocalBasis,
+  type CellAngles,
+  type CellOperation,
+  type IsValidCellOptions,
+  type LatticeParameters,
+  type ResidualOperationsOptions,
+} from './cell.js';
+export {
+  changeOfAxes,
+  directionFromFourIndices,
+  directionToFourIndices,
+  planeFromFourIndices,
+  planeToFourIndices,
+  reduceIndices,
+  zoneAxis,
+  type AxisChange,
+  type FourIndices,
+} from './indices.js';
 
 import type {
   PointGroupKey as ClassKey,
@@ -67,6 +92,7 @@ export {
   type OperationKind,
   type SymmetryDirection,
 } from './pointGroups/elements.js';
+export { residualOperations } from './cell.js';
 export { siteSymmetry, type SiteSymmetry, type SiteSymmetryOptions } from './siteSymmetry.js';
 export {
   describeOperationsOf,

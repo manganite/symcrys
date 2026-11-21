@@ -708,6 +708,46 @@ crystal: the images of its unit vector, coinciding images merged when closer tha
 lead there. The list is not closed into a group. For a group and a face of a crystal form, `orbit`
 and `orbitOf` give the same entries with the same operations.
 
+## Cell, metric and indices
+
+**Frame of a general cell.** `latticeFromParameters({ a, b, c, alpha, beta, gamma })` gives the
+basis as the columns a, b, c of a Cartesian matrix: **a along x, b in the xy plane (y > 0), c towards
++z**, so z ∥ c\* (the usual orthogonalization of crystallography). It is right-handed, with
+a = (a, 0, 0), b = (b cos γ, b sin γ, 0), c = (c cos β, c (cos α − cos β cos γ)/sin γ, V/(ab sin γ)). It
+agrees with `latticeBasis` where that exists (hexagonal axes: b at 120° from a, c ∥ z) and holds
+for both monoclinic settings (unique axis b: b ∥ y, c in the xz plane; unique axis c: c ∥ z). Chosen
+by the maintainer's rule (2026-11-21) that symcrys follows the ITC standard and an application whose
+frame differs converts in the application (stereography, for instance, rotates into its own frame).
+Not checked against a printed page: the orthogonalization of ITA Vol. B is not yet read; a printed
+difference would be corrected here.
+
+**Metric and angles.** G = AᵀA (A the basis), the reciprocal basis B = A⁻ᵀ with a_i · a\*_j = δ_ij (no
+factor 2π); the angle between directions is that of A·u and A·v, between planes (hkl) that of the
+reciprocal vectors B·h. A plane angle is that of the **normals**, so 180° minus the interior dihedral
+angle of two faces. Angles come from the arc tangent of cross and dot product, so equal vectors give
+exactly 0°.
+
+**Valid cells.** Three angles belong to a cell if each lies in (0°, 180°) and
+1 − cos²α − cos²β − cos²γ + 2 cos α cos β cos γ > 0 (the volume is V = abc·√ of it). `isValidCell` has
+the optional `minVolumeRatio`, default 0: the library accepts what is mathematically a cell; an
+application that wants to avoid nearly flat cells passes its own limit (stereography 0.1).
+
+**Residual operations.** `residualOperations(operations, basis, { tolerance })` keeps the operations
+W (integer matrices in the lattice basis, as `latticeOperations` gives them) with WᵀGW = G. The
+deviation is relative to the largest entry of G, so the unit of the lengths does not matter; the
+default is `EPSILON`.
+
+**Indices.** (hkl) ↔ (hkil) with i = −(h + k); [uvw] → [UVTW] with U = (2u − v)/3, V = (2v − u)/3,
+T = −(U + V), W = w, scaled to the smallest integers, and back with u = U − T, v = V − T, w = W,
+reduced. `zoneAxis(h1, h2)` is the reduced cross product h₁ × h₂ (zone law hu + kv + lw = 0), so its
+sign follows the order of the planes; parallel planes give `null`.
+
+**Change of axes.** For (a′, b′, c′) = (a, b, c)·P (columns of P: the new vectors in the old basis,
+det P > 0), `changeOfAxes(P)` gives Q = P⁻¹ for the coordinates of a direction and Pᵀ for the indices
+of a plane ((h′ k′ l′) = (h k l)·P), so hu + kv + lw is invariant (ITA Vol. A, 2006, Section 5.1.3).
+The matrices P of the named changes (rhombohedral ↔ hexagonal, centrings) are not tabulated here;
+the caller passes them.
+
 ## Tensors
 
 `tensorForm(key, spec, options)` gives the form of a property tensor under a point group, a

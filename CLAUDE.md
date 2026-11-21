@@ -333,6 +333,15 @@ Decided by Thomas on 2026-11-20 (#29), asked before implementation.
   in a PR of its own (#56).
 - **A PATCH release of its own** (0.6.1) puts the site online with the generated docstrings.
 
+### ITC standard for every consumer
+
+- **symcrys follows the ITC standard; an application adapts** (maintainer, 2026-11-21, #24): the API
+  always follows ITC. Only in the Birss convention does it make the adjustments that are checked
+  against Birss. If one of Thomas' apps deviates from the ITC standard (a frame, a setting, a
+  symbol), the app does the conversion, not symcrys. Reason: symcrys is meant to be useful to other
+  users too, and that works only if it follows what users of such a library expect, the ITC
+  standard. Example: stereography keeps its own Cartesian frame and rotates symcrys' results into it.
+
 ### Point groups
 
 The conventions themselves are in `docs/conventions.md`; here, what was decided and why.

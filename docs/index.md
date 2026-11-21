@@ -27,6 +27,9 @@ Where to start:
 - [Crystal forms, orbits and distorted crystals](forms.md): the basic and limiting forms of each
   crystal class, as ITA lists them, the orbits of faces and directions, and the point group of a
   list of operations.
+- [Cells, metric, angles and indices](cells.md): the cell from lattice parameters, metric tensor,
+  angles between directions and faces, the operations a distortion leaves, Miller–Bravais indices,
+  the zone law and the change of axes.
 - [Tensors and named properties](tensors.md): forms of property tensors, and the named properties
   such as piezoelectric or ferromagnetic.
 - [Examples](examples.md), among them second-harmonic generation at surfaces.
@@ -46,6 +49,7 @@ getting-started
 readings
 conventions
 forms
+cells
 tensors
 examples
 reference/index
