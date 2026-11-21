@@ -14,13 +14,14 @@ All notable changes to symcrys are recorded here. The format follows
   of a cell and back; a ∥ x, b in the xy plane, c towards +z), `isValidCell` (three angles give a
   cell, optional `minVolumeRatio`), `metricTensor`, `reciprocalBasis`, `angleBetweenDirections`,
   `angleBetweenPlanes`, `residualOperations` (the operations of a list that keep the metric; also
-  in the magnetic API, with `timeReversal` carried along), `reduceIndices`,
+  in the magnetic API, where every operation must say whether it has time reversal, as for the
+  other functions there; `timeReversal` is carried along), `reduceIndices`,
   `planeToFourIndices`, `planeFromFourIndices`, `directionToFourIndices`,
   `directionFromFourIndices`, `zoneAxis` and `changeOfAxes` (transformation of direction
   coordinates and plane indices for a change of basis P). In both entry points (the cell, metric and
   index functions need no group key); in Python the same names in snake_case. Types `LatticeParameters`,
   `CellAngles`, `CellOperation`, `IsValidCellOptions`, `ResidualOperationsOptions`, `AxisChange`,
-  `FourIndices`. Python: the key `plane` of a result is a float64 array like `matrix`.
+  `FourIndices`; in the magnetic API also `MagneticCellOperation`. Python: the key `plane` of a result is a float64 array like `matrix`.
   Rules in `docs/conventions.md`, "Cell, metric and indices"; page "Cells, metric, angles and
   indices" on the site.
 
