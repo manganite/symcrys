@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { apply, inverse, matricesEqual, multiply, transpose, type Mat3, type Vec3 } from '../linalg.js';
+import { apply, det, inverse, matricesEqual, multiply, transpose, type Mat3, type Vec3 } from '../linalg.js';
 import { latticeBasis } from '../lattice.js';
 import { latticeOperations, orbit, orbitOf } from './orbits.js';
 import { MAGNETIC_POINT_GROUP_KEYS, POINT_GROUP_KEYS, operations, settings } from './pointGroups.js';
@@ -8,8 +8,8 @@ import { wyckoffPositions } from './wyckoff.js';
 const ALL_SETTINGS = POINT_GROUP_KEYS.flatMap((key) => settings(key, 'itc').map((s) => ({ key, s })));
 
 describe('latticeOperations', () => {
-  it('are integer matrices with determinant ±1, index for index the operations of the same call', () => {
-    for (const key of MAGNETIC_POINT_GROUP_KEYS) {
+  for (const key of MAGNETIC_POINT_GROUP_KEYS) {
+    it(`are integer matrices, index for index the operations of the same call: ${key}`, () => {
       for (const s of settings(key, 'itc')) {
         for (const convention of ['itc', 'birss'] as const) {
           const ops = operations(key, { convention, setting: s.index });
@@ -17,12 +17,13 @@ describe('latticeOperations', () => {
           expect(lattice).toHaveLength(ops.length);
           lattice.forEach((w, i) => {
             expect(w.matrix.flat().every((x) => Number.isInteger(x))).toBe(true);
+            expect(Math.abs(det(w.matrix))).toBe(1);
             expect(w.timeReversal).toBe(ops[i].timeReversal);
           });
         }
       }
-    }
-  });
+    });
+  }
 
   it('are the Cartesian operations in the lattice basis: R·B = B·W', () => {
     const b = latticeBasis('hexagonal');
