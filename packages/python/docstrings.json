@@ -61,6 +61,10 @@
     "orbit_of": {
       "type": "list of dict",
       "doc": "In each, ``direction`` is a float64 array of shape (3,) and ``operations`` an int64 array of shape (n,)."
+    },
+    "describe_operations_of": {
+      "type": "list of dict",
+      "doc": "In each, ``axis`` (if present) has ``cartesian`` (float64, shape (3,))."
     }
   },
   "symcrys.magnetic": {
@@ -112,6 +116,10 @@
     "orbit_of": {
       "type": "list of dict",
       "doc": "In each, ``direction`` is a float64 array of shape (3,) and ``operations`` an int64 array of shape (n,)."
+    },
+    "describe_operations_of": {
+      "type": "list of dict",
+      "doc": "In each, ``axis`` (if present) has ``cartesian`` (float64, shape (3,))."
     }
   }
 }

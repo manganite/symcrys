@@ -69,6 +69,14 @@ export {
 } from './pointGroups/elements.js';
 export { siteSymmetry, type SiteSymmetry, type SiteSymmetryOptions } from './siteSymmetry.js';
 export {
+  describeOperationsOf,
+  pointGroupOf,
+  type CartesianAxis,
+  type CartesianOperationDescription,
+  type IdentifiedPointGroup,
+  type PointGroupOfOptions,
+} from './pointGroups/identify.js';
+export {
   latticeOperations,
   orbit,
   orbitOf,

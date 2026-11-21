@@ -97,4 +97,4 @@ once, then compute with NumPy.
   [Conventions](conventions.md), in particular "Settings" and "Cartesian frame".
 - How a tensor form is given (basis, parameters, relations): [Tensors](tensors.md).
 - The crystal forms of a class, basic and limiting, and orbits of faces:
-  [Crystal forms and orbits](forms.md).
+  [Crystal forms, orbits and distorted crystals](forms.md).

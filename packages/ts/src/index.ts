@@ -23,6 +23,7 @@ export type { SiteSymmetry, SiteSymmetryOptions } from './siteSymmetry.js';
 export type { Hkl, WyckoffOptions, WyckoffPosition } from './pointGroups/wyckoff.js';
 export type { CrystalForm, CrystalFormType } from './pointGroups/crystalForms.js';
 export type { DirectionOrbitEntry, FaceOrbitEntry, OrbitOptions, OrbitPole } from './pointGroups/orbits.js';
+export type { CartesianAxis, PointGroupOfOptions } from './pointGroups/identify.js';
 export type { IntrinsicSymmetry, TensorForm, TensorParity, TensorRank } from './tensors/tensorForm.js';
 
 export {
@@ -35,6 +36,7 @@ export {
   allowsPropertyOf,
   crystalForms,
   describeOperations,
+  describeOperationsOf,
   findPointGroup,
   generators,
   holohedry,
@@ -46,6 +48,7 @@ export {
   orbit,
   orbitOf,
   pointGroup,
+  pointGroupOf,
   pointGroups,
   rotateTensor,
   settings,
@@ -56,6 +59,8 @@ export {
   tensorFormOf,
   wyckoffPositionOf,
   wyckoffPositions,
+  type CartesianOperationDescription,
+  type IdentifiedPointGroup,
   type Operation,
   type OperationDescription,
   type PointGroup,

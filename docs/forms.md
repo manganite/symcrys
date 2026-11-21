@@ -5,7 +5,7 @@ kernelspec:
   display_name: Python 3
 ---
 
-# Crystal forms and orbits
+# Crystal forms, orbits and distorted crystals
 
 A crystal form is a set of faces that a point group makes equivalent. ITA (6th ed.) lists, for every
 crystal class and every Wyckoff position, the forms that occur there: the **basic** form and the
@@ -59,4 +59,22 @@ hexagonal axes a face transforms otherwise than a lattice direction
 
 ```{code-cell} ipython3
 symcrys.lattice_operations("3")[1]["matrix"]  # integers, as a float64 array
+```
+
+## A distorted crystal
+
+The operations that a distortion leaves form a point group, usually in an orientation that is not a
+setting of symcrys. `pointGroupOf` names it, and `describeOperationsOf` gives its elements with
+Cartesian axes ([Conventions](conventions.md), "Point group of a list of operations").
+
+```{ts-example} distorted.ts
+
+```
+
+```{code-cell} ipython3
+import numpy as np
+
+kept = [op for op in symcrys.operations("m-3m") if np.allclose(op["matrix"] @ [1, 1, 1], [1, 1, 1])
+        or np.allclose(op["matrix"] @ [1, 1, 1], [-1, -1, -1])]
+symcrys.point_group_of(kept)
 ```

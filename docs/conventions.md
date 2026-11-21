@@ -134,9 +134,9 @@ of time-even tensors and so the same time-even properties. `entryPoints.test.ts`
 all 32 classes.
 
 **Operations passed in.** Where a function takes a list of operations (`tensorFormOf`,
-`allowsPropertyOf`, `allowedPropertiesOf`, `isCentrosymmetricOf`, `isChiralOf`), the matrices must
-be orthogonal (Cartesian), and the magnetic API asks every operation whether it is
-combined with time reversal: `timeReversal` must be `true` or `false`. Operations of the
+`allowsPropertyOf`, `allowedPropertiesOf`, `isCentrosymmetricOf`, `isChiralOf`, `pointGroupOf`,
+`describeOperationsOf`), the matrices must be orthogonal (Cartesian), and the magnetic API asks
+every operation whether it is combined with time reversal: `timeReversal` must be `true` or `false`. Operations of the
 crystallographic API, which do not say, are refused there and not read as a white group; a caller
 who means the white group adds `timeReversal: false`, one who means a crystal without magnetic
 order builds the grey group. `siteSymmetry` and `orbitOf` do not depend on time reversal and take
@@ -356,8 +356,8 @@ on setting or convention. For a magnetic point group, as in birss-app:
 **For a list of operations** (a site symmetry, the operations of a distorted crystal):
 `isCentrosymmetricOf(operations)` and `isChiralOf(operations)`, for the group the operations
 generate, with what `tensorFormOf` asks of the list ("Two entry points", "Operations passed in").
-Polar is there the named property: `allowsPropertyOf(operations, 'pyroelectric')`. A
-list of operations has no Laue class as a key; a consumer that needs it identifies the group first.
+Polar is there the named property: `allowsPropertyOf(operations, 'pyroelectric')`. A list of operations has no Laue class as a key; `pointGroupOf` identifies the group first
+("Point group of a list of operations").
 
 **Holohedry.** `holohedry(system)` is the class that is the point symmetry of the lattice of a
 crystal system, the Laue groups in full boxes of ITA Table 2.1.1.1 (p. 143): `-1`, `2/m`, `mmm`,
@@ -632,6 +632,42 @@ tetragonal dipyramids of 422, (h0l) and (hhl)).
   eigensymmetry) and the basic forms with symcrys, without difference, so the two editions number
   the forms alike.
 
+## Point group of a list of operations
+
+`pointGroupOf(operations, { tolerance })` names the point group that a list of Cartesian
+operations generates, for instance the operations of a crystal that keep its distorted lattice
+(maintainer, 2026-11-21, #24). The list is closed into a group, two matrices being equal when no
+entry differs by `tolerance` (default `EPSILON`, at most 0.1) or more; a caller whose matrices
+carry rounding errors passes a value well above them, and the matrices need only be orthogonal, and
+their traces integers, within it. The result is the
+key, and the setting whose operations the group equals in the frame of symcrys. A group in another
+orientation (a threefold axis along [111] of a cubic crystal, a frame turned by any angle) has no
+setting: the key is still found, the setting is absent. `1` and `-1` have no orientation and always
+setting 1. The result is undefined if the operations generate no point group (an operation of
+order 5, a group of more than 96 operations). The setting is found from the operations passed in,
+which generate the group, not from their products, whose errors add up. The first call builds a
+table of the 122 groups (about 0.1 s); after that a call takes about 1.5 ms for the 48 operations
+of m-3m (Node, measured 2026-11-21), since the closure multiplies only by the operations passed in
+and compares a product only with the operations of its kind.
+
+**How the group is named.** Each operation contributes its determinant, its trace and, in the
+magnetic API, whether it is combined with time reversal; the group is named by how often each
+combination occurs. For the 122 point groups these counts are all different (`identify.test.ts`
+checks it). Every finite group of orthogonal matrices whose elements have orders 1, 2, 3, 4 or 6
+is a point group in some orientation, and the 122 groups are all point groups up to orientation,
+so the counts name every such group. The crystallographic API takes no time reversal and names
+one of the 32 classes; the magnetic API takes the time reversal of each operation and names one of
+the 122 groups (a list of white operations is the white group, as everywhere in that API).
+
+`describeOperationsOf(operations, { tolerance })` describes each operation of any list as `describeOperations`
+does for a key (kind, n, sense), but with the axis as a Cartesian unit vector only, because the
+list need not belong to a setting whose lattice directions could name it. The axis is signed so
+that its first non-zero component, in the order x, y, z, is positive, as in the Birss convention of
+`describeOperations`, and the sense refers to that sign; a component smaller than the tolerance
+counts as zero, so that a matrix with rounding errors keeps the sign of its axis. A matrix that is
+not orthogonal, or whose rotation part does not turn by 360°/n with n = 1, 2, 3, 4, 6 (its trace
+1 + 2 cos θ not an integer), is a RangeError, both within `tolerance` as for `pointGroupOf`.
+
 ## Lattice basis and orbits
 
 **Operations in the lattice basis.** `latticeOperations(key, { setting, convention })` gives the
@@ -848,6 +884,7 @@ ITC symbol, and so are the second trigonal orientations the text of § 1.5.8.1 n
 | Wyckoff positions (letter, multiplicity, oriented site symmetry, representative point and face)                             | ITA Table 3.2.3.2 (pp. 745–769): `references/itc/vol-a-table-3.2.3.2-wyckoff-positions.md`; the oriented symbols read along ITA Table 2.1.3.1 (p. 151); `2mm`, `m2m`: derived (above); additional check against the 5th ed. (2006), Table 10.1.2.2, by `audit/wyckoff-2006`                                       | `wyckoff.reference.test.ts`                                                                             |
 | crystal forms: the forms of each Wyckoff position, basic and limiting; the 47 forms with number of faces and eigensymmetry  | ITA Table 3.2.3.2 (pp. 745–769): `references/itc/vol-a-table-3.2.3.2-face-forms.md`; ITA Table 3.2.1.3 (pp. 724–726): `references/itc/vol-a-table-3.2.1.3-crystal-forms.md`, the two checked against each other; additional check against the 5th ed. (2006), Tables 10.1.2.2 and 10.1.2.3, by `audit/forms-2006` | `crystalForms.reference.test.ts`                                                                        |
 | operations in the lattice basis; orbits of directions and faces                                                             | ITA Table 3.2.3.2 (pp. 745–769): the general positions, `references/itc/vol-a-table-3.2.3.2-general-positions.md`; the faces of the general form for hexagonal axes (pp. 752–764), `references/itc/vol-a-table-3.2.3.2-general-faces.md`                                                                          | `orbits.reference.test.ts`                                                                              |
+| the point group of a list of operations                                                                                     | none needed: the groups are built from the operations of the 122 groups (anchored above) and, independently, from the full symbols of the 32 classes along Cartesian directions, in a general orientation                                                                                                         | `identify.test.ts`                                                                                      |
 | tensor forms, Birss convention                                                                                              | Birss Tables 4a–4f (pp. 56–66): `references/birss/table-4a.md` … `table-4f.md`                                                                                                                                                                                                                                    | `tensors/birss.reference.test.ts`                                                                       |
 | tensor forms, ITC convention: counts, pyroelectric direction, piezoelectric classes                                         | ITA Table 3.2.2.1 (p. 738)                                                                                                                                                                                                                                                                                        | `tensors/itc.reference.test.ts`                                                                         |
 | ferroaxial classes (axial vector, time-even)                                                                                | Birss Table 4a (pp. 56–57) with Table 4c (p. 58): `references/birss/`; the term: Hlinka, Privratska, Ondrejkovic & Janovec, _Phys. Rev. Lett._ **116**, 177602 (2016)                                                                                                                                             | `tensors/tensorProperties.test.ts`                                                                      |
