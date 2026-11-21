@@ -139,7 +139,9 @@ be orthogonal (Cartesian), and the magnetic API asks every operation whether it 
 combined with time reversal: `timeReversal` must be `true` or `false`. Operations of the
 crystallographic API, which do not say, are refused there and not read as a white group; a caller
 who means the white group adds `timeReversal: false`, one who means a crystal without magnetic
-order builds the grey group. `siteSymmetry` does not depend on time reversal and takes either.
+order builds the grey group. `siteSymmetry` and `orbitOf` do not depend on time reversal and take
+either in the magnetic API; `orbitOf` also requires orthogonal matrices, `siteSymmetry` does not
+check them.
 
 ## Cartesian frame
 
@@ -334,8 +336,8 @@ symbols (`-3` is `C3i` in both Birss Table 3 and ITA Tables 3.2.1.2 and 3.2.3.2)
 
 Matrices hold floating-point numbers. During group closure every entry within 10⁻⁹ of an exact
 value (0, ±1, ±1/2, ±√3/2, and ±√2/2 for the 45° setting frame) is set to that value, so products do not drift; two matrices are
-equal when all entries agree within 10⁻⁶. Exact matrices in the lattice basis may come later, when
-a consumer needs them (decision on #13).
+equal when all entries agree within 10⁻⁶. Exact integer matrices in the lattice basis are given by
+`latticeOperations` ("Lattice basis and orbits").
 
 ## Properties
 
@@ -667,8 +669,9 @@ for the trigonal classes): W = B⁻¹·R·B, with B the basis of `latticeBasis` 
 the Cartesian matrix of `operations`. W acts on the coordinates of a lattice direction [uvw]. The
 list has the shape of `operations` (`{ matrix }`, in the magnetic API with `timeReversal`) and its
 order, index for index, so that a caller can switch between the two. The matrices are not
-orthogonal in general (hexagonal axes), and the functions that take Cartesian operations refuse
-them.
+orthogonal in general (hexagonal axes) and must not be passed to a function that takes Cartesian
+operations; `tensorFormOf`, `isChiralOf` and `orbitOf`, among others, refuse them, but
+`siteSymmetry` does not check and would give a wrong result.
 
 They do not depend on the cell angles: a point operation maps the lattice onto itself, and its
 matrix in the lattice basis is the same for every metric the point group allows (2 along b is

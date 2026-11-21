@@ -6,7 +6,7 @@
 import { crystalFamily, latticeBasis } from '../lattice.js';
 import { apply, inverse, multiply, type Mat3, type Vec3 } from '../linalg.js';
 import { checkOrthogonal, type Operation } from '../operations.js';
-import { siteTolerance, type SiteSymmetryOptions } from '../siteSymmetry.js';
+import { siteTolerance } from '../siteSymmetry.js';
 import type { Uvw } from '../symmetryDirections.js';
 import {
   operations as groupOperations,
@@ -52,7 +52,9 @@ const latticeCache = new WeakMap<readonly Operation[], readonly Operation[]>();
  * W = B⁻¹·R·B with the basis B of `latticeBasis` and the Cartesian matrix R. They do not depend on
  * the cell angles, so they exist for every family; for the monoclinic and triclinic families a, b,
  * c are taken along x, y, z, as for the Wyckoff positions. In the ITC convention they are the
- * matrices of ITA's general position (6th ed., Table 3.2.3.2).
+ * matrices of ITA's general position (6th ed., Table 3.2.3.2). Not orthogonal in general: pass
+ * them to no function that takes Cartesian operations (docs/conventions.md, "Lattice basis and
+ * orbits").
  */
 export function latticeOperations(key: MagneticPointGroupKey, options?: SettingOptions): readonly Operation[] {
   const ops = groupOperations(key, options);
@@ -83,10 +85,10 @@ function indicesOf(value: unknown, name: string): readonly [number, number, numb
   if (
     !Array.isArray(value) ||
     value.length !== 3 ||
-    !value.every((x) => typeof x === 'number' && Number.isInteger(x)) ||
+    !value.every((x) => typeof x === 'number' && Number.isSafeInteger(x)) ||
     value.every((x) => x === 0)
   ) {
-    throw new RangeError(`${name} must be three integers, not all zero: ${JSON.stringify(value)}`);
+    throw new RangeError(`${name} must be three (safe) integers, not all zero: ${JSON.stringify(value)}`);
   }
   return [value[0] + 0, value[1] + 0, value[2] + 0];
 }
@@ -132,6 +134,11 @@ export function orbit(
   key: MagneticPointGroupKey,
   indices: { readonly hkl: Hkl } | { readonly uvw: Uvw },
   options?: SettingOptions,
+): readonly FaceOrbitEntry[] | readonly DirectionOrbitEntry[];
+export function orbit(
+  key: MagneticPointGroupKey,
+  indices: { readonly hkl: Hkl } | { readonly uvw: Uvw },
+  options?: SettingOptions,
 ): readonly FaceOrbitEntry[] | readonly DirectionOrbitEntry[] {
   const given = (indices ?? {}) as { readonly hkl?: unknown; readonly uvw?: unknown };
   const hasHkl = given.hkl !== undefined;
@@ -165,6 +172,15 @@ function integerInverseTranspose(w: Mat3): Mat3 {
   return r;
 }
 
+/** Options of `orbitOf`. */
+export interface OrbitOptions {
+  /**
+   * Two images count as one pole if their unit vectors are closer than this (Euclidean distance).
+   * Default 10⁻⁶; a caller whose directions carry rounding errors passes a larger value.
+   */
+  readonly tolerance?: number;
+}
+
 /** One pole of the orbit of a direction under a list of operations. */
 export interface OrbitPole {
   /** The image of the given direction as a Cartesian unit vector (the first operation's image where several coincide). */
@@ -185,7 +201,7 @@ export interface OrbitPole {
 export function orbitOf(
   operations: readonly { readonly matrix: Mat3 }[],
   direction: Vec3,
-  options?: SiteSymmetryOptions,
+  options?: OrbitOptions,
 ): readonly OrbitPole[] {
   const tolerance = siteTolerance(options);
   operations.forEach((op, i) => checkOrthogonal(op.matrix, `Operation ${i}`));

@@ -473,6 +473,11 @@ export function orbit(
   key: PointGroupKey,
   indices: { readonly hkl: Hkl } | { readonly uvw: Uvw },
   options?: SettingOptions,
+): readonly orbits.FaceOrbitEntry[] | readonly orbits.DirectionOrbitEntry[];
+export function orbit(
+  key: PointGroupKey,
+  indices: { readonly hkl: Hkl } | { readonly uvw: Uvw },
+  options?: SettingOptions,
 ): readonly orbits.FaceOrbitEntry[] | readonly orbits.DirectionOrbitEntry[] {
   return orbits.orbit(classKey(key), indices as { readonly hkl: Hkl }, options);
 }
@@ -488,7 +493,7 @@ export function orbit(
 export function orbitOf(
   operations: readonly OperationArgument[],
   direction: Vec3,
-  options?: site.SiteSymmetryOptions,
+  options?: orbits.OrbitOptions,
 ): readonly orbits.OrbitPole[] {
   checkUnitary(operations);
   return orbits.orbitOf(operations, direction, options);

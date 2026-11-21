@@ -97,12 +97,18 @@ describe('orbit', () => {
 
   it('refuses indices that are not three integers, not all zero, and wants exactly one of hkl, uvw', () => {
     expect(() => orbit('4mm', { hkl: [0, 0, 0] })).toThrow(RangeError);
+    expect(() => orbit('4mm', { hkl: [2 ** 53 + 2, 0, 0] })).toThrow(RangeError);
     expect(() => orbit('4mm', { hkl: [1, 0.5, 0] as unknown as [number, number, number] })).toThrow(RangeError);
     expect(() => orbit('4mm', { hkl: [1, 0, 0, 0] as unknown as [number, number, number] })).toThrow(RangeError);
     expect(() => orbit('4mm', {} as { hkl: [number, number, number] })).toThrow(RangeError);
     expect(() => orbit('4mm', { hkl: [1, 0, 0], uvw: [1, 0, 0] } as { hkl: [number, number, number] })).toThrow(
       RangeError,
     );
+  });
+
+  it('takes a value of the union type', () => {
+    const indices: { hkl: [number, number, number] } | { uvw: [number, number, number] } = { uvw: [0, 0, 1] };
+    expect(orbit('4mm', indices)).toHaveLength(1);
   });
 
   it('is frozen', () => {
