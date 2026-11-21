@@ -21,15 +21,18 @@ export { LATTICE_SYMMETRY_DIRECTIONS, type Uvw } from './symmetryDirections.js';
 export type { Axis, DirectionElements, OperationKind, SymmetryDirection } from './pointGroups/elements.js';
 export type { SiteSymmetry, SiteSymmetryOptions } from './siteSymmetry.js';
 export type { Hkl, WyckoffOptions, WyckoffPosition } from './pointGroups/wyckoff.js';
+export type { CrystalForm, CrystalFormType } from './pointGroups/crystalForms.js';
 export type { IntrinsicSymmetry, TensorForm, TensorParity, TensorRank } from './tensors/tensorForm.js';
 
 export {
+  CRYSTAL_FORM_TYPES,
   POINT_GROUP_KEYS,
   TENSOR_PROPERTIES,
   allowedProperties,
   allowedPropertiesOf,
   allowsProperty,
   allowsPropertyOf,
+  crystalForms,
   describeOperations,
   findPointGroup,
   generators,

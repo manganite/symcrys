@@ -44,6 +44,7 @@ class Operation(TypedDict):
 
 
 __all__ = [
+    "CRYSTAL_FORM_TYPES",
     "LATTICE_SYMMETRY_DIRECTIONS",
     "POINT_GROUP_KEYS",
     "TENSOR_PROPERTIES",
@@ -56,6 +57,7 @@ __all__ = [
     "allows_property",
     "allows_property_of",
     "crystal_family",
+    "crystal_forms",
     "describe_operations",
     "find_point_group",
     "generators",
@@ -99,6 +101,12 @@ TENSOR_PROPERTIES: dict[str, dict[str, Any]] = from_js(_shared.value("TENSOR_PRO
 """The named tensor properties of the crystal classes: those of time-even tensors. ``'gyrotropic'``
 is optical activity. The properties of time-odd tensors (``'ferromagnetic'``, …) are in the magnetic
 API.
+"""
+CRYSTAL_FORM_TYPES: list[dict[str, Any]] = from_js(_shared.value("CRYSTAL_FORM_TYPES"))
+"""The 47 crystal forms of ITA Table 3.2.1.3 (6th ed., pp. 724–726) with ITA's numbers, English
+names, numbers of faces and eigensymmetries: ``CRYSTAL_FORM_TYPES[n - 1]`` is form n. A
+``CrystalForm`` of ``crystal_forms`` names its form by this number (docs/conventions.md, "Crystal
+forms").
 """
 
 
@@ -409,6 +417,32 @@ def wyckoff_position_of(
             _shared.options(convention=convention, setting=setting, tolerance=tolerance),
         )
     )
+
+
+# --- crystal forms -------------------------------------------------------------------------------
+
+
+def crystal_forms(
+    key: str, *, convention: Optional[Convention] = None, setting: Optional[int] = None
+) -> list[dict[str, Any]]:
+    """The crystal forms of a crystal class, as ITA 6th ed. Table 3.2.3.2 prints them: for each
+    Wyckoff position (general position first) its basic form, then its limiting forms. In the ITC
+    convention only, like the Wyckoff positions (docs/conventions.md, "Crystal forms").
+
+    Parameters
+    ----------
+    convention : keyword-only, optional
+        Default ``'itc'``.
+    setting : keyword-only, optional
+        1-based setting index; default: the default setting of the convention.
+
+    Returns
+    -------
+    list of dict
+        In each, ``representative`` has ``hkl`` (int64, shape (3,)) and ``cartesian`` (float64,
+        shape (3,)).
+    """
+    return list(_call("crystalForms", key, _shared.options(convention=convention, setting=setting)))
 
 
 # --- tensors -------------------------------------------------------------------------------------

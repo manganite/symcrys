@@ -1,5 +1,5 @@
 """Print anchors through Python, read from references/ as the TypeScript tests read them: ITA
-Table 3.2.2.1, ITC Vol. D § 1.1.4.10.6, ITC Vol. D Table 1.5.2.3 (magnetic point groups), Tables
+Table 3.2.2.1, Tables 3.2.1.3 and 3.2.3.2 (crystal forms), ITC Vol. D § 1.1.4.10.6, ITC Vol. D Table 1.5.2.3 (magnetic point groups), Tables
 1.5.2.4, 1.5.7.1 and 1.5.8.1 (ferromagnetic, piezomagnetic, magnetoelectric), and
 Yariv Table 16.1 with the use case of #30 (SHG at the (001), (110) and (111) surfaces of an m-3m
 crystal)."""
@@ -218,3 +218,63 @@ def test_itc_vol_d_1524_ferromagnetic_groups() -> None:
     assert len(keys) == 31
     assert sorted(keys) == sorted(k for k in magnetic.POINT_GROUP_KEYS if magnetic.allows_property(k, "ferromagnetic"))
 
+
+
+# --- ITA Tables 3.2.1.3 and 3.2.3.2: crystal forms -------------------------------------------------
+
+FORMS_3213 = reference("itc/vol-a-table-3.2.1.3-crystal-forms.md")
+FORM_TYPES = table_rows(section(FORMS_3213, "## Forms"))
+FACE_FORMS = table_rows(reference("itc/vol-a-table-3.2.3.2-face-forms.md"))
+# The names Table 3.2.3.2 prints for a form that Table 3.2.1.3 names otherwise (as in the TypeScript test).
+NAME_VARIANTS = {
+    "Sphenoid or dihedron": 3,
+    "Dome or dihedron": 3,
+    "Pentagon-trioctahedron or gyroid or pentagon-icositetrahedron": 44,
+}
+
+
+def form_number(name: str) -> int:
+    found = [int(r[0]) for r in FORM_TYPES[1:] if r[1] == name]
+    return found[0] if found else NAME_VARIANTS[name]
+
+
+def test_ita_3213_the_47_forms() -> None:
+    assert FORM_TYPES[0] == ["No.", "Crystal form", "Faces", "Eigensymmetry"]
+    assert [[str(t["number"]), t["name"], str(t["faces"]), t["eigensymmetry"]] for t in symcrys.CRYSTAL_FORM_TYPES] == (
+        FORM_TYPES[1:]
+    )
+
+
+def _setting(short: str, axes: str) -> tuple[str, int]:
+    axis = axes[-1] if axes.startswith("unique axis") else None
+    found = [
+        (key, s["index"])
+        for key in symcrys.POINT_GROUP_KEYS
+        for s in symcrys.settings(key)
+        if s["symbol"] == short and (axis is None or s.get("unique_axis") == axis)
+    ]
+    assert len(found) == 1, (short, axes)
+    return found[0]
+
+
+FORM_ENTRIES = sorted({(r[0], r[1]) for r in FACE_FORMS[1:]})
+
+
+@pytest.mark.parametrize("entry", FORM_ENTRIES, ids=[f"{s} {a}".strip() for s, a in FORM_ENTRIES])
+def test_ita_3232_face_forms(entry: tuple[str, str]) -> None:
+    assert FACE_FORMS[0] == ["Short", "Axes", "Page", "Letter", "Form", "Name", "Miller indices", "Condition"]
+    key, setting = _setting(*entry)
+    printed = [
+        [r[3], r[4] == "basic", form_number(r[5]), r[6], re.sub(r"abs\((\w)\)", r"|\1|", r[7])]
+        for r in FACE_FORMS[1:]
+        if (r[0], r[1]) == entry
+    ]
+    forms = symcrys.crystal_forms(key, setting=setting)
+    assert [[f["letter"], f["basic"], f["form_type"], f["miller_indices"], f.get("condition", "")] for f in forms] == (
+        printed
+    )
+    for f in forms:
+        assert f["representative"]["hkl"].dtype == np.int64 and f["representative"]["hkl"].shape == (3,)
+        assert f["representative"]["cartesian"].dtype == np.float64
+        faces = symcrys.CRYSTAL_FORM_TYPES[f["form_type"] - 1]["faces"]
+        assert f["multiplicity"] == faces

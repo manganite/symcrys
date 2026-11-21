@@ -6,6 +6,23 @@ All notable changes to symcrys are recorded here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- Crystal forms of the crystal classes, #24 item 2: `crystalForms(key, { setting })` gives, as ITA
+  (6th ed.) Table 3.2.3.2 prints them, the forms of every Wyckoff position, its basic form first,
+  then its limiting forms, each with Wyckoff letter, multiplicity, face symmetry, the number of the
+  form, ITA's first face (Miller indices as printed, and the condition `|h|<|l|` or `|h|>|l|` of the
+  cubic forms (hhl)) and a numeric representative with its Cartesian normal; `CRYSTAL_FORM_TYPES`
+  holds the 47 forms of ITA Table 3.2.1.3 (number, English name as printed, number of faces,
+  eigensymmetry). Types `CrystalForm`, `CrystalFormType`. ITC convention and crystallographic API
+  only, like the Wyckoff positions. In Python `crystal_forms` and `CRYSTAL_FORM_TYPES`.
+- `references/itc/vol-a-table-3.2.3.2-face-forms.md` and `vol-a-table-3.2.1.3-crystal-forms.md`:
+  the face forms of ITA Table 3.2.3.2 and the 47 forms of Table 3.2.1.3, re-parsed by
+  `crystalForms.reference.test.ts`, which also checks the two tables against each other; two
+  misprints of Table 3.2.1.3 recorded with errata. `audit/forms-2006` compares with stereography's
+  catalogue (ITA 2006): no difference.
+- Documentation: the page "Crystal forms", with examples in TypeScript and Python.
+
 ## [0.6.1] - 2026-11-21
 
 ### Added
