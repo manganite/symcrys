@@ -100,7 +100,7 @@ npm run build && npm run bundle:python
 python -m pip install -e packages/python -r docs/requirements.txt
 npm run docs:check     # TypeDoc (fails on warnings), Python docstrings current, examples type-check
 npm run docs:site      # build/docs/html: every example and notebook executed, every reference resolved
-npm run docs:linkcheck # external links
+npm run docs:linkcheck # external links (CI: workflow Links, not a gate)
 ```
 
 The docstrings of the Python package are written from the TSDoc comments: after changing a TSDoc
@@ -116,7 +116,8 @@ for the operations of all 122 magnetic point groups, `packages/ts/src/tensors/bi
 
 CI runs these seven gates on every pull request, on Node 22 and 24, the gate `python` (bundle,
 build sdist and wheel, install the wheel, `mypy`, `pytest`) on Python 3.10 and the newest, and the
-gate `docs` (the three `docs:` commands above). Tests sit next to their
+gate `docs` (`docs:check` and `docs:site` above); the external links (`docs:linkcheck`) are
+checked by the workflow Links, which is not a gate. Tests sit next to their
 module (`foo.ts`, `foo.test.ts`). Working rules for contributors, human or agent: `CLAUDE.md`.
 
 ## Releases

@@ -210,16 +210,19 @@ argsJson) → resultJson` (`_engine.py`, `scripts/bundle-python.mjs`; a name of 
 - Never commit to `main` (the only exception was the initial commit that created it). Short-lived
   branch (`feature/`, `fix/`, `refactor/`, `docs/`, `chore/`, `audit/`), Conventional Commits
   (`type(scope): summary`), PR to `main`, merged with a merge commit (no squash).
-- **Gates**, run by CI on every PR on Node 22 and 24: `typecheck`, `typecheck:ts7`, `lint`,
-  `format:check`, `test`, `build`, `check:dist`; and `python` on Python 3.10 and the newest
+- **Gates**, run by CI on every PR, these seven on Node 22 and 24: `typecheck`, `typecheck:ts7`,
+  `lint`, `format:check`, `test`, `build`, `check:dist`; and `python` on Python 3.10 and the newest
   (bundle, build sdist and wheel, install the wheel into a fresh environment, `mypy --strict`,
   `pytest`; maintainer, 2026-11-19, from the first PR of the Python package); and `docs` (#29):
   `npm run docs:check` (TypeDoc with every warning an error: an undocumented export, a broken
   link, a referenced type that is not exported; the Python docstrings current; the TypeScript
-  examples of the site type-check), `npm run docs:site` (Sphinx with `-W -n`: every example and
-  notebook executed, every reference resolved) and `npm run docs:linkcheck` (external links). A
-  report names all nine with their result; a skipped one is named as skipped. Locally: `npm run build && npm run
-bundle:python`, then in `packages/python` `pip install -e ".[test]"`, `mypy` and `pytest`.
+  examples of the site type-check) and `npm run docs:site` (Sphinx with `-W -n`: every example and
+  notebook executed, every reference resolved). A report names all nine with their result; a
+  skipped one is named as skipped. The external links (`npm run docs:linkcheck`) are checked by
+  the job `linkcheck` (`linkcheck.yml`: on every PR, weekly and by hand), which is not a gate: a
+  site elsewhere that is down for a while must not block a merge (maintainer, 2026-11-21). A red
+  `linkcheck` is still looked at, and a link that is really dead is fixed. Locally: `npm run
+build && npm run bundle:python`, then in `packages/python` `pip install -e ".[test]"`, `mypy` and `pytest`.
 - **Review by an independent agent** before reporting to Thomas, on every PR without exception:
   an agent that does not know the work gets only repository, branch and purpose and checks the
   diff for errors, edge cases, contradictions with this file, and domain claims against code and
@@ -227,15 +230,16 @@ bundle:python`, then in `packages/python` `pip install -e ".[test]"`, `mypy` and
 - **Merge only on Thomas' explicit OK.**
 - **Repository settings** (maintainer, 2026-11-08): the ruleset `main` allows changes only
   through a pull request, merged with a merge commit, with `gates (22)`, `gates (24)`,
-  `python (3.10)` and `python (3.x)` green on a branch up to date with `main`; no force push, no deletion. It requires no approval, because
+  `python (3.10)`, `python (3.x)` and `docs` (from 2026-11-21, #29) green on a branch up to date
+  with `main`; no force push, no deletion. It requires no approval, because
   GitHub does not let Thomas approve his own PRs; his OK stays a process rule. Admins may bypass
   only through a pull request (e.g. when a check itself is broken), never by pushing directly.
   Squash and rebase merges are off, head branches are deleted after merge.
 - **Documentation site** (#29): built from the tag by `release.yml` (jobs `site` and `pages`) and
   published on GitHub Pages, [manganite.github.io/symcrys](https://manganite.github.io/symcrys/).
   Settings by Thomas: Pages with the source "GitHub Actions", and a deployment rule for tags
-  `v*.*.*` on the environment `github-pages`. Whether the ruleset `main` requires the check `docs`
-  is Thomas' decision (open as of 2026-11-21).
+  `v*.*.*` on the environment `github-pages`. Which checks the ruleset `main` requires: "Repository
+  settings" above.
 - **Releases:** procedure in `README.md`. The release PR is merged on Thomas' OK; **Thomas sets
   the tag by hand** (maintainer, 2026-11-08). Before tagging, `origin/main` must be the release
   PR's merge commit; afterwards `release.yml` must be green.

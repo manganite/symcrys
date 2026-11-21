@@ -89,7 +89,8 @@ jobs:
   # The documentation site (docs/, #29): TypeDoc fails on an undocumented export, a broken link
   # or a referenced type that is not exported; the Python docstrings must be those written from
   # the TSDoc comments; the TypeScript examples type-check; Sphinx builds the site with every
-  # example and notebook executed and every reference resolved, then checks the external links.
+  # example and notebook executed and every reference resolved. The external links are checked
+  # apart, in linkcheck.yml, because a site elsewhere that is down must not fail a gate.
   docs:
     runs-on: ubuntu-latest
     steps:
@@ -116,8 +117,6 @@ jobs:
         run: npm run docs:check
       - name: Build the site
         run: npm run docs:site
-      - name: Check the links
-        run: npm run docs:linkcheck
       - name: Keep the site
         uses: actions/upload-artifact@v6
         with:

@@ -1,0 +1,45 @@
+name: Links
+
+# The external links of the documentation site (docs/, #29). Not a gate: a site elsewhere that is
+# down for a while must not block a merge (maintainer, 2026-11-21). It runs on every pull request,
+# so that a broken link shows beside the change that made it, and weekly and by hand, so that a
+# link that dies without any change here is found too.
+
+on:
+  pull_request:
+  schedule:
+    - cron: '17 5 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  linkcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+      - name: Set up Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.x'
+      - name: Install Node dependencies
+        run: npm ci
+      - name: Build and bundle the TypeScript package
+        run: |
+          npm run build
+          npm run bundle:python
+      - name: Install the Python package and the documentation tools
+        run: python -m pip install -e packages/python -r docs/requirements.txt
+      # The site includes the HTML of TypeDoc (html_extra_path in docs/conf.py), which Sphinx
+      # expects to exist also for the builder linkcheck.
+      - name: TypeScript reference (TypeDoc)
+        run: npm run docs:ts
+      - name: Check the links
+        run: npm run docs:linkcheck
