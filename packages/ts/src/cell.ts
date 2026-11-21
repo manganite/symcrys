@@ -44,7 +44,8 @@ export interface CellOperation {
 export interface IsValidCellOptions {
   /**
    * The smallest accepted ratio V/(abc) of the cell volume to the volume of the box of its edge
-   * lengths; default 0, which accepts every cell that `isValidCell` otherwise accepts. A ratio near 0 is a nearly flat cell.
+   * lengths, from 0 to 1 (1 only for orthogonal axes); default 0, which accepts every cell that
+   * `isValidCell` otherwise accepts. A ratio near 0 is a nearly flat cell.
    */
   readonly minVolumeRatio?: number;
 }
@@ -79,13 +80,15 @@ function anglesOk({ alpha, beta, gamma }: CellAngles): boolean {
  * Whether three angles (degrees) belong to a cell: each between 0° and 180°, and the three axes not
  * in one plane (the volume radicand 1 − cos²α − cos²β − cos²γ + 2 cos α cos β cos γ exceeds 10⁻¹², i.e.
  * V/(abc) > 10⁻⁶: a cell that is flat within rounding is refused). With
- * `minVolumeRatio` also refuses nearly flat cells, whose ratio V/(abc), the square root of the radicand, is smaller.
+ * `minVolumeRatio` (from 0 to 1, default 0) also refuses nearly flat cells, whose ratio V/(abc), the
+ * square root of the radicand, is smaller. Throws a RangeError for a `minVolumeRatio` that is not a
+ * number from 0 to 1.
  */
 export function isValidCell(angles: CellAngles, options?: IsValidCellOptions): boolean {
   if (!anglesOk(angles)) return false;
   const min = options?.minVolumeRatio ?? 0;
-  if (typeof min !== 'number' || Number.isNaN(min))
-    throw new RangeError('isValidCell: minVolumeRatio must be a number');
+  if (!(typeof min === 'number' && min >= 0 && min <= 1))
+    throw new RangeError(`isValidCell: minVolumeRatio must be a number from 0 to 1, not ${String(min)}`);
   const r = radicand(angles);
   if (!(r > 1e-12)) return false;
   return Math.sqrt(r) >= min;

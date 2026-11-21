@@ -64,6 +64,41 @@ describe('linalg', () => {
     ).toThrow(RangeError);
   });
 
+  /** k·m. */
+  const times = (m: Mat3, k: number): Mat3 => [
+    [k * m[0][0], k * m[0][1], k * m[0][2]],
+    [k * m[1][0], k * m[1][1], k * m[1][2]],
+    [k * m[2][0], k * m[2][1], k * m[2][2]],
+  ];
+
+  it('inverse does not depend on the scale of the entries (cells in metres or in ångström)', () => {
+    const b: Mat3 = [
+      [1, -0.5, 0.3],
+      [0, Math.sqrt(3) / 2, 0.2],
+      [0, 0, 2],
+    ];
+    for (const k of [1e-10, 1e-3, 1, 1e3]) {
+      const a = times(b, k);
+      // (k·B)⁻¹ = B⁻¹ / k, so k·(k·B)⁻¹ · B is the identity at every scale.
+      const back = multiply(times(inverse(a), k), b);
+      expect(matricesEqual(back, IDENTITY), String(k)).toBe(true);
+      // A singular matrix stays singular at every scale, and so does one with a zero column.
+      const flat = [
+        [k, 2 * k, 3 * k],
+        [2 * k, 4 * k, 6 * k],
+        [0, 0, k],
+      ] as Mat3;
+      expect(() => inverse(flat), String(k)).toThrow(RangeError);
+      expect(() =>
+        inverse([
+          [k, 0, 0],
+          [0, 0, 0],
+          [0, 0, k],
+        ]),
+      ).toThrow(RangeError);
+    }
+  });
+
   it('conjugate expresses an operation in a rotated frame', () => {
     // A twofold axis along y, seen in a frame rotated by 90° about z, lies along −x, i.e. along x.
     expect(matricesEqual(snap(conjugate(rotationY(180), rotationZ(90))), rotationX(180))).toBe(true);

@@ -23,7 +23,9 @@ import type { Mat3 } from './linalg.js';
 
 const DEG = Math.PI / 180;
 const column = (m: Mat3, j: number) => [m[0][j], m[1][j], m[2][j]];
-const closeMat = (m: Mat3, e: number[][], digits = 12) =>
+/** k·m as a mutable copy. */
+const times = (m: Mat3, k: number): number[][] => m.map((row) => row.map((x) => k * x));
+const closeMat = (m: Mat3 | number[][], e: number[][], digits = 12) =>
   e.forEach((row, i) => row.forEach((x, j) => expect(m[i][j]).toBeCloseTo(x, digits)));
 
 describe('latticeFromParameters: the frame a ∥ x, b in the xy plane, c towards +z', () => {
@@ -126,6 +128,44 @@ describe('latticeParameters', () => {
         [0, 0, 1],
       ]),
     ).toThrow(RangeError);
+  });
+});
+
+describe('cells in any unit of length', () => {
+  // Hand calculation: for B = k·A the reciprocal basis is (A⁻¹)ᵀ / k, and angles do not change.
+  const p = { a: 4.9, b: 4.9, c: 5.4, alpha: 90, beta: 90, gamma: 120 }; // quartz-like cell, ångström
+  for (const [unit, k] of [
+    ['metres', 1e-10],
+    ['nanometres', 0.1],
+    ['ångström', 1],
+    ['picometres', 100],
+  ] as const) {
+    it(`gives the same reciprocal basis (scaled) and the same angles in ${unit}`, () => {
+      const scaled = latticeFromParameters({ ...p, a: p.a * k, b: p.b * k, c: p.c * k });
+      const ref = reciprocalBasis(latticeFromParameters(p));
+      closeMat(times(reciprocalBasis(scaled), k), times(ref, 1), 10);
+      // (100) and (010) of a hexagonal cell: their normals a* and b* make 60°.
+      expect(angleBetweenPlanes(scaled, [1, 0, 0], [0, 1, 0])).toBeCloseTo(60, 10);
+      expect(angleBetweenDirections(scaled, [1, 0, 0], [0, 1, 0])).toBeCloseTo(120, 10);
+      expect(latticeParameters(scaled).gamma).toBeCloseTo(120, 10);
+    });
+  }
+  it('cubic cell of edge 0.001: reciprocal basis 1000·I, (100)∧(110) = 45°', () => {
+    const tiny: Mat3 = [
+      [1e-3, 0, 0],
+      [0, 1e-3, 0],
+      [0, 0, 1e-3],
+    ];
+    closeMat(
+      reciprocalBasis(tiny),
+      [
+        [1000, 0, 0],
+        [0, 1000, 0],
+        [0, 0, 1000],
+      ],
+      8,
+    );
+    expect(angleBetweenPlanes(tiny, [1, 0, 0], [1, 1, 0])).toBeCloseTo(45, 10);
   });
 });
 
@@ -307,8 +347,15 @@ describe('input checks and edge cases', () => {
     expect(() => residualOperations(latticeOperations('4/mmm'), basis, { tolerance: Number.NaN })).toThrow(RangeError);
     expect(() => residualOperations(latticeOperations('4/mmm'), basis, { tolerance: -1 })).toThrow(RangeError);
   });
-  it('isValidCell refuses a NaN minVolumeRatio with a RangeError', () => {
-    expect(() => isValidCell({ alpha: 90, beta: 90, gamma: 90 }, { minVolumeRatio: Number.NaN })).toThrow(RangeError);
+  it('isValidCell refuses a minVolumeRatio that is not a number from 0 to 1 with a RangeError', () => {
+    const cube = { alpha: 90, beta: 90, gamma: 90 };
+    for (const m of [Number.NaN, -1, -1e-12, 1.0001, 2, Infinity, -Infinity, '0.1' as unknown as number]) {
+      expect(() => isValidCell(cube, { minVolumeRatio: m }), String(m)).toThrow(RangeError);
+    }
+    // the ends of the range are accepted: 0 accepts every cell, 1 only orthogonal axes (V = abc)
+    expect(isValidCell(cube, { minVolumeRatio: 0 })).toBe(true);
+    expect(isValidCell(cube, { minVolumeRatio: 1 })).toBe(true);
+    expect(isValidCell({ alpha: 90, beta: 90, gamma: 120 }, { minVolumeRatio: 1 })).toBe(false);
   });
   it('a rhombohedral cell (α = β = γ = 80°) is valid and keeps the angles', () => {
     const q = latticeParameters(latticeFromParameters({ a: 1, b: 1, c: 1, alpha: 80, beta: 80, gamma: 80 }));

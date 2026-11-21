@@ -310,6 +310,55 @@ describe('the crystallographic API refuses what involves time reversal', () => {
   });
 });
 
+describe('every function for a list of Cartesian operations refuses a matrix that is not orthogonal', () => {
+  // A stretch is no point operation; a function that took it would give a result that looks valid
+  // and is wrong (siteSymmetry did so up to 0.8.0).
+  const stretch = {
+    matrix: [
+      [2, 0, 0],
+      [0, 1, 0],
+      [0, 0, 1],
+    ],
+  } as const;
+  const notOrthogonal = /Operation 0 is not an orthogonal \(Cartesian\) matrix/;
+  it('in the crystallographic API', () => {
+    const ops = [stretch] as unknown as readonly classes.Operation[];
+    for (const call of [
+      () => classes.siteSymmetry(ops, [1, 0, 0]),
+      () => classes.siteSymmetry(ops, [0, 1, 0]),
+      () => classes.orbitOf(ops, [1, 2, 3]),
+      () => classes.pointGroupOf(ops),
+      () => classes.describeOperationsOf(ops),
+      () => classes.tensorFormOf(ops, 'piezoelectric'),
+      () => classes.allowsPropertyOf(ops, 'piezoelectric'),
+      () => classes.allowedPropertiesOf(ops),
+      () => classes.isCentrosymmetricOf(ops),
+      () => classes.isChiralOf(ops),
+    ]) {
+      expect(call).toThrow(RangeError);
+      expect(call).toThrow(notOrthogonal);
+    }
+  });
+  it('in the magnetic API', () => {
+    const ops = [{ ...stretch, timeReversal: false }] as unknown as readonly magnetic.Operation[];
+    for (const call of [
+      () => magnetic.siteSymmetry(ops, [1, 0, 0]),
+      () => magnetic.siteSymmetry(ops, [0, 1, 0]),
+      () => magnetic.orbitOf(ops, [1, 2, 3]),
+      () => magnetic.pointGroupOf(ops),
+      () => magnetic.describeOperationsOf(ops),
+      () => magnetic.tensorFormOf(ops, 'pyroelectric'),
+      () => magnetic.allowsPropertyOf(ops, 'pyroelectric'),
+      () => magnetic.allowedPropertiesOf(ops),
+      () => magnetic.isCentrosymmetricOf(ops),
+      () => magnetic.isChiralOf(ops),
+    ]) {
+      expect(call).toThrow(RangeError);
+      expect(call).toThrow(notOrthogonal);
+    }
+  });
+});
+
 describe('the magnetic API asks every operation whether it is combined with time reversal', () => {
   // Without the check, an operation without `timeReversal` is composed as if it had it in every
   // second product: the inversion alone then "allows" a polar vector.

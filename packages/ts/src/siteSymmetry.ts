@@ -4,7 +4,7 @@
  */
 
 import { apply, matricesEqual, multiply, type Vec3 } from './linalg.js';
-import type { Operation } from './operations.js';
+import { checkOrthogonal, type Operation } from './operations.js';
 import { EPSILON } from './tolerances.js';
 
 /** Options of `siteSymmetry` and `wyckoffPositionOf`. */
@@ -119,8 +119,9 @@ export function siteTolerance(options?: SiteSymmetryOptions): number {
  * within the tolerance are closed under the products found in the list and the direction is set onto
  * their fixed space, repeated until stable, so that for a group the result is a subgroup and the
  * set direction lies exactly on its elements. For a list that is not a group, `multiplicity` may
- * not be an integer. Throws a RangeError for a zero vector, and if the closed operations fix no
- * common direction (a tolerance far too large, e.g. 0.5).
+ * not be an integer. The matrices must be Cartesian and orthogonal (not those of
+ * `latticeOperations`). Throws a RangeError for a matrix that is not orthogonal, for a zero vector,
+ * and if the closed operations fix no common direction (a tolerance far too large, e.g. 0.5).
  */
 export function siteSymmetry(
   operations: readonly Operation[],
@@ -128,6 +129,7 @@ export function siteSymmetry(
   options?: SiteSymmetryOptions,
 ): SiteSymmetry {
   const tolerance = siteTolerance(options);
+  operations.forEach((op, i) => checkOrthogonal(op.matrix, `Operation ${i}`));
   const v = unit(direction);
   const fixing = (w: Vec3): number[] => {
     const out: number[] = [];
