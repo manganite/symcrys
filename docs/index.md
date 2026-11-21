@@ -24,8 +24,9 @@ Where to start:
   `symcrys/magnetic`.
 - [Conventions](conventions.md): ITC and Birss, settings, the Cartesian frame. Which convention and
   which setting you need decides which tensor components you get.
-- [Crystal forms and orbits](forms.md): the basic and limiting forms of each crystal class, as ITA
-  lists them, and the orbits of faces and directions.
+- [Crystal forms, orbits and distorted crystals](forms.md): the basic and limiting forms of each
+  crystal class, as ITA lists them, the orbits of faces and directions, and the point group of a
+  list of operations.
 - [Tensors and named properties](tensors.md): forms of property tensors, and the named properties
   such as piezoelectric or ferromagnetic.
 - [Examples](examples.md), among them second-harmonic generation at surfaces.

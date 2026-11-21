@@ -286,6 +286,8 @@ describe('the crystallographic API refuses what involves time reversal', () => {
     const calls = [
       (ops: readonly classes.Operation[]) => classes.siteSymmetry(ops, [0, 0, 1]),
       (ops: readonly classes.Operation[]) => classes.orbitOf(ops, [1, 2, 3]),
+      (ops: readonly classes.Operation[]) => classes.pointGroupOf(ops),
+      (ops: readonly classes.Operation[]) => classes.describeOperationsOf(ops),
       (ops: readonly classes.Operation[]) => classes.tensorFormOf(ops, 'piezoelectric'),
       (ops: readonly classes.Operation[]) => classes.allowsPropertyOf(ops, 'piezoelectric'),
       (ops: readonly classes.Operation[]) => classes.allowedPropertiesOf(ops),
@@ -317,6 +319,8 @@ describe('the magnetic API asks every operation whether it is combined with time
     (ops: readonly magnetic.Operation[]) => magnetic.allowedPropertiesOf(ops),
     (ops: readonly magnetic.Operation[]) => magnetic.isCentrosymmetricOf(ops),
     (ops: readonly magnetic.Operation[]) => magnetic.isChiralOf(ops),
+    (ops: readonly magnetic.Operation[]) => magnetic.pointGroupOf(ops),
+    (ops: readonly magnetic.Operation[]) => magnetic.describeOperationsOf(ops),
   ];
   const asMagnetic = (ops: readonly unknown[]) => ops as readonly magnetic.Operation[];
 
@@ -450,6 +454,20 @@ describe('a time-even question has one answer: class, white group and grey group
       'magnetoelectric',
       'piezomagnetic',
     ]);
+  });
+
+  it('the point group of a list: the class, and the white group of its operations', () => {
+    for (const key of classes.POINT_GROUP_KEYS) {
+      for (const { index: setting } of classes.settings(key)) {
+        expect(classes.pointGroupOf(classes.operations(key, { setting }))).toEqual({ key, setting });
+        const white = magnetic.operations(key, { setting });
+        expect(magnetic.pointGroupOf(white)).toEqual({ key, setting });
+        expect(classes.describeOperationsOf(classes.operations(key, { setting }))).toEqual(
+          magnetic.describeOperationsOf(white).map(({ timeReversal: _t, ...d }) => d),
+        );
+      }
+    }
+    expect(magnetic.pointGroupOf(magnetic.operations("321'"))).toEqual({ key: "321'", setting: 2 });
   });
 
   it('lattice operations and orbits agree; the magnetic ones carry time reversal', () => {

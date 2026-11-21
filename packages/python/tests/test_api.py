@@ -148,6 +148,18 @@ def test_lattice_operations_and_orbits() -> None:
         symcrys.orbit("4mm", {})
 
 
+def test_point_group_of_a_list_of_operations() -> None:
+    assert symcrys.point_group_of(symcrys.operations("32", setting=1)) == {"key": "32", "setting": 1}
+    assert magnetic.point_group_of(magnetic.operations("4'mm'")) == {"key": "4'mm'", "setting": 1}
+    c, s = np.cos(0.4 * np.pi), np.sin(0.4 * np.pi)
+    fivefold = np.array([[c, -s, 0], [s, c, 0], [0, 0, 1]])
+    assert symcrys.point_group_of([{"matrix": fivefold}]) is None
+    described = symcrys.describe_operations_of(symcrys.operations("4"))
+    assert described[2]["kind"] == "rotation" and described[2]["axis"]["cartesian"].dtype == np.float64
+    assert "time_reversal" not in described[2]
+    assert "time_reversal" in magnetic.describe_operations_of(magnetic.operations("4"))[2]
+
+
 def test_tensor_form_arrays_have_fixed_shapes_also_when_empty() -> None:
     f = symcrys.tensor_form("mm2", SHG)
     assert f["basis"].shape == (5, 27) and f["relations"].shape == (22, 27) and f["parameters"].shape == (5, 3)

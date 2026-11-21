@@ -127,7 +127,7 @@ function positionsOf(family: CrystalFamily, c: Convention): readonly (readonly U
 }
 
 /** The proper rotation part of a matrix and its order n (1 for the identity). */
-function rotationPart(m: Mat3): { r: Mat3; n: number } {
+export function rotationPart(m: Mat3): { r: Mat3; n: number } {
   const r = det(m) > 0 ? m : (m.map((row) => row.map((v) => -v)) as unknown as Mat3);
   const cos = Math.max(-1, Math.min(1, (trace(r) - 1) / 2));
   const angle = Math.acos(cos);
@@ -137,7 +137,7 @@ function rotationPart(m: Mat3): { r: Mat3; n: number } {
 }
 
 /** The axis of a proper rotation of order n ≥ 2 (sign arbitrary for n = 2). */
-function rotationAxis(r: Mat3, n: number): Vec3 {
+export function rotationAxis(r: Mat3, n: number): Vec3 {
   if (n === 2) {
     // r + 1 has rank 1; its columns are parallel to the axis.
     let best: Vec3 = [0, 0, 0];
@@ -156,7 +156,11 @@ function rotationAxis(r: Mat3, n: number): Vec3 {
 }
 
 /** (r − rᵀ)/2 as a vector: sin θ times the unit axis for a rotation by θ. */
-const axialVector = (r: Mat3): Vec3 => [(r[2][1] - r[1][2]) / 2, (r[0][2] - r[2][0]) / 2, (r[1][0] - r[0][1]) / 2];
+export const axialVector = (r: Mat3): Vec3 => [
+  (r[2][1] - r[1][2]) / 2,
+  (r[0][2] - r[2][0]) / 2,
+  (r[1][0] - r[0][1]) / 2,
+];
 
 function findAxis(axes: readonly Axis[], u: Vec3, what: string): Axis {
   const a = axes.find((x) => Math.abs(Math.abs(dot(x.cartesian, u)) - 1) < AXIS_TOLERANCE);

@@ -29,10 +29,17 @@ All notable changes to symcrys are recorded here. The format follows
   `orbitOf(operations, direction, { tolerance })` (the orbit of a Cartesian direction under any list
   of operations, coinciding poles merged); types `FaceOrbitEntry`, `DirectionOrbitEntry`,
   `OrbitPole`. In Python `lattice_operations`, `orbit`, `orbit_of`.
+- The point group of a list of operations, #24 item 3, in both entry points: `pointGroupOf(operations,
+{ tolerance })` gives the key of the group the operations generate and the setting whose
+  operations it equals (absent for another orientation), undefined if they generate no point group;
+  `describeOperationsOf(operations)` describes the operations of any list with Cartesian axes. Types
+  `IdentifiedPointGroup`, `CartesianOperationDescription`, `CartesianAxis`, `PointGroupOfOptions`.
+  In Python `point_group_of`, `describe_operations_of`.
 - `references/itc/vol-a-table-3.2.3.2-general-faces.md`: the faces of the general form of the 16
   entries of ITA Table 3.2.3.2 with hexagonal axes; with the general positions, the print anchor of
   `orbits.reference.test.ts`.
-- Documentation: the page "Crystal forms and orbits", with examples in TypeScript and Python.
+- Documentation: the page "Crystal forms, orbits and distorted crystals", with examples in TypeScript
+  and Python.
 
 ## [0.6.1] - 2026-11-21
 
