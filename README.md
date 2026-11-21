@@ -100,7 +100,7 @@ npm run build && npm run bundle:python
 python -m pip install -e packages/python -r docs/requirements.txt
 npm run docs:check     # TypeDoc (fails on warnings), Python docstrings current, examples type-check
 npm run docs:site      # build/docs/html: every example and notebook executed, every reference resolved
-npm run docs:linkcheck # external links
+npm run docs:linkcheck # external links (CI: workflow Links, not a gate)
 ```
 
 The docstrings of the Python package are written from the TSDoc comments: after changing a TSDoc
