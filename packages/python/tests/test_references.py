@@ -1,8 +1,8 @@
 """Print anchors through Python, read from references/ as the TypeScript tests read them: ITA
-Table 3.2.2.1, Tables 3.2.1.3 and 3.2.3.2 (crystal forms), ITC Vol. D § 1.1.4.10.6, ITC Vol. D Table 1.5.2.3 (magnetic point groups), Tables
-1.5.2.4, 1.5.7.1 and 1.5.8.1 (ferromagnetic, piezomagnetic, magnetoelectric), and
-Yariv Table 16.1 with the use case of #30 (SHG at the (001), (110) and (111) surfaces of an m-3m
-crystal)."""
+Tables 3.2.2.1, 3.2.1.3 and 3.2.3.2 (crystal forms), ITC Vol. D § 1.1.4.10.6, ITC Vol. D Table
+1.5.2.3 (magnetic point groups), Tables 1.5.2.4, 1.5.7.1 and 1.5.8.1 (ferromagnetic,
+piezomagnetic, magnetoelectric), and Yariv Table 16.1 with the use case of #30 (SHG at the (001),
+(110) and (111) surfaces of an m-3m crystal)."""
 
 import re
 
@@ -217,7 +217,6 @@ def test_itc_vol_d_1524_ferromagnetic_groups() -> None:
         keys.append(where["key"])
     assert len(keys) == 31
     assert sorted(keys) == sorted(k for k in magnetic.POINT_GROUP_KEYS if magnetic.allows_property(k, "ferromagnetic"))
-
 
 
 # --- ITA Tables 3.2.1.3 and 3.2.3.2: crystal forms -------------------------------------------------

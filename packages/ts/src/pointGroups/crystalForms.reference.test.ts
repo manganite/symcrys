@@ -4,14 +4,19 @@
  * numbers of faces, eigensymmetries and generating point groups), re-parsed from
  * references/itc/vol-a-table-3.2.3.2-face-forms.md and vol-a-table-3.2.1.3-crystal-forms.md.
  *
- * Three checks independent of the library: (1) the two tables against each other: every form of
+ * Checks independent of the library: (1) the two tables against each other: every form of
  * Table 3.2.3.2, with the face symmetry of its Wyckoff position, is listed in Table 3.2.1.3 for its
  * class, in bold for a basic form and in normal type for a limiting one, and conversely; (2) the
  * faces of each printed form, computed here from the printed general position
  * (vol-a-table-3.2.3.2-general-positions.md), are as many as the form has and lie in the Wyckoff
  * position of the row; (3) the eigensymmetry of each form with finite eigensymmetry, computed here
  * as the group of all orthogonal maps that permute its face normals (the symmetry of the form as a
- * polyhedron; monoclinic and triclinic with a, b, c along x, y, z), is the printed one, and a limiting form has a higher eigensymmetry than the basic form of its position. The
+ * polyhedron; monoclinic and triclinic with a, b, c along x, y, z), is the printed one, and a
+ * limiting form has a higher eigensymmetry than the basic form of its position; (4) a prism, and
+ * only a prism, has its face normals in one plane, and a name that gives the polygon of the faces
+ * (trigon-, tetragon-, pentagon-) matches the polyhedron the faces bound: this tells apart forms
+ * with the same number of faces and eigensymmetry; (5) each form occurs once per position, except
+ * the limiting forms marked † in Table 3.2.1.3. The
  * library's data file must equal the transcriptions, and its crystal forms must agree with them.
  */
 
@@ -227,6 +232,38 @@ function symmetryOfSet(vs: number[][]): M[] {
   return out;
 }
 
+/** True if the vectors are all perpendicular to one direction (the normals of an open form, a prism). */
+const isPlanar = (vs: number[][]): boolean => {
+  const v2 = vs.find((v) => Math.hypot(...cross(vs[0], v)) > 1e-6);
+  if (!v2) return true;
+  const axis = cross(vs[0], v2);
+  return vs.every((v) => Math.abs(dot(axis, v)) < 1e-9);
+};
+
+/**
+ * The number of vertices of each face of the closed polyhedron with the given unit face normals,
+ * all faces at distance 1 from the centre: the points where three face planes meet and that lie
+ * inside all others.
+ */
+function verticesPerFace(vs: number[][]): number[] {
+  return vs.map((a, i) => {
+    const corners: number[][] = [];
+    for (let j = 0; j < vs.length; j++) {
+      for (let k = j + 1; k < vs.length; k++) {
+        if (j === i || k === i) continue;
+        const m = [a, vs[j], vs[k]];
+        if (Math.abs(det(m)) < 1e-9) continue;
+        const x = apply(inverse(m), [1, 1, 1]);
+        if (vs.every((n) => dot(n, x) <= 1 + 1e-9) && !corners.some((y) => sameV(x, y))) corners.push(x);
+      }
+    }
+    return corners.length;
+  });
+}
+
+/** The polygon a name of Table 3.2.1.3 gives the faces of its form: trigon-, tetragon-, pentagon-. */
+const POLYGON: Record<string, number> = { Trigon: 3, Tetragon: 4, Pentagon: 5 };
+
 const orbit = (group: RefOp[], n: number[]): number[][] => {
   const out: number[][] = [];
   for (const g of group) {
@@ -350,6 +387,25 @@ describe('ITA Table 3.2.3.2: face forms', () => {
     }
   });
 
+  it('has each form once per position, except the limiting forms marked † in Table 3.2.1.3', () => {
+    // Footnote † (p. 726): these limiting forms occur in three or two non-equivalent orientations;
+    // three rhombic prisms in 222 (p. 726, example (2)), two dipyramids in 422 and 622 (p. 727).
+    const daggers = generatingRows.slice(1).filter((r) => r[5] === '†');
+    expect(daggers.map((r) => `${r[0]} ${r[1]}`)).toEqual(['6 222', '14 422', '31 622']);
+    for (const e of ENTRIES) {
+      const counts = new Map<string, number>();
+      for (const r of e.forms) {
+        const k = `${r[3]} ${numberOfName(r[5])} ${r[4]}`;
+        counts.set(k, (counts.get(k) ?? 0) + 1);
+      }
+      for (const [k, count] of counts) {
+        const [, no, type] = k.split(' ');
+        const dagger = daggers.some((r) => r[0] === no && r[1] === e.short && r[4] === type);
+        expect(count, `${e.short} ${e.axes}: ${k}`).toBe(dagger ? (e.short === '222' ? 3 : 2) : 1);
+      }
+    }
+  });
+
   for (const e of ENTRIES) {
     const label = `${e.short}${e.axes ? ` (${e.axes})` : ''}, p. ${e.page}`;
     for (const r of e.forms) {
@@ -372,6 +428,15 @@ describe('ITA Table 3.2.3.2: face forms', () => {
         expect(Number(position[3])).toBe(faces);
         const siteOfPosition = stabilizerOf(e.group, faceNormal(e.basis, hklOf(position[7], { h: 3, k: 2, l: 1 })));
         expect(conjugate(e.group, stabilizerOf(e.group, normal), siteOfPosition), 'same Wyckoff position').toBe(true);
+        // Open or closed: the face normals of a prism (and of a form of one or two faces) lie in one
+        // plane, those of every other form do not. This tells apart forms with the same number of
+        // faces and the same eigensymmetry (tetragonal dipyramid and ditetragonal prism, ...).
+        const typeName = typeRows[n][1];
+        if (faces > 1) expect(isPlanar(faceSet), `open form: ${typeName}`).toBe(faces <= 2 || /prism/.test(typeName));
+        // The polygon of the faces where the name gives it (trigon-tritetrahedron: triangles,
+        // tetragon-tritetrahedron: quadrilaterals, ...): tells apart the two cubic forms on (hhl).
+        const polygon = POLYGON[/^(Trigon|Tetragon|Pentagon)-/.exec(typeName)?.[1] ?? ''];
+        if (polygon) expect(new Set(verticesPerFace(faceSet)), `faces of ${typeName}`).toEqual(new Set([polygon]));
         // Eigensymmetry: the symmetry of the faces as a polyhedron.
         const eigen = typeRows[n][3];
         if (!eigen.startsWith('∞')) {

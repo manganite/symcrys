@@ -104,9 +104,8 @@ API.
 """
 CRYSTAL_FORM_TYPES: list[dict[str, Any]] = from_js(_shared.value("CRYSTAL_FORM_TYPES"))
 """The 47 crystal forms of ITA Table 3.2.1.3 (6th ed., pp. 724–726) with ITA's numbers, English
-names, numbers of faces and eigensymmetries: ``CRYSTAL_FORM_TYPES[n - 1]`` is form n. A
-``CrystalForm`` of ``crystal_forms`` names its form by this number (docs/conventions.md, "Crystal
-forms").
+names, numbers of faces and eigensymmetries: ``CRYSTAL_FORM_TYPES[n - 1]`` is form n. Each crystal
+form of ``crystal_forms`` names its form by this number (docs/conventions.md, "Crystal forms").
 """
 
 
@@ -426,8 +425,9 @@ def crystal_forms(
     key: str, *, convention: Optional[Convention] = None, setting: Optional[int] = None
 ) -> list[dict[str, Any]]:
     """The crystal forms of a crystal class, as ITA 6th ed. Table 3.2.3.2 prints them: for each
-    Wyckoff position (general position first) its basic form, then its limiting forms. In the ITC
-    convention only, like the Wyckoff positions (docs/conventions.md, "Crystal forms").
+    Wyckoff position (general position first) its basic form (two for the cubic faces (hhl) of -43m
+    and m-3m), then its limiting forms. In the ITC convention only, like the Wyckoff positions
+    (docs/conventions.md, "Crystal forms").
 
     Parameters
     ----------

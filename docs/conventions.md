@@ -595,12 +595,13 @@ tetragonal dipyramids of 422, (h0l) and (hhl)).
 | `condition`      | the condition printed with the cubic forms (hhl), below; absent otherwise                 |
 | `representative` | that face with numbers, as for the Wyckoff positions: `hkl` and its Cartesian unit normal |
 
-- **Two forms on the same faces.** In the cubic classes the faces (hhl) form two different forms
-  depending on whether |h| < |l| or |h| > |l| (trigon- and tetragon-tritetrahedron in 23 and -43m,
-  trigon- and tetragon-trioctahedron in m-3, 432 and m-3m); ITA prints both, with the condition,
-  which `condition` gives as `'|h|<|l|'` or `'|h|>|l|'`.
-  The representative takes h = 3, k = 2, l = 1 as for the Wyckoff positions, and h = 1, l = 3 where
-  the condition is |h| < |l|: (331) and (113).
+- **Two forms on the faces (hhl).** In the cubic classes the faces (hhl) of one Wyckoff position
+  form two different forms depending on whether |h| < |l| or |h| > |l| (trigon- and
+  tetragon-tritetrahedron in 23 and -43m, trigon- and tetragon-trioctahedron in m-3, 432 and m-3m).
+  ITA prints both with the condition, which `condition` gives as `'|h|<|l|'` or `'|h|>|l|'`; in
+  -43m and m-3m both are basic forms of the position, elsewhere both are limiting forms. The
+  representative takes h = 3, k = 2, l = 1 as for the Wyckoff positions, and h = 1, l = 3 where the
+  condition is |h| < |l|: (331) and (113).
 - **Convention and groups.** As the Wyckoff positions: ITC convention only, the 32 crystal classes
   only (a RangeError otherwise), and the settings ITA does not print (`mm2` settings 2 and 3) are
   setting 1 carried into their frame.
@@ -613,12 +614,20 @@ tetragonal dipyramids of 422, (h0l) and (hhl)).
   disagree with Table 3.2.3.2 and with the rest of the table, and are read corrected (errata in
   `references/itc/vol-a-table-3.2.1.3-crystal-forms.md`): No. 14 prints the face symmetry `.m` for
   `..m` (4/mmm), and No. 31 prints 6/m(1) in normal type, although the hexagonal dipyramid is the
-  basic general form of 6/m. Independently of the library, the tests compute the faces of every
-  printed form from the printed general position (their number, their Wyckoff position) and its
-  eigensymmetry as the group of all orthogonal maps that permute the face normals.
-- **ITA 2006.** The 5th edition prints the basic forms as Table 10.1.2.2 and the 47 forms as Table
-  10.1.2.3, with the same numbers; `audit/forms-2006` compares them with stereography's catalogue,
-  which follows the 5th edition.
+  basic general form of 6/m. Independently of the library, the tests compute from the printed
+  general position the faces of every printed form and check: their number and Wyckoff position;
+  the eigensymmetry, as the group of all orthogonal maps that permute the face normals; whether the
+  form is open (a prism: normals in one plane) or closed; and, where the name gives it, the polygon
+  of the faces (trigon-, tetragon-, pentagon-), from the polyhedron the faces bound. Together these
+  tell apart all forms with the same number of faces and eigensymmetry (tetragonal dipyramid and
+  ditetragonal prism; the two forms on (hhl)). A form is listed once per position, except the
+  limiting forms Table 3.2.1.3 marks with †: three rhombic prisms in 222, two dipyramids in 422
+  and 622 (pp. 726–727).
+- **ITA 2006.** The 5th edition prints the forms of the point groups as Table 10.1.2.2 and the 47
+  forms as Table 10.1.2.3. stereography's catalogue follows it, with the basic forms only and the
+  numbers of Table 10.1.2.3; `audit/forms-2006` compares the 47 forms (number of faces,
+  eigensymmetry) and the basic forms with symcrys, without difference, so the two editions number
+  the forms alike.
 
 ## Tensors
 

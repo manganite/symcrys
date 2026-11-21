@@ -44,9 +44,9 @@ export interface CrystalForm {
   /** Oriented site-symmetry symbol of the Wyckoff position, e.g. `..m` (the face symmetry). */
   readonly siteSymmetry: string;
   /**
-   * True for a basic form, the form of lowest eigensymmetry of the position, false for a limiting
-   * form: its faces have the face symmetry of the position, but the form has a higher eigensymmetry
-   * (ITA 6th ed., § 3.2.1.2.2, p. 723).
+   * True for a basic form, a form of lowest eigensymmetry of the position (two at the faces (hhl) of
+   * -43m and m-3m), false for a limiting form: its faces have the face symmetry of the position,
+   * but the form has a higher eigensymmetry (ITA 6th ed., § 3.2.1.2.2, p. 723).
    */
   readonly basic: boolean;
   /** The number of the form in `CRYSTAL_FORM_TYPES` (ITA Table 3.2.1.3), 1 to 47. */
@@ -99,7 +99,7 @@ const cache = new Map<string, readonly CrystalForm[]>();
 
 /**
  * The crystal forms of a crystal class in ITA's order: by Wyckoff position (general position
- * first), each position's basic form before its limiting forms, as ITA 6th ed. Table 3.2.3.2
+ * first), each position's basic forms before its limiting forms, as ITA 6th ed. Table 3.2.3.2
  * prints them. ITC convention only (throws a RangeError for `'birss'` and for a magnetic point
  * group with time reversal), like the Wyckoff positions. For `mm2` settings 2 and 3 (`2mm`, `m2m`),
  * which ITA does not print, the forms of setting 1 carried into their frame.
