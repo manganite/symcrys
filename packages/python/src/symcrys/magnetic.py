@@ -297,27 +297,40 @@ def point_group_of(
     Parameters
     ----------
     tolerance : keyword-only, optional
-        Two matrices are the same operation if no entry differs by this much or more. Default
-        ``EPSILON`` (10⁻⁶); a caller whose matrices carry rounding errors passes a larger value.
+        Two matrices are the same operation if no entry differs by this much or more, and a matrix
+        counts as orthogonal and crystallographic within it. Default ``EPSILON`` (10⁻⁶); a caller
+        whose matrices carry rounding errors passes a larger value, below 0.1.
     """
     result = _call("pointGroupOf", list(operations), _shared.options(tolerance=tolerance))
     return None if result is None else dict(result)
 
 
-def describe_operations_of(operations: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+def describe_operations_of(
+    operations: Sequence[Mapping[str, Any]], *, tolerance: Optional[float] = None
+) -> list[dict[str, Any]]:
     """Each operation of a list described geometrically, in the order of the list: kind, n, the
     Cartesian axis (rotation or rotoinversion axis, mirror normal) with its first non-zero
     component, in the order x, y, z, positive, and for n ≥ 3 the sense about that axis. The axes are
     not named by lattice directions, since the list need not belong to a setting; for a point group
     given by its key, ``describe_operations`` names them. Raises SymcrysError for a matrix that is
-    not orthogonal or not a crystallographic operation (an order other than 1, 2, 3, 4, 6).
+    not orthogonal or not a crystallographic operation (a rotation part by an angle other than
+    360°/n, n = 1, 2, 3, 4, 6), both within ``tolerance`` (default ``EPSILON``, as for
+    ``point_group_of``).
+
+    Parameters
+    ----------
+    tolerance : keyword-only, optional
+        Two matrices are the same operation if no entry differs by this much or more, and a matrix
+        counts as orthogonal and crystallographic within it. Default ``EPSILON`` (10⁻⁶); a caller
+        whose matrices carry rounding errors passes a larger value, below 0.1.
 
     Returns
     -------
     list of dict
         In each, ``axis`` (if present) has ``cartesian`` (float64, shape (3,)).
     """
-    return list(_call("describeOperationsOf", list(operations)))
+    return list(_call("describeOperationsOf", list(operations), _shared.options(tolerance=tolerance)))
+
 
 def symmetry_directions(
     key: str, *, convention: Optional[Convention] = None, setting: Optional[int] = None

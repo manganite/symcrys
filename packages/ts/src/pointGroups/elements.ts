@@ -127,7 +127,7 @@ function positionsOf(family: CrystalFamily, c: Convention): readonly (readonly U
 }
 
 /** The proper rotation part of a matrix and its order n (1 for the identity). */
-export function rotationPart(m: Mat3): { r: Mat3; n: number } {
+function rotationPart(m: Mat3): { r: Mat3; n: number } {
   const r = det(m) > 0 ? m : (m.map((row) => row.map((v) => -v)) as unknown as Mat3);
   const cos = Math.max(-1, Math.min(1, (trace(r) - 1) / 2));
   const angle = Math.acos(cos);

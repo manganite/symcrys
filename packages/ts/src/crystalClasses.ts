@@ -324,8 +324,8 @@ export type CartesianOperationDescription = Omit<identify.CartesianOperationDesc
  * (default `EPSILON`) or more. Returns undefined if the operations generate no crystal class (an
  * operation of order 5, a group larger than 48). Throws a RangeError for a matrix that is not
  * orthogonal (within `tolerance`, at least `EPSILON`). The classes `1` and `-1` have no
- * orientation, so they always have setting 1 (docs/conventions.md, "Point group of a list of
- * operations").
+ * orientation, so they always have setting 1. The first call builds a table of the groups (about
+ * 0.1 s; docs/conventions.md, "Point group of a list of operations").
  */
 export function pointGroupOf(
   operations: readonly OperationArgument[],
@@ -340,13 +340,15 @@ export function pointGroupOf(
  * in the order x, y, z, positive, and for n ≥ 3 the sense about that axis. The axes are not named
  * by lattice directions, since the list need not belong to a setting; for a crystal class given by
  * its key, `describeOperations` names them. Throws a RangeError for a matrix that is not orthogonal
- * or not a crystallographic operation (an order other than 1, 2, 3, 4, 6).
+ * or not a crystallographic operation (a rotation part by an angle other than 360°/n, n = 1, 2, 3,
+ * 4, 6), both within `tolerance` (default `EPSILON`, as for `pointGroupOf`).
  */
 export function describeOperationsOf(
   operations: readonly OperationArgument[],
+  options?: identify.PointGroupOfOptions,
 ): readonly CartesianOperationDescription[] {
   return Object.freeze(
-    identify.describeOperationsOf(unitary(operations)).map((d) => {
+    identify.describeOperationsOf(unitary(operations), options).map((d) => {
       const { timeReversal: _timeReversal, ...rest } = d;
       return Object.freeze(rest);
     }),

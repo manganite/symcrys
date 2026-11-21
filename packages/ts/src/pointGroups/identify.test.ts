@@ -141,6 +141,29 @@ describe('pointGroupOf', () => {
 
   it('gives the identity alone, and an empty list, the class 1', () => {
     expect(pointGroupOf([])).toEqual({ key: '1', setting: 1 });
+    expect(pointGroupOf([operations('1')[0]])).toEqual({ key: '1', setting: 1 });
+  });
+
+  it('reads an operation given with and without time reversal as a grey group', () => {
+    const two = operations('2', { setting: 1 })[1];
+    expect(pointGroupOf([two, { ...two, timeReversal: true }])).toEqual({ key: "21'", setting: 1 });
+  });
+
+  it('takes a larger tolerance for matrices with larger errors (the trace is checked within it)', () => {
+    const scaled = operations('mmm').map((op) => ({
+      matrix: op.matrix.map((row) => row.map((v) => v * (1 - 4e-4))) as unknown as Mat3,
+      timeReversal: false,
+    }));
+    expect(() => pointGroupOf(scaled)).toThrow(/not an orthogonal/);
+    expect(pointGroupOf(scaled, { tolerance: 1e-3 })).toEqual({ key: 'mmm', setting: 1 });
+    expect(pointGroupOf(scaled, { tolerance: 1e-2 })).toEqual({ key: 'mmm', setting: 1 });
+    expect(describeOperationsOf(scaled, { tolerance: 1e-2 })).toHaveLength(8);
+  });
+
+  it('refuses a tolerance outside 0 < t < 0.1', () => {
+    for (const tolerance of [0, -1, 0.1, Number.NaN]) {
+      expect(() => pointGroupOf(operations('2'), { tolerance })).toThrow(RangeError);
+    }
   });
 });
 
@@ -171,8 +194,24 @@ describe('describeOperationsOf', () => {
     }
   });
 
-  it('refuses an operation that is not crystallographic', () => {
-    const fivefold = rotationAbout(Z, 1 / 5) as unknown as Mat3;
-    expect(() => describeOperationsOf([{ matrix: fivefold, timeReversal: false }])).toThrow(RangeError);
+  it('refuses an operation that is not crystallographic, also one whose angle rounds to 360°/n', () => {
+    for (const turns of [1 / 5, 100 / 360, 110 / 360, 150 / 360, 170 / 360]) {
+      const matrix = rotationAbout(Z, turns) as unknown as Mat3;
+      expect(() => describeOperationsOf([{ matrix, timeReversal: false }]), `${turns * 360}°`).toThrow(RangeError);
+      const improper = matrix.map((row) => row.map((v) => -v)) as unknown as Mat3;
+      expect(() => describeOperationsOf([{ matrix: improper, timeReversal: false }])).toThrow(RangeError);
+    }
+  });
+
+  it('signs an axis within the tolerance: a mirror tilted by 10⁻⁷ keeps the sign of its normal', () => {
+    const tilted = (e: number): Mat3 => {
+      const n = [e, 0, 1].map((x) => x / Math.hypot(e, 1));
+      return [0, 1, 2].map((i) => [0, 1, 2].map((j) => (i === j ? 1 : 0) - 2 * n[i] * n[j])) as unknown as Mat3;
+    };
+    const axes = describeOperationsOf([
+      { matrix: tilted(1e-7), timeReversal: false },
+      { matrix: tilted(-1e-7), timeReversal: false },
+    ]).map((d) => d.axis?.cartesian[2]);
+    expect(axes.every((z) => (z ?? 0) > 0)).toBe(true);
   });
 });

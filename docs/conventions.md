@@ -135,9 +135,8 @@ all 32 classes.
 
 **Operations passed in.** Where a function takes a list of operations (`tensorFormOf`,
 `allowsPropertyOf`, `allowedPropertiesOf`, `isCentrosymmetricOf`, `isChiralOf`, `pointGroupOf`,
-`describeOperationsOf`), the matrices must
-be orthogonal (Cartesian), and the magnetic API asks every operation whether it is
-combined with time reversal: `timeReversal` must be `true` or `false`. Operations of the
+`describeOperationsOf`), the matrices must be orthogonal (Cartesian), and the magnetic API asks
+every operation whether it is combined with time reversal: `timeReversal` must be `true` or `false`. Operations of the
 crystallographic API, which do not say, are refused there and not read as a white group; a caller
 who means the white group adds `timeReversal: false`, one who means a crystal without magnetic
 order builds the grey group. `siteSymmetry` and `orbitOf` do not depend on time reversal and take
@@ -638,13 +637,18 @@ tetragonal dipyramids of 422, (h0l) and (hhl)).
 `pointGroupOf(operations, { tolerance })` names the point group that a list of Cartesian
 operations generates, for instance the operations of a crystal that keep its distorted lattice
 (maintainer, 2026-11-21, #24). The list is closed into a group, two matrices being equal when no
-entry differs by `tolerance` (default `EPSILON`) or more; a caller whose matrices carry rounding
-errors passes a larger value, and the matrices need only be orthogonal within it. The result is the
+entry differs by `tolerance` (default `EPSILON`, at most 0.1) or more; a caller whose matrices
+carry rounding errors passes a value well above them, and the matrices need only be orthogonal, and
+their traces integers, within it. The result is the
 key, and the setting whose operations the group equals in the frame of symcrys. A group in another
 orientation (a threefold axis along [111] of a cubic crystal, a frame turned by any angle) has no
 setting: the key is still found, the setting is absent. `1` and `-1` have no orientation and always
 setting 1. The result is undefined if the operations generate no point group (an operation of
-order 5, a group of more than 96 operations).
+order 5, a group of more than 96 operations). The setting is found from the operations passed in,
+which generate the group, not from their products, whose errors add up. The first call builds a
+table of the 122 groups (about 0.1 s); after that a call takes about 1.5 ms for the 48 operations
+of m-3m (Node, measured 2026-11-21), since the closure multiplies only by the operations passed in
+and compares a product only with the operations of its kind.
 
 **How the group is named.** Each operation contributes its determinant, its trace and, in the
 magnetic API, whether it is combined with time reversal; the group is named by how often each
@@ -655,12 +659,14 @@ so the counts name every such group. The crystallographic API takes no time reve
 one of the 32 classes; the magnetic API takes the time reversal of each operation and names one of
 the 122 groups (a list of white operations is the white group, as everywhere in that API).
 
-`describeOperationsOf(operations)` describes each operation of any list as `describeOperations`
+`describeOperationsOf(operations, { tolerance })` describes each operation of any list as `describeOperations`
 does for a key (kind, n, sense), but with the axis as a Cartesian unit vector only, because the
 list need not belong to a setting whose lattice directions could name it. The axis is signed so
 that its first non-zero component, in the order x, y, z, is positive, as in the Birss convention of
-`describeOperations`, and the sense refers to that sign. A matrix that is not orthogonal, or of an
-order other than 1, 2, 3, 4, 6, is a RangeError.
+`describeOperations`, and the sense refers to that sign; a component smaller than the tolerance
+counts as zero, so that a matrix with rounding errors keeps the sign of its axis. A matrix that is
+not orthogonal, or whose rotation part does not turn by 360°/n with n = 1, 2, 3, 4, 6 (its trace
+1 + 2 cos θ not an integer), is a RangeError, both within `tolerance` as for `pointGroupOf`.
 
 ## Lattice basis and orbits
 
