@@ -17,7 +17,7 @@ from typing import Any
 
 import numpy as np
 
-FLOAT_KEYS = frozenset({"matrix", "cartesian", "direction", "basis", "relations"})
+FLOAT_KEYS = frozenset({"matrix", "cartesian", "direction", "basis", "relations", "plane"})
 
 
 def snake(name: str) -> str:
