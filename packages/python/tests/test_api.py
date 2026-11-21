@@ -135,6 +135,19 @@ def test_crystal_forms_in_the_itc_convention_only() -> None:
     assert "condition" not in symcrys.crystal_forms("4mm")[0]
 
 
+def test_lattice_operations_and_orbits() -> None:
+    ops = symcrys.lattice_operations("3")
+    assert ops[1]["matrix"].dtype == np.float64 and ops[1]["matrix"].tolist() == [[0, -1, 0], [1, -1, 0], [0, 0, 1]]
+    assert [w["time_reversal"] for w in magnetic.lattice_operations("4'")] == [False, False, True, True]
+    faces = symcrys.orbit("4mm", {"hkl": np.array([0, 0, 1])})
+    assert len(faces) == 1 and faces[0]["hkl"].dtype == np.int64 and faces[0]["operations"].tolist() == list(range(8))
+    poles = symcrys.orbit_of(symcrys.operations("4mm"), [1, 0, 0])
+    assert [p["operations"].tolist() for p in poles] == [[0, 4], [1, 5], [2, 7], [3, 6]]
+    assert poles[0]["direction"].dtype == np.float64
+    with pytest.raises(symcrys.SymcrysError, match="either hkl"):
+        symcrys.orbit("4mm", {})
+
+
 def test_tensor_form_arrays_have_fixed_shapes_also_when_empty() -> None:
     f = symcrys.tensor_form("mm2", SHG)
     assert f["basis"].shape == (5, 27) and f["relations"].shape == (22, 27) and f["parameters"].shape == (5, 3)

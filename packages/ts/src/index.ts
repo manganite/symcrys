@@ -22,6 +22,7 @@ export type { Axis, DirectionElements, OperationKind, SymmetryDirection } from '
 export type { SiteSymmetry, SiteSymmetryOptions } from './siteSymmetry.js';
 export type { Hkl, WyckoffOptions, WyckoffPosition } from './pointGroups/wyckoff.js';
 export type { CrystalForm, CrystalFormType } from './pointGroups/crystalForms.js';
+export type { DirectionOrbitEntry, FaceOrbitEntry, OrbitOptions, OrbitPole } from './pointGroups/orbits.js';
 export type { IntrinsicSymmetry, TensorForm, TensorParity, TensorRank } from './tensors/tensorForm.js';
 
 export {
@@ -40,7 +41,10 @@ export {
   isCentrosymmetricOf,
   isChiralOf,
   isPointGroupKey,
+  latticeOperations,
   operations,
+  orbit,
+  orbitOf,
   pointGroup,
   pointGroups,
   rotateTensor,

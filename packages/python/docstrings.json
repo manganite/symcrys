@@ -49,6 +49,18 @@
     "rotate_tensor": {
       "type": "numpy.ndarray",
       "doc": "A float64 array of shape (3**rank,); ``tensor`` may have any shape with 3**rank entries (it is flattened in C order)."
+    },
+    "lattice_operations": {
+      "type": "list of dict",
+      "doc": "Dicts ``{\"matrix\"}``; each matrix is a float64 array of shape (3, 3) holding integers (the fixed rule for matrices)."
+    },
+    "orbit": {
+      "type": "list of dict",
+      "doc": "In each, ``hkl`` (or ``uvw``) is an int64 array of shape (3,) and ``operations`` an int64 array of shape (n,); ``indices`` is a dict ``{\"hkl\": ...}`` or ``{\"uvw\": ...}``."
+    },
+    "orbit_of": {
+      "type": "list of dict",
+      "doc": "In each, ``direction`` is a float64 array of shape (3,) and ``operations`` an int64 array of shape (n,)."
     }
   },
   "symcrys.magnetic": {
@@ -88,6 +100,18 @@
     "rotate_tensor": {
       "type": "numpy.ndarray",
       "doc": "A float64 array of shape (3**rank,); ``tensor`` may have any shape with 3**rank entries (it is flattened in C order)."
+    },
+    "lattice_operations": {
+      "type": "list of dict",
+      "doc": "Dicts ``{\"matrix\", \"time_reversal\"}``; each matrix is a float64 array of shape (3, 3) holding integers (the fixed rule for matrices)."
+    },
+    "orbit": {
+      "type": "list of dict",
+      "doc": "In each, ``hkl`` (or ``uvw``) is an int64 array of shape (3,) and ``operations`` an int64 array of shape (n,); ``indices`` is a dict ``{\"hkl\": ...}`` or ``{\"uvw\": ...}``."
+    },
+    "orbit_of": {
+      "type": "list of dict",
+      "doc": "In each, ``direction`` is a float64 array of shape (3,) and ``operations`` an int64 array of shape (n,)."
     }
   }
 }

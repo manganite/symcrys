@@ -65,9 +65,12 @@ __all__ = [
     "is_centrosymmetric_of",
     "is_chiral_of",
     "is_point_group_key",
+    "lattice_operations",
     "lattice_basis",
     "magnetic",
     "operations",
+    "orbit",
+    "orbit_of",
     "point_group",
     "point_groups",
     "rotate_tensor",
@@ -353,6 +356,94 @@ def site_symmetry(
     """
     return _shared.site(
         _call("siteSymmetry", list(operations), np.asarray(direction), _shared.options(tolerance=tolerance))
+    )
+
+
+def lattice_operations(
+    key: str, *, convention: Optional[Convention] = None, setting: Optional[int] = None
+) -> list[Operation]:
+    """The operations of the crystal class in the conventional lattice basis (a, b, c; for the
+    trigonal classes the hexagonal axes), in the order of ``operations`` for the same setting and
+    convention: integer matrices W acting on the coordinates of a lattice direction [uvw], W =
+    B⁻¹·R·B with the basis B of ``lattice_basis`` and the Cartesian matrix R of ``operations``. They
+    do not depend on the cell angles, so they exist for every family; for the monoclinic and
+    triclinic families a, b, c are taken along x, y, z, as for the Wyckoff positions. In the ITC
+    convention they are the matrices of ITA's general position (6th ed., Table 3.2.3.2). Not
+    orthogonal in general: pass them to no function that takes Cartesian operations
+    (docs/conventions.md, "Lattice basis and orbits").
+
+    Parameters
+    ----------
+    convention : keyword-only, optional
+        Default ``'itc'``.
+    setting : keyword-only, optional
+        1-based setting index; default: the default setting of the convention.
+
+    Returns
+    -------
+    list of dict
+        Dicts ``{"matrix"}``; each matrix is a float64 array of shape (3, 3) holding integers (the
+        fixed rule for matrices).
+    """
+    return list(_call("latticeOperations", key, _shared.options(convention=convention, setting=setting)))
+
+
+def orbit(
+    key: str,
+    indices: Mapping[str, ArrayLike],
+    *,
+    convention: Optional[Convention] = None,
+    setting: Optional[int] = None,
+) -> list[dict[str, Any]]:
+    """The orbit of a face (hkl) or of a lattice direction [uvw] under a crystal class, exactly, in
+    the lattice basis: the distinct faces (directions), in the order in which the operations reach
+    them (so in the ITC convention the given face first), each with the indices of the operations
+    that map the given one onto it. A face transforms with the inverse transpose of a lattice
+    operation, h' = W⁻ᵀ·h, a direction with the operation itself, u' = W·u. The number of entries is
+    the multiplicity of the face (direction). Raises SymcrysError unless exactly one of ``hkl`` and
+    ``uvw`` is given, as three integers not all zero (hexagonal axes: three indices, without i).
+
+    Parameters
+    ----------
+    convention : keyword-only, optional
+        Default ``'itc'``.
+    setting : keyword-only, optional
+        1-based setting index; default: the default setting of the convention.
+
+    Returns
+    -------
+    list of dict
+        In each, ``hkl`` (or ``uvw``) is an int64 array of shape (3,) and ``operations`` an int64
+        array of shape (n,); ``indices`` is a dict ``{"hkl": ...}`` or ``{"uvw": ...}``.
+    """
+    return list(_call("orbit", key, dict(indices), _shared.options(convention=convention, setting=setting)))
+
+
+def orbit_of(
+    operations: Sequence[Mapping[str, Any]], direction: ArrayLike, *, tolerance: Optional[float] = None
+) -> list[dict[str, Any]]:
+    """The orbit of a direction (any non-zero vector, Cartesian, e.g. a face normal) under a list of
+    operations, for instance those of a distorted crystal: the images of its unit vector under each
+    operation, coinciding images merged (closer than ``tolerance``, default ``EPSILON``, as for
+    ``site_symmetry``), in the order in which the operations reach them, each with the indices of
+    the operations that map the direction there. The list is taken as it is, not closed into a
+    group. Raises SymcrysError for a zero vector and for a matrix that is not orthogonal.
+
+    Parameters
+    ----------
+    tolerance : keyword-only, optional
+        Two images count as one pole if their unit vectors are closer than this (Euclidean
+        distance). Default 10⁻⁶; a caller whose directions carry rounding errors passes a larger
+        value.
+
+    Returns
+    -------
+    list of dict
+        In each, ``direction`` is a float64 array of shape (3,) and ``operations`` an int64 array of
+        shape (n,).
+    """
+    return list(
+        _call("orbitOf", list(operations), np.asarray(direction), _shared.options(tolerance=tolerance))
     )
 
 
