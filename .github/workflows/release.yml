@@ -1,6 +1,6 @@
 name: Release
 
-# Runs when a tag vX.Y.Z is pushed (by hand, after the release PR is merged; CLAUDE.md, "Releases").
+# Runs when a tag vX.Y.Z is pushed after the release PR is merged (who pushes it: CLAUDE.md, "Releases").
 on:
   push:
     tags:

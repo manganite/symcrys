@@ -242,8 +242,8 @@ build && npm run bundle:python`, then in `packages/python` `pip install -e ".[te
   settings" above.
 - **Releases:** procedure in `README.md`. The release PR is merged on Thomas' OK. **Who sets the
   tag depends on where the release work runs** (maintainer, 2026-11-21; replaces "Thomas sets the
-  tag by hand", 2026-11-08): Claude Code on Thomas' computer sets it itself, after Thomas' release
-  OK and the merge of the release PR; in a cloud session, where pushing a tag fails
+  tag by hand", 2026-11-08): Claude Code on Thomas' computer sets it itself once the release PR
+  is merged on his OK; in a cloud session, where pushing a tag fails
   ("Cloud-session limits"), Thomas sets it. Before tagging, `origin/main` must be the release PR's
   merge commit; afterwards `release.yml` must be green.
 - **npm:** `release.yml` submits each tagged version with `npm stage publish` (trusted publishing,
