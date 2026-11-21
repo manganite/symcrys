@@ -134,7 +134,8 @@ of time-even tensors and so the same time-even properties. `entryPoints.test.ts`
 all 32 classes.
 
 **Operations passed in.** Where a function takes a list of operations (`tensorFormOf`,
-`allowsPropertyOf`, `allowedPropertiesOf`, `isCentrosymmetricOf`, `isChiralOf`), the matrices must
+`allowsPropertyOf`, `allowedPropertiesOf`, `isCentrosymmetricOf`, `isChiralOf`, `pointGroupOf`,
+`describeOperationsOf`), the matrices must
 be orthogonal (Cartesian), and the magnetic API asks every operation whether it is
 combined with time reversal: `timeReversal` must be `true` or `false`. Operations of the
 crystallographic API, which do not say, are refused there and not read as a white group; a caller
