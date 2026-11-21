@@ -39,7 +39,8 @@ export function reduceIndices(indices: readonly number[]): number[] {
 /** The plane (hkl) of hexagonal axes as (hkil) with i = −(h + k). */
 export function planeToFourIndices(hkl: Vec3): FourIndices {
   integers(hkl, 'planeToFourIndices', 3);
-  return [hkl[0], hkl[1], -(hkl[0] + hkl[1]) + 0, hkl[2]];
+  if (hkl.every((x) => x === 0)) throw new RangeError('planeToFourIndices: zero vector');
+  return [hkl[0] + 0, hkl[1] + 0, -(hkl[0] + hkl[1]) + 0, hkl[2] + 0];
 }
 
 /** The plane (hkil) as (hkl); throws a RangeError unless i = −(h + k). */
@@ -47,7 +48,7 @@ export function planeFromFourIndices(hkil: FourIndices): Vec3 {
   integers(hkil, 'planeFromFourIndices', 4);
   if (hkil[2] !== -(hkil[0] + hkil[1]))
     throw new RangeError(`planeFromFourIndices: i must be −(h + k) in ${JSON.stringify(hkil)}`);
-  return [hkil[0], hkil[1], hkil[3]];
+  return [hkil[0] + 0, hkil[1] + 0, hkil[3] + 0];
 }
 
 /**
@@ -64,19 +65,23 @@ export function directionToFourIndices(uvw: Vec3): FourIndices {
 /** The direction [UVTW] as [uvw], reduced: u = U − T, v = V − T, w = W; throws a RangeError unless T = −(U + V). */
 export function directionFromFourIndices(uvtw: FourIndices): Vec3 {
   integers(uvtw, 'directionFromFourIndices', 4);
+  if (uvtw.every((x) => x === 0)) throw new RangeError('directionFromFourIndices: zero vector');
   const [U, V, T, W] = uvtw;
   if (T !== -(U + V)) throw new RangeError(`directionFromFourIndices: T must be −(U + V) in ${JSON.stringify(uvtw)}`);
   return reduceIndices([U - T, V - T, W]) as unknown as Vec3;
 }
 
 /**
- * The zone axis [uvw] of two planes (hkl): the solution of the zone law hu + kv + lw = 0, the
+ * The zone axis [uvw] of two planes (hkl), which must not be zero vectors: the solution of the zone law hu + kv + lw = 0, the
  * cross product h₁ × h₂ reduced (so its sign follows the order of the planes), or `null` for parallel planes.
  */
 export function zoneAxis(h1: Vec3, h2: Vec3): Vec3 | null {
   integers(h1, 'zoneAxis', 3);
   integers(h2, 'zoneAxis', 3);
+  if (h1.every((x) => x === 0) || h2.every((x) => x === 0)) throw new RangeError('zoneAxis: zero vector');
   const c = [h1[1] * h2[2] - h1[2] * h2[1], h1[2] * h2[0] - h1[0] * h2[2], h1[0] * h2[1] - h1[1] * h2[0]];
+  if (!c.every((x) => Number.isSafeInteger(x)))
+    throw new RangeError('zoneAxis: the cross product exceeds the safe integers');
   if (c.every((x) => x === 0)) return null;
   return reduceIndices(c) as unknown as Vec3;
 }
@@ -103,7 +108,7 @@ export function changeOfAxes(P: Mat3): AxisChange {
   ) {
     throw new RangeError('changeOfAxes: P must be a 3×3 matrix of finite numbers');
   }
-  if (!(det(P) > 1e-9)) throw new RangeError('changeOfAxes: det P must be positive (a right-handed basis)');
+  if (!(det(P) > 0)) throw new RangeError('changeOfAxes: det P must be positive (a right-handed basis)');
   const clean = (m: Mat3): Mat3 => m.map((r) => r.map((x) => x + 0)) as unknown as Mat3; // no −0
   return { direction: clean(inverse(P)), plane: clean(transpose(P)) };
 }

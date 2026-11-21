@@ -5,6 +5,7 @@
  */
 
 import { apply, det, inverse, multiply, transpose, type Mat3, type Vec3 } from './linalg.js';
+import { checkTimeReversal, type Operation as MagneticOperation } from './operations.js';
 import { EPSILON } from './tolerances.js';
 
 /** The lattice parameters of a cell: edge lengths and angles in degrees (α between b and c, β between a and c, γ between a and b). */
@@ -43,7 +44,7 @@ export interface CellOperation {
 export interface IsValidCellOptions {
   /**
    * The smallest accepted ratio V/(abc) of the cell volume to the volume of the box of its edge
-   * lengths; default 0, which accepts every cell that has a volume. A ratio near 0 is a nearly flat cell.
+   * lengths; default 0, which accepts every cell that `isValidCell` otherwise accepts. A ratio near 0 is a nearly flat cell.
    */
   readonly minVolumeRatio?: number;
 }
@@ -76,14 +77,18 @@ function anglesOk({ alpha, beta, gamma }: CellAngles): boolean {
 
 /**
  * Whether three angles (degrees) belong to a cell: each between 0° and 180°, and the three axes not
- * in one plane (the volume radicand 1 − cos²α − cos²β − cos²γ + 2 cos α cos β cos γ is positive). With
+ * in one plane (the volume radicand 1 − cos²α − cos²β − cos²γ + 2 cos α cos β cos γ exceeds 10⁻¹², i.e.
+ * V/(abc) > 10⁻⁶: a cell that is flat within rounding is refused). With
  * `minVolumeRatio` also refuses nearly flat cells, whose ratio V/(abc), the square root of the radicand, is smaller.
  */
 export function isValidCell(angles: CellAngles, options?: IsValidCellOptions): boolean {
   if (!anglesOk(angles)) return false;
+  const min = options?.minVolumeRatio ?? 0;
+  if (typeof min !== 'number' || Number.isNaN(min))
+    throw new RangeError('isValidCell: minVolumeRatio must be a number');
   const r = radicand(angles);
   if (!(r > 1e-12)) return false;
-  return Math.sqrt(r) >= (options?.minVolumeRatio ?? 0);
+  return Math.sqrt(r) >= min;
 }
 
 function checkEdges({ a, b, c }: LatticeParameters): void {
@@ -189,7 +194,7 @@ function angleOf(u: Vec3, v: Vec3): number {
   return Math.atan2(norm(cross), dot(u, v)) / DEG + 0;
 }
 
-/** The angle in degrees between two lattice directions [uvw] (coordinates in the basis, columns a, b, c), 0° to 180°. Throws for a zero vector. */
+/** The angle in degrees between two lattice directions [uvw] (coordinates in the basis, columns a, b, c), 0° to 180°. Throws a RangeError for a zero vector. */
 export function angleBetweenDirections(basis: Mat3, u: Vec3, v: Vec3): number {
   checkBasis(basis, 'angleBetweenDirections');
   return angleOf(apply(basis, vector(u, 'u')), apply(basis, vector(v, 'v')));
@@ -198,7 +203,7 @@ export function angleBetweenDirections(basis: Mat3, u: Vec3, v: Vec3): number {
 /**
  * The angle in degrees between the normals of two planes (hkl), 0° to 180°: the angle between the
  * reciprocal vectors h·a* + k·b* + l·c*. For two faces this is 180° minus the interior dihedral
- * angle. Throws for a zero vector.
+ * angle. Throws a RangeError for a zero vector.
  */
 export function angleBetweenPlanes(basis: Mat3, h: Vec3, k: Vec3): number {
   checkBasis(basis, 'angleBetweenPlanes');
@@ -221,9 +226,46 @@ export function residualOperations<T extends CellOperation>(
 ): T[] {
   const g = metricTensor(basis);
   const tolerance = options?.tolerance ?? EPSILON;
+  if (typeof tolerance !== 'number' || !Number.isFinite(tolerance) || tolerance < 0) {
+    throw new RangeError(
+      `residualOperations: tolerance must be a non-negative number, not ${JSON.stringify(tolerance)}`,
+    );
+  }
+  if (!Array.isArray(operations)) throw new RangeError('residualOperations: operations must be a list');
+  operations.forEach((op, i) => {
+    const m = (op as { readonly matrix?: unknown } | null)?.matrix;
+    const ok =
+      Array.isArray(m) &&
+      m.length === 3 &&
+      m.every((r) => Array.isArray(r) && r.length === 3 && r.every((x) => typeof x === 'number' && Number.isFinite(x)));
+    if (!ok) throw new RangeError(`residualOperations: operation ${i} has no 3×3 matrix of finite numbers`);
+  });
   const scale = Math.max(...g.flat().map(Math.abs));
   return operations.filter((op) => {
     const m = multiply(multiply(transpose(op.matrix), g), op.matrix);
     return m.every((row, i) => row.every((x, j) => Math.abs(x - g[i][j]) <= tolerance * scale));
   });
+}
+
+/** An operation of the magnetic API passed to `residualOperations`: its matrix and whether it is combined with time reversal. */
+export interface MagneticCellOperation extends CellOperation {
+  /** Whether the operation is combined with time reversal. */
+  readonly timeReversal: boolean;
+}
+
+/**
+ * The operations of a list that keep the metric of a cell: W with WᵀGW = G, G the metric tensor
+ * of `basis`. The operations are integer matrices on lattice coordinates, as `latticeOperations`
+ * gives them; the list is taken as it is and the kept operations are the ones of the list, in its
+ * order. The deviation counts relative to the largest entry of G (`tolerance`, default `EPSILON`).
+ * Every operation must say whether it is combined with time reversal (`timeReversal`), which is
+ * kept; one that does not (an operation of the crystallographic API) is a RangeError.
+ */
+export function residualMagneticOperations<T extends MagneticCellOperation>(
+  operations: readonly T[],
+  basis: Mat3,
+  options?: ResidualOperationsOptions,
+): T[] {
+  if (Array.isArray(operations)) checkTimeReversal(operations as unknown as readonly MagneticOperation[]);
+  return residualOperations(operations, basis, options);
 }

@@ -282,6 +282,7 @@ def test_cell_metric_and_indices() -> None:
     basis = symcrys.lattice_from_parameters({"a": 3, "b": 3, "c": 5, "alpha": 90, "beta": 90, "gamma": 120})
     assert basis.dtype == np.float64 and basis.shape == (3, 3)
     assert symcrys.lattice_parameters(basis)["gamma"] == pytest.approx(120)
+    assert all(type(v) is float for v in symcrys.lattice_parameters(np.eye(3)).values())
     assert symcrys.is_valid_cell({"alpha": 90, "beta": 90, "gamma": 90}) is True
     assert symcrys.is_valid_cell({"alpha": 60, "beta": 60, "gamma": 120}) is False
     assert symcrys.is_valid_cell({"alpha": 90, "beta": 90, "gamma": 30}, min_volume_ratio=0.6) is False
@@ -314,3 +315,5 @@ def test_residual_operations_in_both_apis() -> None:
     assert all("time_reversal" in op for op in magnetic.residual_operations(mops, cell))
     with pytest.raises(ValueError):
         symcrys.residual_operations([{"matrix": np.eye(3), "time_reversal": True}], cell)
+    with pytest.raises(ValueError):
+        magnetic.residual_operations([{"matrix": np.eye(3)}], cell)

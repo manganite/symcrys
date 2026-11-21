@@ -167,3 +167,26 @@ describe('changeOfAxes', () => {
     ).toThrow(RangeError);
   });
 });
+
+describe('edge cases', () => {
+  it('no −0 in plane indices, and zero vectors are refused alike', () => {
+    expect(Object.is(planeToFourIndices([-0, 0, 1])[0], 0)).toBe(true);
+    expect(Object.is(planeFromFourIndices([-0, 0, 0, 1])[0], 0)).toBe(true);
+    expect(() => planeToFourIndices([0, 0, 0])).toThrow(RangeError);
+    expect(() => zoneAxis([0, 0, 0], [1, 0, 0])).toThrow(RangeError);
+    expect(() => directionFromFourIndices([0, 0, 0, 0])).toThrow(RangeError);
+  });
+  it('zoneAxis names itself when the product leaves the safe integers', () => {
+    expect(() => zoneAxis([2 ** 40, 1, 0], [0, 2 ** 40, 1])).toThrow(/zoneAxis/);
+  });
+  it('rhombohedral → hexagonal: (h k l) becomes (h−k, k−l, h+k+l) for P = columns a−b, b−c, a+b+c', () => {
+    const { plane } = changeOfAxes([
+      [1, 0, 1],
+      [-1, 1, 1],
+      [0, -1, 1],
+    ]);
+    const h = [2, 1, 3];
+    const out = [0, 1, 2].map((i) => plane[i][0] * h[0] + plane[i][1] * h[1] + plane[i][2] * h[2]);
+    expect(out).toEqual([1, -2, 6]);
+  });
+});

@@ -292,22 +292,23 @@ def lattice_parameters(basis: ArrayLike) -> dict[str, float]:
     lengths and the angles in degrees. Independent of the orientation of the basis in the Cartesian
     frame (and of its handedness). Raises SymcrysError for a singular matrix.
     """
-    result: dict[str, float] = _call("latticeParameters", np.asarray(basis, dtype=np.float64))
-    return result
+    result: dict[str, Any] = _call("latticeParameters", np.asarray(basis, dtype=np.float64))
+    return {k: float(v) for k, v in result.items()}
 
 
 def is_valid_cell(angles: Mapping[str, float], *, min_volume_ratio: Optional[float] = None) -> bool:
     """Whether three angles (degrees) belong to a cell: each between 0° and 180°, and the three axes
-    not in one plane (the volume radicand 1 − cos²α − cos²β − cos²γ + 2 cos α cos β cos γ is
-    positive). With ``min_volume_ratio`` also refuses nearly flat cells, whose ratio V/(abc), the
-    square root of the radicand, is smaller.
+    not in one plane (the volume radicand 1 − cos²α − cos²β − cos²γ + 2 cos α cos β cos γ exceeds
+    10⁻¹², i.e. V/(abc) > 10⁻⁶: a cell that is flat within rounding is refused). With
+    ``min_volume_ratio`` also refuses nearly flat cells, whose ratio V/(abc), the square root of the
+    radicand, is smaller.
 
     Parameters
     ----------
     min_volume_ratio : keyword-only, optional
         The smallest accepted ratio V/(abc) of the cell volume to the volume of the box of its edge
-        lengths; default 0, which accepts every cell that has a volume. A ratio near 0 is a nearly
-        flat cell.
+        lengths; default 0, which accepts every cell that ``is_valid_cell`` otherwise accepts. A
+        ratio near 0 is a nearly flat cell.
     """
     return bool(_call("isValidCell", dict(angles), _shared.options(min_volume_ratio=min_volume_ratio)))
 
@@ -328,7 +329,7 @@ def reciprocal_basis(basis: ArrayLike) -> NDArray[np.float64]:
 
 def angle_between_directions(basis: ArrayLike, u: ArrayLike, v: ArrayLike) -> float:
     """The angle in degrees between two lattice directions [uvw] (coordinates in the basis, columns
-    a, b, c), 0° to 180°. Throws for a zero vector.
+    a, b, c), 0° to 180°. Raises SymcrysError for a zero vector.
     """
     return float(_call("angleBetweenDirections", np.asarray(basis, dtype=np.float64), np.asarray(u), np.asarray(v)))
 
@@ -336,7 +337,7 @@ def angle_between_directions(basis: ArrayLike, u: ArrayLike, v: ArrayLike) -> fl
 def angle_between_planes(basis: ArrayLike, h: ArrayLike, k: ArrayLike) -> float:
     """The angle in degrees between the normals of two planes (hkl), 0° to 180°: the angle between
     the reciprocal vectors h·a* + k·b* + l·c*. For two faces this is 180° minus the interior
-    dihedral angle. Throws for a zero vector.
+    dihedral angle. Raises SymcrysError for a zero vector.
     """
     return float(_call("angleBetweenPlanes", np.asarray(basis, dtype=np.float64), np.asarray(h), np.asarray(k)))
 
@@ -344,13 +345,13 @@ def angle_between_planes(basis: ArrayLike, h: ArrayLike, k: ArrayLike) -> float:
 def residual_operations(
     operations: Sequence[Mapping[str, Any]], basis: ArrayLike, *, tolerance: Optional[float] = None
 ) -> list[Operation]:
-    """The operations that leave the metric of a cell unchanged: those W (integer matrices on the
-    coordinates of a lattice direction, as ``lattice_operations`` gives them) with WᵀGW = G, G the
-    metric tensor of ``basis``. It is the point symmetry of a distorted lattice among the operations
-    of a group; the list is taken as it is, not closed into a group, and the kept operations are the
+    """The operations of a list that keep the metric of a cell: W with WᵀGW = G, G the metric tensor
+    of ``basis``. The operations are integer matrices on lattice coordinates, as
+    ``lattice_operations`` gives them; the list is taken as it is and the kept operations are the
     ones of the list, in its order. The deviation counts relative to the largest entry of G
-    (``tolerance``, default ``EPSILON``), so the result does not depend on the unit of the edge
-    lengths.
+    (``tolerance``, default ``EPSILON``). Every operation must say whether it is combined with time
+    reversal (``time_reversal``), which is kept; one that does not (an operation of the
+    crystallographic API) raises SymcrysError.
 
     Parameters
     ----------
@@ -400,9 +401,9 @@ def direction_from_four_indices(uvtw: ArrayLike) -> NDArray[np.int64]:
 
 
 def zone_axis(h1: ArrayLike, h2: ArrayLike) -> Optional[NDArray[np.int64]]:
-    """The zone axis [uvw] of two planes (hkl): the solution of the zone law hu + kv + lw = 0, the
-    cross product h₁ × h₂ reduced (so its sign follows the order of the planes), or ``null`` for
-    parallel planes.
+    """The zone axis [uvw] of two planes (hkl), which must not be zero vectors: the solution of the
+    zone law hu + kv + lw = 0, the cross product h₁ × h₂ reduced (so its sign follows the order of
+    the planes), or ``null`` for parallel planes.
     """
     result = _call("zoneAxis", np.asarray(h1), np.asarray(h2))
     return None if result is None else np.asarray(result, dtype=np.int64)

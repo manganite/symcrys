@@ -14,6 +14,7 @@ import {
   latticeParameters,
   metricTensor,
   reciprocalBasis,
+  residualMagneticOperations,
   residualOperations,
 } from './cell.js';
 import { latticeBasis } from './lattice.js';
@@ -283,5 +284,48 @@ describe('residualOperations: the operations that keep the metric', () => {
     const kept = residualOperations(ops, cell({ a: 2, b: 2.1, c: 3 }));
     expect(kept.every((op) => ops.includes(op))).toBe(true);
     expect(kept.map((op) => ops.indexOf(op))).toEqual([...kept.map((op) => ops.indexOf(op))].sort((x, y) => x - y));
+  });
+});
+
+describe('input checks and edge cases', () => {
+  const basis = latticeFromParameters({ a: 1, b: 1, c: 1, alpha: 90, beta: 90, gamma: 90 });
+  it('residualOperations refuses malformed operations and tolerances with a RangeError', () => {
+    expect(() =>
+      residualOperations(
+        [
+          {
+            matrix: [
+              [1, 0],
+              [0, 1],
+            ],
+          } as never,
+        ],
+        basis,
+      ),
+    ).toThrow(RangeError);
+    expect(() => residualOperations([{} as never], basis)).toThrow(RangeError);
+    expect(() => residualOperations(latticeOperations('4/mmm'), basis, { tolerance: Number.NaN })).toThrow(RangeError);
+    expect(() => residualOperations(latticeOperations('4/mmm'), basis, { tolerance: -1 })).toThrow(RangeError);
+  });
+  it('isValidCell refuses a NaN minVolumeRatio with a RangeError', () => {
+    expect(() => isValidCell({ alpha: 90, beta: 90, gamma: 90 }, { minVolumeRatio: Number.NaN })).toThrow(RangeError);
+  });
+  it('a rhombohedral cell (α = β = γ = 80°) is valid and keeps the angles', () => {
+    const q = latticeParameters(latticeFromParameters({ a: 1, b: 1, c: 1, alpha: 80, beta: 80, gamma: 80 }));
+    expect([q.alpha, q.beta, q.gamma].map((x) => Math.round(x * 1e8) / 1e8)).toEqual([80, 80, 80]);
+  });
+  it('monoclinic, unique axis c: c ∥ z and the angle γ between a and b', () => {
+    const m = latticeFromParameters({ a: 3, b: 4, c: 5, alpha: 90, beta: 90, gamma: 100 });
+    expect([m[0][2], m[1][2], m[2][2]]).toEqual([0, 0, 5]);
+    expect(latticeParameters(m).gamma).toBeCloseTo(100, 10);
+  });
+});
+
+describe('residualMagneticOperations', () => {
+  const cell = latticeFromParameters({ a: 2, b: 2.1, c: 3, alpha: 90, beta: 90, gamma: 90 });
+  it('keeps timeReversal and refuses an operation that does not say whether it has it', () => {
+    const ops = latticeOperations('4/mmm');
+    expect(residualMagneticOperations(ops, cell)).toHaveLength(8);
+    expect(() => residualMagneticOperations(ops.map((o) => ({ matrix: o.matrix })) as never, cell)).toThrow(RangeError);
   });
 });

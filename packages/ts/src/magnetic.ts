@@ -92,7 +92,7 @@ export {
   type OperationKind,
   type SymmetryDirection,
 } from './pointGroups/elements.js';
-export { residualOperations } from './cell.js';
+export { residualMagneticOperations as residualOperations, type MagneticCellOperation } from './cell.js';
 export { siteSymmetry, type SiteSymmetry, type SiteSymmetryOptions } from './siteSymmetry.js';
 export {
   describeOperationsOf,
