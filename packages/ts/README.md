@@ -1,8 +1,8 @@
 # symcrys
 
 Crystallographic symmetry calculations in TypeScript: point groups with their settings, symbols,
-symmetry elements, site symmetry and Wyckoff positions, and the forms of property tensors they
-allow. A library without runtime dependencies that runs unbundled in browsers and in Node.
+symmetry elements, site symmetry, Wyckoff positions and crystal forms, and the forms of property
+tensors they allow. A library without runtime dependencies that runs unbundled in browsers and in Node.
 
 ```bash
 npm install symcrys

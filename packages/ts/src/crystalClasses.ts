@@ -18,6 +18,7 @@ import * as elements from './pointGroups/elements.js';
 import * as groups from './pointGroups/pointGroups.js';
 import type { Convention, PointGroupKey, Setting, SettingOptions, SymbolOptions } from './pointGroups/pointGroups.js';
 import * as properties from './pointGroups/properties.js';
+import * as forms from './pointGroups/crystalForms.js';
 import * as wyckoff from './pointGroups/wyckoff.js';
 import * as site from './siteSymmetry.js';
 import { TENSOR_PROPERTIES as ALL_TENSOR_PROPERTIES } from './tensors/propertyTable.js';
@@ -373,6 +374,26 @@ export function wyckoffPositionOf(
   options?: wyckoff.WyckoffOptions,
 ): wyckoff.WyckoffPosition {
   return wyckoff.wyckoffPositionOf(classKey(key), direction, options);
+}
+
+// --- crystal forms ---------------------------------------------------------------------------------
+
+/**
+ * The 47 crystal forms of ITA Table 3.2.1.3 (6th ed., pp. 724–726) with ITA's numbers, English
+ * names, numbers of faces and eigensymmetries: `CRYSTAL_FORM_TYPES[n - 1]` is form n. Each
+ * crystal form of `crystalForms` names its form by this number (docs/conventions.md, "Crystal
+ * forms").
+ */
+export const CRYSTAL_FORM_TYPES: readonly forms.CrystalFormType[] = forms.CRYSTAL_FORM_TYPES;
+
+/**
+ * The crystal forms of a crystal class, as ITA 6th ed. Table 3.2.3.2 prints them: for each Wyckoff
+ * position (general position first) its basic form (two for the cubic faces (hhl) of -43m and
+ * m-3m), then its limiting forms. In the ITC convention
+ * only, like the Wyckoff positions (docs/conventions.md, "Crystal forms").
+ */
+export function crystalForms(key: PointGroupKey, options?: SettingOptions): readonly forms.CrystalForm[] {
+  return forms.crystalForms(classKey(key), options);
 }
 
 // --- tensors ---------------------------------------------------------------------------------------

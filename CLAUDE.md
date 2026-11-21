@@ -420,6 +420,27 @@ The conventions themselves are in `docs/conventions.md`; here, what was decided 
   (`references/`); the 5th edition (Table 10.1.2.2, via stereography's form catalogue) is an
   additional check by `audit/wyckoff-2006`, not the reference (docs/conventions.md, "Site symmetry
   and Wyckoff positions").
+- **Crystal forms, group identification, orbits** (maintainer, 2026-11-21, #24 items 2 and 3;
+  asked before implementation). **Data of a form:** a table of the 47 forms of ITA Table 3.2.1.3
+  (`CRYSTAL_FORM_TYPES`: number, English name as printed, number of faces, eigensymmetry), to which
+  the forms of a class refer by number; the English names are terms of the print source, like the
+  symbols, while names in other languages (stereography's German ones) and the link ids stay in the
+  apps; point forms are left out. **Names**, in the `…Of` scheme: `crystalForms(key, { setting })`;
+  `pointGroupOf(operations)` beside `pointGroup(key)`; `latticeOperations(key, { setting })`;
+  `orbit(key, …)`, exact in the lattice basis, and `orbitOf(operations, direction)`, Cartesian, with
+  coinciding poles merged. **Tolerance:** an optional `tolerance`, default `EPSILON`, as for
+  `siteSymmetry`. **Lattice-basis operations** for all families and settings, integer and without
+  cell angles: the integer matrices of the point operations do not depend on the cell angles (ITA
+  prints them as the general position), so the restriction of `latticeBasis` below does not apply;
+  Cartesian matrices for a real monoclinic or triclinic cell belong to #24 item 4. **Identification:**
+  `pointGroupOf` closes the list into a group, returns the key always and the setting only if the
+  operations equal those of a setting in symcrys's frame, `undefined` if they form no crystallographic
+  point group; the elements of any list of operations come from `describeOperationsOf`. **Three
+  PRs, one MINOR:** forms; lattice operations and orbits; identification. Crystal forms are given in
+  the ITC convention only, like the Wyckoff positions they belong to (decided by that precedent, not
+  asked again). The print anchor is ITA 6th ed. Tables 3.2.3.2 and 3.2.1.3, checked against each
+  other; stereography's catalogue (ITA 2006) is an additional check by `audit/forms-2006`, not the
+  reference (docs/conventions.md, "Crystal forms").
 - **`latticeBasis` only for families with fixed cell angles** (2026-11-09, #14): for monoclinic
   and triclinic a Cartesian basis would need the cell angles, which a point group does not fix.
 - **Two entry points, `symcrys` and `symcrys/magnetic`** (maintainer, 2026-11-20, #47): the
@@ -440,8 +461,8 @@ The conventions themselves are in `docs/conventions.md`; here, what was decided 
   (`findPointGroup`, `isPointGroupKey`) answers "not found" for a magnetic symbol, because not
   finding is the correct answer there; the magnetic API has the names of the crystallographic
   one also for the lists (`POINT_GROUP_KEYS` are there the 122 keys, `findPointGroup` finds all
-  groups); Wyckoff positions stay with the crystallographic API, because ITA tabulates them for
-  the classes only. One implementation serves both: the modules compute for all 122 groups, as
+  groups); Wyckoff positions and crystal forms stay with the crystallographic API, because ITA
+  tabulates them for the classes only. One implementation serves both: the modules compute for all 122 groups, as
   the magnetic API exports them, and `crystalClasses.ts` checks what comes in and leaves time
   reversal out of what goes back, so the two agree by construction and every print-verified test
   serves both (`entryPoints.test.ts` checks the agreement). This replaces the first design of #13,

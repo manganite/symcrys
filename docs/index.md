@@ -1,8 +1,8 @@
 # symcrys
 
 Crystallographic symmetry calculations: the 32 crystal classes and the 122 magnetic point groups,
-with their settings, symbols, symmetry elements, site symmetry and Wyckoff positions, and the forms
-of the property tensors (rank 0 to 4) they allow. The results are checked against print, the
+with their settings, symbols, symmetry elements, site symmetry, Wyckoff positions and crystal forms,
+and the forms of the property tensors (rank 0 to 4) they allow. The results are checked against print, the
 _International Tables for Crystallography_ (ITC) and Birss, _Symmetry and Magnetism_ (1966), and,
 where print leaves a choice open, against birss-app.
 
@@ -24,6 +24,7 @@ Where to start:
   `symcrys/magnetic`.
 - [Conventions](conventions.md): ITC and Birss, settings, the Cartesian frame. Which convention and
   which setting you need decides which tensor components you get.
+- [Crystal forms](forms.md): the basic and limiting forms of each crystal class, as ITA lists them.
 - [Tensors and named properties](tensors.md): forms of property tensors, and the named properties
   such as piezoelectric or ferromagnetic.
 - [Examples](examples.md), among them second-harmonic generation at surfaces.
@@ -42,6 +43,7 @@ symcrys is the computational core of the crystallography teaching apps
 getting-started
 readings
 conventions
+forms
 tensors
 examples
 reference/index

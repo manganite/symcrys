@@ -42,7 +42,7 @@ def test_every_function_has_its_docstring_from_the_tsdoc() -> None:
 
 
 def test_the_two_modules_have_the_same_names() -> None:
-    only_classes = {"magnetic", "wyckoff_position_of", "wyckoff_positions"}
+    only_classes = {"magnetic", "CRYSTAL_FORM_TYPES", "crystal_forms", "wyckoff_position_of", "wyckoff_positions"}
     assert set(symcrys.__all__) - only_classes == set(magnetic.__all__)
     assert symcrys.magnetic is magnetic and magnetic.VERSION == symcrys.VERSION == symcrys.__version__
 
@@ -125,6 +125,14 @@ def test_matrices_are_float_arrays_and_indices_int_arrays() -> None:
     assert site["operations"].dtype == np.int64
     axis = symcrys.describe_operations("4")[1]["axis"]
     assert axis["lattice"].dtype == np.int64 and axis["cartesian"].dtype == np.float64
+
+
+def test_crystal_forms_in_the_itc_convention_only() -> None:
+    with pytest.raises(symcrys.SymcrysError, match="ITC convention only"):
+        symcrys.crystal_forms("mmm", convention="birss")
+    assert symcrys.crystal_forms("2")[-1]["miller_indices"] == "0,1,0"
+    assert symcrys.crystal_forms("2", setting=1)[-1]["miller_indices"] == "0,0,1"
+    assert "condition" not in symcrys.crystal_forms("4mm")[0]
 
 
 def test_tensor_form_arrays_have_fixed_shapes_also_when_empty() -> None:

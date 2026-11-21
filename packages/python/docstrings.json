@@ -34,6 +34,10 @@
       "type": "dict",
       "doc": "``representative`` has ``hkl`` (int64, shape (3,)) and ``cartesian`` (float64, shape (3,)), ``site_symmetry_operations`` is an int64 array of shape (n,)."
     },
+    "crystal_forms": {
+      "type": "list of dict",
+      "doc": "In each, ``representative`` has ``hkl`` (int64, shape (3,)) and ``cartesian`` (float64, shape (3,))."
+    },
     "tensor_form": {
       "type": "dict",
       "doc": "``basis`` float64 array of shape (p, 3**rank), ``parameters`` int64 array of shape (p, rank), ``relations`` float64 array of shape (3**rank - p, 3**rank), ``rank``; p is the number of free parameters. A row of ``basis`` reshaped to ``(3,) * rank`` is a tensor."

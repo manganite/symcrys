@@ -24,8 +24,8 @@ describe('the two entry points', () => {
     expect(Object.keys(pkg.exports)).toEqual(['.', './magnetic', './package.json']);
   });
 
-  it('export the same names; only the Wyckoff positions are crystallographic alone', () => {
-    const onlyClasses = ['wyckoffPositionOf', 'wyckoffPositions'];
+  it('export the same names; only the Wyckoff positions and the crystal forms are crystallographic alone', () => {
+    const onlyClasses = ['CRYSTAL_FORM_TYPES', 'crystalForms', 'wyckoffPositionOf', 'wyckoffPositions'];
     expect(Object.keys(classes).sort()).toEqual([...Object.keys(magnetic), ...onlyClasses].sort());
     for (const name of Object.keys(magnetic) as (keyof typeof magnetic)[]) {
       expect(typeof classes[name], name).toBe(typeof magnetic[name]);
@@ -223,6 +223,7 @@ describe('the crystallographic API refuses what involves time reversal', () => {
       classes.symmetryDirections,
       classes.wyckoffPositions,
       (key) => classes.wyckoffPositionOf(key, [0, 0, 1]),
+      classes.crystalForms,
       (key) => classes.tensorForm(key, 'piezoelectric'),
       (key) => classes.allowsProperty(key, 'piezoelectric'),
       classes.allowedProperties,
