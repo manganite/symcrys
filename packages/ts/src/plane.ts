@@ -32,6 +32,7 @@ import {
   type PlanePointGroupKey,
 } from './spaceGroups/planePointGroups.js';
 import { planeOrbit, planeSiteSymmetry, planeWyckoffPositionOf } from './spaceGroups/positions.js';
+import { planeSnapToWyckoffPosition } from './spaceGroups/snap.js';
 import { parseRational, rational, toNumber, type Rational } from './spaceGroups/rational.js';
 
 export { VERSION } from './version.js';
@@ -169,6 +170,12 @@ export interface WyckoffPosition {
   readonly siteSymmetry: string;
   /** The printed coordinates of the (0,0)+ set, e.g. `['x,0', '-x,0']`; a leading `-` is an overbar. */
   readonly coordinates: readonly string[];
+}
+
+/** A point snapped onto a Wyckoff position: the position, as `wyckoffPositions` gives it, and the point on it. */
+export interface SnappedPosition extends WyckoffPosition {
+  /** The point on the position nearest to the given one, modulo the lattice, in [0, 1). */
+  readonly point: readonly number[];
 }
 
 /** The site symmetry of a point under a plane group. */
@@ -477,6 +484,31 @@ export function wyckoffPositionOf(
   const found = wyckoffPositions(k).find((w) => w.letter === letter);
   if (!found) throw new Error(`No Wyckoff position ${letter} in ${k}`);
   return found;
+}
+
+/**
+ * Snaps a point (lattice basis) onto the most special Wyckoff position of a plane group that lies
+ * within the tolerance of it, measured per coordinate modulo the lattice: a position without a free
+ * parameter (a point) before one with one (a line), before the general position, which always holds
+ * the point; among positions of the same kind the nearest. Returns the position, as
+ * `wyckoffPositions` gives it, and the nearest point on it, in [0, 1). Unlike `wyckoffPositionOf`,
+ * which asks whether the images of the point lie within the tolerance of it, this asks whether the
+ * point lies within the tolerance of the position: an application that drags a point and lets it
+ * snap passes a tolerance such as 10⁻². The point on a line is found by least squares in the
+ * lattice coordinates. Throws a RangeError as `siteSymmetry`.
+ */
+export function snapToWyckoffPosition(
+  key: PlaneGroupKey,
+  point: readonly number[],
+  options?: PointOptions,
+): SnappedPosition {
+  const k = groupKey(key, 'snapToWyckoffPosition');
+  if (!Array.isArray(point)) {
+    throw new RangeError(`A point of the plane has two finite coordinates, not ${JSON.stringify(point)}`);
+  }
+  const snapped = planeSnapToWyckoffPosition(k, point, options?.tolerance);
+  const position = wyckoffPositions(k)[snapped.row];
+  return Object.freeze({ ...position, point: Object.freeze([...snapped.point]) });
 }
 
 /**

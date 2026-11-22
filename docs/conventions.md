@@ -958,7 +958,15 @@ in the lattice basis, with an optional `tolerance` measured per coordinate modul
 (default 10⁻⁶, below 1/2). The operations that fix the point within the tolerance are closed into a
 group and the point set onto their fixed space, so a rounded point gives the exact site symmetry.
 The Wyckoff position is the printed row of the point's multiplicity whose printed coordinates, with
-the centring, reach the point: letter and oriented symbol are ITA's.
+the centring, reach the point: letter and oriented symbol are ITA's. `snapToWyckoffPosition` answers another
+question, for a point that is dragged: onto which position should it snap? It measures the distance
+of the point to the point set of a position (per coordinate, modulo the lattice), not the distance of
+its images, takes the most special position within the tolerance (points, then lines, then the
+general position) and, among positions of the same kind, the nearest; it returns the position and the
+point on it found by least squares in the lattice coordinates (maintainer, 2026-11-22, #85). At a mirror line the two criteria differ by a
+factor of 2 (the image of a point at distance d lies 2d away); at a rotation point the factor depends
+on the order and on the direction of the offset, and in a hexagonal basis the point on a line is not
+where the mean of the images lies.
 
 **The cell.** `asymmetricUnit` is the polygon of ITA's printed block "Asymmetric unit": its
 vertices, counter-clockwise from the lowest, and per edge the printed inequality a·x + b·y ≤ c that
