@@ -15,7 +15,7 @@ import { checkOrthogonal, checkTimeReversal, closeGroup, type Operation } from '
 import { operations, settings, type MagneticPointGroupKey, type SettingOptions } from '../pointGroups/pointGroups.js';
 import { specOf, type TensorPropertyName } from './propertyTable.js';
 import { EPSILON, SNAP_EPSILON } from '../tolerances.js';
-import { reducedRowEchelon } from './rowEchelon.js';
+import { rowEchelonWithPivots } from './rowEchelon.js';
 
 /** Rank of a tensor: 0 (scalar) to 4. */
 export type TensorRank = 0 | 1 | 2 | 3 | 4;
@@ -180,8 +180,9 @@ function project(group: readonly Operation[], spec: TensorSpec, perms: number[][
     if (averaged.some((x) => Math.abs(x) >= EPSILON)) spanning.push(averaged);
   }
 
-  const basis = reducedRowEchelon(spanning, dim).map((row) => row.map(snapEntry));
-  const pivots = basis.map((row) => row.findIndex((x) => x !== 0));
+  const reduced = rowEchelonWithPivots(spanning, dim);
+  const basis = reduced.rows.map((row) => row.map(snapEntry));
+  const { pivots } = reduced;
   const relations: number[][] = [];
   for (let c = 0; c < dim; c++) {
     if (pivots.includes(c)) continue;

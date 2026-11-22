@@ -288,6 +288,29 @@ describe('tensorFormOf', () => {
     }
   });
 
+  it('takes its parameters from the pivots of the reduction, also for operations with float noise (#88)', () => {
+    // Noise below the orthogonality check leaves entries in the basis that are too small to be a
+    // pivot; before #88 the parameters were read as the first non-zero entry of each row, and
+    // 4mm with a noise of 1e-9 gave the parameters xxx, zxx, zzz instead of xxz, zxx, zzz.
+    const noisy = (ops: readonly Operation[], eps: number): Operation[] =>
+      ops.map((op) => ({ ...op, matrix: op.matrix.map((row) => row.map((x) => x + eps)) as unknown as Mat3 }));
+    for (const key of POINT_GROUP_KEYS) {
+      for (const sp of SPECS) {
+        const form = tensorFormOf(noisy(operations(key), 1e-9), sp);
+        const dim = 3 ** sp.rank;
+        expect(form.parameters, `${key} ${JSON.stringify(sp)}`).toEqual(tensorForm(key, sp).parameters);
+        expect(form.relations).toHaveLength(dim - form.basis.length);
+        expect(satisfies(form.basis, form.relations, 1e-6)).toBe(true);
+        expect(matrixRank(form.relations, dim)).toBe(dim - form.basis.length);
+      }
+    }
+    expect(tensorFormOf(noisy(operations('4mm'), 2e-8), spec(3, 'polar', 'jk')).parameters).toEqual([
+      [0, 0, 2],
+      [2, 0, 0],
+      [2, 2, 2],
+    ]);
+  });
+
   it('an empty list is the group 1', () => {
     expect(tensorFormOf([], spec(3, 'polar', 'jk'))).toEqual(tensorForm('1', spec(3, 'polar', 'jk')));
   });
