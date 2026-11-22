@@ -15,6 +15,13 @@ All notable changes to symcrys are recorded here. The format follows
   lines of `symmetryElements`: the symmetry direction of the line in the lattice basis, as in ITA
   Table 2.1.3.1, tested against that table and the printed full symbols of the 17 plane groups (#84).
 
+### Changed
+
+- `siteSymmetry` and `wyckoffPositionOf` of `symcrys/plane` are several times faster at special
+  positions (in Node about 5 to 10 times at the 4-fold point of p4mm), from a group table per plane
+  group, computed once, on which the closure of the site symmetry works, and from parsing the
+  printed coordinates of the Wyckoff positions once (#86). Results are unchanged.
+
 ## [0.9.0] - 2026-11-22
 
 ### Added
