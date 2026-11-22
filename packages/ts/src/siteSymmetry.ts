@@ -51,33 +51,33 @@ function isIdentity(op: Operation): boolean {
   return op.matrix.every((row, i) => row.every((v, j) => Math.abs(v - (i === j ? 1 : 0)) < EPSILON));
 }
 
-/** Products already looked up, per list of operations: `i * n + j` → index of op[i]·op[j] in the list, or -1. */
-const productTables = new WeakMap<readonly Operation[], Map<number, number>>();
-
-function productIndex(operations: readonly Operation[], i: number, j: number): number {
-  let table = productTables.get(operations);
-  if (!table) {
-    table = new Map();
-    productTables.set(operations, table);
-  }
-  const key = i * operations.length + j;
-  let k = table.get(key);
-  if (k === undefined) {
-    const product = multiply(operations[i].matrix, operations[j].matrix);
-    k = operations.findIndex((op) => matricesEqual(op.matrix, product));
-    table.set(key, k);
-  }
-  return k;
+/**
+ * The products of a list of operations, looked up as needed: `i * n + j` → index of op[i]·op[j] in
+ * the list, or -1. Made per call, not kept between calls: a caller may change its list in place
+ * (#90).
+ */
+function productLookup(operations: readonly Operation[]): (i: number, j: number) => number {
+  const table = new Map<number, number>();
+  return (i, j) => {
+    const key = i * operations.length + j;
+    let k = table.get(key);
+    if (k === undefined) {
+      const product = multiply(operations[i].matrix, operations[j].matrix);
+      k = operations.findIndex((op) => matricesEqual(op.matrix, product));
+      table.set(key, k);
+    }
+    return k;
+  };
 }
 
 /** The indices plus those of every product of two of them that is itself in the list, until closed. */
-function closeWithin(operations: readonly Operation[], indices: readonly number[]): number[] {
+function closeWithin(product: (i: number, j: number) => number, indices: readonly number[]): number[] {
   const set = [...indices];
   const inSet = new Set(set);
   // Each element is multiplied with every element before it once, in both orders, as it is added.
   for (let i = 0; i < set.length; i++) {
     for (let j = 0; j <= i; j++) {
-      for (const k of [productIndex(operations, set[i], set[j]), productIndex(operations, set[j], set[i])]) {
+      for (const k of [product(set[i], set[j]), product(set[j], set[i])]) {
         if (k >= 0 && !inSet.has(k)) {
           inSet.add(k);
           set.push(k);
@@ -143,24 +143,27 @@ export function siteSymmetry(
   // as fixing while its square does not). Close them under products found in the list, set v onto the
   // fixed space of the closure (the mean of its images, the projector for a group), and repeat on the
   // projected direction until the set is stable.
-  let indices = fixing(v);
-  let projected = v;
-  let set = closeWithin(operations, indices);
-  for (let pass = 0; pass < 8; pass++) {
+  const product = productLookup(operations);
+  let set = closeWithin(product, fixing(v));
+  let settled: { indices: number[]; projected: Vec3 } | undefined;
+  for (let pass = 0; pass < 8 && !settled; pass++) {
     const mean = meanImage(operations, set, v);
     if (mean === undefined) {
       throw new RangeError(
         `No common fixed direction for the operations fixing ${JSON.stringify(direction)} within ${tolerance} (tolerance too large?)`,
       );
     }
-    const next = closeWithin(operations, fixing(mean));
-    if (sameIndices(next, set)) {
-      indices = set;
-      projected = mean;
-      break;
-    }
-    set = next;
+    const next = closeWithin(product, fixing(mean));
+    if (sameIndices(next, set)) settled = { indices: set, projected: mean };
+    else set = next;
   }
+  if (!settled) {
+    // Not seen in practice; the site symmetry would be neither closed nor its direction projected (#91).
+    throw new RangeError(
+      `The site symmetry of ${JSON.stringify(direction)} does not settle within ${tolerance} (tolerance too large?)`,
+    );
+  }
+  const { indices, projected } = settled;
   return Object.freeze({
     operations: Object.freeze(indices),
     direction: Object.freeze(projected) as Vec3,

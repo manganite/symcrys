@@ -5,6 +5,19 @@ import { POINT_GROUP_KEYS, operations, settings } from './pointGroups.js';
 import { wyckoffPositionOf, wyckoffPositions } from './wyckoff.js';
 
 const ALL_SETTINGS = POINT_GROUP_KEYS.flatMap((key) => settings(key, 'itc').map((s) => ({ key, s })));
+const DIRECTIONS: Vec3[] = [
+  [1, 0, 0],
+  [0, 1, 0],
+  [0, 0, 1],
+  [1, 1, 0],
+  [1, -1, 0],
+  [1, 1, 1],
+  [1, 2, 0],
+  [0, 1, 1],
+  [1, 0, 1],
+  [2, 1, 0],
+  [0.3, 0.7, 1.1],
+];
 
 describe('wyckoffPositions', () => {
   it('exist for every ITC setting, without the origin', () => {
@@ -152,6 +165,29 @@ describe('siteSymmetry', () => {
     // 422, tolerance 0.95: operations that move this direction by up to 0.95 generate a group fixing no
     // direction (found by a scan; a tolerance far beyond any use).
     expect(() => siteSymmetry(operations('422'), [0.9018, 0.3462, 0.2588], { tolerance: 0.95 })).toThrow(RangeError);
+  });
+
+  it('answers for the list as it is now, also when a caller changes its list in place (#90)', () => {
+    // Before #90 the products were cached by the identity of the list: after the list of 2 was
+    // replaced in place by that of mm2, [1, 0, 1] got the site symmetry [0, 1, 2, 3].
+    const list = [...operations('2', { setting: 1 })];
+    siteSymmetry(list, [0, 1, 0]);
+    list.length = 0;
+    list.push(...operations('mm2', { setting: 1 }));
+    expect(siteSymmetry(list, [1, 0, 1]).operations).toEqual(siteSymmetry([...list], [1, 0, 1]).operations);
+    for (const first of POINT_GROUP_KEYS) {
+      for (const second of POINT_GROUP_KEYS) {
+        const changing = [...operations(first)];
+        for (const d of DIRECTIONS) siteSymmetry(changing, d, { tolerance: 1e-3 });
+        changing.length = 0;
+        changing.push(...operations(second));
+        for (const d of DIRECTIONS) {
+          expect(siteSymmetry(changing, d, { tolerance: 1e-3 }).operations, `${first} → ${second}`).toEqual(
+            siteSymmetry([...changing], d, { tolerance: 1e-3 }).operations,
+          );
+        }
+      }
+    }
   });
 
   it('rejects a zero vector and an invalid tolerance', () => {

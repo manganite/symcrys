@@ -412,8 +412,7 @@ export function siteSymmetry(
   options?: site.SiteSymmetryOptions,
 ): site.SiteSymmetry {
   checkUnitary(operations);
-  // The shared function reads the matrices only, and it keeps the products of a list by the identity
-  // of the list, so the list of the caller is passed on as it is.
+  // The shared function reads the matrices only, so the list of the caller is passed on as it is.
   return site.siteSymmetry(operations as readonly MagneticOperation[], direction, options);
 }
 

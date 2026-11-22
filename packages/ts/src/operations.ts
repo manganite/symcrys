@@ -99,7 +99,9 @@ export function closeGroup(generators: readonly Operation[]): Operation[] {
   const add = (op: Operation): boolean => {
     if (group.some((g) => operationsEqual(g, op))) return false;
     if (group.length >= MAX_GROUP_ORDER)
-      throw new Error('closeGroup: closure does not terminate; check the generators');
+      throw new RangeError(
+        `The operations generate no finite point group (more than ${MAX_GROUP_ORDER} elements): a rotation by an angle that is not 360°/n, or matrices too far from exact`,
+      );
     group.push(op);
     return true;
   };
