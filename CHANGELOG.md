@@ -6,6 +6,12 @@ All notable changes to symcrys are recorded here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- Documentation site: a description and Open Graph tags on every page, the site's address as the
+  canonical link of the landing page, and a `sitemap.xml` written by the build, so that search
+  engines find every page (#72).
+
 ### Fixed
 
 - `siteSymmetry` (Python: `site_symmetry`), in both entry points, now refuses a matrix that is not

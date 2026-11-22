@@ -332,6 +332,13 @@ Decided by Thomas on 2026-11-20 (#29), asked before implementation.
 - **An API report** (`@microsoft/api-extractor`, which ships TypeScript 6.0.3 itself) comes later,
   in a PR of its own (#56).
 - **A PATCH release of its own** (0.6.1) puts the site online with the generated docstrings.
+- **Findability** (maintainer, 2026-11-22, #72): every page has a description (`symcrys_page_descriptions`
+  in `docs/conf.py`; the build warns about a page without one, so the gate `docs` fails), Open Graph
+  tags and a canonical link (`html_baseurl`), and the build writes `sitemap.xml`, which `robots.txt` of
+  manganite.github.io names. Written in `docs/_ext/symcrys_docs.py` rather than with `sphinx-sitemap`
+  and `sphinxext-opengraph` (chosen while implementing): about 50 lines instead of two more pinned
+  tools, one of which (`sphinx-sitemap`) pulls in `sphinx-last-updated-by-git`, which needs the git
+  history of the pages. No image for link previews yet; symcrys has none of its own.
 
 ### ITC standard for every consumer
 
