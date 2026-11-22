@@ -176,7 +176,9 @@ decides which one is the default.
 
 The data are stored in **setting 1**, which is Birss's frame. Every other setting is a rotation s
 of it: its operations are s·W·sᵀ for the stored operations W. The ITC settings are among these
-frames, so ITC results come from the same stored data as Birss results.
+frames. The ITC operations, generators, symbols and lattice operations of the classes come from
+ITA's selected generators instead (`pointGroups/itcData.ts`); the stored data serve the Birss
+convention and the magnetic groups, and must give the same sets.
 
 Classes with more than one setting (short symbol, full symbol in parentheses):
 

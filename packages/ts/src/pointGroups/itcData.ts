@@ -11,7 +11,7 @@
  * `m2m` come from `mm2` by the settings cab and bca of ITA 2016 Table 1.5.4.4 (§ 1.5.4.3, p. 96:
  * cab turns Pmm2 into P2mm); their operations keep the order of the printed setting.
  *
- * Internal; not yet wired into the API (#122, PR 2a). The setting indices are those of the current
+ * Internal; read by the ITC path of the classes in pointGroups.ts and orbits.ts (#122). The setting indices are those of the current
  * API, until the settings are renumbered (#137 A4).
  */
 
