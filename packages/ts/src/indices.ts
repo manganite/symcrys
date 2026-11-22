@@ -3,7 +3,7 @@
  * (docs/conventions.md, "Cell, metric and indices"). Plain integers and matrices in and out.
  */
 
-import { det, inverse, transpose, type Mat3, type Vec3 } from './linalg.js';
+import { det, inverse, isSingular, transpose, type Mat3, type Vec3 } from './linalg.js';
 
 /** A direction [UVTW] or a plane (hkil) in four indices (Miller–Bravais). */
 export type FourIndices = readonly [number, number, number, number];
@@ -98,7 +98,9 @@ export interface AxisChange {
  * The transformation of indices for a change of basis (a′, b′, c′) = (a, b, c)·P (ITA Vol. A, 2006,
  * Section 5.1.3): the columns of `P` are the new basis vectors in the old one. The coordinates of a
  * direction transform with Q = P⁻¹, the indices of a plane with Pᵀ, so that hu + kv + lw is the same in
- * both bases. Throws a RangeError unless det P > 0 (a right-handed basis).
+ * both bases. Throws a RangeError unless det P > 0 (a right-handed basis), and for a P that is
+ * singular within rounding (the absolute value of det P at most 10⁻⁹ times the product of its
+ * column lengths).
  */
 export function changeOfAxes(P: Mat3): AxisChange {
   if (
@@ -109,6 +111,7 @@ export function changeOfAxes(P: Mat3): AxisChange {
     throw new RangeError('changeOfAxes: P must be a 3×3 matrix of finite numbers');
   }
   if (!(det(P) > 0)) throw new RangeError('changeOfAxes: det P must be positive (a right-handed basis)');
+  if (isSingular(P)) throw new RangeError('changeOfAxes: P is singular within rounding');
   const clean = (m: Mat3): Mat3 => m.map((r) => r.map((x) => x + 0)) as unknown as Mat3; // no −0
   return { direction: clean(inverse(P)), plane: clean(transpose(P)) };
 }

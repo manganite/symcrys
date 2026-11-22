@@ -310,6 +310,67 @@ describe('the crystallographic API refuses what involves time reversal', () => {
   });
 });
 
+describe('every function for a list of Cartesian operations refuses a matrix that is not orthogonal', () => {
+  // A stretch is no point operation; a function that took it would give a result that looks valid
+  // and is wrong (siteSymmetry did so up to 0.8.0).
+  const stretch = {
+    matrix: [
+      [2, 0, 0],
+      [0, 1, 0],
+      [0, 0, 1],
+    ],
+  } as const;
+  const notOrthogonal = /Operation 0 is not an orthogonal \(Cartesian\) matrix/;
+  it('in the crystallographic API', () => {
+    const ops = [stretch] as unknown as readonly classes.Operation[];
+    for (const call of [
+      () => classes.siteSymmetry(ops, [1, 0, 0]),
+      () => classes.siteSymmetry(ops, [0, 1, 0]),
+      () => classes.orbitOf(ops, [1, 2, 3]),
+      () => classes.pointGroupOf(ops),
+      () => classes.describeOperationsOf(ops),
+      () => classes.tensorFormOf(ops, 'piezoelectric'),
+      () => classes.allowsPropertyOf(ops, 'piezoelectric'),
+      () => classes.allowedPropertiesOf(ops),
+      () => classes.isCentrosymmetricOf(ops),
+      () => classes.isChiralOf(ops),
+    ]) {
+      expect(call).toThrow(RangeError);
+      expect(call).toThrow(notOrthogonal);
+    }
+  });
+  it('within the tolerance of the call: operations rounded to 4 decimals pass with tolerance 10⁻⁴', () => {
+    // 6/mmm (order 24): [001] has site symmetry 6mm (order 12), [100] mm2 (order 4); ITA 6th ed.
+    // Table 3.2.3.2, multiplicities 2 and 6.
+    const rounded = classes.operations('6/mmm').map((op) => ({
+      matrix: op.matrix.map((row) => row.map((x) => Math.round(x * 1e4) / 1e4)),
+    })) as unknown as readonly classes.Operation[];
+    expect(() => classes.siteSymmetry(rounded, [0, 0, 1])).toThrow(/not an orthogonal/);
+    expect(classes.siteSymmetry(rounded, [0, 0, 1], { tolerance: 1e-4 }).multiplicity).toBe(2);
+    expect(classes.siteSymmetry(rounded, [1, 0, 0], { tolerance: 1e-4 }).multiplicity).toBe(6);
+    expect(() => classes.orbitOf(rounded, [1, 0, 0])).toThrow(/not an orthogonal/);
+    expect(classes.orbitOf(rounded, [1, 0, 0], { tolerance: 1e-4 })).toHaveLength(6);
+  });
+  it('in the magnetic API', () => {
+    const ops = [{ ...stretch, timeReversal: false }] as unknown as readonly magnetic.Operation[];
+    for (const call of [
+      () => magnetic.siteSymmetry(ops, [1, 0, 0]),
+      () => magnetic.siteSymmetry(ops, [0, 1, 0]),
+      () => magnetic.orbitOf(ops, [1, 2, 3]),
+      () => magnetic.pointGroupOf(ops),
+      () => magnetic.describeOperationsOf(ops),
+      () => magnetic.tensorFormOf(ops, 'pyroelectric'),
+      () => magnetic.allowsPropertyOf(ops, 'pyroelectric'),
+      () => magnetic.allowedPropertiesOf(ops),
+      () => magnetic.isCentrosymmetricOf(ops),
+      () => magnetic.isChiralOf(ops),
+    ]) {
+      expect(call).toThrow(RangeError);
+      expect(call).toThrow(notOrthogonal);
+    }
+  });
+});
+
 describe('the magnetic API asks every operation whether it is combined with time reversal', () => {
   // Without the check, an operation without `timeReversal` is composed as if it had it in every
   // second product: the inversion alone then "allows" a polar vector.

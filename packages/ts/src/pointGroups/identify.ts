@@ -5,7 +5,7 @@
  */
 
 import { det, multiply, trace, type Mat3, type Vec3 } from '../linalg.js';
-import { checkOrthogonal, checkTimeReversal, type Operation } from '../operations.js';
+import { checkOrthogonalWithin, checkTimeReversal, type Operation } from '../operations.js';
 import { EPSILON } from '../tolerances.js';
 import { axialVector, rotationAxis, type OperationKind } from './elements.js';
 import {
@@ -60,22 +60,6 @@ export interface CartesianOperationDescription {
   readonly sense?: '+' | '-';
   /** True if the operation is combined with time reversal (a primed operation). */
   readonly timeReversal: boolean;
-}
-
-/** Throws unless mᵀm = 1 within the tolerance (a matrix with rounding errors passes with a larger one). */
-function checkOrthogonalWithin(m: Mat3, what: string, tolerance: number): void {
-  if (tolerance <= EPSILON) {
-    checkOrthogonal(m, what);
-    return;
-  }
-  for (let i = 0; i < 3; i++) {
-    for (let j = 0; j < 3; j++) {
-      const d = m[0][i] * m[0][j] + m[1][i] * m[1][j] + m[2][i] * m[2][j];
-      if (!(Math.abs(d - (i === j ? 1 : 0)) < tolerance)) {
-        throw new RangeError(`${what} is not an orthogonal (Cartesian) matrix: ${JSON.stringify(m)}`);
-      }
-    }
-  }
 }
 
 /** No point group has more than 96 operations (m-3m1'). */
@@ -181,7 +165,8 @@ function keyOfSignature(s: string): MagneticPointGroupKey | undefined {
  * Time reversal counts: a list with time reversal gives a magnetic point group. Returns undefined
  * if the operations generate no point group (an operation of order 5, a group larger than 96).
  * Throws a RangeError for a matrix that is not orthogonal (within `tolerance`, at least
- * `EPSILON`). The classes `1` and `-1` have one setting and no orientation, so they always have
+ * `EPSILON`) and for an operation that does not say whether it is combined with time reversal.
+ * The classes `1` and `-1` have one setting and no orientation, so they always have
  * setting 1.
  */
 export function pointGroupOf(
@@ -243,7 +228,8 @@ function describe(op: Operation, i: number, tolerance: number): CartesianOperati
  * by lattice directions, since the list need not belong to a setting; for a point group given by its
  * key, `describeOperations` names them. Throws a RangeError for a matrix that is not orthogonal or
  * not a crystallographic operation (a rotation part by an angle other than 360°/n, n = 1, 2, 3, 4,
- * 6), both within `tolerance` (default `EPSILON`, as for `pointGroupOf`).
+ * 6), both within `tolerance` (default `EPSILON`, as for `pointGroupOf`), and for an operation that
+ * does not say whether it is combined with time reversal.
  */
 export function describeOperationsOf(
   operations: readonly Operation[],

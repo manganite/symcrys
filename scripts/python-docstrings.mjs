@@ -71,10 +71,11 @@ function codeToPython(code) {
 /** Converts running text: the few TypeScript words that name something else in Python. */
 /** @param {string} text */
 function textToPython(text) {
+  // \s+ also across a line break of the comment, so the phrase is found wherever the comment wraps.
   return text
-    .replace(/\bThrows a RangeError\b/g, 'Raises SymcrysError')
-    .replace(/\bthrows a RangeError\b/g, 'raises SymcrysError')
-    .replace(/\bis a RangeError\b/g, 'raises SymcrysError')
+    .replace(/\bThrows a(\s+)RangeError\b/g, 'Raises$1SymcrysError')
+    .replace(/\bthrows a(\s+)RangeError\b/g, 'raises$1SymcrysError')
+    .replace(/\bis a(\s+)RangeError\b/g, 'raises$1SymcrysError')
     .replace(/\bRangeError\b/g, 'SymcrysError')
     .replace(/\bReturns undefined\b/g, 'Returns None');
 }

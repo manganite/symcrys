@@ -12,7 +12,9 @@ import { MAGNETIC_POINT_GROUP_KEYS, generators, operations, pointGroup } from '.
 import { isCentrosymmetricOf, isChiralOf } from './properties.js';
 
 describe('centrosymmetric and chiral for a list of operations', () => {
-  it('agree with the fields for every group, from all operations and from the generators', () => {
+  // Exhaustive (122 groups, two conventions, closure of the generators): about 1–2 s alone, more under the load of the
+  // full suite, so it gets a limit of its own instead of the default 5 s.
+  it('agree with the fields for every group, from all operations and from the generators', { timeout: 30_000 }, () => {
     for (const key of MAGNETIC_POINT_GROUP_KEYS) {
       const g = pointGroup(key);
       for (const convention of ['itc', 'birss'] as const) {

@@ -303,6 +303,19 @@ def test_cell_metric_and_indices() -> None:
     assert change["direction"].dtype == np.float64 and change["plane"].dtype == np.float64
     with pytest.raises(ValueError):
         symcrys.reduce_indices([0, 0, 0])
+    with pytest.raises(symcrys.SymcrysError, match="minVolumeRatio must be a number from 0 to 1"):
+        symcrys.is_valid_cell({"alpha": 90, "beta": 90, "gamma": 90}, min_volume_ratio=-1)
+    # a cell in metres: the reciprocal basis is that of the cell in ångström, divided by 10⁻¹⁰
+    metres = symcrys.lattice_from_parameters({"a": 3e-10, "b": 3e-10, "c": 5e-10, "alpha": 90, "beta": 90, "gamma": 120})
+    assert np.allclose(symcrys.reciprocal_basis(metres) * 1e-10, symcrys.reciprocal_basis(basis))
+
+
+def test_site_symmetry_refuses_a_matrix_that_is_not_orthogonal() -> None:
+    stretch = [[2, 0, 0], [0, 1, 0], [0, 0, 1]]
+    with pytest.raises(symcrys.SymcrysError, match="not an orthogonal"):
+        symcrys.site_symmetry([{"matrix": stretch}], [1, 0, 0])
+    with pytest.raises(symcrys.SymcrysError, match="not an orthogonal"):
+        magnetic.site_symmetry([{"matrix": stretch, "time_reversal": False}], [1, 0, 0])
 
 
 def test_residual_operations_in_both_apis() -> None:

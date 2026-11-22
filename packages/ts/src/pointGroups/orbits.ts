@@ -5,7 +5,7 @@
 
 import { crystalFamily, latticeBasis } from '../lattice.js';
 import { apply, inverse, multiply, type Mat3, type Vec3 } from '../linalg.js';
-import { checkOrthogonal, type Operation } from '../operations.js';
+import { checkOrthogonalWithin, type Operation } from '../operations.js';
 import { siteTolerance } from '../siteSymmetry.js';
 import type { Uvw } from '../symmetryDirections.js';
 import {
@@ -196,7 +196,7 @@ export interface OrbitPole {
  * `siteSymmetry`), in the order in which the operations reach them, each with the indices of the
  * operations that map the direction there. The list is taken as it is, not closed into a group.
  * Time reversal is ignored. Throws a RangeError for a zero vector and for a matrix that is not
- * orthogonal (Cartesian; not one of `latticeOperations`).
+ * orthogonal (Cartesian, not one of `latticeOperations`; within `tolerance`, at least `EPSILON`).
  */
 export function orbitOf(
   operations: readonly { readonly matrix: Mat3 }[],
@@ -204,7 +204,7 @@ export function orbitOf(
   options?: OrbitOptions,
 ): readonly OrbitPole[] {
   const tolerance = siteTolerance(options);
-  operations.forEach((op, i) => checkOrthogonal(op.matrix, `Operation ${i}`));
+  operations.forEach((op, i) => checkOrthogonalWithin(op.matrix, `Operation ${i}`, tolerance));
   const n = Math.hypot(direction[0], direction[1], direction[2]);
   if (!(n > 0) || !Number.isFinite(n)) throw new RangeError(`Not a direction: ${JSON.stringify(direction)}`);
   const u: Vec3 = [direction[0] / n, direction[1] / n, direction[2] / n];

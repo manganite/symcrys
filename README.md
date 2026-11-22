@@ -13,7 +13,8 @@ package of the same version that runs it in an embedded JavaScript engine.
 > **Status: pre-release.** So far: the 32 crystal classes and the 122 magnetic point groups, with
 > their settings, symbols, symmetry elements, site symmetry, the forms of property tensors of rank 0
 > to 4 and named properties (piezoelectric, ferroaxial, ferromagnetic, …); for the crystal classes
-> also Wyckoff positions and crystal forms. The API will change without notice until 1.0.0.
+> also Wyckoff positions and crystal forms. Until 1.0.0 a MINOR version may change the API; every
+> change to the API or to calculated results is recorded in [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Scope
 

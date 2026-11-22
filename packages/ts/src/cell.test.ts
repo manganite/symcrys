@@ -23,7 +23,7 @@ import type { Mat3 } from './linalg.js';
 
 const DEG = Math.PI / 180;
 const column = (m: Mat3, j: number) => [m[0][j], m[1][j], m[2][j]];
-const closeMat = (m: Mat3, e: number[][], digits = 12) =>
+const closeMat = (m: Mat3 | number[][], e: number[][], digits = 12) =>
   e.forEach((row, i) => row.forEach((x, j) => expect(m[i][j]).toBeCloseTo(x, digits)));
 
 describe('latticeFromParameters: the frame a ∥ x, b in the xy plane, c towards +z', () => {
@@ -126,6 +126,62 @@ describe('latticeParameters', () => {
         [0, 0, 1],
       ]),
     ).toThrow(RangeError);
+  });
+});
+
+describe('cells in any unit of length', () => {
+  // The defining property of the reciprocal basis, a_i · a*_j = δ_ij (ITA Vol. A, 2006, 1.1.3), and
+  // angles that do not change with the unit: not symcrys output.
+  const p = { a: 4.9, b: 4.9, c: 5.4, alpha: 90, beta: 90, gamma: 120 }; // quartz-like cell, ångström
+  /** a_i · a*_j for the columns of a basis and of its reciprocal basis. */
+  const duality = (basis: Mat3, rec: Mat3): number[][] =>
+    [0, 1, 2].map((i) => [0, 1, 2].map((j) => [0, 1, 2].reduce((s, r) => s + basis[r][i] * rec[r][j], 0)));
+  const I = [
+    [1, 0, 0],
+    [0, 1, 0],
+    [0, 0, 1],
+  ];
+  for (const [unit, k] of [
+    ['metres', 1e-10],
+    ['nanometres', 0.1],
+    ['ångström', 1],
+    ['picometres', 100],
+  ] as const) {
+    it(`gives the reciprocal basis and the same angles in ${unit}`, () => {
+      const scaled = latticeFromParameters({ ...p, a: p.a * k, b: p.b * k, c: p.c * k });
+      closeMat(duality(scaled, reciprocalBasis(scaled)), I, 10);
+      // |a*| = 1/(a sin γ) for γ = 120° and c ⊥ a, b: a* has length 2/(√3·a).
+      const ra = reciprocalBasis(scaled);
+      expect(Math.hypot(ra[0][0], ra[1][0], ra[2][0]) * p.a * k).toBeCloseTo(2 / Math.sqrt(3), 10);
+      // (100) and (010) of a hexagonal cell: their normals a* and b* make 60°.
+      expect(angleBetweenPlanes(scaled, [1, 0, 0], [0, 1, 0])).toBeCloseTo(60, 10);
+      expect(angleBetweenDirections(scaled, [1, 0, 0], [0, 1, 0])).toBeCloseTo(120, 10);
+      expect(latticeParameters(scaled).gamma).toBeCloseTo(120, 10);
+    });
+  }
+  it('cubic cell of edge 0.001: reciprocal basis 1000·I, (100)∧(110) = 45°', () => {
+    const tiny: Mat3 = [
+      [1e-3, 0, 0],
+      [0, 1e-3, 0],
+      [0, 0, 1e-3],
+    ];
+    closeMat(
+      reciprocalBasis(tiny),
+      [
+        [1000, 0, 0],
+        [0, 1000, 0],
+        [0, 0, 1000],
+      ],
+      8,
+    );
+    expect(angleBetweenPlanes(tiny, [1, 0, 0], [1, 1, 0])).toBeCloseTo(45, 10);
+  });
+  it('a cell with very different edges is no singular basis (c/a = 10⁵, right angles)', () => {
+    // 0.8.0 refused it: the test was relative to the cube of the longest edge.
+    const long = latticeFromParameters({ a: 1, b: 1, c: 1e5, alpha: 90, beta: 90, gamma: 90 });
+    expect(latticeParameters(long).c).toBeCloseTo(1e5, 6);
+    closeMat(duality(long, reciprocalBasis(long)), I, 10);
+    expect(angleBetweenPlanes(long, [1, 0, 1], [0, 0, 1])).toBeCloseTo((Math.atan(1e5) * 180) / Math.PI, 8);
   });
 });
 
@@ -307,8 +363,15 @@ describe('input checks and edge cases', () => {
     expect(() => residualOperations(latticeOperations('4/mmm'), basis, { tolerance: Number.NaN })).toThrow(RangeError);
     expect(() => residualOperations(latticeOperations('4/mmm'), basis, { tolerance: -1 })).toThrow(RangeError);
   });
-  it('isValidCell refuses a NaN minVolumeRatio with a RangeError', () => {
-    expect(() => isValidCell({ alpha: 90, beta: 90, gamma: 90 }, { minVolumeRatio: Number.NaN })).toThrow(RangeError);
+  it('isValidCell refuses a minVolumeRatio that is not a number from 0 to 1 with a RangeError', () => {
+    const cube = { alpha: 90, beta: 90, gamma: 90 };
+    for (const m of [Number.NaN, -1, -1e-12, 1.0001, 2, Infinity, -Infinity, '0.1' as unknown as number]) {
+      expect(() => isValidCell(cube, { minVolumeRatio: m }), String(m)).toThrow(RangeError);
+    }
+    // the ends of the range are accepted: 0 accepts every cell, 1 only orthogonal axes (V = abc)
+    expect(isValidCell(cube, { minVolumeRatio: 0 })).toBe(true);
+    expect(isValidCell(cube, { minVolumeRatio: 1 })).toBe(true);
+    expect(isValidCell({ alpha: 90, beta: 90, gamma: 120 }, { minVolumeRatio: 1 })).toBe(false);
   });
   it('a rhombohedral cell (α = β = γ = 80°) is valid and keeps the angles', () => {
     const q = latticeParameters(latticeFromParameters({ a: 1, b: 1, c: 1, alpha: 80, beta: 80, gamma: 80 }));
