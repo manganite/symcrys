@@ -7,8 +7,9 @@ import { describe, expect, it } from 'vitest';
 import * as plane from './plane.js';
 import { planeAsymmetricUnit, planeCellElements } from './spaceGroups/cell.js';
 import { describePlaneOperation } from './spaceGroups/describe.js';
+import { compose, translationOperation } from './spaceGroups/affine.js';
 import { planeGroupOperations } from './spaceGroups/planeGroups.js';
-import { toNumber } from './spaceGroups/rational.js';
+import { rational, toNumber } from './spaceGroups/rational.js';
 
 const key = (m: readonly (readonly number[])[]) => JSON.stringify(m);
 
@@ -126,12 +127,14 @@ describe('plain numbers at the API', () => {
         expect(d.location).toEqual(exact[i].location?.map(toNumber));
         expect(d.glide).toEqual(exact[i].glide?.map(toNumber));
         expect(d.direction).toEqual(exact[i].direction);
+        expect(d.normal).toEqual(exact[i].normal);
       });
       expect(plane.asymmetricUnit(k).vertices).toEqual(planeAsymmetricUnit(k).vertices.map((v) => v.map(toNumber)));
       const e = planeCellElements(k);
       expect(plane.symmetryElements(k).lines.map((l) => l.segment)).toEqual(
         e.lines.map((l) => l.segment.map((p) => p.map(toNumber))),
       );
+      expect(plane.symmetryElements(k).lines.map((l) => l.normal)).toEqual(e.lines.map((l) => l.normal));
       expect(plane.symmetryElements(k).rotations.map((r) => r.order)).toEqual(e.rotations.map((r) => r.order));
     }
     expect(plane.describeOperations('p4gm')[4]).toEqual({
@@ -139,6 +142,7 @@ describe('plain numbers at the API', () => {
       order: 2,
       location: [0.25, 0],
       direction: [0, 1],
+      normal: [1, 0],
       glide: [0, 0.5],
     });
   });
@@ -166,6 +170,115 @@ describe('plain numbers at the API', () => {
     expect(Object.isFrozen(plane.operations('p2')[0].matrix[0])).toBe(true);
     expect(Object.isFrozen(plane.symmetryElements('p2').rotations[0].point)).toBe(true);
     expect(Object.isFrozen(plane.PLANE_GROUP_KEYS)).toBe(true);
+  });
+});
+
+describe('describeOperationsOf', () => {
+  it('describes the operations of every group as describeOperations does', () => {
+    for (const k of [...plane.PLANE_GROUP_KEYS, ...plane.POINT_GROUP_KEYS]) {
+      expect(plane.describeOperationsOf(plane.operations(k))).toEqual(plane.describeOperations(k));
+    }
+    expect(plane.describeOperationsOf(plane.operations('3m', { setting: 2 }))).toEqual(
+      plane.describeOperations('3m', { setting: 2 }),
+    );
+  });
+
+  it('describes products and shifted operations as the exact description gives them', () => {
+    for (const k of plane.PLANE_GROUP_KEYS) {
+      const ops = planeGroupOperations(k);
+      const shift = translationOperation([rational(1), rational(-2)]);
+      const others = ops.flatMap((a) => [compose(shift, a), ...ops.map((b) => compose(a, b))]);
+      const plain = others.map((op) => ({
+        matrix: op.matrix.map((r) => [...r]),
+        translation: op.translation.map(toNumber),
+      }));
+      plane.describeOperationsOf(plain).forEach((d, i) => {
+        const e = describePlaneOperation(others[i]);
+        expect(d.kind).toBe(e.kind);
+        expect(d.order).toBe(e.order);
+        expect(d.sense).toBe(e.sense);
+        expect(d.location).toEqual(e.location?.map(toNumber));
+        expect(d.glide).toEqual(e.glide?.map(toNumber));
+        expect(d.translation).toEqual(e.translation?.map(toNumber));
+        expect(d.normal).toEqual(e.normal);
+      });
+    }
+  });
+
+  it('reads a translation within 10⁻⁹ of a fraction with a denominator up to 12', () => {
+    const [d] = plane.describeOperationsOf([
+      {
+        matrix: [
+          [0, -1],
+          [1, -1],
+        ],
+        translation: [1 / 3 + 1e-12, 2 / 3],
+      },
+    ]);
+    expect(d).toMatchObject({ kind: 'rotation', order: 3, sense: '+' });
+    expect(
+      plane.describeOperationsOf([
+        {
+          matrix: [
+            [1, 0],
+            [0, 1],
+          ],
+          translation: [1 / 12, 0],
+        },
+      ])[0].kind,
+    ).toBe('translation');
+  });
+
+  it('refuses what is not an operation of a plane group', () => {
+    const bad: unknown[] = [
+      {
+        matrix: [
+          [1, 0],
+          [0, 1],
+        ],
+        translation: [0.1234, 0],
+      },
+      {
+        matrix: [
+          [1, 0],
+          [0, 1],
+        ],
+        translation: [1 / 13, 0],
+      },
+      {
+        matrix: [
+          [0.5, 0],
+          [0, 1],
+        ],
+        translation: [0, 0],
+      },
+      {
+        matrix: [
+          [1, 1],
+          [0, 1],
+        ],
+        translation: [0, 0],
+      },
+      {
+        matrix: [
+          [1, 0, 0],
+          [0, 1, 0],
+          [0, 0, 1],
+        ],
+        translation: [0, 0, 0],
+      },
+      {
+        matrix: [
+          [1, 0],
+          [0, 1],
+        ],
+      },
+      null,
+    ];
+    for (const op of bad) {
+      expect(() => plane.describeOperationsOf([op as plane.PlaneOperation])).toThrow(RangeError);
+    }
+    expect(() => plane.describeOperationsOf('p2' as unknown as plane.PlaneOperation[])).toThrow(RangeError);
   });
 });
 

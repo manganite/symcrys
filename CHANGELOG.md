@@ -6,6 +6,15 @@ All notable changes to symcrys are recorded here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- `describeOperationsOf(operations)` in `symcrys/plane` (Python `describe_operations_of`): any list of
+  operations of the plane described as `describeOperations` describes those of a group, for
+  products, operations shifted by lattice translations or the operations of a site symmetry (#84).
+- A field `normal` for each mirror and glide line, in the descriptions of the operations and in the
+  lines of `symmetryElements`: the symmetry direction of the line in the lattice basis, as in ITA
+  Table 2.1.3.1, tested against that table and the printed full symbols of the 17 plane groups (#84).
+
 ## [0.9.0] - 2026-11-22
 
 ### Added

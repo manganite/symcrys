@@ -39,11 +39,21 @@ def test_numpy_types() -> None:
     assert plane.plane_group("p2")["centring"].shape == (0, 2)
     glide = plane.describe_operations("p4gm")[4]
     assert glide["direction"].dtype == np.int64 and glide["glide"].dtype == np.float64
+    assert glide["normal"].dtype == np.int64 and glide["normal"].tolist() == [1, 0]
+    described = plane.describe_operations_of(plane.operations("p6mm"))
+    assert [d["kind"] for d in described] == [d["kind"] for d in plane.describe_operations("p6mm")]
+    assert all(
+        np.array_equal(a.get("normal", []), b.get("normal", []))
+        for a, b in zip(described, plane.describe_operations("p6mm"))
+    )
+    mirror = plane.describe_operations_of([{"matrix": np.array([[1, -1], [0, -1]]), "translation": (0, 0)}])[0]
+    assert mirror["kind"] == "mirror" and mirror["normal"].tolist() == [1, 2] and mirror["direction"].tolist() == [1, 0]
     unit = plane.asymmetric_unit("p6mm")
     assert unit["vertices"].shape == (3, 2) and unit["inequalities"].dtype == np.int64
     elements = plane.symmetry_elements("p4mm")
     assert elements["lines"][0]["segment"].shape == (2, 2)
     assert elements["rotations"][0]["point"].dtype == np.float64
+    assert elements["lines"][0]["normal"].dtype == np.int64
     site = plane.site_symmetry("p2mm", np.array([0.5, 0.2]))
     assert site["operations"].dtype == np.int64 and site["multiplicity"] == 2
     assert plane.orbit("p2", (0.1, 0.2)).shape == (2, 2)
@@ -58,6 +68,8 @@ def test_errors() -> None:
         plane.orbit("p2", [0.1, 0.2], tolerance=0.5)
     with pytest.raises(symcrys.SymcrysError, match="two coordinates"):
         plane.site_symmetry("p2", [[0.1, 0.2]])
+    with pytest.raises(symcrys.SymcrysError, match="denominator"):
+        plane.describe_operations_of([{"matrix": np.eye(2), "translation": [0.1234, 0]}])
 
 
 @pytest.mark.parametrize("text", sections(), ids=lambda t: t.split(",")[0])

@@ -768,7 +768,16 @@ while implementing gets its own note here.
   Wyckoff position gives all printed coordinates of its (0,0)+ set (`coordinates`, a list), since ITA
   prints them all for the plane groups; fields and functions as in `symcrys` where the notion is the
   same (`crystalSystem`, `settings(key)` as a list of settings with `index`, `symbol`, `default`,
-  `wyckoffPositionOf` giving the same record as `wyckoffPositions`; review of PR #82).
+  `wyckoffPositionOf` giving the same record as `wyckoffPositions`; review of PR #82). Asked in a third round (Thomas,
+  2026-11-22, #84, #85; recommendations taken): **`describeOperationsOf(operations)`** describes any
+  list of operations of the plane, the name of the other entry points for the same notion; a
+  translation is read as the nearest fraction with a denominator of at most 12 (chosen while
+  implementing, as proposed in the question). **`normal`** of a mirror or glide line, its symmetry
+  direction in the lattice basis (ITA Table 2.1.3.1), in the descriptions and in each line of
+  `symmetryElements`, so that an application can assign a line to a position of the symbol without a
+  metric. **Snapping** onto the nearest Wyckoff position by the distance to the position, the most
+  special first, is a function of its own, `snapToWyckoffPosition(key, point, { tolerance })`, rather
+  than an option of `wyckoffPositionOf`, which keeps its criterion (the distance of the images).
 - **Print anchor: ITA 6th edition (2016), Chapter 2.2** (#31, asked together with the four
   questions): the 6th edition is the reference of symcrys for what it holds (`docs/conventions.md`,
   "Sources"); for the crystal classes only the order of the operations, the selected generators and the
