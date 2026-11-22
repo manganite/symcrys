@@ -6,6 +6,13 @@ All notable changes to symcrys are recorded here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- `snapToWyckoffPosition(key, point, { tolerance })` in `symcrys/plane` (Python
+  `snap_to_wyckoff_position`): snaps a point onto the most special Wyckoff position within the
+  tolerance of it, by its distance to the position, and returns the position with the point on it,
+  for applications that let a dragged point snap (#85).
+
 ## [0.9.0] - 2026-11-22
 
 ### Added

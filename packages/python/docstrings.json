@@ -143,6 +143,10 @@
       "type": "dict",
       "doc": "``operations`` int64 array of shape (n,), ``point`` float64 array of shape (2,), ``multiplicity``, ``general``."
     },
+    "snap_to_wyckoff_position": {
+      "type": "dict",
+      "doc": "``letter``, ``multiplicity``, ``site_symmetry``, ``coordinates`` as in ``wyckoff_positions``, and ``point`` a float64 array of shape (2,)."
+    },
     "orbit": {
       "type": "numpy.ndarray",
       "doc": "A float64 array of shape (n, 2), the images as rows."

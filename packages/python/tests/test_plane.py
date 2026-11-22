@@ -47,6 +47,9 @@ def test_numpy_types() -> None:
     site = plane.site_symmetry("p2mm", np.array([0.5, 0.2]))
     assert site["operations"].dtype == np.int64 and site["multiplicity"] == 2
     assert plane.orbit("p2", (0.1, 0.2)).shape == (2, 2)
+    snapped = plane.snap_to_wyckoff_position("p6mm", np.array([0.34, 0.66]), tolerance=0.02)
+    assert snapped["letter"] == "b" and snapped["site_symmetry"] == "3m."
+    assert snapped["point"].dtype == np.float64 and np.allclose(snapped["point"], [1 / 3, 2 / 3])
 
 
 def test_errors() -> None:
@@ -58,6 +61,8 @@ def test_errors() -> None:
         plane.orbit("p2", [0.1, 0.2], tolerance=0.5)
     with pytest.raises(symcrys.SymcrysError, match="two coordinates"):
         plane.site_symmetry("p2", [[0.1, 0.2]])
+    with pytest.raises(symcrys.SymcrysError):
+        plane.snap_to_wyckoff_position("p2", [0.1, 0.2], tolerance=0.5)
 
 
 @pytest.mark.parametrize("text", sections(), ids=lambda t: t.split(",")[0])

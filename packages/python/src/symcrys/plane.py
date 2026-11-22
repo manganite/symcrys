@@ -41,6 +41,7 @@ __all__ = [
     "point_group",
     "settings",
     "site_symmetry",
+    "snap_to_wyckoff_position",
     "symbol",
     "symmetry_elements",
     "wyckoff_position_of",
@@ -237,6 +238,34 @@ def wyckoff_position_of(key: str, point: ArrayLike, *, tolerance: Optional[float
         by less than this from an integer. Default 10⁻⁶; must be below 1/2.
     """
     return dict(_call("wyckoffPositionOf", key, _point(point), _shared.options(tolerance=tolerance)))
+
+
+def snap_to_wyckoff_position(key: str, point: ArrayLike, *, tolerance: Optional[float] = None) -> dict[str, Any]:
+    """Snaps a point (lattice basis) onto the most special Wyckoff position of a plane group that
+    lies within the tolerance of it, measured per coordinate modulo the lattice: a position without
+    a free parameter (a point) before one with one (a line), before the general position, which
+    always holds the point; among positions of the same kind the nearest. Returns the position, as
+    ``wyckoff_positions`` gives it, and the nearest point on it, in [0, 1). Unlike
+    ``wyckoff_position_of``, which asks whether the images of the point lie within the tolerance of
+    it, this asks whether the point lies within the tolerance of the position: an application that
+    drags a point and lets it snap passes a tolerance such as 10⁻². Raises SymcrysError as
+    ``site_symmetry``.
+
+    Parameters
+    ----------
+    tolerance : keyword-only, optional
+        Two points count as the same, modulo the lattice, if each coordinate (lattice basis) differs
+        by less than this from an integer. Default 10⁻⁶; must be below 1/2.
+
+    Returns
+    -------
+    dict
+        ``letter``, ``multiplicity``, ``site_symmetry``, ``coordinates`` as in
+        ``wyckoff_positions``, and ``point`` a float64 array of shape (2,).
+    """
+    result = dict(_call("snapToWyckoffPosition", key, _point(point), _shared.options(tolerance=tolerance)))
+    result["point"] = _floats(result["point"], 2)
+    return result
 
 
 def orbit(key: str, point: ArrayLike, *, tolerance: Optional[float] = None) -> NDArray[np.float64]:

@@ -169,6 +169,21 @@ describe('plain numbers at the API', () => {
   });
 });
 
+describe('snapToWyckoffPosition', () => {
+  it('gives the printed position with the snapped point, frozen', () => {
+    const s = plane.snapToWyckoffPosition('p6mm', [0.34, 0.66], { tolerance: 0.02 });
+    expect(s).toEqual({ ...plane.wyckoffPositions('p6mm').find((w) => w.letter === 'b'), point: [1 / 3, 2 / 3] });
+    expect(Object.isFrozen(s) && Object.isFrozen(s.point)).toBe(true);
+    expect(plane.snapToWyckoffPosition('p2', [0.3, 0.4]).letter).toBe('e');
+  });
+
+  it('refuses a point group, a bad point or tolerance', () => {
+    expect(() => plane.snapToWyckoffPosition('4mm' as plane.PlaneGroupKey, [0, 0])).toThrow(RangeError);
+    expect(() => plane.snapToWyckoffPosition('p2', 'x' as unknown as number[])).toThrow(RangeError);
+    expect(() => plane.snapToWyckoffPosition('p2', [0, 0], { tolerance: 0.6 })).toThrow(RangeError);
+  });
+});
+
 describe('errors', () => {
   it('unknown keys, and the key of the other kind', () => {
     for (const f of [plane.operations, plane.generators, plane.describeOperations]) {
