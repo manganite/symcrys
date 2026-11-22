@@ -137,7 +137,11 @@ option.
   operations into the ITC frame and compare there.
 - **Settings as ITC prints them.** Only settings that ITC prints, selected by their ITC symbol
   with the index as a second handle (#116; design of the setting record: #123); missing ones are
-  added (unique axis a, rhombohedral axes #111, the orientations of `2'm'm` printed in ITC Vol. D).
+  added (unique axis a, rhombohedral axes #111). "Printed by ITC" means printed as the symbol of
+  the point group in that orientation anywhere in ITC, not only in ITA Table 3.2.3.2 (Thomas,
+  2026-11-22, after a search of the volumes): so `mm2` keeps `2mm` and `m2m` (ITA 2016 § 1.6.4,
+  p. 114, "the three point groups 2mm, m2m and mm2"; ITC Vol. D Tables 1.2.3.1, p. 49, and 1.5.7.1,
+  p. 135), and `2'm'm` keeps all six orientations (ITC Vol. D pp. 111, 113, 135–136, 139–140).
 - **Tolerant input**, in every entry point, where it is a pure normalisation before the comparison
   and the input stays unambiguous (spaces, overbar spellings such as `-`, a combining overbar or
   `bar`, prime variants, Birss's printed forms such as `m3m`); an input that could match two groups
@@ -585,7 +589,8 @@ The conventions themselves are in `docs/conventions.md`; here, what was decided 
   and its coset after it (ITC Vol. D eq. (1.5.2.2)), would have changed the numbers against the
   class. The generators follow the same idea: those of the class with their time reversal, for a
   grey group followed by `1'` (chosen while implementing).
-- **Six settings of `2'm'm`** _(Replaced by "Pure ITC" above; describes the code until the ITC migration.)_
+- **Six settings of `2'm'm`** _(The six settings stay, all printed in ITC Vol. D ("Pure ITC" above); the
+  reasons from birss-app and the numbering are replaced, #116, #123.)_
   (maintainer, 2026-11-20, #19): an orthorhombic group gets a setting
   for every distinct orientation of its axes. birss-app's standing decision (at most three settings
   per group, by the axis that carries the unique element) does not cover the one group whose three

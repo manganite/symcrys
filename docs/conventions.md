@@ -250,14 +250,14 @@ two axes at the same unique axis (maintainer, 2026-11-20). `uniqueAxis` is the n
 plane without time reversal, the direction a spontaneous magnetization may have; two settings share
 each axis, so for this group it does not identify a setting: the symbol or the index does.
 
-| Setting | Symbol  | Axis | Operations besides 1 | Symbol printed in                                               |
-| ------- | ------- | ---- | -------------------- | --------------------------------------------------------------- |
-| 1       | `2'm'm` | c    | 2′_x, m′_y, m_z      | Birss Table 6; ITC Vol. D Tables 1.5.2.3, 1.5.7.1 (in brackets) |
-| 2       | `m2'm'` | a    | m_x, 2′_y, m′_z      | ITC Vol. D Table 1.5.8.1 (in brackets)                          |
-| 3       | `m'm2'` | b    | m′_x, m_y, 2′_z      | ITC Vol. D Table 1.5.2.4                                        |
-| 4       | `m'2'm` | c    | m′_x, 2′_y, m_z      | ITC Vol. D Table 1.5.7.1                                        |
-| 5       | `mm'2'` | a    | m_x, m′_y, 2′_z      | Paufler (1986), p. 62 and Table A 6, no. 15, p. 316             |
-| 6       | `2'mm'` | b    | 2′_x, m_y, m′_z      | ITC Vol. D Table 1.5.8.1                                        |
+| Setting | Symbol  | Axis | Operations besides 1 | Symbol printed in                                                                                              |
+| ------- | ------- | ---- | -------------------- | -------------------------------------------------------------------------------------------------------------- |
+| 1       | `2'm'm` | c    | 2′_x, m′_y, m_z      | Birss Table 6; ITC Vol. D Tables 1.5.2.3 (p. 111), 1.5.7.1 (in brackets, p. 135), list on p. 140 (in brackets) |
+| 2       | `m2'm'` | a    | m_x, 2′_y, m′_z      | ITC Vol. D Table 1.5.8.1 (in brackets, p. 139), list on p. 136 (in brackets)                                   |
+| 3       | `m'm2'` | b    | m′_x, m_y, 2′_z      | ITC Vol. D Table 1.5.2.4 (p. 113), lists on pp. 136 and 140                                                    |
+| 4       | `m'2'm` | c    | m′_x, 2′_y, m_z      | ITC Vol. D Table 1.5.7.1 (p. 135), list on p. 140 (in brackets)                                                |
+| 5       | `mm'2'` | a    | m_x, m′_y, 2′_z      | ITC Vol. D, lists on pp. 136 and 140; Paufler (1986), p. 62 and Table A 6, no. 15, p. 316                      |
+| 6       | `2'mm'` | b    | 2′_x, m_y, m′_z      | ITC Vol. D Tables 1.5.8.1 (p. 139) and 1.2.6.12 (p. 66), list on p. 136                                        |
 
 Birss (Table 6) and Paufler (Table A 6) print the operations with the symbol; for the other rows
 the operations are those the symbol names, each position read along x, y, z.
