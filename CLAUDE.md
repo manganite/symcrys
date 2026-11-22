@@ -644,3 +644,50 @@ The conventions are in `docs/conventions.md` ("Tensors"); here, what was decided
   (`quickjs-ng`) 3–112 ms per class for the SHG tensor and up to about 0.3 s at rank 4 (m-3m), 10–35
   times Node; enough for a Python layer that calls symcrys a few times per material. Forms per
   class, setting and kind of tensor are cached.
+
+### Plane groups (and later space groups)
+
+Decided by Thomas on 2026-11-22 (#31), asked before implementation, each among proposals with a
+recommendation; what is chosen while implementing gets its own note here.
+
+- **Exact inside, plain numbers at the API; a type of its own** (#31 question 1): an operation with
+  a translation is computed exactly, the matrix as integers in the lattice basis and the translation
+  as fractions (integer numerator over the smallest denominator), so that comparing operations and
+  points of the group data modulo the lattice needs no tolerance. At the API it is
+  `{ matrix, translation }` in the lattice basis: `matrix` with integer entries in the shape that
+  `latticeOperations` returns, `translation` as numbers (1/3 as the nearest double), as spglib gives
+  its symmetry (integer rotations, float translations), which is what users of such a library expect.
+  Point groups keep their Cartesian operations (`operations`, tensors), so the point-group API does
+  not change; the alternatives were exact fractions at the API ([numerator, denominator] pairs:
+  unusual, and every consumer would compute with fractions itself), floating point with snapping as
+  for the point groups (not exact; comparisons modulo 1 with a tolerance, the trouble plane-groups
+  has today) and one type for all groups (would have broken the point-group API, and tensors are
+  Cartesian). Points a caller passes in are floating point and take an optional `tolerance`, as
+  `siteSymmetry` does.
+- **One module for every dimension**: written for d = 2 and d = 3, so that the space groups for the
+  3D app are the same module with d = 3, not a further implementation.
+- **First step: the 17 plane groups** (#31 question 2), one MINOR in several PRs: the type, its
+  arithmetic and the closure; the data of ITA (operations in ITA's order, selected generators,
+  centring, origin, asymmetric unit, Wyckoff positions), transcribed to `references/` and tested
+  against print; the description of the operations (kind, location, glide part, as in ITA's
+  "Symmetry operations") and the symmetry elements in a cell; site symmetry, orbit and the Wyckoff
+  position of a point. The determination of the group of a pattern (plane-groups' `bestimmung.js`)
+  follows in a second MINOR, built on the first; it is the largest part (cell reduction, metric,
+  choice of cell and origin, tolerances), and plane-groups can move most of its calculations
+  before it.
+- **No frieze, layer or magnetic plane groups for now** (#31 question 3): no consumer needs them;
+  the dimension-generic module keeps them possible (idea in #74).
+- **Entry point `symcrys/plane`, later `symcrys/space`** (#31 question 4), as `symcrys/magnetic`
+  (#47): the import decides how a key is read, and the root entry point stays the crystal classes
+  in 3D. `symcrys/plane` holds the 10 plane point groups and the 17 plane groups, with the function
+  names of the other entry points where the notion is the same; in Python `symcrys.plane`. Keys are
+  ITA's short symbols (`'p2mg'`, `'c2mm'`; the point groups `'4mm'` etc.), which do not overlap,
+  since a plane group's symbol begins with its lattice letter. The plane point groups are the
+  restriction of the 10 polar crystal classes with the polar axis normal to the plane (one data
+  source).
+- **Print anchor: ITA 6th edition (2016), Chapter 2.2** (2026-11-22), as for the crystal classes,
+  so that every ITC anchor of symcrys is one edition. The 2016 volume in Zotero (`7NZ258UB`) holds
+  Chapters 2.1 and 3.2 only; Thomas provides Chapter 2.2. The 5th edition (2006, `3SDKZZFX`), Part 6,
+  pp. 92–109, against which plane-groups is tested, is an additional check by an audit, not the
+  reference (printed p. 92 is PDF page 235; checked at that page only). Chapter 2.1 (2016, p. 142)
+  says that its data closely follow the earlier edition.
