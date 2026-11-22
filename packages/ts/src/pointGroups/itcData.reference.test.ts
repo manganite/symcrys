@@ -1,7 +1,7 @@
 /**
  * The exact ITC class data (itcData.ts) against print (fixture class (a)): ITA (6th ed.) Table
- * 3.2.3.2, pp. 745–769, re-parsed from references/itc/. For each of the 40 entries with hexagonal or
- * no special axes, the operations built from ITA's selected generators are the printed general
+ * 3.2.3.2, pp. 745–769, re-parsed from references/itc/. For each of the 40 entries without
+ * rhombohedral axes, the operations built from ITA's selected generators are the printed general
  * position, as integer matrices in the conventional basis and in the printed order; the symbols and
  * the crystal system are those of the headline.
  */

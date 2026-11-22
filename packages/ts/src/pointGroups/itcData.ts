@@ -2,12 +2,14 @@
  * The 32 crystal classes in the ITC frame, exactly (#122, #137 A1): per class and ITC setting its
  * symbols, and the operations as ITA prints them, integer matrices W in the conventional basis
  * (x̃ = W·x), in ITA's order, built from ITA's selected generators. The Cartesian matrices are
- * derived, B·W·B⁻¹. Nothing here is derived from the Birss frame: the source is ITA's general
- * position (6th ed., Table 3.2.3.2) and its selected generators (5th ed., Part 7; `itaOrder.ts`).
+ * derived, B·W·B⁻¹. Nothing here is derived from the Birss frame: the source is ITA's selected
+ * generators (5th ed., Part 7; `itaOrder.ts`); the general position of ITA 6th ed. Table 3.2.3.2 is
+ * the print check (`itcData.reference.test.ts`).
  *
- * A setting that ITA does not print with generators is the printed one in another basis, W' = P⁻¹·W·P
- * with the change of basis P of ITA (2016) Table 1.5.4.4 (`2mm` and `m2m` from `mm2`: the settings
- * cab and bca); its operations keep the order of the printed setting.
+ * A setting that ITA does not print with generators is the printed one in another basis: with
+ * (a′, b′, c′) = (a, b, c)·P, W′ = P⁻¹·W·P (ITA 2016 eqs. (1.5.1.4), (1.5.1.5), p. 76). `2mm` and
+ * `m2m` come from `mm2` by the settings cab and bca of ITA 2016 Table 1.5.4.4 (§ 1.5.4.3, p. 96:
+ * cab turns Pmm2 into P2mm); their operations keep the order of the printed setting.
  *
  * Internal; not yet wired into the API (#122, PR 2a). The setting indices are those of the current
  * API, until the settings are renumbered (#137 A4).
@@ -32,7 +34,8 @@ export interface ItcSetting {
   readonly isDefault: boolean;
   /**
    * For a setting without printed generators: the printed setting it comes from (its index) and
-   * the change of basis P, whose columns are the new basis vectors in the old basis.
+   * the change of basis P, whose columns are the new basis vectors in the old basis
+   * ((a′, b′, c′) = (a, b, c)·P, ITA 2016 eq. (1.5.1.4), p. 76).
    */
   readonly from?: { readonly index: number; readonly basis: IntMat3 };
 }
@@ -44,13 +47,16 @@ export interface ItcClass {
   readonly settings: readonly ItcSetting[];
 }
 
-/** ITA 2016 Table 1.5.4.4, setting cab: a′ = c, b′ = a, c′ = b (the columns of P). */
+/**
+ * Setting cab of ITA 2016 Table 1.5.4.4 (the table prints the setting symbols, not P): a′ = c,
+ * b′ = a, c′ = b, the columns of P (eq. (1.5.1.4), p. 76; § 1.5.4.3, p. 96).
+ */
 const SETTING_CAB: IntMat3 = [
   [0, 1, 0],
   [0, 0, 1],
   [1, 0, 0],
 ];
-/** ITA 2016 Table 1.5.4.4, setting bca: a′ = b, b′ = c, c′ = a (the columns of P). */
+/** Setting bca of ITA 2016 Table 1.5.4.4: a′ = b, b′ = c, c′ = a, the columns of P (as for cab). */
 const SETTING_BCA: IntMat3 = [
   [0, 0, 1],
   [1, 0, 0],
@@ -231,6 +237,13 @@ export function itcLatticeOperations(key: PointGroupKey, index: number): readonl
           for (const x of h) list.push(imul(power, x));
         }
       }
+      // The cosets form a group only if each generator normalises the group built so far; check
+      // closure, so that a mistake in the transcribed generators fails here rather than in a caller.
+      for (const a of list) {
+        for (const b of list) {
+          if (!has(list, imul(a, b))) throw new Error(`The operations of ${key} setting ${index} are not closed`);
+        }
+      }
       ops = list;
     }
     operationCache.set(cacheKey, Object.freeze(ops));
@@ -240,9 +253,9 @@ export function itcLatticeOperations(key: PointGroupKey, index: number): readonl
 
 /**
  * W as a Cartesian matrix B·W·B⁻¹, snapped to the exact values. B is the basis of `latticeBasis` for
- * the families with fixed angles; for the monoclinic and triclinic families W itself (a, b, c along
- * x, y, z): their operations only negate the plane perpendicular to the unique axis, or every
- * direction, so B·W·B⁻¹ does not depend on the cell angles.
+ * the families with fixed angles; for the monoclinic and triclinic families W itself: their
+ * operations are ±1 on the diagonal, and the unique axis (y or z) is perpendicular to the other two,
+ * so B·W·B⁻¹ = W for every cell with that axis along y or z, whatever its angles.
  */
 export function cartesianOf(w: IntMat3, system: CrystalSystem): Mat3 {
   const family = crystalFamily(system);
