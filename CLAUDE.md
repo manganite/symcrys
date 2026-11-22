@@ -215,6 +215,15 @@ Carried over from birss-app, where the calculations come from.
 - **Python tests** (`packages/python/tests`, pytest) read the same `references/` and `*.pins.json`
   and have no expected values of their own (#30); in addition they test the layer itself (names,
   conversions, errors) and run the example notebooks.
+- **ITC baseline pins** (#121): the safety net of the ITC migration. `testUtils/itcBaseline.ts`
+  collects the ITC output of all three entry points over the public API; `audit/itc-baseline`
+  (`npm run audit:itc-baseline`) writes it from a clean checkout as `itcBaseline.pins.json` in
+  `pointGroups/`, `tensors/` and `spaceGroups/`, and `itcBaseline.pins.test.ts` compares. A PR of
+  the migration that changes a pin lists every change and why, then re-captures; a rename changes
+  only the calls in `itcBaseline.ts`. Python does not read these pins: the migration rewrites the
+  Python layer (#98), whose own tests follow it.
+- **Test timeout** 30 s (`vitest.config.ts`): several exhaustive tests take one to two seconds alone
+  and four times that with every file in parallel on a slower machine (WSL, 12 workers).
 
 ## Public API and versions
 
