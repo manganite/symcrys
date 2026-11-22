@@ -5,13 +5,15 @@
  * three JSON files, one entry per line:
  *
  * - packages/ts/src/pointGroups/itcBaseline.pins.json: every key of the magnetic API in every ITC
- *   setting (symbols, operations, generators, lattice operations, descriptions, symmetry directions,
- *   identification, site symmetry, orbits; Wyckoff positions and crystal forms of the 32 classes),
- *   the tables of both APIs, and the cell, index and lattice functions on fixed inputs.
- * - packages/ts/src/tensors/itcBaseline.pins.json: the tensor forms of every specification in every
- *   ITC setting, time-even for the 32 classes, time-odd for the 58 black-and-white groups.
- * - packages/ts/src/spaceGroups/itcBaseline.pins.json: the 17 plane groups and the 10 plane point
- *   groups.
+ *   setting, and the crystallographic API for the 32 classes (symbols, searches, operations,
+ *   generators, lattice operations, descriptions, symmetry directions, identification, site
+ *   symmetry and orbits with and without a tolerance, Wyckoff positions, crystal forms), the tables,
+ *   tolerant and wrong inputs, and the cell, index and lattice functions on fixed inputs.
+ * - packages/ts/src/tensors/itcBaseline.pins.json: the tensor forms (parameters, basis, relations)
+ *   of every specification in every ITC setting, time-even for the 32 classes, time-odd for the 58
+ *   black-and-white groups, and the tensor functions on lists of operations.
+ * - packages/ts/src/spaceGroups/itcBaseline.pins.json: the 17 plane groups (with snapping and
+ *   tolerances near special positions) and the 10 plane point groups.
  *
  * Run by hand from a clean checkout of a known-good revision: npm run audit:itc-baseline. Not part
  * of the build, the tests or CI. Regenerate the pins only by re-running this script, never by
@@ -27,24 +29,20 @@ import {
   collectPlane,
   collectPointGroups,
   collectTensors,
-  normalised,
+  type Pin,
 } from '../../packages/ts/src/testUtils/itcBaseline';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const src = `${root}packages/ts/src/`;
 
 const NOTE =
-  'Behavioural pins (fixture class (c), CLAUDE.md): the output of symcrys in the ITC convention, the safety net of the ITC migration (#121, #137). Captured by audit/itc-baseline/capture.run.ts (npm run audit:itc-baseline) from the revision below; regenerate only by re-capture, never edit. Numbers rounded to 12 decimals.';
+  'Behavioural pins (fixture class (c), CLAUDE.md): the output of symcrys in the ITC convention, the safety net of the ITC migration (#121, #137). Captured by audit/itc-baseline/capture.run.ts (npm run audit:itc-baseline) from the revision below; regenerate only by re-capture, never edit. One pin per line: what was asked (id) and the answer or the error (value); numbers rounded to 12 decimals.';
 
-/** Writes a pin file: the header, then each section, an array with one entry per line. */
-function write(path: string, revision: string, data: Record<string, unknown>): void {
-  const sections = Object.entries(normalised(data) as Record<string, unknown>).map(([k, v]) =>
-    Array.isArray(v)
-      ? `  ${JSON.stringify(k)}: [\n${v.map((x) => `    ${JSON.stringify(x)}`).join(',\n')}\n  ]`
-      : `  ${JSON.stringify(k)}: ${JSON.stringify(v)}`,
-  );
+/** Writes a pin file: the header, then the pins, one `{ id, value }` per line. */
+function write(path: string, revision: string, pins: readonly Pin[]): void {
   const head = [`  "note": ${JSON.stringify(NOTE)}`, `  "revision": ${JSON.stringify(revision)}`];
-  writeFileSync(path, `{\n${[...head, ...sections].join(',\n')}\n}\n`);
+  const body = `  "pins": [\n${pins.map((p) => `    ${JSON.stringify(p)}`).join(',\n')}\n  ]`;
+  writeFileSync(path, `{\n${[...head, body].join(',\n')}\n}\n`);
 }
 
 it('captures the ITC baseline pins', () => {
