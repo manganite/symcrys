@@ -39,6 +39,7 @@ __all__ = [
     "orbit",
     "plane_group",
     "point_group",
+    "settings",
     "site_symmetry",
     "symbol",
     "symmetry_elements",
@@ -71,7 +72,10 @@ def _operation(op: dict[str, Any]) -> Operation:
 
 
 def _point(point: ArrayLike) -> list[float]:
-    return [float(v) for v in np.asarray(point, dtype=np.float64).reshape(-1)]
+    p = np.asarray(point, dtype=np.float64)
+    if p.shape != (2,):
+        raise SymcrysError(f"A point of the plane has two coordinates, not an array of shape {p.shape}", "RangeError")
+    return [float(v) for v in p]
 
 
 # --- groups -------------------------------------------------------------------------------------
@@ -95,6 +99,13 @@ def point_group(key: str) -> dict[str, Any]:
     return dict(_call("pointGroup", key))
 
 
+def settings(key: str) -> list[dict[str, Any]]:
+    """The settings of a plane point group: two for ``3m`` (``3m1``, the default, and ``31m``), one
+    for the others. Raises SymcrysError for an unknown key.
+    """
+    return [dict(s) for s in _call("settings", key)]
+
+
 def symbol(key: str, *, setting: Optional[int] = None) -> str:
     """The symbol of a plane point group in a setting: ``'3m1'`` or ``'31m'`` for ``3m``, otherwise
     the key.
@@ -102,8 +113,8 @@ def symbol(key: str, *, setting: Optional[int] = None) -> str:
     Parameters
     ----------
     setting : keyword-only, optional
-        1-based setting: for ``3m`` 1 is ``3m1`` (default) and 2 is ``31m``; the other point groups
-        and the plane groups have one.
+        1-based setting: for the point group ``3m`` 1 is ``3m1`` (default) and 2 is ``31m``; the
+        other point groups have one, and a plane group takes only 1.
     """
     return str(_call("symbol", key, _shared.options(setting=setting)))
 
@@ -119,8 +130,8 @@ def operations(key: str, *, setting: Optional[int] = None) -> list[Operation]:
     Parameters
     ----------
     setting : keyword-only, optional
-        1-based setting: for ``3m`` 1 is ``3m1`` (default) and 2 is ``31m``; the other point groups
-        and the plane groups have one.
+        1-based setting: for the point group ``3m`` 1 is ``3m1`` (default) and 2 is ``31m``; the
+        other point groups have one, and a plane group takes only 1.
 
     Returns
     -------
@@ -139,8 +150,8 @@ def generators(key: str, *, setting: Optional[int] = None) -> list[Operation]:
     Parameters
     ----------
     setting : keyword-only, optional
-        1-based setting: for ``3m`` 1 is ``3m1`` (default) and 2 is ``31m``; the other point groups
-        and the plane groups have one.
+        1-based setting: for the point group ``3m`` 1 is ``3m1`` (default) and 2 is ``31m``; the
+        other point groups have one, and a plane group takes only 1.
 
     Returns
     -------
@@ -158,8 +169,8 @@ def describe_operations(key: str, *, setting: Optional[int] = None) -> list[dict
     Parameters
     ----------
     setting : keyword-only, optional
-        1-based setting: for ``3m`` 1 is ``3m1`` (default) and 2 is ``31m``; the other point groups
-        and the plane groups have one.
+        1-based setting: for the point group ``3m`` 1 is ``3m1`` (default) and 2 is ``31m``; the
+        other point groups have one, and a plane group takes only 1.
 
     Returns
     -------
@@ -215,9 +226,9 @@ def site_symmetry(key: str, point: ArrayLike, *, tolerance: Optional[float] = No
 
 
 def wyckoff_position_of(key: str, point: ArrayLike, *, tolerance: Optional[float] = None) -> dict[str, Any]:
-    """The Wyckoff position of a point (lattice basis) under a plane group, as ITA prints it: the
-    printed position of the point's multiplicity whose coordinates, with the centring, reach the
-    point set onto its site symmetry. Raises SymcrysError as ``site_symmetry``.
+    """The Wyckoff position of a point (lattice basis) under a plane group, as ``wyckoff_positions``
+    gives it: the printed position of the point's multiplicity whose coordinates, with the centring,
+    reach the point set onto its site symmetry. Raises SymcrysError as ``site_symmetry``.
 
     Parameters
     ----------

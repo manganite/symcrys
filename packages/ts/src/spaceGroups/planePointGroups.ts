@@ -31,6 +31,17 @@ const SOURCE: Record<PlanePointGroupKey, readonly string[]> = {
   '6mm': ['p6mm'],
 };
 
+/** The point group of a plane group and its setting: the key under which the plane group's symbol appears in `SOURCE`. */
+export function planePointGroupOf(groupSymbol: string): { key: PlanePointGroupKey; setting: number } {
+  for (const key of PLANE_POINT_GROUP_KEYS) {
+    const i = SOURCE[key].indexOf(groupSymbol);
+    if (i >= 0) return { key, setting: i + 1 };
+  }
+  // A plane group that is not symmorphic has the setting of the symmorphic group of its point group.
+  const entry = planeGroupEntry(groupSymbol);
+  return { key: entry.pointGroup as PlanePointGroupKey, setting: 1 };
+}
+
 /** True if `key` is the key of a plane point group. */
 export function isPlanePointGroupKey(key: unknown): key is PlanePointGroupKey {
   return typeof key === 'string' && (PLANE_POINT_GROUP_KEYS as readonly string[]).includes(key);

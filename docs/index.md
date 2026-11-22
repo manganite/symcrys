@@ -1,17 +1,18 @@
-# symcrys: crystallographic point groups and tensors
+# symcrys: crystallographic point groups, plane groups and tensors
 
 Crystallographic symmetry calculations: the 32 crystal classes and the 122 magnetic point groups,
 with their settings, symbols, symmetry elements, site symmetry, Wyckoff positions and crystal forms,
-and the forms of the property tensors (rank 0 to 4) they allow. The results are checked against print, the
+and the forms of the property tensors (rank 0 to 4) they allow; the 17 plane groups with their
+operations, Wyckoff positions, asymmetric unit and symmetry elements in the cell. The results are checked against print, the
 _International Tables for Crystallography_ (ITC) and Birss, _Symmetry and Magnetism_ (1966), and,
 where print leaves a choice open, against birss-app.
 
 One implementation, two packages of the same version:
 
-| Language                | Install               | Import                               |
-| ----------------------- | --------------------- | ------------------------------------ |
-| TypeScript / JavaScript | `npm install symcrys` | `symcrys`, `symcrys/magnetic`        |
-| Python ≥ 3.10           | `pip install symcrys` | `import symcrys`, `symcrys.magnetic` |
+| Language                | Install               | Import                                                |
+| ----------------------- | --------------------- | ----------------------------------------------------- |
+| TypeScript / JavaScript | `npm install symcrys` | `symcrys`, `symcrys/magnetic`, `symcrys/plane`        |
+| Python ≥ 3.10           | `pip install symcrys` | `import symcrys`, `symcrys.magnetic`, `symcrys.plane` |
 
 The TypeScript library has no dependencies and runs unbundled in browsers and in Node. The Python
 package runs the same library in an embedded JavaScript engine, so the results agree; names follow a

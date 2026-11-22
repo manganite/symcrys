@@ -6,10 +6,10 @@
 // NumPy arrays) is added from packages/python/docstrings.json, the only hand-written part.
 //
 // Reads TypeDoc's JSON output (build/typedoc.json, `npm run docs:json`). Rewrites the docstring of
-// every function and documented constant in symcrys/__init__.py (crystallographic API, index.ts)
-// symcrys/magnetic.py (magnetic API, magnetic.ts) and symcrys/plane.py (plane API, plane.ts). With --check it changes nothing and fails
-// if a docstring is missing or stale, or if a TSDoc comment converts to text that still holds a
-// TypeScript name.
+// every function and documented constant in symcrys/__init__.py (crystallographic API, index.ts),
+// symcrys/magnetic.py (magnetic API, magnetic.ts) and symcrys/plane.py (plane API, plane.ts).
+// With --check it changes nothing and fails if a docstring is missing or stale, or if a TSDoc
+// comment converts to text that still holds a TypeScript name.
 //
 //   node scripts/python-docstrings.mjs [--check]
 

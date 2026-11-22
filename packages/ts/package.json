@@ -1,12 +1,13 @@
 {
   "name": "symcrys",
   "version": "0.8.1",
-  "description": "Crystallographic symmetry calculations: point groups (crystallographic and magnetic), their settings, symbols and properties, and property tensors. TypeScript library without dependencies.",
+  "description": "Crystallographic symmetry calculations: point groups (crystallographic and magnetic) and plane groups, their settings, symbols and properties, and property tensors. TypeScript library without dependencies.",
   "keywords": [
     "crystallography",
     "symmetry",
     "point-groups",
     "magnetic-point-groups",
+    "plane-groups",
     "tensors"
   ],
   "author": "Thomas Lottermoser",

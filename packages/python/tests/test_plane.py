@@ -26,6 +26,9 @@ def test_keys_and_module() -> None:
     assert len(plane.PLANE_GROUP_KEYS) == 17 and len(plane.POINT_GROUP_KEYS) == 10
     assert plane.plane_group("p31m")["point_group_setting"] == 2
     assert plane.symbol("3m", setting=2) == "31m"
+    assert plane.point_group("3m") == {"key": "3m", "crystal_system": "hexagonal", "order": 6}
+    assert [s["symbol"] for s in plane.settings("3m")] == ["3m1", "31m"]
+    assert plane.plane_group("c2mm")["crystal_system"] == "rectangular"
 
 
 def test_numpy_types() -> None:
@@ -53,6 +56,8 @@ def test_errors() -> None:
         plane.site_symmetry("4mm", [0, 0])
     with pytest.raises(symcrys.SymcrysError):
         plane.orbit("p2", [0.1, 0.2], tolerance=0.5)
+    with pytest.raises(symcrys.SymcrysError, match="two coordinates"):
+        plane.site_symmetry("p2", [[0.1, 0.2]])
 
 
 @pytest.mark.parametrize("text", sections(), ids=lambda t: t.split(",")[0])
@@ -68,7 +73,9 @@ def test_print(text: str) -> None:
         if "x" in first or "y" in first:
             continue
         point = [frac(c) for c in first.split(",")]
-        assert plane.wyckoff_position_of(symbol, point) == {"letter": letter, "multiplicity": int(m), "site_symmetry": site}
+        assert plane.wyckoff_position_of(symbol, point) == {
+            "letter": letter, "multiplicity": int(m), "site_symmetry": site, "coordinates": coords.split("; ")
+        }  # fmt: skip
     vertices = re.search(r"^Vertices: (.+?)\s*$", text, re.M)
     if vertices:
         printed = [[frac(c) for c in v.split(",")] for v in vertices.group(1).split("; ")]

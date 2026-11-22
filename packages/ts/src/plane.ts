@@ -24,6 +24,7 @@ import {
   PLANE_POINT_GROUP_KEYS,
   isPlanePointGroupKey,
   planePointGroupGenerators,
+  planePointGroupOf,
   planePointGroupOperations,
   planePointGroupSettingCount,
   planePointGroupSymbol,
@@ -60,14 +61,14 @@ export type PlaneGroupKey =
 export type PointGroupKey = PlanePointGroupKey;
 
 /** The short symbols of the 17 plane groups, in ITA's order (plane group n at index n − 1). */
-export const PLANE_GROUP_KEYS: readonly PlaneGroupKey[] = Object.freeze(GROUP_KEYS as PlaneGroupKey[]);
+export const PLANE_GROUP_KEYS: readonly PlaneGroupKey[] = Object.freeze([...GROUP_KEYS] as PlaneGroupKey[]);
 
 /** The keys of the 10 plane point groups, in the order of ITA Table 3.2.1.1. */
 export const POINT_GROUP_KEYS: readonly PointGroupKey[] = Object.freeze([...PLANE_POINT_GROUP_KEYS]);
 
 /** Options that choose the setting of a plane point group. */
 export interface SettingOptions {
-  /** 1-based setting: for `3m` 1 is `3m1` (default) and 2 is `31m`; the other point groups and the plane groups have one. */
+  /** 1-based setting: for the point group `3m` 1 is `3m1` (default) and 2 is `31m`; the other point groups have one, and a plane group takes only 1. */
   readonly setting?: number;
 }
 
@@ -101,7 +102,7 @@ export interface PlaneGroup {
   /** The setting of the point group: 2 for `p31m`, otherwise 1. */
   readonly pointGroupSetting: number;
   /** The crystal system. */
-  readonly system: PlaneSystem;
+  readonly crystalSystem: PlaneSystem;
   /** The centring translations besides (0, 0): `[[0.5, 0.5]]` for `cm` and `c2mm`, otherwise none. */
   readonly centring: readonly (readonly number[])[];
   /** The block "Origin" as ITA prints it, e.g. `'at 2mm'`. */
@@ -115,11 +116,19 @@ export interface PointGroup {
   /** The key, e.g. `'2mm'`. */
   readonly key: PointGroupKey;
   /** The crystal system. */
-  readonly system: PlaneSystem;
+  readonly crystalSystem: PlaneSystem;
   /** The order of the group. */
   readonly order: number;
-  /** The number of settings: 2 for `3m`, otherwise 1. */
-  readonly settings: number;
+}
+
+/** A setting of a plane point group. */
+export interface Setting {
+  /** 1-based. */
+  readonly index: number;
+  /** Its symbol: `'3m1'` or `'31m'` for `3m`, otherwise the key. */
+  readonly symbol: string;
+  /** True for the default setting (setting 1). */
+  readonly default: boolean;
 }
 
 /** What an operation is, geometrically, as ITA describes it under "Symmetry operations". */
@@ -167,16 +176,6 @@ export interface SiteSymmetry {
   readonly general: boolean;
 }
 
-/** The Wyckoff position of a point, as ITA prints it. */
-export interface PointWyckoffPosition {
-  /** The Wyckoff letter. */
-  readonly letter: string;
-  /** The multiplicity. */
-  readonly multiplicity: number;
-  /** The oriented site-symmetry symbol. */
-  readonly siteSymmetry: string;
-}
-
 /** The asymmetric unit of a plane group, a convex polygon in the lattice basis. */
 export interface AsymmetricUnit {
   /** Its vertices, counter-clockwise (a towards b), starting at the lowest (smallest y, then x). */
@@ -221,16 +220,26 @@ function isPlaneGroupKey(key: unknown): key is PlaneGroupKey {
   return typeof key === 'string' && (GROUP_KEYS as readonly string[]).includes(key);
 }
 
-function unknownKey(key: unknown): never {
-  throw new RangeError(`Unknown plane group or plane point group: ${JSON.stringify(key)}`);
+function unknownKey(key: unknown, what = 'plane group or plane point group'): never {
+  throw new RangeError(`Unknown ${what}: ${JSON.stringify(key)}`);
 }
 
 /** The plane group of a key; throws for a point group or an unknown key. */
 function groupKey(key: unknown, what: string): PlaneGroupKey {
   if (isPlaneGroupKey(key)) return key;
-  if (isPlanePointGroupKey(key))
+  if (isPlanePointGroupKey(key)) {
     throw new RangeError(`${what} takes the key of a plane group, not of the point group ${key}`);
-  return unknownKey(key);
+  }
+  return unknownKey(key, 'plane group');
+}
+
+/** The key of a plane point group; throws for a plane group or an unknown key. */
+function pointKey(key: unknown, what: string): PointGroupKey {
+  if (isPlanePointGroupKey(key)) return key;
+  if (isPlaneGroupKey(key)) {
+    throw new RangeError(`${what} takes the key of a plane point group; ${key} is a plane group (planeGroup)`);
+  }
+  return unknownKey(key, 'plane point group');
 }
 
 function settingOf(options: SettingOptions | undefined): number | undefined {
@@ -263,13 +272,14 @@ const plain = (op: ExactOperation): PlaneOperation => {
 /** The plane group with this key (short symbol). Throws a RangeError for an unknown key. */
 export function planeGroup(key: PlaneGroupKey): PlaneGroup {
   const entry = planeGroupEntry(groupKey(key, 'planeGroup'));
+  const point = planePointGroupOf(entry.symbol);
   return Object.freeze({
     key: entry.symbol as PlaneGroupKey,
     number: entry.number,
     fullSymbol: entry.fullSymbol,
-    pointGroup: entry.pointGroup as PointGroupKey,
-    pointGroupSetting: entry.symbol === 'p31m' ? 2 : 1,
-    system: entry.system,
+    pointGroup: point.key,
+    pointGroupSetting: point.setting,
+    crystalSystem: entry.system,
     centring: Object.freeze(
       entry.centring.map((t) => Object.freeze(t.split(',').map((c) => toNumber(parseRational(c))))),
     ),
@@ -280,27 +290,26 @@ export function planeGroup(key: PlaneGroupKey): PlaneGroup {
 
 /** The plane point group with this key. Throws a RangeError for an unknown key. */
 export function pointGroup(key: PointGroupKey): PointGroup {
-  if (!isPlanePointGroupKey(key)) {
-    if (isPlaneGroupKey(key))
-      throw new RangeError(`pointGroup takes the key of a plane point group; ${key} is a plane group (planeGroup)`);
-    unknownKey(key);
-  }
-  return Object.freeze({
-    key,
-    system: planePointGroupSystem(key),
-    order: planePointGroupOperations(key).length,
-    settings: planePointGroupSettingCount(key),
-  });
+  const k = pointKey(key, 'pointGroup');
+  return Object.freeze({ key: k, crystalSystem: planePointGroupSystem(k), order: planePointGroupOperations(k).length });
+}
+
+/**
+ * The settings of a plane point group: two for `3m` (`3m1`, the default, and `31m`), one for the
+ * others. Throws a RangeError for an unknown key.
+ */
+export function settings(key: PointGroupKey): readonly Setting[] {
+  const k = pointKey(key, 'settings');
+  return Object.freeze(
+    Array.from({ length: planePointGroupSettingCount(k) }, (_, i) =>
+      Object.freeze({ index: i + 1, symbol: planePointGroupSymbol(k, i + 1), default: i === 0 }),
+    ),
+  );
 }
 
 /** The symbol of a plane point group in a setting: `'3m1'` or `'31m'` for `3m`, otherwise the key. */
 export function symbol(key: PointGroupKey, options?: SettingOptions): string {
-  if (!isPlanePointGroupKey(key)) {
-    if (isPlaneGroupKey(key))
-      throw new RangeError(`symbol takes the key of a plane point group; the symbols of ${key} are in planeGroup`);
-    unknownKey(key);
-  }
-  return planePointGroupSymbol(key, settingOf(options));
+  return planePointGroupSymbol(pointKey(key, 'symbol'), settingOf(options));
 }
 
 /**
@@ -380,16 +389,20 @@ export function siteSymmetry(key: PlaneGroupKey, point: readonly number[], optio
 }
 
 /**
- * The Wyckoff position of a point (lattice basis) under a plane group, as ITA prints it: the
- * printed position of the point's multiplicity whose coordinates, with the centring, reach the
- * point set onto its site symmetry. Throws a RangeError as `siteSymmetry`.
+ * The Wyckoff position of a point (lattice basis) under a plane group, as `wyckoffPositions` gives
+ * it: the printed position of the point's multiplicity whose coordinates, with the centring, reach
+ * the point set onto its site symmetry. Throws a RangeError as `siteSymmetry`.
  */
 export function wyckoffPositionOf(
   key: PlaneGroupKey,
   point: readonly number[],
   options?: PointOptions,
-): PointWyckoffPosition {
-  return Object.freeze({ ...planeWyckoffPositionOf(groupKey(key, 'wyckoffPositionOf'), point, options) });
+): WyckoffPosition {
+  const k = groupKey(key, 'wyckoffPositionOf');
+  const { letter } = planeWyckoffPositionOf(k, point, options);
+  const found = wyckoffPositions(k).find((w) => w.letter === letter);
+  if (!found) throw new Error(`No Wyckoff position ${letter} in ${k}`);
+  return found;
 }
 
 /**

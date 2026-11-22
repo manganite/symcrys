@@ -10,14 +10,16 @@ All notable changes to symcrys are recorded here. The format follows
 
 - A third entry point, `symcrys/plane` (Python: `symcrys.plane`), for the 17 plane groups and the
   10 plane point groups, in the lattice basis, after ITA (6th ed., 2016) Chapter 2.2 and Table
-  3.2.1.1 (#31): `PLANE_GROUP_KEYS`, `POINT_GROUP_KEYS`, `planeGroup`, `pointGroup`, `symbol`,
+  3.2.1.1 (#31): `PLANE_GROUP_KEYS`, `POINT_GROUP_KEYS`, `planeGroup`, `pointGroup`, `settings`, `symbol`,
   `operations` and `generators` (`{ matrix, translation }`, matrices with integer entries,
   translations as numbers), `describeOperations` (kind, order, sense, centre or line, glide vector),
   `wyckoffPositions`, `siteSymmetry`, `wyckoffPositionOf` and `orbit` of a point (with
   `tolerance`), `asymmetricUnit` (vertices and one inequality a·x + b·y ≤ c per edge) and
   `symmetryElements` (rotation centres with their order, mirror and glide lines with their segment
-  in the cell). `3m` has the settings `3m1` and `31m`. Everything is tested against the
-  transcription of the printed pages (`references/itc/vol-a-2016-plane-groups.md`).
+  in the cell). `3m` has the settings `3m1` and `31m`. The plane groups are tested against the
+  transcription of the printed pages (`references/itc/vol-a-2016-plane-groups.md`); the plane point
+  groups are the linear parts of their symmorphic plane groups, checked against those of every
+  plane group.
 
 ## [0.8.1] - 2026-11-22
 

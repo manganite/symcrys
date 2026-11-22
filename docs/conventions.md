@@ -11,9 +11,10 @@ conventions, operations in the lattice basis and orbits of faces and directions,
 property tensors of rank 0 to 4. For the crystal classes also the Wyckoff positions of directions
 and the crystal forms.
 
-The library has two entry points with the same function names: `symcrys`, the crystallographic API
-for the 32 crystal classes, and `symcrys/magnetic`, the magnetic API for all 122 groups ("Two entry
-points"). Where a section below speaks of time reversal, of the types or of a magnetic group, it
+The library has two entry points for the point groups, with the same function names: `symcrys`,
+the crystallographic API for the 32 crystal classes, and `symcrys/magnetic`, the magnetic API for
+all 122 groups ("Two entry points"). A third, `symcrys/plane`, holds the 17 plane groups and the 10
+plane point groups ("Plane groups"). Where a section below speaks of time reversal, of the types or of a magnetic group, it
 describes the magnetic API.
 
 ## Conventions
@@ -918,7 +919,8 @@ Table 3.2.1.1 (p. 720) for the point groups.
 in the order of Table 3.2.1.1. The two sets do not overlap: a plane group's symbol begins with its
 lattice letter. `3m` has two settings, `3m1` (setting 1, the default) and `31m` (setting 2), as ITA
 describes the trigonal groups with hexagonal axes in two orientations and says so for the plane
-point group (Ch. 3.2, p. 721, item (d)); the other groups have one.
+point group (Ch. 3.2, p. 721, item (d)); the other groups have one. `settings(key)` lists them,
+`symbol(key, { setting })` gives the symbol of one.
 
 **Lattice basis.** Everything is in the basis a, b of the conventional cell: an operation is
 `{ matrix, translation }` with x ↦ W·x + w, W a 2 × 2 matrix with integer entries; a point, a vertex

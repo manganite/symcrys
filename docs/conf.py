@@ -86,8 +86,8 @@ html_baseurl = "https://manganite.github.io/symcrys/"
 # One description per page (meta description and og:description, at most about 160 characters);
 # the build warns about a page without one.
 symcrys_page_descriptions = {
-    "index": "Crystallographic point groups in TypeScript and Python: 32 crystal classes, 122 magnetic "
-    "point groups, Wyckoff positions, crystal forms and tensor forms.",
+    "index": "Crystallographic point and plane groups in TypeScript and Python: 32 crystal classes, "
+    "122 magnetic point groups, 17 plane groups, Wyckoff positions, crystal forms and tensor forms.",
     "getting-started": "Install symcrys from npm or PyPI and take the first steps: point groups, settings, "
     "symbols, operations and the form of a property tensor.",
     "readings": "One key, two readings: 32 is a crystal class in symcrys and a white magnetic point "

@@ -42,8 +42,14 @@ describe('plane point groups', () => {
     expect(plane.symbol('3m', { setting: 2 })).toBe('31m');
     expect(plane.symbol('2mm')).toBe('2mm');
     expect(plane.symbol('m')).toBe('m');
-    expect(plane.pointGroup('3m')).toEqual({ key: '3m', system: 'hexagonal', order: 6, settings: 2 });
-    expect(plane.pointGroup('4mm')).toEqual({ key: '4mm', system: 'square', order: 8, settings: 1 });
+    expect(plane.pointGroup('3m')).toEqual({ key: '3m', crystalSystem: 'hexagonal', order: 6 });
+    expect(plane.pointGroup('4mm')).toEqual({ key: '4mm', crystalSystem: 'square', order: 8 });
+    expect(plane.settings('3m')).toEqual([
+      { index: 1, symbol: '3m1', default: true },
+      { index: 2, symbol: '31m', default: false },
+    ]);
+    expect(plane.settings('m')).toEqual([{ index: 1, symbol: 'm', default: true }]);
+    expect(() => plane.settings('p2' as plane.PointGroupKey)).toThrow(/plane group \(planeGroup\)/);
     expect(plane.planeGroup('p31m').pointGroupSetting).toBe(2);
     expect(plane.planeGroup('p3m1').pointGroupSetting).toBe(1);
     expect(() => plane.symbol('4mm', { setting: 2 })).toThrow(RangeError);
@@ -53,7 +59,7 @@ describe('plane point groups', () => {
 
   it('generators of a point group generate it', () => {
     for (const k of plane.POINT_GROUP_KEYS) {
-      for (let s = 1; s <= plane.pointGroup(k).settings; s++) {
+      for (let s = 1; s <= plane.settings(k).length; s++) {
         const group = new Set([
           key([
             [1, 0],
@@ -89,7 +95,7 @@ describe('plain numbers at the API', () => {
       fullSymbol: 'c2mm',
       pointGroup: '2mm',
       pointGroupSetting: 1,
-      system: 'rectangular',
+      crystalSystem: 'rectangular',
       centring: [[0.5, 0.5]],
       origin: 'at 2mm',
       order: 8,
@@ -142,7 +148,9 @@ describe('plain numbers at the API', () => {
       letter: 'b',
       multiplicity: 2,
       siteSymmetry: '3m.',
+      coordinates: ['1/3,2/3', '2/3,1/3'],
     });
+    expect(plane.wyckoffPositionOf('cm', [0.2, 0.3])).toEqual(plane.wyckoffPositions('cm')[0]);
     const site = plane.siteSymmetry('p2mm', [0.5, 0.2]);
     expect(site.multiplicity).toBe(2);
     expect(site.general).toBe(false);
@@ -166,6 +174,8 @@ describe('errors', () => {
     for (const f of [plane.operations, plane.generators, plane.describeOperations]) {
       expect(() => f('p7' as plane.PlaneGroupKey)).toThrow(/Unknown plane group or plane point group: "p7"/);
     }
+    expect(() => plane.orbit('p7' as plane.PlaneGroupKey, [0, 0])).toThrow(/Unknown plane group: "p7"/);
+    expect(() => plane.pointGroup('7' as plane.PointGroupKey)).toThrow(/Unknown plane point group: "7"/);
     expect(() => plane.planeGroup(9 as unknown as plane.PlaneGroupKey)).toThrow(RangeError);
     expect(() => plane.planeGroup('2mm' as plane.PlaneGroupKey)).toThrow(/plane group, not of the point group 2mm/);
     expect(() => plane.pointGroup('p2' as plane.PointGroupKey)).toThrow(/planeGroup/);

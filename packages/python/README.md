@@ -3,7 +3,8 @@
 Crystallographic symmetry calculations: the 32 crystal classes and the 122 magnetic point groups
 with their settings (ITC and Birss conventions), symbols, symmetry elements, site symmetry and the
 forms of property tensors of rank 0 to 4 they allow, and for the crystal classes Wyckoff positions
-and crystal forms, checked against print (ITC, Birss, Yariv).
+and crystal forms; the 17 plane groups with their operations, Wyckoff positions, asymmetric unit
+and symmetry elements; checked against print (ITC, Birss, Yariv).
 
 This package is the TypeScript library [symcrys](https://github.com/manganite/symcrys) of the same
 version, run in an embedded JavaScript engine ([quickjs-ng](https://pypi.org/project/quickjs-ng/)).
@@ -26,7 +27,8 @@ magnetic.allowed_properties("m'm'2")           # six of the seven names, 'ferrom
 ```
 
 `symcrys` is the crystallographic API (the 32 crystal classes, without time reversal),
-`symcrys.magnetic` the magnetic API (the 122 magnetic point groups), under the same function names.
+`symcrys.magnetic` the magnetic API (the 122 magnetic point groups), under the same function names;
+`symcrys.plane` the plane groups and plane point groups, in the lattice basis.
 
 **Documentation:** [manganite.github.io/symcrys](https://manganite.github.io/symcrys/): getting
 started, the two readings of a key, the conventions and their print sources, tensors and named

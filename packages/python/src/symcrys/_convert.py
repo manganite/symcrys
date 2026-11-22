@@ -6,6 +6,9 @@
   ``float64`` under the keys in ``FLOAT_KEYS`` (matrices, Cartesian vectors, tensor bases and
   relations), otherwise ``int64`` when every entry is an integer (index lists, Miller indices,
   lattice directions) and ``float64`` if not. Other values stay plain Python values.
+- ``symcrys.plane`` does not rely on the rule above for its arrays: it converts each field itself
+  (coordinates and translations float64 even when their entries are integers, the direction of a
+  line int64, although ``direction`` is a float key here, a Cartesian vector in the point groups).
 - Arguments: NumPy arrays and scalars become lists and numbers, tuples lists, and the keys of
   dictionaries are turned into camelCase.
 """

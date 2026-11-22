@@ -22,7 +22,7 @@ def test_every_export_of_the_library_has_its_python_name() -> None:
     for module, prefix in ((symcrys, ""), (magnetic, "magnetic."), (plane, "plane.")):
         own = [(name[len(prefix) :], kind) for name, kind in exported if (name.startswith(prefix) if prefix else "." not in name)]
         expected = {name if kind == "value" else snake(name) for name, kind in own}
-        assert len(expected) > 12
+        assert len(expected) > (12 if module is plane else 20)
         extra = (
             TYPES | {"magnetic", "plane"}
             if module is symcrys

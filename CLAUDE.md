@@ -185,7 +185,8 @@ Carried over from birss-app, where the calculations come from.
   function names and object keys camelCase → snake_case; an options object becomes keyword-only
   arguments; arrays of numbers become NumPy arrays (`float64` for matrices, Cartesian vectors,
   tensor bases and relations; `int64` for index lists, Miller indices and lattice directions);
-  errors of the library raise `SymcrysError`, a `ValueError`. A new export of `src/index.ts` gets
+  errors of the library raise `SymcrysError`, a `ValueError`. `symcrys.plane` converts its arrays
+  field by field instead of by key ("The API of `symcrys/plane`" below). A new export of `src/index.ts` gets
   its Python function in `symcrys`, one of `src/magnetic.ts` in `symcrys.magnetic`, one of
   `src/plane.ts` in `symcrys.plane`, in the same PR; a test fails until it has one.
 - **One description of every export: its TSDoc comment** (maintainer, 2026-11-20, #29). The
@@ -765,7 +766,9 @@ while implementing gets its own note here.
   point, vertex or segment float64 even where its entries are integers; a direction of a line int64,
   although `direction` is a float key of the fixed rule, which means a Cartesian vector there); a
   Wyckoff position gives all printed coordinates of its (0,0)+ set (`coordinates`, a list), since ITA
-  prints them all for the plane groups.
+  prints them all for the plane groups; fields and functions as in `symcrys` where the notion is the
+  same (`crystalSystem`, `settings(key)` as a list of settings with `index`, `symbol`, `default`,
+  `wyckoffPositionOf` giving the same record as `wyckoffPositions`; review of PR #82).
 - **Print anchor: ITA 6th edition (2016), Chapter 2.2** (#31, asked together with the four
   questions): the 6th edition is the reference of symcrys for what it holds (`docs/conventions.md`,
   "Sources"); for the crystal classes only the order of the operations, the selected generators and the
