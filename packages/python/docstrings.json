@@ -141,7 +141,7 @@
     },
     "describe_operations_of": {
       "type": "list of dict",
-      "doc": "As ``describe_operations``: ``translation``, ``location`` and ``glide`` (where present) float64 arrays of shape (2,), ``direction`` and ``normal`` int64 arrays of shape (2,). Each operation is a mapping with ``matrix`` (shape (2, 2)) and ``translation`` (shape (2,)), as ``operations`` gives them."
+      "doc": "As ``describe_operations``: ``translation``, ``location`` and ``glide`` (where present) float64 arrays of shape (2,), ``direction`` and ``normal`` int64 arrays of shape (2,)."
     },
     "site_symmetry": {
       "type": "dict",

@@ -70,6 +70,8 @@ def test_errors() -> None:
         plane.site_symmetry("p2", [[0.1, 0.2]])
     with pytest.raises(symcrys.SymcrysError, match="denominator"):
         plane.describe_operations_of([{"matrix": np.eye(2), "translation": [0.1234, 0]}])
+    with pytest.raises(symcrys.SymcrysError):
+        plane.describe_operations_of([{"matrix": np.eye(2)}])
 
 
 @pytest.mark.parametrize("text", sections(), ids=lambda t: t.split(",")[0])

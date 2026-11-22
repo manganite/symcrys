@@ -305,7 +305,18 @@ function fractionOf(value: unknown): Rational {
       if (Math.abs(value * d - n) < READ_TOLERANCE * d) return rational(n, d);
     }
   }
-  throw new RangeError(`Not a translation with a denominator of at most ${MAX_DENOMINATOR}: ${String(value)}`);
+  throw new RangeError(
+    `Not within 10⁻⁹ of a translation with a denominator of at most ${MAX_DENOMINATOR}: ${shown(value)}`,
+  );
+}
+
+/** A value for an error message; never throws (BigInt, circular objects). */
+function shown(value: unknown): string {
+  try {
+    return JSON.stringify(value) ?? String(value);
+  } catch {
+    return String(value);
+  }
 }
 
 /** An operation from a caller as an exact operation; throws a RangeError unless it has the shape of a plane operation. */
@@ -315,15 +326,14 @@ function exactOf(op: unknown): ExactOperation {
   const t = o?.translation;
   const isRow = (row: unknown): row is readonly number[] => Array.isArray(row) && row.length === 2;
   if (!Array.isArray(m) || m.length !== 2 || !m.every(isRow) || !Array.isArray(t) || t.length !== 2) {
-    throw new RangeError(`Not an operation of the plane { matrix (2 × 2), translation (2) }: ${JSON.stringify(op)}`);
+    throw new RangeError(`Not an operation of the plane { matrix (2 × 2), translation (2) }: ${shown(op)}`);
   }
   const matrix = m.map((row) =>
     row.map((v) => {
-      const n = Math.round(v);
-      if (!(typeof v === 'number' && Math.abs(v - n) < READ_TOLERANCE)) {
-        throw new RangeError(`The matrix of a plane operation has integer entries, not ${JSON.stringify(m)}`);
+      if (!(typeof v === 'number' && Math.abs(v - Math.round(v)) < READ_TOLERANCE)) {
+        throw new RangeError(`The matrix of a plane operation has integer entries, not ${shown(m)}`);
       }
-      return n + 0;
+      return Math.round(v) + 0;
     }),
   );
   return { matrix, translation: t.map(fractionOf) };
@@ -408,10 +418,12 @@ export function describeOperations(
 /**
  * Any operations of the plane (lattice basis) described geometrically, index for index, as
  * `describeOperations` describes those of a group: for instance a product of operations, an
- * operation shifted by a lattice translation, or the operations of a site symmetry. Each `matrix`
- * must have integer entries and be the linear part of a crystallographic plane point group
- * (determinant ±1, order 1, 2, 3, 4 or 6); each translation is read as the nearest fraction with a
- * denominator of at most 12 (1/3 as 0.333…). Throws a RangeError otherwise.
+ * operation shifted by a lattice translation, or the operations of a site symmetry. Each operation is
+ * `{ matrix, translation }` as `operations` gives it. Each matrix must have integer entries (within
+ * 10⁻⁹) and be the linear part of a crystallographic plane point group (determinant ±1, order 1,
+ * 2, 3, 4 or 6); each translation must lie within 10⁻⁹ of a fraction with a denominator of at most
+ * 12 (1/3 as 0.333…), as the translations of `operations` and their products do. Throws a
+ * RangeError otherwise.
  */
 export function describeOperationsOf(operations: readonly PlaneOperation[]): readonly OperationDescription[] {
   if (!Array.isArray(operations)) {

@@ -273,6 +273,13 @@ describe('describeOperationsOf', () => {
           [0, 1],
         ],
       },
+      {
+        matrix: [
+          [1n, 0],
+          [0, 1],
+        ],
+        translation: [0, 0],
+      },
       null,
     ];
     for (const op of bad) {

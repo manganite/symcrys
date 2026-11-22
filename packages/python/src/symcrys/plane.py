@@ -185,21 +185,20 @@ def describe_operations(key: str, *, setting: Optional[int] = None) -> list[dict
 def describe_operations_of(operations: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
     """Any operations of the plane (lattice basis) described geometrically, index for index, as
     ``describe_operations`` describes those of a group: for instance a product of operations, an
-    operation shifted by a lattice translation, or the operations of a site symmetry. Each
-    ``matrix`` must have integer entries and be the linear part of a crystallographic plane point
-    group (determinant ±1, order 1, 2, 3, 4 or 6); each translation is read as the nearest fraction
-    with a denominator of at most 12 (1/3 as 0.333…). Raises SymcrysError otherwise.
+    operation shifted by a lattice translation, or the operations of a site symmetry. Each operation
+    is ``{ matrix, translation }`` as ``operations`` gives it. Each matrix must have integer entries
+    (within 10⁻⁹) and be the linear part of a crystallographic plane point group (determinant ±1,
+    order 1, 2, 3, 4 or 6); each translation must lie within 10⁻⁹ of a fraction with a denominator
+    of at most 12 (1/3 as 0.333…), as the translations of ``operations`` and their products do.
+    Raises SymcrysError otherwise.
 
     Returns
     -------
     list of dict
         As ``describe_operations``: ``translation``, ``location`` and ``glide`` (where present)
-        float64 arrays of shape (2,), ``direction`` and ``normal`` int64 arrays of shape (2,). Each
-        operation is a mapping with ``matrix`` (shape (2, 2)) and ``translation`` (shape (2,)), as
-        ``operations`` gives them.
+        float64 arrays of shape (2,), ``direction`` and ``normal`` int64 arrays of shape (2,).
     """
-    ops = [{"matrix": np.asarray(op["matrix"]).tolist(), "translation": np.asarray(op["translation"]).tolist()} for op in operations]
-    return [_description(d) for d in _call("describeOperationsOf", ops)]
+    return [_description(d) for d in _call("describeOperationsOf", list(operations))]
 
 
 def _description(d: dict[str, Any]) -> dict[str, Any]:

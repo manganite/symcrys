@@ -950,7 +950,7 @@ normals of a group are the printed symmetry directions at the positions where it
 of `symmetryElements` carry them too (maintainer, 2026-11-22, #84). `describeOperationsOf` describes
 any list of operations of the plane in the same way, such as a product of operations, an operation
 shifted by a lattice translation or the operations of a site symmetry; it reads each translation as
-the nearest fraction with a denominator of at most 12 and refuses a matrix that is not the linear
+a fraction with a denominator of at most 12 (within 10⁻⁹) and refuses a matrix that is not the linear
 part of a plane point group (maintainer, 2026-11-22, #84).
 
 **Points.** `siteSymmetry`, `wyckoffPositionOf` and `orbit` take the key of a plane group and a point
