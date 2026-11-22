@@ -9,10 +9,10 @@
 
 import { describe, expect, it } from 'vitest';
 import { readReference } from '../testUtils/references.js';
-import { parseOperation } from './affine.js';
+import { applyToPoint, compose, parseOperation, translationOperation, type ExactOperation } from './affine.js';
 import { describePlaneOperation, type PlaneOperationDescription } from './describe.js';
 import { PLANE_GROUP_KEYS, planeGroupOperations } from './planeGroups.js';
-import { formatRational, rational, type Rational } from './rational.js';
+import { add, formatRational, rational, scale, type Rational } from './rational.js';
 
 const f = formatRational;
 
@@ -40,9 +40,9 @@ function symbol(d: PlaneOperationDescription): string {
       return `t(${(d.translation ?? []).map(f).join(',')})`;
     case 'rotation':
       return `${d.order}${d.sense ?? ''} ${(d.location ?? []).map(f).join(',')}`;
-    case 'reflection':
+    case 'mirror':
       return `m ${line(d)}`;
-    case 'glide-reflection': {
+    case 'glide': {
       const [gx, gy] = (d.glide ?? []).map(f);
       const letter = gy === '0' && gx === '1/2' ? 'a' : gx === '0' && gy === '1/2' ? 'b' : `g(${gx},${gy})`;
       return `${letter} ${line(d)}`;
@@ -78,13 +78,90 @@ describe('describePlaneOperation against ITA "Symmetry operations"', () => {
   }
 });
 
+const same = (p: readonly Rational[], q: readonly Rational[]) =>
+  p.every((v, k) => v[0] === q[k][0] && v[1] === q[k][1]);
+const shifts = ['0,0', '1,0', '0,-1', '2,3'].map((t) =>
+  translationOperation(t.split(',').map((v) => rational(Number(v)))),
+);
+
+/** Checks a description against the operation by invariants that do not depend on how it was computed. */
+function checkInvariants(op: ExactOperation, d: PlaneOperationDescription): void {
+  const image = (p: readonly Rational[]) => applyToPoint(op, p);
+  if (d.kind === 'rotation') {
+    const c = d.location ?? [];
+    expect(same(image(c), c)).toBe(true); // the centre is fixed
+    if (d.order >= 3) {
+      // '+': the rotation by +360°/n turns a towards b, i.e. W·a has a positive b component.
+      expect(op.matrix[1][0] > 0).toBe(d.sense === '+');
+    }
+  }
+  if (d.kind === 'mirror' || d.kind === 'glide') {
+    const p = d.location ?? [];
+    const g = d.glide ?? [rational(0), rational(0)];
+    // A point of the line goes to itself shifted by the glide vector.
+    expect(same(image(p), [add(p[0], g[0]), add(p[1], g[1])])).toBe(true);
+    // The direction is fixed by W, and the glide vector is parallel to it.
+    const [u, v] = d.direction ?? [0, 0];
+    expect([op.matrix[0][0] * u + op.matrix[0][1] * v, op.matrix[1][0] * u + op.matrix[1][1] * v]).toEqual([u, v]);
+    expect(add(scale(v, g[0]), scale(-u, g[1]))[0]).toBe(0);
+    expect(u > 0 || (u === 0 && v > 0)).toBe(true);
+  }
+}
+
+describe('describePlaneOperation: invariants', () => {
+  for (const key of PLANE_GROUP_KEYS) {
+    it(`${key}: every operation, also shifted by lattice translations`, () => {
+      for (const op of planeGroupOperations(key)) {
+        for (const t of shifts) {
+          const shifted = compose(t, op);
+          checkInvariants(shifted, describePlaneOperation(shifted));
+        }
+      }
+    });
+  }
+});
+
 describe('describePlaneOperation', () => {
-  it('describes a glide reflection with a glide that is a lattice vector as a glide reflection', () => {
-    // m 0,y followed by t(0,1): x' = -x, y' = y + 1, geometrically a glide along the mirror.
-    expect(describePlaneOperation(parseOperation('-x,y+1')).kind).toBe('glide-reflection');
+  it('describes an operation whose glide vector is a lattice vector as a glide', () => {
+    // m 0,y followed by t(0,1): x' = -x, y' = y + 1, geometrically a glide along the mirror line x = 0.
+    expect(describePlaneOperation(parseOperation('-x,y+1'))).toEqual({
+      kind: 'glide',
+      order: 2,
+      location: [rational(0), rational(0)],
+      direction: [0, 1],
+      glide: [rational(0), rational(1)],
+    });
   });
 
-  it('refuses what is no operation of a plane group', () => {
+  it('gives lines along the axes with the shortest direction and a point on x = 0 or y = 0', () => {
+    // m 1/4,y of p2mg: line x = 1/4 along b, met by y = 0 at (1/4, 0).
+    expect(describePlaneOperation(parseOperation('-x+1/2,y'))).toEqual({
+      kind: 'mirror',
+      order: 2,
+      location: [rational(1, 4), rational(0)],
+      direction: [0, 1],
+    });
+    // a x,1/4 of p2gg: line y = 1/4 along a, parallel to y = 0, so its point is on x = 0.
+    expect(describePlaneOperation(parseOperation('x+1/2,-y+1/2'))).toEqual({
+      kind: 'glide',
+      order: 2,
+      location: [rational(0), rational(1, 4)],
+      direction: [1, 0],
+      glide: [rational(1, 2), rational(0)],
+    });
+  });
+
+  it('gives rotation centres unreduced, also away from the origin', () => {
+    // -y,x+1/2: (I − W)p = w with W = 4+ gives p = (−1/4, 1/4); check: W·p + w = (−1/4, −1/4 + 1/2).
+    expect(describePlaneOperation(parseOperation('-y,x+1/2'))).toEqual({
+      kind: 'rotation',
+      order: 4,
+      sense: '+',
+      location: [rational(-1, 4), rational(1, 4)],
+    });
+  });
+
+  it('refuses a linear part of no plane point group', () => {
     expect(() => describePlaneOperation(parseOperation('-x,-y,z'))).toThrow(RangeError);
     expect(() => describePlaneOperation(parseOperation('x+y,y'))).toThrow(RangeError); // a shear, trace 2
     expect(() => describePlaneOperation(parseOperation('-x+y,-y'))).toThrow(RangeError); // trace -2, not of order 2

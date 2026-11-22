@@ -8,24 +8,35 @@
 import { determinant, dimensionOf, trace, type ExactOperation, type IntMatrix } from './affine.js';
 import { ZERO, add, multiply, rational, scale, type Rational } from './rational.js';
 
-/** What an operation of a plane group is. */
-export type PlaneOperationKind = 'identity' | 'translation' | 'rotation' | 'reflection' | 'glide-reflection';
+/**
+ * What an operation of a plane group is: `'mirror'` (a reflection in a line, as `'mirror'` of the
+ * point groups) and `'glide'` (a glide reflection).
+ */
+export type PlaneOperationKind = 'identity' | 'translation' | 'rotation' | 'mirror' | 'glide';
 
 /** One operation of a plane group described geometrically, in the lattice basis. */
 export interface PlaneOperationDescription {
   /** What the operation is. */
   readonly kind: PlaneOperationKind;
-  /** The order n of its linear part: 1 for identity and translation, 2 for a (glide) reflection. */
+  /** The order n of its linear part: 1 for identity and translation, 2 for a mirror or glide. */
   readonly order: number;
   /** For a rotation with n ≥ 3: `'+'` if it turns a towards b, `'-'` otherwise. */
   readonly sense?: '+' | '-';
   /** For a translation: the translation vector. */
   readonly translation?: readonly Rational[];
-  /** For a rotation: its centre. For a (glide) reflection: a point of its line, on y = 0 unless the line is parallel to it, then on x = 0. */
+  /**
+   * For a rotation: its centre. For a mirror or glide: a point of its line, on y = 0 unless the line
+   * is parallel to it, then on x = 0. Not reduced modulo the lattice: the centre of `-y,x+1/2` is
+   * (−1/4, 1/4).
+   */
   readonly location?: readonly Rational[];
-  /** For a (glide) reflection: the direction of its line, the shortest integer vector, first non-zero component positive. */
+  /** For a mirror or glide: the direction of its line, the shortest integer vector, first non-zero component positive. */
   readonly direction?: readonly [number, number];
-  /** For a glide reflection: the glide vector, (w + W·w)/2. */
+  /**
+   * For a glide: the glide vector (w + W·w)/2, not reduced modulo the lattice. An operation whose
+   * glide vector is a non-zero lattice vector is a glide, as it is geometrically, although the
+   * symmetry element of its coset is the mirror line, which ITA lists.
+   */
   readonly glide?: readonly Rational[];
 }
 
@@ -58,7 +69,7 @@ const isIdentity = (m: IntMatrix): boolean => m[0][0] === 1 && m[0][1] === 0 && 
 const ORDER_BY_TRACE: Record<number, number> = { 2: 1, [-2]: 2, [-1]: 3, 0: 4, 1: 6 };
 
 /**
- * Describes an operation of a plane group. Throws unless the operation is two-dimensional with the
+ * Describes an operation of a plane group; the result is frozen. Throws unless the operation is two-dimensional with the
  * linear part of a crystallographic plane point group (determinant ±1, order 1, 2, 3, 4 or 6).
  */
 export function describePlaneOperation(op: ExactOperation): PlaneOperationDescription {
@@ -89,14 +100,14 @@ export function describePlaneOperation(op: ExactOperation): PlaneOperationDescri
       multiply(add(scale(a[1][1], t[0]), scale(-a[0][1], t[1])), inv),
       multiply(add(scale(-a[1][0], t[0]), scale(a[0][0], t[1])), inv),
     ];
-    const description: PlaneOperationDescription = { kind: 'rotation', order: n, location };
+    const description: PlaneOperationDescription = { kind: 'rotation', order: n, location: Object.freeze(location) };
     // The sense: the sign of a × W·a with a = (1, 0), the same in any right-handed basis.
-    return n === 2 ? description : { ...description, sense: w[1][0] > 0 ? '+' : '-' };
+    return Object.freeze(n === 2 ? description : { ...description, sense: w[1][0] > 0 ? '+' : '-' });
   }
   if (det !== -1 || trace(w) !== 0 || !isIdentity(power(w, 2))) {
     throw new RangeError(`Not a crystallographic reflection: ${JSON.stringify(w)}`);
   }
-  // A reflection: W² = I. Glide vector g = (w + W·w)/2, along the line; the line is the set of p with (I − W) p = w − g.
+  // A mirror or glide: W² = I. Glide vector g = (w + W·w)/2, along the line; the line is the set of p with (I − W) p = w − g.
   const wt = [add(scale(w[0][0], t[0]), scale(w[0][1], t[1])), add(scale(w[1][0], t[0]), scale(w[1][1], t[1]))];
   const half = rational(1, 2);
   const glide = [multiply(add(t[0], wt[0]), half), multiply(add(t[1], wt[1]), half)];
@@ -113,7 +124,10 @@ export function describePlaneOperation(op: ExactOperation): PlaneOperationDescri
   const i = a[0][0] !== 0 || a[0][1] !== 0 ? 0 : 1;
   const location: Rational[] =
     a[i][0] !== 0 ? [multiply(s[i], rational(1, a[i][0])), ZERO] : [ZERO, multiply(s[i], rational(1, a[i][1]))];
-  return glide.some((v) => v[0] !== 0)
-    ? { kind: 'glide-reflection', order: 2, location, direction, glide }
-    : { kind: 'reflection', order: 2, location, direction };
+  const line = { order: 2, location: Object.freeze(location), direction: Object.freeze(direction) };
+  return Object.freeze(
+    glide.some((v) => v[0] !== 0)
+      ? { kind: 'glide' as const, ...line, glide: Object.freeze(glide) }
+      : { kind: 'mirror' as const, ...line },
+  );
 }
