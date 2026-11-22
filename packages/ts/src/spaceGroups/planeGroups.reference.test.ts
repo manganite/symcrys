@@ -57,6 +57,16 @@ function printedGroups(): PrintedGroup[] {
 }
 
 const PRINT = printedGroups();
+
+/**
+ * The order of the plane point group named by an oriented site-symmetry symbol (`1`, `2..`, `.m.`,
+ * `2mm.`, `3m.`, `6mm` …): n, the rotation at its first position (1 if a dot), and 2n if it
+ * contains a mirror, since a plane point group with mirrors has as many mirrors as rotations.
+ */
+function siteSymbolOrder(symbol: string): number {
+  const n = /^[1-6]/.test(symbol) ? Number(symbol[0]) : 1;
+  return symbol.includes('m') ? 2 * n : n;
+}
 /** A point with general rational coordinates, to evaluate the printed coordinate expressions. */
 const PARAMETERS: Rational[] = [rational(3, 7), rational(2, 11)];
 
@@ -122,7 +132,7 @@ describe('plane groups: each printed page is consistent', () => {
       expect(planeGroupGenerators(g.symbol)).toHaveLength(named.length + centring.length);
     });
 
-    for (const [multiplicity, letter, , coordinates] of g.rows) {
+    for (const [multiplicity, letter, site, coordinates] of g.rows) {
       it(`${g.symbol} ${multiplicity}${letter}: the printed points form one orbit of that size`, () => {
         const points = centrings(g).flatMap((c) =>
           coordinates
@@ -143,6 +153,8 @@ describe('plane groups: each printed page is consistent', () => {
         // Stabilizer order = |G| / multiplicity.
         const stabilizer = group.filter((op) => pointsEqualModLattice(applyToPoint(op, points[0]), points[0]));
         expect(stabilizer.length * Number(multiplicity)).toBe(group.length);
+        // The printed site-symmetry symbol names a group of that order.
+        expect(siteSymbolOrder(site)).toBe(stabilizer.length);
       });
     }
   }

@@ -13,7 +13,8 @@ symmetry from the headline; the blocks "Origin", "Asymmetric unit" (with "Vertic
 set"), "Generators selected" and "Positions": multiplicity, Wyckoff letter, oriented site symmetry
 and the coordinates, general position first, in the printed order. For a centred group the
 coordinates are those of the (0,0)+ set, to which (1/2,1/2)+ is added, as printed. Not transcribed:
-the diagrams and the reflection conditions.
+the diagrams and the reflection conditions. The line "Centring: (0,0)+ (1/2,1/2)+" of a centred
+group records the heading that the print sets over the column of coordinates.
 
 Transcription conventions: a leading minus sign is an overbar (`-x` for x̄, `-2x` for 2̄x); `n+` and
 `n-` are the superscripts of n⁺ and n⁻; `<=` is ≤; the spaces the print sets between the characters

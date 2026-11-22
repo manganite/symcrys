@@ -718,7 +718,7 @@ while implementing gets its own note here.
   additional check by `audit/plane-groups-2006` (against plane-groups' transcription,
   `js/ebenengruppen.js`), not the reference; printed p. 92 is PDF page 235 (checked at that page
   only). The data of the 17 groups (`src/spaceGroups/planeGroupData.ts`) hold what the pages print
-  except the diagrams, the symmetry operations as text (kept in `references/`, the anchor of their
+  except the diagrams, the Patterson symmetry, the symmetry operations as text (kept in `references/`, the anchor of their
   description in a later PR) and the reflection conditions (not transcribed: plane-groups leaves
   diffraction to the diffraction app); the selected generators must close into the printed general
   position, or `planeGroupOperations` throws, as for the point groups.
