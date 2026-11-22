@@ -1,6 +1,6 @@
 {
   "$schema": "https://typedoc.org/schema.json",
-  "entryPoints": ["packages/ts/src/index.ts", "packages/ts/src/magnetic.ts"],
+  "entryPoints": ["packages/ts/src/index.ts", "packages/ts/src/magnetic.ts", "packages/ts/src/plane.ts"],
   "tsconfig": "packages/ts/tsconfig.build.json",
   "plugin": ["typedoc-plugin-missing-exports"],
   "out": "build/docs/ts-extra/ts",

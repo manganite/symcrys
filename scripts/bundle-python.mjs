@@ -9,7 +9,8 @@
 //   __symcrys.exports() → json                     names and kinds ("function", "value") of all exports
 //
 // A plain name (`tensorForm`) is an export of the crystallographic API (dist/index.js), a name with
-// the prefix `magnetic.` (`magnetic.tensorForm`) one of the magnetic API (dist/magnetic.js).
+// the prefix `magnetic.` (`magnetic.tensorForm`) one of the magnetic API (dist/magnetic.js), a name
+// with the prefix `plane.` (`plane.operations`) one of the plane API (dist/plane.js).
 //
 // Writes packages/python/src/symcrys/_bundle.js (not committed; built for every Python build and
 // test). Checks that dist/ reports the version of packages/ts/package.json and of
@@ -40,8 +41,9 @@ if (errors.length > 0) {
 const entry = `
 import * as classes from ${JSON.stringify(dist.replaceAll('\\', '/'))};
 import * as magnetic from ${JSON.stringify(dist.replaceAll('\\', '/').replace(/index\.js$/, 'magnetic.js'))};
+import * as plane from ${JSON.stringify(dist.replaceAll('\\', '/').replace(/index\.js$/, 'plane.js'))};
 const failure = (e) => ({ error: { name: (e && e.name) || 'Error', message: String((e && e.message) || e) } });
-const entries = { '': classes, 'magnetic.': magnetic };
+const entries = { '': classes, 'magnetic.': magnetic, 'plane.': plane };
 const find = (name) => {
   const prefix = name.slice(0, name.indexOf('.') + 1);
   const entry = Object.hasOwn(entries, prefix) ? entries[prefix] : undefined;

@@ -121,5 +121,39 @@
       "type": "list of dict",
       "doc": "In each, ``axis`` (if present) has ``cartesian`` (float64, shape (3,))."
     }
+  },
+  "symcrys.plane": {
+    "plane_group": {
+      "type": "dict",
+      "doc": "``centring`` is a float64 array of shape (n, 2), n = 0 or 1."
+    },
+    "operations": {
+      "type": "list of dict",
+      "doc": "Dicts ``{\"matrix\", \"translation\"}``: float64 arrays of shape (2, 2) and (2,)."
+    },
+    "generators": {
+      "type": "list of dict",
+      "doc": "Dicts ``{\"matrix\", \"translation\"}``: float64 arrays of shape (2, 2) and (2,)."
+    },
+    "describe_operations": {
+      "type": "list of dict",
+      "doc": "``translation``, ``location`` and ``glide`` (where present) are float64 arrays of shape (2,), ``direction`` an int64 array of shape (2,)."
+    },
+    "site_symmetry": {
+      "type": "dict",
+      "doc": "``operations`` int64 array of shape (n,), ``point`` float64 array of shape (2,), ``multiplicity``, ``general``."
+    },
+    "orbit": {
+      "type": "numpy.ndarray",
+      "doc": "A float64 array of shape (n, 2), the images as rows."
+    },
+    "asymmetric_unit": {
+      "type": "dict",
+      "doc": "``vertices`` a float64 array of shape (n, 2), ``inequalities`` an int64 array of shape (n, 3)."
+    },
+    "symmetry_elements": {
+      "type": "dict",
+      "doc": "``rotations``: dicts ``{\"order\", \"point\"}``, point a float64 array of shape (2,); ``lines``: dicts ``{\"kind\", \"direction\", \"glide\", \"segment\"}``, direction int64 of shape (2,), glide float64 of shape (2,), segment float64 of shape (2, 2), the two ends as rows."
+    }
   }
 }

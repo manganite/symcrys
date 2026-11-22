@@ -19,9 +19,9 @@ const MAGNETIC_API = /symcrys\/magnetic/;
 /** The crystallographic API takes keys of crystal classes; tests pass it other keys on purpose. */
 const asClass = (key: string) => key as classes.PointGroupKey;
 
-describe('the two entry points', () => {
+describe('the entry points', () => {
   it('are both entries of the package', () => {
-    expect(Object.keys(pkg.exports)).toEqual(['.', './magnetic', './package.json']);
+    expect(Object.keys(pkg.exports)).toEqual(['.', './magnetic', './plane', './package.json']);
   });
 
   it('export the same names; only the Wyckoff positions and the crystal forms are crystallographic alone', () => {

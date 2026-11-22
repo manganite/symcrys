@@ -3,7 +3,8 @@
 A thin layer over the TypeScript library symcrys of the same version, which runs in an embedded
 JavaScript engine (quickjs-ng). Every function here calls the function of the same name in the
 library (camelCase there, snake_case here) and returns its result as plain Python data, matrices
-and vectors as NumPy arrays (rules in ``symcrys._convert``). The conventions, frames and print
+and vectors as NumPy arrays (rules in ``symcrys._convert``; ``symcrys.plane`` converts its arrays
+itself, see its module docstring). The conventions, frames and print
 sources are documented once, for both languages: https://manganite.github.io/symcrys/conventions.html
 
 This module is the crystallographic API: the 32 crystal classes, without time reversal. The
@@ -11,6 +12,7 @@ magnetic point groups, time-odd tensors and operations with time reversal are in
 ``symcrys.magnetic``, under the same function names; there ``"32"`` is the white group, and a
 crystal without magnetic order has the grey group of its class (quartz: ``"321'"``). A question
 that involves time reversal raises ``SymcrysError`` here (docs/conventions.md, "Two entry points").
+The plane groups and plane point groups are in ``symcrys.plane``.
 
 Each call costs about a millisecond or more (the forms of rank-4 tensors up to a few tenths of a
 second); fetch operations or forms once and compute with NumPy, rather than calling in a loop.
@@ -84,6 +86,7 @@ __all__ = [
     "zone_axis",
     "change_of_axes",
     "magnetic",
+    "plane",
     "operations",
     "orbit",
     "orbit_of",
@@ -865,3 +868,4 @@ def rotate_tensor(
 
 
 from . import magnetic  # noqa: E402  (the magnetic API, also reachable as symcrys.magnetic)
+from . import plane  # noqa: E402  (the plane API, also reachable as symcrys.plane)

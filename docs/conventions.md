@@ -11,9 +11,10 @@ conventions, operations in the lattice basis and orbits of faces and directions,
 property tensors of rank 0 to 4. For the crystal classes also the Wyckoff positions of directions
 and the crystal forms.
 
-The library has two entry points with the same function names: `symcrys`, the crystallographic API
-for the 32 crystal classes, and `symcrys/magnetic`, the magnetic API for all 122 groups ("Two entry
-points"). Where a section below speaks of time reversal, of the types or of a magnetic group, it
+The library has two entry points for the point groups, with the same function names: `symcrys`,
+the crystallographic API for the 32 crystal classes, and `symcrys/magnetic`, the magnetic API for
+all 122 groups ("Two entry points"). A third, `symcrys/plane`, holds the 17 plane groups and the 10
+plane point groups ("Plane groups"). Where a section below speaks of time reversal, of the types or of a magnetic group, it
 describes the magnetic API.
 
 ## Conventions
@@ -142,6 +143,9 @@ crystallographic API, which do not say, are refused there and not read as a whit
 who means the white group adds `timeReversal: false`, one who means a crystal without magnetic
 order builds the grey group. `siteSymmetry` and `orbitOf` do not depend on time reversal and take
 either in the magnetic API.
+
+**A third entry point, `symcrys/plane`,** holds the plane groups and the plane point groups ("Plane
+groups" below); its keys are not keys of the other two.
 
 ## Cartesian frame
 
@@ -903,6 +907,59 @@ along the entries of an orthorhombic symbol; z, x, y along those of a trigonal o
 so each printed symbol, those in square brackets included, is compared in the setting that has this
 ITC symbol, and so are the second trigonal orientations the text of § 1.5.8.1 names (312, 31m, …).
 
+## Plane groups
+
+The 17 plane groups and the 10 plane point groups are in a third entry point, `symcrys/plane` (in
+Python `symcrys.plane`), with the names of the other entry points where the notion is the same
+(maintainer, 2026-11-22, #31). They follow ITA (6th ed., 2016), Chapter 2.2 for the plane groups and
+Table 3.2.1.1 (p. 720) for the point groups.
+
+**Keys.** The short symbols ITA prints: `'p1'` … `'p6mm'` for the plane groups, in ITA's order, and
+`'1'`, `'2'`, `'m'`, `'2mm'`, `'4'`, `'4mm'`, `'3'`, `'3m'`, `'6'`, `'6mm'` for the plane point groups,
+in the order of Table 3.2.1.1. The two sets do not overlap: a plane group's symbol begins with its
+lattice letter. `3m` has two settings, `3m1` (setting 1, the default) and `31m` (setting 2), as ITA
+describes the trigonal groups with hexagonal axes in two orientations and says so for the plane
+point group (Ch. 3.2, p. 721, item (d)); the other groups have one. `settings(key)` lists them,
+`symbol(key, { setting })` gives the symbol of one.
+
+**Lattice basis.** Everything is in the basis a, b of the conventional cell: an operation is
+`{ matrix, translation }` with x ↦ W·x + w, W a 2 × 2 matrix with integer entries; a point, a vertex
+and the ends of a line are coordinates x, y. Inside, translations and coordinates are exact
+fractions; at the API they are numbers (1/3 as the nearest double). No metric is needed: a plane
+group fixes the type of its lattice, not its parameters.
+
+**Operations.** A plane group has one operation per coset of the integer translations, with its
+translation in [0, 1): first the general position as ITA numbers it, then, for `cm` and `c2mm`, the
+same sequence with the centring (1/2, 1/2) added, as ITA prints the "(1/2,1/2)+ set". The
+generators are ITA's selected generators without the identity and the integer translations, the
+centring first. A plane point group has the linear parts of its symmorphic plane group, in the same
+order (pm for `m`, p3m1 and p31m for the settings of `3m`), so that the point group of a plane group
+is the set of its linear parts; this is checked for all 17 plane groups, also for those that are not
+symmorphic (`pg`, `cm`, `p4gm`, …).
+
+**Descriptions.** `describeOperations` describes each operation as ITA does under "Symmetry
+operations": its kind (`'identity'`, `'translation'`, `'rotation'`, `'mirror'` or `'glide'`), the
+order and sense of a rotation, the centre of a rotation, the direction of a line and one point of
+it (on y = 0, or on x = 0 for a line along a), and the glide vector (w + W·w)/2. An operation whose
+glide vector is a non-zero lattice vector is a glide, as it is geometrically.
+
+**Points.** `siteSymmetry`, `wyckoffPositionOf` and `orbit` take the key of a plane group and a point
+in the lattice basis, with an optional `tolerance` measured per coordinate modulo the lattice
+(default 10⁻⁶, below 1/2). The operations that fix the point within the tolerance are closed into a
+group and the point set onto their fixed space, so a rounded point gives the exact site symmetry.
+The Wyckoff position is the printed row of the point's multiplicity whose printed coordinates, with
+the centring, reach the point: letter and oriented symbol are ITA's.
+
+**The cell.** `asymmetricUnit` is the polygon of ITA's printed block "Asymmetric unit": its
+vertices, counter-clockwise from the lowest, and per edge the printed inequality a·x + b·y ≤ c that
+holds it (bounds that hold no edge are left out). `symmetryElements` gives every rotation centre in
+[0, 1]², boundary included, with the highest order of a rotation about it, and every mirror and glide
+line that crosses the cell, with its segment there; a glide line carries its glide vector
+s·direction with 0 < s < 1 (in a plane group s = 1/2). Drawing them is left to the application.
+
+**Not yet.** The positions and edge forms of the plane point groups (ITA Table 3.2.3.1, #81) and
+the determination of the plane group of a pattern (a later MINOR, #31).
+
 ## Sources
 
 | What                                                                                                                        | Print source                                                                                                                                                                                                                                                                                                      | Test                                                                                                    |
@@ -937,6 +994,11 @@ ITC symbol, and so are the second trigonal orientations the text of § 1.5.8.1 n
 | the two entry points: a time-even question has one answer for a class, its white group and its grey group                   | none needed: the same operations (Birss pp. 84, 102, as the row above); checked by comparing the two entry points                                                                                                                                                                                                 | `entryPoints.test.ts`                                                                                   |
 | named tensor properties: the kind of tensor behind each name                                                                | ITC Vol. D (2013) §§ 1.1.4.4.2, 1.1.4.4.3 (p. 12), 1.1.4.10.7.2 (p. 30), 1.5.2.1 (p. 113), 1.5.7.1 (p. 134), 1.5.8.1 (pp. 139–140); the `source` of each entry of `TENSOR_PROPERTIES`                                                                                                                             | `tensors/tensorProperties.test.ts`                                                                      |
 | Birss: free parameters of the tensor forms                                                                                  | none: birss-app 2be5fe3, behavioural pins (class (c)) captured by `audit/birss-app`: time-even forms of the 32 classes, time-odd forms of the 58 black-and-white groups                                                                                                                                           | `tensors/birssApp.pins.test.ts`                                                                         |
+| plane groups: general position, generators, centring, origin, asymmetric unit, Wyckoff positions                            | ITA 6th ed. (2016), Chapter 2.2 (pp. 176–192): `references/itc/vol-a-2016-plane-groups.md`; additional check against the 5th ed. (2006), Part 6 (pp. 92–109), by `audit/plane-groups-2006`                                                                                                                        | `spaceGroups/planeGroups.reference.test.ts`                                                             |
+| plane groups: description of the operations                                                                                 | the block "Symmetry operations" of the same pages, both sets of the centred groups; symbols as in ITA § 2.1.3.9 (pp. 160–161)                                                                                                                                                                                     | `spaceGroups/describe.reference.test.ts`                                                                |
+| plane groups: site symmetry, orbit and Wyckoff position of a point                                                          | the Wyckoff positions of the same pages: every printed point of every position                                                                                                                                                                                                                                    | `spaceGroups/positions.reference.test.ts`                                                               |
+| plane groups: asymmetric unit, symmetry elements in the cell                                                                | the printed vertices and inequalities, the Wyckoff positions (centres and mirror lines) and the printed glides of the same pages; all lines also derived from the printed general position                                                                                                                        | `spaceGroups/cell.reference.test.ts`                                                                    |
+| plane point groups: keys, settings of `3m`, operations                                                                      | ITA 6th ed. (2016), Table 3.2.1.1 (p. 720), Ch. 3.2, p. 721, item (d); operations: the linear parts of the plane groups (above)                                                                                                                                                                                   | `plane.test.ts`                                                                                         |
 
 Each file in `references/` names its source and the printed page. ITA means Vol. A, 6th edition
 (2016), unless the 5th edition (2006) is named: its space-group tables are the source for the

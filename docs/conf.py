@@ -56,7 +56,7 @@ napoleon_use_rtype = False
 nitpicky = True
 nitpick_ignore_regex = [
     (r"py:.*", r"(numpy|np|NDArray|ArrayLike|Any|Optional|Literal|Mapping|Sequence|TypedDict).*"),
-    (r"py:.*", r"(symcrys\.)?(magnetic\.)?(_shared\.)?(Convention|TensorParity|IntrinsicSymmetry|TimeParity|TensorPropertyName|SiteSymmetry|TensorForm|TensorSpec|Operation)"),
+    (r"py:.*", r"(symcrys\.)?(magnetic\.|plane\.)?(_shared\.)?(Convention|TensorParity|IntrinsicSymmetry|TimeParity|TensorPropertyName|SiteSymmetry|TensorForm|TensorSpec|Operation)"),
     (r"py:.*", r"(str|int|float|bool|dict|list|tuple)"),
     # The type column of the generated Parameters sections (scripts/python-docstrings.mjs).
     (r"py:.*", r"(keyword-only|optional)"),
@@ -86,14 +86,14 @@ html_baseurl = "https://manganite.github.io/symcrys/"
 # One description per page (meta description and og:description, at most about 160 characters);
 # the build warns about a page without one.
 symcrys_page_descriptions = {
-    "index": "Crystallographic point groups in TypeScript and Python: 32 crystal classes, 122 magnetic "
-    "point groups, Wyckoff positions, crystal forms and tensor forms.",
+    "index": "Crystallographic point and plane groups in TypeScript and Python: 32 crystal classes, "
+    "122 magnetic point groups, 17 plane groups, Wyckoff positions, crystal forms and tensor forms.",
     "getting-started": "Install symcrys from npm or PyPI and take the first steps: point groups, settings, "
     "symbols, operations and the form of a property tensor.",
     "readings": "One key, two readings: 32 is a crystal class in symcrys and a white magnetic point "
     "group in symcrys/magnetic. Which entry point to use, and why.",
-    "conventions": "The conventions of symcrys for point groups: ITC and Birss, axis frames, settings, "
-    "symbols, Wyckoff positions, crystal forms and tensors, with print sources.",
+    "conventions": "The conventions of symcrys for point and plane groups: ITC and Birss, axis frames, "
+    "settings, symbols, Wyckoff positions, crystal forms and tensors, with print sources.",
     "tensors": "Tensor forms allowed by a point group, rank 0 to 4, and named properties such as "
     "piezoelectric, pyroelectric, gyrotropic, ferroaxial and magnetoelectric.",
     "cells": "Cells in symcrys: lattice from cell parameters, reciprocal basis, angles between planes, "

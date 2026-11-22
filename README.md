@@ -13,7 +13,8 @@ package of the same version that runs it in an embedded JavaScript engine.
 > **Status: pre-release.** So far: the 32 crystal classes and the 122 magnetic point groups, with
 > their settings, symbols, symmetry elements, site symmetry, the forms of property tensors of rank 0
 > to 4 and named properties (piezoelectric, ferroaxial, ferromagnetic, …); for the crystal classes
-> also Wyckoff positions and crystal forms. Until 1.0.0 a MINOR version may change the API; every
+> also Wyckoff positions and crystal forms; the 17 plane groups with their operations, Wyckoff
+> positions, asymmetric unit and symmetry elements. Until 1.0.0 a MINOR version may change the API; every
 > change to the API or to calculated results is recorded in [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Scope
@@ -34,7 +35,8 @@ symcrys.
 **Conventions.** Point groups follow the _International Tables for Crystallography_ by default;
 the convention of Birss, _Symmetry and Magnetism_ (1966), is an option. **Two entry points:**
 `symcrys` for the 32 crystal classes, `symcrys/magnetic` for the 122 magnetic point groups, under the
-same function names; the import decides how a key such as `'32'` is read.
+same function names; the import decides how a key such as `'32'` is read. A third, `symcrys/plane`,
+holds the plane groups and plane point groups.
 
 symcrys is the computational core of the crystallography teaching apps
 ([stereography](https://github.com/manganite/stereography),

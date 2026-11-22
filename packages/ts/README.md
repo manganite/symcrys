@@ -1,8 +1,8 @@
 # symcrys
 
 Crystallographic symmetry calculations in TypeScript: point groups with their settings, symbols,
-symmetry elements, site symmetry, Wyckoff positions and crystal forms, and the forms of property
-tensors they allow. A library without runtime dependencies that runs unbundled in browsers and in Node.
+symmetry elements, site symmetry, Wyckoff positions and crystal forms, the forms of property
+tensors they allow, and the plane groups. A library without runtime dependencies that runs unbundled in browsers and in Node.
 
 ```bash
 npm install symcrys
@@ -26,6 +26,15 @@ import { allowedProperties } from 'symcrys/magnetic';
 
 allowedProperties("321'"); // ['piezoelectric', 'gyrotropic']: quartz
 allowedProperties("m'm'2"); // six of the seven names, 'ferromagnetic' among them
+```
+
+The 17 plane groups and the 10 plane point groups are in `symcrys/plane`, in the lattice basis:
+
+```ts
+import { symmetryElements, wyckoffPositionOf } from 'symcrys/plane';
+
+wyckoffPositionOf('p6mm', [1 / 3, 2 / 3]).letter; // 'b'
+symmetryElements('p4gm').rotations; // the 4- and 2-fold centres in the cell
 ```
 
 Documentation (getting started, conventions, tensors, examples, reference):
