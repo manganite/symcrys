@@ -6,6 +6,13 @@ All notable changes to symcrys are recorded here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- `siteSymmetry` and `wyckoffPositionOf` of `symcrys/plane` are several times faster at special
+  positions (in Node about 5 to 10 times at the 4-fold point of p4mm), from a group table per plane
+  group, computed once, on which the closure of the site symmetry works, and from parsing the
+  printed coordinates of the Wyckoff positions once (#86). Results are unchanged.
+
 ## [0.9.0] - 2026-11-22
 
 ### Added
