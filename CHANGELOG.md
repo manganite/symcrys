@@ -6,6 +6,8 @@ All notable changes to symcrys are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-11-22
+
 ### Added
 
 - A third entry point, `symcrys/plane` (Python: `symcrys.plane`), for the 17 plane groups and the
@@ -361,7 +363,8 @@ All notable changes to symcrys are recorded here. The format follows
 - Project scaffold: TypeScript build to `dist/` (ES modules with type declarations), tests, lint,
   format check, CI and release workflow. The only export so far is `VERSION`.
 
-[Unreleased]: https://github.com/manganite/symcrys/compare/v0.8.1...HEAD
+[Unreleased]: https://github.com/manganite/symcrys/compare/v0.9.0...HEAD
+[0.9.0]: https://github.com/manganite/symcrys/compare/v0.8.1...v0.9.0
 [0.8.1]: https://github.com/manganite/symcrys/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/manganite/symcrys/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/manganite/symcrys/compare/v0.6.1...v0.7.0
