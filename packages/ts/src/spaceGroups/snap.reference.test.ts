@@ -109,6 +109,31 @@ describe('snapping: order, tolerance and errors', () => {
     expect(planeWyckoffPositionOf('pm', [0.012, 0.3], { tolerance: 0.02 }).letter).toBe('c');
   });
 
+  it('takes the nearest of two lines within reach, not the first printed', () => {
+    // Near the crossing at the origin of p4mm: 0.0004 from x,0 (4d) and 0.0047 from x,x (4f, printed
+    // first), both within 0.005, but 0.0098 from the point 0,0 (1a), beyond it.
+    expect(wyckoffLetter('p4mm', planeSnapToWyckoffPosition('p4mm', [0.0098, 0.0004], 0.005).row)).toBe('d');
+  });
+
+  it('snaps the fixed points at the tolerance of an application (10⁻²)', () => {
+    for (const { symbol, rows } of printed()) {
+      const wyckoff = planeGroupEntry(symbol).wyckoff;
+      for (const row of rows) {
+        if (/[xy]/.test(wyckoff.find(([, l]) => l === row.letter)?.[3][0] ?? 'x')) continue;
+        for (const p of row.points) {
+          for (const s of [
+            [9e-3, -8e-3],
+            [-9.5e-3, 0],
+          ]) {
+            const snapped = planeSnapToWyckoffPosition(symbol, [p[0] + s[0], p[1] + s[1]], 1e-2);
+            expect(wyckoffLetter(symbol, snapped.row)).toBe(row.letter);
+            expect(close(snapped.point, p, 1e-12)).toBe(true);
+          }
+        }
+      }
+    }
+  });
+
   it('reduces modulo the lattice', () => {
     const snapped = planeSnapToWyckoffPosition('p2', [-1.001, 2.4999], 0.01);
     expect(wyckoffLetter('p2', snapped.row)).toBe('b');

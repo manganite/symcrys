@@ -712,6 +712,16 @@ while implementing gets its own note here.
   oriented symbol come from print, not from a rule of symcrys. Checked: every printed point of every
   Wyckoff position of the 17 groups, displaced by about 3·10⁻⁸ in both directions, gives its printed letter, multiplicity,
   symbol and printed orbit (`positions.reference.test.ts`).
+- **Snapping onto a Wyckoff position** (`snapToWyckoffPosition`, decided by Thomas on 2026-11-22,
+  #85; chosen while implementing, PR #104; `src/spaceGroups/snap.ts`): the criterion of plane-groups
+  (`lage`, `einrasten`), the distance of the point to the point set of a position, not of its images:
+  per printed coordinate expression with every centring, the parameters by least squares in the
+  lattice coordinates, accepted if both coordinate differences are below the tolerance; points before
+  lines before the general position. Different from the app, among positions of the same kind the
+  nearest wins, not the first in print order; the two differ only near the crossing of two lines,
+  where the nearer line is the better answer. The least-squares point is not always the nearest in
+  the per-coordinate measure (on `x,2x` it reaches 0.8 of the tolerance), as in the app. Checked:
+  every printed point of every Wyckoff position snaps onto its letter (`snap.reference.test.ts`).
 - **Asymmetric unit and elements in the cell** (chosen while implementing, PR #80;
   `src/spaceGroups/cell.ts`): exact rationals inside, as the rest of the module. The asymmetric unit
   is the polygon of the printed inequalities, given by its vertices (counter-clockwise from the

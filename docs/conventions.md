@@ -953,10 +953,10 @@ question, for a point that is dragged: onto which position should it snap? It me
 of the point to the point set of a position (per coordinate, modulo the lattice), not the distance of
 its images, takes the most special position within the tolerance (points, then lines, then the
 general position) and, among positions of the same kind, the nearest; it returns the position and the
-nearest point on it (maintainer, 2026-11-22, #85). At a mirror line the two criteria differ by a
-factor of 2 (the image of a point at distance d lies 2d away), at 3- and 4-fold points by other
-factors, and in a hexagonal basis the nearest point of a line is not where the mean of the images
-lies.
+point on it found by least squares in the lattice coordinates (maintainer, 2026-11-22, #85). At a mirror line the two criteria differ by a
+factor of 2 (the image of a point at distance d lies 2d away); at a rotation point the factor depends
+on the order and on the direction of the offset, and in a hexagonal basis the point on a line is not
+where the mean of the images lies.
 
 **The cell.** `asymmetricUnit` is the polygon of ITA's printed block "Asymmetric unit": its
 vertices, counter-clockwise from the lowest, and per edge the printed inequality a·x + b·y ≤ c that

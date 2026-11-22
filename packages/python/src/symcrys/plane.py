@@ -248,8 +248,8 @@ def snap_to_wyckoff_position(key: str, point: ArrayLike, *, tolerance: Optional[
     ``wyckoff_positions`` gives it, and the nearest point on it, in [0, 1). Unlike
     ``wyckoff_position_of``, which asks whether the images of the point lie within the tolerance of
     it, this asks whether the point lies within the tolerance of the position: an application that
-    drags a point and lets it snap passes a tolerance such as 10⁻². Raises SymcrysError as
-    ``site_symmetry``.
+    drags a point and lets it snap passes a tolerance such as 10⁻². The point on a line is found by
+    least squares in the lattice coordinates. Raises SymcrysError as ``site_symmetry``.
 
     Parameters
     ----------

@@ -1,6 +1,6 @@
 /**
  * Snapping a point of the plane onto the nearest Wyckoff position of a plane group, by the distance
- * of the point to the position (#85; CLAUDE.md, "The API of `symcrys/plane`"). Unlike the site
+ * of the point to the position (#85; CLAUDE.md, "Snapping onto a Wyckoff position"). Unlike the site
  * symmetry (`positions.ts`), which asks whether the images of a point lie within a tolerance of it,
  * this asks whether the point lies within the tolerance of the point set of a position. Internal.
  */

@@ -420,7 +420,8 @@ export function wyckoffPositionOf(
  * `wyckoffPositions` gives it, and the nearest point on it, in [0, 1). Unlike `wyckoffPositionOf`,
  * which asks whether the images of the point lie within the tolerance of it, this asks whether the
  * point lies within the tolerance of the position: an application that drags a point and lets it
- * snap passes a tolerance such as 10⁻². Throws a RangeError as `siteSymmetry`.
+ * snap passes a tolerance such as 10⁻². The point on a line is found by least squares in the
+ * lattice coordinates. Throws a RangeError as `siteSymmetry`.
  */
 export function snapToWyckoffPosition(
   key: PlaneGroupKey,
