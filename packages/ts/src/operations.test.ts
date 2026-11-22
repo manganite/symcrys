@@ -29,6 +29,8 @@ describe('closeGroup', () => {
   });
 
   it('throws when the closure does not terminate (a non-crystallographic angle)', () => {
-    expect(() => closeGroup([operation(rotationZ(1.234))])).toThrow(/does not terminate/);
+    // A RangeError, as for every other invalid input (#91), which names the input, not the function.
+    expect(() => closeGroup([operation(rotationZ(1.234))])).toThrow(RangeError);
+    expect(() => closeGroup([operation(rotationZ(1.234))])).toThrow(/no finite point group/);
   });
 });

@@ -199,7 +199,8 @@ def describe_operations_of(operations: Sequence[Mapping[str, Any]]) -> list[dict
         As ``describe_operations``: ``translation``, ``location`` and ``glide`` (where present)
         float64 arrays of shape (2,), ``direction`` and ``normal`` int64 arrays of shape (2,).
     """
-    return [_description(d) for d in _call("describeOperationsOf", list(operations))]
+    checked = _shared.operation_list(operations, ("matrix", "translation"))
+    return [_description(d) for d in _call("describeOperationsOf", checked)]
 
 
 def _description(d: dict[str, Any]) -> dict[str, Any]:

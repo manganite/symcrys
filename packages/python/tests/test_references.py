@@ -30,7 +30,7 @@ def count(cell: str) -> int:
 
 
 ROWS_3221 = table_rows(reference("itc/vol-a-table-3.2.2.1.md"))
-ITA_3221 = [r for r in ROWS_3221[1:] if r[2] not in ("235 (532)", "2-inf (inf inf)")]
+ITA_3221 = [r for r in ROWS_3221[1:] if r[2] not in ("235 (532)", "2inf (inf inf)")]
 
 
 def test_ita_3221_as_read() -> None:

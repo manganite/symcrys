@@ -8,7 +8,7 @@
  *   symmetry operators, compared as far as the print names them (kind, time reversal, and the axis
  *   where it is printed: fully in the triclinic to tetragonal systems).
  * - Birss convention, fixture class (a): Birss Table 6 (printed pp. 91–98) with the generating
- *   matrices σ(N) of eq. (2.17) (printed p. 48). For each of its 90 groups: the printed generators,
+ *   matrices σ(N) of eq. (2.17) (printed pp. 48–49). For each of its 90 groups: the printed generators,
  *   those of the last column combined with time reversal, closed with the independent algebra of
  *   testUtils, give exactly the operations of the Birss default setting; the matrices of the
  *   classical subgroup generate half of them; the operator list names the same operations; the

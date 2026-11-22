@@ -1,6 +1,6 @@
 /**
- * Birss convention against its print source (fixture class (a)): Birss Table 3 (printed pp. 36–39)
- * and the generating matrices σ(N) of equation (2.17) (printed p. 48), re-parsed from references/.
+ * Birss convention against its print source (fixture class (a)): Birss Table 3 (printed pp. 36–38)
+ * and the generating matrices σ(N) of equation (2.17) (printed pp. 48–49), re-parsed from references/.
  * For every crystal class, the printed generators, closed with the independent algebra of
  * testUtils, must give exactly the operations of symcrys in the Birss default setting; the short
  * symbol, Schoenflies symbol, crystal system and order must match the print.
@@ -99,7 +99,7 @@ const TABLE3: Table3Row[] = rows.slice(1).map((r) => {
   };
 });
 
-describe('Birss Table 3 (printed pp. 36–39) against symcrys, Birss convention', () => {
+describe('Birss Table 3 (printed pp. 36–38) against symcrys, Birss convention', () => {
   it('lists the 32 crystal classes, each once, and the σ pool has ten matrices', () => {
     expect(TABLE3).toHaveLength(32);
     expect(new Set(TABLE3.map((r) => r.key)).size).toBe(32);
@@ -134,8 +134,8 @@ describe('Birss Table 3 (printed pp. 36–39) against symcrys, Birss convention'
 
 /**
  * Birss symbols of every setting, read along Birss's directions (fixture class (b)). Birss prints
- * short symbols for the default orientation only (Table 3) and no full symbols in the modern sense
- * (Table 3's "Full" column repeats the short symbol), so the other symbols are derived: positions
+ * short symbols for the default orientation only (Table 3) and full symbols only for mmm, 4/mmm,
+ * -3m, 6/mmm, m3 and m3m (Table 3's "Full" column), so the other symbols are derived: positions
  * as in ITC, except that in the hexagonal family position 2 is y (Birss Table 4a, printed pp. 56–57:
  * `32: 2//y`, `3m: -2//y`, `-6m2: -2//y`) and position 3 is x (derived, as birss-app reads them;
  * #17).

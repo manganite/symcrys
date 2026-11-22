@@ -2,10 +2,10 @@
 // one description of every function, written once in packages/ts/src, converted by the fixed
 // rules of the Python layer (packages/python/src/symcrys/_convert.py): names camelCase →
 // snake_case, an options object → keyword-only arguments, RangeError → SymcrysError,
-// undefined/true/false → None/True/False. What exists only in Python (shapes and dtypes of the
+// undefined/null/true/false → None/None/True/False. What exists only in Python (shapes and dtypes of the
 // NumPy arrays) is added from packages/python/docstrings.json, the only hand-written part.
 //
-// Reads TypeDoc's JSON output (build/typedoc.json, `npm run docs:json`). Rewrites the docstring of
+// Reads TypeDoc's JSON output (build/typedoc.json, written by `npm run docs:check` and `npm run docs:python`). Rewrites the docstring of
 // every function and documented constant in symcrys/__init__.py (crystallographic API, index.ts),
 // symcrys/magnetic.py (magnetic API, magnetic.ts) and symcrys/plane.py (plane API, plane.ts).
 // With --check it changes nothing and fails if a docstring is missing or stale, or if a TSDoc
@@ -28,7 +28,7 @@ const MODULES = [
   { ts: 'magnetic', py: 'packages/python/src/symcrys/magnetic.py', extras: extras['symcrys.magnetic'] ?? {} },
   { ts: 'plane', py: 'packages/python/src/symcrys/plane.py', extras: extras['symcrys.plane'] ?? {} },
 ];
-const KIND = { variable: 32, function: 64, interface: 256, typeAlias: 2097152, reference: 4194304 };
+const KIND = { module: 2, variable: 32, function: 64, interface: 256, typeAlias: 2097152, reference: 4194304 };
 const WIDTH = 100;
 
 /** @typedef {any} Json A node of TypeDoc's JSON output. */
@@ -63,6 +63,7 @@ function codeToPython(code) {
           quoted ?? snake(name),
       )
       .replace(/\bundefined\b/g, 'None')
+      .replace(/\bnull\b/g, 'None')
       .replace(/\btrue\b/g, 'True')
       .replace(/\bfalse\b/g, 'False')
       .replace(/\bRangeError\b/g, 'SymcrysError')
@@ -99,8 +100,8 @@ function render(parts, where) {
   // A Python string literal: no backslash (an escape), no triple quote (the end of the docstring).
   if (/\\|"""/.test(out)) problems.push(`${where}: backslash or triple quote in the text`);
   // In running text these are TypeScript values; written as code, they are converted.
-  if (/\b(true|false|undefined)\b/.test(out.replace(/``[^`]*``/g, ''))) {
-    problems.push(`${where}: true, false or undefined outside code`);
+  if (/\b(true|false|undefined|null)\b/.test(out.replace(/``[^`]*``/g, ''))) {
+    problems.push(`${where}: true, false, undefined or null outside code`);
   }
   // reStructuredText would read |…| as a substitution.
   if (/\|/.test(out.replace(/``[^`]*``/g, '')))
@@ -327,6 +328,11 @@ function update(module) {
       const end = docstringEnd(src, after);
       if (src.slice(after, end).join('\n') !== want.join('\n')) stale.push(decl.name);
       src.splice(after, end - after, ...want);
+    } else if (![KIND.interface, KIND.typeAlias, KIND.module].includes(decl.kind)) {
+      // Types have no Python counterpart, and the module `<internal>` holds the internal types that
+      // typedoc-plugin-missing-exports documents; any other kind of export (a class, an enum) has no
+      // rule here and would get no docstring.
+      problems.push(`${where}: an export of kind ${decl.kind}, which this script does not convert`);
     }
   }
   for (const name of Object.keys(module.extras)) {

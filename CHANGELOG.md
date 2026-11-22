@@ -6,6 +6,35 @@ All notable changes to symcrys are recorded here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- `tensorFormOf` (Python: `tensor_form_of`) could name the wrong free parameters and give wrong
+  relations for operations with float noise that pass its orthogonality check: it read each
+  parameter as the first non-zero entry of a basis row, while noise too small to be a pivot stayed
+  in the rows. 4mm with a noise of 10⁻⁹ on every entry gave the parameters xxx, zxx, zzz instead of
+  xxz, zxx, zzz, and with 2·10⁻⁸ the same parameter twice. Wrong since 0.4.0; the parameters are
+  now the pivots of the reduction (#88). Exact operations, `tensorForm` and the named properties
+  were not affected. Too many parameters can still come out for operations rounded to 6 decimals and
+  for groups in an exactly rotated frame (#89).
+- `siteSymmetry` kept the products of a list by the identity of the array, so a caller that changed
+  its list in place got products of the old contents: a wrong site symmetry or a RangeError. Wrong since 0.3.1; the products are now kept for one call (#90). The
+  Python package was not affected.
+- `siteSymmetry` throws a RangeError instead of returning a result that is not a group when the
+  operations fixing the direction do not settle, which happens only for a tolerance far too large
+  (e.g. 6221' at 0.99 gave 10 of 24 operations); the closure of a list of operations that generates
+  no finite group (`tensorFormOf`, `isCentrosymmetricOf`, `isChiralOf`, the property functions) throws a RangeError
+  that names the input, instead of a plain `Error` naming an internal function (#91).
+- Python: NaN or infinity in an argument raises `SymcrysError` ("must be finite") instead of the
+  engine's "unexpected token: 'NaN'"; an array of matrices, or a list of matrices, passed as
+  operations raises `SymcrysError` saying what is expected instead of "cannot read property '0' of
+  undefined" (#92).
+- `TENSOR_PROPERTIES`: the `source` of `'piezoelectric'`, `'magnetoelectric'` and `'piezomagnetic'`
+  cites the sections of ITC Vol. D in which the equations stand (§ 1.1.4.10.1, § 1.5.7, § 1.5.8)
+  (#118).
+- Documentation: `"3'2'"`, which is no magnetic point group, is now `"32'"` (Two readings of a key);
+  Birss prints full symbols for six classes, contrary to what the conventions said; further stale
+  statements (#129, #130).
+
 ## [0.10.0] - 2026-11-22
 
 ### Added

@@ -3,6 +3,7 @@ print are checked in test_pins.py and test_references.py)."""
 
 import re
 import threading
+from types import MappingProxyType
 
 import numpy as np
 import pytest
@@ -252,6 +253,30 @@ def test_library_errors_are_value_errors_with_the_message() -> None:
         symcrys.tensor_form("2", {"rank": 3, "parity": "polar", "intrinsic": "voigt"})
     with pytest.raises(ValueError, match="not an orthogonal"):
         symcrys.rotate_tensor([1, 0, 0], np.diag([2.0, 1.0, 1.0]), {"rank": 1, "parity": "polar", "intrinsic": "none"})
+
+
+def test_nan_and_wrong_shapes_give_readable_errors() -> None:
+    # #92: before, NaN reached the engine's JSON parser ("unexpected token: 'NaN'") and an array of
+    # matrices failed inside the library ("cannot read property '0' of undefined").
+    ops = symcrys.operations("4mm")
+    for bad in ([np.nan, 0, 1], [np.inf, 0, 1]):
+        with pytest.raises(symcrys.SymcrysError, match="must be finite") as e:
+            symcrys.site_symmetry(ops, bad)
+        assert e.value.js_name == "RangeError"
+    with pytest.raises(symcrys.SymcrysError, match="must be finite"):
+        plane.orbit("p4", [np.nan, 0.0])
+    matrices = np.array([op["matrix"] for op in ops])
+    for module in (symcrys, magnetic):
+        with pytest.raises(symcrys.SymcrysError, match=r"list of operations \{\"matrix\"\}.*not ndarray"):
+            module.point_group_of(matrices)
+        with pytest.raises(symcrys.SymcrysError, match=r"operation 0 must be a mapping"):
+            module.tensor_form_of(list(matrices), SHG if module is symcrys else MAGNETIC_SHG)
+    with pytest.raises(symcrys.SymcrysError, match=r"\{\"matrix\", \"translation\"\}"):
+        plane.describe_operations_of([{"matrix": np.eye(2)}])
+    # Any iterable of mappings is taken: a generator, an object array, read-only mappings.
+    assert symcrys.point_group_of(op for op in ops) == {"key": "4mm", "setting": 1}
+    assert symcrys.point_group_of(np.array(ops, dtype=object)) == {"key": "4mm", "setting": 1}
+    assert symcrys.point_group_of([MappingProxyType(op) for op in ops]) == {"key": "4mm", "setting": 1}
 
 
 def test_undefined_result_is_none() -> None:
