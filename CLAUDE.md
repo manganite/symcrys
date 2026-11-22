@@ -699,6 +699,17 @@ while implementing gets its own note here.
   (`describe.reference.test.ts`); invariants that do not depend on the computation (a centre is
   fixed, a point of the line moves by the glide vector) cover the operations shifted by lattice
   translations, where print has no centres of order ≥ 3 away from the origin.
+- **Points: orbit, site symmetry, Wyckoff position** (chosen while implementing, PR #79;
+  `src/spaceGroups/positions.ts`): a point from a caller has floating-point coordinates in the
+  lattice basis, so these functions work in floating point on the exact operations, with the
+  `tolerance` of #31 measured per coordinate modulo the lattice (default `EPSILON`), as
+  `siteSymmetry` does for directions; a tolerance in the lattice basis needs no metric, which a
+  plane group does not fix. The site symmetry sets the point onto its fixed space by the mean of its
+  images, as `siteSymmetry` does. The Wyckoff position is the printed row of the point's
+  multiplicity whose printed coordinates (with the centring) reach the point, so letter and
+  oriented symbol come from print, not from a rule of symcrys. Checked: every printed point of every
+  Wyckoff position of the 17 groups, displaced by 3·10⁻⁸, gives its printed letter, multiplicity,
+  symbol and printed orbit (`positions.reference.test.ts`).
 - **No frieze, layer or magnetic plane groups for now** (#31 question 3): no consumer needs them;
   the dimension-generic module keeps them possible (idea in #74).
 - **Entry point `symcrys/plane`, later `symcrys/space`** (#31 question 4), as `symcrys/magnetic`
