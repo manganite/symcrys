@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   add,
-  equals,
+  rationalsEqual,
   formatRational,
   isInteger,
   mod1,
@@ -47,9 +47,15 @@ describe('rational', () => {
     expect(mod1(rational(3, 4))).toEqual([3, 4]);
   });
 
+  it('throws when an intermediate product leaves the safe integers, instead of rounding', () => {
+    // (2^52 + 1)/3 − (2^52 + 3)/3 = −2/3, but the cross product 3·(2^52 + 1) exceeds 2^53.
+    expect(() => add(rational(2 ** 52 + 1, 3), rational(-(2 ** 52 + 3), 3))).toThrow(RangeError);
+    expect(() => multiply(rational(2 ** 30), rational(2 ** 30))).toThrow(RangeError);
+  });
+
   it('compares, tests integers and converts to a double', () => {
-    expect(equals(rational(2, 6), rational(1, 3))).toBe(true);
-    expect(equals(rational(1, 3), rational(-1, 3))).toBe(false);
+    expect(rationalsEqual(rational(2, 6), rational(1, 3))).toBe(true);
+    expect(rationalsEqual(rational(1, 3), rational(-1, 3))).toBe(false);
     expect(isInteger(rational(4, 2))).toBe(true);
     expect(isInteger(rational(1, 2))).toBe(false);
     expect(toNumber(rational(1, 4))).toBe(0.25);
