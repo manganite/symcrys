@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "symcrys"
 # Equal to packages/ts/package.json (one version for both packages; checked by the tests of both).
-version = "0.8.1"
+version = "0.9.0"
 description = "Crystallographic symmetry calculations: point groups (crystallographic and magnetic) and plane groups, their settings, symbols, site symmetry, Wyckoff positions, crystal forms and orbits, and the forms of property tensors. The TypeScript library symcrys of the same version, in an embedded JavaScript engine."
 readme = "README.md"
 license = "MIT"
