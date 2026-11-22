@@ -32,7 +32,7 @@ import {
   type PlanePointGroupKey,
 } from './spaceGroups/planePointGroups.js';
 import { planeOrbit, planeSiteSymmetry, planeWyckoffPositionOf } from './spaceGroups/positions.js';
-import { parseRational, toNumber, type Rational } from './spaceGroups/rational.js';
+import { parseRational, rational, toNumber, type Rational } from './spaceGroups/rational.js';
 
 export { VERSION } from './version.js';
 export type { PlaneSystem } from './spaceGroups/planeGroupData.js';
@@ -148,6 +148,13 @@ export interface OperationDescription {
   readonly location?: readonly number[];
   /** For a mirror or glide: the direction of its line, the shortest integer vector, first non-zero component positive. */
   readonly direction?: readonly number[];
+  /**
+   * For a mirror or glide: the normal of its line in the lattice basis, its symmetry direction as in
+   * ITA Table 2.1.3.1: the shortest integer vector along the columns of W − I, first non-zero
+   * component positive. Without a metric it is not the perpendicular of `direction`: in a hexagonal
+   * basis the normal of a line along [1,0] is [1,2].
+   */
+  readonly normal?: readonly number[];
   /** For a glide: the glide vector (w + W·w)/2, not reduced modulo the lattice. */
   readonly glide?: readonly number[];
 }
@@ -198,6 +205,8 @@ export interface SymmetryLine {
   readonly kind: 'mirror' | 'glide';
   /** The direction of the line, the shortest integer vector, first non-zero component positive. */
   readonly direction: readonly number[];
+  /** The normal of the line in the lattice basis, as in `describeOperations`. */
+  readonly normal: readonly number[];
   /** For a glide line its glide vector s·direction, 0 < s < 1; for a mirror line (0, 0). */
   readonly glide: readonly number[];
   /** The two ends of the segment of the line in the cell [0, 1]², in the order of `direction`. */
@@ -268,6 +277,67 @@ const plain = (op: ExactOperation): PlaneOperation => {
     translation: Object.freeze([...translation]),
   });
 };
+
+/** The description of an exact operation with plain numbers. */
+function describe(op: ExactOperation): OperationDescription {
+  const d = describePlaneOperation(op);
+  return Object.freeze({
+    kind: d.kind,
+    order: d.order,
+    ...(d.sense ? { sense: d.sense } : {}),
+    ...(d.translation ? { translation: Object.freeze(numbers(d.translation)) } : {}),
+    ...(d.location ? { location: Object.freeze(numbers(d.location)) } : {}),
+    ...(d.direction ? { direction: Object.freeze([...d.direction]) } : {}),
+    ...(d.normal ? { normal: Object.freeze([...d.normal]) } : {}),
+    ...(d.glide ? { glide: Object.freeze(numbers(d.glide)) } : {}),
+  });
+}
+
+/** Tolerance for reading an integer or a fraction from a double. */
+const READ_TOLERANCE = 1e-9;
+/** The largest denominator of a translation that `describeOperationsOf` reads. */
+const MAX_DENOMINATOR = 12;
+
+function fractionOf(value: unknown): Rational {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    for (let d = 1; d <= MAX_DENOMINATOR; d++) {
+      const n = Math.round(value * d);
+      if (Math.abs(value * d - n) < READ_TOLERANCE * d) return rational(n, d);
+    }
+  }
+  throw new RangeError(
+    `Not within 10⁻⁹ of a translation with a denominator of at most ${MAX_DENOMINATOR}: ${shown(value)}`,
+  );
+}
+
+/** A value for an error message; never throws (BigInt, circular objects). */
+function shown(value: unknown): string {
+  try {
+    return JSON.stringify(value) ?? String(value);
+  } catch {
+    return String(value);
+  }
+}
+
+/** An operation from a caller as an exact operation; throws a RangeError unless it has the shape of a plane operation. */
+function exactOf(op: unknown): ExactOperation {
+  const o = op as Partial<PlaneOperation> | null;
+  const m = o?.matrix;
+  const t = o?.translation;
+  const isRow = (row: unknown): row is readonly number[] => Array.isArray(row) && row.length === 2;
+  if (!Array.isArray(m) || m.length !== 2 || !m.every(isRow) || !Array.isArray(t) || t.length !== 2) {
+    throw new RangeError(`Not an operation of the plane { matrix (2 × 2), translation (2) }: ${shown(op)}`);
+  }
+  const matrix = m.map((row) =>
+    row.map((v) => {
+      if (!(typeof v === 'number' && Math.abs(v - Math.round(v)) < READ_TOLERANCE)) {
+        throw new RangeError(`The matrix of a plane operation has integer entries, not ${shown(m)}`);
+      }
+      return Math.round(v) + 0;
+    }),
+  );
+  return { matrix, translation: t.map(fractionOf) };
+}
 
 /** The plane group with this key (short symbol). Throws a RangeError for an unknown key. */
 export function planeGroup(key: PlaneGroupKey): PlaneGroup {
@@ -342,20 +412,24 @@ export function describeOperations(
   key: PlaneGroupKey | PointGroupKey,
   options?: SettingOptions,
 ): readonly OperationDescription[] {
-  return Object.freeze(
-    exact(key, options, false).map((op) => {
-      const d = describePlaneOperation(op);
-      return Object.freeze({
-        kind: d.kind,
-        order: d.order,
-        ...(d.sense ? { sense: d.sense } : {}),
-        ...(d.translation ? { translation: Object.freeze(numbers(d.translation)) } : {}),
-        ...(d.location ? { location: Object.freeze(numbers(d.location)) } : {}),
-        ...(d.direction ? { direction: Object.freeze([...d.direction]) } : {}),
-        ...(d.glide ? { glide: Object.freeze(numbers(d.glide)) } : {}),
-      });
-    }),
-  );
+  return Object.freeze(exact(key, options, false).map(describe));
+}
+
+/**
+ * Any operations of the plane (lattice basis) described geometrically, index for index, as
+ * `describeOperations` describes those of a group: for instance a product of operations, an
+ * operation shifted by a lattice translation, or the operations of a site symmetry. Each operation is
+ * `{ matrix, translation }` as `operations` gives it. Each matrix must have integer entries (within
+ * 10⁻⁹) and be the linear part of a crystallographic plane point group (determinant ±1, order 1,
+ * 2, 3, 4 or 6); each translation must lie within 10⁻⁹ of a fraction with a denominator of at most
+ * 12 (1/3 as 0.333…), as the translations of `operations` and their products do. Throws a
+ * RangeError otherwise.
+ */
+export function describeOperationsOf(operations: readonly PlaneOperation[]): readonly OperationDescription[] {
+  if (!Array.isArray(operations)) {
+    throw new RangeError('describeOperationsOf takes a list of operations { matrix, translation }');
+  }
+  return Object.freeze(operations.map((op) => describe(exactOf(op))));
 }
 
 /**
@@ -446,6 +520,7 @@ export function symmetryElements(key: PlaneGroupKey): SymmetryElements {
         Object.freeze({
           kind: l.kind,
           direction: Object.freeze([...l.direction]),
+          normal: Object.freeze([...l.normal]),
           glide: Object.freeze(numbers(l.glide)),
           segment: Object.freeze(l.segment.map((p) => Object.freeze(numbers(p)))),
         }),

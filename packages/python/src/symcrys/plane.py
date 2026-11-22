@@ -9,7 +9,7 @@ line is an int64 array of shape (2,) (docs/conventions.md, "Plane groups").
 
 from __future__ import annotations
 
-from typing import Any, Optional, TypedDict
+from typing import Any, Mapping, Optional, Sequence, TypedDict
 
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
@@ -34,6 +34,7 @@ __all__ = [
     "SymcrysError",
     "asymmetric_unit",
     "describe_operations",
+    "describe_operations_of",
     "generators",
     "operations",
     "orbit",
@@ -176,18 +177,39 @@ def describe_operations(key: str, *, setting: Optional[int] = None) -> list[dict
     -------
     list of dict
         ``translation``, ``location`` and ``glide`` (where present) are float64 arrays of shape
-        (2,), ``direction`` an int64 array of shape (2,).
+        (2,), ``direction`` and ``normal`` int64 arrays of shape (2,).
     """
-    out = []
-    for d in _call("describeOperations", key, _shared.options(setting=setting)):
-        d = dict(d)
-        for k in ("translation", "location", "glide"):
-            if k in d:
-                d[k] = _floats(d[k], 2)
-        if "direction" in d:
-            d["direction"] = _ints(d["direction"])
-        out.append(d)
-    return out
+    return [_description(d) for d in _call("describeOperations", key, _shared.options(setting=setting))]
+
+
+def describe_operations_of(operations: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    """Any operations of the plane (lattice basis) described geometrically, index for index, as
+    ``describe_operations`` describes those of a group: for instance a product of operations, an
+    operation shifted by a lattice translation, or the operations of a site symmetry. Each operation
+    is ``{ matrix, translation }`` as ``operations`` gives it. Each matrix must have integer entries
+    (within 10⁻⁹) and be the linear part of a crystallographic plane point group (determinant ±1,
+    order 1, 2, 3, 4 or 6); each translation must lie within 10⁻⁹ of a fraction with a denominator
+    of at most 12 (1/3 as 0.333…), as the translations of ``operations`` and their products do.
+    Raises SymcrysError otherwise.
+
+    Returns
+    -------
+    list of dict
+        As ``describe_operations``: ``translation``, ``location`` and ``glide`` (where present)
+        float64 arrays of shape (2,), ``direction`` and ``normal`` int64 arrays of shape (2,).
+    """
+    return [_description(d) for d in _call("describeOperationsOf", list(operations))]
+
+
+def _description(d: dict[str, Any]) -> dict[str, Any]:
+    d = dict(d)
+    for k in ("translation", "location", "glide"):
+        if k in d:
+            d[k] = _floats(d[k], 2)
+    for k in ("direction", "normal"):
+        if k in d:
+            d[k] = _ints(d[k])
+    return d
 
 
 # --- points -------------------------------------------------------------------------------------
@@ -284,8 +306,9 @@ def symmetry_elements(key: str) -> dict[str, Any]:
     -------
     dict
         ``rotations``: dicts ``{"order", "point"}``, point a float64 array of shape (2,); ``lines``:
-        dicts ``{"kind", "direction", "glide", "segment"}``, direction int64 of shape (2,), glide
-        float64 of shape (2,), segment float64 of shape (2, 2), the two ends as rows.
+        dicts ``{"kind", "direction", "normal", "glide", "segment"}``, direction and normal int64 of
+        shape (2,), glide float64 of shape (2,), segment float64 of shape (2, 2), the two ends as
+        rows.
     """
     result = dict(_call("symmetryElements", key))
     return {
@@ -294,6 +317,7 @@ def symmetry_elements(key: str) -> dict[str, Any]:
             {
                 "kind": line["kind"],
                 "direction": _ints(line["direction"]),
+                "normal": _ints(line["normal"]),
                 "glide": _floats(line["glide"], 2),
                 "segment": _floats(line["segment"], 2, 2),
             }

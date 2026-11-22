@@ -9,7 +9,7 @@ printed p. 18.
 Transcription conventions: a leading minus sign is an overbar. Directions in one brace set are
 symmetry-equivalent; the first entry represents the set. The sequence primary, secondary,
 tertiary is the sequence of positions in the Hermann–Mauguin symbol. The two-dimensional rows are
-omitted.
+in `vol-a-table-2.1.3.1-plane.md`.
 
 | Lattice                          | Primary                    | Secondary                     | Tertiary                          |
 |----------------------------------|----------------------------|-------------------------------|-----------------------------------|
