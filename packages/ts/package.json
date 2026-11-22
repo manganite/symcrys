@@ -28,6 +28,10 @@
       "types": "./dist/magnetic.d.ts",
       "default": "./dist/magnetic.js"
     },
+    "./plane": {
+      "types": "./dist/plane.d.ts",
+      "default": "./dist/plane.js"
+    },
     "./package.json": "./package.json"
   },
   "main": "./dist/index.js",

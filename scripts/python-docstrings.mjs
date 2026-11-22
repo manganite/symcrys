@@ -7,7 +7,7 @@
 //
 // Reads TypeDoc's JSON output (build/typedoc.json, `npm run docs:json`). Rewrites the docstring of
 // every function and documented constant in symcrys/__init__.py (crystallographic API, index.ts)
-// and symcrys/magnetic.py (magnetic API, magnetic.ts). With --check it changes nothing and fails
+// symcrys/magnetic.py (magnetic API, magnetic.ts) and symcrys/plane.py (plane API, plane.ts). With --check it changes nothing and fails
 // if a docstring is missing or stale, or if a TSDoc comment converts to text that still holds a
 // TypeScript name.
 //
@@ -26,6 +26,7 @@ const extras = JSON.parse(readFileSync(path.join(root, 'packages/python/docstrin
 const MODULES = [
   { ts: 'index', py: 'packages/python/src/symcrys/__init__.py', extras: extras.symcrys ?? {} },
   { ts: 'magnetic', py: 'packages/python/src/symcrys/magnetic.py', extras: extras['symcrys.magnetic'] ?? {} },
+  { ts: 'plane', py: 'packages/python/src/symcrys/plane.py', extras: extras['symcrys.plane'] ?? {} },
 ];
 const KIND = { variable: 32, function: 64, interface: 256, typeAlias: 2097152, reference: 4194304 };
 const WIDTH = 100;
@@ -53,7 +54,7 @@ const problems = [];
 function codeToPython(code) {
   return (
     code
-      .replace(/symcrys\/magnetic/g, 'symcrys.magnetic')
+      .replace(/symcrys\/(magnetic|plane)/g, 'symcrys.$1')
       .replace(/\)\.([A-Za-z_]\w*)/g, (_, /** @type {string} */ key) => `)["${snake(key)}"]`)
       // camelCase names outside quoted strings: a string value goes to Python as it is.
       .replace(

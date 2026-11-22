@@ -8,7 +8,7 @@ import numpy as np
 import pytest
 
 import symcrys
-from symcrys import _engine, magnetic
+from symcrys import _engine, magnetic, plane
 from symcrys._convert import camel, snake
 
 SHG = {"rank": 3, "parity": "polar", "intrinsic": "jk"}
@@ -18,12 +18,16 @@ TYPES = {"SymcrysError", "TensorForm", "TensorSpec"}
 
 def test_every_export_of_the_library_has_its_python_name() -> None:
     exported = _engine.exports()
-    for module, prefix in ((symcrys, ""), (magnetic, "magnetic.")):
-        own = [(name[len(prefix) :], kind) for name, kind in exported if ("." in name) == bool(prefix)]
-        assert all(name.startswith(prefix) for name, _ in exported if "." in name)
+    assert all(name.startswith(("magnetic.", "plane.")) for name, _ in exported if "." in name)
+    for module, prefix in ((symcrys, ""), (magnetic, "magnetic."), (plane, "plane.")):
+        own = [(name[len(prefix) :], kind) for name, kind in exported if (name.startswith(prefix) if prefix else "." not in name)]
         expected = {name if kind == "value" else snake(name) for name, kind in own}
-        assert len(expected) > 20
-        extra = TYPES | ({"magnetic"} if module is symcrys else set())
+        assert len(expected) > 12
+        extra = (
+            TYPES | {"magnetic", "plane"}
+            if module is symcrys
+            else {"SymcrysError", "Operation"} if module is plane else TYPES
+        )
         assert set(module.__all__) == expected | extra, module.__name__
         for name in expected:
             assert hasattr(module, name), name
@@ -32,7 +36,7 @@ def test_every_export_of_the_library_has_its_python_name() -> None:
 def test_every_function_has_its_docstring_from_the_tsdoc() -> None:
     # Written from the TSDoc comments by scripts/python-docstrings.mjs (#29); whether they are
     # current is checked by `npm run docs:check` in the gate docs, which needs the TypeScript sources.
-    for module in (symcrys, magnetic):
+    for module in (symcrys, magnetic, plane):
         for name in module.__all__:
             obj = getattr(module, name)
             if callable(obj) and not isinstance(obj, type) and name not in TYPES:
@@ -42,7 +46,7 @@ def test_every_function_has_its_docstring_from_the_tsdoc() -> None:
 
 
 def test_the_two_modules_have_the_same_names() -> None:
-    only_classes = {"magnetic", "CRYSTAL_FORM_TYPES", "crystal_forms", "wyckoff_position_of", "wyckoff_positions"}
+    only_classes = {"magnetic", "plane", "CRYSTAL_FORM_TYPES", "crystal_forms", "wyckoff_position_of", "wyckoff_positions"}
     assert set(symcrys.__all__) - only_classes == set(magnetic.__all__)
     assert symcrys.magnetic is magnetic and magnetic.VERSION == symcrys.VERSION == symcrys.__version__
 

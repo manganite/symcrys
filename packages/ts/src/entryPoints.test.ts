@@ -21,7 +21,7 @@ const asClass = (key: string) => key as classes.PointGroupKey;
 
 describe('the two entry points', () => {
   it('are both entries of the package', () => {
-    expect(Object.keys(pkg.exports)).toEqual(['.', './magnetic', './package.json']);
+    expect(Object.keys(pkg.exports)).toEqual(['.', './magnetic', './plane', './package.json']);
   });
 
   it('export the same names; only the Wyckoff positions and the crystal forms are crystallographic alone', () => {

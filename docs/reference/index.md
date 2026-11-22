@@ -5,8 +5,8 @@ reference is generated from them by TypeDoc; the docstrings of the Python packag
 them by fixed rules (names in snake_case, an options object as keyword arguments, `RangeError` as
 `SymcrysError`) and add only what Python alone has, the shapes and types of the NumPy arrays.
 
-- <a href="../ts/index.html">TypeScript reference</a> (TypeDoc): `symcrys` and `symcrys/magnetic`.
-- [Python reference](python.md): `symcrys` and `symcrys.magnetic`.
+- <a href="../ts/index.html">TypeScript reference</a> (TypeDoc): `symcrys`, `symcrys/magnetic` and `symcrys/plane`.
+- [Python reference](python.md): `symcrys`, `symcrys.magnetic` and `symcrys.plane`.
 
 ```{toctree}
 :hidden:

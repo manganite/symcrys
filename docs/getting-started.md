@@ -31,8 +31,15 @@ carries `timeReversal`, and a tensor specification `timeParity`:
 
 ```
 
+The plane groups and the plane point groups are in `symcrys/plane`, in the lattice basis
+([Conventions](conventions.md), "Plane groups"):
+
+```{ts-example} plane.ts
+
+```
+
 Without a build step, copy `dist/` of the package (from the npm tarball, or from the release on
-GitHub) next to your code and import `dist/index.js` or `dist/magnetic.js`: every module imports
+GitHub) next to your code and import `dist/index.js`, `dist/magnetic.js` or `dist/plane.js`: every module imports
 only relative `.js` paths.
 
 ## Python
@@ -74,6 +81,14 @@ The magnetic API is the module `symcrys.magnetic`:
 from symcrys import magnetic
 
 magnetic.allowed_properties("m'm'2"), magnetic.tensor_form("m'm'2", "ferromagnetic")["parameters"]
+```
+
+The plane API is the module `symcrys.plane`:
+
+```{code-cell} ipython3
+from symcrys import plane
+
+plane.wyckoff_position_of("p6mm", [1 / 3, 2 / 3]), plane.asymmetric_unit("p6mm")["vertices"]
 ```
 
 An error of the library raises `symcrys.SymcrysError`, a subclass of `ValueError`:

@@ -84,6 +84,7 @@ __all__ = [
     "zone_axis",
     "change_of_axes",
     "magnetic",
+    "plane",
     "operations",
     "orbit",
     "orbit_of",
@@ -865,3 +866,4 @@ def rotate_tensor(
 
 
 from . import magnetic  # noqa: E402  (the magnetic API, also reachable as symcrys.magnetic)
+from . import plane  # noqa: E402  (the plane API, also reachable as symcrys.plane)

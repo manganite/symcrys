@@ -5,7 +5,7 @@
 ```{eval-rst}
 .. automodule:: symcrys
    :members:
-   :exclude-members: magnetic
+   :exclude-members: magnetic, plane
 ```
 
 ## `symcrys.magnetic`: magnetic point groups
@@ -17,3 +17,11 @@
 ```
 
 `symcrys.magnetic.SymcrysError` and `symcrys.magnetic.TensorForm` are those of `symcrys` above.
+
+## `symcrys.plane`: plane groups and plane point groups
+
+```{eval-rst}
+.. automodule:: symcrys.plane
+   :members:
+   :exclude-members: SymcrysError
+```

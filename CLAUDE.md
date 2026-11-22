@@ -166,8 +166,9 @@ Carried over from birss-app, where the calculations come from.
 ## Public API and versions
 
 - Public API = everything exported from the entries in `exports` of `package.json`: `src/index.ts`
-  (`symcrys`, the crystallographic API) and `src/magnetic.ts` (`symcrys/magnetic`, the magnetic
-  API; "Point groups" below). Everything else is internal and may change freely.
+  (`symcrys`, the crystallographic API), `src/magnetic.ts` (`symcrys/magnetic`, the magnetic
+  API; "Point groups" below) and `src/plane.ts` (`symcrys/plane`, the plane groups; "Plane groups"
+  below). Everything else is internal and may change freely.
 - **Plain data at the API boundary** (maintainer, 2026-11-19, #30): exported functions take and
   return numbers, strings, booleans, arrays and plain objects; no classes, no functions, no `Map` or
   `Set` as arguments or results. A thin layer in another language (Python, #30) can then pass
@@ -185,12 +186,12 @@ Carried over from birss-app, where the calculations come from.
   arguments; arrays of numbers become NumPy arrays (`float64` for matrices, Cartesian vectors,
   tensor bases and relations; `int64` for index lists, Miller indices and lattice directions);
   errors of the library raise `SymcrysError`, a `ValueError`. A new export of `src/index.ts` gets
-  its Python function in `symcrys`, one of `src/magnetic.ts` in `symcrys.magnetic`, in the same PR;
-  a test fails until it has one.
+  its Python function in `symcrys`, one of `src/magnetic.ts` in `symcrys.magnetic`, one of
+  `src/plane.ts` in `symcrys.plane`, in the same PR; a test fails until it has one.
 - **One description of every export: its TSDoc comment** (maintainer, 2026-11-20, #29). The
   TypeScript reference is generated from it (TypeDoc), and so are the docstrings of the Python
   functions and constants (`scripts/python-docstrings.mjs`, `npm run docs:python`, which rewrites
-  them in `symcrys/__init__.py` and `symcrys/magnetic.py`), by the rules above: names in
+  them in `symcrys/__init__.py`, `symcrys/magnetic.py` and `symcrys/plane.py`), by the rules above: names in
   snake_case, the options object as a "Parameters" section of keyword arguments, `RangeError` as
   `SymcrysError`, `undefined`/`true`/`false` as `None`/`True`/`False`. Hand-written for Python is
   only what Python alone has, the shapes and dtypes of the NumPy arrays
@@ -201,7 +202,7 @@ Carried over from birss-app, where the calculations come from.
   TypeScript name is left in it. A PR that changes a TSDoc comment runs `npm run docs:python`.
 - **The engine stays replaceable** (#30): the whole boundary is one function, `call(name,
 argsJson) → resultJson` (`_engine.py`, `scripts/bundle-python.mjs`; a name of the magnetic API has
-  the prefix `magnetic.`), so another backend
+  the prefix `magnetic.`, one of the plane API `plane.`), so another backend
   (Pyodide in JupyterLite) replaces one module. Not now: that second backend and a display layer
   such as `_repr_latex_` (presentation; ideas in #30).
 
@@ -665,8 +666,7 @@ while implementing gets its own note here.
   comparisons modulo 1 with a tolerance, cf. plane-groups `CLAUDE.md`, "Toleranzen der Bestimmung")
   and one type for all groups (would have broken the point-group API, and tensors are Cartesian).
   Functions that take a point from a caller (floating point) take an optional `tolerance`, as
-  `siteSymmetry` does. Open until the first exported function: the NumPy types in Python (under the
-  fixed rule `matrix` would be float64, as for `latticeOperations`; `translation` float64).
+  `siteSymmetry` does. NumPy types in Python: "The API of `symcrys/plane`" below.
 - **One module for every dimension**: written for d = 2 and d = 3, so that the space groups for the
   3D app are the same module with d = 3, not a further implementation.
 - **The arithmetic** (chosen while implementing, PR #76; `src/spaceGroups/`): a rational is a pair
@@ -735,9 +735,11 @@ while implementing gets its own note here.
   the symbols ITA prints for the plane: `'p2mg'`, `'c2mm'` for the plane groups, `'2mm'`, `'4mm'`
   etc. for the plane point groups (the plane point group `2mm` is the class `mm2` with its 2 normal
   to the plane); the two sets do not overlap, since a plane group's symbol begins with its lattice
-  letter. The plane point groups are the 10 crystal classes whose operations leave the normal of
-  the plane fixed, restricted to the plane (one data source). Their frame and settings: "The API of `symcrys/plane`" below. Until the entry point
-  exists, "Public API and versions" and "Two entry points" name the two existing entry points only.
+  letter. The operations of a plane point group are the linear parts of its symmorphic plane group
+  (pm for `m`, p3m1 and p31m for the settings of `3m`), one data source with the plane groups
+  (chosen while implementing, PR #82): the first plan, the crystal classes restricted to the plane,
+  fails for `m`, since no setting of the class `m` has its mirror normal to a, as pm has
+  (`-x,y`); a test checks that every plane group's linear parts are its point group.
 - **The API of `symcrys/plane`** (Thomas, 2026-11-22, #31, asked with proposals and a
   recommendation): **`planeGroup(key)`** names the function that gives a plane group (number,
   symbols, point group, system, centring), not `spaceGroup` as recommended (one name for plane and
@@ -752,6 +754,18 @@ while implementing gets its own note here.
   order and lines with kind, glide vector and segment in the cell [0, 1]², so that the calculation
   is in one place for all apps; the segment is the part nearest the drawing that still is geometry.
   **Python:** `matrix` float64 by the fixed rule, as for `latticeOperations`; `translation` float64.
+  Asked in a second round (Thomas, 2026-11-22, #31, all four recommendations taken): **functions of a
+  point take the key**, `siteSymmetry(key, point)`, `wyckoffPositionOf(key, point)`,
+  `orbit(key, point)` with `{ tolerance }` (the site symmetry needs the group modulo the lattice;
+  arbitrary lists of operations belong to the determination); **names** `asymmetricUnit(key)` and
+  `symmetryElements(key)`, ITA's terms; **plane point groups** with ten keys as in ITA Table 3.2.1.1
+  and `3m` in the settings 1 = `3m1` and 2 = `31m` (`{ setting }`, `pointGroup`, `symbol`, as in
+  `symcrys`); their **positions and edge forms** (ITA Table 3.2.3.1) later, #81. Chosen while
+  implementing (PR #82): the Python layer converts the results of `symcrys.plane` itself (a translation,
+  point, vertex or segment float64 even where its entries are integers; a direction of a line int64,
+  although `direction` is a float key of the fixed rule, which means a Cartesian vector there); a
+  Wyckoff position gives all printed coordinates of its (0,0)+ set (`coordinates`, a list), since ITA
+  prints them all for the plane groups.
 - **Print anchor: ITA 6th edition (2016), Chapter 2.2** (#31, asked together with the four
   questions): the 6th edition is the reference of symcrys for what it holds (`docs/conventions.md`,
   "Sources"); for the crystal classes only the order of the operations, the selected generators and the
