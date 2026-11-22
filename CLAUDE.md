@@ -689,6 +689,16 @@ while implementing gets its own note here.
   follows in a second MINOR, built on the first; it is the largest part (cell reduction, metric,
   choice of cell and origin, tolerances), and plane-groups can move most of its calculations
   before it.
+- **Description of an operation** (chosen while implementing, PR #78; `src/spaceGroups/describe.ts`,
+  fields in its TSDoc): structured and exact, as for the point groups ("Symmetry elements as
+  structured data"); the symbols such as `g(1/2,1/2) x,x` stay with the applications. The kinds
+  `'mirror'` and `'glide'` match `'mirror'` of the point groups. The line of a mirror or glide is
+  given by its direction and one point; the point on y = 0 (on x = 0 for a line along a) is one fixed
+  choice among many, so that equal lines give equal data. Checked against print: the symbols written
+  from the description reproduce every printed "Symmetry operations" entry of the 17 groups
+  (`describe.reference.test.ts`); invariants that do not depend on the computation (a centre is
+  fixed, a point of the line moves by the glide vector) cover the operations shifted by lattice
+  translations, where print has no centres of order ≥ 3 away from the origin.
 - **No frieze, layer or magnetic plane groups for now** (#31 question 3): no consumer needs them;
   the dimension-generic module keeps them possible (idea in #74).
 - **Entry point `symcrys/plane`, later `symcrys/space`** (#31 question 4), as `symcrys/magnetic`
@@ -699,10 +709,22 @@ while implementing gets its own note here.
   etc. for the plane point groups (the plane point group `2mm` is the class `mm2` with its 2 normal
   to the plane); the two sets do not overlap, since a plane group's symbol begins with its lattice
   letter. The plane point groups are the 10 crystal classes whose operations leave the normal of
-  the plane fixed, restricted to the plane (one data source). Their frame, the type of their
-  operations and whether `3m` gets two orientations (as in p3m1 and p31m) are settled when they are
-  implemented, with Thomas where it is a choice. Until then "Public API and versions" and "Two entry
-  points" name the two existing entry points only.
+  the plane fixed, restricted to the plane (one data source). Their frame and settings: "The API of `symcrys/plane`" below. Until the entry point
+  exists, "Public API and versions" and "Two entry points" name the two existing entry points only.
+- **The API of `symcrys/plane`** (Thomas, 2026-11-22, #31, asked with proposals and a
+  recommendation): **`planeGroup(key)`** names the function that gives a plane group (number,
+  symbols, point group, system, centring), not `spaceGroup` as recommended (one name for plane and
+  space): a name that says what it is serves teaching and the apps; `symcrys/space` will have
+  `spaceGroup`. The other names come from the other entry points (`operations`, `generators`,
+  `wyckoffPositions`, `siteSymmetry`, `orbit`, `describeOperations`) and take the key of a plane
+  group or of a plane point group. **The plane point groups in the lattice basis** (integer 2 × 2
+  matrices, the type of the plane groups, so that the point group of a plane group is its linear
+  part), and `3m` in two settings, `3m1` and `31m`, as in p3m1 and p31m. **Asymmetric unit and
+  symmetry elements in the cell as numbers in symcrys**: the asymmetric unit as inequalities
+  (coefficients of a·x + b·y ≤ c) with its vertices, the elements as rotation centres with their
+  order and lines with kind, glide vector and segment in the cell [0, 1]², so that the calculation
+  is in one place for all apps; the segment is the part nearest the drawing that still is geometry.
+  **Python:** `matrix` float64 by the fixed rule, as for `latticeOperations`; `translation` float64.
 - **Print anchor: ITA 6th edition (2016), Chapter 2.2** (#31, asked together with the four
   questions): the 6th edition is the reference of symcrys for what it holds (`docs/conventions.md`,
   "Sources"); for the crystal classes only the order of the operations, the selected generators and the
