@@ -64,9 +64,15 @@ describe('plane groups: points of every printed Wyckoff position', () => {
   for (const { symbol, rows } of printed()) {
     for (const row of rows) {
       it(`${symbol} ${row.multiplicity}${row.letter}`, () => {
-        for (const p of row.points) {
-          // Displaced by much less than the default tolerance of 10⁻⁶.
-          const q = [p[0] + 3e-8, p[1] - 2e-8];
+        for (const [p, sign] of row.points.flatMap(
+          (p) =>
+            [
+              [p, 1],
+              [p, -1],
+            ] as const,
+        )) {
+          // Displaced by much less than the default tolerance of 10⁻⁶, both ways (across 0 and 1).
+          const q = [p[0] + sign * 3e-8, p[1] - sign * 2e-8];
           expect(planeWyckoffPositionOf(symbol, q)).toEqual({
             letter: row.letter,
             multiplicity: row.multiplicity,
@@ -99,10 +105,23 @@ describe('plane-group positions: tolerance and errors', () => {
     expect(planeWyckoffPositionOf('p6mm', p, { tolerance: 1e-3 }).letter).toBe('b');
   });
 
+  it('closes the operations that fix a point within a large tolerance into a group', () => {
+    // Near the 4-fold centre of p4, 4+ and 4- fix (0.0007, 0.0002) within 10⁻³ but 2 does not;
+    // closed, all four fix it, and the point is set onto the centre.
+    const site = planeSiteSymmetry('p4', [0.0007, 0.0002], { tolerance: 1e-3 });
+    expect(site.operations).toHaveLength(4);
+    expect(site.multiplicity).toBe(1);
+    expect(close(site.point, [0, 0], 1e-12)).toBe(true);
+    expect(planeWyckoffPositionOf('p4', [0.0007, 0.0002], { tolerance: 1e-3 }).letter).toBe('a');
+    expect(planeWyckoffPositionOf('p6mm', [0.0007, 0], { tolerance: 1e-3 }).letter).toBe('a');
+  });
+
   it('refuses bad points, tolerances and keys', () => {
     expect(() => planeOrbit('p2', [0.1])).toThrow(RangeError);
     expect(() => planeOrbit('p2', [0.1, Number.NaN])).toThrow(RangeError);
     expect(() => planeOrbit('p2', [0.1, 0.2], { tolerance: 0 })).toThrow(RangeError);
+    expect(() => planeOrbit('p2', [0.1, 0.2], { tolerance: 0.5 })).toThrow(RangeError);
+    expect(() => planeOrbit('p2', [0.1, 0.2], { tolerance: Infinity })).toThrow(RangeError);
     expect(() => planeOrbit('p7', [0.1, 0.2])).toThrow(RangeError);
   });
 });

@@ -704,11 +704,12 @@ while implementing gets its own note here.
   lattice basis, so these functions work in floating point on the exact operations, with the
   `tolerance` of #31 measured per coordinate modulo the lattice (default `EPSILON`), as
   `siteSymmetry` does for directions; a tolerance in the lattice basis needs no metric, which a
-  plane group does not fix. The site symmetry sets the point onto its fixed space by the mean of its
-  images, as `siteSymmetry` does. The Wyckoff position is the printed row of the point's
+  plane group does not fix; it must stay below 1/2. As `siteSymmetry` does, the operations fixing the
+  point are closed under products and the point is set onto the fixed space of the closure (the mean
+  of its images), repeated until stable, so a large tolerance still gives a subgroup. The Wyckoff position is the printed row of the point's
   multiplicity whose printed coordinates (with the centring) reach the point, so letter and
   oriented symbol come from print, not from a rule of symcrys. Checked: every printed point of every
-  Wyckoff position of the 17 groups, displaced by 3·10⁻⁸, gives its printed letter, multiplicity,
+  Wyckoff position of the 17 groups, displaced by about 3·10⁻⁸ in both directions, gives its printed letter, multiplicity,
   symbol and printed orbit (`positions.reference.test.ts`).
 - **No frieze, layer or magnetic plane groups for now** (#31 question 3): no consumer needs them;
   the dimension-generic module keeps them possible (idea in #74).

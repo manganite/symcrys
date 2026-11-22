@@ -5,7 +5,7 @@
  * point groups (`siteSymmetry`). Internal for now.
  */
 
-import { parseOperation, toPlain, type PlainOperation } from './affine.js';
+import { compose, equalModLattice, parseOperation, toPlain, type PlainOperation } from './affine.js';
 import { planeGroupEntry, planeGroupOperations } from './planeGroups.js';
 import { EPSILON } from '../tolerances.js';
 
@@ -51,7 +51,10 @@ export interface PlaneWyckoffPosition {
 
 function tolerance(options?: PointOptions): number {
   const t = options?.tolerance ?? EPSILON;
-  if (!(t > 0)) throw new RangeError(`The tolerance must be positive, not ${String(t)}`);
+  // Modulo the lattice two coordinates differ by at most 1/2, so a tolerance of 1/2 or more says nothing.
+  if (!(typeof t === 'number' && t > 0 && t < 0.5)) {
+    throw new RangeError(`The tolerance must lie between 0 and 1/2, not ${String(t)}`);
+  }
   return t;
 }
 
@@ -105,29 +108,71 @@ export function planeOrbit(key: string, point: readonly number[], options?: Poin
   return out;
 }
 
-/** The site symmetry of a point under a plane group. */
+/** Indices of `set` closed under products, modulo the lattice, within the operations of the group. */
+function closeWithin(key: string, set: readonly number[]): number[] {
+  const exact = planeGroupOperations(planeGroupEntry(key).symbol);
+  const out = new Set(set);
+  let grew = true;
+  while (grew) {
+    grew = false;
+    for (const a of [...out]) {
+      for (const b of [...out]) {
+        const product = compose(exact[a], exact[b]);
+        const k = exact.findIndex((op) => equalModLattice(op, product));
+        if (!out.has(k)) {
+          out.add(k);
+          grew = true;
+        }
+      }
+    }
+  }
+  return [...out].sort((a, b) => a - b);
+}
+
+/** The operations of `indices`, each shifted by the lattice translation that brings its image of `p` nearest to `p`. */
+function fixingOperations(ops: readonly PlainOperation[], indices: readonly number[], p: readonly number[]) {
+  return indices.map((i) => {
+    const op = ops[i];
+    const n = image(op, p).map((v, k) => Math.round(v - p[k]));
+    return { matrix: op.matrix.map((r) => [...r]), translation: op.translation.map((t, k) => t - n[k]) };
+  });
+}
+
+/**
+ * The site symmetry of a point under a plane group. The operations that fix the point modulo the
+ * lattice within the tolerance are closed under products and the point is set onto the fixed space
+ * of the closure (the mean of its images), repeated until stable, as `siteSymmetry` does for the point
+ * groups; so the result is always a subgroup and the set point lies exactly on its elements. Throws a
+ * RangeError if that does not settle (a tolerance far too large).
+ */
 export function planeSiteSymmetry(key: string, point: readonly number[], options?: PointOptions): PlaneSiteSymmetry {
   checkPoint(point);
   const tol = tolerance(options);
   const ops = plainOperations(key);
-  const indices: number[] = [];
-  const fixing: PlainOperation[] = [];
-  ops.forEach((op, i) => {
-    const q = image(op, point);
-    const n = q.map((v, k) => Math.round(v - point[k]));
-    if (q.every((v, k) => Math.abs(v - point[k] - n[k]) < tol)) {
-      indices.push(i);
-      fixing.push({ matrix: op.matrix.map((r) => [...r]), translation: op.translation.map((t, k) => t - n[k]) });
+  const fixingAt = (p: readonly number[]): number[] =>
+    ops.flatMap((op, i) => (sameModLattice(image(op, p), p, tol) ? [i] : []));
+  let p: readonly number[] = point;
+  let set = closeWithin(key, fixingAt(p));
+  for (let pass = 0; pass < 8; pass++) {
+    const fixing = fixingOperations(ops, set, p);
+    const mean = [0, 1].map((k) => fixing.reduce((s, op) => s + image(op, p)[k], 0) / fixing.length);
+    const next = closeWithin(key, fixingAt(mean));
+    const settled = fixing.every((op) => sameModLattice(image(op, mean), mean, 1e-9));
+    if (settled && next.length === set.length && next.every((x, i) => x === set[i])) {
+      const q = mean.map(mod1);
+      return {
+        operations: set,
+        fixing: fixingOperations(ops, set, q),
+        point: q,
+        multiplicity: ops.length / set.length,
+      };
     }
-  });
-  // The mean of the images under the fixing operations lies on their common fixed space.
-  const mean = [0, 1].map((k) => fixing.reduce((s, op) => s + image(op, point)[k], 0) / fixing.length);
-  return {
-    operations: indices,
-    fixing,
-    point: mean.map(mod1),
-    multiplicity: ops.length / indices.length,
-  };
+    p = mean;
+    set = next;
+  }
+  throw new RangeError(
+    `No common fixed point for the operations fixing ${JSON.stringify(point)} within ${tol} (tolerance too large?)`,
+  );
 }
 
 /**
@@ -188,5 +233,5 @@ export function planeWyckoffPositionOf(
       }
     }
   }
-  throw new Error(`No Wyckoff position of ${entry.symbol} holds the point ${JSON.stringify(point)}`);
+  throw new RangeError(`No Wyckoff position of ${entry.symbol} holds the point ${JSON.stringify(point)}`);
 }
