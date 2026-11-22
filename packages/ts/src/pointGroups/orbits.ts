@@ -8,9 +8,12 @@ import { apply, inverse, multiply, type Mat3, type Vec3 } from '../linalg.js';
 import { checkOrthogonalWithin, type Operation } from '../operations.js';
 import { siteTolerance } from '../siteSymmetry.js';
 import type { Uvw } from '../symmetryDirections.js';
+import { itcLatticeOperations } from './itcData.js';
 import {
   operations as groupOperations,
+  isPointGroupKey,
   pointGroup,
+  settings,
   type MagneticPointGroupKey,
   type SettingOptions,
 } from './pointGroups.js';
@@ -60,16 +63,26 @@ export function latticeOperations(key: MagneticPointGroupKey, options?: SettingO
   const ops = groupOperations(key, options);
   let result = latticeCache.get(ops);
   if (!result) {
-    const b = conventionalBasis(key);
-    const bInv = inverse(b);
-    result = Object.freeze(
-      ops.map((op, i) =>
-        Object.freeze({
-          matrix: deepFreeze(integer(multiply(multiply(bInv, op.matrix), b), `Operation ${i} of ${key}`)),
-          timeReversal: op.timeReversal,
-        }),
-      ),
-    );
+    if (isPointGroupKey(key) && (options?.convention ?? 'itc') === 'itc') {
+      // A class in the ITC convention: the exact matrices of the ITC class data, in the same order.
+      const index = options?.setting ?? settings(key, 'itc').find((s) => s.isDefault)!.index;
+      result = Object.freeze(
+        itcLatticeOperations(key, index).map((w, i) =>
+          Object.freeze({ matrix: deepFreeze(w as unknown as Mat3), timeReversal: ops[i].timeReversal }),
+        ),
+      );
+    } else {
+      const b = conventionalBasis(key);
+      const bInv = inverse(b);
+      result = Object.freeze(
+        ops.map((op, i) =>
+          Object.freeze({
+            matrix: deepFreeze(integer(multiply(multiply(bInv, op.matrix), b), `Operation ${i} of ${key}`)),
+            timeReversal: op.timeReversal,
+          }),
+        ),
+      );
+    }
     latticeCache.set(ops, result);
   }
   return result;

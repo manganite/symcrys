@@ -1,9 +1,10 @@
 /**
- * The exact ITC class data (itcData.ts, #122) against the current ITC output, which it is to replace
- * without changing it (#121: a pure refactor, the ITC baseline pins unchanged). For every class and
- * setting: the settings with their symbols, unique axis and default; the operations as Cartesian
- * matrices in the same order; ITA's generators; the lattice operations. Also the change of basis
- * that gives `2mm` and `m2m` (ITA 2016 Table 1.5.4.4, cab and bca).
+ * The exact ITC class data (itcData.ts, #122) against the ITC output of the API. Since PR 2b the
+ * API reads the settings, symbols, defaults, operations, generators and lattice operations of the
+ * classes in the ITC convention from these data, so this test checks the wiring (every setting, the
+ * same order, no copy that drifts); that the output did not change is checked by the ITC baseline
+ * pins (#121, itcBaseline.pins.test.ts), and its correctness by itcData.reference.test.ts. Also the
+ * change of basis that gives `2mm` and `m2m` (ITA 2016 Table 1.5.4.4, cab and bca).
  */
 
 import { describe, expect, it } from 'vitest';
@@ -17,7 +18,7 @@ const SETTINGS = ITC_CLASSES.flatMap((c) => c.settings.map((s) => [`${c.key} #${
 const sameMatrices = (a: readonly Mat3[], b: readonly Mat3[]) =>
   a.length === b.length && a.every((m, i) => matricesEqual(m, b[i]));
 
-describe('the exact ITC class data equals the current ITC output', () => {
+describe('the API gives the exact ITC class data', () => {
   it('has the 32 classes in the order of POINT_GROUP_KEYS', () => {
     expect(ITC_CLASSES.map((c) => c.key)).toEqual([...POINT_GROUP_KEYS]);
   });

@@ -10,11 +10,12 @@ import {
   MAX_GROUP_ORDER,
   closeGroup,
   compose,
+  operation,
   operationsEqual,
   transformOperation,
   type Operation,
 } from '../operations.js';
-import { inItaOrder, itaGeneratorOperations } from './itaOrder.js';
+import { itcCartesianGenerators, itcCartesianOperations, itcClass, itcSetting } from './itcData.js';
 import type { CrystalSystem } from '../lattice.js';
 import { POINT_GROUP_DATA, POINT_GROUP_KEYS, type PointGroupKey, type SettingData } from './data.js';
 import {
@@ -123,8 +124,13 @@ interface GroupData {
   readonly generators: readonly Operation[];
   readonly settings: readonly { readonly frame: SettingData['frame']; readonly uniqueAxis?: 'a' | 'b' | 'c' }[];
   readonly itcDefault: number;
-  /** Type I only: the stored symbols of each setting. */
+  /** Type I only: the stored symbols of each setting (the Birss ones are used; ITC: itcData.ts). */
   readonly symbols?: readonly SettingData[];
+}
+
+/** The ITC default setting of a class, from the ITC class data (itcData.ts). */
+function itcDefaultOf(key: PointGroupKey): number {
+  return itcClass(key).settings.find((s) => s.isDefault)!.index;
 }
 
 const BY_KEY = new Map<string, GroupData>();
@@ -139,7 +145,7 @@ for (const d of POINT_GROUP_DATA) {
     schoenflies: d.schoenflies,
     generators: d.generators,
     settings: d.settings,
-    itcDefault: d.itcDefault,
+    itcDefault: itcDefaultOf(d.key),
     symbols: d.settings,
   };
   BY_KEY.set(d.key, self);
@@ -157,7 +163,7 @@ for (const d of POINT_GROUP_DATA) {
     schoenflies: greySchoenflies(d.schoenflies),
     generators: [...(d.key === '1' ? [] : d.generators), TIME_REVERSAL],
     settings: d.settings,
-    itcDefault: d.itcDefault,
+    itcDefault: crystalClass.itcDefault,
   });
 }
 for (const d of BLACK_WHITE_DATA) {
@@ -272,7 +278,7 @@ function classSetting(d: GroupData, index: number): number {
 const itaGeneratorCache = new Map<string, readonly Operation[]>();
 
 /**
- * ITA's generators of a setting (see `generators`); throws if setting 1 of a class has none. For a
+ * ITA's generators of a setting (see `generators`); for a class from the ITC class data. For a
  * magnetic group: ITA's generators of its class in the same frame, each with the time reversal it
  * has in the group; for a grey group followed by time reversal 1'.
  */
@@ -282,12 +288,7 @@ function settingItaGenerators(d: GroupData, index: number): readonly Operation[]
   if (!result) {
     let gens: Operation[];
     if (d.type === 'I') {
-      const ita = itaGeneratorOperations(d.key, index, d.crystalSystem);
-      if (ita) gens = ita;
-      else {
-        if (index === 1) throw new Error(`Point group ${d.key}: no ITA generators for setting 1`);
-        gens = settingItaGenerators(d, 1).map((op) => transformOperation(op, d.settings[index - 1].frame));
-      }
+      gens = itcCartesianGenerators(d.key as PointGroupKey, index).map((m) => operation(m));
     } else {
       const classGens = settingItaGenerators(d.crystalClass, classSetting(d, index));
       gens =
@@ -339,10 +340,9 @@ function birssOperations(d: GroupData, index: number): readonly Operation[] {
 
 /**
  * The operations of a setting in ITA's order (docs/conventions.md, "Order of the operations"). A
- * crystal class: for a setting ITA lists, coset by coset from ITA's generators; for a setting ITA
- * does not list (today `mm2` settings 2 and 3), the order of setting 1, carried into the frame of
- * the setting. Setting 1 is always one ITA lists; throws if its generators are missing or do not
- * give the closure. A black-and-white group: the operations of its class in the same frame, in
+ * crystal class: from the ITC class data (itcData.ts), built coset by coset from ITA's generators;
+ * throws if they differ as a set from the closure of the stored (Birss) generators, a cross-check
+ * of the two data sets while the Birss convention exists (#121). A black-and-white group: the operations of its class in the same frame, in
  * that order, each with the time reversal it has in the group. A grey group: the operations of its
  * class, then the same sequence combined with time reversal.
  */
@@ -351,13 +351,9 @@ function settingOperations(d: GroupData, index: number): readonly Operation[] {
   let result = operationCache.get(cacheKey);
   if (!result) {
     const closed = closeGroup(settingGenerators(d, index));
-    let ordered: Operation[] | undefined;
+    let ordered: Operation[];
     if (d.type === 'I') {
-      ordered = inItaOrder(d.key, index, d.crystalSystem, closed);
-      if (!ordered) {
-        if (index === 1) throw new Error(`Point group ${d.key}: no ITA generators for setting 1`);
-        ordered = settingOperations(d, 1).map((op) => transformOperation(op, d.settings[index - 1].frame));
-      }
+      ordered = itcCartesianOperations(d.key as PointGroupKey, index).map((m) => operation(m));
     } else {
       const classOps = settingOperations(d.crystalClass, classSetting(d, index));
       ordered =
@@ -385,12 +381,17 @@ function sameSet(a: readonly Operation[], b: readonly Operation[]): boolean {
 const symbolCache = new Map<string, { readonly short: string; readonly full: string }>();
 
 /**
- * Short and full symbol of a setting in a convention. A crystal class: as stored. A grey group:
+ * Short and full symbol of a setting in a convention. A crystal class: the ITC symbols from the ITC
+ * class data (itcData.ts), the Birss ones as stored (data.ts). A grey group:
  * the symbols of its class followed by `1'`. A black-and-white group: the symbols of its class in
  * the same frame, with the primes of its operations (magneticSymbols.ts).
  */
 function settingSymbols(d: GroupData, index: number, c: Convention): { readonly short: string; readonly full: string } {
-  if (d.symbols) return d.symbols[index - 1][c];
+  if (d.type === 'I') {
+    if (c === 'birss') return d.symbols![index - 1].birss;
+    const s = itcSetting(d.key as PointGroupKey, index);
+    return Object.freeze({ short: s.short, full: s.full });
+  }
   const cacheKey = `${d.key}#${index}#${c}`;
   let result = symbolCache.get(cacheKey);
   if (!result) {
@@ -505,11 +506,14 @@ export function settings(key: MagneticPointGroupKey, conventionName: Convention 
   const def = defaultSetting(d, c);
   return d.settings.map((s, i) => {
     const symbols = settingSymbols(d, i + 1, c);
+    // A class in the ITC convention: the unique axis of the ITC class data.
+    const uniqueAxis =
+      d.type === 'I' && c === 'itc' ? itcSetting(d.key as PointGroupKey, i + 1).uniqueAxis : s.uniqueAxis;
     return Object.freeze({
       index: i + 1,
       symbol: symbols.short,
       fullSymbol: symbols.full,
-      ...(s.uniqueAxis ? { uniqueAxis: s.uniqueAxis } : {}),
+      ...(uniqueAxis ? { uniqueAxis } : {}),
       isDefault: i + 1 === def,
     });
   });
