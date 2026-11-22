@@ -12,6 +12,19 @@ All notable changes to symcrys are recorded here. The format follows
   `snap_to_wyckoff_position`): snaps a point onto the most special Wyckoff position within the
   tolerance of it, by its distance to the position, and returns the position with the point on it,
   for applications that let a dragged point snap (#85).
+- `describeOperationsOf(operations)` in `symcrys/plane` (Python `describe_operations_of`): any list of
+  operations of the plane described as `describeOperations` describes those of a group, for
+  products, operations shifted by lattice translations or the operations of a site symmetry (#84).
+- A field `normal` for each mirror and glide line, in the descriptions of the operations and in the
+  lines of `symmetryElements`: the symmetry direction of the line in the lattice basis, as in ITA
+  Table 2.1.3.1, tested against that table and the printed full symbols of the 17 plane groups (#84).
+
+### Changed
+
+- `siteSymmetry` and `wyckoffPositionOf` of `symcrys/plane` are several times faster at special
+  positions (in Node about 5 to 10 times at the 4-fold point of p4mm), from a group table per plane
+  group, computed once, on which the closure of the site symmetry works, and from parsing the
+  printed coordinates of the Wyckoff positions once (#86). Results are unchanged.
 
 ## [0.9.0] - 2026-11-22
 

@@ -33,6 +33,13 @@ export interface PlaneOperationDescription {
   /** For a mirror or glide: the direction of its line, the shortest integer vector, first non-zero component positive. */
   readonly direction?: readonly [number, number];
   /**
+   * For a mirror or glide: the normal of its line in the lattice basis, its symmetry direction in
+   * the sense of ITA Table 2.1.3.1: the shortest integer vector along the columns of W − I, first
+   * non-zero component positive. Without a metric it is not the perpendicular of `direction`: in a
+   * hexagonal basis the normal of a line along [1,0] is [1,2].
+   */
+  readonly normal?: readonly [number, number];
+  /**
    * For a glide: the glide vector (w + W·w)/2, not reduced modulo the lattice. An operation whose
    * glide vector is a non-zero lattice vector is a glide, as it is geometrically, although the
    * symmetry element of its coset is the mirror line, which ITA lists.
@@ -116,6 +123,10 @@ export function describePlaneOperation(op: ExactOperation): PlaneOperationDescri
     [w[0][0] + 1, w[0][1]],
     [w[1][0], w[1][1] + 1],
   ]);
+  const normal = primitiveColumn([
+    [w[0][0] - 1, w[0][1]],
+    [w[1][0], w[1][1] - 1],
+  ]);
   // (I − W) has rank 1; one of its non-zero rows a gives a·p = s_i. A point on y = 0 if the line meets it.
   const a = [
     [1 - w[0][0], -w[0][1]],
@@ -124,7 +135,12 @@ export function describePlaneOperation(op: ExactOperation): PlaneOperationDescri
   const i = a[0][0] !== 0 || a[0][1] !== 0 ? 0 : 1;
   const location: Rational[] =
     a[i][0] !== 0 ? [multiply(s[i], rational(1, a[i][0])), ZERO] : [ZERO, multiply(s[i], rational(1, a[i][1]))];
-  const line = { order: 2, location: Object.freeze(location), direction: Object.freeze(direction) };
+  const line = {
+    order: 2,
+    location: Object.freeze(location),
+    direction: Object.freeze(direction),
+    normal: Object.freeze(normal),
+  };
   return Object.freeze(
     glide.some((v) => v[0] !== 0)
       ? { kind: 'glide' as const, ...line, glide: Object.freeze(glide) }

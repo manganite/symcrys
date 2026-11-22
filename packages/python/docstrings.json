@@ -137,7 +137,11 @@
     },
     "describe_operations": {
       "type": "list of dict",
-      "doc": "``translation``, ``location`` and ``glide`` (where present) are float64 arrays of shape (2,), ``direction`` an int64 array of shape (2,)."
+      "doc": "``translation``, ``location`` and ``glide`` (where present) are float64 arrays of shape (2,), ``direction`` and ``normal`` int64 arrays of shape (2,)."
+    },
+    "describe_operations_of": {
+      "type": "list of dict",
+      "doc": "As ``describe_operations``: ``translation``, ``location`` and ``glide`` (where present) float64 arrays of shape (2,), ``direction`` and ``normal`` int64 arrays of shape (2,)."
     },
     "site_symmetry": {
       "type": "dict",
@@ -157,7 +161,7 @@
     },
     "symmetry_elements": {
       "type": "dict",
-      "doc": "``rotations``: dicts ``{\"order\", \"point\"}``, point a float64 array of shape (2,); ``lines``: dicts ``{\"kind\", \"direction\", \"glide\", \"segment\"}``, direction int64 of shape (2,), glide float64 of shape (2,), segment float64 of shape (2, 2), the two ends as rows."
+      "doc": "``rotations``: dicts ``{\"order\", \"point\"}``, point a float64 array of shape (2,); ``lines``: dicts ``{\"kind\", \"direction\", \"normal\", \"glide\", \"segment\"}``, direction and normal int64 of shape (2,), glide float64 of shape (2,), segment float64 of shape (2, 2), the two ends as rows."
     }
   }
 }

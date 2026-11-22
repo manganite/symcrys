@@ -81,16 +81,37 @@ function sameModLattice(p: readonly number[], q: readonly number[], tol: number)
   });
 }
 
-const plainCache = new Map<string, PlainOperation[]>();
-function plainOperations(key: string): PlainOperation[] {
-  const k = planeGroupEntry(key).symbol;
-  let ops = plainCache.get(k);
-  if (!ops) {
-    ops = planeGroupOperations(k).map(toPlain);
-    plainCache.set(k, ops);
-  }
-  return ops;
+/**
+ * Per plane group, computed once: its operations as plain numbers and its group table modulo the
+ * lattice (`table[a][b]` is the index of the operation that equals a∘b modulo the lattice), so that
+ * closing a set of operations works on indices (#86).
+ */
+interface GroupData {
+  readonly ops: readonly PlainOperation[];
+  readonly table: readonly (readonly number[])[];
 }
+
+const groupCache = new Map<string, GroupData>();
+function groupData(key: string): GroupData {
+  const k = planeGroupEntry(key).symbol;
+  let data = groupCache.get(k);
+  if (!data) {
+    const exact = planeGroupOperations(k);
+    const table = exact.map((a) =>
+      exact.map((b) => {
+        const product = compose(a, b);
+        const i = exact.findIndex((op) => equalModLattice(op, product));
+        if (i < 0) throw new Error(`The operations of ${k} are not closed modulo the lattice`);
+        return i;
+      }),
+    );
+    data = { ops: exact.map(toPlain), table };
+    groupCache.set(k, data);
+  }
+  return data;
+}
+
+const plainOperations = (key: string): readonly PlainOperation[] => groupData(key).ops;
 
 /**
  * The orbit of a point under a plane group: its distinct images in the conventional cell, each in
@@ -110,23 +131,21 @@ export function planeOrbit(key: string, point: readonly number[], options?: Poin
 
 /** Indices of `set` closed under products, modulo the lattice, within the operations of the group. */
 function closeWithin(key: string, set: readonly number[]): number[] {
-  const exact = planeGroupOperations(planeGroupEntry(key).symbol);
-  const out = new Set(set);
-  let grew = true;
-  while (grew) {
-    grew = false;
-    for (const a of [...out]) {
-      for (const b of [...out]) {
-        const product = compose(exact[a], exact[b]);
-        const k = exact.findIndex((op) => equalModLattice(op, product));
-        if (!out.has(k)) {
-          out.add(k);
-          grew = true;
+  const { table } = groupData(key);
+  const out = [...new Set(set)];
+  const member = new Set(out);
+  // Every product of two members is a member once each new member has been combined with all others.
+  for (let i = 0; i < out.length; i++) {
+    for (let j = 0; j <= i; j++) {
+      for (const k of [table[out[i]][out[j]], table[out[j]][out[i]]]) {
+        if (!member.has(k)) {
+          member.add(k);
+          out.push(k);
         }
       }
     }
   }
-  return [...out].sort((a, b) => a - b);
+  return out.sort((a, b) => a - b);
 }
 
 /** The operations of `indices`, each shifted by the lattice translation that brings its image of `p` nearest to `p`. */
@@ -175,12 +194,23 @@ export function planeSiteSymmetry(key: string, point: readonly number[], options
   );
 }
 
+/** A printed coordinate expression, parsed once. */
+const expressionCache = new Map<string, PlainOperation>();
+function parsed(expression: string): PlainOperation {
+  let op = expressionCache.get(expression);
+  if (!op) {
+    op = toPlain(parseOperation(expression));
+    expressionCache.set(expression, op);
+  }
+  return op;
+}
+
 /**
  * True if some parameters x, y make the printed coordinate expression (e.g. `x,2x`, `-x+1/2,y`) give
  * the point modulo the lattice within `tol`: least squares over the nearby lattice translations.
  */
 function onExpression(expression: string, p: readonly number[], tol: number): boolean {
-  const { matrix, translation } = toPlain(parseOperation(expression));
+  const { matrix, translation } = parsed(expression);
   const c = translation;
   const ex = [matrix[0][0], matrix[1][0]];
   const ey = [matrix[0][1], matrix[1][1]];
@@ -223,7 +253,7 @@ export function planeWyckoffPositionOf(
   const tol = tolerance(options);
   const site = planeSiteSymmetry(key, point, options);
   const entry = planeGroupEntry(key);
-  const centrings = [[0, 0], ...entry.centring.map((t) => toPlain(parseOperation(t)).translation)];
+  const centrings = [[0, 0], ...entry.centring.map((t) => parsed(t).translation)];
   for (const [multiplicity, letter, siteSymmetry, coordinates] of entry.wyckoff) {
     if (multiplicity !== site.multiplicity) continue;
     for (const t of centrings) {

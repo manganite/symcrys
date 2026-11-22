@@ -50,6 +50,8 @@ export interface SymmetryLine {
   readonly kind: 'mirror' | 'glide';
   /** The direction of the line, the shortest integer vector, first non-zero component positive. */
   readonly direction: readonly [number, number];
+  /** The normal of the line in the lattice basis, as `PlaneOperationDescription.normal`. */
+  readonly normal: readonly [number, number];
   /** For a glide line: its glide vector s·direction with 0 < s < 1; for a mirror line (0, 0). */
   readonly glide: readonly Rational[];
   /** The ends of the segment of the line in the cell [0, 1]², in the order of `direction`. */
@@ -302,6 +304,7 @@ export function planeCellElements(key: string | number): CellElements {
   const lines: {
     kind: 'mirror' | 'glide';
     direction: [number, number];
+    normal: readonly [number, number];
     s: Rational;
     c: Rational;
     segment: [readonly Rational[], readonly Rational[]];
@@ -325,7 +328,7 @@ export function planeCellElements(key: string | number): CellElements {
         // The glide vector is s·dir; s modulo 1, since a lattice translation along the line changes nothing.
         const g = d.glide ?? [ZERO, ZERO];
         const s = frac(dir[0] !== 0 ? rational(g[0][0], g[0][1] * dir[0]) : rational(g[1][0], g[1][1] * dir[1]));
-        // The line is n·x = c with the normal n = (−dir_y, dir_x).
+        // The line is the set of x with (−dir_y, dir_x)·x = c.
         const c = add(scale(-dir[1], p[0]), scale(dir[0], p[1]));
         if (
           lines.some(
@@ -340,7 +343,14 @@ export function planeCellElements(key: string | number): CellElements {
         }
         const segment = clip(p, dir);
         if (!segment) continue;
-        lines.push({ kind: s[0] === 0 ? 'mirror' : 'glide', direction: [dir[0], dir[1]], s, c, segment });
+        lines.push({
+          kind: s[0] === 0 ? 'mirror' : 'glide',
+          direction: [dir[0], dir[1]],
+          normal: d.normal ?? [0, 0],
+          s,
+          c,
+          segment,
+        });
       }
     }
   }
@@ -360,6 +370,7 @@ export function planeCellElements(key: string | number): CellElements {
         Object.freeze({
           kind: l.kind,
           direction: Object.freeze(l.direction) as readonly [number, number],
+          normal: Object.freeze([...l.normal]) as readonly [number, number],
           glide: Object.freeze([scale(l.direction[0], l.s), scale(l.direction[1], l.s)]),
           segment: Object.freeze(l.segment.map((p) => Object.freeze([...p]))) as unknown as SymmetryLine['segment'],
         }),

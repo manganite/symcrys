@@ -5,13 +5,19 @@
  * here, in the test, from the structured description, by the rules of ITA § 2.1.3.9 (p. 160): the
  * symbol of the operation with its glide part ("a", "b" or "g(...)"), then the location of its
  * symmetry element, a line in parametric form.
+ *
+ * The normals of the mirror and glide lines against print as well: ITA Table 2.1.3.1 (p. 151, two
+ * dimensions; references/itc/vol-a-table-2.1.3.1-plane.md) gives the symmetry directions of each
+ * lattice, and the printed full symbol of each group says at which of them it has a mirror or glide
+ * line (`m` or `g` in the secondary or tertiary position).
  */
 
 import { describe, expect, it } from 'vitest';
-import { readReference } from '../testUtils/references.js';
+import { readReference, tableRows } from '../testUtils/references.js';
 import { applyToPoint, compose, parseOperation, translationOperation, type ExactOperation } from './affine.js';
 import { describePlaneOperation, type PlaneOperationDescription } from './describe.js';
-import { PLANE_GROUP_KEYS, planeGroupOperations } from './planeGroups.js';
+import { PLANE_GROUP_KEYS, planeGroupEntry, planeGroupOperations } from './planeGroups.js';
+import { planeCellElements } from './cell.js';
 import { add, formatRational, rational, scale, type Rational } from './rational.js';
 
 const f = formatRational;
@@ -129,6 +135,7 @@ describe('describePlaneOperation', () => {
       order: 2,
       location: [rational(0), rational(0)],
       direction: [0, 1],
+      normal: [1, 0],
       glide: [rational(0), rational(1)],
     });
   });
@@ -140,6 +147,7 @@ describe('describePlaneOperation', () => {
       order: 2,
       location: [rational(1, 4), rational(0)],
       direction: [0, 1],
+      normal: [1, 0],
     });
     // a x,1/4 of p2gg: line y = 1/4 along a, parallel to y = 0, so its point is on x = 0.
     expect(describePlaneOperation(parseOperation('x+1/2,-y+1/2'))).toEqual({
@@ -147,6 +155,7 @@ describe('describePlaneOperation', () => {
       order: 2,
       location: [rational(0), rational(1, 4)],
       direction: [1, 0],
+      normal: [0, 1],
       glide: [rational(1, 2), rational(0)],
     });
   });
@@ -167,5 +176,51 @@ describe('describePlaneOperation', () => {
     expect(() => describePlaneOperation(parseOperation('-x+y,-y'))).toThrow(RangeError); // trace -2, not of order 2
     expect(() => describePlaneOperation(parseOperation('-x+y,y'))).not.toThrow(); // (5) of p3m1, m x,2x
     expect(() => describePlaneOperation(parseOperation('-x+y,y+x'))).toThrow(RangeError); // det -2
+  });
+});
+
+describe('normals of mirror and glide lines against ITA Table 2.1.3.1 and the full symbols', () => {
+  const rows = tableRows(readReference('itc/vol-a-table-2.1.3.1-plane.md')).slice(1);
+  /** Printed directions such as `{[1-1], [12]}`, each with its first non-zero component positive. */
+  const directions = (cell: string): string[] =>
+    [...cell.matchAll(/\[(-?\d)(-?\d)\]/g)].map((m) => {
+      const v = [Number(m[1]), Number(m[2])];
+      const sign = v[0] < 0 || (v[0] === 0 && v[1] < 0) ? -1 : 1;
+      return `${sign * v[0] + 0},${sign * v[1] + 0}`;
+    });
+  const lattice = Object.fromEntries(rows.map((r) => [r[0].toLowerCase(), [directions(r[2]), directions(r[3])]]));
+
+  it('reads the four lattices', () => {
+    expect(Object.keys(lattice)).toEqual(['oblique', 'rectangular', 'square', 'hexagonal']);
+    expect(lattice.hexagonal).toEqual([
+      ['1,0', '0,1', '1,1'],
+      ['1,-1', '1,2', '2,1'],
+    ]);
+  });
+
+  it.each(PLANE_GROUP_KEYS)('%s: the normals are the printed directions where the full symbol has m or g', (key) => {
+    const entry = planeGroupEntry(key);
+    // The full symbol: lattice letter, then primary (rotation), secondary and tertiary positions.
+    const positions = entry.fullSymbol.slice(1).split('');
+    const expected = new Set<string>();
+    positions.slice(1).forEach((c, i) => {
+      if (c === 'm' || c === 'g') for (const d of lattice[entry.system][i]) expected.add(d);
+    });
+    const fromOperations = new Set<string>();
+    for (const op of planeGroupOperations(key)) {
+      const d = describePlaneOperation(op);
+      if (d.kind === 'mirror' || d.kind === 'glide') {
+        const n = d.normal ?? [0, 0];
+        fromOperations.add(n.join(','));
+        // Independent of the rule that computes it: W maps the normal onto its negative and the direction onto itself.
+        const w = op.matrix;
+        expect([w[0][0] * n[0] + w[0][1] * n[1], w[1][0] * n[0] + w[1][1] * n[1]]).toEqual([0 - n[0], 0 - n[1]]);
+        const u = d.direction ?? [0, 0];
+        expect([w[0][0] * u[0] + w[0][1] * u[1], w[1][0] * u[0] + w[1][1] * u[1]]).toEqual([u[0], u[1]]);
+      }
+    }
+    expect([...fromOperations].sort()).toEqual([...expected].sort());
+    const fromCell = new Set(planeCellElements(key).lines.map((l) => l.normal.join(',')));
+    expect([...fromCell].sort()).toEqual([...expected].sort());
   });
 });
