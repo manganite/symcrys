@@ -689,6 +689,16 @@ while implementing gets its own note here.
   follows in a second MINOR, built on the first; it is the largest part (cell reduction, metric,
   choice of cell and origin, tolerances), and plane-groups can move most of its calculations
   before it.
+- **Description of an operation** (chosen while implementing, PR #78; `src/spaceGroups/describe.ts`):
+  structured data as for the point groups ("Symmetry elements as structured data"), the symbols
+  stay with the applications: the kind (`'identity'`, `'translation'`, `'rotation'`, `'reflection'`,
+  `'glide-reflection'`), the order, for n ≥ 3 the sense (`'+'` if a turns towards b), the centre of
+  a rotation, and for a (glide) reflection the direction of its line (shortest integer vector, first
+  non-zero component positive), one point of it (on y = 0, or on x = 0 for a line parallel to y = 0)
+  and the glide vector (w + W·w)/2, all exact. An operation whose glide vector is a non-zero lattice
+  vector is a glide reflection, as it is geometrically; ITA lists the mirror of its coset. Checked:
+  the symbols written from the description reproduce every printed "Symmetry operations" entry of
+  the 17 groups, both sets of the c groups (`describe.reference.test.ts`).
 - **No frieze, layer or magnetic plane groups for now** (#31 question 3): no consumer needs them;
   the dimension-generic module keeps them possible (idea in #74).
 - **Entry point `symcrys/plane`, later `symcrys/space`** (#31 question 4), as `symcrys/magnetic`

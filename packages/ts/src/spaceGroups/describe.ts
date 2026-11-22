@@ -1,0 +1,119 @@
+/**
+ * The geometric description of an operation of a plane group, as ITA gives it under "Symmetry
+ * operations" (ITA 2016, § 2.1.3.9, pp. 160–161): what it is, its order and sense, where its
+ * symmetry element lies and its glide part. Structured data; the symbols such as `g(1/2,1/2) x,x`
+ * stay with the applications (CLAUDE.md, "Symmetry elements as structured data").
+ */
+
+import { determinant, dimensionOf, trace, type ExactOperation, type IntMatrix } from './affine.js';
+import { ZERO, add, multiply, rational, scale, type Rational } from './rational.js';
+
+/** What an operation of a plane group is. */
+export type PlaneOperationKind = 'identity' | 'translation' | 'rotation' | 'reflection' | 'glide-reflection';
+
+/** One operation of a plane group described geometrically, in the lattice basis. */
+export interface PlaneOperationDescription {
+  /** What the operation is. */
+  readonly kind: PlaneOperationKind;
+  /** The order n of its linear part: 1 for identity and translation, 2 for a (glide) reflection. */
+  readonly order: number;
+  /** For a rotation with n ≥ 3: `'+'` if it turns a towards b, `'-'` otherwise. */
+  readonly sense?: '+' | '-';
+  /** For a translation: the translation vector. */
+  readonly translation?: readonly Rational[];
+  /** For a rotation: its centre. For a (glide) reflection: a point of its line, on y = 0 unless the line is parallel to it, then on x = 0. */
+  readonly location?: readonly Rational[];
+  /** For a (glide) reflection: the direction of its line, the shortest integer vector, first non-zero component positive. */
+  readonly direction?: readonly [number, number];
+  /** For a glide reflection: the glide vector, (w + W·w)/2. */
+  readonly glide?: readonly Rational[];
+}
+
+function gcd(a: number, b: number): number {
+  return b === 0 ? Math.abs(a) : gcd(b, a % b);
+}
+
+/** The shortest integer vector along the non-zero column of a 2 × 2 matrix of rank 1, first non-zero component positive. */
+function primitiveColumn(m: IntMatrix): [number, number] {
+  const col = m[0][0] !== 0 || m[1][0] !== 0 ? [m[0][0], m[1][0]] : [m[0][1], m[1][1]];
+  const g = gcd(col[0], col[1]);
+  const sign = col[0] < 0 || (col[0] === 0 && col[1] < 0) ? -1 : 1;
+  return [(sign * col[0]) / g + 0, (sign * col[1]) / g + 0];
+}
+
+function power(m: IntMatrix, n: number): IntMatrix {
+  let p: IntMatrix = [
+    [1, 0],
+    [0, 1],
+  ];
+  for (let k = 0; k < n; k++) {
+    p = p.map((row) => [0, 1].map((j) => row[0] * m[0][j] + row[1] * m[1][j]));
+  }
+  return p;
+}
+
+const isIdentity = (m: IntMatrix): boolean => m[0][0] === 1 && m[0][1] === 0 && m[1][0] === 0 && m[1][1] === 1;
+
+/** The order of the rotation part of a proper plane operation, from its trace (also in a hexagonal basis). */
+const ORDER_BY_TRACE: Record<number, number> = { 2: 1, [-2]: 2, [-1]: 3, 0: 4, 1: 6 };
+
+/**
+ * Describes an operation of a plane group. Throws unless the operation is two-dimensional with the
+ * linear part of a crystallographic plane point group (determinant ±1, order 1, 2, 3, 4 or 6).
+ */
+export function describePlaneOperation(op: ExactOperation): PlaneOperationDescription {
+  if (dimensionOf(op) !== 2) {
+    throw new RangeError('Not an operation of the plane');
+  }
+  const w = op.matrix;
+  const t = op.translation;
+  const det = determinant(w);
+  if (det === 1) {
+    const n = ORDER_BY_TRACE[trace(w)];
+    if (n === undefined || !isIdentity(power(w, n))) {
+      throw new RangeError(`Not a crystallographic rotation: ${JSON.stringify(w)}`);
+    }
+    if (n === 1) {
+      return t.every((v) => v[0] === 0)
+        ? { kind: 'identity', order: 1 }
+        : { kind: 'translation', order: 1, translation: [...t] };
+    }
+    // The centre p solves (I − W) p = w; det(I − W) = 2 − trace W ≠ 0 for a rotation.
+    const a = [
+      [1 - w[0][0], -w[0][1]],
+      [-w[1][0], 1 - w[1][1]],
+    ];
+    const d = a[0][0] * a[1][1] - a[0][1] * a[1][0];
+    const inv = rational(1, d);
+    const location = [
+      multiply(add(scale(a[1][1], t[0]), scale(-a[0][1], t[1])), inv),
+      multiply(add(scale(-a[1][0], t[0]), scale(a[0][0], t[1])), inv),
+    ];
+    const description: PlaneOperationDescription = { kind: 'rotation', order: n, location };
+    // The sense: the sign of a × W·a with a = (1, 0), the same in any right-handed basis.
+    return n === 2 ? description : { ...description, sense: w[1][0] > 0 ? '+' : '-' };
+  }
+  if (det !== -1 || trace(w) !== 0 || !isIdentity(power(w, 2))) {
+    throw new RangeError(`Not a crystallographic reflection: ${JSON.stringify(w)}`);
+  }
+  // A reflection: W² = I. Glide vector g = (w + W·w)/2, along the line; the line is the set of p with (I − W) p = w − g.
+  const wt = [add(scale(w[0][0], t[0]), scale(w[0][1], t[1])), add(scale(w[1][0], t[0]), scale(w[1][1], t[1]))];
+  const half = rational(1, 2);
+  const glide = [multiply(add(t[0], wt[0]), half), multiply(add(t[1], wt[1]), half)];
+  const s = [add(t[0], scale(-1, glide[0])), add(t[1], scale(-1, glide[1]))];
+  const direction = primitiveColumn([
+    [w[0][0] + 1, w[0][1]],
+    [w[1][0], w[1][1] + 1],
+  ]);
+  // (I − W) has rank 1; one of its non-zero rows a gives a·p = s_i. A point on y = 0 if the line meets it.
+  const a = [
+    [1 - w[0][0], -w[0][1]],
+    [-w[1][0], 1 - w[1][1]],
+  ];
+  const i = a[0][0] !== 0 || a[0][1] !== 0 ? 0 : 1;
+  const location: Rational[] =
+    a[i][0] !== 0 ? [multiply(s[i], rational(1, a[i][0])), ZERO] : [ZERO, multiply(s[i], rational(1, a[i][1]))];
+  return glide.some((v) => v[0] !== 0)
+    ? { kind: 'glide-reflection', order: 2, location, direction, glide }
+    : { kind: 'reflection', order: 2, location, direction };
+}
