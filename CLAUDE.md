@@ -722,7 +722,8 @@ while implementing gets its own note here.
   with its glide reduced to s·direction, 0 < s < 1. Checked against print: the printed vertices
   (hexagonal groups) and the printed inequalities read as text; centres and mirror lines from the
   Wyckoff positions (no free parameter and a rotation; one free parameter and a mirror) with their
-  lattice translates; every printed glide; and from the group alone the area 1/|G|, one image of a
+  lattice translates; every printed glide; all lines also derived independently from the printed general
+  position (ITA prints no glide line of p4mm, p3m1, p31m, p6mm); and from the group alone the area 1/|G|, one image of a
   general point inside, each line the element of an operation, the lines mapped onto themselves
   (`cell.reference.test.ts`).
 - **No frieze, layer or magnetic plane groups for now** (#31 question 3): no consumer needs them;

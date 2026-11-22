@@ -11,6 +11,8 @@ import { describePlaneOperation } from './describe.js';
 import { planeGroupEntry, planeGroupOperations } from './planeGroups.js';
 import {
   ONE,
+  safeProduct,
+  safeSum,
   ZERO,
   add,
   multiply,
@@ -134,8 +136,8 @@ function gcd(a: number, b: number): number {
 
 /** p ≤ 0 as an inequality with integer coefficients without a common factor. */
 function toInequality(p: Linear): Inequality {
-  const lcm = p.reduce((l, r) => (l * r[1]) / gcd(l, r[1]), 1);
-  const [a, b, c0] = p.map((r) => (r[0] * lcm) / r[1]);
+  const lcm = p.reduce((l, r) => safeProduct(l, r[1]) / gcd(l, r[1]), 1);
+  const [a, b, c0] = p.map((r) => safeProduct(r[0], lcm / r[1]));
   const g = gcd(gcd(a, b), c0) || 1;
   return [a / g + 0, b / g + 0, -c0 / g + 0];
 }
@@ -185,9 +187,10 @@ function polygon(inequalities: readonly Inequality[]): Rational[][] {
     for (let j = i + 1; j < inequalities.length; j++) {
       const [a1, b1, c1] = inequalities[i];
       const [a2, b2, c2] = inequalities[j];
-      const det = a1 * b2 - a2 * b1;
+      const cross = (u: number, v: number, x: number, y: number) => safeSum(safeProduct(u, v), -safeProduct(x, y));
+      const det = cross(a1, b2, a2, b1);
       if (det === 0) continue;
-      const p = [rational(c1 * b2 - c2 * b1, det), rational(a1 * c2 - a2 * c1, det)];
+      const p = [rational(cross(c1, b2, c2, b1), det), rational(cross(a1, c2, a2, c1), det)];
       if (inequalities.every((q) => excess(q, p)[0] <= 0) && !points.some((v) => samePoint(v, p))) points.push(p);
     }
   }
@@ -245,7 +248,7 @@ const inCell = (p: readonly Rational[]): boolean => p.every((v) => v[0] >= 0 && 
  * reach every element that meets the cell: a centre p in [0, 1]² of (W, w + t) has
  * t = (I − W)p − w, and the entries of I − W (at most 2 on the diagonal, 1 off it) give
  * (I − W)p in [−2, 3]; a line through p in the cell, taken with its glide g along it reduced to
- * |g_i| ≤ 1, has t = (I − W)p + g − w, where for a reflection (I − W)p lies in [−1, 2].
+ * g = d/2 (in a plane group s is 0 or 1/2, and |d_i| ≤ 2, so |g_i| ≤ 1), has t = (I − W)p + g − w, where for a reflection (I − W)p lies in [−1, 2].
  */
 const SHIFTS: Rational[][] = [];
 for (let i = -3; i <= 3; i++) for (let j = -3; j <= 3; j++) SHIFTS.push([r(i), r(j)]);

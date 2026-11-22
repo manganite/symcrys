@@ -10,9 +10,11 @@
  *   symmetry contains a rotation, with its order, and their lattice translates in [0, 1]².
  * - Mirror lines: the lines of the Wyckoff positions with one free parameter and a mirror in their
  *   site symmetry, and their lattice translates.
- * - Glide lines: every printed glide of "Symmetry operations" with its lattice translates; every line
- *   is the element of an operation of the group, and the set of lines is mapped onto itself by the
- *   group.
+ * - Glide lines: every printed glide of "Symmetry operations" with its lattice translates. As ITA
+ *   prints no glide line of p4mm, p3m1, p31m, p6mm (nor the diagonal ones of p4gm), all mirror and
+ *   glide lines are also derived here independently from the printed general position (class (b)),
+ *   in floating point with a wider range of lattice shifts than the code. Every line is the element of
+ *   an operation of the group, and the set of lines is mapped onto itself by the group.
  */
 
 import { describe, expect, it } from 'vitest';
@@ -86,10 +88,18 @@ describe('asymmetric unit', () => {
       const unit = planeAsymmetricUnit(g.symbol);
       const vertices = unit.vertices.map(num);
       if (g.vertices) {
-        expect(new Set(vertices.map(key))).toEqual(
-          new Set(g.vertices.map((v) => key(v.split(',').map((c) => toNumber(parseRationalText(c)))))),
+        // In the printed order, which is counter-clockwise from the lowest vertex.
+        expect(vertices.map(key)).toEqual(
+          g.vertices.map((v) => key(v.split(',').map((c) => toNumber(parseRationalText(c))))),
         );
       }
+      const lowest = [...vertices].sort((p, q) => p[1] - q[1] || p[0] - q[0])[0];
+      expect(key(vertices[0])).toBe(key(lowest));
+      // Inequality i holds the edge from vertex i to vertex i + 1.
+      unit.inequalities.forEach(([a, b, c], i) => {
+        for (const v of [vertices[i], vertices[(i + 1) % vertices.length]])
+          expect(a * v[0] + b * v[1]).toBeCloseTo(c, 12);
+      });
       // Inside the polygon ⇔ the printed inequalities hold (on a grid that avoids the boundary).
       const inside = (x: number, y: number) => unit.inequalities.every(([a, b, c]) => a * x + b * y <= c + 1e-12);
       for (let i = 0; i <= 40; i++) {
@@ -253,6 +263,55 @@ describe('symmetry elements in the cell', () => {
         const d = primitive([Math.round(p1[0] - p0[0]), Math.round(p1[1] - p0[1])]);
         const s = d[0] !== 0 ? glide[0] / d[0] : glide[1] / d[1];
         for (const k of translates(p0, d, s)) expect(computed).toContain(k);
+      }
+
+      // Derived independently (class (b)): every operation with det −1 of the printed general position (the
+      // first Wyckoff row, with the centring), shifted
+      // by lattice vectors |t_i| ≤ 6, gives a line with glide g = (w + Ww)/2 through (w − g)/2, along the
+      // fixed direction of W; reduced modulo the lattice vector along it. All those that cross the cell.
+      const derived = new Set<string>();
+      const general = g.centring.flatMap((c) =>
+        g.wyckoff[0].coordinates.map((text) => {
+          const op = toPlain(parseOperation(text));
+          return { matrix: op.matrix, translation: [op.translation[0] + c[0], op.translation[1] + c[1]] };
+        }),
+      );
+      for (const op of general) {
+        const det = op.matrix[0][0] * op.matrix[1][1] - op.matrix[0][1] * op.matrix[1][0];
+        if (det !== -1) continue;
+        const ipw = [
+          [1 + op.matrix[0][0], op.matrix[0][1]],
+          [op.matrix[1][0], 1 + op.matrix[1][1]],
+        ];
+        const d = primitive(ipw[0][0] !== 0 || ipw[1][0] !== 0 ? [ipw[0][0], ipw[1][0]] : [ipw[0][1], ipw[1][1]]);
+        for (let a = -6; a <= 6; a++) {
+          for (let b = -6; b <= 6; b++) {
+            const w = [op.translation[0] + a, op.translation[1] + b];
+            const gl = [0, 1].map((k) => (w[k] + op.matrix[k][0] * w[0] + op.matrix[k][1] * w[1]) / 2);
+            const seg = clip([(w[0] - gl[0]) / 2, (w[1] - gl[1]) / 2], d);
+            if (seg) derived.add(lineKey(d, seg, d[0] !== 0 ? gl[0] / d[0] : gl[1] / d[1]));
+          }
+        }
+      }
+      expect(new Set(computed)).toEqual(derived);
+
+      // No duplicates, and the documented order.
+      expect(new Set(computed).size).toBe(computed.length);
+      const rotationKeys = elements.rotations.map((r) => key(num(r.point)));
+      expect(new Set(rotationKeys).size).toBe(rotationKeys.length);
+      for (let k = 1; k < elements.rotations.length; k++) {
+        const [a, b] = [elements.rotations[k - 1], elements.rotations[k]];
+        const [pa, pb] = [num(a.point), num(b.point)];
+        expect(
+          a.order > b.order || (a.order === b.order && (pa[1] < pb[1] || (pa[1] === pb[1] && pa[0] < pb[0]))),
+        ).toBe(true);
+      }
+      for (let k = 1; k < elements.lines.length; k++) {
+        const [a, b] = [elements.lines[k - 1], elements.lines[k]];
+        const [pa, pb] = [num(a.segment[0]), num(b.segment[0])];
+        const order =
+          a.direction[0] - b.direction[0] || a.direction[1] - b.direction[1] || pa[1] - pb[1] || pa[0] - pb[0];
+        expect(order).toBeLessThan(0);
       }
 
       // Every line is the element of an operation of the group, and the group maps the lines onto themselves.
