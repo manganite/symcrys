@@ -669,6 +669,17 @@ while implementing gets its own note here.
   fixed rule `matrix` would be float64, as for `latticeOperations`; `translation` float64).
 - **One module for every dimension**: written for d = 2 and d = 3, so that the space groups for the
   3D app are the same module with d = 3, not a further implementation.
+- **The arithmetic** (chosen while implementing, PR #76; `src/spaceGroups/`): a rational is a pair
+  [numerator, denominator] of safe integers in lowest terms with a positive denominator, so that
+  equal numbers have equal pairs; every intermediate product and sum is checked, and a value
+  outside the safe integers throws rather than rounds. An operation (W, w) has d from 1 to 3. The
+  closure gives one representative per coset of the integer translations, translations in [0, 1),
+  breadth first from the identity; this order has no meaning of its own (ITA's order comes with the
+  data, as for the point groups). It refuses a generator with det W ≠ ±1 (a typo in transcribed
+  data would otherwise close into a monoid) and stops at 192 cosets (Fm-3m in its conventional
+  cell), a bound that a closure in a larger cell raises by an option. Coordinate triplets are read
+  as ITA prints them, with integer coefficients and every character consumed, so that a stray sign
+  is an error.
 - **First step: the 17 plane groups** (#31 question 2), one MINOR in several PRs: the type, its
   arithmetic and the closure; the data of ITA (operations in ITA's order, selected generators,
   centring, origin, asymmetric unit, Wyckoff positions), transcribed to `references/` and tested
