@@ -715,5 +715,10 @@ while implementing gets its own note here.
   (as `¯` after the letter) but takes fractions apart, so the tables are transcribed from page
   images. The 5th
   edition (2006, `3SDKZZFX`), Part 6, pp. 92–109, against which plane-groups is tested, becomes an
-  additional check by an audit (named with the data PR), not the reference; printed p. 92 is PDF
-  page 235 (checked at that page only).
+  additional check by `audit/plane-groups-2006` (against plane-groups' transcription,
+  `js/ebenengruppen.js`), not the reference; printed p. 92 is PDF page 235 (checked at that page
+  only). The data of the 17 groups (`src/spaceGroups/planeGroupData.ts`) hold what the pages print
+  except the diagrams, the symmetry operations as text (kept in `references/`, the anchor of their
+  description in a later PR) and the reflection conditions (not transcribed: plane-groups leaves
+  diffraction to the diffraction app); the selected generators must close into the printed general
+  position, or `planeGroupOperations` throws, as for the point groups.
