@@ -3,7 +3,9 @@
  * The 90 magnetic point groups built on them are in magneticData.ts.
  *
  * Generators are stored in the Birss frame (docs/conventions.md); every setting is a rotation of
- * that frame, and the ITC settings are among them. The print anchors and their tests are listed in
+ * that frame. The ITC symbols, defaults and operations of the classes come from itcData.ts; the
+ * data here serve the Birss convention and the magnetic groups until the ITC migration removes the
+ * Birss convention (#121). The print anchors and their tests are listed in
  * docs/conventions.md, "Sources"; never derive data here from symcrys output.
  */
 
@@ -63,7 +65,7 @@ export interface SettingData {
   readonly frame: Mat3;
   /** Monoclinic: the unique axis; orthorhombic mm2: the axis of the twofold rotation. */
   readonly uniqueAxis?: 'a' | 'b' | 'c';
-  readonly itc: SymbolForms;
+  /** The Birss symbols; the ITC ones are in itcData.ts. */
   readonly birss: SymbolForms;
 }
 
@@ -75,8 +77,6 @@ export interface PointGroupData {
   readonly generators: readonly Operation[];
   /** Setting 1 first; its frame is the identity. */
   readonly settings: readonly SettingData[];
-  /** The ITC default setting (1-based). The Birss default is always setting 1. */
-  readonly itcDefault: number;
 }
 
 // --- Matrices in the stored (Birss) frame ---------------------------------------------------------
@@ -158,10 +158,10 @@ export const ROT30_Z = rotationZ(30);
 
 const ops = (...matrices: Mat3[]): Operation[] => matrices.map(operation);
 
-/** A setting whose symbols are the same in both conventions. */
+/** A setting whose Birss symbols are the ITC ones (itcData.ts). */
 function setting(frame: Mat3, short: string, full: string, uniqueAxis?: 'a' | 'b' | 'c'): SettingData {
   const forms = { short, full };
-  return uniqueAxis ? { frame, uniqueAxis, itc: forms, birss: forms } : { frame, itc: forms, birss: forms };
+  return uniqueAxis ? { frame, uniqueAxis, birss: forms } : { frame, birss: forms };
 }
 
 /** A group with one setting whose symbols agree in both conventions. */
@@ -172,15 +172,16 @@ function group(
   generators: Operation[],
   full: string = key,
 ): PointGroupData {
-  return { key, crystalSystem, schoenflies, generators, settings: [setting(SAME, key, full)], itcDefault: 1 };
+  return { key, crystalSystem, schoenflies, generators, settings: [setting(SAME, key, full)] };
 }
 
 /**
  * Trigonal and hexagonal groups whose two settings differ by 30° about z. Symbol position 2 means
  * the a direction (x) in ITC and the y direction in Birss, so each frame carries, in one
  * convention, the symbol the other convention gives to the other frame (docs/conventions.md).
- * `secondary` is the ITC symbol with the lateral elements in the a direction; ITC's default is
- * that frame, setting 2. Birss's default, setting 1, carries Birss's printed short symbol, the key.
+ * `secondary` is the ITC symbol with the lateral elements in the a direction (setting 2),
+ * `tertiary` the other one; only their Birss readings are stored. Birss's default, setting 1,
+ * carries Birss's printed short symbol, the key.
  */
 function trigonalPair(
   key: PointGroupKey,
@@ -196,10 +197,9 @@ function trigonalPair(
     schoenflies,
     generators,
     settings: [
-      { frame: SAME, itc: tertiary, birss: { short: key, full: secondary.full } },
-      { frame: ROT30_Z, itc: secondary, birss: tertiary },
+      { frame: SAME, birss: { short: key, full: secondary.full } },
+      { frame: ROT30_Z, birss: tertiary },
     ],
-    itcDefault: 2,
   };
 }
 
@@ -210,7 +210,6 @@ function monoclinic(key: PointGroupKey, schoenflies: string, generators: Operati
     schoenflies,
     generators,
     settings: [setting(SAME, key, full('c'), 'c'), setting(MONOCLINIC_B, key, full('b'), 'b')],
-    itcDefault: 2,
   };
   return data;
 }
@@ -236,7 +235,6 @@ export const POINT_GROUP_DATA: readonly PointGroupData[] = [
       setting(ORTHO_TO_A, '2mm', '2 m m', 'a'),
       setting(ORTHO_TO_B, 'm2m', 'm 2 m', 'b'),
     ],
-    itcDefault: 1,
   },
   group('mmm', 'orthorhombic', 'D2h', ops(ROT2_Z, ROT2_X, INVERSION), '2/m 2/m 2/m'),
 
@@ -251,7 +249,6 @@ export const POINT_GROUP_DATA: readonly PointGroupData[] = [
     schoenflies: 'D2d',
     generators: ops(ROTINV4_Z, ROT2_X),
     settings: [setting(SAME, '-42m', '-4 2 m'), setting(ROT45_Z, '-4m2', '-4 m 2')],
-    itcDefault: 1,
   },
   group('4/mmm', 'tetragonal', 'D4h', ops(ROT4_Z, ROT2_X, INVERSION), '4/m 2/m 2/m'),
 

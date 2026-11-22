@@ -1,18 +1,14 @@
 /**
- * The order of the operations: as ITA numbers them. ITA bases the sequence of the coordinate
+ * ITA's selected generators of every point-group setting it lists, the data from which
+ * `itcData.ts` builds the operations in ITA's order. ITA bases the sequence of the coordinate
  * triplets on its "Generators selected" (Vol. A, 5th ed. 2006, § 2.2.11 (iv), p. 27; transcribed
  * for the symmorphic P group of every setting it lists in references/itc/vol-a-2006-symmetry-operations.md)
  * and takes the next generator as soon as a power of the current one lies in the group generated
- * so far (§ 8.3.5, p. 737). So, starting from the identity, each generator g extends that group H
- * by gH, g²H, … until a power of g lies in H. This gives ITA's numbering of the general
- * position (ITA 6th ed. Table 3.2.3.2), as `elements.reference.test.ts` checks for all 40 settings.
- * The generators are the printed triplets of Table 3.2.3.2, as matrices W in the conventional basis
- * (x̃ = W x); docs/conventions.md, "Order of the operations".
+ * so far (§ 8.3.5, p. 737). This gives ITA's numbering of the general position (ITA 6th ed. Table
+ * 3.2.3.2), as `itcData.reference.test.ts` checks for all 40 settings. The generators are the
+ * printed triplets of Table 3.2.3.2, as matrices W in the conventional basis (x̃ = W x);
+ * docs/conventions.md, "Order of the operations".
  */
-
-import { inverse, multiply, snap, type Mat3 } from '../linalg.js';
-import { crystalFamily, latticeBasis, type CrystalSystem } from '../lattice.js';
-import { IDENTITY_OPERATION, compose, operation, operationsEqual, type Operation } from '../operations.js';
 
 /** An integer matrix W in the conventional basis, rows as printed in a coordinate triplet. */
 export type IntMat3 = readonly [
@@ -638,51 +634,3 @@ export const ITA_GENERATORS: Readonly<Record<string, readonly IntMat3[]>> = {
     ],
   ],
 };
-
-/** ITA's selected generators of a setting as matrices in the conventional basis, or undefined if ITA does not list it. */
-function itaGenerators(key: string, setting: number): readonly IntMat3[] | undefined {
-  return ITA_GENERATORS[`${key}#${setting}`];
-}
-
-/**
- * W in the conventional basis as a Cartesian matrix B·W·B⁻¹. Monoclinic and triclinic: W itself,
- * without a basis (symcrys fixes none for them): their point operations are ±1 on the diagonal,
- * and the unique axis (y or z) is perpendicular to the other two axes, so W is the same in every
- * Cartesian frame with that axis along y or z.
- */
-function cartesian(w: IntMat3, system: CrystalSystem): Mat3 {
-  const family = crystalFamily(system);
-  if (family === 'monoclinic' || family === 'triclinic') return w as unknown as Mat3;
-  const b = latticeBasis(family);
-  return multiply(multiply(b, w as unknown as Mat3), inverse(b));
-}
-
-/** ITA's selected generators of a setting as Cartesian operations, in printed order, or undefined if ITA does not list it. */
-export function itaGeneratorOperations(key: string, setting: number, system: CrystalSystem): Operation[] | undefined {
-  return itaGenerators(key, setting)?.map((w) => operation(snap(cartesian(w, system))));
-}
-
-/**
- * The operations of a setting in ITA's order, built coset by coset from ITA's generators, or
- * undefined if ITA does not list the setting. `closed` (the closure of the stored generators) only
- * bounds the loop; the caller checks that the result is the same set.
- */
-export function inItaOrder(
-  key: string,
-  setting: number,
-  system: CrystalSystem,
-  closed: readonly Operation[],
-): Operation[] | undefined {
-  const gens = itaGeneratorOperations(key, setting, system);
-  if (!gens) return undefined;
-  const has = (list: readonly Operation[], op: Operation) => list.some((x) => operationsEqual(x, op));
-  const list: Operation[] = [IDENTITY_OPERATION];
-  for (const g of gens) {
-    const h = list.slice();
-    for (let power = g; !has(h, power); power = compose(power, g)) {
-      if (list.length > closed.length) break;
-      for (const x of h) list.push(compose(power, x));
-    }
-  }
-  return list;
-}

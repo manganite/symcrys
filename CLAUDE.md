@@ -465,9 +465,10 @@ The conventions themselves are in `docs/conventions.md`; here, what was decided 
   crystallography-common#99): `operations` returns the operations as ITA numbers them, built coset
   by coset from ITA's selected generators (`docs/conventions.md`, "Order of the operations").
   Consumers draw and list operations in this order (stereography: poles, faces, face lists), so it
-  should mean something and stay stable; the closure order had no meaning of its own. The closure of
-  the stored generators stays the source of the set; the ordering throws if ITA's generators give a
-  different set. In the Birss convention the order is birss-app's (above).
+  should mean something and stay stable; the closure order had no meaning of its own. For the classes
+  the set comes from ITA's selected generators (`pointGroups/itcData.ts`, #122); while the Birss
+  convention exists it must equal the closure of the stored generators, or `operations` throws.
+  In the Birss convention the order is birss-app's (above).
 - **Generators per convention** _(Birss part replaced by "Pure ITC" above; describes the code until the ITC migration.)_
   (maintainer, 2026-11-18, #25, #27): `generators` returns ITA's
   selected generators in the ITC convention and birss-app's (the stored ones) in the Birss
