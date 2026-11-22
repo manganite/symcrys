@@ -40,7 +40,7 @@ for (const target of new Set([pkg.main, pkg.types, ...entries.flatMap(([, e]) =>
 
 // No test-only code in the build (CLAUDE.md, "Tests")
 for (const file of all) {
-  if (/\.(test|fixtures)\.(js|d\.ts)(\.map)?$/.test(file) || file.includes(`${sep}testUtils${sep}`)) {
+  if (/\.(test|fixtures)\.(js|d\.ts)(\.map)?$|\.pins\.json$/.test(file) || file.includes(`${sep}testUtils${sep}`)) {
     errors.push(`test-only file in dist: ${rel(file)}`);
   }
 }
@@ -62,7 +62,12 @@ for (const file of all.filter((f) => f.endsWith('.js') || f.endsWith('.d.ts'))) 
   }
 }
 
-// The built module loads and carries the right version
+// The built module loads and carries the right version; only if nothing above failed, since a broken
+// import would throw here and hide the list of errors.
+if (errors.length > 0) {
+  console.error(errors.map((e) => `check:dist: ${e}`).join('\n'));
+  process.exit(1);
+}
 for (const [name, e] of entries) {
   const mod = await import(pathToFileURL(join(root, e.default)).href);
   if (mod.VERSION !== pkg.version) {

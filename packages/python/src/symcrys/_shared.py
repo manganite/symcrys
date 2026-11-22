@@ -41,6 +41,31 @@ def options(**kwargs: Any) -> dict[str, Any]:
     return result
 
 
+def operation_list(operations: Any, keys: tuple[str, ...] = ("matrix",)) -> list[Any]:
+    """A list of operations as the library takes it, checked: a sequence of mappings with ``keys``.
+
+    Without the check, an array of matrices reached the library and failed there with "cannot read
+    property '0' of undefined" (#92).
+    """
+    shape = "{" + ", ".join(f'"{k}"' for k in keys) + "}"
+    numeric_array = isinstance(operations, np.ndarray) and operations.dtype != object
+    if numeric_array or isinstance(operations, (Mapping, str, bytes)) or not hasattr(operations, "__iter__"):
+        raise _engine.SymcrysError(
+            f"operations must be a list of operations {shape}, as operations() returns them, "
+            f"not {type(operations).__name__}",
+            "RangeError",
+        )
+    ops = list(operations)
+    for i, op in enumerate(ops):
+        if not isinstance(op, Mapping) or not all(k in op for k in keys):
+            raise _engine.SymcrysError(
+                f"operation {i} must be a mapping {shape}, as operations() returns it, not {type(op).__name__}",
+                "RangeError",
+            )
+    # Plain dicts, which the conversion to JSON takes (a Mapping such as MappingProxyType it does not).
+    return [dict(op) for op in ops]
+
+
 def call(name: str, *args: Any, floats: bool = False) -> Any:
     """Calls the function ``name`` of the library (``magnetic.…`` for the magnetic API)."""
     return from_js(_engine.invoke(name, *(to_js(a) for a in args)), floats=floats)

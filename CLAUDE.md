@@ -296,7 +296,8 @@ build && npm run bundle:python`, then in `packages/python` `pip install -e ".[te
   tag by hand", 2026-11-08): Claude Code on Thomas' computer sets it itself once the release PR
   is merged on his OK; in a cloud session, where pushing a tag fails
   ("Cloud-session limits"), Thomas sets it. Before tagging, `origin/main` must be the release PR's
-  merge commit; afterwards `release.yml` must be green.
+  merge commit (`release.yml` refuses a tag that is not on `main`, #128); afterwards `release.yml`
+  must be green.
 - **npm:** `release.yml` submits each tagged version with `npm stage publish` (trusted publishing,
   allowed action "stage" only); **Thomas approves it** with 2FA (maintainer, 2026-11-08). Never
   publish from a working copy other than a clean checkout of the tag; a stale checkout put `0.0.0`
@@ -366,7 +367,8 @@ Decided by Thomas on 2026-11-20 (#29), asked before implementation, unless a poi
   cells, autodoc with napoleon for the Python reference, and the HTML of TypeDoc beside it (`ts/`).
   Material for MkDocs, first proposed in #29, reached its end of life on 2026-11-05, and its
   successor Zensical was at 0.1 with preliminary support for API references. The tools are pinned
-  in `docs/requirements.txt` and the dev dependencies (TypeDoc 0.28, which accepts TypeScript 6.0,
+  in `docs/requirements.txt`, their whole environment in `docs/constraints.txt` (with Python 3.13,
+  used as `PIP_CONSTRAINT` by CI and `release.yml`, #128), and the dev dependencies (TypeDoc 0.28, which accepts TypeScript 6.0,
   and `typedoc-plugin-missing-exports`, which documents the internal types that public signatures
   name), never dependencies of the packages.
 - **Everything shown runs**: a TypeScript example of the site is a file in `docs/examples`, run

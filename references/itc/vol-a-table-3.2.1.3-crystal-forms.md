@@ -80,7 +80,8 @@ non-equivalent orientations) is kept in the column Note.
 Footnotes as printed (p. 726): "† These limiting forms occur in three or two non-equivalent
 orientations (different types of limiting forms); cf. Table 3.2.3.2. ‡ In point groups 4̄2m and
 3̄m, the tetragonal prism and the hexagonal prism occur twice, as a 'basic special form' and as a
-'limiting special form'."
+'limiting special form'. In these cases, the point groups are listed twice, as '4̄2m(.2.) and
+4̄2m(..m)' and as '3̄m1(.2.) and 3̄m1(.m.)'."
 
 Face symmetries are printed oriented (`..m`) where the orientation matters and otherwise without
 dots (`3`, `4mm`, `2, m` for 2/m), as transcribed.

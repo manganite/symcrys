@@ -404,7 +404,7 @@ export function symmetryDirections(
  * group, `multiplicity` may not be an integer. The matrices must be Cartesian and orthogonal (not
  * those of `latticeOperations`). Throws a RangeError for a matrix that is not orthogonal (within
  * `tolerance`, at least `EPSILON`), for a zero vector, and if the closed operations fix no common
- * direction (a tolerance far too large, e.g. 0.5).
+ * direction or do not settle into a group (a tolerance far too large, e.g. 0.5).
  */
 export function siteSymmetry(
   operations: readonly OperationArgument[],
@@ -412,8 +412,7 @@ export function siteSymmetry(
   options?: site.SiteSymmetryOptions,
 ): site.SiteSymmetry {
   checkUnitary(operations);
-  // The shared function reads the matrices only, and it keeps the products of a list by the identity
-  // of the list, so the list of the caller is passed on as it is.
+  // The shared function reads the matrices only, so the list of the caller is passed on as it is.
   return site.siteSymmetry(operations as readonly MagneticOperation[], direction, options);
 }
 

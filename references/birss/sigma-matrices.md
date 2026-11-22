@@ -1,7 +1,7 @@
 # Birss generating matrices σ(0) to σ(9)
 
 Source: R. R. Birss, _Symmetry and Magnetism_ (North-Holland, Amsterdam, 1966), equation (2.17),
-printed p. 48. Transcribed in manganite/birss-tables (`conventions-reference.md`, § 4).
+printed pp. 48–49 (σ(0)–σ(5) on p. 48, σ(6)–σ(9) on p. 49). Transcribed in manganite/birss-tables (`conventions-reference.md`, § 4).
 
 Each matrix is given by its rows; entries are integers or `±1/2`, `±√3/2`. The frame is Birss's
 Cartesian frame (x, y, z); `σ'(N)` is σ(N) combined with time reversal.
