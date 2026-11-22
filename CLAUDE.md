@@ -696,9 +696,13 @@ while implementing gets its own note here.
   questions): the 6th edition is the reference of symcrys for what it holds (`docs/conventions.md`,
   "Sources"); for the crystal classes only the order of the operations, the selected generators and the
   symbols of the operations come from the space-group tables of the 5th edition (Part 7). The
-  2016 volume in Zotero (`7NZ258UB`) holds Chapters 2.1 (`9W72G6EC`) and 3.2 (`Y6Z8P8NR`) only;
-  Thomas provides Chapter 2.2 ("the 17 types of plane groups (Chapter 2.2)", Ch. 2.1, p. 142, which
-  also says that the data of Chapters 2.2 and 2.3 closely follow the earlier edition). The 5th
+  2016 volume in Zotero (`7NZ258UB`) holds Chapters 2.1 (`9W72G6EC`) and 3.2 (`Y6Z8P8NR`), and
+  Thomas added Chapter 2.2 on 2026-11-22 as one PDF per plane group (attachments
+  `sgtable2o2o001` to `sgtable2o2o017`); plane group n is printed on p. 175 + n (checked at 7, 8, 9
+  and 17; "the 17 types of plane groups (Chapter 2.2)", Ch. 2.1, p. 142, which also says that the
+  data of Chapters 2.2 and 2.3 closely follow the earlier edition). Their text layer keeps overbars
+  (as `¯` after the letter) but takes fractions apart, so the tables are transcribed from page
+  images. The 5th
   edition (2006, `3SDKZZFX`), Part 6, pp. 92–109, against which plane-groups is tested, becomes an
   additional check by an audit (named with the data PR), not the reference; printed p. 92 is PDF
   page 235 (checked at that page only).
