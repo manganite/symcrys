@@ -644,3 +644,65 @@ The conventions are in `docs/conventions.md` ("Tensors"); here, what was decided
   (`quickjs-ng`) 3–112 ms per class for the SHG tensor and up to about 0.3 s at rank 4 (m-3m), 10–35
   times Node; enough for a Python layer that calls symcrys a few times per material. Forms per
   class, setting and kind of tensor are cached.
+
+### Plane groups (and later space groups)
+
+Decided by Thomas on 2026-11-22 (#31, where the questions, the proposals and the answers are
+recorded), asked before implementation, each among proposals with a recommendation; what is chosen
+while implementing gets its own note here.
+
+- **Exact inside, plain numbers at the API; a type of its own** (#31 question 1): an operation with
+  a translation is computed exactly, the matrix as integers in the lattice basis and the translation
+  as fractions (integer numerator over the smallest denominator), so that comparing operations and
+  points of the group data modulo the lattice needs no tolerance. At the API it is
+  `{ matrix, translation }` in the lattice basis: `matrix` a d × d matrix with integer entries, the
+  object shape `{ matrix }` of `latticeOperations` with `translation` added, and `translation` as
+  numbers (1/3 as the nearest double), as spglib gives its symmetry (integer rotations, float
+  translations), which is what users of such a library expect. The Cartesian operations of the
+  crystal classes and magnetic groups (`operations`, tensors) stay as they are. The alternatives were
+  exact fractions at the API ([numerator, denominator] pairs: unusual, and every consumer would
+  compute with fractions itself), floating point with snapping as for the point groups (not exact;
+  comparisons modulo 1 with a tolerance, cf. plane-groups `CLAUDE.md`, "Toleranzen der Bestimmung")
+  and one type for all groups (would have broken the point-group API, and tensors are Cartesian).
+  Functions that take a point from a caller (floating point) take an optional `tolerance`, as
+  `siteSymmetry` does. Open until the first exported function: the NumPy types in Python (under the
+  fixed rule `matrix` would be float64, as for `latticeOperations`; `translation` float64).
+- **One module for every dimension**: written for d = 2 and d = 3, so that the space groups for the
+  3D app are the same module with d = 3, not a further implementation.
+- **First step: the 17 plane groups** (#31 question 2), one MINOR in several PRs: the type, its
+  arithmetic and the closure; the data of ITA (operations in ITA's order, selected generators,
+  centring, origin, asymmetric unit, Wyckoff positions), transcribed to `references/` and tested
+  against print; the description of the operations (kind, location, glide part, as in ITA's
+  "Symmetry operations") and the symmetry elements in a cell; site symmetry, orbit and the Wyckoff
+  position of a point. The determination of the group of a pattern (plane-groups' `bestimmung.js`)
+  follows in a second MINOR, built on the first; it is the largest part (cell reduction, metric,
+  choice of cell and origin, tolerances), and plane-groups can move most of its calculations
+  before it.
+- **No frieze, layer or magnetic plane groups for now** (#31 question 3): no consumer needs them;
+  the dimension-generic module keeps them possible (idea in #74).
+- **Entry point `symcrys/plane`, later `symcrys/space`** (#31 question 4), as `symcrys/magnetic`
+  (#47): the import decides how a key is read, and the root entry point stays the crystal classes
+  in 3D. `symcrys/plane` holds the 10 plane point groups and the 17 plane groups, with the function
+  names of the other entry points where the notion is the same; in Python `symcrys.plane`. Keys are
+  the symbols ITA prints for the plane: `'p2mg'`, `'c2mm'` for the plane groups, `'2mm'`, `'4mm'`
+  etc. for the plane point groups (the plane point group `2mm` is the class `mm2` with its 2 normal
+  to the plane); the two sets do not overlap, since a plane group's symbol begins with its lattice
+  letter. The plane point groups are the 10 crystal classes whose operations leave the normal of
+  the plane fixed, restricted to the plane (one data source). Their frame, the type of their
+  operations and whether `3m` gets two orientations (as in p3m1 and p31m) are settled when they are
+  implemented, with Thomas where it is a choice. Until then "Public API and versions" and "Two entry
+  points" name the two existing entry points only.
+- **Print anchor: ITA 6th edition (2016), Chapter 2.2** (#31, asked together with the four
+  questions): the 6th edition is the reference of symcrys for what it holds (`docs/conventions.md`,
+  "Sources"); for the crystal classes only the order of the operations, the selected generators and the
+  symbols of the operations come from the space-group tables of the 5th edition (Part 7). The
+  2016 volume in Zotero (`7NZ258UB`) holds Chapters 2.1 (`9W72G6EC`) and 3.2 (`Y6Z8P8NR`), and
+  Thomas added Chapter 2.2 on 2026-11-22 as one PDF per plane group (attachments
+  `sgtable2o2o001` to `sgtable2o2o017`); plane group n is printed on p. 175 + n (checked at 7, 8, 9
+  and 17; "the 17 types of plane groups (Chapter 2.2)", Ch. 2.1, p. 142, which also says that the
+  data of Chapters 2.2 and 2.3 closely follow the earlier edition). Their text layer keeps overbars
+  (as `¯` after the letter) but takes fractions apart, so the tables are transcribed from page
+  images. The 5th
+  edition (2006, `3SDKZZFX`), Part 6, pp. 92–109, against which plane-groups is tested, becomes an
+  additional check by an audit (named with the data PR), not the reference; printed p. 92 is PDF
+  page 235 (checked at that page only).
