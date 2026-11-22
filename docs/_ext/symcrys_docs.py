@@ -16,6 +16,7 @@
 from __future__ import annotations
 
 import html
+import posixpath
 import re
 import shutil
 import subprocess
@@ -122,14 +123,15 @@ def copy_notebooks(app: Sphinx) -> None:
         shutil.copyfile(notebook, target / notebook.name)
 
 
-# Pages copied in at build time (the notebooks) take their description from nowhere and are not checked.
+# Pages copied in at build time (the notebooks): a description is used if there is one, but a missing
+# one is not a warning, because a new notebook needs no change to the site.
 UNCHECKED = ("examples/notebooks/",)
 
 
 def page_url(app: Sphinx, pagename: str) -> str:
-    """The address of a page; the landing page is the site's address itself."""
-    base = app.config.html_baseurl
-    return base if pagename == app.config.root_doc else f"{base}{pagename}.html"
+    """The address of a page, as Sphinx builds the canonical link; the landing page is the site's address."""
+    target = "" if pagename == app.config.root_doc else app.builder.get_target_uri(pagename)
+    return posixpath.join(app.config.html_baseurl, target)
 
 
 def page_meta(app: Sphinx, pagename: str, templatename: str, context: dict[str, Any], doctree: Any) -> None:
@@ -137,7 +139,7 @@ def page_meta(app: Sphinx, pagename: str, templatename: str, context: dict[str, 
     if doctree is None:  # genindex, search: generated, not sources
         return
     description = app.config.symcrys_page_descriptions.get(pagename)
-    if description is None and not pagename.startswith(UNCHECKED):
+    if not description and not pagename.startswith(UNCHECKED):
         logger.warning(
             "no description for %s in symcrys_page_descriptions (docs/conf.py)", pagename, location=pagename
         )
@@ -149,7 +151,7 @@ def page_meta(app: Sphinx, pagename: str, templatename: str, context: dict[str, 
         ("property", "og:site_name", "symcrys"),
         ("property", "og:title", title),
         ("property", "og:url", url),
-        ("property", "og:locale", "en"),
+        ("property", "og:locale", "en_GB"),  # British spelling, as the site
     ]
     if description:
         tags = [("name", "description", description), *tags, ("property", "og:description", description)]

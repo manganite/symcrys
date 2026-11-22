@@ -6,7 +6,7 @@ All notable changes to symcrys are recorded here. The format follows
 
 ## [Unreleased]
 
-### Changed
+### Added
 
 - Documentation site: a description and Open Graph tags on every page, the site's address as the
   canonical link of the landing page, and a `sitemap.xml` written by the build, so that search
