@@ -103,7 +103,45 @@ convention or the process updates this file (or the `docs/` file) in the same PR
   pp. 66, 140, 240) agree with ITC Vol. D; its Tables 6.11 (p. 141) and 7.6 (pp. 240 ff.) give the forms after
   Bhagavantam and Birss.
 
+## Pure ITC (decided 2026-11-22; the code follows in the ITC migration)
+
+Decided by Thomas on 2026-11-22 (#106, #110), after a review of 0.10.0 and an audit of the API
+against ITC: earlier decisions led to special solutions for the existing apps, which is not a good
+way. symcrys is to be efficient, logically structured, user-friendly and **strictly ITC**; an
+application adapts to symcrys, not the other way round. This section is binding for all new work.
+The sections below that it replaces describe the code as it still is; the ITC migration (#121,
+#126) changes code, `docs/conventions.md` and those sections together and rewrites them to the new
+state (#127).
+
+- **One convention, ITC.** The option `convention` and the Birss output mode go; so do birss-app's
+  order of the operations, its generators and its axis signs as API behaviour, the special reading
+  of `mm'm'` and `6'/mmm'` by `findPointGroup` (#46), and the birss-app pins as reference. The
+  conversion to Birss's presentation belongs in birss-app (#125). Replaces "Two conventions: ITC
+  (default) and Birss" below and the Birss parts of the decisions under "Point groups" and
+  "Tensors".
+- **No special solutions for applications.** Where print leaves a choice open, ITC's own usage
+  decides, not an app's; replaces "birss-app is the reference where print leaves a choice open".
+  The special solutions found so far are listed in #110.
+- **ITC is the source of the data.** The data move from the Birss frame into the ITC frame; nothing
+  is derived from Birss any more (how they are stored: #122). Long-term clarity and the inner
+  structure of the project come before the amount of work. The print-verified Birss tests (Birss
+  Tables 4a–4f, 6, 7) stay as an independent second print check: they rotate Birss's forms into
+  the ITC frame and compare there.
+- **Settings as ITC prints them.** Only settings that ITC prints, numbered as ITC numbers them,
+  selected by their ITC symbol with the index as a second handle (#116, #123); missing ones are
+  added (unique axis a, rhombohedral axes #111, the orientations of `2'm'm` printed in ITC Vol. D).
+- **Tolerant input** where it is a pure normalisation before the comparison and the input stays
+  unambiguous (spaces, overbar and prime variants, Birss's printed forms such as `m3m`); an input
+  that could match two groups or settings is an error that lists the candidates (#96).
+- **Signs of axes:** the axis of an operation carries the sign of its Seitz symbol (ITA 6th ed.,
+  Tables 1.4.2.1/1.4.2.2); Table 2.1.3.1 stays the anchor of the lattice symmetry directions (#114).
+- **Reference edition:** ITA 6th ed. (2016). Exception, until there is another solution: what comes
+  from the space-group tables (Ch. 2.3) keeps the 5th ed. (2006, Part 7) as anchor, because the
+  2016 edition has the 230 space groups only as single PDFs (#124).
+
 ## Two conventions: ITC (default) and Birss
+
+_Replaced by "Pure ITC" above; describes the code until the ITC migration._
 
 - symcrys supports two conventions for point groups: the _International Tables for
   Crystallography_ (ITC: Vol. A for the 32 crystal classes, Vol. D Ch. 1.5 for the magnetic point
@@ -400,7 +438,7 @@ The conventions themselves are in `docs/conventions.md`; here, what was decided 
   should mean something and stay stable; the closure order had no meaning of its own. The closure of
   the stored generators stays the source of the set; the ordering throws if ITA's generators give a
   different set. In the Birss convention the order is birss-app's (above).
-- **Generators per convention** (maintainer, 2026-11-18, #25, #27): `generators` returns ITA's
+- **Generators per convention** (_replaced on 2026-11-22 by "Pure ITC" above; describes the code until the ITC migration_) (maintainer, 2026-11-18, #25, #27): `generators` returns ITA's
   selected generators in the ITC convention and birss-app's (the stored ones) in the Birss
   convention (`docs/conventions.md`, "Generators").
 - **Cartesian floating-point matrices with snapping** (maintainer, 2026-11-08, #13), as in
@@ -418,12 +456,13 @@ The conventions themselves are in `docs/conventions.md`; here, what was decided 
   directions of ITA Table 2.1.3.1 and closed independently, must give the same operations; this
   also covers `2mm` and `m2m`, which ITA does not list. ITC Vol. D Table 1.5.2.3 is transcribed with
   the magnetic groups.
-- **Stored frame and settings** (2026-11-09, #14): data are stored once, in Birss's frame (setting
+- **Stored frame and settings** (_replaced on 2026-11-22 by "Pure ITC" above; describes the code until the ITC migration_) (2026-11-09, #14): data are stored once, in Birss's frame (setting
   1); every setting, the ITC ones included, is a rotation of it. A setting index names a physical
   frame and means the same in both conventions; the convention picks the default and the symbols and
   how the operations are presented (order, generators, axis signs), not their set. One data set then
   serves both conventions, and the Birss print tests apply directly.
-- **birss-app is the reference where print leaves a choice open** (maintainer, 2026-11-09, #17):
+- **birss-app is the reference where print leaves a choice open** (_replaced on 2026-11-22 by
+  "Pure ITC" above; describes the code until the ITC migration_) (maintainer, 2026-11-09, #17):
   symcrys follows birss-app's current implementation unless it is wrong on the subject. The choices
   for the crystal classes were checked against birss-app 2be5fe3: D3h keeps the key and ITC
   default `-6m2` (print state in `docs/conventions.md`, "Keys"), and the Birss symbols that Birss
@@ -504,7 +543,7 @@ The conventions themselves are in `docs/conventions.md`; here, what was decided 
   one set of functions taking all 122 keys with a list of magnetic keys beside the classes. A new
   function is added to the shared modules and exported by both entry points, with its wrapper in
   `crystalClasses.ts` if a key, an operation or a tensor passes through it.
-- **A search reads its argument as a symbol** (maintainer, 2026-11-20, #46): `findPointGroup`
+- **A search reads its argument as a symbol** (_replaced on 2026-11-22 by "Pure ITC" above; describes the code until the ITC migration_) (maintainer, 2026-11-20, #46): `findPointGroup`
   gives the setting a symbol names, also where the string is a key, so that
   `findPointGroup(symbol(key, { convention, setting }), convention)` returns the setting. It
   matters for two keys in the Birss convention (`mm'm'`, `6'/mmm'`: the Birss symbols of setting
@@ -522,7 +561,7 @@ The conventions themselves are in `docs/conventions.md`; here, what was decided 
   and its coset after it (ITC Vol. D eq. (1.5.2.2)), would have changed the numbers against the
   class. The generators follow the same idea: those of the class with their time reversal, for a
   grey group followed by `1'` (chosen while implementing).
-- **Six settings of `2'm'm`** (maintainer, 2026-11-20, #19): an orthorhombic group gets a setting
+- **Six settings of `2'm'm`** (_replaced on 2026-11-22 by "Pure ITC" above; describes the code until the ITC migration_) (maintainer, 2026-11-20, #19): an orthorhombic group gets a setting
   for every distinct orientation of its axes. birss-app's standing decision (at most three settings
   per group, by the axis that carries the unique element) does not cover the one group whose three
   elements all differ; it has six orientations, and print uses all of them (Birss, four tables of
