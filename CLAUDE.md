@@ -112,7 +112,10 @@ application adapts to symcrys, not the other way round (this sharpens "ITC stand
 consumer" below). This section is binding for all new work.
 The sections below that it replaces describe the code as it still is; the ITC migration (#121,
 #126) changes code, `docs/conventions.md` and those sections together and rewrites them to the new
-state (#127).
+state (#127). Until then (Thomas, 2026-11-22): existing behaviour, the Birss mode and its birss-app
+pins included, keeps working and is fixed where broken, since it is the safety net of the
+migration (#121); nothing new is added to the Birss mode, and new exports take no `convention`
+option.
 
 - **One convention, ITC.** The option `convention` and the Birss output mode go; so do birss-app's
   order of the operations, its generators and its axis signs as API behaviour, the special reading
@@ -129,8 +132,9 @@ state (#127).
 - **ITC is the source of the data.** The data move from the Birss frame into the ITC frame; nothing
   is derived from Birss any more (how they are stored: #122). Long-term clarity and the inner
   structure of the project come before the amount of work. The print-verified Birss tests (Birss
-  Tables 4a–4f, 6, 7) stay as an independent second print check: they rotate Birss's forms into
-  the ITC frame and compare there.
+  Tables 3, 4a–4f, 6, 7 and the generating matrices σ(N) of eq. (2.17); Tables 3 and σ(N) confirmed
+  by Thomas on 2026-11-22) stay as an independent second print check: they rotate Birss's forms and
+  operations into the ITC frame and compare there.
 - **Settings as ITC prints them.** Only settings that ITC prints, selected by their ITC symbol
   with the index as a second handle (#116; design of the setting record: #123); missing ones are
   added (unique axis a, rhombohedral axes #111, the orientations of `2'm'm` printed in ITC Vol. D).
