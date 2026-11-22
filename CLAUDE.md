@@ -711,6 +711,21 @@ while implementing gets its own note here.
   oriented symbol come from print, not from a rule of symcrys. Checked: every printed point of every
   Wyckoff position of the 17 groups, displaced by about 3·10⁻⁸ in both directions, gives its printed letter, multiplicity,
   symbol and printed orbit (`positions.reference.test.ts`).
+- **Asymmetric unit and elements in the cell** (chosen while implementing, PR #80;
+  `src/spaceGroups/cell.ts`): exact rationals inside, as the rest of the module. The asymmetric unit
+  is the polygon of the printed inequalities, given by its vertices (counter-clockwise from the
+  lowest) and, per edge, the printed inequality that holds it with integer coefficients without a
+  common factor; printed bounds that hold no edge (e.g. `y <= 2/3` in p3) are left out, so every
+  inequality is an edge to draw. The elements are found by describing every operation shifted by the
+  lattice translations that can reach the cell (bound in the code), keeping what meets [0, 1]² with
+  its boundary: a centre with the highest order about it, a line with its segment, as a glide line
+  with its glide reduced to s·direction, 0 < s < 1. Checked against print: the printed vertices
+  (hexagonal groups) and the printed inequalities read as text; centres and mirror lines from the
+  Wyckoff positions (no free parameter and a rotation; one free parameter and a mirror) with their
+  lattice translates; every printed glide; all lines also derived independently from the printed general
+  position (ITA prints no glide line of p4mm, p3m1, p31m, p6mm); and from the group alone the area 1/|G|, one image of a
+  general point inside, each line the element of an operation, the lines mapped onto themselves
+  (`cell.reference.test.ts`).
 - **No frieze, layer or magnetic plane groups for now** (#31 question 3): no consumer needs them;
   the dimension-generic module keeps them possible (idea in #74).
 - **Entry point `symcrys/plane`, later `symcrys/space`** (#31 question 4), as `symcrys/magnetic`
