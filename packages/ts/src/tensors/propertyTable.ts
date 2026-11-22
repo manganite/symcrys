@@ -43,7 +43,7 @@ export const TENSOR_PROPERTIES = Object.freeze({
   piezoelectric: property(
     { rank: 3, parity: 'polar', timeParity: 'i', intrinsic: 'jk' },
     'Electric polarization linear in stress, P_i = d_ijk T_jk: a polar tensor of rank 3, symmetric in j, k.',
-    'ITC Vol. D (2013), § 1.1.4.4.3, p. 12; classes: ITA (2016) Table 3.2.2.1, p. 738',
+    'ITC Vol. D (2013), § 1.1.4.4.3, p. 12, and § 1.1.4.10.1, eqs. (1.1.4.5), (1.1.4.7), p. 24; classes: ITA (2016) Table 3.2.2.1, p. 738',
   ),
   /** Optical activity: the symmetric axial tensor of rank 2. */
   gyrotropic: property(
@@ -61,13 +61,13 @@ export const TENSOR_PROPERTIES = Object.freeze({
   magnetoelectric: property(
     { rank: 2, parity: 'axial', timeParity: 'c', intrinsic: 'none' },
     'Linear magnetoelectric effect, P_i = α_ij H_j: an axial tensor of rank 2 that changes sign under time reversal.',
-    'ITC Vol. D (2013), § 1.5.8.1 with eqs. (1.5.8.2), (1.5.8.3) and Table 1.5.8.1, pp. 139–140',
+    'ITC Vol. D (2013), § 1.5.8, eqs. (1.5.8.2), (1.5.8.3), p. 139, and § 1.5.8.1 with Table 1.5.8.1, pp. 139–140',
   ),
   /** The piezomagnetic effect: a time-odd axial tensor of rank 3, symmetric in j, k (magnetic API only). */
   piezomagnetic: property(
     { rank: 3, parity: 'axial', timeParity: 'c', intrinsic: 'jk' },
     'Magnetization linear in stress, M_i = Λ_ijk T_jk: an axial tensor of rank 3, symmetric in j, k, that changes sign under time reversal.',
-    'ITC Vol. D (2013), § 1.5.7.1 with eq. (1.5.7.2) and Table 1.5.7.1, pp. 134–135',
+    'ITC Vol. D (2013), § 1.5.7, eq. (1.5.7.2), and § 1.5.7.1 with Table 1.5.7.1, pp. 134–135',
   ),
 } satisfies Record<string, TensorProperty>);
 

@@ -17,7 +17,7 @@ Notation:
 - A header of the form `zzxy(xy:6)` denotes the six components obtained from `zzxy` by permuting its indices subject to the restriction that the order of `x` and `y` remains unchanged, although `x` and `y` need not remain adjacent.
 - By the same convention, `zzyx(yx:6)` preserves the order `y, x`.
 
-**Lockstep expansion rule (Birss, text preceding Table 4f, printed pages 62–66).** Quote: "Notations
+**Lockstep expansion rule (Birss, text below Table 4a, printed pp. 56–57).** Quote: "Notations
 of the type xz(2), xxy(3), yxxx(x.3), xxxz(4), xxyy(x:3), xxyz(c4) and zzxy(xy:6) indicate certain
 permutations which must be applied to every component in the column. Thus, in considering a
 permutation of a component at the top of a column, the same permutation must be applied to all the

@@ -2,17 +2,18 @@
 
 Source: _International Tables for Crystallography_, Vol. D, 2nd edition (2013), Chapter 1.5
 (A. S. Borovik-Romanov, H. Grimmer, M. Kenzelmann, "Magnetic properties"), Table 1.5.8.1, printed
-p. 139, with § 1.5.8.1, printed pp. 139–140. Transcribed 2026-11-20 from the volume in Thomas' Zotero
+p. 139, with § 1.5.8 (eqs. (1.5.8.1)–(1.5.8.3), p. 139) and § 1.5.8.1, printed p. 140. Transcribed 2026-11-20 from the volume in Thomas' Zotero
 (item YQKTNYVN), read from page images at 200 and 450 dpi (the text layer of the PDF loses primes
 and overbars), and compared with the list of groups in birss-app
 (`docs/references/ITC-table-1.5.8.1-magnetoelectric-groups.md`).
 
 The table lists 58 magnetic point groups in 11 blocks; the groups of a block share one matrix.
 
-What the print fixes (§ 1.5.8.1):
+What the print fixes (§§ 1.5.8 and 1.5.8.1):
 
-- The tensor, eqs. (1.5.8.2) and (1.5.8.3): μ0* M_j = α_ij E_i and P_i = α_ij H_j; α_ij is an axial
-  tensor of second rank whose components all change sign under time inversion (p. 140).
+- The tensor, eqs. (1.5.8.2) and (1.5.8.3) of § 1.5.8 (p. 139): μ0* M_j = α_ij E_i and
+  P_i = α_ij H_j; α_ij is an axial tensor of second rank whose components all change sign under
+  time inversion (§ 1.5.8.1, p. 140).
 - Cartesian axes: as in Table 1.5.7.1 (`vol-d-table-1.5.7.1.md`); square brackets give other
   orientations of the same group with the same form. The trigonal groups are printed without the
   third entry; the text names the orientation meant and a second one with the same form (third

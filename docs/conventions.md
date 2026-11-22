@@ -323,8 +323,9 @@ symbols (`-3` is `C3i` in both Birss Table 3 and ITA Tables 3.2.1.2 and 3.2.3.2)
 - **Full symbol** (`form: 'full'`): one entry per symmetry direction, separated by single spaces,
   `1` for a direction without symmetry: `-3 2/m 1`, `1 2 1`, `4/m -3 2/m`.
 - **Birss symbols other than the printed short symbol of the default setting are derived.** Birss
-  prints short symbols for the default orientation only, and no full symbols (the "Full" column of
-  his Table 3 repeats the short symbol). symcrys reads the positions along Birss's directions: as
+  prints short symbols for the default orientation only, and full symbols only for the six
+  centrosymmetric classes with more than one symmetry direction (`mmm`, `4/mmm`, `-3m`, `6/mmm`,
+  `m3`, `m3m`; Table 3, pp. 36–38). symcrys reads the positions along Birss's directions: as
   in ITC, except that in the hexagonal family position 2 is y (Birss Table 4a) and position 3 is x
   (the reading of birss-app; #17).
 - **Schoenflies** (`form: 'schoenflies'`): subscripts written inline (`C3v`, `D2d`, `Oh`); the same

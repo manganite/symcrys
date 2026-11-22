@@ -62,9 +62,9 @@ c-tensor symbols of the 90 magnetic point groups, via the same rank mapping.
 | Trigonal | -3 | -3//z | K_m | - | - | K_n |
 | Trigonal | 32 | 3//z, 2//y | L_m | L_m | L_n | L_n |
 | Trigonal | 3m | 3//z, -2//y | L_m | M_m | M_n | L_n |
-| Trigonal | -3m | -3//z, 2//y | L_m | - | - | L_n |
+| Trigonal | -3m | 3//z, 2//y | L_m | - | - | L_n |
 | Hexagonal | 6 | 6//z | N_m | N_m | N_n | N_n |
-| Hexagonal | -6 | -3//z | N_m | O_m | O_n | N_n |
+| Hexagonal | -6 | 3//z | N_m | O_m | O_n | N_n |
 | Hexagonal | 6/m | 6//z | N_m | - | - | N_n |
 | Hexagonal | 622 | 6//z, 2//y | P_m | P_m | P_n | P_n |
 | Hexagonal | 6mm | 6//z, -2//y | P_m | Q_m | Q_n | P_n |

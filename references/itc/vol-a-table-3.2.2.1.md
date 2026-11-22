@@ -38,7 +38,7 @@ property vector is given. There are 10 pyroelectric, 20 piezoelectric,
 |              | 4/m-32/m     | 432   | -                          | -                  | +               | + (1)                           |
 |              |              | -43m  | -                          | + (1)              | -               | -                               |
 | Icosahedral  | m-3-5 (-5-3m)| 235 (532) | -                      | -                  | +               | + (1)                           |
-| Spherical    | m-inf (inf inf m) | 2-inf (inf inf) | -            | -                  | +               | + (1)                           |
+| Spherical    | m-inf (inf inf m) | 2inf (inf inf) | -            | -                  | +               | + (1)                           |
 
 Printed footnotes: (a) = dagger: unique axis b. (b) = double dagger:
 hexagonal axes.
