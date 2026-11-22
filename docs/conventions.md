@@ -1,4 +1,4 @@
-# Conventions for point groups
+# Conventions
 
 How symcrys represents the crystallographic point groups, and where the two supported conventions,
 ITC and Birss, differ. The print sources behind each statement are listed in "Sources" at the end;
@@ -642,7 +642,7 @@ tetragonal dipyramids of 422, (h0l) and (hhl)).
 `pointGroupOf(operations, { tolerance })` names the point group that a list of Cartesian
 operations generates, for instance the operations of a crystal that keep its distorted lattice
 (maintainer, 2026-11-21, #24). The list is closed into a group, two matrices being equal when no
-entry differs by `tolerance` (default `EPSILON`, at most 0.1) or more; a caller whose matrices
+entry differs by `tolerance` (default `EPSILON`, below 0.1) or more; a caller whose matrices
 carry rounding errors passes a value well above them, and the matrices need only be orthogonal, and
 their traces integers, within it. The result is the
 key, and the setting whose operations the group equals in the frame of symcrys. A group in another

@@ -19,13 +19,15 @@ package of the same version that runs it in an embedded JavaScript engine.
 
 ## Scope
 
-symcrys holds calculations, not presentation. Planned, in this order:
+symcrys holds calculations, not presentation. It has:
 
 1. Point groups: the 32 crystallographic and the 122 magnetic point groups as data (generators),
-   group generation, settings, Hermann–Mauguin, Schoenflies and Shubnikov symbols, derived
-   properties (centrosymmetric, polar, chiral, magnetoelectric …), subgroups.
-2. Plane groups.
-3. Space groups.
+   group generation, settings, Hermann–Mauguin and Schoenflies symbols, derived properties
+   (centrosymmetric, polar, chiral, the named tensor properties), site symmetry, Wyckoff positions,
+   crystal forms, orbits, and the point group of any list of operations.
+2. Plane groups and plane point groups (`symcrys/plane`).
+
+Planned: space groups (`symcrys/space`).
 
 Property tensors: the symmetry-reduced form of a tensor of rank 0 to 4 under a point group or any
 set of operations, from birss-app; results are numbers (coefficient matrices). Rendering (LaTeX,
@@ -113,7 +115,10 @@ what only Python has, the shapes of the NumPy arrays, is in `packages/python/doc
 Audits under `audit/` compare the code bases symcrys draws on. They are run by hand, with
 [birss-app](https://github.com/manganite/birss-app) and
 [stereography](https://github.com/manganite/stereography) checked out next to this repository:
-`npm run audit:point-groups` writes `audit/point-groups/report.md`, and `npm run audit:birss-app`
+`npm run audit:point-groups` writes `audit/point-groups/report.md`; `npm run audit:wyckoff-2006`,
+`audit:forms-2006` and `audit:plane-groups-2006` compare with the 5th edition of ITA as transcribed
+in stereography and in [plane-groups](https://github.com/manganite/plane-groups) (checked out next to
+this repository as well); and `npm run audit:birss-app`
 captures the pins of the Birss convention as JSON (`packages/ts/src/pointGroups/birssApp.pins.json`
 for the operations of all 122 magnetic point groups, `packages/ts/src/tensors/birssApp.pins.json` for the tensor forms).
 

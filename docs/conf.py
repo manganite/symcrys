@@ -97,7 +97,7 @@ symcrys_page_descriptions = {
     "tensors": "Tensor forms allowed by a point group, rank 0 to 4, and named properties such as "
     "piezoelectric, pyroelectric, gyrotropic, ferroaxial and magnetoelectric.",
     "cells": "Cells in symcrys: lattice from cell parameters, reciprocal basis, angles between planes, "
-    "residual symmetry, Miller and Miller-Bravais indices, zone axes.",
+    "residual symmetry, Miller and Bravais–Miller indices, zone axes.",
     "forms": "Crystal forms of the 32 point groups after ITA, orbits of faces, and the point group and "
     "symmetry elements of the operations of a distorted crystal.",
     "examples": "Example notebooks of the symcrys Python package, executed when the site is built; "
@@ -106,8 +106,8 @@ symcrys_page_descriptions = {
     "tensor the surfaces of a crystal allow, computed with the symcrys Python package.",
     "reference/index": "API reference of symcrys: the TypeScript reference (TypeDoc) and the Python "
     "reference, generated from one description of every export.",
-    "reference/python": "Python reference of symcrys: every function and constant of the modules symcrys "
-    "and symcrys.magnetic, with NumPy shapes and types.",
+    "reference/python": "Python reference of symcrys: every function and constant of the modules symcrys, "
+    "symcrys.magnetic and symcrys.plane, with NumPy shapes and types.",
 }
 html_title = f"symcrys {release}"
 html_static_path = ["_static"]

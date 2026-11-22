@@ -49,7 +49,7 @@ magnetoelectric and the piezomagnetic effect, which need magnetic order.
   classes.
 - **Magnetism** (magnetic order, magnetoelectric or piezomagnetic effect, time-odd tensors):
   `symcrys/magnetic`. A non-magnetic crystal is then its grey group (`"321'"`), a magnetically
-  ordered one its white or black-and-white group (`'32'`, `"3'2'"`…).
+  ordered one its white or black-and-white group (`'32'`, `"32'"`…).
 
 A question that involves time reversal (a magnetic key, a time-odd tensor or property, an operation
 with time reversal) is an error in the crystallographic API, because a wrong reading should fail

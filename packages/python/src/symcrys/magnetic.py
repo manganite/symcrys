@@ -404,7 +404,7 @@ def direction_from_four_indices(uvtw: ArrayLike) -> NDArray[np.int64]:
 def zone_axis(h1: ArrayLike, h2: ArrayLike) -> Optional[NDArray[np.int64]]:
     """The zone axis [uvw] of two planes (hkl), which must not be zero vectors: the solution of the
     zone law hu + kv + lw = 0, the cross product h₁ × h₂ reduced (so its sign follows the order of
-    the planes), or ``null`` for parallel planes.
+    the planes), or ``None`` for parallel planes.
     """
     result = _call("zoneAxis", np.asarray(h1), np.asarray(h2))
     return None if result is None else np.asarray(result, dtype=np.int64)
