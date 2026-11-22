@@ -1,4 +1,4 @@
-# symcrys
+# symcrys: crystallographic point groups and tensors
 
 Crystallographic symmetry calculations: the 32 crystal classes and the 122 magnetic point groups,
 with their settings, symbols, symmetry elements, site symmetry, Wyckoff positions and crystal forms,

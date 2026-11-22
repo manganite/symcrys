@@ -28,6 +28,7 @@ extensions = [
 ]
 
 exclude_patterns = ["_build", "**/.ipynb_checkpoints", "requirements.txt"]
+templates_path = ["_templates"]
 root_doc = "index"
 
 # MyST: Markdown with anchors for the headings, so that a link can name a section of a page
@@ -80,6 +81,34 @@ def setup(app):  # noqa: ANN001, ANN201
 
 
 html_theme = "furo"
+# The site's address: canonical links, Open Graph and sitemap.xml (docs/_ext/symcrys_docs.py, #72).
+html_baseurl = "https://manganite.github.io/symcrys/"
+# One description per page (meta description and og:description, at most about 160 characters);
+# the build warns about a page without one.
+symcrys_page_descriptions = {
+    "index": "Crystallographic point groups in TypeScript and Python: 32 crystal classes, 122 magnetic "
+    "point groups, Wyckoff positions, crystal forms and tensor forms.",
+    "getting-started": "Install symcrys from npm or PyPI and take the first steps: point groups, settings, "
+    "symbols, operations and the form of a property tensor.",
+    "readings": "One key, two readings: 32 is a crystal class in symcrys and a white magnetic point "
+    "group in symcrys/magnetic. Which entry point to use, and why.",
+    "conventions": "The conventions of symcrys for point groups: ITC and Birss, axis frames, settings, "
+    "symbols, Wyckoff positions, crystal forms and tensors, with print sources.",
+    "tensors": "Tensor forms allowed by a point group, rank 0 to 4, and named properties such as "
+    "piezoelectric, pyroelectric, gyrotropic, ferroaxial and magnetoelectric.",
+    "cells": "Cells in symcrys: lattice from cell parameters, reciprocal basis, angles between planes, "
+    "residual symmetry, Miller and Miller-Bravais indices, zone axes.",
+    "forms": "Crystal forms of the 32 point groups after ITA, orbits of faces, and the point group and "
+    "symmetry elements of the operations of a distorted crystal.",
+    "examples": "Example notebooks of the symcrys Python package, executed when the site is built; "
+    "currently the allowed SHG tensor at the surfaces of a crystal.",
+    "examples/notebooks/surface-shg": "Notebook: which components of the second-harmonic generation (SHG) "
+    "tensor the surfaces of a crystal allow, computed with the symcrys Python package.",
+    "reference/index": "API reference of symcrys: the TypeScript reference (TypeDoc) and the Python "
+    "reference, generated from one description of every export.",
+    "reference/python": "Python reference of symcrys: every function and constant of the modules symcrys "
+    "and symcrys.magnetic, with NumPy shapes and types.",
+}
 html_title = f"symcrys {release}"
 html_static_path = ["_static"]
 html_css_files = ["symcrys.css"]

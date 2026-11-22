@@ -309,7 +309,7 @@ build && npm run bundle:python`, then in `packages/python` `pip install -e ".[te
 
 ### Documentation
 
-Decided by Thomas on 2026-11-20 (#29), asked before implementation.
+Decided by Thomas on 2026-11-20 (#29), asked before implementation, unless a point gives its own date.
 
 - **Sphinx with MyST** for the site, `myst-nb` for the notebooks and the pages with Python code
   cells, autodoc with napoleon for the Python reference, and the HTML of TypeDoc beside it (`ts/`).
@@ -332,6 +332,16 @@ Decided by Thomas on 2026-11-20 (#29), asked before implementation.
 - **An API report** (`@microsoft/api-extractor`, which ships TypeScript 6.0.3 itself) comes later,
   in a PR of its own (#56).
 - **A PATCH release of its own** (0.6.1) puts the site online with the generated docstrings.
+- **Findability** (maintainer, 2026-11-22, #72): every page has a description (`symcrys_page_descriptions`
+  in `docs/conf.py`; the build warns about a page without one, so the gate `docs` fails), Open Graph
+  tags and a canonical link (`html_baseurl`), and the build writes `sitemap.xml`. The sitemap is meant
+  to be named in `robots.txt` of manganite.github.io, so that that repository keeps no list of the
+  symcrys pages (done there after the release that brings it). Written in `docs/_ext/symcrys_docs.py`
+  rather than with `sphinx-sitemap` and `sphinxext-opengraph` (chosen while implementing): about 50
+  lines instead of two more pinned tools, one of which (`sphinx-sitemap`) pulls in
+  `sphinx-last-updated-by-git`, which needs the git history of the pages. The landing page's browser
+  title names its subject (`docs/_templates/base.html`; furo gives it the site's name alone). No image
+  for link previews yet; symcrys has none of its own.
 
 ### ITC standard for every consumer
 
