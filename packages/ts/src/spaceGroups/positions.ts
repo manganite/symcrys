@@ -194,10 +194,7 @@ export function planeSiteSymmetry(key: string, point: readonly number[], options
   );
 }
 
-/**
- * True if some parameters x, y make the printed coordinate expression (e.g. `x,2x`, `-x+1/2,y`) give
- * the point modulo the lattice within `tol`: least squares over the nearby lattice translations.
- */
+/** A printed coordinate expression, parsed once. */
 const expressionCache = new Map<string, PlainOperation>();
 function parsed(expression: string): PlainOperation {
   let op = expressionCache.get(expression);
@@ -208,6 +205,10 @@ function parsed(expression: string): PlainOperation {
   return op;
 }
 
+/**
+ * True if some parameters x, y make the printed coordinate expression (e.g. `x,2x`, `-x+1/2,y`) give
+ * the point modulo the lattice within `tol`: least squares over the nearby lattice translations.
+ */
 function onExpression(expression: string, p: readonly number[], tol: number): boolean {
   const { matrix, translation } = parsed(expression);
   const c = translation;
