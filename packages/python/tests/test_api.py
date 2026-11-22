@@ -3,6 +3,7 @@ print are checked in test_pins.py and test_references.py)."""
 
 import re
 import threading
+from types import MappingProxyType
 
 import numpy as np
 import pytest
@@ -272,8 +273,10 @@ def test_nan_and_wrong_shapes_give_readable_errors() -> None:
             module.tensor_form_of(list(matrices), SHG if module is symcrys else MAGNETIC_SHG)
     with pytest.raises(symcrys.SymcrysError, match=r"\{\"matrix\", \"translation\"\}"):
         plane.describe_operations_of([{"matrix": np.eye(2)}])
-    # Any iterable of operations is still taken, as before.
+    # Any iterable of mappings is taken: a generator, an object array, read-only mappings.
     assert symcrys.point_group_of(op for op in ops) == {"key": "4mm", "setting": 1}
+    assert symcrys.point_group_of(np.array(ops, dtype=object)) == {"key": "4mm", "setting": 1}
+    assert symcrys.point_group_of([MappingProxyType(op) for op in ops]) == {"key": "4mm", "setting": 1}
 
 
 def test_undefined_result_is_none() -> None:

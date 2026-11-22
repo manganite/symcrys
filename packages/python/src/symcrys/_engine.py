@@ -58,8 +58,10 @@ def invoke(name: str, *args: Any) -> Any:
     """Calls ``name`` with JSON-compatible arguments; returns the decoded result or raises SymcrysError."""
     try:
         args_json = json.dumps(args, allow_nan=False)
-    except ValueError:
+    except ValueError as e:
         # JSON has no NaN or infinity; without this check the engine's parser reported "unexpected token" (#92).
+        if "Out of range float" not in str(e):
+            raise
         raise SymcrysError("Every number passed to symcrys must be finite, not NaN or infinite", "RangeError") from None
     answer = json.loads(call(name, args_json))
     if "error" in answer:

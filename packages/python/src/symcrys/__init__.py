@@ -563,7 +563,8 @@ def site_symmetry(
     not a group, ``multiplicity`` may not be an integer. The matrices must be Cartesian and
     orthogonal (not those of ``lattice_operations``). Raises SymcrysError for a matrix that is not
     orthogonal (within ``tolerance``, at least ``EPSILON``), for a zero vector, and if the closed
-    operations fix no common direction (a tolerance far too large, e.g. 0.5).
+    operations fix no common direction or do not settle into a group (a tolerance far too large,
+    e.g. 0.5).
 
     Parameters
     ----------

@@ -1,6 +1,6 @@
 /**
- * Birss convention against its print source (fixture class (a)): Birss Table 3 (printed pp. 36–39)
- * and the generating matrices σ(N) of equation (2.17) (printed p. 48), re-parsed from references/.
+ * Birss convention against its print source (fixture class (a)): Birss Table 3 (printed pp. 36–38)
+ * and the generating matrices σ(N) of equation (2.17) (printed pp. 48–49), re-parsed from references/.
  * For every crystal class, the printed generators, closed with the independent algebra of
  * testUtils, must give exactly the operations of symcrys in the Birss default setting; the short
  * symbol, Schoenflies symbol, crystal system and order must match the print.
@@ -99,7 +99,7 @@ const TABLE3: Table3Row[] = rows.slice(1).map((r) => {
   };
 });
 
-describe('Birss Table 3 (printed pp. 36–39) against symcrys, Birss convention', () => {
+describe('Birss Table 3 (printed pp. 36–38) against symcrys, Birss convention', () => {
   it('lists the 32 crystal classes, each once, and the σ pool has ten matrices', () => {
     expect(TABLE3).toHaveLength(32);
     expect(new Set(TABLE3.map((r) => r.key)).size).toBe(32);

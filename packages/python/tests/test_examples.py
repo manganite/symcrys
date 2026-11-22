@@ -24,12 +24,16 @@ def test_notebook_runs(path: Path) -> None:
 def test_stored_version_is_that_of_the_package(path: Path) -> None:
     # A release bumps the version; the stored output of `symcrys.VERSION` has to follow.
     shown = []
+    asks = False
     for cell in json.loads(path.read_text(encoding="utf-8"))["cells"]:
         if cell["cell_type"] != "code" or "VERSION" not in "".join(cell["source"]):
             continue
+        asks = True
         for output in cell.get("outputs", []):
             text = "".join(output.get("data", {}).get("text/plain", []))
             if re.fullmatch(r"'\d+\.\d+\.\d+'", text):
                 shown.append(text)
+    # A notebook that asks for the version must show it, or the check below would pass on nothing (#129).
+    assert shown or not asks, f"{path.name}: a cell asks for VERSION but no version is stored as its output"
     for text in shown:
         assert text == repr(symcrys.VERSION)

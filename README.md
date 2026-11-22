@@ -102,7 +102,7 @@ dependencies of the packages):
 
 ```bash
 npm run build && npm run bundle:python
-python -m pip install -e packages/python -r docs/requirements.txt
+PIP_CONSTRAINT=docs/constraints.txt python -m pip install -e packages/python -r docs/requirements.txt
 npm run docs:check     # TypeDoc (fails on warnings), Python docstrings current, examples type-check
 npm run docs:site      # build/docs/html: every example and notebook executed, every reference resolved
 npm run docs:linkcheck # external links (CI: workflow Links, not a gate)
@@ -137,7 +137,7 @@ module (`foo.ts`, `foo.test.ts`). Working rules for contributors, human or agent
    `vX.Y.Z...HEAD`, `[X.Y.Z]` compares the previous tag with `vX.Y.Z`).
 2. After the merge: `git fetch origin`, check that `origin/main` is the merge commit of the release PR,
    then `git tag -a vX.Y.Z -m "symcrys X.Y.Z" origin/main && git push origin vX.Y.Z`.
-3. The tag runs `.github/workflows/release.yml`: it checks that the tag matches both packages,
+3. The tag runs `.github/workflows/release.yml`: it checks that the tagged commit is on `main` and that the tag matches both packages,
    runs all gates, and creates the GitHub release with the `CHANGELOG.md` section as notes and the
    `npm pack` tarball, the Python sdist and the wheel attached. Check that the workflow is green
    and the release carries `symcrys-X.Y.Z.tgz`, `symcrys-X.Y.Z.tar.gz` and

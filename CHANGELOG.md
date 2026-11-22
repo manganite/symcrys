@@ -14,14 +14,15 @@ All notable changes to symcrys are recorded here. The format follows
   in the rows. 4mm with a noise of 10⁻⁹ on every entry gave the parameters xxx, zxx, zzz instead of
   xxz, zxx, zzz, and with 2·10⁻⁸ the same parameter twice. Wrong since 0.4.0; the parameters are
   now the pivots of the reduction (#88). Exact operations, `tensorForm` and the named properties
-  were not affected. Operations rounded to 6 decimals can still give too many parameters (#89).
-- `siteSymmetry` (and so `wyckoffPositionOf`) kept the products of a list by the identity of the
-  array, so a caller that changed its list in place got products of the old contents: a wrong site
-  symmetry or a RangeError. Wrong since 0.3.1; the products are now kept for one call (#90). The
+  were not affected. Too many parameters can still come out for operations rounded to 6 decimals and
+  for groups in an exactly rotated frame (#89).
+- `siteSymmetry` kept the products of a list by the identity of the array, so a caller that changed
+  its list in place got products of the old contents: a wrong site symmetry or a RangeError. Wrong since 0.3.1; the products are now kept for one call (#90). The
   Python package was not affected.
-- `siteSymmetry` throws a RangeError instead of returning a result that is not closed if it does not
-  settle (not seen in practice); the closure of a list of operations that generates no finite group
-  (`tensorFormOf`, `isCentrosymmetricOf`, `isChiralOf`, the property functions) throws a RangeError
+- `siteSymmetry` throws a RangeError instead of returning a result that is not a group when the
+  operations fixing the direction do not settle, which happens only for a tolerance far too large
+  (e.g. 6221' at 0.99 gave 10 of 24 operations); the closure of a list of operations that generates
+  no finite group (`tensorFormOf`, `isCentrosymmetricOf`, `isChiralOf`, the property functions) throws a RangeError
   that names the input, instead of a plain `Error` naming an internal function (#91).
 - Python: NaN or infinity in an argument raises `SymcrysError` ("must be finite") instead of the
   engine's "unexpected token: 'NaN'"; an array of matrices, or a list of matrices, passed as

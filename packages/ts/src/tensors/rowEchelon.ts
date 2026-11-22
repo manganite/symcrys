@@ -6,7 +6,7 @@
 /** An entry below this (absolute) does not serve as a pivot: float noise is never a new direction. */
 export const PIVOT_EPSILON = 1e-7;
 
-/** An entry below this (absolute) is not eliminated. */
+/** An entry below this (absolute) is not eliminated, and is set to zero in the result. */
 export const ELIMINATION_EPSILON = 1e-12;
 
 /**
@@ -14,8 +14,9 @@ export const ELIMINATION_EPSILON = 1e-12;
  * columns: one row per independent direction, each with a 1 at its pivot and 0 at every other
  * row's pivot, pivots ascending. The rows are unique for a given span, so the pivots name the free
  * parameters unambiguously: each is the lowest-index component that is independent of the ones
- * before it. An entry below `PIVOT_EPSILON` that is left in a row is float noise (it could not
- * serve as a pivot), and is set to zero, so that the first non-zero entry of a row is its pivot.
+ * before it. For operations with float noise a row can keep entries too small to be a pivot
+ * (below `PIVOT_EPSILON`) before its pivot, so the pivots are returned rather than read off the
+ * rows (#88); entries below `ELIMINATION_EPSILON` are set to zero.
  */
 export function rowEchelonWithPivots(
   vectors: readonly (readonly number[])[],
@@ -43,7 +44,7 @@ export function rowEchelonWithPivots(
   rows.forEach((r, k) => {
     for (let j = 0; j < dim; j++) {
       if (j === pivots[k]) r[j] = 1;
-      else if (pivots.includes(j) || Math.abs(r[j]) < PIVOT_EPSILON) r[j] = 0;
+      else if (pivots.includes(j) || Math.abs(r[j]) < ELIMINATION_EPSILON) r[j] = 0;
     }
   });
   return { rows, pivots };

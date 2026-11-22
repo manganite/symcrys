@@ -48,7 +48,8 @@ def operation_list(operations: Any, keys: tuple[str, ...] = ("matrix",)) -> list
     property '0' of undefined" (#92).
     """
     shape = "{" + ", ".join(f'"{k}"' for k in keys) + "}"
-    if isinstance(operations, (np.ndarray, Mapping, str, bytes)) or not hasattr(operations, "__iter__"):
+    numeric_array = isinstance(operations, np.ndarray) and operations.dtype != object
+    if numeric_array or isinstance(operations, (Mapping, str, bytes)) or not hasattr(operations, "__iter__"):
         raise _engine.SymcrysError(
             f"operations must be a list of operations {shape}, as operations() returns them, "
             f"not {type(operations).__name__}",
@@ -61,7 +62,8 @@ def operation_list(operations: Any, keys: tuple[str, ...] = ("matrix",)) -> list
                 f"operation {i} must be a mapping {shape}, as operations() returns it, not {type(op).__name__}",
                 "RangeError",
             )
-    return ops
+    # Plain dicts, which the conversion to JSON takes (a Mapping such as MappingProxyType it does not).
+    return [dict(op) for op in ops]
 
 
 def call(name: str, *args: Any, floats: bool = False) -> Any:

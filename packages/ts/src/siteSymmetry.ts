@@ -122,7 +122,7 @@ export function siteTolerance(options?: SiteSymmetryOptions): number {
  * not be an integer. The matrices must be Cartesian and orthogonal (not those of
  * `latticeOperations`). Throws a RangeError for a matrix that is not orthogonal (within
  * `tolerance`, at least `EPSILON`), for a zero vector, and if the closed operations fix no common
- * direction (a tolerance far too large, e.g. 0.5).
+ * direction or do not settle into a group (a tolerance far too large, e.g. 0.5).
  */
 export function siteSymmetry(
   operations: readonly Operation[],
@@ -158,7 +158,8 @@ export function siteSymmetry(
     else set = next;
   }
   if (!settled) {
-    // Not seen in practice; the site symmetry would be neither closed nor its direction projected (#91).
+    // Only for a tolerance far too large; the site symmetry would be neither closed nor its direction
+    // projected (#91).
     throw new RangeError(
       `The site symmetry of ${JSON.stringify(direction)} does not settle within ${tolerance} (tolerance too large?)`,
     );
