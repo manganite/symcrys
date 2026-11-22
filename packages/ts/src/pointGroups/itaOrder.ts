@@ -15,14 +15,14 @@ import { crystalFamily, latticeBasis, type CrystalSystem } from '../lattice.js';
 import { IDENTITY_OPERATION, compose, operation, operationsEqual, type Operation } from '../operations.js';
 
 /** An integer matrix W in the conventional basis, rows as printed in a coordinate triplet. */
-type IntMat3 = readonly [
+export type IntMat3 = readonly [
   readonly [number, number, number],
   readonly [number, number, number],
   readonly [number, number, number],
 ];
 
 /** ITA's selected generators per setting (`key#setting`), in printed order (identity and translations left out). */
-const ITA_GENERATORS: Readonly<Record<string, readonly IntMat3[]>> = {
+export const ITA_GENERATORS: Readonly<Record<string, readonly IntMat3[]>> = {
   // 1: P1 (No. 1), p. 113
   '1#1': [],
   // -1: P-1 (No. 2), p. 115
