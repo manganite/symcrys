@@ -338,7 +338,8 @@ Decided by Thomas on 2026-11-20 (#29), asked before implementation.
   manganite.github.io names. Written in `docs/_ext/symcrys_docs.py` rather than with `sphinx-sitemap`
   and `sphinxext-opengraph` (chosen while implementing): about 50 lines instead of two more pinned
   tools, one of which (`sphinx-sitemap`) pulls in `sphinx-last-updated-by-git`, which needs the git
-  history of the pages. No image for link previews yet; symcrys has none of its own.
+  history of the pages. The landing page's browser title names its subject (`docs/_templates/base.html`;
+  furo gives it the site's name alone). No image for link previews yet; symcrys has none of its own.
 
 ### ITC standard for every consumer
 

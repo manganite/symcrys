@@ -13,3 +13,6 @@ packages/python/src/symcrys/_bundle.js
 build/
 # Copied in by the Sphinx build (docs/_ext/symcrys_docs.py)
 docs/examples/notebooks/
+
+# Jinja templates of the documentation site: Prettier would treat them as plain HTML.
+docs/_templates/

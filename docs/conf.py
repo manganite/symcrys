@@ -28,6 +28,7 @@ extensions = [
 ]
 
 exclude_patterns = ["_build", "**/.ipynb_checkpoints", "requirements.txt"]
+templates_path = ["_templates"]
 root_doc = "index"
 
 # MyST: Markdown with anchors for the headings, so that a link can name a section of a page
