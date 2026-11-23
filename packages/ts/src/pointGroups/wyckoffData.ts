@@ -6,7 +6,8 @@
  * compares with this file; change both only by transcription from print.
  *
  * Notation: a leading `-` is an overbar; components separated by commas; Bravais–Miller indices
- * (four components) for hexagonal axes. The origin (letter o) has no face (`''`).
+ * (four components) for hexagonal axes, three Miller indices for rhombohedral axes, where an index
+ * may be a sum as printed (`h,k,-h-k`). The origin (letter o) has no face (`''`).
  */
 
 /** [letter, multiplicity, oriented site symmetry, coordinates, Miller indices]. */
@@ -17,6 +18,8 @@ export interface WyckoffEntry {
   readonly symbol: string;
   /** Monoclinic: the unique axis of the entry. */
   readonly uniqueAxis?: 'b' | 'c';
+  /** Trigonal: `'rhombohedral'` for an entry with rhombohedral axes (hexagonal axes otherwise). */
+  readonly axes?: 'rhombohedral';
   /** Printed page. */
   readonly page: number;
   /** In printed order, general position first. */
@@ -223,12 +226,31 @@ export const ITA_WYCKOFF: readonly WyckoffEntry[] = [
     ],
   },
   {
+    symbol: '3',
+    axes: 'rhombohedral',
+    page: 753,
+    rows: [
+      ['b', 3, '1', 'x,y,z', 'h,k,l'],
+      ['a', 1, '3.', 'x,x,x', '1,1,1'],
+    ],
+  },
+  {
     symbol: '-3',
     page: 753,
     rows: [
       ['b', 6, '1', 'x,y,z', 'h,k,i,l'],
       ['a', 2, '3..', '0,0,z', '0,0,0,1'],
       ['o', 1, '-3..', '0,0,0', ''],
+    ],
+  },
+  {
+    symbol: '-3',
+    axes: 'rhombohedral',
+    page: 753,
+    rows: [
+      ['b', 6, '1', 'x,y,z', 'h,k,l'],
+      ['a', 2, '3.', 'x,x,x', '1,1,1'],
+      ['o', 1, '-3.', '0,0,0', ''],
     ],
   },
   {
@@ -252,6 +274,17 @@ export const ITA_WYCKOFF: readonly WyckoffEntry[] = [
     ],
   },
   {
+    symbol: '32',
+    axes: 'rhombohedral',
+    page: 755,
+    rows: [
+      ['c', 6, '1', 'x,y,z', 'h,k,l'],
+      ['b', 3, '.2', 'x,-x,0', '0,1,-1'],
+      ['a', 2, '3.', 'x,x,x', '1,1,1'],
+      ['o', 1, '32', '0,0,0', ''],
+    ],
+  },
+  {
     symbol: '3m1',
     page: 755,
     rows: [
@@ -267,6 +300,16 @@ export const ITA_WYCKOFF: readonly WyckoffEntry[] = [
       ['c', 6, '1', 'x,y,z', 'h,k,i,l'],
       ['b', 3, '..m', 'x,0,z', 'h,h,-2h,l'],
       ['a', 1, '3.m', '0,0,z', '0,0,0,1'],
+    ],
+  },
+  {
+    symbol: '3m',
+    axes: 'rhombohedral',
+    page: 756,
+    rows: [
+      ['c', 6, '1', 'x,y,z', 'h,k,l'],
+      ['b', 3, '.m', 'x,y,x', 'h,h,l'],
+      ['a', 1, '3m', 'x,x,x', '1,1,1'],
     ],
   },
   {
@@ -289,6 +332,18 @@ export const ITA_WYCKOFF: readonly WyckoffEntry[] = [
       ['b', 6, '.2.', 'x,0,0', '1,1,-2,0'],
       ['a', 2, '3m.', '0,0,z', '0,0,0,1'],
       ['o', 1, '-3m.', '0,0,0', ''],
+    ],
+  },
+  {
+    symbol: '-3m',
+    axes: 'rhombohedral',
+    page: 759,
+    rows: [
+      ['d', 12, '1', 'x,y,z', 'h,k,l'],
+      ['c', 6, '.m', 'x,y,x', 'h,h,l'],
+      ['b', 6, '.2', 'x,-x,0', '0,1,-1'],
+      ['a', 2, '3m', 'x,x,x', '1,1,1'],
+      ['o', 1, '-3m', '0,0,0', ''],
     ],
   },
   {

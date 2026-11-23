@@ -7,7 +7,8 @@
  * with this file; change both only by transcription from print.
  *
  * Notation as in wyckoffData.ts: a leading `-` is an overbar; components separated by commas;
- * Bravais–Miller indices (four components) for hexagonal axes.
+ * Bravais–Miller indices (four components) for hexagonal axes; three for rhombohedral axes, where an
+ * index may be a sum as printed (`h,k,-h-k`, `h,k,2k-h`).
  */
 
 /** [number, name as printed, number of faces, eigensymmetry]. */
@@ -75,6 +76,8 @@ export interface FormEntry {
   readonly symbol: string;
   /** Monoclinic: the unique axis of the entry. */
   readonly uniqueAxis?: 'b' | 'c';
+  /** Trigonal: `'rhombohedral'` for an entry with rhombohedral axes (hexagonal axes otherwise). */
+  readonly axes?: 'rhombohedral';
   /** Printed page. */
   readonly page: number;
   /** In printed order: general position first, each position's basic form before its limiting forms. */
@@ -293,12 +296,32 @@ export const ITA_FORMS: readonly FormEntry[] = [
     ],
   },
   {
+    symbol: '3',
+    axes: 'rhombohedral',
+    page: 753,
+    rows: [
+      ['b', true, 17, 'h,k,l'],
+      ['b', false, 18, 'h,k,-h-k'],
+      ['a', true, 1, '1,1,1'],
+    ],
+  },
+  {
     symbol: '-3',
     page: 753,
     rows: [
       ['b', true, 21, 'h,k,i,l'],
       ['b', false, 25, 'h,k,i,0'],
       ['a', true, 2, '0,0,0,1'],
+    ],
+  },
+  {
+    symbol: '-3',
+    axes: 'rhombohedral',
+    page: 753,
+    rows: [
+      ['b', true, 21, 'h,k,l'],
+      ['b', false, 25, 'h,k,-h-k'],
+      ['a', true, 2, '1,1,1'],
     ],
   },
   {
@@ -328,6 +351,20 @@ export const ITA_FORMS: readonly FormEntry[] = [
     ],
   },
   {
+    symbol: '32',
+    axes: 'rhombohedral',
+    page: 755,
+    rows: [
+      ['c', true, 19, 'h,k,l'],
+      ['c', false, 22, 'h,k,-h-k'],
+      ['c', false, 24, 'h,k,2k-h'],
+      ['c', false, 21, 'h,h,l'],
+      ['c', false, 25, '1,1,-2'],
+      ['b', true, 18, '0,1,-1'],
+      ['a', true, 2, '1,1,1'],
+    ],
+  },
+  {
     symbol: '3m1',
     page: 755,
     rows: [
@@ -354,6 +391,20 @@ export const ITA_FORMS: readonly FormEntry[] = [
     ],
   },
   {
+    symbol: '3m',
+    axes: 'rhombohedral',
+    page: 756,
+    rows: [
+      ['c', true, 20, 'h,k,l'],
+      ['c', false, 22, 'h,k,-h-k'],
+      ['c', false, 23, 'h,k,2k-h'],
+      ['c', false, 25, '0,1,-1'],
+      ['b', true, 17, 'h,h,l'],
+      ['b', false, 18, '1,1,-2'],
+      ['a', true, 1, '1,1,1'],
+    ],
+  },
+  {
     symbol: '-31m',
     page: 757,
     rows: [
@@ -377,6 +428,20 @@ export const ITA_FORMS: readonly FormEntry[] = [
       ['c', false, 25, '1,0,-1,0'],
       ['b', true, 25, '1,1,-2,0'],
       ['a', true, 2, '0,0,0,1'],
+    ],
+  },
+  {
+    symbol: '-3m',
+    axes: 'rhombohedral',
+    page: 759,
+    rows: [
+      ['d', true, 26, 'h,k,l'],
+      ['d', false, 30, 'h,k,-h-k'],
+      ['d', false, 31, 'h,k,2k-h'],
+      ['c', true, 21, 'h,h,l'],
+      ['c', false, 25, '1,1,-2'],
+      ['b', true, 25, '0,1,-1'],
+      ['a', true, 2, '1,1,1'],
     ],
   },
   {

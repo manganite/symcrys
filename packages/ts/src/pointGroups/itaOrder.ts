@@ -5,7 +5,7 @@
  * for the symmorphic P group of every setting it lists in references/itc/vol-a-2006-symmetry-operations.md)
  * and takes the next generator as soon as a power of the current one lies in the group generated
  * so far (§ 8.3.5, p. 737). This gives ITA's numbering of the general position (ITA 6th ed. Table
- * 3.2.3.2), as `itcData.reference.test.ts` checks for all 40 settings. The generators are the
+ * 3.2.3.2), as `itcData.reference.test.ts` checks for all 45 entries (5 with rhombohedral axes). The generators are the
  * printed triplets of Table 3.2.3.2, as matrices W in the conventional basis (x̃ = W x);
  * docs/conventions.md, "Order of the operations".
  */
@@ -17,7 +17,10 @@ export type IntMat3 = readonly [
   readonly [number, number, number],
 ];
 
-/** ITA's selected generators per setting (`key|full ITC symbol of the setting`), in printed order (identity and translations left out). */
+/**
+ * ITA's selected generators per setting (`key|full ITC symbol of the setting`, with `|rhombohedral`
+ * for rhombohedral axes), in printed order (identity and translations left out).
+ */
 export const ITA_GENERATORS: Readonly<Record<string, readonly IntMat3[]>> = {
   // 1: P1 (No. 1), p. 113
   '1|1': [],
@@ -628,6 +631,71 @@ export const ITA_GENERATORS: Readonly<Record<string, readonly IntMat3[]>> = {
       [0, 0, -1],
     ],
     /* (25) -x,-y,-z */ [
+      [-1, 0, 0],
+      [0, -1, 0],
+      [0, 0, -1],
+    ],
+  ],
+  // R3 (No. 146), rhombohedral axes, p. 496
+  '3|3|rhombohedral': [
+    /* (2) z,x,y */ [
+      [0, 0, 1],
+      [1, 0, 0],
+      [0, 1, 0],
+    ],
+  ],
+  // R-3 (No. 148), rhombohedral axes, p. 502
+  '-3|-3|rhombohedral': [
+    /* (2) z,x,y */ [
+      [0, 0, 1],
+      [1, 0, 0],
+      [0, 1, 0],
+    ],
+    /* (4) -x,-y,-z */ [
+      [-1, 0, 0],
+      [0, -1, 0],
+      [0, 0, -1],
+    ],
+  ],
+  // R32 (No. 155), rhombohedral axes, p. 518
+  '32|3 2|rhombohedral': [
+    /* (2) z,x,y */ [
+      [0, 0, 1],
+      [1, 0, 0],
+      [0, 1, 0],
+    ],
+    /* (4) -z,-y,-x */ [
+      [0, 0, -1],
+      [0, -1, 0],
+      [-1, 0, 0],
+    ],
+  ],
+  // R3m (No. 160), rhombohedral axes, p. 530
+  '3m|3 m|rhombohedral': [
+    /* (2) z,x,y */ [
+      [0, 0, 1],
+      [1, 0, 0],
+      [0, 1, 0],
+    ],
+    /* (4) z,y,x */ [
+      [0, 0, 1],
+      [0, 1, 0],
+      [1, 0, 0],
+    ],
+  ],
+  // R-3m (No. 166), rhombohedral axes, p. 547
+  '-3m|-3 2/m|rhombohedral': [
+    /* (2) z,x,y */ [
+      [0, 0, 1],
+      [1, 0, 0],
+      [0, 1, 0],
+    ],
+    /* (4) -z,-y,-x */ [
+      [0, 0, -1],
+      [0, -1, 0],
+      [-1, 0, 0],
+    ],
+    /* (7) -x,-y,-z */ [
       [-1, 0, 0],
       [0, -1, 0],
       [0, 0, -1],

@@ -310,7 +310,10 @@ describe('symbols of every setting of the magnetic groups generate its operation
         const shortDirections = system === 'monoclinic' && positions.length === 1 ? [AXIS[s.uniqueAxis!]] : directions;
         expect(sameGroup(groupOfSymbol(s.symbol, shortDirections), ops)).toBe(true);
         expect(sameGroup(groupOfSymbol(s.fullSymbol, directions), ops)).toBe(true);
-        expect(findMagneticPointGroup(s.fullSymbol)).toEqual({ key, setting: s.index });
+        // A symbol that is, without spaces, the key gives the default setting (`3 2'`, rhombohedral).
+        const def = settings(key).find((x) => x.isDefault)!.index;
+        const isKey = s.fullSymbol.replace(/\s+/g, '') === key;
+        expect(findMagneticPointGroup(s.fullSymbol)).toEqual({ key, setting: isKey ? def : s.index });
       });
     }
   }
@@ -491,13 +494,19 @@ describe('the 122 magnetic point groups', () => {
       for (const s of settings(key)) {
         const ops = operations(key, { setting: s.index });
         expect(ops.filter((op) => op.timeReversal)).toHaveLength(ops.length / 2);
-        // Without time reversal the operations are those of the class in one of its settings.
+        // Without time reversal the operations are those of the class in one of its settings with the
+        // same axes (hexagonal and rhombohedral axes share the Cartesian operations).
         const stripped = ops.map((op) => ({ matrix: op.matrix, timeReversal: false }));
-        const match = settings(classKey).filter((c) =>
-          sameGroup(
-            operations(classKey, { setting: c.index }).map((op) => ({ m: op.matrix.map((row) => [...row]), t: false })),
-            stripped,
-          ),
+        const match = settings(classKey).filter(
+          (c) =>
+            c.axes === s.axes &&
+            sameGroup(
+              operations(classKey, { setting: c.index }).map((op) => ({
+                m: op.matrix.map((row) => [...row]),
+                t: false,
+              })),
+              stripped,
+            ),
         );
         expect(match, `${key} setting ${s.index}`).toHaveLength(1);
       }
@@ -562,30 +571,38 @@ describe('the 122 magnetic point groups', () => {
       const def = all.find((s) => s.isDefault)!.index;
       for (const s of all) {
         const what = `${key} setting ${s.index}`;
-        const shared = all.filter((t) => t.symbol === s.symbol).length > 1;
+        // A symbol several settings share, or one that is the key without spaces, gives the default.
+        const compact = (t: string) => t.replace(/\s+/g, '');
+        const shared = all.filter((t) => t.symbol === s.symbol).length > 1 || compact(s.symbol) === key;
         expect(findMagneticPointGroup(s.symbol), `${what}: ${s.symbol}`).toEqual({
           key,
           setting: shared ? def : s.index,
         });
+        const fullShared =
+          all.filter((t) => compact(t.fullSymbol) === compact(s.fullSymbol)).length > 1 ||
+          compact(s.fullSymbol) === key;
         expect(findMagneticPointGroup(s.fullSymbol), `${what}: ${s.fullSymbol}`).toEqual({
           key,
-          setting: s.index,
+          setting: fullShared ? def : s.index,
         });
       }
-      // The key gives the default setting, unless it is the symbol of exactly one other setting.
-      const named = all.filter((s) => s.symbol === key);
-      expect(findMagneticPointGroup(key), key).toEqual({
-        key,
-        setting: named.length === 1 ? named[0].index : def,
-      });
+      // The key gives the default setting, also where it is the symbol of another setting (`32`).
+      expect(findMagneticPointGroup(key), key).toEqual({ key, setting: def });
     }
-    // Only the monoclinic groups share a short symbol between settings (unique axis b, c and a).
+    // Settings that share a short symbol: the monoclinic ones (unique axis b, c and a), and the
+    // hexagonal and rhombohedral axes of 3, -3 and their magnetic groups.
     const sharing = MAGNETIC_POINT_GROUP_KEYS.filter((key) => {
       const symbols = settings(key).map((s) => s.symbol);
       return new Set(symbols).size < symbols.length;
     });
-    expect(sharing.map((key) => pointGroup(key).crystalSystem)).toEqual(sharing.map(() => 'monoclinic'));
-    expect(sharing).toHaveLength(11);
+    expect(sharing.filter((key) => pointGroup(key).crystalSystem === 'monoclinic')).toHaveLength(11);
+    expect(sharing.filter((key) => pointGroup(key).crystalSystem !== 'monoclinic')).toEqual([
+      '3',
+      '-3',
+      "31'",
+      "-31'",
+      "-3'",
+    ]);
   });
 
   it('a key finds the default setting', () => {

@@ -37,6 +37,8 @@ export interface ItcSettingFixture {
   /** Full symbol, written as in the source (positions may run together, as in `321`). */
   readonly full: string;
   readonly uniqueAxis?: 'a' | 'b' | 'c';
+  /** The setting with rhombohedral axes (ITA Table 3.2.3.2, pp. 753–759). */
+  readonly rhombohedral?: true;
   readonly standard: boolean;
   readonly shortSource: Source;
   readonly fullSource: Source;
@@ -52,6 +54,12 @@ const printed = (short: string, full: string = short, standard = true, standardS
   standardSource
     ? { short, full, standard, shortSource: A3232, fullSource: A3232, standardSource }
     : { short, full, standard, shortSource: A3232, fullSource: A3232 };
+
+/** The entry of a trigonal class with rhombohedral axes, as Table 3.2.3.2 prints it. */
+const rhombohedral = (short: string, full: string = short): ItcSettingFixture => ({
+  ...printed(short, full, false),
+  rhombohedral: true,
+});
 
 const B_UNIQUE = 'ITA (6th ed.) § 2.1.3.15, p. 171';
 const VOL_D_1_1_4 = 'ITC Vol. D § 1.1.4.10.4.4 (#6)';
@@ -99,11 +107,15 @@ export const ITC_SETTINGS: Record<string, ItcSettingFixture[]> = {
   '4mm': [printed('4mm')],
   '-42m': [printed('-42m'), printed('-4m2', '-4m2', false)],
   '4/mmm': [printed('4/mmm', '4/m 2/m 2/m')],
-  '3': [printed('3')],
-  '-3': [printed('-3')],
-  '32': [printed('321', '321', true, VOL_D_1_1_4), printed('312', '312', false)],
-  '3m': [printed('3m1', '3m1', true, VOL_D_1_1_4), printed('31m', '31m', false)],
-  '-3m': [printed('-3m1', '-3 2/m 1', true, LAUE_OF_321), printed('-31m', '-3 1 2/m', false)],
+  '3': [printed('3'), rhombohedral('3')],
+  '-3': [printed('-3'), rhombohedral('-3')],
+  '32': [printed('321', '321', true, VOL_D_1_1_4), printed('312', '312', false), rhombohedral('32')],
+  '3m': [printed('3m1', '3m1', true, VOL_D_1_1_4), printed('31m', '31m', false), rhombohedral('3m')],
+  '-3m': [
+    printed('-3m1', '-3 2/m 1', true, LAUE_OF_321),
+    printed('-31m', '-3 1 2/m', false),
+    rhombohedral('-3m', '-3 2/m'),
+  ],
   '6': [printed('6')],
   '-6': [printed('-6')],
   '6/m': [printed('6/m')],

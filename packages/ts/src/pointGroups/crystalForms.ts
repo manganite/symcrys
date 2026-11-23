@@ -8,7 +8,7 @@ import type { Vec3 } from '../linalg.js';
 import type { PointGroupKey, SettingOptions } from './pointGroups.js';
 import { ITA_FORMS, ITA_FORM_TYPES, type FormRow } from './crystalFormsData.js';
 import {
-  REPRESENTATIVE_VALUES,
+  representativeValues,
   faceBasis,
   tableSetting,
   normal,
@@ -59,8 +59,8 @@ export interface CrystalForm {
   /** The condition ITA prints with the form, `|h|<|l|` or `|h|>|l|` (cubic forms (hhl)); absent otherwise. */
   readonly condition?: string;
   /**
-   * A face of the form with numbers: `millerIndices` with h = 3, k = 2, l = 1, and with h = 1, l = 3
-   * where the condition is `|h|<|l|`.
+   * A face of the form with numbers: `millerIndices` with h = 3, k = 2, l = 1 (rhombohedral axes:
+   * h = 5), and with h = 1, l = 3 where the condition is `|h|<|l|`.
    */
   readonly representative: {
     /** The Miller indices (hkl) of the face. */
@@ -110,7 +110,7 @@ export function crystalForms(key: PointGroupKey, options?: SettingOptions): read
   let result = cache.get(cacheKey);
   if (!result) {
     const positions = wyckoffPositions(key, { setting });
-    const basis = faceBasis(key);
+    const basis = faceBasis(key, setting);
     result = Object.freeze(
       printedRows(key, setting).map(([letter, basic, formType, millerIndices, condition]) => {
         const position = positions.find((p) => p.letter === letter);
@@ -120,7 +120,7 @@ export function crystalForms(key: PointGroupKey, options?: SettingOptions): read
             `Point group ${key}, setting ${setting}: form ${formType} does not have the multiplicity of position ${letter}`,
           );
         }
-        const values = condition === '|h|<|l|' ? SMALL_H : REPRESENTATIVE_VALUES;
+        const values = condition === '|h|<|l|' ? SMALL_H : representativeValues(key, setting);
         const hkl = numericHkl(millerIndices, values);
         return Object.freeze({
           letter,

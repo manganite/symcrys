@@ -28,7 +28,7 @@ describe('lookup', () => {
   it('rejects unknown keys and settings, and the removed option convention, with a RangeError', () => {
     expect(isPointGroupKey('m3m')).toBe(false);
     expect(() => pointGroup('m3m' as PointGroupKey)).toThrow(RangeError);
-    expect(() => operations('32', { setting: 3 })).toThrow(RangeError);
+    expect(() => operations('32', { setting: 4 })).toThrow(RangeError);
     expect(() => operations('32', { setting: 0 })).toThrow(RangeError);
     expect(() => operations('32', { setting: 1.5 })).toThrow(RangeError);
     expect(() => operations('32', { setting: 1, convention: 'birss' } as never)).toThrow(RangeError);
@@ -126,22 +126,29 @@ describe('a setting by its symbol', () => {
       /names 3 settings.*1: 2 \(1 2 1\), 2: 2 \(1 1 2\), 3: 2 \(2 1 1\)/,
     );
     expect(operations('2', { setting: '2 1 1' })).toBe(operations('2', { setting: 3 }));
-    expect(() => operations('32', { setting: '32' })).toThrow(/has no setting "32" \(settings 1: 321/);
+    expect(operations('32', { setting: '32' })).toBe(operations('32', { setting: 3 }));
+    expect(() => operations('32', { setting: '3 2 2' })).toThrow(/has no setting "3 2 2" \(settings 1: 321/);
+    expect(() => operations('3', { setting: '3' })).toThrow(
+      /names 2 settings; give the index \(1: 3 \(3\), 2: 3 \(3, rhombohedral axes\)\)/,
+    );
+    expect(() => operations('2', { setting: '2' })).toThrow(/give the full symbol or the index/);
     expect(() => operations('32', { setting: [2] } as never)).toThrow(/must be an index or a symbol, not \[2\]/);
     expect(() => operations('32', { setting: true } as never)).toThrow(RangeError);
   });
 });
 
 describe('the numbering of the settings (#137 A4)', () => {
-  it('the ITC default first, then monoclinic c and a, the other orientation, orthorhombic in the column order of ITA Table 1.5.4.4', () => {
+  it('the ITC default first, then monoclinic c and a, the other orientation, trigonal rhombohedral axes last, orthorhombic in the column order of ITA Table 1.5.4.4', () => {
     const symbols = (key: PointGroupKey) => settings(key).map((s) => s.symbol);
     for (const key of POINT_GROUP_KEYS) expect(settings(key)[0].isDefault).toBe(true);
     expect(settings('2').map((s) => s.uniqueAxis)).toEqual(['b', 'c', 'a']);
     expect(symbols('mm2')).toEqual(['mm2', '2mm', 'm2m']);
     expect(symbols('-42m')).toEqual(['-42m', '-4m2']);
-    expect(symbols('32')).toEqual(['321', '312']);
-    expect(symbols('3m')).toEqual(['3m1', '31m']);
-    expect(symbols('-3m')).toEqual(['-3m1', '-31m']);
+    expect(symbols('32')).toEqual(['321', '312', '32']);
+    expect(symbols('3m')).toEqual(['3m1', '31m', '3m']);
+    expect(symbols('-3m')).toEqual(['-3m1', '-31m', '-3m']);
+    expect(symbols('3')).toEqual(['3', '3']);
+    expect(settings('3').map((s) => s.axes)).toEqual(['hexagonal', 'rhombohedral']);
     expect(symbols('-6m2')).toEqual(['-6m2', '-62m']);
   });
 
@@ -150,7 +157,7 @@ describe('the numbering of the settings (#137 A4)', () => {
       const system = pointGroup(key).crystalSystem;
       for (const s of settings(key)) {
         expect('uniqueAxis' in s, `${key} ${s.index}`).toBe(system === 'monoclinic');
-        expect(s.axes, `${key} ${s.index}`).toBe(system === 'trigonal' ? 'hexagonal' : undefined);
+        expect(s.axes !== undefined, `${key} ${s.index}`).toBe(system === 'trigonal');
       }
     }
   });

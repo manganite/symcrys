@@ -219,11 +219,20 @@ function settingOfSymbol(d: GroupData, text: string): number {
     return compact(s.short) === target || compact(s.full) === target;
   });
   const list = (indices: number[]) =>
-    indices.map((i) => `${i}: ${settingSymbols(d, i).short} (${settingSymbols(d, i).full})`).join(', ');
+    indices
+      .map((i) => {
+        const axes = settingAxes(d, i) === 'rhombohedral' ? ', rhombohedral axes' : '';
+        return `${i}: ${settingSymbols(d, i).short} (${settingSymbols(d, i).full}${axes})`;
+      })
+      .join(', ');
   if (named.length === 1) return named[0]!;
   if (named.length > 1) {
+    // The full symbols tell the settings apart unless they too are the same (`3` with hexagonal and
+    // rhombohedral axes); then only the index does.
+    const fulls = new Set(named.map((i) => compact(settingSymbols(d, i).full)));
+    const advice = fulls.size === named.length ? 'give the full symbol or the index' : 'give the index';
     throw new RangeError(
-      `Point group ${d.key}: the symbol ${JSON.stringify(text)} names ${named.length} settings; give the full symbol or the index (${list(named)})`,
+      `Point group ${d.key}: the symbol ${JSON.stringify(text)} names ${named.length} settings; ${advice} (${list(named)})`,
     );
   }
   throw new RangeError(`Point group ${d.key} has no setting ${JSON.stringify(text)} (settings ${list(all)})`);
@@ -279,6 +288,26 @@ function withMatrix(ops: readonly Operation[], op: Operation): Operation {
  */
 function classSetting(d: GroupData, index: number): number {
   return d.type === 'III' ? itcBlackWhiteClassSetting(d.key as BlackWhitePointGroupKey, index) : index;
+}
+
+/** The axes of a trigonal setting, `'hexagonal'` or `'rhombohedral'`; undefined in other systems. */
+function settingAxes(d: GroupData, index: number): 'hexagonal' | 'rhombohedral' | undefined {
+  return d.type === 'III'
+    ? itcBlackWhiteSetting(d.key as BlackWhitePointGroupKey, index).axes
+    : itcSetting(d.crystalClass.key as PointGroupKey, index).axes;
+}
+
+/**
+ * The crystal class of a group and the setting of the class whose frame and basis the requested
+ * setting of the group has. Internal: for the modules that need the basis or the symmetry
+ * directions of a setting.
+ */
+export function classSettingOf(
+  key: MagneticPointGroupKey,
+  options?: SettingOptions,
+): { readonly key: PointGroupKey; readonly index: number } {
+  const d = data(key);
+  return { key: d.crystalClass.key as PointGroupKey, index: classSetting(d, settingIndex(d, options)) };
 }
 
 const itaGeneratorCache = new Map<string, readonly Operation[]>();
@@ -533,8 +562,9 @@ function find(hm: string, classesOnly: boolean): PointGroupInSetting<MagneticPoi
     key: d.key,
     setting: settingsNamed.length === 1 ? settingsNamed[0]! : d.itcDefault,
   });
+  // A key is the key, also where it is the symbol of a setting (`32`, the class with rhombohedral axes).
   const byKey = candidates.find((d) => d.key === target);
-  if (byKey) return pick(byKey, named(byKey, 'short'));
+  if (byKey) return { key: byKey.key, setting: byKey.itcDefault };
   for (const form of ['short', 'full'] as const) {
     for (const d of candidates) {
       const settingsNamed = named(d, form);

@@ -499,10 +499,10 @@ def symmetry_directions(
 ) -> list[dict[str, Any]]:
     """The positions of the full Hermann–Mauguin symbol in the requested setting, each with its
     symmetry directions (ITA Table 2.1.3.1) and the symmetry elements along them. All positions of
-    the crystal family are listed, also those the symbol of the class leaves out (then without
-    ``symbol``); the triclinic family has none. A direction carries the same ``lattice`` and
-    ``cartesian`` vectors as the axis of ``describe_operations`` along it, so match the two by
-    value.
+    the crystal family are listed (for rhombohedral axes the two of that row of the table), also
+    those the symbol of the class leaves out (then without ``symbol``); the triclinic family has
+    none. A direction carries the same ``lattice`` and ``cartesian`` vectors as the axis of
+    ``describe_operations`` along it, so match the two by value.
 
     Parameters
     ----------
@@ -580,13 +580,15 @@ def lattice_operations(
     key: str, *, setting: Optional[Union[int, str]] = None
 ) -> list[Operation]:
     """The operations of the crystal class in the conventional lattice basis (a, b, c; for the
-    trigonal classes the hexagonal axes), in the order of ``operations`` for the same setting:
-    integer matrices W acting on the coordinates of a lattice direction [uvw], W = B⁻¹·R·B with the
-    basis B of ``lattice_basis`` and the Cartesian matrix R of ``operations``. They do not depend on
-    the cell angles, so they exist for every family; for the monoclinic and triclinic families a, b,
-    c are taken along x, y, z, as for the Wyckoff positions. They are the matrices of ITA's general
-    position (6th ed., Table 3.2.3.2). Not orthogonal in general: pass them to no function that
-    takes Cartesian operations (docs/conventions.md, "Lattice basis and orbits").
+    trigonal classes the hexagonal or the rhombohedral axes of the setting), in the order of
+    ``operations`` for the same setting: integer matrices W acting on the coordinates of a lattice
+    direction [uvw], W = B⁻¹·R·B with the basis B of the setting (columns a, b, c, as
+    ``lattice_basis`` gives them; for rhombohedral axes the obverse a_R, b_R, c_R in that hexagonal
+    cell) and the Cartesian matrix R of ``operations``. They do not depend on the cell angles, so
+    they exist for every family; for the monoclinic and triclinic families a, b, c are taken along
+    x, y, z, as for the Wyckoff positions. They are the matrices of ITA's general position (6th ed.,
+    Table 3.2.3.2). Not orthogonal in general: pass them to no function that takes Cartesian
+    operations (docs/conventions.md, "Lattice basis and orbits").
 
     Parameters
     ----------

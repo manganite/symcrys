@@ -223,9 +223,7 @@ def test_itc_vol_d_1524_ferromagnetic_groups() -> None:
 
 FORMS_3213 = reference("itc/vol-a-table-3.2.1.3-crystal-forms.md")
 FORM_TYPES = table_rows(section(FORMS_3213, "## Forms"))
-# The entries with rhombohedral axes are taken up with the rhombohedral settings (#121, step 6c).
-NOT_RHOMBOHEDRAL = "rhombohedral axes"
-FACE_FORMS = [r for r in table_rows(reference("itc/vol-a-table-3.2.3.2-face-forms.md")) if r[1] != NOT_RHOMBOHEDRAL]
+FACE_FORMS = table_rows(reference("itc/vol-a-table-3.2.3.2-face-forms.md"))
 # The names Table 3.2.3.2 prints for a form that Table 3.2.1.3 names otherwise (as in the TypeScript test).
 NAME_VARIANTS = {
     "Sphenoid or dihedron": 3,
@@ -248,11 +246,14 @@ def test_ita_3213_the_47_forms() -> None:
 
 def _setting(short: str, axes: str) -> tuple[str, int]:
     axis = axes[-1] if axes.startswith("unique axis") else None
+    rhombohedral = axes == "rhombohedral axes"
     found = [
         (key, s["index"])
         for key in symcrys.POINT_GROUP_KEYS
         for s in symcrys.settings(key)
-        if s["symbol"] == short and (axis is None or s.get("unique_axis") == axis)
+        if s["symbol"] == short
+        and (axis is None or s.get("unique_axis") == axis)
+        and (s.get("axes") == "rhombohedral") == rhombohedral
     ]
     assert len(found) == 1, (short, axes)
     return found[0]
@@ -283,8 +284,8 @@ def test_ita_3232_face_forms(entry: tuple[str, str]) -> None:
 
 # --- ITA Table 3.2.3.2: operations in the lattice basis and orbits --------------------------------
 
-GENERAL = [r for r in table_rows(reference("itc/vol-a-table-3.2.3.2-general-positions.md")) if r[1] != NOT_RHOMBOHEDRAL]
-GENERAL_FACES = [r for r in table_rows(reference("itc/vol-a-table-3.2.3.2-general-faces.md")) if r[1] != NOT_RHOMBOHEDRAL]
+GENERAL = table_rows(reference("itc/vol-a-table-3.2.3.2-general-positions.md"))
+GENERAL_FACES = table_rows(reference("itc/vol-a-table-3.2.3.2-general-faces.md"))
 
 
 def _coefficients(expr: str) -> list[int]:
@@ -309,16 +310,26 @@ def test_ita_3232_lattice_operations_and_orbit(row: list[str]) -> None:
     assert uvw == [(np.array(w) @ [3, 2, 1]).tolist() for w in printed]
 
 
-@pytest.mark.parametrize("row", GENERAL_FACES[1:], ids=[r[0] for r in GENERAL_FACES[1:]])
-def test_ita_3232_general_faces_hexagonal(row: list[str]) -> None:
+@pytest.mark.parametrize("row", GENERAL_FACES[1:], ids=[f"{r[0]} {r[1]}".strip() for r in GENERAL_FACES[1:]])
+def test_ita_3232_general_faces(row: list[str]) -> None:
     assert GENERAL_FACES[0] == ["Short", "Axes", "Page", "Faces"]
     value = {"h": 3, "k": 2, "i": -5, "l": 1}
     expected = []
     for face in row[3].split():
         v = [(-1 if c.startswith("-") else 1) * value[c.lstrip("-")] for c in face.split(",")]
-        expected.append([v[0], v[1], v[3]])
+        expected.append(v if len(v) == 3 else [v[0], v[1], v[3]])
     key, setting = _setting(row[0], row[1])
     computed = [e["hkl"].tolist() for e in symcrys.orbit(key, {"hkl": [3, 2, 1]}, setting=setting)]
-    if row[0] in ("6/m", "6mm"):  # two rows printed in the other order (see the transcription, "Order")
+    # The printed order (see the transcription, "Order"): 6/m and 6mm print two rows the other way
+    # round; 32, 3m and -3m with rhombohedral axes the row of the second coset shifted by one.
+    if row[0] in ("6/m", "6mm"):
         computed = computed[:6] + computed[9:] + computed[6:9]
+    elif row[1] == "rhombohedral axes" and row[0] in ("32", "3m", "-3m"):
+        def shift(r: int) -> list[list[int]]:
+            return [computed[r + 1], computed[r + 2], computed[r]]
+
+        reordered = computed[:3] + shift(3)
+        if row[0] == "-3m":
+            reordered += computed[6:9] + shift(9)
+        computed = reordered
     assert computed == expected

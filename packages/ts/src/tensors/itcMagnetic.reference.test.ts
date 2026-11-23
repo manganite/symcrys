@@ -43,7 +43,9 @@ const schoenflies = (key: MagneticPointGroupKey) => symbol(key, { form: 'schoenf
 const BY_SYMBOL = new Map<string, Orientation[]>();
 const DEFAULT = new Map<string, Orientation>();
 for (const key of GROUPS) {
-  for (const s of settings(key)) {
+  // A setting with rhombohedral axes has the Cartesian operations, so the tensor forms, of setting 1;
+  // its symbol (`32`) is the key, which the tables of Chapter 1.5 use for the default setting.
+  for (const s of settings(key).filter((x) => x.axes !== 'rhombohedral')) {
     for (const name of new Set([s.symbol, compact(s.fullSymbol)])) {
       BY_SYMBOL.set(name, [...(BY_SYMBOL.get(name) ?? []), { key, setting: s.index }]);
     }

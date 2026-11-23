@@ -95,8 +95,10 @@ describe('pointGroupOf', () => {
     it(`identifies ${key} in every setting with its setting, from all operations and from the generators`, () => {
       for (const s of settings(key)) {
         const options = { setting: s.index };
-        expect(pointGroupOf(operations(key, options)), `#${s.index}`).toEqual({ key, setting: s.index });
-        expect(pointGroupOf(generators(key, options)), `#${s.index} gen`).toEqual({ key, setting: s.index });
+        // Rhombohedral axes have the Cartesian operations of setting 1 (hexagonal axes): the same frame.
+        const expected = { key, setting: s.axes === 'rhombohedral' ? 1 : s.index };
+        expect(pointGroupOf(operations(key, options)), `#${s.index}`).toEqual(expected);
+        expect(pointGroupOf(generators(key, options)), `#${s.index} gen`).toEqual(expected);
       }
     });
   }

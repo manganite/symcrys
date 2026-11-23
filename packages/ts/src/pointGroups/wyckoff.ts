@@ -5,8 +5,8 @@
  */
 
 import { apply, inverse, transpose, type Mat3, type Vec3 } from '../linalg.js';
-import { crystalFamily, latticeBasis } from '../lattice.js';
-import { itcClass, itcSetting as itcClassSetting } from './itcData.js';
+import { crystalFamily } from '../lattice.js';
+import { itcBasis, itcClass, itcSetting as itcClassSetting } from './itcData.js';
 import {
   settingIndexOf,
   isMagneticPointGroupKey,
@@ -37,7 +37,7 @@ export interface WyckoffPosition {
    * `h,h,-2h,l` (Bravais–Miller indices) for hexagonal axes.
    */
   readonly millerIndices: string;
-  /** A representative face with numbers: `millerIndices` with h = 3, k = 2, l = 1. */
+  /** A representative face with numbers: `millerIndices` with h = 3, k = 2, l = 1 (rhombohedral axes: h = 5). */
   readonly representative: {
     /** The Miller indices (hkl) of the face. */
     readonly hkl: Hkl;
@@ -57,15 +57,40 @@ export type WyckoffOptions = SettingOptions & SiteSymmetryOptions;
 /** The values substituted into ITA's Miller indices for the numeric representative. */
 export const REPRESENTATIVE_VALUES: Readonly<Record<'h' | 'k' | 'l', number>> = { h: 3, k: 2, l: 1 };
 
-/** One printed index (`h`, `-2h`, `0`, `1`) as a number. */
+/**
+ * The values for rhombohedral axes: h = 5, k = 2, l = 1. With 3, 2, 1 the face (h,k,l) would lie on
+ * the limiting form (h,k,2k-h) that ITA prints there (Table 3.2.3.2, 32, 3m and -3m with rhombohedral
+ * axes, pp. 755–759): (321) is (116) in hexagonal axes. (521), (318) in hexagonal axes, lies on no
+ * printed limiting form, and every printed face with these values is in lowest terms ((5,2,-7),
+ * (5,2,-1), (5,5,1)); h = 4 would give (4,2,-6) and (4,2,0).
+ */
+export const RHOMBOHEDRAL_VALUES: Readonly<Record<'h' | 'k' | 'l', number>> = { h: 5, k: 2, l: 1 };
+
+/** The values of h, k, l for the representative faces of a setting. */
+export function representativeValues(key: PointGroupKey, setting: number): Readonly<Record<'h' | 'k' | 'l', number>> {
+  return itcClassSetting(key, setting).axes === 'rhombohedral' ? RHOMBOHEDRAL_VALUES : REPRESENTATIVE_VALUES;
+}
+
+/**
+ * One printed index as a number: a term (`h`, `-2h`, `0`, `1`) or a sum of terms (`-h-k`, `2k-h`,
+ * as printed for rhombohedral axes).
+ */
 function index(component: string, values: Readonly<Record<'h' | 'k' | 'l', number>>): number {
-  const m = /^(-?)(\d*)([hkil]?)$/.exec(component);
-  if (!m || (m[2] === '' && m[3] === '')) throw new Error(`Unreadable Miller index: ${component}`);
-  const sign = m[1] ? -1 : 1;
-  const factor = m[2] === '' ? 1 : Number(m[2]);
-  if (m[3] === '') return sign * factor;
-  if (m[3] === 'i') return sign * factor * -(values.h + values.k);
-  return sign * factor * values[m[3] as 'h' | 'k' | 'l'];
+  // A term is a signed number, or a signed letter with an optional factor; terms after the first
+  // begin with their sign, so that run-together terms (`hk`, `h2`) are unreadable.
+  if (!/^-?(\d+|\d*[hkil])([+-](\d+|\d*[hkil]))*$/.test(component)) {
+    throw new Error(`Unreadable Miller index: ${component}`);
+  }
+  const terms = component.match(/[+-]?\d*[hkil]?/g)!.filter((t) => t !== '');
+  return terms.reduce((sum, term) => {
+    const m = /^([+-]?)(\d*)([hkil]?)$/.exec(term);
+    if (!m || (m[2] === '' && m[3] === '')) throw new Error(`Unreadable Miller index: ${component}`);
+    const sign = m[1] === '-' ? -1 : 1;
+    const factor = m[2] === '' ? 1 : Number(m[2]);
+    if (m[3] === '') return sum + sign * factor;
+    if (m[3] === 'i') return sum + sign * factor * -(values.h + values.k);
+    return sum + sign * factor * values[m[3] as 'h' | 'k' | 'l'];
+  }, 0);
 }
 
 /** Printed Miller indices (three, or four for hexagonal axes) as three numbers, with the given values of h, k, l. */
@@ -147,16 +172,19 @@ export function permutationFromSetting1(key: PointGroupKey, setting: number): Ma
 
 /**
  * The entry of a table printed per setting (Wyckoff positions, face forms) for a setting of a class:
- * the one with the ITC short symbol (and unique axis) of the setting, or undefined if ITA does not
+ * the one with the ITC short symbol (and unique axis or axes) of the setting, or undefined if ITA does not
  * print the setting.
  */
-export function printedEntry<E extends { readonly symbol: string; readonly uniqueAxis?: 'b' | 'c' }>(
-  table: readonly E[],
-  key: PointGroupKey,
-  setting: number,
-): E | undefined {
+export function printedEntry<
+  E extends { readonly symbol: string; readonly uniqueAxis?: 'b' | 'c'; readonly axes?: 'rhombohedral' },
+>(table: readonly E[], key: PointGroupKey, setting: number): E | undefined {
   const s = settings(key)[setting - 1];
-  return table.find((e) => e.symbol === s.symbol && (e.uniqueAxis === undefined || e.uniqueAxis === s.uniqueAxis));
+  return table.find(
+    (e) =>
+      e.symbol === s.symbol &&
+      (e.uniqueAxis === undefined || e.uniqueAxis === s.uniqueAxis) &&
+      (e.axes === 'rhombohedral') === (s.axes === 'rhombohedral'),
+  );
 }
 
 /** The printed rows of a setting; for a setting ITA does not print, those of setting 1 carried into its frame. */
@@ -177,12 +205,13 @@ function printedRows(key: PointGroupKey, setting: number): readonly WyckoffRow[]
 }
 
 /**
- * The lattice basis in which the Cartesian normals of the representatives are computed; monoclinic
- * and triclinic: a, b, c along x, y, z (docs/conventions.md, "Site symmetry and Wyckoff positions").
+ * The lattice basis in which the Cartesian normals of the representatives are computed, that of the
+ * setting (itcData.ts, `itcBasis`): monoclinic and triclinic a, b, c along x, y, z; rhombohedral
+ * axes in the hexagonal cell of `latticeBasis` (docs/conventions.md, "Site symmetry and Wyckoff
+ * positions").
  */
-export function faceBasis(key: PointGroupKey): Mat3 {
-  const family = crystalFamily(itcClass(key).crystalSystem);
-  return family === 'monoclinic' || family === 'triclinic' ? IDENTITY : latticeBasis(family);
+export function faceBasis(key: PointGroupKey, setting: number): Mat3 {
+  return itcBasis(key, setting);
 }
 
 const cache = new Map<string, readonly WyckoffPosition[]>();
@@ -215,12 +244,12 @@ export function wyckoffPositions(key: PointGroupKey, options?: SettingOptions): 
   let result = cache.get(cacheKey);
   if (!result) {
     const ops = operations(key, { setting });
-    const basis = faceBasis(key);
+    const basis = faceBasis(key, setting);
     result = Object.freeze(
       printedRows(key, setting)
         .filter(([letter]) => letter !== 'o')
         .map(([letter, multiplicity, site, coordinates, millerIndices]) => {
-          const hkl = numericHkl(millerIndices);
+          const hkl = numericHkl(millerIndices, representativeValues(key, setting));
           const cartesian = normal(basis, hkl);
           const stab = siteSymmetry(ops, cartesian);
           if (stab.multiplicity !== multiplicity) {
