@@ -146,8 +146,6 @@ export interface BlackWhiteData {
   readonly generators: readonly Operation[];
   /** Setting 1 first; its frame is the identity. */
   readonly settings: readonly MagneticFrame[];
-  /** The ITC default setting (1-based). The Birss default is always setting 1. */
-  readonly itcDefault: number;
 }
 
 /** Time reversal alone: the identity combined with time reversal (1'). */
@@ -162,39 +160,45 @@ function blackWhite(
   schoenflies: string,
   generators: Operation[],
   frames: Mat3[],
-  itcDefault = 1,
   uniqueAxes?: ('a' | 'b' | 'c')[],
 ): BlackWhiteData {
   const settings = frames.map((frame, i): MagneticFrame =>
     uniqueAxes ? { frame, uniqueAxis: uniqueAxes[i] } : { frame },
   );
-  return { key, crystalClass, schoenflies, generators, settings, itcDefault };
+  return { key, crystalClass, schoenflies, generators, settings };
 }
 
 /**
  * The 58 black-and-white groups. The generators are birss-app's (CLAUDE.md, "birss-app is the
  * reference where print leaves a choice open"); the group they generate is checked against Birss's
- * Table 6 and against ITC Vol. D Table 1.5.2.3. Setting frames as for the classes (data.ts), with three more for `2'm'm`; the
- * ITC default is the frame in which the key, read along ITA's symmetry directions, describes the
- * group, which is the frame of the operators printed in Table 1.5.2.3.
+ * Table 6 and against ITC Vol. D Table 1.5.2.3. Setting frames as for the classes (data.ts), with
+ * three more for `2'm'm`. These data serve the Birss convention and the cross-check of the ITC
+ * operations until the Birss convention goes (#121); the ITC symbols, defaults and operations come
+ * from itcMagneticData.ts.
  */
 export const BLACK_WHITE_DATA: readonly BlackWhiteData[] = [
   blackWhite("-1'", '-1', 'Ci(C1)', [primed(INVERSION)], [SAME]),
-  blackWhite("2'", '2', 'C2(C1)', [primed(ROT2_Z)], [SAME, MONOCLINIC_B], 2, ['c', 'b']),
-  blackWhite("m'", 'm', 'Cs(C1)', [primed(MIRROR_Z)], [SAME, MONOCLINIC_B], 2, ['c', 'b']),
-  blackWhite("2'/m'", '2/m', 'C2h(Ci)', [primed(ROT2_Z), operation(INVERSION)], [SAME, MONOCLINIC_B], 2, ['c', 'b']),
-  blackWhite("2/m'", '2/m', 'C2h(C2)', [operation(ROT2_Z), primed(INVERSION)], [SAME, MONOCLINIC_B], 2, ['c', 'b']),
-  blackWhite("2'/m", '2/m', 'C2h(Cs)', [primed(ROT2_Z), primed(INVERSION)], [SAME, MONOCLINIC_B], 2, ['c', 'b']),
-  blackWhite("2'2'2", '222', 'D2(C2)', [operation(ROT2_Z), primed(ROT2_X)], [SAME, ORTHO_TO_A, ORTHO_TO_B], 1, [
-    'c',
-    'a',
-    'b',
-  ]),
-  blackWhite("m'm'2", 'mm2', 'C2v(C2)', [operation(ROT2_Z), primed(MIRROR_X)], [SAME, ORTHO_TO_A, ORTHO_TO_B], 1, [
-    'c',
-    'a',
-    'b',
-  ]),
+  blackWhite("2'", '2', 'C2(C1)', [primed(ROT2_Z)], [SAME, MONOCLINIC_B], ['c', 'b']),
+  blackWhite("m'", 'm', 'Cs(C1)', [primed(MIRROR_Z)], [SAME, MONOCLINIC_B], ['c', 'b']),
+  blackWhite("2'/m'", '2/m', 'C2h(Ci)', [primed(ROT2_Z), operation(INVERSION)], [SAME, MONOCLINIC_B], ['c', 'b']),
+  blackWhite("2/m'", '2/m', 'C2h(C2)', [operation(ROT2_Z), primed(INVERSION)], [SAME, MONOCLINIC_B], ['c', 'b']),
+  blackWhite("2'/m", '2/m', 'C2h(Cs)', [primed(ROT2_Z), primed(INVERSION)], [SAME, MONOCLINIC_B], ['c', 'b']),
+  blackWhite(
+    "2'2'2",
+    '222',
+    'D2(C2)',
+    [operation(ROT2_Z), primed(ROT2_X)],
+    [SAME, ORTHO_TO_A, ORTHO_TO_B],
+    ['c', 'a', 'b'],
+  ),
+  blackWhite(
+    "m'm'2",
+    'mm2',
+    'C2v(C2)',
+    [operation(ROT2_Z), primed(MIRROR_X)],
+    [SAME, ORTHO_TO_A, ORTHO_TO_B],
+    ['c', 'a', 'b'],
+  ),
   // Its three elements all differ, so exchanging two axes gives another orientation: six settings.
   // Settings 1 to 3 are birss-app's; 4 to 6 exchange the other two axes at the same unique axis.
   blackWhite(
@@ -203,7 +207,6 @@ export const BLACK_WHITE_DATA: readonly BlackWhiteData[] = [
     'C2v(Cs)',
     [operation(MIRROR_Z), primed(ROT2_X)],
     [SAME, ORTHO_TO_A, ORTHO_TO_B, ORTHO_SWAP, ORTHO_TO_A_SWAP, ORTHO_TO_B_SWAP],
-    1,
     ['c', 'a', 'b', 'c', 'a', 'b'],
   ),
   blackWhite(
@@ -212,7 +215,6 @@ export const BLACK_WHITE_DATA: readonly BlackWhiteData[] = [
     'D2h(C2h)',
     [operation(ROT2_Z), operation(INVERSION), primed(ROT2_X)],
     [SAME, ORTHO_TO_A, ORTHO_TO_B],
-    2,
     ['c', 'a', 'b'],
   ),
   blackWhite("m'm'm'", 'mmm', 'D2h(D2)', [operation(ROT2_Z), operation(ROT2_X), primed(INVERSION)], [SAME]),
@@ -222,7 +224,6 @@ export const BLACK_WHITE_DATA: readonly BlackWhiteData[] = [
     'D2h(C2v)',
     [operation(ROT2_Z), operation(MIRROR_X), primed(INVERSION)],
     [SAME, ORTHO_TO_A, ORTHO_TO_B],
-    1,
     ['c', 'a', 'b'],
   ),
   blackWhite("4'", '4', 'C4(C2)', [primed(ROT4_Z)], [SAME]),
@@ -255,37 +256,29 @@ export const BLACK_WHITE_DATA: readonly BlackWhiteData[] = [
     [SAME, ROT45_Z],
   ),
   blackWhite("-3'", '-3', 'C3i(C3)', [operation(ROT3_Z), primed(INVERSION)], [SAME]),
-  blackWhite("32'", '32', 'D3(C3)', [operation(ROT3_Z), primed(ROT2_Y)], [SAME, ROT30_Z], 2),
-  blackWhite("3m'", '3m', 'C3v(C3)', [operation(ROT3_Z), primed(MIRROR_Y)], [SAME, ROT30_Z], 2),
-  blackWhite("-3m'", '-3m', 'D3d(C3i)', [operation(ROT3_Z), operation(INVERSION), primed(ROT2_Y)], [SAME, ROT30_Z], 2),
-  blackWhite("-3'm'", '-3m', 'D3d(D3)', [operation(ROT3_Z), operation(ROT2_Y), primed(INVERSION)], [SAME, ROT30_Z], 2),
-  blackWhite(
-    "-3'm",
-    '-3m',
-    'D3d(C3v)',
-    [operation(ROT3_Z), operation(MIRROR_Y), primed(INVERSION)],
-    [SAME, ROT30_Z],
-    2,
-  ),
+  blackWhite("32'", '32', 'D3(C3)', [operation(ROT3_Z), primed(ROT2_Y)], [SAME, ROT30_Z]),
+  blackWhite("3m'", '3m', 'C3v(C3)', [operation(ROT3_Z), primed(MIRROR_Y)], [SAME, ROT30_Z]),
+  blackWhite("-3m'", '-3m', 'D3d(C3i)', [operation(ROT3_Z), operation(INVERSION), primed(ROT2_Y)], [SAME, ROT30_Z]),
+  blackWhite("-3'm'", '-3m', 'D3d(D3)', [operation(ROT3_Z), operation(ROT2_Y), primed(INVERSION)], [SAME, ROT30_Z]),
+  blackWhite("-3'm", '-3m', 'D3d(C3v)', [operation(ROT3_Z), operation(MIRROR_Y), primed(INVERSION)], [SAME, ROT30_Z]),
   blackWhite("6'", '6', 'C6(C3)', [primed(ROT6_Z)], [SAME]),
   blackWhite("-6'", '-6', 'C3h(C3)', [primed(ROTINV6_Z)], [SAME]),
   blackWhite("6'/m'", '6/m', 'C6h(C3i)', [primed(ROT6_Z), operation(INVERSION)], [SAME]),
   blackWhite("6/m'", '6/m', 'C6h(C6)', [operation(ROT6_Z), primed(INVERSION)], [SAME]),
   blackWhite("6'/m", '6/m', 'C6h(C3h)', [primed(ROT6_Z), primed(INVERSION)], [SAME]),
-  blackWhite("6'22'", '622', 'D6(D3)', [primed(ROT6_Z), operation(ROT2_Y)], [SAME, ROT30_Z], 2),
+  blackWhite("6'22'", '622', 'D6(D3)', [primed(ROT6_Z), operation(ROT2_Y)], [SAME, ROT30_Z]),
   blackWhite("62'2'", '622', 'D6(C6)', [operation(ROT6_Z), primed(ROT2_Y)], [SAME]),
-  blackWhite("6'mm'", '6mm', 'C6v(C3v)', [primed(ROT6_Z), operation(MIRROR_Y)], [SAME, ROT30_Z], 2),
+  blackWhite("6'mm'", '6mm', 'C6v(C3v)', [primed(ROT6_Z), operation(MIRROR_Y)], [SAME, ROT30_Z]),
   blackWhite("6m'm'", '6mm', 'C6v(C6)', [operation(ROT6_Z), primed(MIRROR_Y)], [SAME]),
-  blackWhite("-6'2m'", '-6m2', 'D3h(D3)', [primed(ROTINV6_Z), operation(ROT2_Y)], [SAME, ROT30_Z], 2),
-  blackWhite("-6'm2'", '-6m2', 'D3h(C3v)', [primed(ROTINV6_Z), operation(MIRROR_Y)], [SAME, ROT30_Z], 2),
-  blackWhite("-6m'2'", '-6m2', 'D3h(C3h)', [operation(ROTINV6_Z), primed(MIRROR_Y)], [SAME, ROT30_Z], 2),
+  blackWhite("-6'2m'", '-6m2', 'D3h(D3)', [primed(ROTINV6_Z), operation(ROT2_Y)], [SAME, ROT30_Z]),
+  blackWhite("-6'm2'", '-6m2', 'D3h(C3v)', [primed(ROTINV6_Z), operation(MIRROR_Y)], [SAME, ROT30_Z]),
+  blackWhite("-6m'2'", '-6m2', 'D3h(C3h)', [operation(ROTINV6_Z), primed(MIRROR_Y)], [SAME, ROT30_Z]),
   blackWhite(
     "6'/m'mm'",
     '6/mmm',
     'D6h(D3d)',
     [primed(ROT6_Z), operation(ROT2_Y), operation(INVERSION)],
     [SAME, ROT30_Z],
-    2,
   ),
   blackWhite("6/mm'm'", '6/mmm', 'D6h(C6h)', [operation(ROT6_Z), operation(INVERSION), primed(ROT2_Y)], [SAME]),
   blackWhite("6/m'm'm'", '6/mmm', 'D6h(D6)', [operation(ROT6_Z), operation(ROT2_Y), primed(INVERSION)], [SAME]),
