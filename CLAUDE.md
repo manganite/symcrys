@@ -154,7 +154,10 @@ option. The Birss mode, its data and its birss-app pins were removed in step 5 o
 - **Tolerant input**, in every entry point, where it is a pure normalisation before the comparison
   and the input stays unambiguous (spaces, overbar spellings such as `-`, a combining overbar or
   `bar`, prime variants, Birss's printed forms such as `m3m`); an input that could match two groups
-  or settings is an error that lists the candidates (#96).
+  or settings is an error that lists the candidates (#96). Decided further by Thomas on 2026-11-23
+  (#96): a Schoenflies symbol names the group and gives its default setting; a symbol written with
+  spaces is read as a full symbol first (`3 2`: the rhombohedral setting of `32`). Implemented in
+  #121 step 7b (`notation.ts`; `docs/conventions.md`, "Reading symbols").
 - **Signs of axes:** the axis of an operation (for a reflection, its normal) carries the sign of its
   Seitz symbol (ITA 6th ed., Tables 1.4.2.1/1.4.2.2), in every entry point; Table 2.1.3.1 stays the
   anchor of the lattice symmetry directions (#114; for the plane groups, #107).
@@ -581,9 +584,8 @@ The conventions themselves are in `docs/conventions.md`; here, what was decided 
   two settings hold the same Cartesian operations and a list of them cannot say which basis is
   meant; **a key is the key** in `findPointGroup`, also where it is the symbol of another setting
   (`32` gives setting 1, not the rhombohedral setting 3; before, no key was such a symbol), while a
-  full symbol finds the setting it names (`-3 2/m` gives setting 3, `3 2` without spaces is the key
-  and gives setting 1): the split is left to #96, which decides how an input that can mean two
-  settings is treated; the **representative face** with rhombohedral axes takes h = 5, k = 2, l = 1,
+  full symbol finds the setting it names (`-3 2/m` and `3 2` give setting 3, since a symbol written
+  with spaces is read as a full symbol first, #96, step 7b); the **representative face** with rhombohedral axes takes h = 5, k = 2, l = 1,
   since (321) lies there on the limiting form (h,k,2k−h) and h = 4 would give printed faces with a
   common factor ((4,2,−6), (4,2,0)). The symbols of the magnetic groups in the rhombohedral setting
   follow the rule for all black-and-white symbols (the symbol of the class in that frame with the

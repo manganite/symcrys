@@ -280,7 +280,9 @@ rhombohedral axes, from ITA's selected generators of R3, R-3, R32, R3m and R-3m 
 502, 518, 530, 547). Since setting 1 and the rhombohedral setting hold the same Cartesian
 operations, `pointGroupOf` names such operations setting 1; and since the symbol of the rhombohedral
 setting of `32`, `3m`, `-3m` is the key, `findPointGroup('32')` gives the default, as a key always
-does. The rhombohedral setting is chosen by its index or as `{ setting: '32' }`.
+does, while its full symbol written with spaces, `findPointGroup('3 2')`, gives the rhombohedral
+setting ("Reading symbols"). The rhombohedral setting is chosen by its index, as `{ setting: '32' }`
+or as `{ setting: '3 2' }`.
 The classes `222` and `mmm` have one setting only: their three axes are equivalent.
 
 ### Settings of the magnetic groups
@@ -398,6 +400,39 @@ writes; ITC Vol. D and the magnetic API write `S6`).
 - **Shubnikov symbols** are not provided. `references/` holds them as printed (ITC Vol. D
   Table 1.5.2.3; Birss Tables 3 and 6).
 - Rendering (overbars, subscripts, LaTeX) is left to the applications.
+
+## Reading symbols
+
+`findPointGroup` (in both entry points) and the option `setting` read a symbol tolerantly, as a pure
+normalisation before the comparison (#96; decided by Thomas on 2026-11-22 and 2026-11-23):
+
+- **Spellings** (`notation.ts`): the overbar as `-`, `−` (U+2212), a combining overbar or overline
+  after the digit (`m3̄m`), `bar3`, or LaTeX's `\bar{3}` and `\overline{3}`; the prime as `'`, `′`
+  (U+2032), `ʹ` (U+02B9) or `’` (U+2019, which editors put for an apostrophe); Schoenflies subscripts
+  also as Unicode subscripts (`C₃ᵥ`, `D₃d(S₆)`); spaces ignored, except as below.
+- **What `findPointGroup` reads,** in this order:
+  1. a symbol written with spaces as a full symbol first: `3 2` is the rhombohedral setting of `32`,
+     `-3 2/m` that of `-3m` (Thomas, 2026-11-23);
+  2. the key, which gives the default setting, also where it is the short symbol of another setting
+     (`32`);
+  3. the short or full symbol of a setting, spaces ignored (and the short symbol by the rule,
+     `32'1`); one that several settings share (`2` for unique axis b, c and a; `3 1'` for hexagonal
+     and rhombohedral axes) gives the default setting;
+  4. a Schoenflies symbol, with `C3i` or `S6` alike (`D3`, `D4h(D2h)`, `D4R`), which names the
+     group, not an orientation, and gives the default setting (Thomas, 2026-11-23);
+  5. Birss's cubic symbols, printed without the overbar on the 3, which takes the prime of the mirror
+     before it (`m3m`, `m'3m` for `m-3m`, `m'-3'm`; Birss Tables 3 and 6).
+
+  Every symbol `symbol()` writes is read back to its group (tested over all settings and forms of
+  both entry points). A symbol that names several groups is a RangeError that lists them; none of
+  the symbols of the library does. The crystallographic API finds no magnetic group, in any
+  spelling.
+
+- **`{ setting }`** reads a symbol of a setting with the same spellings: its full symbol written with
+  spaces first, then its short or full symbol with the spaces ignored; a symbol that several settings
+  share is an error that lists them ("Settings").
+
+`symcrys/plane` has no lookup by symbol yet (#97).
 
 ## Numbers
 

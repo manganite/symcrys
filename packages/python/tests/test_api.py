@@ -364,3 +364,14 @@ def test_residual_operations_in_both_apis() -> None:
         symcrys.residual_operations([{"matrix": np.eye(3), "time_reversal": True}], cell)
     with pytest.raises(ValueError):
         magnetic.residual_operations([{"matrix": np.eye(3)}], cell)
+
+
+def test_find_point_group_reads_symbols_tolerantly() -> None:
+    # #96: the spellings of print and pasted text, Schoenflies symbols and Birss's cubic symbols.
+    for hm in ("m3̄m", "m−3m", "mbar3m", "Oh", "Oₕ", "m3m"):
+        assert symcrys.find_point_group(hm) == {"key": "m-3m", "setting": 1}
+    assert magnetic.find_point_group("4′/mmm′") == {"key": "4'/mmm'", "setting": 1}
+    assert magnetic.find_point_group("D₃d(S₆)") == {"key": "-3m'", "setting": 1}
+    assert symcrys.find_point_group("3 2") == {"key": "32", "setting": 3}
+    assert symcrys.find_point_group("32") == {"key": "32", "setting": 1}
+    assert symcrys.find_point_group("D4R") is None

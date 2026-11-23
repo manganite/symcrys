@@ -27,6 +27,13 @@ All notable changes to symcrys are recorded here. The format follows
   them. The representative face of a position with rhombohedral axes takes h = 5 ((521) for the
   general position), since (321) lies on a limiting form there.
 
+- **Tolerant reading of symbols** (#96, #121 step 7b): `findPointGroup` (Python `find_point_group`)
+  in both entry points reads every symbol `symbol()` writes, Schoenflies symbols included (`Oh`,
+  `D4h(D2h)`, `C3i` and `S6` alike; they give the default setting), Birss's cubic symbols (`m3m`,
+  `m'3m`), and the spellings of print and pasted text: the overbar as `−`, a combining overbar,
+  `bar3` or `\bar{3}`, the prime as `′`, `ʹ` or `’`, Unicode subscripts (`C₃ᵥ`). The option
+  `setting` reads the same spellings. A symbol that names several groups is a RangeError.
+
 ### Changed
 
 - **The settings are numbered by ITC's rule** (#137 A4, #121 step 6b): the ITC default is setting 1;
@@ -86,6 +93,11 @@ All notable changes to symcrys are recorded here. The format follows
     selects it, `{ setting: "3 2'" }`, since a full symbol is compared with its spaces first;
   - Schoenflies symbols in `S6` instead of `C3i` (`S6(C3)`, `D3d(S6)`, `C6h(S6)`, `S6R`), as Vol. D
     writes them; the crystallographic API keeps ITA's `C3i`.
+
+- **`findPointGroup` reads a symbol written with spaces as a full symbol first** (#96, #121
+  step 7b): `findPointGroup('3 2')` gives the rhombohedral setting of `32` (setting 3), no longer the
+  default; without spaces, `'32'` is the key and gives the default, as before. Up to 0.10 a
+  Schoenflies symbol, `m3m` or `Oh` gave `undefined`.
 
 ### Removed
 

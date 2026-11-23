@@ -145,13 +145,20 @@ def is_point_group_key(key: str) -> bool:
 
 
 def find_point_group(hm: str) -> Optional[dict[str, Any]]:
-    """Finds one of the 122 magnetic point groups (the 32 crystal classes included) by a symbol: the
-    short symbol of a setting, a full symbol, or the key (spaces are ignored). A prime ``'`` marks
-    time reversal: ``4'/mmm'``, ``2221'``. A symbol that names one setting gives that setting; the
-    key, and a short symbol that several settings share (the monoclinic ones: ``2'`` for unique axis
-    b, c and a), give the ITC default setting. Returns None if nothing matches, also for a value
-    that is not a string. Symbols are written as in this library, with ``-`` for the overbar
-    (``m'-3'm``).
+    """Finds one of the 122 magnetic point groups (the 32 crystal classes included) by a symbol,
+    read tolerantly. A prime marks time reversal: ``4'/mmm'``, ``2221'``. What is read (#96;
+    docs/conventions.md, "Reading symbols"): - a symbol written with spaces as a full symbol first
+    (``3 2``: the rhombohedral setting of ``32``); - the key, which gives the default setting, also
+    where it is the symbol of another setting (``32``); - the short or full symbol of a setting,
+    spaces ignored; one that several settings share (``2``, unique axis b, c and a) gives the
+    default setting; - a Schoenflies symbol, ITA's or ITC Vol. D's (``D3``, ``C3i``, ``S6``), which
+    gives the default setting; - Birss's cubic symbols without the overbar on the 3 (``m3m``).
+
+    Spellings: the overbar as ``-``, ``−``, a combining overbar (``m3̄m``), ``bar3`` (also with a
+    backslash and braces, as in LaTeX); the prime as ``'``, ``′``, ``ʹ`` or ``’``; Schoenflies
+    subscripts also as Unicode subscripts (``D₃d(S₆)``). Returns None if nothing matches, also for a
+    value that is not a string; a symbol that names several groups raises SymcrysError that lists
+    them.
     """
     args = [hm]
     result = _call("findPointGroup", *args)
