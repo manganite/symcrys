@@ -213,9 +213,15 @@ symbol in each setting, from which its operations follow (`pointGroups/itcMagnet
 axis c and unique axis a; for the orthorhombic groups, the further orientations in the order of the columns of ITA
 (2016) Table 1.5.4.4 (abc, ba-c, cab, -cba, bca, a-cb), each orientation once; otherwise the other
 orientation; for the trigonal groups the setting with rhombohedral axes last. A setting is chosen
-by its index or by its ITC symbol, short or full (`{ setting: '312' }`, `{ setting: '1 1 2' }`); a
-symbol that several settings share (`'2'` for unique axis b, c and a; `'3'` for hexagonal and
-rhombohedral axes) is an error that names them. The record of a setting (`settings(key)`) has
+by its index or by a symbol, short or full (`{ setting: '312' }`, `{ setting: '1 1 2' }`), read as
+in "Reading symbols". A symbol that several settings share (the key `'32'`, also the symbol of the
+setting with rhombohedral axes; `'2'` for unique axis b, c and a) gives the standard (ITC default)
+setting; the others are chosen as ITA's headlines name them (Table 3.2.3.2: "unique axis c",
+"rhombohedral axes"), by the options `uniqueAxis` (`'a'`, `'b'`, `'c'`) and `axes`
+(`'hexagonal'`, `'rhombohedral'`), alone or with a symbol: `{ axes: 'rhombohedral' }`,
+`{ setting: '2', uniqueAxis: 'c' }` (Thomas, 2026-11-23, #96). `uniqueAxis` applies to the monoclinic
+groups, `axes` to the hexagonal family (`'hexagonal'` holds for all its groups); criteria that no
+setting meets are an error that lists the settings. The record of a setting (`settings(key)`) has
 `index`, `symbol`, `fullSymbol`, `isDefault`, and `uniqueAxis` for a monoclinic setting, `axes`
 (`'hexagonal'` or `'rhombohedral'`) for a trigonal one.
 
@@ -279,8 +285,9 @@ lattice basis a_R, b_R, c_R ("Cartesian frame"); its operations are numbered as 
 rhombohedral axes, from ITA's selected generators of R3, R-3, R32, R3m and R-3m (5th ed., pp. 496,
 502, 518, 530, 547). Since setting 1 and the rhombohedral setting hold the same Cartesian
 operations, `pointGroupOf` names such operations setting 1; and since the symbol of the rhombohedral
-setting of `32`, `3m`, `-3m` is the key, `findPointGroup('32')` gives the default, as a key always
-does. The rhombohedral setting is chosen by its index or as `{ setting: '32' }`.
+setting of `32`, `3m`, `-3m` is the key, `findPointGroup('32')` and `findPointGroup('3 2')` give the
+default, as a key always does. The rhombohedral setting is chosen by its index or by the axes:
+`{ axes: 'rhombohedral' }`, `findPointGroup('32', { axes: 'rhombohedral' })`.
 The classes `222` and `mmm` have one setting only: their three axes are equivalent.
 
 ### Settings of the magnetic groups
@@ -376,9 +383,8 @@ writes; ITC Vol. D and the magnetic API write `S6`).
   orientation with the `1` where it sets it against the other one (§ 1.5.8.1, p. 140: `3m'1`,
   `31m'`); symcrys gives the symbol of Table 1.5.2.3. The symbol derived by the rule for the default
   setting (`32'1`, `3211'`) still selects it (`{ setting }`, `findPointGroup`). With rhombohedral axes the short symbol is again the key
-  (`32'`), so the default and the rhombohedral setting share it and are told apart by their full
-  symbols (`3 2' 1`, `3 2'`): a full symbol is compared with its spaces first, since without them
-  `3 2'` is `32'`. A crystal class keeps ITA's symbol (`321`) in both entry points, so
+  (`32'`), so the default and the rhombohedral setting share it; the symbol gives the default, and
+  `{ axes: 'rhombohedral' }` the other ("Settings"). A crystal class keeps ITA's symbol (`321`) in both entry points, so
   that a setting symbol means the same setting in both.
 - **Short symbol** (`form: 'short'`, the default): the symbol of the setting, in ITC as in the
   headline of ITA Table 3.2.3.2, with the trailing or inner `1` that fixes the orientation (`321`,
@@ -398,6 +404,39 @@ writes; ITC Vol. D and the magnetic API write `S6`).
 - **Shubnikov symbols** are not provided. `references/` holds them as printed (ITC Vol. D
   Table 1.5.2.3; Birss Tables 3 and 6).
 - Rendering (overbars, subscripts, LaTeX) is left to the applications.
+
+## Reading symbols
+
+`findPointGroup` (in both entry points) and the option `setting` read a symbol tolerantly, as a pure
+normalisation before the comparison (#96; decided by Thomas on 2026-11-22 and 2026-11-23):
+
+- **Spellings** (`notation.ts`): the overbar as `-`, `−` (U+2212), a combining overbar or overline
+  after the digit (`m3̄m`), the macron `¯` after the digit (as the text layer of the ITA 2016 PDFs
+  gives it), `bar3`, or LaTeX's `\bar{3}` and `\overline{3}`; the prime as `'`, `′`
+  (U+2032), `ʹ` (U+02B9) or `’` (U+2019, which editors put for an apostrophe); Schoenflies subscripts
+  also as Unicode subscripts (`C₃ᵥ`, `D₃d(S₆)`) or LaTeX's (`C_{3v}`, `C_3`). Spaces carry no
+  meaning: `3 2` is `32` (Thomas, 2026-11-23), as print writes the short symbols without them.
+- **What `findPointGroup` reads:** the key; the short or full symbol of a setting (and the short
+  symbol by the rule, `32'1`); a Schoenflies symbol, with `C3i` or `S6` alike (`D3`, `D4h(D2h)`,
+  `D4R`), which names the group, not an orientation (Thomas, 2026-11-23); Birss's cubic symbols,
+  printed without the overbar on the 3, which takes the prime of the mirror before it (`m3m`, `m'3m`
+  for `m-3m`, `m'-3'm`; Birss Tables 3 and 6). A symbol that names several settings (the key `32`,
+  also the symbol of the setting with rhombohedral axes; `2` for unique axis b, c and a; `3 1'`;
+  every Schoenflies symbol) gives the standard (ITC default) setting, as the name without the
+  headline means the standard in ITA; the options `axes` and `uniqueAxis` choose another
+  (`findPointGroup('32', { axes: 'rhombohedral' })`; "Settings").
+
+  Every symbol `symbol()` writes is read back to its group (tested over all settings and forms of
+  both entry points), and to its setting where the symbol, or the symbol with the setting's axes or
+  unique axis, names one. A symbol that names several groups is a RangeError that lists them; none
+  of the symbols of the library does. The crystallographic API finds no magnetic group, in any
+  spelling.
+
+- **`{ setting }`** reads a symbol of a setting with the same spellings, and Birss's cubic symbols,
+  with the same rule: a symbol of several settings gives the standard, unless `axes` or
+  `uniqueAxis` chooses another. A Schoenflies symbol names no setting and is not read here.
+
+`symcrys/plane` has no lookup by symbol yet (#97).
 
 ## Numbers
 

@@ -257,16 +257,23 @@ export function pointGroups(): readonly PointGroup[] {
 }
 
 /**
- * Finds a crystal class by a Hermann–Mauguin symbol: the short symbol of a setting, a full symbol,
- * or the key (spaces are ignored). A symbol that names one setting gives that setting; the key, and
- * a short symbol that several settings share (the monoclinic ones: `2` for unique axis b, c and a),
- * give the ITC default setting. Returns undefined if nothing matches, also for a value that is not a
- * string and for the symbol of a magnetic group with time reversal. Symbols are written as in this
- * library, with `-` for the overbar (`m-3m`).
+ * Finds a crystal class by a symbol, read tolerantly.
+ * It reads, spaces ignored (#96; docs/conventions.md, "Reading symbols"): the key; the short or
+ * full symbol of a setting (`312`, `1 1 2`); a Schoenflies symbol, ITA's or ITC Vol. D's (`D3`,
+ * `C3i`, `S6`); Birss's cubic symbols without the overbar on the 3 (`m3m`). A symbol that names
+ * several settings (the key `32`, which is also the symbol of the setting with rhombohedral axes;
+ * `2` for unique axis b, c and a; any Schoenflies symbol) gives the standard (ITC default) setting,
+ * unless the options `axes` or `uniqueAxis` choose another, as the headlines of ITA name the
+ * settings (the option `axes` set to `'rhombohedral'` for the key `32`).
+ *
+ * Spellings: the overbar as `-`, `−`, a combining overbar or `¯` after the digit (`m3̄m`), `bar3` (also with a backslash and braces, as in LaTeX);
+ * Schoenflies subscripts also as Unicode or LaTeX subscripts (`C₃ᵥ`, `C_{3v}`). Returns undefined if nothing matches,
+ * also for a value that is not a string and for the symbol of a magnetic group with time reversal; a
+ * symbol that names several groups is a RangeError that lists them.
  */
-export function findPointGroup(hm: string): PointGroupInSetting | undefined {
-  groups.rejectConventionArgument(arguments.length);
-  return groups.findPointGroup(hm);
+export function findPointGroup(hm: string, options?: groups.AxesOptions): PointGroupInSetting | undefined {
+  if (arguments.length > 2) groups.rejectConventionArgument(arguments.length);
+  return groups.findPointGroup(hm, options);
 }
 
 /** The settings of a crystal class, with their symbols and the ITC default. */

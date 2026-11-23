@@ -77,6 +77,7 @@ export {
   symbol,
   type PointGroupType,
   type Setting,
+  type AxesOptions,
   type SettingOptions,
   type SymbolOptions,
 } from './pointGroups/pointGroups.js';

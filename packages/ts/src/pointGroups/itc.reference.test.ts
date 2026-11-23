@@ -251,10 +251,13 @@ describe('ITC symbols and operations of every setting', () => {
         });
 
         it(`${label}: findPointGroup finds this setting by its full symbol`, () => {
-          // A symbol that is, without spaces, the key (`3 2`, rhombohedral) gives the default setting.
+          // Spaces are ignored; a symbol that is the key (`3 2`, `3` with rhombohedral axes) gives the
+          // standard setting, and the axes choose the other (#96, Thomas 2026-11-23).
           const isKey = setting().fullSymbol.replace(/\s+/g, '') === key;
-          const expected = isKey ? settings(key).find((s) => s.isDefault)!.index : setting().index;
-          expect(findPointGroup(setting().fullSymbol)).toEqual({ key, setting: expected });
+          const def = settings(key).find((s) => s.isDefault)!.index;
+          expect(findPointGroup(setting().fullSymbol)).toEqual({ key, setting: isKey ? def : setting().index });
+          const axes = e.rhombohedral ? 'rhombohedral' : system === 'trigonal' ? 'hexagonal' : undefined;
+          if (axes) expect(findPointGroup(setting().fullSymbol, { axes })).toEqual({ key, setting: setting().index });
         });
       }
     });

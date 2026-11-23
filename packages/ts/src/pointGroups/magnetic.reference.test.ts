@@ -105,6 +105,11 @@ describe('ITC Vol. D Table 1.5.2.3 (printed pp. 111–112) against symcrys, ITC 
         // The short symbol as printed for a black-and-white group (#137 B2); a crystal class keeps
         // ITA's symbol (`321` where the table prints `32`; CLAUDE.md, "Symbols per volume").
         if (pointGroup(key).type === 'III') expect(symbol(key)).toBe(short);
+        // The printed symbols find the group (#96): Schoenflies gives the default setting.
+        const def = settings(key).find((s) => s.isDefault)!.index;
+        expect(findMagneticPointGroup(schoenflies)).toEqual({ key, setting: def });
+        expect(findMagneticPointGroup(short)?.key).toBe(key);
+        expect(findMagneticPointGroup(full)).toEqual({ key, setting: def });
         // The Schoenflies symbol G(H) names the crystal class G.
         expect(symbol(crystalClassOf(key), { form: 'schoenflies' })).toBe(schoenflies.replace(/\(.+\)$/, ''));
       });
@@ -197,6 +202,14 @@ const sigmas = (cell: string, t: boolean): RefOp[] =>
  */
 describe('Birss Table 6 (printed pp. 91–98) against symcrys, in the ITC frame', () => {
   const rows = birssRows.slice(1);
+
+  it("findPointGroup reads Birss's printed symbols, and his Schoenflies symbols, as the groups they are (#96)", () => {
+    for (const r of rows) {
+      const key = KEY_OF_PRINTED[r[1]] ?? r[1];
+      expect(findMagneticPointGroup(r[1])?.key, r[1]).toBe(key);
+      if (pointGroup(key as MagneticPointGroupKey).type === 'I') expect(findPointGroup(r[1])?.key, r[1]).toBe(key);
+    }
+  });
 
   it('lists 90 groups, each once: the 32 crystal classes and the 58 black-and-white groups', () => {
     expect(rows).toHaveLength(90);
@@ -305,10 +318,17 @@ describe('symbols of every setting of the magnetic groups generate its operation
         const shortDirections = system === 'monoclinic' && positions.length === 1 ? [AXIS[s.uniqueAxis!]] : directions;
         expect(sameGroup(groupOfSymbol(s.symbol, shortDirections), ops)).toBe(true);
         expect(sameGroup(groupOfSymbol(s.fullSymbol, directions), ops)).toBe(true);
-        // A symbol that is, without spaces, the key gives the default setting (`3 2'`, rhombohedral).
+        // Spaces are ignored; a symbol that is the key (`3 2'`, rhombohedral) or that several settings
+        // share (`3 1'`) gives the standard setting, and the axes choose the other (#96).
         const def = settings(key).find((x) => x.isDefault)!.index;
-        const isKey = s.fullSymbol.replace(/\s+/g, '') === key;
-        expect(findMagneticPointGroup(s.fullSymbol)).toEqual({ key, setting: isKey ? def : s.index });
+        const compactFull = s.fullSymbol.replace(/\s+/g, '');
+        const shared =
+          compactFull === key ||
+          settings(key).filter((t) => t.fullSymbol.replace(/\s+/g, '') === compactFull).length > 1;
+        expect(findMagneticPointGroup(s.fullSymbol)).toEqual({ key, setting: shared ? def : s.index });
+        if (s.axes === 'rhombohedral') {
+          expect(findMagneticPointGroup(s.fullSymbol, { axes: 'rhombohedral' })).toEqual({ key, setting: s.index });
+        }
       });
     }
   }
@@ -584,13 +604,14 @@ describe('the 122 magnetic point groups', () => {
       const def = all.find((s) => s.isDefault)!.index;
       for (const s of all) {
         const what = `${key} setting ${s.index}`;
-        // A symbol several settings share, or one that is the key without spaces, gives the default.
+        // A symbol several settings share, or one that is the key (spaces ignored), gives the default.
         const compact = (t: string) => t.replace(/\s+/g, '');
         const shared = all.filter((t) => t.symbol === s.symbol).length > 1 || compact(s.symbol) === key;
         expect(findMagneticPointGroup(s.symbol), `${what}: ${s.symbol}`).toEqual({
           key,
           setting: shared ? def : s.index,
         });
+        // Spaces are ignored in full symbols too (#96).
         const fullShared =
           all.filter((t) => compact(t.fullSymbol) === compact(s.fullSymbol)).length > 1 ||
           compact(s.fullSymbol) === key;
@@ -627,23 +648,20 @@ describe('the 122 magnetic point groups', () => {
       "-3'm'",
       "-3'm",
     ]);
-    // Every setting is selected by its full symbol as listed, unless another setting has the same
-    // full symbol (`3`, `-3'` with hexagonal and rhombohedral axes: only the index tells them apart).
+    // Every setting is selected by its full symbol as listed, together with its axes or unique axis
+    // where the symbol alone means several settings (#96: the symbol then gives the standard).
     for (const key of MAGNETIC_POINT_GROUP_KEYS) {
       for (const s of settings(key)) {
-        const sameFull = settings(key).filter((t) => t.fullSymbol === s.fullSymbol);
-        if (sameFull.length === 1) {
-          expect(operations(key, { setting: s.fullSymbol }), `${key} ${s.fullSymbol}`).toBe(
-            operations(key, { setting: s.index }),
-          );
-        } else {
-          expect(() => operations(key, { setting: s.fullSymbol }), `${key} ${s.fullSymbol}`).toThrow(/give the index/);
-        }
+        const criteria = s.axes ? { axes: s.axes } : s.uniqueAxis ? { uniqueAxis: s.uniqueAxis } : {};
+        expect(operations(key, { setting: s.fullSymbol, ...criteria }), `${key} ${s.fullSymbol}`).toBe(
+          operations(key, { setting: s.index }),
+        );
       }
     }
-    expect(operations("32'", { setting: "3 2'" })).toBe(operations("32'", { setting: 3 }));
+    expect(operations("32'", { setting: "3 2'" })).toBe(operations("32'", { setting: 1 }));
+    expect(operations("32'", { setting: "3 2'", axes: 'rhombohedral' })).toBe(operations("32'", { setting: 3 }));
     expect(operations("32'", { setting: "32'1" })).toBe(operations("32'", { setting: 1 }));
-    expect(() => operations("32'", { setting: "32'" })).toThrow(/names 2 settings; give the full symbol or the index/);
+    expect(operations("32'", { setting: "32'" })).toBe(operations("32'", { setting: 1 }));
     for (const key of ["321'", "32'", "-3'm"] as const) {
       const s = settings(key);
       expect(s[0].symbol, key).toBe(s[s.length - 1].symbol);

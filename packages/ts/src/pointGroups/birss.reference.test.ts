@@ -14,7 +14,7 @@ import { BIRSS_DIRECTIONS, toItcFrame } from '../testUtils/birssFrame.js';
 import { close, sameGroup, type M, type RefOp } from '../testUtils/independentGroups.js';
 import { expectHeader, readReference, section, tableRows } from '../testUtils/references.js';
 import { symbol as itaSymbol } from '../crystalClasses.js';
-import { isPointGroupKey, operations, pointGroup, type PointGroupKey } from './pointGroups.js';
+import { findPointGroup, isPointGroupKey, operations, pointGroup, type PointGroupKey } from './pointGroups.js';
 
 // --- σ(0)–σ(9) ---------------------------------------------------------------------------------
 
@@ -96,6 +96,13 @@ const TABLE3: Table3Row[] = rows.slice(1).map((r) => {
 });
 
 describe('Birss Table 3 (printed pp. 36–38) against symcrys, in the ITC frame', () => {
+  it("findPointGroup reads Birss's printed symbols and Schoenflies symbols as the classes they are (#96)", () => {
+    for (const row of TABLE3) {
+      expect(findPointGroup(row.printedSymbol)?.key, row.printedSymbol).toBe(row.key);
+      expect(findPointGroup(row.schoenflies)?.key, row.schoenflies).toBe(row.key);
+    }
+  });
+
   it('lists the 32 crystal classes, each once, and the σ pool has ten matrices', () => {
     expect(TABLE3).toHaveLength(32);
     expect(new Set(TABLE3.map((r) => r.key)).size).toBe(32);

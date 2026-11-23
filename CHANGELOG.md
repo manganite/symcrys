@@ -22,10 +22,17 @@ All notable changes to symcrys are recorded here. The format follows
   crystal forms are those of ITA Table 3.2.3.2 for rhombohedral axes (pp. 753–759). The axes are the
   obverse ones in the hexagonal cell of setting 1 (ITA 2016 Table 1.5.1.1, p. 78, the matrix Q of R₁ obverse), so the Cartesian
   operations equal those of setting 1: `pointGroupOf` names them setting 1. `findPointGroup('32')`
-  still gives the default, since `32` is the key; choose the setting by its index or as
-  `{ setting: '32' }`. `{ setting: '3' }` for class `3` names two settings and is an error that lists
-  them. The representative face of a position with rhombohedral axes takes h = 5 ((521) for the
+  gives the default, since `32` is the key; choose the setting by its index or by the axes,
+  `{ axes: 'rhombohedral' }` (#96, below). The representative face of a position with rhombohedral axes takes h = 5 ((521) for the
   general position), since (321) lies on a limiting form there.
+
+- **Tolerant reading of symbols** (#96, #121 step 7b): `findPointGroup` (Python `find_point_group`)
+  in both entry points reads every symbol `symbol()` writes, Schoenflies symbols included (`Oh`,
+  `D4h(D2h)`, `C3i` and `S6` alike; they give the default setting), Birss's cubic symbols (`m3m`,
+  `m'3m`), and the spellings of print and pasted text: the overbar as `−`, a combining overbar,
+  `¯` after the digit, `bar3` or `\bar{3}`, the prime as `′`, `ʹ` or `’`, Unicode or LaTeX subscripts
+  (`C₃ᵥ`, `C_{3v}`). The option `setting` reads the same spellings. A symbol that names several
+  groups is a RangeError. Up to 0.10 a Schoenflies symbol, `m3m` or `Oh` gave `undefined`.
 
 ### Changed
 
@@ -48,8 +55,8 @@ All notable changes to symcrys are recorded here. The format follows
   `{ setting: '312' }`.
 
 - **A setting can be given by its ITC symbol** (#123): `{ setting }` takes the index or the short or
-  full symbol, spaces ignored; a symbol that several settings share is a RangeError that names
-  them (`'2'`: give `'1 2 1'` or `'1 1 2'`).
+  full symbol, spaces ignored; a symbol that several settings share gives the standard setting, and
+  the options `axes` and `uniqueAxis` choose another (below).
 - **The record of a setting** (#137 A3, C4): `uniqueAxis` only for the monoclinic settings (it
   went for `mm2` and the orthorhombic magnetic groups, where a setting is identified by its symbol),
   and `axes` (`'hexagonal'` or `'rhombohedral'`) for the trigonal settings.
@@ -82,10 +89,17 @@ All notable changes to symcrys are recorded here. The format follows
     `symbol("321'")` is `321'`, not `3211'`. Eight groups change: `321'`, `3m1'`, `-3m1'`, `32'`,
     `3m'`, `-3m'`, `-3'm'`, `-3'm`, and their `settings`. The other settings keep their symbols, and
     the old ones still select the default setting. Their rhombohedral setting has the same short
-    symbol, so `{ setting: "32'" }` names two settings (an error that lists them); the full symbol
-    selects it, `{ setting: "3 2'" }`, since a full symbol is compared with its spaces first;
+    symbol, which selects the default; `{ axes: 'rhombohedral' }` selects it (#96, below);
   - Schoenflies symbols in `S6` instead of `C3i` (`S6(C3)`, `D3d(S6)`, `C6h(S6)`, `S6R`), as Vol. D
     writes them; the crystallographic API keeps ITA's `C3i`.
+
+- **A symbol that several settings share gives the standard setting; `axes` and `uniqueAxis`
+  choose another** (#96, #121 step 7b; Thomas, 2026-11-23): `{ setting: '2' }` gives unique axis b,
+  `{ setting: '2', uniqueAxis: 'c' }` or
+  `{ uniqueAxis: 'c' }` unique axis c; `{ axes: 'rhombohedral' }` the setting with rhombohedral axes.
+  The new options `axes` (`'hexagonal'`, `'rhombohedral'`) and `uniqueAxis` (`'a'`, `'b'`, `'c'`), as
+  ITA's headlines name the settings, are taken by every function with the option `setting` and by
+  `findPointGroup` (Python `axes=`, `unique_axis=`). Spaces in a symbol carry no meaning.
 
 ### Removed
 

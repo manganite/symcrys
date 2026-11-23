@@ -155,16 +155,38 @@ def is_point_group_key(key: str) -> bool:
     return bool(_call("isPointGroupKey", key))
 
 
-def find_point_group(hm: str) -> Optional[dict[str, Any]]:
-    """Finds a crystal class by a Hermann–Mauguin symbol: the short symbol of a setting, a full
-    symbol, or the key (spaces are ignored). A symbol that names one setting gives that setting; the
-    key, and a short symbol that several settings share (the monoclinic ones: ``2`` for unique axis
-    b, c and a), give the ITC default setting. Returns None if nothing matches, also for a value
-    that is not a string and for the symbol of a magnetic group with time reversal. Symbols are
-    written as in this library, with ``-`` for the overbar (``m-3m``).
+def find_point_group(
+    hm: str,
+    *,
+    axes: Optional[Literal["hexagonal", "rhombohedral"]] = None,
+    unique_axis: Optional[Literal["a", "b", "c"]] = None,
+) -> Optional[dict[str, Any]]:
+    """Finds a crystal class by a symbol, read tolerantly. It reads, spaces ignored (#96;
+    docs/conventions.md, "Reading symbols"): the key; the short or full symbol of a setting
+    (``312``, ``1 1 2``); a Schoenflies symbol, ITA's or ITC Vol. D's (``D3``, ``C3i``, ``S6``);
+    Birss's cubic symbols without the overbar on the 3 (``m3m``). A symbol that names several
+    settings (the key ``32``, which is also the symbol of the setting with rhombohedral axes; ``2``
+    for unique axis b, c and a; any Schoenflies symbol) gives the standard (ITC default) setting,
+    unless the options ``axes`` or ``unique_axis`` choose another, as the headlines of ITA name the
+    settings (the option ``axes`` set to ``'rhombohedral'`` for the key ``32``).
+
+    Spellings: the overbar as ``-``, ``−``, a combining overbar or ``¯`` after the digit (``m3̄m``),
+    ``bar3`` (also with a backslash and braces, as in LaTeX); Schoenflies subscripts also as Unicode
+    or LaTeX subscripts (``C₃ᵥ``, ``C_{3v}``). Returns None if nothing matches, also for a value
+    that is not a string and for the symbol of a magnetic group with time reversal; a symbol that
+    names several groups raises SymcrysError that lists them.
+
+    Parameters
+    ----------
+    axes : keyword-only, optional
+        The axes, as ITA's headlines name them: ``'rhombohedral'`` chooses the setting with
+        rhombohedral axes of a trigonal group, ``'hexagonal'`` one with hexagonal axes, which every
+        group of the hexagonal family has. A SymcrysError for another family.
+    unique_axis : keyword-only, optional
+        The unique axis of a monoclinic group, as ITA's headlines name it (``'b'``, the standard,
+        ``'c'``, ``'a'``). A SymcrysError for another system.
     """
-    args = [hm]
-    result = _call("findPointGroup", *args)
+    result = _call("findPointGroup", hm, _shared.options(axes=axes, unique_axis=unique_axis))
     return None if result is None else dict(result)
 
 
@@ -174,7 +196,13 @@ def settings(key: str) -> list[dict[str, Any]]:
     return list(_call("settings", *args))
 
 
-def operations(key: str, *, setting: Optional[Union[int, str]] = None) -> list[Operation]:
+def operations(
+    key: str,
+    *,
+    setting: Optional[Union[int, str]] = None,
+    axes: Optional[Literal["hexagonal", "rhombohedral"]] = None,
+    unique_axis: Optional[Literal["a", "b", "c"]] = None,
+) -> list[Operation]:
     """All operations of the crystal class in the requested setting (default: the ITC default
     setting), in ITA's order: identity first, then as ITA numbers the general position
     (docs/conventions.md, "Order of the operations"). Each operation is ITA's matrix W in the
@@ -183,10 +211,18 @@ def operations(key: str, *, setting: Optional[Union[int, str]] = None) -> list[O
 
     Parameters
     ----------
+    axes : keyword-only, optional
+        The axes, as ITA's headlines name them: ``'rhombohedral'`` chooses the setting with
+        rhombohedral axes of a trigonal group, ``'hexagonal'`` one with hexagonal axes, which every
+        group of the hexagonal family has. A SymcrysError for another family.
+    unique_axis : keyword-only, optional
+        The unique axis of a monoclinic group, as ITA's headlines name it (``'b'``, the standard,
+        ``'c'``, ``'a'``). A SymcrysError for another system.
     setting : keyword-only, optional
-        The setting: its 1-based index, or its ITC symbol, short or full (spaces ignored: ``'312'``,
-        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b,
-        c and a) is an error that names them. Default: the ITC default setting.
+        The setting: its 1-based index, or a symbol, read as ``find_point_group`` reads it (spaces
+        ignored: ``'312'``, ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (the key
+        ``'32'``, ``'2'`` for unique axis b, c and a) gives the standard (ITC default) setting,
+        unless ``axes`` or ``unique_axis`` chooses another. Default: the ITC default setting.
 
     Returns
     -------
@@ -194,10 +230,16 @@ def operations(key: str, *, setting: Optional[Union[int, str]] = None) -> list[O
         Dicts ``{"matrix", "cartesian"}``; ``matrix`` is a float64 array of shape (3, 3) holding
         integers (the fixed rule for matrices), ``cartesian`` a float64 array of shape (3, 3).
     """
-    return list(_call("operations", key, _shared.options(setting=setting)))
+    return list(_call("operations", key, _shared.options(setting=setting, axes=axes, unique_axis=unique_axis)))
 
 
-def generators(key: str, *, setting: Optional[Union[int, str]] = None) -> list[Operation]:
+def generators(
+    key: str,
+    *,
+    setting: Optional[Union[int, str]] = None,
+    axes: Optional[Literal["hexagonal", "rhombohedral"]] = None,
+    unique_axis: Optional[Literal["a", "b", "c"]] = None,
+) -> list[Operation]:
     """Generators of the crystal class in the requested setting (docs/conventions.md, "Generators"):
     ITA's selected generators in printed order, without the identity and ITA's lattice translations,
     so the list is empty for ``1``; for the settings ITA does not print (``mm2`` settings 2 and 3,
@@ -205,10 +247,18 @@ def generators(key: str, *, setting: Optional[Union[int, str]] = None) -> list[O
 
     Parameters
     ----------
+    axes : keyword-only, optional
+        The axes, as ITA's headlines name them: ``'rhombohedral'`` chooses the setting with
+        rhombohedral axes of a trigonal group, ``'hexagonal'`` one with hexagonal axes, which every
+        group of the hexagonal family has. A SymcrysError for another family.
+    unique_axis : keyword-only, optional
+        The unique axis of a monoclinic group, as ITA's headlines name it (``'b'``, the standard,
+        ``'c'``, ``'a'``). A SymcrysError for another system.
     setting : keyword-only, optional
-        The setting: its 1-based index, or its ITC symbol, short or full (spaces ignored: ``'312'``,
-        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b,
-        c and a) is an error that names them. Default: the ITC default setting.
+        The setting: its 1-based index, or a symbol, read as ``find_point_group`` reads it (spaces
+        ignored: ``'312'``, ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (the key
+        ``'32'``, ``'2'`` for unique axis b, c and a) gives the standard (ITC default) setting,
+        unless ``axes`` or ``unique_axis`` chooses another. Default: the ITC default setting.
 
     Returns
     -------
@@ -216,13 +266,15 @@ def generators(key: str, *, setting: Optional[Union[int, str]] = None) -> list[O
         Dicts ``{"matrix", "cartesian"}``; ``matrix`` is a float64 array of shape (3, 3) holding
         integers (the fixed rule for matrices), ``cartesian`` a float64 array of shape (3, 3).
     """
-    return list(_call("generators", key, _shared.options(setting=setting)))
+    return list(_call("generators", key, _shared.options(setting=setting, axes=axes, unique_axis=unique_axis)))
 
 
 def symbol(
     key: str,
     *,
     setting: Optional[Union[int, str]] = None,
+    axes: Optional[Literal["hexagonal", "rhombohedral"]] = None,
+    unique_axis: Optional[Literal["a", "b", "c"]] = None,
     form: Optional[Literal["short", "full", "schoenflies"]] = None,
 ) -> str:
     """A symbol of the crystal class in the requested setting, as ITA writes it (Tables 3.2.1.2 and
@@ -230,10 +282,18 @@ def symbol(
 
     Parameters
     ----------
+    axes : keyword-only, optional
+        The axes, as ITA's headlines name them: ``'rhombohedral'`` chooses the setting with
+        rhombohedral axes of a trigonal group, ``'hexagonal'`` one with hexagonal axes, which every
+        group of the hexagonal family has. A SymcrysError for another family.
+    unique_axis : keyword-only, optional
+        The unique axis of a monoclinic group, as ITA's headlines name it (``'b'``, the standard,
+        ``'c'``, ``'a'``). A SymcrysError for another system.
     setting : keyword-only, optional
-        The setting: its 1-based index, or its ITC symbol, short or full (spaces ignored: ``'312'``,
-        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b,
-        c and a) is an error that names them. Default: the ITC default setting.
+        The setting: its 1-based index, or a symbol, read as ``find_point_group`` reads it (spaces
+        ignored: ``'312'``, ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (the key
+        ``'32'``, ``'2'`` for unique axis b, c and a) gives the standard (ITC default) setting,
+        unless ``axes`` or ``unique_axis`` chooses another. Default: the ITC default setting.
     form : keyword-only, optional
         ``'short'`` (default): short symbol of the setting, e.g. ``321`` for class ``32`` (ITA Table
         3.2.3.2); in the magnetic API the default setting of a grey or black-and-white group has its
@@ -243,7 +303,7 @@ def symbol(
         ``C3i`` for the class -3 in the crystallographic API (ITA), ``S6`` in the magnetic API (ITC
         Vol. D: ``S6(C3)``, ``D3d(S6)``).
     """
-    return str(_call("symbol", key, _shared.options(setting=setting, form=form)))
+    return str(_call("symbol", key, _shared.options(setting=setting, axes=axes, unique_axis=unique_axis, form=form)))
 
 
 def crystal_family(system: str) -> str:
@@ -429,7 +489,11 @@ def change_of_axes(p: ArrayLike) -> dict[str, NDArray[np.float64]]:
 
 
 def describe_operations(
-    key: str, *, setting: Optional[Union[int, str]] = None
+    key: str,
+    *,
+    setting: Optional[Union[int, str]] = None,
+    axes: Optional[Literal["hexagonal", "rhombohedral"]] = None,
+    unique_axis: Optional[Literal["a", "b", "c"]] = None,
 ) -> list[dict[str, Any]]:
     """Each operation of the crystal class described geometrically, in the order of ``operations``
     for the same key and options. Axes are named by the symmetry direction they lie along, with the
@@ -437,10 +501,18 @@ def describe_operations(
 
     Parameters
     ----------
+    axes : keyword-only, optional
+        The axes, as ITA's headlines name them: ``'rhombohedral'`` chooses the setting with
+        rhombohedral axes of a trigonal group, ``'hexagonal'`` one with hexagonal axes, which every
+        group of the hexagonal family has. A SymcrysError for another family.
+    unique_axis : keyword-only, optional
+        The unique axis of a monoclinic group, as ITA's headlines name it (``'b'``, the standard,
+        ``'c'``, ``'a'``). A SymcrysError for another system.
     setting : keyword-only, optional
-        The setting: its 1-based index, or its ITC symbol, short or full (spaces ignored: ``'312'``,
-        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b,
-        c and a) is an error that names them. Default: the ITC default setting.
+        The setting: its 1-based index, or a symbol, read as ``find_point_group`` reads it (spaces
+        ignored: ``'312'``, ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (the key
+        ``'32'``, ``'2'`` for unique axis b, c and a) gives the standard (ITC default) setting,
+        unless ``axes`` or ``unique_axis`` chooses another. Default: the ITC default setting.
 
     Returns
     -------
@@ -448,7 +520,7 @@ def describe_operations(
         In each, ``axis`` (if present) has ``lattice`` (int64, shape (3,)) and ``cartesian``
         (float64, shape (3,)).
     """
-    return list(_call("describeOperations", key, _shared.options(setting=setting)))
+    return list(_call("describeOperations", key, _shared.options(setting=setting, axes=axes, unique_axis=unique_axis)))
 
 
 def point_group_of(
@@ -504,7 +576,11 @@ def describe_operations_of(
 
 
 def symmetry_directions(
-    key: str, *, setting: Optional[Union[int, str]] = None
+    key: str,
+    *,
+    setting: Optional[Union[int, str]] = None,
+    axes: Optional[Literal["hexagonal", "rhombohedral"]] = None,
+    unique_axis: Optional[Literal["a", "b", "c"]] = None,
 ) -> list[dict[str, Any]]:
     """The positions of the full Hermann–Mauguin symbol in the requested setting, each with its
     symmetry directions (ITA Table 2.1.3.1) and the symmetry elements along them. All positions of
@@ -515,10 +591,18 @@ def symmetry_directions(
 
     Parameters
     ----------
+    axes : keyword-only, optional
+        The axes, as ITA's headlines name them: ``'rhombohedral'`` chooses the setting with
+        rhombohedral axes of a trigonal group, ``'hexagonal'`` one with hexagonal axes, which every
+        group of the hexagonal family has. A SymcrysError for another family.
+    unique_axis : keyword-only, optional
+        The unique axis of a monoclinic group, as ITA's headlines name it (``'b'``, the standard,
+        ``'c'``, ``'a'``). A SymcrysError for another system.
     setting : keyword-only, optional
-        The setting: its 1-based index, or its ITC symbol, short or full (spaces ignored: ``'312'``,
-        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b,
-        c and a) is an error that names them. Default: the ITC default setting.
+        The setting: its 1-based index, or a symbol, read as ``find_point_group`` reads it (spaces
+        ignored: ``'312'``, ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (the key
+        ``'32'``, ``'2'`` for unique axis b, c and a) gives the standard (ITC default) setting,
+        unless ``axes`` or ``unique_axis`` chooses another. Default: the ITC default setting.
 
     Returns
     -------
@@ -526,7 +610,7 @@ def symmetry_directions(
         Each entry of ``directions`` has ``lattice`` (int64, shape (3,)) and ``cartesian`` (float64,
         shape (3,)).
     """
-    return list(_call("symmetryDirections", key, _shared.options(setting=setting)))
+    return list(_call("symmetryDirections", key, _shared.options(setting=setting, axes=axes, unique_axis=unique_axis)))
 
 
 # --- properties of a list of operations ----------------------------------------------------------
@@ -590,6 +674,8 @@ def orbit(
     indices: Mapping[str, ArrayLike],
     *,
     setting: Optional[Union[int, str]] = None,
+    axes: Optional[Literal["hexagonal", "rhombohedral"]] = None,
+    unique_axis: Optional[Literal["a", "b", "c"]] = None,
 ) -> list[dict[str, Any]]:
     """The orbit of a face (hkl) or of a lattice direction [uvw] under a crystal class, exactly, in
     the lattice basis: the distinct faces (directions), in the order in which the operations reach
@@ -601,10 +687,18 @@ def orbit(
 
     Parameters
     ----------
+    axes : keyword-only, optional
+        The axes, as ITA's headlines name them: ``'rhombohedral'`` chooses the setting with
+        rhombohedral axes of a trigonal group, ``'hexagonal'`` one with hexagonal axes, which every
+        group of the hexagonal family has. A SymcrysError for another family.
+    unique_axis : keyword-only, optional
+        The unique axis of a monoclinic group, as ITA's headlines name it (``'b'``, the standard,
+        ``'c'``, ``'a'``). A SymcrysError for another system.
     setting : keyword-only, optional
-        The setting: its 1-based index, or its ITC symbol, short or full (spaces ignored: ``'312'``,
-        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b,
-        c and a) is an error that names them. Default: the ITC default setting.
+        The setting: its 1-based index, or a symbol, read as ``find_point_group`` reads it (spaces
+        ignored: ``'312'``, ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (the key
+        ``'32'``, ``'2'`` for unique axis b, c and a) gives the standard (ITC default) setting,
+        unless ``axes`` or ``unique_axis`` chooses another. Default: the ITC default setting.
 
     Returns
     -------
@@ -612,7 +706,7 @@ def orbit(
         In each, ``hkl`` (or ``uvw``) is an int64 array of shape (3,) and ``operations`` an int64
         array of shape (n,); ``indices`` is a dict ``{"hkl": ...}`` or ``{"uvw": ...}``.
     """
-    return list(_call("orbit", key, dict(indices), _shared.options(setting=setting)))
+    return list(_call("orbit", key, dict(indices), _shared.options(setting=setting, axes=axes, unique_axis=unique_axis)))
 
 
 def orbit_of(
@@ -645,17 +739,29 @@ def orbit_of(
 
 
 def wyckoff_positions(
-    key: str, *, setting: Optional[Union[int, str]] = None
+    key: str,
+    *,
+    setting: Optional[Union[int, str]] = None,
+    axes: Optional[Literal["hexagonal", "rhombohedral"]] = None,
+    unique_axis: Optional[Literal["a", "b", "c"]] = None,
 ) -> list[dict[str, Any]]:
     """The Wyckoff positions of a crystal class for directions, as ITA tabulates them (general
     position first) (docs/conventions.md, "Site symmetry and Wyckoff positions").
 
     Parameters
     ----------
+    axes : keyword-only, optional
+        The axes, as ITA's headlines name them: ``'rhombohedral'`` chooses the setting with
+        rhombohedral axes of a trigonal group, ``'hexagonal'`` one with hexagonal axes, which every
+        group of the hexagonal family has. A SymcrysError for another family.
+    unique_axis : keyword-only, optional
+        The unique axis of a monoclinic group, as ITA's headlines name it (``'b'``, the standard,
+        ``'c'``, ``'a'``). A SymcrysError for another system.
     setting : keyword-only, optional
-        The setting: its 1-based index, or its ITC symbol, short or full (spaces ignored: ``'312'``,
-        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b,
-        c and a) is an error that names them. Default: the ITC default setting.
+        The setting: its 1-based index, or a symbol, read as ``find_point_group`` reads it (spaces
+        ignored: ``'312'``, ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (the key
+        ``'32'``, ``'2'`` for unique axis b, c and a) gives the standard (ITC default) setting,
+        unless ``axes`` or ``unique_axis`` chooses another. Default: the ITC default setting.
 
     Returns
     -------
@@ -663,7 +769,7 @@ def wyckoff_positions(
         In each, ``representative`` has ``hkl`` (int64, shape (3,)) and ``cartesian`` (float64,
         shape (3,)), ``site_symmetry_operations`` is an int64 array of shape (n,).
     """
-    return list(_call("wyckoffPositions", key, _shared.options(setting=setting)))
+    return list(_call("wyckoffPositions", key, _shared.options(setting=setting, axes=axes, unique_axis=unique_axis)))
 
 
 def wyckoff_position_of(
@@ -671,6 +777,8 @@ def wyckoff_position_of(
     direction: ArrayLike,
     *,
     setting: Optional[Union[int, str]] = None,
+    axes: Optional[Literal["hexagonal", "rhombohedral"]] = None,
+    unique_axis: Optional[Literal["a", "b", "c"]] = None,
     tolerance: Optional[float] = None,
 ) -> dict[str, Any]:
     """The Wyckoff position of a direction (Cartesian) in a crystal class: the position whose site
@@ -679,10 +787,18 @@ def wyckoff_position_of(
 
     Parameters
     ----------
+    axes : keyword-only, optional
+        The axes, as ITA's headlines name them: ``'rhombohedral'`` chooses the setting with
+        rhombohedral axes of a trigonal group, ``'hexagonal'`` one with hexagonal axes, which every
+        group of the hexagonal family has. A SymcrysError for another family.
+    unique_axis : keyword-only, optional
+        The unique axis of a monoclinic group, as ITA's headlines name it (``'b'``, the standard,
+        ``'c'``, ``'a'``). A SymcrysError for another system.
     setting : keyword-only, optional
-        The setting: its 1-based index, or its ITC symbol, short or full (spaces ignored: ``'312'``,
-        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b,
-        c and a) is an error that names them. Default: the ITC default setting.
+        The setting: its 1-based index, or a symbol, read as ``find_point_group`` reads it (spaces
+        ignored: ``'312'``, ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (the key
+        ``'32'``, ``'2'`` for unique axis b, c and a) gives the standard (ITC default) setting,
+        unless ``axes`` or ``unique_axis`` chooses another. Default: the ITC default setting.
     tolerance : keyword-only, optional
         A direction counts as fixed by an operation if the operation moves its unit vector by less
         than this (Euclidean distance). Default 10⁻⁶; a caller whose directions carry rounding
@@ -699,7 +815,7 @@ def wyckoff_position_of(
             "wyckoffPositionOf",
             key,
             np.asarray(direction),
-            _shared.options(setting=setting, tolerance=tolerance),
+            _shared.options(setting=setting, axes=axes, unique_axis=unique_axis, tolerance=tolerance),
         )
     )
 
@@ -708,7 +824,11 @@ def wyckoff_position_of(
 
 
 def crystal_forms(
-    key: str, *, setting: Optional[Union[int, str]] = None
+    key: str,
+    *,
+    setting: Optional[Union[int, str]] = None,
+    axes: Optional[Literal["hexagonal", "rhombohedral"]] = None,
+    unique_axis: Optional[Literal["a", "b", "c"]] = None,
 ) -> list[dict[str, Any]]:
     """The crystal forms of a crystal class, as ITA 6th ed. Table 3.2.3.2 prints them: for each
     Wyckoff position (general position first) its basic form (two for the cubic faces (hhl) of -43m
@@ -716,10 +836,18 @@ def crystal_forms(
 
     Parameters
     ----------
+    axes : keyword-only, optional
+        The axes, as ITA's headlines name them: ``'rhombohedral'`` chooses the setting with
+        rhombohedral axes of a trigonal group, ``'hexagonal'`` one with hexagonal axes, which every
+        group of the hexagonal family has. A SymcrysError for another family.
+    unique_axis : keyword-only, optional
+        The unique axis of a monoclinic group, as ITA's headlines name it (``'b'``, the standard,
+        ``'c'``, ``'a'``). A SymcrysError for another system.
     setting : keyword-only, optional
-        The setting: its 1-based index, or its ITC symbol, short or full (spaces ignored: ``'312'``,
-        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b,
-        c and a) is an error that names them. Default: the ITC default setting.
+        The setting: its 1-based index, or a symbol, read as ``find_point_group`` reads it (spaces
+        ignored: ``'312'``, ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (the key
+        ``'32'``, ``'2'`` for unique axis b, c and a) gives the standard (ITC default) setting,
+        unless ``axes`` or ``unique_axis`` chooses another. Default: the ITC default setting.
 
     Returns
     -------
@@ -727,7 +855,7 @@ def crystal_forms(
         In each, ``representative`` has ``hkl`` (int64, shape (3,)) and ``cartesian`` (float64,
         shape (3,)).
     """
-    return list(_call("crystalForms", key, _shared.options(setting=setting)))
+    return list(_call("crystalForms", key, _shared.options(setting=setting, axes=axes, unique_axis=unique_axis)))
 
 
 # --- tensors -------------------------------------------------------------------------------------
@@ -738,6 +866,8 @@ def tensor_form(
     spec: TensorSpec | Mapping[str, Any] | TensorPropertyName,
     *,
     setting: Optional[Union[int, str]] = None,
+    axes: Optional[Literal["hexagonal", "rhombohedral"]] = None,
+    unique_axis: Optional[Literal["a", "b", "c"]] = None,
 ) -> TensorForm:
     """The form of a tensor under a crystal class in the requested setting (default: the ITC default
     setting). The tensor is given by its specification or by the name of a property in
@@ -745,10 +875,18 @@ def tensor_form(
 
     Parameters
     ----------
+    axes : keyword-only, optional
+        The axes, as ITA's headlines name them: ``'rhombohedral'`` chooses the setting with
+        rhombohedral axes of a trigonal group, ``'hexagonal'`` one with hexagonal axes, which every
+        group of the hexagonal family has. A SymcrysError for another family.
+    unique_axis : keyword-only, optional
+        The unique axis of a monoclinic group, as ITA's headlines name it (``'b'``, the standard,
+        ``'c'``, ``'a'``). A SymcrysError for another system.
     setting : keyword-only, optional
-        The setting: its 1-based index, or its ITC symbol, short or full (spaces ignored: ``'312'``,
-        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b,
-        c and a) is an error that names them. Default: the ITC default setting.
+        The setting: its 1-based index, or a symbol, read as ``find_point_group`` reads it (spaces
+        ignored: ``'312'``, ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (the key
+        ``'32'``, ``'2'`` for unique axis b, c and a) gives the standard (ITC default) setting,
+        unless ``axes`` or ``unique_axis`` chooses another. Default: the ITC default setting.
 
     Returns
     -------
@@ -758,7 +896,7 @@ def tensor_form(
         number of free parameters. A row of ``basis`` reshaped to ``(3,) * rank`` is a tensor.
     """
     return _shared.form(
-        _call("tensorForm", key, _shared.spec(spec), _shared.options(setting=setting))
+        _call("tensorForm", key, _shared.spec(spec), _shared.options(setting=setting, axes=axes, unique_axis=unique_axis))
     )
 
 
