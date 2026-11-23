@@ -655,8 +655,9 @@ The conventions themselves are in `docs/conventions.md`; here, what was decided 
   magnetic API too, so that a class has the same `settings` in both entry points and
   `{ setting: '32' }` selects the same setting (the rhombohedral one) in both; the symbol derived by
   the rule (`32'1`) still selects the default setting; a full symbol is compared with its spaces
-  first, so that `3 2'` selects the rhombohedral setting of `32'` (_open question to Thomas in the
-  PR of step 7a_).
+  first, so that `3 2'` selects the rhombohedral setting of `32'`. Confirmed by Thomas on 2026-11-23
+  (#150): the white groups keep `321`, and the default short symbol is the one of Table 1.5.2.3
+  (`3m'`), although Vol. D writes `3m'1` where it sets the orientation against `31m'` (p. 140).
 - **Magnetic point groups: data** _(Storage in the Birss frame replaced by "Pure ITC" above; the reason
   given for the type names is corrected in #109. Since #122 PR 2c the ITC full symbols of the
   black-and-white groups are stored, one per setting, and the rule runs the other way: the time
