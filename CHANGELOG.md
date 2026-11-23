@@ -65,6 +65,8 @@ All notable changes to symcrys are recorded here. The format follows
   refuse a record without it, with a hint if it has `matrix`; a record of `operations` passes as it
   is. `residualOperations` reads `matrix` and refuses a matrix that is not integer, which before gave
   a wrong answer without an error for a Cartesian matrix (#94). The values themselves are unchanged.
+  `symcrys/magnetic` exports the type `CartesianOperation` (`{ cartesian, timeReversal }`), what the
+  functions for a list of operations read.
 
   | Up to 0.10                                                      | From 0.11                                                        |
   | --------------------------------------------------------------- | ---------------------------------------------------------------- |

@@ -522,7 +522,10 @@ describe('the 122 magnetic point groups', () => {
       const classKey = crystalClassOf(key);
       for (const s of settings(key)) {
         const ops = operations(key, { setting: s.index });
+        // The class setting with the same Cartesian operations and the same axes (hexagonal and
+        // rhombohedral axes share the Cartesian operations, not the lattice basis).
         const classSetting = settings(classKey).find((c) => {
+          if (c.axes !== s.axes) return false;
           const classOps = operations(classKey, { setting: c.index });
           return classOps.every((x) =>
             ops.some((o) => sameGroup([{ m: x.cartesian.map((r) => [...r]), t: o.timeReversal }], [o])),
@@ -531,6 +534,8 @@ describe('the 122 magnetic point groups', () => {
         const classOps = operations(classKey, { setting: classSetting.index });
         const expected = group.type === 'II' ? [...classOps, ...classOps] : classOps;
         expect(ops.map((o) => o.cartesian)).toEqual(expected.map((o) => o.cartesian));
+        // And the same matrices W in the lattice basis, those of ITA's general position for the class.
+        expect(ops.map((o) => o.matrix)).toEqual(expected.map((o) => o.matrix));
         if (group.type === 'II') {
           expect(ops.map((o) => o.timeReversal)).toEqual([...classOps.map(() => false), ...classOps.map(() => true)]);
         }
@@ -542,6 +547,10 @@ describe('the 122 magnetic point groups', () => {
             ? [...classGens.map((g) => g.cartesian), ops[0].cartesian]
             : classGens.map((g) => g.cartesian);
         expect(gens.map((g) => g.cartesian)).toEqual(expectedGens);
+        const identityW = classOps[0].matrix;
+        expect(gens.map((g) => g.matrix)).toEqual(
+          group.type === 'II' ? [...classGens.map((g) => g.matrix), identityW] : classGens.map((g) => g.matrix),
+        );
         if (group.type === 'II') expect(gens[gens.length - 1].timeReversal).toBe(true);
         expect(sameGroup(close(gens.map((g) => ({ m: g.cartesian.map((r) => [...r]), t: g.timeReversal }))), ops)).toBe(
           true,

@@ -388,6 +388,9 @@ describe('every function for a list of Cartesian operations reads cartesian, and
       expect(call).toThrow(RangeError);
       expect(call).toThrow(latticeOnly);
     }
+    // Not a record at all: a RangeError, not a TypeError.
+    expect(() => classes.siteSymmetry([null as never], [1, 0, 0])).toThrow(RangeError);
+    expect(() => classes.tensorFormOf([7 as never], 'piezoelectric')).toThrow(RangeError);
     // A record as operations() gives it passes as it is.
     expect(classes.pointGroupOf(classes.operations('-6m2', { setting: 2 }))).toEqual({ key: '-6m2', setting: 2 });
   });

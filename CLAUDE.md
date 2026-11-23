@@ -546,7 +546,8 @@ The conventions themselves are in `docs/conventions.md`; here, what was decided 
   the forms of a class refer by number; the English names are terms of the print source, like the
   symbols, while names in other languages (stereography's German ones) and the link ids stay in the
   apps; point forms are left out. **Names**, in the `…Of` scheme: `crystalForms(key, { setting })`;
-  `pointGroupOf(operations)` beside `pointGroup(key)`; `latticeOperations(key, { setting })`;
+  `pointGroupOf(operations)` beside `pointGroup(key)`; `latticeOperations(key, { setting })` _(replaced
+  by the field `matrix` of every operation, #121 step 6d)_;
   `orbit(key, …)`, exact in the lattice basis, and `orbitOf(operations, direction)`, Cartesian, with
   coinciding poles merged. **Tolerance:** an optional `tolerance`, default `EPSILON`, as for
   `siteSymmetry`. **Lattice-basis operations** for all families and settings, integer and without
@@ -597,7 +598,7 @@ The conventions themselves are in `docs/conventions.md`; here, what was decided 
   Chosen by Thomas among three proposals: two entry points with the same function names (the import
   decides the reading), rather than two families of names in one entry point
   (`tensorForm` / `magneticTensorForm`) or a context option. The crystallographic API has no time
-  reversal at all (operations `{ matrix }`, no time parity, no `type`, the time-even properties
+  reversal at all (operations `{ matrix, cartesian }` since #121 step 6d, no time parity, no `type`, the time-even properties
   only), and a question that involves time reversal is an error that names the magnetic API,
   because a wrong reading should fail, not answer. Chosen while implementing _(under review, #110
   item 8)_: `timeParity: 'i'` and
@@ -779,7 +780,9 @@ while implementing gets its own note here.
   object shape `{ matrix }` of the lattice operations of the point groups with `translation` added, and `translation` as
   numbers (1/3 as the nearest double), as spglib gives its symmetry (integer rotations, float
   translations), which is what users of such a library expect. The Cartesian operations of the
-  crystal classes and magnetic groups (`operations`, tensors) stay as they are. The alternatives were
+  crystal classes and magnetic groups (`operations`, tensors) stay as they are _(since #121 step 6d
+  an operation of a point group is `{ matrix, cartesian }`, `matrix` W as here, "The operation
+  record")_. The alternatives were
   exact fractions at the API ([numerator, denominator] pairs: unusual, and every consumer would
   compute with fractions itself), floating point with snapping as for the point groups (not exact;
   comparisons modulo 1 with a tolerance, cf. plane-groups `CLAUDE.md`, "Toleranzen der Bestimmung")

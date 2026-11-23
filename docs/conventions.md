@@ -138,8 +138,9 @@ groups" below); its keys are not keys of the other two.
 
 ## Cartesian frame
 
-All matrices are Cartesian, in a right-handed orthonormal frame x, y, z, row-major, acting on
-column vectors. How the conventional lattice basis a, b, c sits in that frame
+Cartesian matrices (the `cartesian` of an operation, rotations of tensors, bases) are taken in a
+right-handed orthonormal frame x, y, z, row-major, acting on column vectors; the `matrix` of an
+operation is in the lattice basis ("Operations"). How the conventional lattice basis a, b, c sits in that frame
 (`latticeBasis(family)`, columns a, b, c with unit edge lengths):
 
 | Family                      | Frame                                               |

@@ -120,7 +120,7 @@ export function siteTolerance(options?: SiteSymmetryOptions): number {
  * their fixed space, repeated until stable, so that for a group the result is a subgroup and the
  * set direction lies exactly on its elements. For a list that is not a group, `multiplicity` may
  * not be an integer. Each operation is read by its Cartesian matrix
- * (`cartesian`), which must be orthogonal; a record without it is refused. Throws a RangeError for a matrix that is not orthogonal (within
+ * (`cartesian`). Throws a RangeError for an operation without an orthogonal Cartesian matrix (`cartesian`; within
  * `tolerance`, at least `EPSILON`), for a zero vector, and if the closed operations fix no common
  * direction or do not settle into a group (a tolerance far too large, e.g. 0.5).
  */

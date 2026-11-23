@@ -516,8 +516,8 @@ export function settings(key: MagneticPointGroupKey): readonly Setting[] {
 const frozenMatrix = (m: Mat3 | IntMat3): Mat3 =>
   Object.freeze(m.map((row) => Object.freeze(row.map((v) => v + 0)))) as unknown as Mat3;
 
-/** An integer matrix from one that should be one; throws if it is not (a data error). */
-function integer(m: Mat3, what: string): Mat3 {
+/** An integer matrix from one that should be one; throws if it is not (a data error). Internal. */
+export function integer(m: Mat3, what: string): Mat3 {
   const r = m.map((row) => row.map((v) => Math.round(v) + 0)) as unknown as Mat3;
   if (!m.every((row, i) => row.every((v, j) => Math.abs(v - r[i][j]) < 1e-9))) {
     throw new Error(`${what} is not an integer matrix in the lattice basis: ${JSON.stringify(m)}`);

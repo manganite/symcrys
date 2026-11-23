@@ -7,17 +7,13 @@ import { apply, inverse, type Mat3, type Vec3 } from '../linalg.js';
 import { checkCartesianOperations } from '../operations.js';
 import { siteTolerance } from '../siteSymmetry.js';
 import type { Uvw } from '../symmetryDirections.js';
-import { operations as groupOperations, type MagneticPointGroupKey, type SettingOptions } from './pointGroups.js';
+import {
+  integer,
+  operations as groupOperations,
+  type MagneticPointGroupKey,
+  type SettingOptions,
+} from './pointGroups.js';
 import type { Hkl } from './wyckoff.js';
-
-/** An integer matrix from one that should be one; throws if it is not (a data error). */
-function integer(m: Mat3, what: string): Mat3 {
-  const r = m.map((row) => row.map((v) => Math.round(v) + 0)) as unknown as Mat3;
-  if (!m.every((row, i) => row.every((v, j) => Math.abs(v - r[i][j]) < 1e-9))) {
-    throw new Error(`${what} is not an integer matrix in the lattice basis: ${JSON.stringify(m)}`);
-  }
-  return r;
-}
 
 const deepFreeze = (m: Mat3): Mat3 => Object.freeze(m.map((row) => Object.freeze([...row]))) as unknown as Mat3;
 
@@ -141,8 +137,7 @@ export interface OrbitPole {
  * operation, coinciding images merged (closer than `tolerance`, default `EPSILON`, as for
  * `siteSymmetry`), in the order in which the operations reach them, each with the indices of the
  * operations that map the direction there. The list is taken as it is, not closed into a group.
- * Time reversal is ignored. Throws a RangeError for a zero vector and for a matrix that is not
- * orthogonal (`cartesian` of each operation, within `tolerance`, at least `EPSILON`).
+ * Time reversal is ignored. Throws a RangeError for a zero vector and for an operation without an orthogonal Cartesian matrix (`cartesian`; within `tolerance`, at least `EPSILON`).
  */
 export function orbitOf(
   operations: readonly { readonly cartesian: Mat3 }[],

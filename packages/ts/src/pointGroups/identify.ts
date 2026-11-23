@@ -164,7 +164,7 @@ function keyOfSignature(s: string): MagneticPointGroupKey | undefined {
  * first, two matrices being equal when no entry differs by `tolerance` (default `EPSILON`) or more.
  * Time reversal counts: a list with time reversal gives a magnetic point group. Returns undefined
  * if the operations generate no point group (an operation of order 5, a group larger than 96).
- * Throws a RangeError for a matrix that is not orthogonal (within `tolerance`, at least
+ * Throws a RangeError for an operation without an orthogonal Cartesian matrix (`cartesian`; within `tolerance`, at least
  * `EPSILON`) and for an operation that does not say whether it is combined with time reversal.
  * The classes `1` and `-1` have one setting and no orientation, so they always have
  * setting 1.
@@ -174,8 +174,8 @@ export function pointGroupOf(
   options?: PointGroupOfOptions,
 ): IdentifiedPointGroup | undefined {
   const tolerance = toleranceOf(options);
-  checkTimeReversal(operations);
   checkCartesianOperations(operations, tolerance);
+  checkTimeReversal(operations);
   const group = close(operations, tolerance);
   if (!group) return undefined;
   const key = keyOfSignature(signature(group, tolerance));
@@ -225,7 +225,7 @@ function describe(op: CartesianOperation, i: number, tolerance: number): Cartesi
  * Cartesian axis (rotation or rotoinversion axis, mirror normal) with its first non-zero component,
  * in the order x, y, z, positive, and for n ≥ 3 the sense about that axis. The axes are not named
  * by lattice directions, since the list need not belong to a setting; for a point group given by its
- * key, `describeOperations` names them. Throws a RangeError for a matrix that is not orthogonal or
+ * key, `describeOperations` names them. Throws a RangeError for an operation without an orthogonal Cartesian matrix (`cartesian`) or
  * not a crystallographic operation (a rotation part by an angle other than 360°/n, n = 1, 2, 3, 4,
  * 6), both within `tolerance` (default `EPSILON`, as for `pointGroupOf`), and for an operation that
  * does not say whether it is combined with time reversal.
