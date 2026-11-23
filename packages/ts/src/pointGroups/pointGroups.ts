@@ -238,7 +238,7 @@ function settingOfSymbol(d: GroupData, text: string): number {
   const all = Array.from({ length: d.settingCount }, (_, i) => i + 1);
   const byFull = all.filter((i) => settingSymbols(d, i).full === spaced(text));
   if (byFull.length === 1) return byFull[0]!;
-  const target = compact(text);
+  const target = birssCubic(compact(text)) === d.key ? d.key : compact(text);
   const named = all.filter((i) => {
     const s = settingSymbols(d, i);
     return compact(s.short) === target || compact(derivedSymbols(d, i).short) === target || compact(s.full) === target;
@@ -720,30 +720,34 @@ function find(hm: string, classesOnly: boolean): PointGroupInSetting<MagneticPoi
     })),
   );
   if (bySchoenflies) return bySchoenflies;
-  // Birss prints the cubic groups without the overbar on the 3, which takes the prime of the mirror
-  // before it (Birss Tables 3 and 6: `m3m`, `m'3` for `m-3m`, `m'-3'`); the cubic groups have one
-  // setting.
-  const birss = /^m('?)3(?!')(.*)$/.exec(target);
-  if (birss) {
-    const key = `m${birss[1]}-3${birss[1]}${birss[2]}`;
-    const d = candidates.find((c) => c.key === key);
-    if (d) return { key: d.key, setting: d.itcDefault };
-  }
-  return undefined;
+  const key = birssCubic(target);
+  const d = key === undefined ? undefined : candidates.find((c) => c.key === key);
+  return d ? { key: d.key, setting: d.itcDefault } : undefined;
+}
+
+/**
+ * Birss prints the cubic groups without the overbar on the 3, which takes the prime of the mirror
+ * before it (Birss Tables 3 and 6: `m3m`, `m'3` for `m-3m`, `m'-3'`): the symbol with the overbar,
+ * which the caller looks up as a key (the cubic groups have one setting); undefined for any other
+ * symbol.
+ */
+function birssCubic(compactTarget: string): string | undefined {
+  const m = /^m('?)3(?!')(.*)$/.exec(compactTarget);
+  return m ? `m${m[1]}-3${m[1]}${m[2]}` : undefined;
 }
 
 /**
  * Finds a crystal class by a symbol, read tolerantly.
- * What is read (#96; docs/conventions.md, "Reading symbols"):
- * - a symbol written with spaces as a full symbol first (`3 2`: the rhombohedral setting of `32`);
- * - the key, which gives the default setting, also where it is the symbol of another setting (`32`);
- * - the short or full symbol of a setting, spaces ignored; one that several settings share (`2`,
- *   unique axis b, c and a) gives the default setting;
- * - a Schoenflies symbol, ITA's or ITC Vol. D's (`D3`, `C3i`, `S6`), which gives the default setting;
- * - Birss's cubic symbols without the overbar on the 3 (`m3m`).
+ * It reads, in this order (#96; docs/conventions.md, "Reading symbols"): a symbol written with
+ * spaces as a full symbol first (`3 2`: the rhombohedral setting of `32`); the key, which gives the
+ * default setting, also where it is the symbol of another setting (`32`); the short or full symbol
+ * of a setting, spaces ignored, where a symbol that several settings share (`2`, unique axis b, c
+ * and a) gives the default setting; a Schoenflies symbol, ITA's or ITC Vol. D's (`D3`, `C3i`,
+ * `S6`), which gives the default setting; Birss's cubic symbols without the overbar on the 3
+ * (`m3m`).
  *
- * Spellings: the overbar as `-`, `−`, a combining overbar (`m3̄m`), `bar3` (also with a backslash and braces, as in LaTeX);
- * Schoenflies subscripts also as Unicode subscripts (`C₃ᵥ`). Returns undefined if nothing matches,
+ * Spellings: the overbar as `-`, `−`, a combining overbar or `¯` after the digit (`m3̄m`), `bar3` (also with a backslash and braces, as in LaTeX);
+ * Schoenflies subscripts also as Unicode or LaTeX subscripts (`C₃ᵥ`, `C_{3v}`). Returns undefined if nothing matches,
  * also for a value that is not a string and for the symbol of a magnetic group with time reversal
  * (`findMagneticPointGroup`); a symbol that names several groups is a RangeError that lists them.
  */
@@ -755,16 +759,16 @@ export function findPointGroup(hm: string): PointGroupInSetting | undefined {
 /**
  * Finds one of the 122 magnetic point groups (the 32 crystal classes included) by a symbol, read
  * tolerantly. A prime marks time reversal: `4'/mmm'`, `2221'`.
- * What is read (#96; docs/conventions.md, "Reading symbols"):
- * - a symbol written with spaces as a full symbol first (`3 2`: the rhombohedral setting of `32`);
- * - the key, which gives the default setting, also where it is the symbol of another setting (`32`);
- * - the short or full symbol of a setting, spaces ignored; one that several settings share (`2`,
- *   unique axis b, c and a) gives the default setting;
- * - a Schoenflies symbol, ITA's or ITC Vol. D's (`D3`, `C3i`, `S6`), which gives the default setting;
- * - Birss's cubic symbols without the overbar on the 3 (`m3m`).
+ * It reads, in this order (#96; docs/conventions.md, "Reading symbols"): a symbol written with
+ * spaces as a full symbol first (`3 2`: the rhombohedral setting of `32`); the key, which gives the
+ * default setting, also where it is the symbol of another setting (`32`); the short or full symbol
+ * of a setting, spaces ignored, where a symbol that several settings share (`2`, unique axis b, c
+ * and a) gives the default setting; a Schoenflies symbol, ITA's or ITC Vol. D's (`D3`, `C3i`,
+ * `S6`), which gives the default setting; Birss's cubic symbols without the overbar on the 3
+ * (`m3m`).
  *
- * Spellings: the overbar as `-`, `−`, a combining overbar (`m3̄m`), `bar3` (also with a backslash and braces, as in LaTeX);
- * the prime as `'`, `′`, `ʹ` or `’`; Schoenflies subscripts also as Unicode subscripts (`D₃d(S₆)`).
+ * Spellings: the overbar as `-`, `−`, a combining overbar or `¯` after the digit (`m3̄m`), `bar3` (also with a backslash and braces, as in LaTeX);
+ * the prime as `'`, `′`, `ʹ` or `’`; Schoenflies subscripts also as Unicode or LaTeX subscripts (`D₃d(S₆)`, `D_{3d}`).
  * Returns undefined if nothing matches, also for a value that is not a string; a symbol that names
  * several groups is a RangeError that lists them.
  */

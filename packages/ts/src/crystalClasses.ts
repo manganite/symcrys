@@ -258,16 +258,16 @@ export function pointGroups(): readonly PointGroup[] {
 
 /**
  * Finds a crystal class by a symbol, read tolerantly.
- * What is read (#96; docs/conventions.md, "Reading symbols"):
- * - a symbol written with spaces as a full symbol first (`3 2`: the rhombohedral setting of `32`);
- * - the key, which gives the default setting, also where it is the symbol of another setting (`32`);
- * - the short or full symbol of a setting, spaces ignored; one that several settings share (`2`,
- *   unique axis b, c and a) gives the default setting;
- * - a Schoenflies symbol, ITA's or ITC Vol. D's (`D3`, `C3i`, `S6`), which gives the default setting;
- * - Birss's cubic symbols without the overbar on the 3 (`m3m`).
+ * It reads, in this order (#96; docs/conventions.md, "Reading symbols"): a symbol written with
+ * spaces as a full symbol first (`3 2`: the rhombohedral setting of `32`); the key, which gives the
+ * default setting, also where it is the symbol of another setting (`32`); the short or full symbol
+ * of a setting, spaces ignored, where a symbol that several settings share (`2`, unique axis b, c
+ * and a) gives the default setting; a Schoenflies symbol, ITA's or ITC Vol. D's (`D3`, `C3i`,
+ * `S6`), which gives the default setting; Birss's cubic symbols without the overbar on the 3
+ * (`m3m`).
  *
- * Spellings: the overbar as `-`, `−`, a combining overbar (`m3̄m`), `bar3` (also with a backslash and braces, as in LaTeX);
- * Schoenflies subscripts also as Unicode subscripts (`C₃ᵥ`). Returns undefined if nothing matches,
+ * Spellings: the overbar as `-`, `−`, a combining overbar or `¯` after the digit (`m3̄m`), `bar3` (also with a backslash and braces, as in LaTeX);
+ * Schoenflies subscripts also as Unicode or LaTeX subscripts (`C₃ᵥ`, `C_{3v}`). Returns undefined if nothing matches,
  * also for a value that is not a string and for the symbol of a magnetic group with time reversal; a
  * symbol that names several groups is a RangeError that lists them.
  */

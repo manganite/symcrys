@@ -407,17 +407,20 @@ writes; ITC Vol. D and the magnetic API write `S6`).
 normalisation before the comparison (#96; decided by Thomas on 2026-11-22 and 2026-11-23):
 
 - **Spellings** (`notation.ts`): the overbar as `-`, `−` (U+2212), a combining overbar or overline
-  after the digit (`m3̄m`), `bar3`, or LaTeX's `\bar{3}` and `\overline{3}`; the prime as `'`, `′`
+  after the digit (`m3̄m`), the macron `¯` after the digit (as the text layer of the ITA 2016 PDFs
+  gives it), `bar3`, or LaTeX's `\bar{3}` and `\overline{3}`; the prime as `'`, `′`
   (U+2032), `ʹ` (U+02B9) or `’` (U+2019, which editors put for an apostrophe); Schoenflies subscripts
-  also as Unicode subscripts (`C₃ᵥ`, `D₃d(S₆)`); spaces ignored, except as below.
+  also as Unicode subscripts (`C₃ᵥ`, `D₃d(S₆)`) or LaTeX's (`C_{3v}`, `C_3`); spaces ignored, except
+  as below.
 - **What `findPointGroup` reads,** in this order:
   1. a symbol written with spaces as a full symbol first: `3 2` is the rhombohedral setting of `32`,
-     `-3 2/m` that of `-3m` (Thomas, 2026-11-23);
+     `-3 2/m` that of `-3m` (Thomas, 2026-11-23); a full symbol of two settings (`3 1'`, hexagonal
+     and rhombohedral axes) gives the default setting;
   2. the key, which gives the default setting, also where it is the short symbol of another setting
      (`32`);
   3. the short or full symbol of a setting, spaces ignored (and the short symbol by the rule,
-     `32'1`); one that several settings share (`2` for unique axis b, c and a; `3 1'` for hexagonal
-     and rhombohedral axes) gives the default setting;
+     `32'1`); one that several settings share (`2` for unique axis b, c and a) gives the default
+     setting;
   4. a Schoenflies symbol, with `C3i` or `S6` alike (`D3`, `D4h(D2h)`, `D4R`), which names the
      group, not an orientation, and gives the default setting (Thomas, 2026-11-23);
   5. Birss's cubic symbols, printed without the overbar on the 3, which takes the prime of the mirror
@@ -428,9 +431,10 @@ normalisation before the comparison (#96; decided by Thomas on 2026-11-22 and 20
   the symbols of the library does. The crystallographic API finds no magnetic group, in any
   spelling.
 
-- **`{ setting }`** reads a symbol of a setting with the same spellings: its full symbol written with
-  spaces first, then its short or full symbol with the spaces ignored; a symbol that several settings
-  share is an error that lists them ("Settings").
+- **`{ setting }`** reads a symbol of a setting with the same spellings, and Birss's cubic symbols:
+  its full symbol written with spaces first, then its short or full symbol with the spaces ignored;
+  a symbol that several settings share is an error that lists them ("Settings"). A Schoenflies
+  symbol names no setting and is not read here.
 
 `symcrys/plane` has no lookup by symbol yet (#97).
 

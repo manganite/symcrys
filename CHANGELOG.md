@@ -31,7 +31,8 @@ All notable changes to symcrys are recorded here. The format follows
   in both entry points reads every symbol `symbol()` writes, Schoenflies symbols included (`Oh`,
   `D4h(D2h)`, `C3i` and `S6` alike; they give the default setting), Birss's cubic symbols (`m3m`,
   `m'3m`), and the spellings of print and pasted text: the overbar as `−`, a combining overbar,
-  `bar3` or `\bar{3}`, the prime as `′`, `ʹ` or `’`, Unicode subscripts (`C₃ᵥ`). The option
+  `¯` after the digit, `bar3` or `\bar{3}`, the prime as `′`, `ʹ` or `’`, Unicode or LaTeX subscripts
+  (`C₃ᵥ`, `C_{3v}`). The option
   `setting` reads the same spellings. A symbol that names several groups is a RangeError.
 
 ### Changed

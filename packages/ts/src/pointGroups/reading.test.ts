@@ -25,6 +25,14 @@ describe('normalizeSymbol', () => {
     expect(normalizeSymbol('D₃d(S₆)')).toBe('D3d(S6)');
     expect(normalizeSymbol('  -3   2/m  1 ')).toBe('-3 2/m 1');
     expect(compactSymbol(' -3 2/m 1 ')).toBe('-32/m1');
+    // A space after a bar word is kept (review of #151): `bar3 2/m` is the full symbol `-3 2/m`.
+    expect(normalizeSymbol('bar3 2/m')).toBe('-3 2/m');
+    expect(normalizeSymbol('\\bar 3 2')).toBe('-3 2');
+    expect(normalizeSymbol('m3' + String.fromCharCode(0xaf) + 'm')).toBe('m-3m'); // macron, ITA's text layer
+    expect(normalizeSymbol(String.fromCharCode(0x2010) + '42m')).toBe('-42m'); // hyphen
+    expect(normalizeSymbol(String.fromCharCode(0x2011) + '6m2')).toBe('-6m2'); // non-breaking hyphen
+    expect(normalizeSymbol('C_{3v}')).toBe('C3v');
+    expect(normalizeSymbol('D_3d')).toBe('D3d');
   });
 });
 
@@ -118,7 +126,12 @@ describe('findPointGroup reads the spellings of print and pasted text', () => {
     }
   });
 
-  it('a setting is chosen by its symbol in any spelling', () => {
+  it("a setting is chosen by its symbol in any spelling, and by Birss's cubic symbol", () => {
+    expect(classes.operations('m-3m', { setting: 'm3m' })).toBe(classes.operations('m-3m'));
+    expect(magnetic.operations("m'-3'm", { setting: "m'3m" })).toBe(magnetic.operations("m'-3'm"));
+    expect(() => classes.operations('m-3m', { setting: 'D4h' })).toThrow(/has no setting/);
+    expect(classes.findPointGroup('bar3 2/m')).toEqual({ key: '-3m', setting: 3 });
+    expect(classes.findPointGroup('C_{3v}')).toEqual({ key: '3m', setting: 1 });
     expect(classes.operations('-6m2', { setting: '−6 2 m' })).toBe(classes.operations('-6m2', { setting: 2 }));
     expect(magnetic.operations("32'", { setting: '3 2′' })).toBe(magnetic.operations("32'", { setting: 3 }));
     expect(magnetic.operations("-3m'", { setting: '3̄ 1 2′/m′' })).toBe(magnetic.operations("-3m'", { setting: 2 }));

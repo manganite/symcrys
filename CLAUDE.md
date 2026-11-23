@@ -157,7 +157,11 @@ option. The Birss mode, its data and its birss-app pins were removed in step 5 o
   or settings is an error that lists the candidates (#96). Decided further by Thomas on 2026-11-23
   (#96): a Schoenflies symbol names the group and gives its default setting; a symbol written with
   spaces is read as a full symbol first (`3 2`: the rhombohedral setting of `32`). Implemented in
-  #121 step 7b (`notation.ts`; `docs/conventions.md`, "Reading symbols").
+  #121 step 7b (`notation.ts`; `docs/conventions.md`, "Reading symbols"). Chosen while
+  implementing (#151): further spellings that are unambiguous, the right single quotation mark `’`
+  as a prime, the minus sign and the hyphens as the overbar, `¯` after the digit (the overbar of the
+  text layer of the ITA 2016 PDFs), LaTeX's `\bar{3}` and subscripts (`C_{3v}`); `{ setting }`
+  reads Birss's cubic symbols too, but no Schoenflies symbol, which names no setting.
 - **Signs of axes:** the axis of an operation (for a reflection, its normal) carries the sign of its
   Seitz symbol (ITA 6th ed., Tables 1.4.2.1/1.4.2.2), in every entry point; Table 2.1.3.1 stays the
   anchor of the lattice symmetry directions (#114; for the plane groups, #107).
