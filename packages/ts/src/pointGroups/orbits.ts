@@ -33,11 +33,13 @@ const latticeCache = new WeakMap<readonly Operation[], readonly Operation[]>();
 
 /**
  * The operations of a point group in the conventional lattice basis (a, b, c; for the trigonal
- * classes the hexagonal or the rhombohedral axes of the setting), in the order and with the time reversal of `operations` for the same
- * setting: integer matrices W acting on the coordinates of a lattice vector [uvw],
- * W = B⁻¹·R·B with the basis B of the setting (itcData.ts, `itcBasis`) and the Cartesian matrix R. They do not depend on
- * the cell angles, so they exist for every family; for the monoclinic and triclinic families a, b,
- * c are taken along x, y, z, as for the Wyckoff positions. They are the
+ * groups the hexagonal or the rhombohedral axes of the setting), in the order and with the time
+ * reversal of `operations` for the same setting: integer matrices W acting on the coordinates of a
+ * lattice vector [uvw], W = B⁻¹·R·B with the basis B of the setting (columns a, b, c, as
+ * `latticeBasis` gives them; for rhombohedral axes the obverse a_R, b_R, c_R in that hexagonal cell)
+ * and the Cartesian matrix R. They do not depend on the cell angles, so they exist for every family;
+ * for the monoclinic and triclinic families a, b, c are taken along x, y, z, as for the Wyckoff
+ * positions. They are the
  * matrices of ITA's general position (6th ed., Table 3.2.3.2). Not orthogonal in general: pass
  * them to no function that takes Cartesian operations (docs/conventions.md, "Lattice basis and
  * orbits").
