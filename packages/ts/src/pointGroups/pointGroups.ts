@@ -396,7 +396,7 @@ function settingSymbols(d: GroupData, index: number, c: Convention): { readonly 
   return result;
 }
 
-// --- properties fixed by the operations (setting 1, the frame all stored data share) ---------------
+// --- properties fixed by the operations (setting 1; a class and its Laue class share its frame) ----
 
 /** Contains the inversion, not combined with time reversal. */
 function hasInversion(ops: readonly Operation[]): boolean {

@@ -23,7 +23,6 @@ import {
   ORTHO_TO_A_SWAP,
   ORTHO_TO_B,
   ORTHO_TO_B_SWAP,
-  POINT_GROUP_DATA,
   POINT_GROUP_KEYS,
   ROT2_X,
   ROT2_Y,
@@ -312,10 +311,3 @@ export const BLACK_WHITE_DATA: readonly BlackWhiteData[] = [
 
 /** Schoenflies symbol of a grey group: that of its class with the subscript R (ITC Vol. D, Table 1.5.2.1). */
 export const greySchoenflies = (classSymbol: string): string => `${classSymbol}R`;
-
-/** The data of the crystal class with this key. */
-export function classData(key: PointGroupKey) {
-  const d = POINT_GROUP_DATA.find((x) => x.key === key);
-  if (!d) throw new RangeError(`Unknown crystal class: ${JSON.stringify(key)}`);
-  return d;
-}

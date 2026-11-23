@@ -6,7 +6,7 @@
 
 import { apply, inverse, transpose, type Mat3, type Vec3 } from '../linalg.js';
 import { crystalFamily, latticeBasis } from '../lattice.js';
-import { POINT_GROUP_DATA } from './data.js';
+import { itcClass, itcSetting as itcClassSetting } from './itcData.js';
 import {
   isMagneticPointGroupKey,
   isPointGroupKey,
@@ -121,31 +121,17 @@ function permuteSymbol(symbolText: string, r: Mat3): string {
   return [0, 1, 2].map((i) => symbolText[[0, 1, 2].find((k) => Math.abs(r[i][k]) === 1) ?? -1]).join('');
 }
 
-function isSignedPermutation(r: Mat3): boolean {
-  return r.every(
-    (row) => row.filter((v) => Math.abs(v) > 1e-9).length === 1 && row.some((v) => Math.abs(Math.abs(v) - 1) < 1e-9),
-  );
-}
-
 /**
- * The signed permutation r that carries setting 1 of a class into `setting` (new axis i = r[i][j] ×
- * old axis j), for the settings ITA does not print (`mm2` settings 2 and 3). Throws if the frame of
- * the setting is not a permutation of that of setting 1.
+ * The permutation r that carries setting 1 of a class into `setting` (new axis i = r[i][j] × old
+ * axis j), for the settings ITA does not print (`mm2` settings 2 and 3): the transpose of the change
+ * of basis P of the ITC class data ((a′, b′, c′) = (a, b, c)·P, itcData.ts). Throws for a setting
+ * that is not carried from setting 1.
  */
 export function permutationFromSetting1(key: PointGroupKey, setting: number): Mat3 {
-  const d = POINT_GROUP_DATA.find((x) => x.key === key);
-  if (!d) throw new RangeError(`Unknown point group key: ${JSON.stringify(key)}`);
-  const f1 = d.settings[0].frame;
-  const fk = d.settings[setting - 1].frame;
-  const raw = fk.map((row) => [0, 1, 2].map((j) => row[0] * f1[j][0] + row[1] * f1[j][1] + row[2] * f1[j][2]));
-  const r = raw.map((row) => row.map((v) => Math.round(v))) as unknown as Mat3;
-  if (
-    !isSignedPermutation(raw as unknown as Mat3) ||
-    !raw.every((row, i) => row.every((v, j) => Math.abs(v - r[i][j]) < 1e-9))
-  ) {
-    throw new Error(`Point group ${key}, setting ${setting}: frame is not a permutation of setting 1`);
-  }
-  return r;
+  const from = itcClassSetting(key, setting).from;
+  if (from?.index !== 1) throw new Error(`Point group ${key}, setting ${setting}: not carried from setting 1`);
+  const p = from.basis;
+  return [0, 1, 2].map((i) => [0, 1, 2].map((j) => p[j][i])) as unknown as Mat3;
 }
 
 /**
@@ -182,9 +168,7 @@ function printedRows(key: PointGroupKey, setting: number): readonly WyckoffRow[]
  * and triclinic: a, b, c along x, y, z (docs/conventions.md, "Site symmetry and Wyckoff positions").
  */
 export function faceBasis(key: PointGroupKey): Mat3 {
-  const d = POINT_GROUP_DATA.find((x) => x.key === key);
-  if (!d) throw new RangeError(`Unknown point group key: ${JSON.stringify(key)}`);
-  const family = crystalFamily(d.crystalSystem);
+  const family = crystalFamily(itcClass(key).crystalSystem);
   return family === 'monoclinic' || family === 'triclinic' ? IDENTITY : latticeBasis(family);
 }
 
@@ -195,7 +179,7 @@ const cache = new Map<string, readonly WyckoffPosition[]>();
  * (`what`: 'Wyckoff positions', 'Crystal forms'); throws a RangeError for a magnetic point group
  * with time reversal and for another convention.
  */
-export function itcSetting(key: PointGroupKey, options?: SettingOptions, what = 'Wyckoff positions'): number {
+export function tableSetting(key: PointGroupKey, options?: SettingOptions, what = 'Wyckoff positions'): number {
   if (isMagneticPointGroupKey(key) && !isPointGroupKey(key)) {
     throw new RangeError(
       `${what} are given for the 32 crystal classes only; ${JSON.stringify(key)} is a magnetic point group`,
@@ -218,7 +202,7 @@ export function itcSetting(key: PointGroupKey, options?: SettingOptions, what = 
  * ITA does not print, the positions of setting 1 carried into their frame.
  */
 export function wyckoffPositions(key: PointGroupKey, options?: SettingOptions): readonly WyckoffPosition[] {
-  const setting = itcSetting(key, options);
+  const setting = tableSetting(key, options);
   const cacheKey = `${key}#${setting}`;
   let result = cache.get(cacheKey);
   if (!result) {
@@ -265,7 +249,7 @@ const sortedKey = (list: readonly number[]): string => [...list].sort((a, b) => 
  */
 export function wyckoffPositionOf(key: PointGroupKey, direction: Vec3, options?: WyckoffOptions): WyckoffPosition {
   const tolerance = siteTolerance(options);
-  const setting = itcSetting(key, options);
+  const setting = tableSetting(key, options);
   const ops = operations(key, { convention: 'itc', setting });
   const rows = wyckoffPositions(key, { convention: 'itc', setting });
   const site = siteSymmetry(ops, direction, { tolerance });
