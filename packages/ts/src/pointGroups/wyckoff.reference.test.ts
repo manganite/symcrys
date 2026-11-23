@@ -446,6 +446,22 @@ describe('ITA Table 3.2.3.2: Wyckoff positions', () => {
   }
 });
 
+describe('Wyckoff coordinates of every setting, unprinted ones included', () => {
+  // Printed settings are checked against print above; this pins the order for all settings: the
+  // images of the first point under the operations of the setting, in their order (the order
+  // printed for setting 1, carried into the frame of an unprinted setting).
+  for (const key of POINT_GROUP_KEYS) {
+    for (const s of settings(key)) {
+      it(`${key}, setting ${s.index}: each position lists the images of its first point, in the order of the operations`, () => {
+        const lattice = operations(key, { setting: s.index }).map((op) => op.matrix.map((r) => [...r]));
+        for (const w of wyckoffPositions(key, { setting: s.index })) {
+          expect(w.coordinates.map(triplet), `${w.letter}`).toEqual(distinctImages(lattice, triplet(w.coordinates[0])));
+        }
+      });
+    }
+  }
+});
+
 describe('Settings ITA does not print: mm2 as 2mm and m2m', () => {
   for (const s of settings('mm2').filter((x) => x.symbol === '2mm' || x.symbol === 'm2m')) {
     it(`${s.symbol}: every position read along x, y, z gives the site symmetry of its representative`, () => {

@@ -12,8 +12,11 @@ All coordinate triplets of column 4 (not only the first) were added 2026-11-23 f
 of the same pages (#121 step 7d), in which an overbar is a glyph of its own over the letter and the
 minus and plus signs are glyphs of a symbol font. On each of the 25 pages the triplets read so
 equal, one by one and in printed order, the first triplet of each row carried by the general
-position of `vol-a-table-3.2.3.2-general-positions.md` in its printed order; pages 764 (6/mmm),
-759 (-3m, rhombohedral axes) and 769 (m-3m) were also compared with their images.
+position of `vol-a-table-3.2.3.2-general-positions.md` in its printed order. All triplets of
+pages 750–769 were also compared with the page images, rendered at 200 dpi (pages 759, 764 and 769
+while transcribing, the others by the review of the same day); pages 745–749 (triclinic,
+monoclinic, orthorhombic, with at most eight triplets of 0, x, y, z and their overbars per
+position) by the text layer and the general position only.
 
 One row per Wyckoff position, in the printed order (general position first): multiplicity,
 Wyckoff letter, oriented site-symmetry symbol (columns 1 to 3 of the print), the coordinate

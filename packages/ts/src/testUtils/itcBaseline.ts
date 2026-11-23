@@ -186,13 +186,13 @@ const oldDescriptions = (list: readonly { readonly kind: string; readonly n: num
     ...(axis === undefined ? {} : Array.isArray(axis) ? { normal: axis } : { axis }),
   }));
 
-/** A point group in the shape of the pins (before #121 step 7c): `chiral` for `enantiomorphic`. */
 /** A Wyckoff position of a class with its first printed point only, as `coordinates` was up to #121 step 7d. */
 const oldWyckoff = <W extends { readonly coordinates: readonly string[] }>({ coordinates, ...rest }: W) => ({
   ...rest,
   coordinates: coordinates[0],
 });
 
+/** A point group in the shape of the pins (before #121 step 7c): `chiral` for `enantiomorphic`. */
 const oldPointGroup = ({ enantiomorphic, ...rest }: { readonly enantiomorphic: boolean }) => ({
   ...rest,
   chiral: enantiomorphic,
