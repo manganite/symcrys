@@ -94,7 +94,6 @@ export interface Setting {
   readonly isDefault: boolean;
 }
 
-/** Which setting a function answers in. */
 /**
  * The criteria of ITA's headlines (Table 3.2.3.2) that choose among the settings a symbol names:
  * the options of `findPointGroup`, and with `setting` those of every function of a group in a
@@ -139,6 +138,15 @@ function criteriaArgument(arg: unknown): AxesOptions | undefined {
   const unknown = Object.keys(arg).filter((k) => k !== 'axes' && k !== 'uniqueAxis');
   if (unknown.length > 0) {
     throw new RangeError(`findPointGroup takes the options axes and uniqueAxis, not ${unknown.join(', ')}`);
+  }
+  // The values are checked here, before a group is found, so that a wrong value is an error also
+  // for a symbol that names no group.
+  const { axes, uniqueAxis } = arg as AxesOptions;
+  if (axes !== undefined && axes !== 'hexagonal' && axes !== 'rhombohedral') {
+    throw new RangeError(`axes must be 'hexagonal' or 'rhombohedral', not ${JSON.stringify(axes)}`);
+  }
+  if (uniqueAxis !== undefined && uniqueAxis !== 'a' && uniqueAxis !== 'b' && uniqueAxis !== 'c') {
+    throw new RangeError(`uniqueAxis must be 'a', 'b' or 'c', not ${JSON.stringify(uniqueAxis)}`);
   }
   return arg as AxesOptions;
 }

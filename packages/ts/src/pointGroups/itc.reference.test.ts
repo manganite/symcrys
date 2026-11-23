@@ -257,9 +257,7 @@ describe('ITC symbols and operations of every setting', () => {
           const def = settings(key).find((s) => s.isDefault)!.index;
           expect(findPointGroup(setting().fullSymbol)).toEqual({ key, setting: isKey ? def : setting().index });
           const axes = e.rhombohedral ? 'rhombohedral' : system === 'trigonal' ? 'hexagonal' : undefined;
-          if (axes && isKey && e.rhombohedral) {
-            expect(findPointGroup(setting().fullSymbol, { axes })).toEqual({ key, setting: setting().index });
-          }
+          if (axes) expect(findPointGroup(setting().fullSymbol, { axes })).toEqual({ key, setting: setting().index });
         });
       }
     });

@@ -158,8 +158,8 @@ def is_point_group_key(key: str) -> bool:
 def find_point_group(
     hm: str,
     *,
-    axes: Optional[str] = None,
-    unique_axis: Optional[str] = None,
+    axes: Optional[Literal["hexagonal", "rhombohedral"]] = None,
+    unique_axis: Optional[Literal["a", "b", "c"]] = None,
 ) -> Optional[dict[str, Any]]:
     """Finds a crystal class by a symbol, read tolerantly. It reads, spaces ignored (#96;
     docs/conventions.md, "Reading symbols"): the key; the short or full symbol of a setting
@@ -200,8 +200,8 @@ def operations(
     key: str,
     *,
     setting: Optional[Union[int, str]] = None,
-    axes: Optional[str] = None,
-    unique_axis: Optional[str] = None,
+    axes: Optional[Literal["hexagonal", "rhombohedral"]] = None,
+    unique_axis: Optional[Literal["a", "b", "c"]] = None,
 ) -> list[Operation]:
     """All operations of the crystal class in the requested setting (default: the ITC default
     setting), in ITA's order: identity first, then as ITA numbers the general position
@@ -237,8 +237,8 @@ def generators(
     key: str,
     *,
     setting: Optional[Union[int, str]] = None,
-    axes: Optional[str] = None,
-    unique_axis: Optional[str] = None,
+    axes: Optional[Literal["hexagonal", "rhombohedral"]] = None,
+    unique_axis: Optional[Literal["a", "b", "c"]] = None,
 ) -> list[Operation]:
     """Generators of the crystal class in the requested setting (docs/conventions.md, "Generators"):
     ITA's selected generators in printed order, without the identity and ITA's lattice translations,
@@ -273,8 +273,8 @@ def symbol(
     key: str,
     *,
     setting: Optional[Union[int, str]] = None,
-    axes: Optional[str] = None,
-    unique_axis: Optional[str] = None,
+    axes: Optional[Literal["hexagonal", "rhombohedral"]] = None,
+    unique_axis: Optional[Literal["a", "b", "c"]] = None,
     form: Optional[Literal["short", "full", "schoenflies"]] = None,
 ) -> str:
     """A symbol of the crystal class in the requested setting, as ITA writes it (Tables 3.2.1.2 and
@@ -492,8 +492,8 @@ def describe_operations(
     key: str,
     *,
     setting: Optional[Union[int, str]] = None,
-    axes: Optional[str] = None,
-    unique_axis: Optional[str] = None,
+    axes: Optional[Literal["hexagonal", "rhombohedral"]] = None,
+    unique_axis: Optional[Literal["a", "b", "c"]] = None,
 ) -> list[dict[str, Any]]:
     """Each operation of the crystal class described geometrically, in the order of ``operations``
     for the same key and options. Axes are named by the symmetry direction they lie along, with the
@@ -579,8 +579,8 @@ def symmetry_directions(
     key: str,
     *,
     setting: Optional[Union[int, str]] = None,
-    axes: Optional[str] = None,
-    unique_axis: Optional[str] = None,
+    axes: Optional[Literal["hexagonal", "rhombohedral"]] = None,
+    unique_axis: Optional[Literal["a", "b", "c"]] = None,
 ) -> list[dict[str, Any]]:
     """The positions of the full Hermann–Mauguin symbol in the requested setting, each with its
     symmetry directions (ITA Table 2.1.3.1) and the symmetry elements along them. All positions of
@@ -674,8 +674,8 @@ def orbit(
     indices: Mapping[str, ArrayLike],
     *,
     setting: Optional[Union[int, str]] = None,
-    axes: Optional[str] = None,
-    unique_axis: Optional[str] = None,
+    axes: Optional[Literal["hexagonal", "rhombohedral"]] = None,
+    unique_axis: Optional[Literal["a", "b", "c"]] = None,
 ) -> list[dict[str, Any]]:
     """The orbit of a face (hkl) or of a lattice direction [uvw] under a crystal class, exactly, in
     the lattice basis: the distinct faces (directions), in the order in which the operations reach
@@ -742,8 +742,8 @@ def wyckoff_positions(
     key: str,
     *,
     setting: Optional[Union[int, str]] = None,
-    axes: Optional[str] = None,
-    unique_axis: Optional[str] = None,
+    axes: Optional[Literal["hexagonal", "rhombohedral"]] = None,
+    unique_axis: Optional[Literal["a", "b", "c"]] = None,
 ) -> list[dict[str, Any]]:
     """The Wyckoff positions of a crystal class for directions, as ITA tabulates them (general
     position first) (docs/conventions.md, "Site symmetry and Wyckoff positions").
@@ -777,8 +777,8 @@ def wyckoff_position_of(
     direction: ArrayLike,
     *,
     setting: Optional[Union[int, str]] = None,
-    axes: Optional[str] = None,
-    unique_axis: Optional[str] = None,
+    axes: Optional[Literal["hexagonal", "rhombohedral"]] = None,
+    unique_axis: Optional[Literal["a", "b", "c"]] = None,
     tolerance: Optional[float] = None,
 ) -> dict[str, Any]:
     """The Wyckoff position of a direction (Cartesian) in a crystal class: the position whose site
@@ -827,8 +827,8 @@ def crystal_forms(
     key: str,
     *,
     setting: Optional[Union[int, str]] = None,
-    axes: Optional[str] = None,
-    unique_axis: Optional[str] = None,
+    axes: Optional[Literal["hexagonal", "rhombohedral"]] = None,
+    unique_axis: Optional[Literal["a", "b", "c"]] = None,
 ) -> list[dict[str, Any]]:
     """The crystal forms of a crystal class, as ITA 6th ed. Table 3.2.3.2 prints them: for each
     Wyckoff position (general position first) its basic form (two for the cubic faces (hhl) of -43m
@@ -866,8 +866,8 @@ def tensor_form(
     spec: TensorSpec | Mapping[str, Any] | TensorPropertyName,
     *,
     setting: Optional[Union[int, str]] = None,
-    axes: Optional[str] = None,
-    unique_axis: Optional[str] = None,
+    axes: Optional[Literal["hexagonal", "rhombohedral"]] = None,
+    unique_axis: Optional[Literal["a", "b", "c"]] = None,
 ) -> TensorForm:
     """The form of a tensor under a crystal class in the requested setting (default: the ITC default
     setting). The tensor is given by its specification or by the name of a property in

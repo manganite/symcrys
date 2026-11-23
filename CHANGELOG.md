@@ -55,8 +55,8 @@ All notable changes to symcrys are recorded here. The format follows
   `{ setting: '312' }`.
 
 - **A setting can be given by its ITC symbol** (#123): `{ setting }` takes the index or the short or
-  full symbol, spaces ignored; a symbol that several settings share is a RangeError that names
-  them (`'2'`: give `'1 2 1'` or `'1 1 2'`).
+  full symbol, spaces ignored; a symbol that several settings share gives the standard setting, and
+  the options `axes` and `uniqueAxis` choose another (below).
 - **The record of a setting** (#137 A3, C4): `uniqueAxis` only for the monoclinic settings (it
   went for `mm2` and the orthorhombic magnetic groups, where a setting is identified by its symbol),
   and `axes` (`'hexagonal'` or `'rhombohedral'`) for the trigonal settings.
@@ -94,8 +94,8 @@ All notable changes to symcrys are recorded here. The format follows
     writes them; the crystallographic API keeps ITA's `C3i`.
 
 - **A symbol that several settings share gives the standard setting; `axes` and `uniqueAxis`
-  choose another** (#96, #121 step 7b; Thomas, 2026-11-23): `{ setting: '2' }` gives unique axis b
-  (up to 0.10 an error that listed the three settings), `{ setting: '2', uniqueAxis: 'c' }` or
+  choose another** (#96, #121 step 7b; Thomas, 2026-11-23): `{ setting: '2' }` gives unique axis b,
+  `{ setting: '2', uniqueAxis: 'c' }` or
   `{ uniqueAxis: 'c' }` unique axis c; `{ axes: 'rhombohedral' }` the setting with rhombohedral axes.
   The new options `axes` (`'hexagonal'`, `'rhombohedral'`) and `uniqueAxis` (`'a'`, `'b'`, `'c'`), as
   ITA's headlines name the settings, are taken by every function with the option `setting` and by

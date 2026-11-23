@@ -604,7 +604,7 @@ describe('the 122 magnetic point groups', () => {
       const def = all.find((s) => s.isDefault)!.index;
       for (const s of all) {
         const what = `${key} setting ${s.index}`;
-        // A symbol several settings share, or one that is the key without spaces, gives the default.
+        // A symbol several settings share, or one that is the key (spaces ignored), gives the default.
         const compact = (t: string) => t.replace(/\s+/g, '');
         const shared = all.filter((t) => t.symbol === s.symbol).length > 1 || compact(s.symbol) === key;
         expect(findMagneticPointGroup(s.symbol), `${what}: ${s.symbol}`).toEqual({

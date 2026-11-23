@@ -154,7 +154,7 @@ option. The Birss mode, its data and its birss-app pins were removed in step 5 o
 - **Tolerant input**, in every entry point, where it is a pure normalisation before the comparison
   and the input stays unambiguous (spaces, overbar spellings such as `-`, a combining overbar or
   `bar`, prime variants, Birss's printed forms such as `m3m`); an input that could match two groups
-  or settings is an error that lists the candidates (#96). Decided further by Thomas on 2026-11-23
+  is an error that lists the candidates (#96; for two settings see the revision below). Decided further by Thomas on 2026-11-23
   (#96): a Schoenflies symbol names the group and gives its default setting. Revised by Thomas on
   2026-11-23 in #151 (replacing his earlier answer that a symbol with spaces is a full symbol first,
   `3 2` the rhombohedral setting, and the rule of #150 that compared full symbols with their spaces):

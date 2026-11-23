@@ -156,6 +156,11 @@ describe('a setting by its symbol', () => {
     expect(() => operations('32', { axes: 'trigonal' as never })).toThrow(/axes must be 'hexagonal' or 'rhombohedral'/);
     expect(() => findPointGroup('mm2', { uniqueAxis: 'c' })).toThrow(/uniqueAxis applies to the monoclinic groups/);
     expect(() => findPointGroup('32', { setting: 2 } as never)).toThrow(/takes the options axes and uniqueAxis/);
+    expect(() => findPointGroup('xyz', { axes: 'bogus' } as never)).toThrow(/axes must be/);
+    expect(() => findPointGroup('32', { convention: 'itc' } as never)).toThrow(/option convention was removed/);
+    expect(() => (findPointGroup as (...args: unknown[]) => unknown)('32', 'birss')).toThrow(
+      /convention argument was removed/,
+    );
     expect(() => operations('32', { setting: [2] } as never)).toThrow(/must be an index or a symbol, not \[2\]/);
     expect(() => operations('32', { setting: true } as never)).toThrow(RangeError);
   });

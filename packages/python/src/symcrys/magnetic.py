@@ -147,8 +147,8 @@ def is_point_group_key(key: str) -> bool:
 def find_point_group(
     hm: str,
     *,
-    axes: Optional[str] = None,
-    unique_axis: Optional[str] = None,
+    axes: Optional[Literal["hexagonal", "rhombohedral"]] = None,
+    unique_axis: Optional[Literal["a", "b", "c"]] = None,
 ) -> Optional[dict[str, Any]]:
     """Finds one of the 122 magnetic point groups (the 32 crystal classes included) by a symbol,
     read tolerantly. A prime marks time reversal: ``4'/mmm'``, ``2221'``. It reads, spaces ignored
@@ -190,8 +190,8 @@ def operations(
     key: str,
     *,
     setting: Optional[Union[int, str]] = None,
-    axes: Optional[str] = None,
-    unique_axis: Optional[str] = None,
+    axes: Optional[Literal["hexagonal", "rhombohedral"]] = None,
+    unique_axis: Optional[Literal["a", "b", "c"]] = None,
 ) -> list[Operation]:
     """All operations of the point group in the requested setting (default: the ITC default
     setting), in ITA's order: identity first, then as ITA numbers the general position of the
@@ -230,8 +230,8 @@ def generators(
     key: str,
     *,
     setting: Optional[Union[int, str]] = None,
-    axes: Optional[str] = None,
-    unique_axis: Optional[str] = None,
+    axes: Optional[Literal["hexagonal", "rhombohedral"]] = None,
+    unique_axis: Optional[Literal["a", "b", "c"]] = None,
 ) -> list[Operation]:
     """Generators of the point group in the requested setting (docs/conventions.md, "Generators"):
     ITA's selected generators in printed order, without the identity and ITA's lattice translations,
@@ -269,8 +269,8 @@ def symbol(
     key: str,
     *,
     setting: Optional[Union[int, str]] = None,
-    axes: Optional[str] = None,
-    unique_axis: Optional[str] = None,
+    axes: Optional[Literal["hexagonal", "rhombohedral"]] = None,
+    unique_axis: Optional[Literal["a", "b", "c"]] = None,
     form: Optional[Literal["short", "full", "schoenflies"]] = None,
 ) -> str:
     """A symbol of the point group in the requested setting. The default setting of a grey or
@@ -491,8 +491,8 @@ def describe_operations(
     key: str,
     *,
     setting: Optional[Union[int, str]] = None,
-    axes: Optional[str] = None,
-    unique_axis: Optional[str] = None,
+    axes: Optional[Literal["hexagonal", "rhombohedral"]] = None,
+    unique_axis: Optional[Literal["a", "b", "c"]] = None,
 ) -> list[dict[str, Any]]:
     """Each operation of the point group described geometrically, in the order of ``operations`` for
     the same key and options. Axes are named by the symmetry direction they lie along, with the sign
@@ -579,8 +579,8 @@ def symmetry_directions(
     key: str,
     *,
     setting: Optional[Union[int, str]] = None,
-    axes: Optional[str] = None,
-    unique_axis: Optional[str] = None,
+    axes: Optional[Literal["hexagonal", "rhombohedral"]] = None,
+    unique_axis: Optional[Literal["a", "b", "c"]] = None,
 ) -> list[dict[str, Any]]:
     """The positions of the full Hermann–Mauguin symbol in the requested setting, each with its
     symmetry directions (ITA Table 2.1.3.1) and the symmetry elements along them. All positions of
@@ -677,8 +677,8 @@ def orbit(
     indices: Mapping[str, ArrayLike],
     *,
     setting: Optional[Union[int, str]] = None,
-    axes: Optional[str] = None,
-    unique_axis: Optional[str] = None,
+    axes: Optional[Literal["hexagonal", "rhombohedral"]] = None,
+    unique_axis: Optional[Literal["a", "b", "c"]] = None,
 ) -> list[dict[str, Any]]:
     """The orbit of a face (hkl) or of a lattice direction [uvw] under a point group, exactly, in
     the lattice basis: the distinct faces (directions), in the order in which the operations reach
@@ -751,8 +751,8 @@ def tensor_form(
     spec: TensorSpec | Mapping[str, Any] | TensorPropertyName,
     *,
     setting: Optional[Union[int, str]] = None,
-    axes: Optional[str] = None,
-    unique_axis: Optional[str] = None,
+    axes: Optional[Literal["hexagonal", "rhombohedral"]] = None,
+    unique_axis: Optional[Literal["a", "b", "c"]] = None,
 ) -> TensorForm:
     """The form of a tensor under a point group, a crystal class or a magnetic point group, in the
     requested setting (default: the ITC default setting). The tensor is given by its specification
