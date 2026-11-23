@@ -8,6 +8,7 @@ import { apply, inverse, transpose, type Mat3, type Vec3 } from '../linalg.js';
 import { crystalFamily, latticeBasis } from '../lattice.js';
 import { itcClass, itcSetting as itcClassSetting } from './itcData.js';
 import {
+  settingIndexOf,
   isMagneticPointGroupKey,
   isPointGroupKey,
   operations,
@@ -193,8 +194,7 @@ export function tableSetting(key: PointGroupKey, options?: SettingOptions, what 
       `${what} are given for the 32 crystal classes only; ${JSON.stringify(key)} is a magnetic point group`,
     );
   }
-  const list = settings(key);
-  const index = options?.setting ?? list.find((s) => s.isDefault)?.index ?? 1;
+  const index = settingIndexOf(key, options);
   operations(key, options); // validates the setting index
   return index;
 }

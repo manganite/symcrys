@@ -10,7 +10,7 @@ time-odd property. Operations carry ``time_reversal``, a tensor specification ``
 
 from __future__ import annotations
 
-from typing import Any, Literal, Mapping, Optional, Sequence, TypedDict
+from typing import Any, Literal, Mapping, Optional, Sequence, TypedDict, Union
 
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
@@ -164,7 +164,7 @@ def settings(key: str) -> list[dict[str, Any]]:
     return list(_call("settings", *args))
 
 
-def operations(key: str, *, setting: Optional[int] = None) -> list[Operation]:
+def operations(key: str, *, setting: Optional[Union[int, str]] = None) -> list[Operation]:
     """All operations of the point group in the requested setting (default: the ITC default
     setting), in ITA's order: identity first, then as ITA numbers the general position of the
     crystal class; an operation of a magnetic group has the number it has in the class, and a grey
@@ -174,7 +174,9 @@ def operations(key: str, *, setting: Optional[int] = None) -> list[Operation]:
     Parameters
     ----------
     setting : keyword-only, optional
-        1-based setting index; default: the ITC default setting.
+        The setting: its 1-based index, or its ITC symbol, short or full (spaces ignored: ``'312'``,
+        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b
+        and c) is an error that names them. Default: the ITC default setting.
 
     Returns
     -------
@@ -184,7 +186,7 @@ def operations(key: str, *, setting: Optional[int] = None) -> list[Operation]:
     return list(_call("operations", key, _shared.options(setting=setting)))
 
 
-def generators(key: str, *, setting: Optional[int] = None) -> list[Operation]:
+def generators(key: str, *, setting: Optional[Union[int, str]] = None) -> list[Operation]:
     """Generators of the point group in the requested setting (docs/conventions.md, "Generators"):
     ITA's selected generators in printed order, without the identity and ITA's lattice translations,
     so the list is empty for ``1``; for ``mm2`` settings 2 and 3, which ITA does not list, those of
@@ -194,7 +196,9 @@ def generators(key: str, *, setting: Optional[int] = None) -> list[Operation]:
     Parameters
     ----------
     setting : keyword-only, optional
-        1-based setting index; default: the ITC default setting.
+        The setting: its 1-based index, or its ITC symbol, short or full (spaces ignored: ``'312'``,
+        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b
+        and c) is an error that names them. Default: the ITC default setting.
 
     Returns
     -------
@@ -207,7 +211,7 @@ def generators(key: str, *, setting: Optional[int] = None) -> list[Operation]:
 def symbol(
     key: str,
     *,
-    setting: Optional[int] = None,
+    setting: Optional[Union[int, str]] = None,
     form: Optional[Literal["short", "full", "schoenflies"]] = None,
 ) -> str:
     """A symbol of the point group in the requested setting.
@@ -215,7 +219,9 @@ def symbol(
     Parameters
     ----------
     setting : keyword-only, optional
-        1-based setting index; default: the ITC default setting.
+        The setting: its 1-based index, or its ITC symbol, short or full (spaces ignored: ``'312'``,
+        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b
+        and c) is an error that names them. Default: the ITC default setting.
     form : keyword-only, optional
         ``'short'`` (default): short symbol of the setting, e.g. ``321`` (ITC) for class ``32``.
         ``'full'``: full symbol, positions separated by spaces, e.g. ``-3 2/m 1``.
@@ -408,7 +414,7 @@ def change_of_axes(p: ArrayLike) -> dict[str, NDArray[np.float64]]:
 
 
 def describe_operations(
-    key: str, *, setting: Optional[int] = None
+    key: str, *, setting: Optional[Union[int, str]] = None
 ) -> list[dict[str, Any]]:
     """Each operation of the point group described geometrically, in the order of ``operations`` for
     the same key and options. Axes are named by the symmetry direction they lie along, with the sign
@@ -417,7 +423,9 @@ def describe_operations(
     Parameters
     ----------
     setting : keyword-only, optional
-        1-based setting index; default: the ITC default setting.
+        The setting: its 1-based index, or its ITC symbol, short or full (spaces ignored: ``'312'``,
+        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b
+        and c) is an error that names them. Default: the ITC default setting.
 
     Returns
     -------
@@ -482,7 +490,7 @@ def describe_operations_of(
 
 
 def symmetry_directions(
-    key: str, *, setting: Optional[int] = None
+    key: str, *, setting: Optional[Union[int, str]] = None
 ) -> list[dict[str, Any]]:
     """The positions of the full Hermann–Mauguin symbol in the requested setting, each with its
     symmetry directions (ITA Table 2.1.3.1) and the symmetry elements along them. All positions of
@@ -494,7 +502,9 @@ def symmetry_directions(
     Parameters
     ----------
     setting : keyword-only, optional
-        1-based setting index; default: the ITC default setting.
+        The setting: its 1-based index, or its ITC symbol, short or full (spaces ignored: ``'312'``,
+        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b
+        and c) is an error that names them. Default: the ITC default setting.
 
     Returns
     -------
@@ -564,7 +574,7 @@ def site_symmetry(
 
 
 def lattice_operations(
-    key: str, *, setting: Optional[int] = None
+    key: str, *, setting: Optional[Union[int, str]] = None
 ) -> list[Operation]:
     """The operations of a point group in the conventional lattice basis (a, b, c; for the trigonal
     classes the hexagonal axes), in the order and with the time reversal of ``operations`` for the
@@ -578,7 +588,9 @@ def lattice_operations(
     Parameters
     ----------
     setting : keyword-only, optional
-        1-based setting index; default: the ITC default setting.
+        The setting: its 1-based index, or its ITC symbol, short or full (spaces ignored: ``'312'``,
+        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b
+        and c) is an error that names them. Default: the ITC default setting.
 
     Returns
     -------
@@ -593,7 +605,7 @@ def orbit(
     key: str,
     indices: Mapping[str, ArrayLike],
     *,
-    setting: Optional[int] = None,
+    setting: Optional[Union[int, str]] = None,
 ) -> list[dict[str, Any]]:
     """The orbit of a face (hkl) or of a lattice direction [uvw] under a point group, exactly, in
     the lattice basis: the distinct faces (directions), in the order in which the operations reach
@@ -607,7 +619,9 @@ def orbit(
     Parameters
     ----------
     setting : keyword-only, optional
-        1-based setting index; default: the ITC default setting.
+        The setting: its 1-based index, or its ITC symbol, short or full (spaces ignored: ``'312'``,
+        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b
+        and c) is an error that names them. Default: the ITC default setting.
 
     Returns
     -------
@@ -655,7 +669,7 @@ def tensor_form(
     key: str,
     spec: TensorSpec | Mapping[str, Any] | TensorPropertyName,
     *,
-    setting: Optional[int] = None,
+    setting: Optional[Union[int, str]] = None,
 ) -> TensorForm:
     """The form of a tensor under a point group, a crystal class or a magnetic point group, in the
     requested setting (default: the ITC default setting). The tensor is given by its specification
@@ -665,7 +679,9 @@ def tensor_form(
     Parameters
     ----------
     setting : keyword-only, optional
-        1-based setting index; default: the ITC default setting.
+        The setting: its 1-based index, or its ITC symbol, short or full (spaces ignored: ``'312'``,
+        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b
+        and c) is an error that names them. Default: the ITC default setting.
 
     Returns
     -------

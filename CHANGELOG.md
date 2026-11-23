@@ -6,6 +6,33 @@ All notable changes to symcrys are recorded here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- **The settings are numbered by ITC's rule** (#137 A4, #121 step 6b): the ITC default is setting 1;
+  then, for the monoclinic groups, unique axis c; for the orthorhombic groups the further
+  orientations in the column order of ITA (2016) Table 1.5.4.4 (abc, ba-c, cab, -cba, bca, a-cb);
+  otherwise the other orientation. Up to 0.10 the numbers came from Birss's frame. The operations,
+  symbols and tensor forms of a setting are unchanged; only its index is.
+
+  | Groups                                                                                    | Up to 0.10                                           | From 0.11                                            |
+  | ----------------------------------------------------------------------------------------- | ---------------------------------------------------- | ---------------------------------------------------- |
+  | `2`, `m`, `2/m` and their grey and black-and-white groups                                 | 1 unique axis c, 2 unique axis b (default)           | 1 unique axis b (default), 2 unique axis c           |
+  | `32`, `3m`, `-3m` and theirs                                                              | 1 `312`, 2 `321` (default)                           | 1 `321` (default), 2 `312`                           |
+  | `-6m2` and its grey group                                                                 | 1 `-62m`, 2 `-6m2` (default)                         | 1 `-6m2` (default), 2 `-62m`                         |
+  | `mm'm'`                                                                                   | 1 `m'm'm`, 2 `mm'm'` (default), 3 `m'mm'`            | 1 `mm'm'`, 2 `m'mm'`, 3 `m'm'm`                      |
+  | `2'm'm`                                                                                   | `2'm'm`, `m2'm'`, `m'm2'`, `m'2'm`, `mm'2'`, `2'mm'` | `2'm'm`, `m'2'm`, `m2'm'`, `mm'2'`, `m'm2'`, `2'mm'` |
+  | the other groups with two settings whose default was setting 2 (`32'`, `3m'`, `6'22'`, …) | default 2                                            | default 1, the other 2                               |
+
+  Code that names a setting by its index should name it by its symbol, which does not change:
+  `{ setting: '312' }`.
+
+- **A setting can be given by its ITC symbol** (#123): `{ setting }` takes the index or the short or
+  full symbol, spaces ignored; a symbol that several settings share is a RangeError that names
+  them (`'2'`: give `'1 2 1'` or `'1 1 2'`).
+- **The record of a setting** (#137 A3, C4): `uniqueAxis` only for the monoclinic settings (it
+  went for `mm2` and the orthorhombic magnetic groups, where a setting is identified by its symbol),
+  and `axes: 'hexagonal'` for the trigonal settings.
+
 ### Removed
 
 - **The Birss convention** (#110, #121 step 5): symcrys follows ITC only. The option `convention`

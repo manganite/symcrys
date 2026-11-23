@@ -157,7 +157,7 @@ describe('symmetryDirections', () => {
   });
 
   it('reads position 2 of the hexagonal family along a, position 3 along the tertiary directions', () => {
-    const itc = symmetryDirections('32', { setting: 1 });
+    const itc = symmetryDirections('32', { setting: 2 });
     expect(itc.map((p) => p.symbol)).toEqual(['3', '1', '2']);
   });
 });

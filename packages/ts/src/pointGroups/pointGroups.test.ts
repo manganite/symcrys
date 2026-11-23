@@ -112,25 +112,66 @@ describe('settings', () => {
   });
 });
 
+describe('a setting by its symbol', () => {
+  it('takes the short or the full ITC symbol, spaces ignored', () => {
+    expect(operations('32', { setting: '312' })).toBe(operations('32', { setting: 2 }));
+    expect(operations('32', { setting: '3 1 2' })).toBe(operations('32', { setting: 2 }));
+    expect(operations('mm2', { setting: '2mm' })).toBe(operations('mm2', { setting: 2 }));
+    expect(operations('2', { setting: '1 1 2' })).toBe(operations('2', { setting: 2 }));
+    expect(symbol('-6m2', { setting: '-62m', form: 'full' })).toBe('-6 2 m');
+  });
+
+  it('refuses a symbol that names several settings, or none, naming the settings', () => {
+    expect(() => operations('2', { setting: '2' })).toThrow(/names 2 settings.*1: 2 \(1 2 1\), 2: 2 \(1 1 2\)/);
+    expect(() => operations('32', { setting: '32' })).toThrow(/has no setting "32" \(settings 1: 321/);
+    expect(() => operations('32', { setting: [2] } as never)).toThrow(/must be an index or a symbol, not \[2\]/);
+    expect(() => operations('32', { setting: true } as never)).toThrow(RangeError);
+  });
+});
+
+describe('the numbering of the settings (#137 A4)', () => {
+  it('the ITC default first, then monoclinic c, the other orientation, orthorhombic in the column order of ITA Table 1.5.4.4', () => {
+    const symbols = (key: PointGroupKey) => settings(key).map((s) => s.symbol);
+    for (const key of POINT_GROUP_KEYS) expect(settings(key)[0].isDefault).toBe(true);
+    expect(settings('2').map((s) => s.uniqueAxis)).toEqual(['b', 'c']);
+    expect(symbols('mm2')).toEqual(['mm2', '2mm', 'm2m']);
+    expect(symbols('-42m')).toEqual(['-42m', '-4m2']);
+    expect(symbols('32')).toEqual(['321', '312']);
+    expect(symbols('3m')).toEqual(['3m1', '31m']);
+    expect(symbols('-3m')).toEqual(['-3m1', '-31m']);
+    expect(symbols('-6m2')).toEqual(['-6m2', '-62m']);
+  });
+
+  it('records the unique axis of monoclinic settings only, and the axes of trigonal ones', () => {
+    for (const key of POINT_GROUP_KEYS) {
+      const system = pointGroup(key).crystalSystem;
+      for (const s of settings(key)) {
+        expect('uniqueAxis' in s, `${key} ${s.index}`).toBe(system === 'monoclinic');
+        expect(s.axes, `${key} ${s.index}`).toBe(system === 'trigonal' ? 'hexagonal' : undefined);
+      }
+    }
+  });
+});
+
 describe('symbols', () => {
   it('short, full and Schoenflies forms', () => {
     expect(symbol('-3m')).toBe('-3m1');
     expect(symbol('-3m', { form: 'full' })).toBe('-3 2/m 1');
     expect(symbol('2', { form: 'full' })).toBe('1 2 1');
-    expect(symbol('2', { form: 'full', setting: 1 })).toBe('1 1 2');
+    expect(symbol('2', { form: 'full', setting: 2 })).toBe('1 1 2');
     expect(symbol('m-3m', { form: 'schoenflies' })).toBe('Oh');
   });
 });
 
 describe('findPointGroup', () => {
   it('a key gives the default setting, a symbol the setting it names', () => {
-    expect(findPointGroup('32')).toEqual({ key: '32', setting: 2 });
-    expect(findPointGroup('312')).toEqual({ key: '32', setting: 1 });
+    expect(findPointGroup('32')).toEqual({ key: '32', setting: 1 });
+    expect(findPointGroup('312')).toEqual({ key: '32', setting: 2 });
   });
 
   it('accepts full symbols with or without spaces, and returns undefined for unknown symbols', () => {
     expect(findPointGroup('4/m 2/m 2/m')).toEqual({ key: '4/mmm', setting: 1 });
-    expect(findPointGroup('112')).toEqual({ key: '2', setting: 1 });
+    expect(findPointGroup('112')).toEqual({ key: '2', setting: 2 });
     expect(findPointGroup('m2m')).toEqual({ key: 'mm2', setting: 3 });
     expect(findPointGroup('m3m')).toBeUndefined();
     expect(findPointGroup(42 as unknown as string)).toBeUndefined();

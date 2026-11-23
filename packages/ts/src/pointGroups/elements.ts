@@ -9,7 +9,14 @@ import { det, trace, type Mat3, type Vec3 } from '../linalg.js';
 import { crystalFamily, latticeBasis, type CrystalFamily } from '../lattice.js';
 import type { Operation } from '../operations.js';
 import { LATTICE_SYMMETRY_DIRECTIONS, type Uvw } from '../symmetryDirections.js';
-import { operations, pointGroup, symbol, type MagneticPointGroupKey, type SettingOptions } from './pointGroups.js';
+import {
+  operations,
+  pointGroup,
+  settingIndexOf,
+  symbol,
+  type MagneticPointGroupKey,
+  type SettingOptions,
+} from './pointGroups.js';
 
 /** What a point operation is; a rotoinversion n̄ is the inversion times the rotation n (n = 3, 4, 6). */
 export type OperationKind = 'identity' | 'inversion' | 'rotation' | 'rotoinversion' | 'mirror';
@@ -171,7 +178,7 @@ const cache = new Map<string, Analysis>();
 
 function analysis(key: MagneticPointGroupKey, options?: SettingOptions): Analysis {
   const ops = operations(key, options); // checks key and setting
-  const setting = options?.setting ?? 0;
+  const setting = settingIndexOf(key, options);
   const cacheKey = `${key}#${setting}`;
   const hit = cache.get(cacheKey);
   if (hit) return hit;

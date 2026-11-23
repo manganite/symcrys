@@ -109,7 +109,7 @@ def test_the_crystallographic_api_refuses_time_reversal() -> None:
     with pytest.raises(symcrys.SymcrysError, match="timeReversal must be false or absent"):
         symcrys.tensor_form_of([{"matrix": -np.eye(3), "time_reversal": 1}], "pyroelectric")
     white = symcrys.tensor_form_of(magnetic.operations("32"), "piezoelectric")
-    assert np.array_equal(white["basis"], symcrys.tensor_form("32", "piezoelectric", setting=2)["basis"])
+    assert np.array_equal(white["basis"], symcrys.tensor_form("32", "piezoelectric", setting=1)["basis"])
     assert np.array_equal(symcrys.tensor_form("32", MAGNETIC_SHG)["basis"], symcrys.tensor_form("32", SHG)["basis"])
 
 
@@ -136,7 +136,8 @@ def test_crystal_forms_and_the_removed_convention() -> None:
     with pytest.raises(TypeError):
         symcrys.crystal_forms("mmm", convention="birss")  # type: ignore[call-arg]
     assert symcrys.crystal_forms("2")[-1]["miller_indices"] == "0,1,0"
-    assert symcrys.crystal_forms("2", setting=1)[-1]["miller_indices"] == "0,0,1"
+    assert symcrys.crystal_forms("2", setting=2)[-1]["miller_indices"] == "0,0,1"
+    assert symcrys.crystal_forms("2", setting="1 1 2")[-1]["miller_indices"] == "0,0,1"
     assert "condition" not in symcrys.crystal_forms("4mm")[0]
 
 
@@ -154,7 +155,7 @@ def test_lattice_operations_and_orbits() -> None:
 
 
 def test_point_group_of_a_list_of_operations() -> None:
-    assert symcrys.point_group_of(symcrys.operations("32", setting=1)) == {"key": "32", "setting": 1}
+    assert symcrys.point_group_of(symcrys.operations("32", setting="312")) == {"key": "32", "setting": 2}
     assert magnetic.point_group_of(magnetic.operations("4'mm'")) == {"key": "4'mm'", "setting": 1}
     c, s = np.cos(0.4 * np.pi), np.sin(0.4 * np.pi)
     fivefold = np.array([[c, -s, 0], [s, c, 0], [0, 0, 1]])
@@ -281,7 +282,7 @@ def test_nan_and_wrong_shapes_give_readable_errors() -> None:
 
 def test_undefined_result_is_none() -> None:
     assert symcrys.find_point_group("not a symbol") is None
-    assert symcrys.find_point_group("321") == {"key": "32", "setting": 2}
+    assert symcrys.find_point_group("321") == {"key": "32", "setting": 1}
 
 
 def test_calls_from_several_threads() -> None:
@@ -299,7 +300,7 @@ def test_calls_from_several_threads() -> None:
 
 
 def test_boundary_is_one_function() -> None:
-    answer = _engine.call("symbol", '["32", {"setting": 1}]')
+    answer = _engine.call("symbol", '["32", {"setting": 2}]')
     assert re.fullmatch(r'\{"result":"312"\}', answer)
     assert "option convention was removed" in _engine.call("symbol", '["32", {"convention": "birss"}]')
     answer = _engine.call("magnetic.symbol", '["4\'/mmm\'", {"form": "schoenflies"}]')

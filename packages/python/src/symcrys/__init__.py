@@ -20,7 +20,7 @@ second); fetch operations or forms once and compute with NumPy, rather than call
 
 from __future__ import annotations
 
-from typing import Any, Literal, Mapping, Optional, Sequence, TypedDict
+from typing import Any, Literal, Mapping, Optional, Sequence, TypedDict, Union
 
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
@@ -174,7 +174,7 @@ def settings(key: str) -> list[dict[str, Any]]:
     return list(_call("settings", *args))
 
 
-def operations(key: str, *, setting: Optional[int] = None) -> list[Operation]:
+def operations(key: str, *, setting: Optional[Union[int, str]] = None) -> list[Operation]:
     """All operations of the crystal class in the requested setting (default: the ITC default
     setting), in ITA's order: identity first, then as ITA numbers the general position
     (docs/conventions.md, "Order of the operations"). The matrices are Cartesian
@@ -183,7 +183,9 @@ def operations(key: str, *, setting: Optional[int] = None) -> list[Operation]:
     Parameters
     ----------
     setting : keyword-only, optional
-        1-based setting index; default: the ITC default setting.
+        The setting: its 1-based index, or its ITC symbol, short or full (spaces ignored: ``'312'``,
+        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b
+        and c) is an error that names them. Default: the ITC default setting.
 
     Returns
     -------
@@ -193,7 +195,7 @@ def operations(key: str, *, setting: Optional[int] = None) -> list[Operation]:
     return list(_call("operations", key, _shared.options(setting=setting)))
 
 
-def generators(key: str, *, setting: Optional[int] = None) -> list[Operation]:
+def generators(key: str, *, setting: Optional[Union[int, str]] = None) -> list[Operation]:
     """Generators of the crystal class in the requested setting (docs/conventions.md, "Generators"):
     ITA's selected generators in printed order, without the identity and ITA's lattice translations,
     so the list is empty for ``1``; for ``mm2`` settings 2 and 3, which ITA does not list, those of
@@ -202,7 +204,9 @@ def generators(key: str, *, setting: Optional[int] = None) -> list[Operation]:
     Parameters
     ----------
     setting : keyword-only, optional
-        1-based setting index; default: the ITC default setting.
+        The setting: its 1-based index, or its ITC symbol, short or full (spaces ignored: ``'312'``,
+        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b
+        and c) is an error that names them. Default: the ITC default setting.
 
     Returns
     -------
@@ -215,7 +219,7 @@ def generators(key: str, *, setting: Optional[int] = None) -> list[Operation]:
 def symbol(
     key: str,
     *,
-    setting: Optional[int] = None,
+    setting: Optional[Union[int, str]] = None,
     form: Optional[Literal["short", "full", "schoenflies"]] = None,
 ) -> str:
     """A symbol of the crystal class in the requested setting.
@@ -223,7 +227,9 @@ def symbol(
     Parameters
     ----------
     setting : keyword-only, optional
-        1-based setting index; default: the ITC default setting.
+        The setting: its 1-based index, or its ITC symbol, short or full (spaces ignored: ``'312'``,
+        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b
+        and c) is an error that names them. Default: the ITC default setting.
     form : keyword-only, optional
         ``'short'`` (default): short symbol of the setting, e.g. ``321`` (ITC) for class ``32``.
         ``'full'``: full symbol, positions separated by spaces, e.g. ``-3 2/m 1``.
@@ -415,7 +421,7 @@ def change_of_axes(p: ArrayLike) -> dict[str, NDArray[np.float64]]:
 
 
 def describe_operations(
-    key: str, *, setting: Optional[int] = None
+    key: str, *, setting: Optional[Union[int, str]] = None
 ) -> list[dict[str, Any]]:
     """Each operation of the crystal class described geometrically, in the order of ``operations``
     for the same key and options. Axes are named by the symmetry direction they lie along, with the
@@ -424,7 +430,9 @@ def describe_operations(
     Parameters
     ----------
     setting : keyword-only, optional
-        1-based setting index; default: the ITC default setting.
+        The setting: its 1-based index, or its ITC symbol, short or full (spaces ignored: ``'312'``,
+        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b
+        and c) is an error that names them. Default: the ITC default setting.
 
     Returns
     -------
@@ -487,7 +495,7 @@ def describe_operations_of(
 
 
 def symmetry_directions(
-    key: str, *, setting: Optional[int] = None
+    key: str, *, setting: Optional[Union[int, str]] = None
 ) -> list[dict[str, Any]]:
     """The positions of the full Hermann–Mauguin symbol in the requested setting, each with its
     symmetry directions (ITA Table 2.1.3.1) and the symmetry elements along them. All positions of
@@ -499,7 +507,9 @@ def symmetry_directions(
     Parameters
     ----------
     setting : keyword-only, optional
-        1-based setting index; default: the ITC default setting.
+        The setting: its 1-based index, or its ITC symbol, short or full (spaces ignored: ``'312'``,
+        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b
+        and c) is an error that names them. Default: the ITC default setting.
 
     Returns
     -------
@@ -567,7 +577,7 @@ def site_symmetry(
 
 
 def lattice_operations(
-    key: str, *, setting: Optional[int] = None
+    key: str, *, setting: Optional[Union[int, str]] = None
 ) -> list[Operation]:
     """The operations of the crystal class in the conventional lattice basis (a, b, c; for the
     trigonal classes the hexagonal axes), in the order of ``operations`` for the same setting:
@@ -581,7 +591,9 @@ def lattice_operations(
     Parameters
     ----------
     setting : keyword-only, optional
-        1-based setting index; default: the ITC default setting.
+        The setting: its 1-based index, or its ITC symbol, short or full (spaces ignored: ``'312'``,
+        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b
+        and c) is an error that names them. Default: the ITC default setting.
 
     Returns
     -------
@@ -596,7 +608,7 @@ def orbit(
     key: str,
     indices: Mapping[str, ArrayLike],
     *,
-    setting: Optional[int] = None,
+    setting: Optional[Union[int, str]] = None,
 ) -> list[dict[str, Any]]:
     """The orbit of a face (hkl) or of a lattice direction [uvw] under a crystal class, exactly, in
     the lattice basis: the distinct faces (directions), in the order in which the operations reach
@@ -609,7 +621,9 @@ def orbit(
     Parameters
     ----------
     setting : keyword-only, optional
-        1-based setting index; default: the ITC default setting.
+        The setting: its 1-based index, or its ITC symbol, short or full (spaces ignored: ``'312'``,
+        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b
+        and c) is an error that names them. Default: the ITC default setting.
 
     Returns
     -------
@@ -650,7 +664,7 @@ def orbit_of(
 
 
 def wyckoff_positions(
-    key: str, *, setting: Optional[int] = None
+    key: str, *, setting: Optional[Union[int, str]] = None
 ) -> list[dict[str, Any]]:
     """The Wyckoff positions of a crystal class for directions, as ITA tabulates them (general
     position first) (docs/conventions.md, "Site symmetry and Wyckoff positions").
@@ -658,7 +672,9 @@ def wyckoff_positions(
     Parameters
     ----------
     setting : keyword-only, optional
-        1-based setting index; default: the ITC default setting.
+        The setting: its 1-based index, or its ITC symbol, short or full (spaces ignored: ``'312'``,
+        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b
+        and c) is an error that names them. Default: the ITC default setting.
 
     Returns
     -------
@@ -673,7 +689,7 @@ def wyckoff_position_of(
     key: str,
     direction: ArrayLike,
     *,
-    setting: Optional[int] = None,
+    setting: Optional[Union[int, str]] = None,
     tolerance: Optional[float] = None,
 ) -> dict[str, Any]:
     """The Wyckoff position of a direction (Cartesian) in a crystal class: the position whose site
@@ -683,7 +699,9 @@ def wyckoff_position_of(
     Parameters
     ----------
     setting : keyword-only, optional
-        1-based setting index; default: the ITC default setting.
+        The setting: its 1-based index, or its ITC symbol, short or full (spaces ignored: ``'312'``,
+        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b
+        and c) is an error that names them. Default: the ITC default setting.
     tolerance : keyword-only, optional
         A direction counts as fixed by an operation if the operation moves its unit vector by less
         than this (Euclidean distance). Default 10⁻⁶; a caller whose directions carry rounding
@@ -709,7 +727,7 @@ def wyckoff_position_of(
 
 
 def crystal_forms(
-    key: str, *, setting: Optional[int] = None
+    key: str, *, setting: Optional[Union[int, str]] = None
 ) -> list[dict[str, Any]]:
     """The crystal forms of a crystal class, as ITA 6th ed. Table 3.2.3.2 prints them: for each
     Wyckoff position (general position first) its basic form (two for the cubic faces (hhl) of -43m
@@ -718,7 +736,9 @@ def crystal_forms(
     Parameters
     ----------
     setting : keyword-only, optional
-        1-based setting index; default: the ITC default setting.
+        The setting: its 1-based index, or its ITC symbol, short or full (spaces ignored: ``'312'``,
+        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b
+        and c) is an error that names them. Default: the ITC default setting.
 
     Returns
     -------
@@ -736,7 +756,7 @@ def tensor_form(
     key: str,
     spec: TensorSpec | Mapping[str, Any] | TensorPropertyName,
     *,
-    setting: Optional[int] = None,
+    setting: Optional[Union[int, str]] = None,
 ) -> TensorForm:
     """The form of a tensor under a crystal class in the requested setting (default: the ITC default
     setting). The tensor is given by its specification or by the name of a property in
@@ -745,7 +765,9 @@ def tensor_form(
     Parameters
     ----------
     setting : keyword-only, optional
-        1-based setting index; default: the ITC default setting.
+        The setting: its 1-based index, or its ITC symbol, short or full (spaces ignored: ``'312'``,
+        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b
+        and c) is an error that names them. Default: the ITC default setting.
 
     Returns
     -------

@@ -406,12 +406,13 @@ describe('orthorhombic groups: a setting for every orientation of the axes', () 
    * print names them. Operations as sign patterns of x, y, z, a prime for time reversal.
    */
   const C2V_CS: [symbolText: string, setting: number, axis: 'a' | 'b' | 'c', ops: string, source: string][] = [
+    // In the column order of ITA 2016 Table 1.5.4.4 applied to 2'm'm: abc, ba-c, cab, -cba, bca, a-cb (#137 A4).
     ["2'm'm", 1, 'c', "1,-1,-1' 1,-1,1' 1,1,-1 1,1,1", 'Birss Table 6; ITC Vol. D Table 1.5.2.3'],
-    ["m2'm'", 2, 'a', "-1,1,-1' -1,1,1 1,1,-1' 1,1,1", 'ITC Vol. D Table 1.5.8.1 (in brackets)'],
-    ["m'm2'", 3, 'b', "-1,-1,1' -1,1,1' 1,-1,1 1,1,1", 'ITC Vol. D Table 1.5.2.4'],
-    ["m'2'm", 4, 'c', "-1,1,-1' -1,1,1' 1,1,-1 1,1,1", 'ITC Vol. D Table 1.5.7.1'],
+    ["m'2'm", 2, 'c', "-1,1,-1' -1,1,1' 1,1,-1 1,1,1", 'ITC Vol. D Table 1.5.7.1'],
+    ["m2'm'", 3, 'a', "-1,1,-1' -1,1,1 1,1,-1' 1,1,1", 'ITC Vol. D Table 1.5.8.1 (in brackets)'],
     // Paufler prints the operations: 1, 2'_z, m_x, m'_y.
-    ["mm'2'", 5, 'a', "-1,-1,1' -1,1,1 1,-1,1' 1,1,1", 'Paufler (1986), p. 62 and Table A 6, no. 15, p. 316'],
+    ["mm'2'", 4, 'a', "-1,-1,1' -1,1,1 1,-1,1' 1,1,1", 'Paufler (1986), p. 62 and Table A 6, no. 15, p. 316'],
+    ["m'm2'", 5, 'b', "-1,-1,1' -1,1,1' 1,-1,1 1,1,1", 'ITC Vol. D Table 1.5.2.4'],
     ["2'mm'", 6, 'b', "1,-1,-1' 1,-1,1 1,1,-1' 1,1,1", 'ITC Vol. D Table 1.5.8.1'],
   ];
 
@@ -419,9 +420,10 @@ describe('orthorhombic groups: a setting for every orientation of the axes', () 
     expect(findMagneticPointGroup(symbolText)).toEqual({ key: "2'm'm", setting });
     expect(symbol("2'm'm", { setting })).toBe(symbolText);
     expect(signature(operations("2'm'm", { setting }), SAME_AXES)).toBe(ops);
-    // The axis of a setting is the normal of the mirror plane without time reversal.
+    // `axis` is the normal of the mirror plane without time reversal; an orthorhombic setting has no
+    // unique axis (#137 C4).
     const s = settings("2'm'm").find((x) => x.index === setting)!;
-    expect(s.uniqueAxis).toBe(axis);
+    expect(s.uniqueAxis).toBeUndefined();
     const mirror = operations("2'm'm", { setting }).find(
       (op) => !op.timeReversal && op.matrix[0][0] * op.matrix[1][1] * op.matrix[2][2] < 0,
     )!;

@@ -31,9 +31,10 @@ describe('wyckoffPositions', () => {
   });
 
   it('default to the ITC default setting', () => {
-    expect(wyckoffPositions('32')).toBe(wyckoffPositions('32', { setting: 2 }));
+    expect(wyckoffPositions('32')).toBe(wyckoffPositions('32', { setting: 1 }));
     expect(wyckoffPositions('32')[1].siteSymmetry).toBe('.2.');
-    expect(wyckoffPositions('32', { setting: 1 })[1].siteSymmetry).toBe('..2');
+    expect(wyckoffPositions('32', { setting: 2 })[1].siteSymmetry).toBe('..2');
+    expect(wyckoffPositions('32', { setting: '312' })[1].siteSymmetry).toBe('..2');
   });
 
   it('refuse the option convention, removed in 0.11.0', () => {
@@ -155,7 +156,7 @@ describe('siteSymmetry', () => {
   });
 
   it('is not general if a non-identity operation alone fixes the direction', () => {
-    const mirrorOnly = operations('m', { setting: 1 }).filter((o) => o.matrix[2][2] === -1);
+    const mirrorOnly = operations('m', { setting: 2 }).filter((o) => o.matrix[2][2] === -1);
     expect(mirrorOnly).toHaveLength(1);
     expect(siteSymmetry(mirrorOnly, [1, 2, 0]).general).toBe(false);
     expect(siteSymmetry(mirrorOnly, [1, 2, 3]).general).toBe(true);

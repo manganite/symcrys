@@ -5,7 +5,7 @@ import { allowedProperties, operations, pointGroup, settings, symbol, tensorForm
 console.log(pointGroup('32'));
 
 // Symbols and settings, as ITC gives them: the default setting, another one, the Schoenflies symbol.
-console.log(symbol('32'), symbol('32', { setting: 1 }), symbol('32', { form: 'schoenflies' }));
+console.log(symbol('32'), symbol('32', { setting: '312' }), symbol('32', { form: 'schoenflies' }));
 console.log(settings('32').map((s) => `${s.index}: ${s.symbol}${s.isDefault ? ' (default)' : ''}`));
 
 // The operations: Cartesian matrices, x ∥ a and z ∥ c for hexagonal axes.

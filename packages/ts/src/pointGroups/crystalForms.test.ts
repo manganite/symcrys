@@ -91,9 +91,10 @@ describe('crystalForms', () => {
   });
 
   it('default to the ITC default setting', () => {
-    expect(crystalForms('32')).toBe(crystalForms('32', { setting: 2 }));
+    expect(crystalForms('32')).toBe(crystalForms('32', { setting: 1 }));
+    expect(crystalForms('32')).toBe(crystalForms('32', { setting: '321' }));
     expect(crystalForms('2').at(-1)?.millerIndices).toBe('0,1,0');
-    expect(crystalForms('2', { setting: 1 }).at(-1)?.millerIndices).toBe('0,0,1');
+    expect(crystalForms('2', { setting: 2 }).at(-1)?.millerIndices).toBe('0,0,1');
   });
 
   it('refuse the option convention, removed in 0.11.0', () => {

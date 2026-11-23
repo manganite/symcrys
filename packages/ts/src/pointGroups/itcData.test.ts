@@ -30,6 +30,7 @@ describe('the API gives the exact ITC class data', () => {
         symbol: s.short,
         fullSymbol: s.full,
         ...(s.uniqueAxis ? { uniqueAxis: s.uniqueAxis } : {}),
+        ...(s.axes ? { axes: s.axes } : {}),
         isDefault: s.isDefault,
       })),
     ).toEqual(settings(key));

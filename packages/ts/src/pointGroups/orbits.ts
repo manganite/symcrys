@@ -10,10 +10,10 @@ import { siteTolerance } from '../siteSymmetry.js';
 import type { Uvw } from '../symmetryDirections.js';
 import { itcLatticeOperations } from './itcData.js';
 import {
+  settingIndexOf,
   operations as groupOperations,
   isPointGroupKey,
   pointGroup,
-  settings,
   type MagneticPointGroupKey,
   type SettingOptions,
 } from './pointGroups.js';
@@ -65,7 +65,7 @@ export function latticeOperations(key: MagneticPointGroupKey, options?: SettingO
   if (!result) {
     if (isPointGroupKey(key)) {
       // A crystal class: the exact matrices of the ITC class data, in the same order.
-      const index = options?.setting ?? settings(key).find((s) => s.isDefault)!.index;
+      const index = settingIndexOf(key, options);
       result = Object.freeze(
         itcLatticeOperations(key, index).map((w, i) =>
           Object.freeze({ matrix: deepFreeze(w as unknown as Mat3), timeReversal: ops[i].timeReversal }),
