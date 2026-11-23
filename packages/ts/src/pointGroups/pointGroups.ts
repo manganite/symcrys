@@ -6,7 +6,7 @@
 
 import { INVERSION, det, inverse, matricesEqual, multiply, type Mat3 } from '../linalg.js';
 import { EPSILON } from '../tolerances.js';
-import { compactSymbol, normalizeSymbol } from '../notation.js';
+import { compactSymbol } from '../notation.js';
 import { compose, operation, operationsEqual, type CartesianOperation, type Operation } from '../operations.js';
 import {
   ITC_CLASSES,
@@ -25,7 +25,7 @@ import {
   itcBlackWhiteOperations,
   itcBlackWhiteSetting,
 } from './itcMagneticData.js';
-import type { CrystalSystem } from '../lattice.js';
+import { crystalFamily, type CrystalSystem } from '../lattice.js';
 import {
   MAGNETIC_POINT_GROUP_KEYS,
   POINT_GROUP_KEYS,
@@ -95,13 +95,52 @@ export interface Setting {
 }
 
 /** Which setting a function answers in. */
-export interface SettingOptions {
+/**
+ * The criteria of ITA's headlines (Table 3.2.3.2) that choose among the settings a symbol names:
+ * the options of `findPointGroup`, and with `setting` those of every function of a group in a
+ * setting.
+ */
+export interface AxesOptions {
   /**
-   * The setting: its 1-based index, or its ITC symbol, short or full (spaces ignored: `'312'`,
-   * `'3 1 2'`, `'1 1 2'`). A symbol that several settings share (`'2'` for unique axis b, c and a) is
-   * an error that names them. Default: the ITC default setting.
+   * The axes, as ITA's headlines name them: `'rhombohedral'` chooses the setting with rhombohedral
+   * axes of a trigonal group, `'hexagonal'` one with hexagonal axes, which every group of the
+   * hexagonal family has. A RangeError for another family.
+   */
+  readonly axes?: 'hexagonal' | 'rhombohedral';
+  /**
+   * The unique axis of a monoclinic group, as ITA's headlines name it (`'b'`, the standard, `'c'`,
+   * `'a'`). A RangeError for another system.
+   */
+  readonly uniqueAxis?: 'a' | 'b' | 'c';
+}
+
+/** Which setting: by index or symbol, and by the criteria of ITA's headlines. */
+export interface SettingOptions extends AxesOptions {
+  /**
+   * The setting: its 1-based index, or a symbol, read as `findPointGroup` reads it (spaces ignored:
+   * `'312'`, `'3 1 2'`, `'1 1 2'`). A symbol that several settings share (the key `'32'`, `'2'` for
+   * unique axis b, c and a) gives the standard (ITC default) setting, unless `axes` or `uniqueAxis`
+   * chooses another. Default: the ITC default setting.
    */
   readonly setting?: number | string;
+}
+
+/**
+ * The second argument of `findPointGroup`: the criteria, checked. A string is the convention that
+ * up to 0.10 came here (`findPointGroup(hm, 'birss')`), a RangeError that names the change.
+ */
+function criteriaArgument(arg: unknown): AxesOptions | undefined {
+  if (arg === undefined) return undefined;
+  if (typeof arg === 'string') rejectConventionArgument(2);
+  if (typeof arg !== 'object' || arg === null) {
+    throw new RangeError(`findPointGroup takes the options { axes, uniqueAxis }, not ${JSON.stringify(arg)}`);
+  }
+  rejectConvention(arg);
+  const unknown = Object.keys(arg).filter((k) => k !== 'axes' && k !== 'uniqueAxis');
+  if (unknown.length > 0) {
+    throw new RangeError(`findPointGroup takes the options axes and uniqueAxis, not ${unknown.join(', ')}`);
+  }
+  return arg as AxesOptions;
 }
 
 /** Setting and form of a symbol. */
@@ -225,57 +264,119 @@ export function rejectConventionArgument(argumentCount: number): void {
   }
 }
 
-/** A symbol in the spelling of this library with its spaces normalized (notation.ts). */
-const spaced = normalizeSymbol;
-
-/**
- * The setting a symbol names: the one whose full symbol it is, written with its spaces (`3 2'`, the
- * rhombohedral setting of `32'`); otherwise the one whose short or full symbol it is with the spaces
- * ignored. Without spaces the full symbol `3 2'` is the short symbol `32'` of the default setting
- * too (#137 B2), so the full symbol is compared with its spaces first.
- */
-function settingOfSymbol(d: GroupData, text: string): number {
-  const all = Array.from({ length: d.settingCount }, (_, i) => i + 1);
-  const byFull = all.filter((i) => settingSymbols(d, i).full === spaced(text));
-  if (byFull.length === 1) return byFull[0]!;
-  const target = birssCubic(compact(text)) === d.key ? d.key : compact(text);
-  const named = all.filter((i) => {
+/** The settings a symbol names, spaces ignored: by its key, its short or full symbol, or Birss's cubic form. */
+function settingsNamed(d: GroupData, text: string): number[] {
+  const compactText = compact(text);
+  const target = birssCubic(compactText) === d.key ? d.key : compactText;
+  return allSettings(d).filter((i) => {
+    if (target === d.key && i === d.itcDefault) return true;
     const s = settingSymbols(d, i);
     return compact(s.short) === target || compact(derivedSymbols(d, i).short) === target || compact(s.full) === target;
   });
-  const list = (indices: number[]) =>
-    indices
-      .map((i) => {
-        const axes = settingAxes(d, i) === 'rhombohedral' ? ', rhombohedral axes' : '';
-        return `${i}: ${settingSymbols(d, i).short} (${settingSymbols(d, i).full}${axes})`;
-      })
-      .join(', ');
-  if (named.length === 1) return named[0]!;
-  if (named.length > 1) {
-    // The full symbols tell the settings apart unless they too are the same (`3` with hexagonal and
-    // rhombohedral axes); then only the index does.
-    const fulls = new Set(named.map((i) => spaced(settingSymbols(d, i).full)));
-    const advice = fulls.size === named.length ? 'give the full symbol or the index' : 'give the index';
-    throw new RangeError(
-      `Point group ${d.key}: the symbol ${JSON.stringify(text)} names ${named.length} settings; ${advice} (${list(named)})`,
-    );
+}
+
+const allSettings = (d: GroupData): number[] => Array.from({ length: d.settingCount }, (_, i) => i + 1);
+
+/** The settings of `d`, listed for an error message. */
+function listSettings(d: GroupData, indices: readonly number[]): string {
+  return indices
+    .map((i) => {
+      const axes = settingAxes(d, i);
+      const unique = settingUniqueAxis(d, i);
+      const note = axes ? `, ${axes} axes` : unique ? `, unique axis ${unique}` : '';
+      return `${i}: ${settingSymbols(d, i).short} (${settingSymbols(d, i).full}${note})`;
+    })
+    .join(', ');
+}
+
+/** `axes` and `uniqueAxis` of the options, checked against the family of the group. */
+function criteriaOf(
+  d: GroupData,
+  options: SettingOptions | undefined,
+): { readonly axes?: 'hexagonal' | 'rhombohedral'; readonly uniqueAxis?: 'a' | 'b' | 'c' } {
+  const axes = options?.axes;
+  const uniqueAxis = options?.uniqueAxis;
+  if (axes !== undefined) {
+    if (axes !== 'hexagonal' && axes !== 'rhombohedral') {
+      throw new RangeError(`axes must be 'hexagonal' or 'rhombohedral', not ${JSON.stringify(axes)}`);
+    }
+    if (crystalFamily(d.crystalSystem) !== 'hexagonal') {
+      throw new RangeError(
+        `Point group ${d.key} (${d.crystalSystem}): axes applies to the trigonal and hexagonal groups`,
+      );
+    }
   }
-  throw new RangeError(`Point group ${d.key} has no setting ${JSON.stringify(text)} (settings ${list(all)})`);
+  if (uniqueAxis !== undefined) {
+    if (uniqueAxis !== 'a' && uniqueAxis !== 'b' && uniqueAxis !== 'c') {
+      throw new RangeError(`uniqueAxis must be 'a', 'b' or 'c', not ${JSON.stringify(uniqueAxis)}`);
+    }
+    if (d.crystalSystem !== 'monoclinic') {
+      throw new RangeError(`Point group ${d.key} (${d.crystalSystem}): uniqueAxis applies to the monoclinic groups`);
+    }
+  }
+  return { ...(axes ? { axes } : {}), ...(uniqueAxis ? { uniqueAxis } : {}) };
+}
+
+/** Whether setting `i` meets the criteria (`axes: 'hexagonal'` holds for every hexagonal group). */
+function meets(d: GroupData, i: number, c: ReturnType<typeof criteriaOf>): boolean {
+  if (c.axes && (settingAxes(d, i) ?? 'hexagonal') !== c.axes) return false;
+  if (c.uniqueAxis && settingUniqueAxis(d, i) !== c.uniqueAxis) return false;
+  return true;
+}
+
+/**
+ * The setting among `candidates` that meets the criteria: the only one, or the standard (ITC
+ * default) where it is one of several, as a name without a criterion means the standard (Thomas,
+ * 2026-11-23, #96). None, or several without the standard, is a RangeError that lists them.
+ */
+function choose(
+  d: GroupData,
+  candidates: readonly number[],
+  criteria: ReturnType<typeof criteriaOf>,
+  what: string,
+): number {
+  const met = candidates.filter((i) => meets(d, i, criteria));
+  if (met.length === 1) return met[0]!;
+  if (met.includes(d.itcDefault)) return d.itcDefault;
+  const crit = [criteria.axes && `${criteria.axes} axes`, criteria.uniqueAxis && `unique axis ${criteria.uniqueAxis}`]
+    .filter(Boolean)
+    .join(', ');
+  const asked = what ? [what, crit].filter(Boolean).join(', ') : `with ${crit}`;
+  throw new RangeError(
+    met.length === 0
+      ? `Point group ${d.key} has no setting ${asked} (settings ${listSettings(d, allSettings(d))})`
+      : `Point group ${d.key}: ${asked} names ${met.length} settings; give the index (${listSettings(d, met)})`,
+  );
 }
 
 /** The requested setting index, checked; the ITC default if none is given. */
 function settingIndex(d: GroupData, options?: SettingOptions): number {
   rejectConvention(options);
+  const criteria = criteriaOf(d, options);
   const requested = options?.setting;
   if (requested !== undefined && requested !== null && typeof requested !== 'number' && typeof requested !== 'string') {
     throw new RangeError(`The setting must be an index or a symbol, not ${JSON.stringify(requested)}`);
   }
-  const index = typeof requested === 'string' ? settingOfSymbol(d, requested) : (requested ?? d.itcDefault);
-  const count = d.settingCount;
-  if (!Number.isInteger(index) || index < 1 || index > count) {
-    throw new RangeError(`Point group ${d.key} has no setting ${String(index)} (settings 1 to ${count})`);
+  if (typeof requested === 'string') {
+    const named = settingsNamed(d, requested);
+    if (named.length === 0) {
+      throw new RangeError(
+        `Point group ${d.key} has no setting ${JSON.stringify(requested)} (settings ${listSettings(d, allSettings(d))})`,
+      );
+    }
+    return choose(d, named, criteria, JSON.stringify(requested));
   }
-  return index;
+  if (requested === undefined || requested === null) return choose(d, allSettings(d), criteria, '');
+  const count = d.settingCount;
+  if (!Number.isInteger(requested) || requested < 1 || requested > count) {
+    throw new RangeError(`Point group ${d.key} has no setting ${String(requested)} (settings 1 to ${count})`);
+  }
+  if (!meets(d, requested, criteria)) {
+    throw new RangeError(
+      `Point group ${d.key}: setting ${requested} does not have the ${[criteria.axes && `${criteria.axes} axes`, criteria.uniqueAxis && `unique axis ${criteria.uniqueAxis}`].filter(Boolean).join(', ')} (settings ${listSettings(d, allSettings(d))})`,
+    );
+  }
+  return requested;
 }
 
 /**
@@ -313,6 +414,13 @@ function withMatrix(ops: readonly CartesianOperation[], op: CartesianOperation):
  */
 function classSetting(d: GroupData, index: number): number {
   return d.type === 'III' ? itcBlackWhiteClassSetting(d.key as BlackWhitePointGroupKey, index) : index;
+}
+
+/** The unique axis of a monoclinic setting; undefined in other systems. */
+function settingUniqueAxis(d: GroupData, index: number): 'a' | 'b' | 'c' | undefined {
+  return d.type === 'III'
+    ? itcBlackWhiteSetting(d.key as BlackWhitePointGroupKey, index).uniqueAxis
+    : itcSetting(d.crystalClass.key as PointGroupKey, index).uniqueAxis;
 }
 
 /** The axes of a trigonal setting, `'hexagonal'` or `'rhombohedral'`; undefined in other systems. */
@@ -665,64 +773,33 @@ export interface PointGroupInSetting<K extends MagneticPointGroupKey = PointGrou
 /** A symbol in the spelling of this library without spaces (notation.ts). */
 const compact = compactSymbol;
 
-function find(hm: string, classesOnly: boolean): PointGroupInSetting<MagneticPointGroupKey> | undefined {
+function find(
+  hm: string,
+  classesOnly: boolean,
+  options: AxesOptions | undefined,
+): PointGroupInSetting<MagneticPointGroupKey> | undefined {
   if (typeof hm !== 'string') return undefined;
-  const written = normalizeSymbol(hm);
-  const target = written.replace(/ /g, '');
+  const target = compact(hm);
   const candidates = [...BY_KEY.values()].filter((d) => !classesOnly || d.type === 'I');
-  const indices = (d: GroupData) => Array.from({ length: d.settingCount }, (_, j) => j + 1);
-  /** The one group of the matches; several groups are an error that lists them (#96). */
-  const one = (
-    matches: readonly { readonly d: GroupData; readonly settings: readonly number[] }[],
-  ): PointGroupInSetting<MagneticPointGroupKey> | undefined => {
-    const found = matches.filter((m) => m.settings.length > 0);
-    if (found.length > 1) {
-      throw new RangeError(
-        `The symbol ${JSON.stringify(hm)} names several point groups: ${found.map((m) => m.d.key).join(', ')}`,
-      );
-    }
-    if (found.length === 0) return undefined;
-    const { d, settings: named } = found[0]!;
-    // One setting named: that one. Several (a monoclinic short symbol): the default.
-    return { key: d.key, setting: named.length === 1 ? named[0]! : d.itcDefault };
-  };
-  // A symbol written with spaces is read as a full symbol first: `3 2` is the full symbol of the
-  // rhombohedral setting of `32`, although without its spaces it is the key (Thomas, 2026-11-23, #96).
-  if (written.includes(' ')) {
-    const byFull = one(
-      candidates.map((d) => ({ d, settings: indices(d).filter((i) => settingSymbols(d, i).full === written) })),
-    );
-    if (byFull) return byFull;
+  // The key, a short or full symbol of a setting (spaces ignored), Birss's cubic form; then a
+  // Schoenflies symbol, ITA's `C3i` or ITC Vol. D's `S6` alike, which names the group and not an
+  // orientation (Thomas, 2026-11-23, #96). A symbol of several groups is an error.
+  let found = candidates.map((d) => ({ d, named: settingsNamed(d, hm) })).filter((m) => m.named.length > 0);
+  if (found.length === 0) {
+    const inVolD = volDSchoenflies(target);
+    found = candidates
+      .filter((d) => volDSchoenflies(d.schoenflies) === inVolD)
+      .map((d) => ({ d, named: allSettings(d) }));
   }
-  // A key is the key, also where it is the symbol of a setting (`32`, the class with rhombohedral axes).
-  const byKey = candidates.find((d) => d.key === target);
-  if (byKey) return { key: byKey.key, setting: byKey.itcDefault };
-  for (const form of ['short', 'full'] as const) {
-    const bySymbol = one(
-      candidates.map((d) => ({
-        d,
-        settings: indices(d).filter(
-          (i) =>
-            compact(settingSymbols(d, i)[form]) === target ||
-            (form === 'short' && compact(derivedSymbols(d, i).short) === target),
-        ),
-      })),
+  if (found.length > 1) {
+    throw new RangeError(
+      `The symbol ${JSON.stringify(hm)} names several point groups: ${found.map((m) => m.d.key).join(', ')}`,
     );
-    if (bySymbol) return bySymbol;
   }
-  // A Schoenflies symbol, with ITA's `C3i` or ITC Vol. D's `S6` (the same symbol in two volumes),
-  // names the group, not an orientation: the default setting (Thomas, 2026-11-23, #96).
-  const inVolD = volDSchoenflies(target);
-  const bySchoenflies = one(
-    candidates.map((d) => ({
-      d,
-      settings: volDSchoenflies(d.schoenflies) === inVolD ? [d.itcDefault] : [],
-    })),
-  );
-  if (bySchoenflies) return bySchoenflies;
-  const key = birssCubic(target);
-  const d = key === undefined ? undefined : candidates.find((c) => c.key === key);
-  return d ? { key: d.key, setting: d.itcDefault } : undefined;
+  if (found.length === 0) return undefined;
+  const { d, named } = found[0]!;
+  // A name that several settings share gives the standard, unless axes or uniqueAxis chooses another.
+  return { key: d.key, setting: choose(d, named, criteriaOf(d, options), JSON.stringify(hm)) };
 }
 
 /**
@@ -738,41 +815,44 @@ function birssCubic(compactTarget: string): string | undefined {
 
 /**
  * Finds a crystal class by a symbol, read tolerantly.
- * It reads, in this order (#96; docs/conventions.md, "Reading symbols"): a symbol written with
- * spaces as a full symbol first (`3 2`: the rhombohedral setting of `32`); the key, which gives the
- * default setting, also where it is the symbol of another setting (`32`); the short or full symbol
- * of a setting, spaces ignored, where a symbol that several settings share (`2`, unique axis b, c
- * and a) gives the default setting; a Schoenflies symbol, ITA's or ITC Vol. D's (`D3`, `C3i`,
- * `S6`), which gives the default setting; Birss's cubic symbols without the overbar on the 3
- * (`m3m`).
+ * It reads, spaces ignored (#96; docs/conventions.md, "Reading symbols"): the key; the short or
+ * full symbol of a setting (`312`, `1 1 2`); a Schoenflies symbol, ITA's or ITC Vol. D's (`D3`,
+ * `C3i`, `S6`); Birss's cubic symbols without the overbar on the 3 (`m3m`). A symbol that names
+ * several settings (the key `32`, which is also the symbol of the setting with rhombohedral axes;
+ * `2` for unique axis b, c and a; any Schoenflies symbol) gives the standard (ITC default) setting,
+ * unless the options `axes` or `uniqueAxis` choose another, as the headlines of ITA name the
+ * settings (the option `axes` set to `'rhombohedral'` for the key `32`).
  *
  * Spellings: the overbar as `-`, `−`, a combining overbar or `¯` after the digit (`m3̄m`), `bar3` (also with a backslash and braces, as in LaTeX);
  * Schoenflies subscripts also as Unicode or LaTeX subscripts (`C₃ᵥ`, `C_{3v}`). Returns undefined if nothing matches,
  * also for a value that is not a string and for the symbol of a magnetic group with time reversal
  * (`findMagneticPointGroup`); a symbol that names several groups is a RangeError that lists them.
  */
-export function findPointGroup(hm: string): PointGroupInSetting | undefined {
-  rejectConventionArgument(arguments.length);
-  return find(hm, true) as PointGroupInSetting | undefined;
+export function findPointGroup(hm: string, options?: AxesOptions): PointGroupInSetting | undefined {
+  if (arguments.length > 2) rejectConventionArgument(arguments.length);
+  return find(hm, true, criteriaArgument(options)) as PointGroupInSetting | undefined;
 }
 
 /**
  * Finds one of the 122 magnetic point groups (the 32 crystal classes included) by a symbol, read
  * tolerantly. A prime marks time reversal: `4'/mmm'`, `2221'`.
- * It reads, in this order (#96; docs/conventions.md, "Reading symbols"): a symbol written with
- * spaces as a full symbol first (`3 2`: the rhombohedral setting of `32`); the key, which gives the
- * default setting, also where it is the symbol of another setting (`32`); the short or full symbol
- * of a setting, spaces ignored, where a symbol that several settings share (`2`, unique axis b, c
- * and a) gives the default setting; a Schoenflies symbol, ITA's or ITC Vol. D's (`D3`, `C3i`,
- * `S6`), which gives the default setting; Birss's cubic symbols without the overbar on the 3
- * (`m3m`).
+ * It reads, spaces ignored (#96; docs/conventions.md, "Reading symbols"): the key; the short or
+ * full symbol of a setting (`312`, `1 1 2`); a Schoenflies symbol, ITA's or ITC Vol. D's (`D3`,
+ * `C3i`, `S6`); Birss's cubic symbols without the overbar on the 3 (`m3m`). A symbol that names
+ * several settings (the key `32`, which is also the symbol of the setting with rhombohedral axes;
+ * `2` for unique axis b, c and a; any Schoenflies symbol) gives the standard (ITC default) setting,
+ * unless the options `axes` or `uniqueAxis` choose another, as the headlines of ITA name the
+ * settings (the option `axes` set to `'rhombohedral'` for the key `32`).
  *
  * Spellings: the overbar as `-`, `−`, a combining overbar or `¯` after the digit (`m3̄m`), `bar3` (also with a backslash and braces, as in LaTeX);
  * the prime as `'`, `′`, `ʹ` or `’`; Schoenflies subscripts also as Unicode or LaTeX subscripts (`D₃d(S₆)`, `D_{3d}`).
  * Returns undefined if nothing matches, also for a value that is not a string; a symbol that names
  * several groups is a RangeError that lists them.
  */
-export function findMagneticPointGroup(hm: string): PointGroupInSetting<MagneticPointGroupKey> | undefined {
-  rejectConventionArgument(arguments.length);
-  return find(hm, false);
+export function findMagneticPointGroup(
+  hm: string,
+  options?: AxesOptions,
+): PointGroupInSetting<MagneticPointGroupKey> | undefined {
+  if (arguments.length > 2) rejectConventionArgument(arguments.length);
+  return find(hm, false, criteriaArgument(options));
 }

@@ -372,6 +372,12 @@ def test_find_point_group_reads_symbols_tolerantly() -> None:
         assert symcrys.find_point_group(hm) == {"key": "m-3m", "setting": 1}
     assert magnetic.find_point_group("4′/mmm′") == {"key": "4'/mmm'", "setting": 1}
     assert magnetic.find_point_group("D₃d(S₆)") == {"key": "-3m'", "setting": 1}
-    assert symcrys.find_point_group("3 2") == {"key": "32", "setting": 3}
-    assert symcrys.find_point_group("32") == {"key": "32", "setting": 1}
+    # Spaces carry no meaning; the axes choose the rhombohedral setting (#96, Thomas 2026-11-23).
+    assert symcrys.find_point_group("3 2") == {"key": "32", "setting": 1}
+    assert symcrys.find_point_group("32", axes="rhombohedral") == {"key": "32", "setting": 3}
+    assert magnetic.find_point_group("2'", unique_axis="c") == {"key": "2'", "setting": 2}
+    assert len(symcrys.operations("32", axes="rhombohedral")) == 6
+    assert symcrys.symbol("2", unique_axis="a", form="full") == "2 1 1"
+    with pytest.raises(symcrys.SymcrysError, match="uniqueAxis applies to the monoclinic groups"):
+        symcrys.operations("mm2", unique_axis="c")
     assert symcrys.find_point_group("D4R") is None

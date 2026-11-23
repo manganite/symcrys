@@ -155,8 +155,15 @@ option. The Birss mode, its data and its birss-app pins were removed in step 5 o
   and the input stays unambiguous (spaces, overbar spellings such as `-`, a combining overbar or
   `bar`, prime variants, Birss's printed forms such as `m3m`); an input that could match two groups
   or settings is an error that lists the candidates (#96). Decided further by Thomas on 2026-11-23
-  (#96): a Schoenflies symbol names the group and gives its default setting; a symbol written with
-  spaces is read as a full symbol first (`3 2`: the rhombohedral setting of `32`). Implemented in
+  (#96): a Schoenflies symbol names the group and gives its default setting. Revised by Thomas on
+  2026-11-23 in #151 (replacing his earlier answer that a symbol with spaces is a full symbol first,
+  `3 2` the rhombohedral setting, and the rule of #150 that compared full symbols with their spaces):
+  spaces carry no meaning, since print writes the symbols without them; a symbol that names several
+  settings gives the standard (ITC default) setting, also in `{ setting }` (where it was an error),
+  as a name without ITA's headline means the standard; the other settings are chosen by the options
+  `axes` (`'hexagonal'`, which holds for every group of the hexagonal family, or `'rhombohedral'`)
+  and `uniqueAxis`, named as ITA's headlines name them, in every function with `setting` and in
+  `findPointGroup`; criteria that no setting meets are an error. Implemented in
   #121 step 7b (`notation.ts`; `docs/conventions.md`, "Reading symbols"). Chosen while
   implementing (#151): further spellings that are unambiguous, the right single quotation mark `’`
   as a prime, the minus sign and the hyphens as the overbar, `¯` after the digit (the overbar of the
@@ -587,9 +594,8 @@ The conventions themselves are in `docs/conventions.md`; here, what was decided 
   Thomas' OK (2026-11-23, PR #148): **`pointGroupOf`** names such operations setting 1, since the
   two settings hold the same Cartesian operations and a list of them cannot say which basis is
   meant; **a key is the key** in `findPointGroup`, also where it is the symbol of another setting
-  (`32` gives setting 1, not the rhombohedral setting 3; before, no key was such a symbol), while a
-  full symbol finds the setting it names (`-3 2/m` and `3 2` give setting 3, since a symbol written
-  with spaces is read as a full symbol first, #96, step 7b); the **representative face** with rhombohedral axes takes h = 5, k = 2, l = 1,
+  (`32` gives setting 1, not the rhombohedral setting 3; before, no key was such a symbol), the
+  rhombohedral setting is chosen by `{ axes: 'rhombohedral' }` (#96, step 7b); the **representative face** with rhombohedral axes takes h = 5, k = 2, l = 1,
   since (321) lies there on the limiting form (h,k,2k−h) and h = 4 would give printed faces with a
   common factor ((4,2,−6), (4,2,0)). The symbols of the magnetic groups in the rhombohedral setting
   follow the rule for all black-and-white symbols (the symbol of the class in that frame with the
@@ -659,9 +665,8 @@ The conventions themselves are in `docs/conventions.md`; here, what was decided 
   ITA's `321` and `C3i`. The types `'I'`, `'II'`, `'III'` are those of ITC Vol. D Table 1.2.6.12
   (p. 66). Chosen while implementing: a crystal class keeps ITA's short symbol (`321`) in the
   magnetic API too, so that a class has the same `settings` in both entry points and
-  `{ setting: '32' }` selects the same setting (the rhombohedral one) in both; the symbol derived by
-  the rule (`32'1`) still selects the default setting; a full symbol is compared with its spaces
-  first, so that `3 2'` selects the rhombohedral setting of `32'`. Confirmed by Thomas on 2026-11-23
+  `{ setting: '32' }` selects the same setting in both; the symbol derived by the rule (`32'1`)
+  still selects the default setting. Confirmed by Thomas on 2026-11-23
   (#150): the white groups keep `321`, and the default short symbol is the one of Table 1.5.2.3
   (`3m'`), although Vol. D writes `3m'1` where it sets the orientation against `31m'` (p. 140).
 - **Magnetic point groups: data** _(Storage in the Birss frame replaced by "Pure ITC" above; the reason

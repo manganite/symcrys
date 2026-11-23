@@ -121,17 +121,41 @@ describe('a setting by its symbol', () => {
     expect(symbol('-6m2', { setting: '-62m', form: 'full' })).toBe('-6 2 m');
   });
 
-  it('refuses a symbol that names several settings, or none, naming the settings', () => {
-    expect(() => operations('2', { setting: '2' })).toThrow(
-      /names 3 settings.*1: 2 \(1 2 1\), 2: 2 \(1 1 2\), 3: 2 \(2 1 1\)/,
-    );
+  it('a symbol that several settings share gives the standard; axes and uniqueAxis choose another (#96)', () => {
+    expect(operations('2', { setting: '2' })).toBe(operations('2', { setting: 1 }));
+    expect(operations('2', { setting: '2', uniqueAxis: 'c' })).toBe(operations('2', { setting: 2 }));
+    expect(operations('2', { uniqueAxis: 'a' })).toBe(operations('2', { setting: 3 }));
     expect(operations('2', { setting: '2 1 1' })).toBe(operations('2', { setting: 3 }));
-    expect(operations('32', { setting: '32' })).toBe(operations('32', { setting: 3 }));
+    expect(operations('32', { setting: '32' })).toBe(operations('32', { setting: 1 }));
+    expect(operations('32', { setting: '3 2' })).toBe(operations('32', { setting: 1 }));
+    expect(operations('32', { axes: 'rhombohedral' })).toBe(operations('32', { setting: 3 }));
+    expect(operations('32', { setting: '32', axes: 'rhombohedral' })).toBe(operations('32', { setting: 3 }));
+    expect(operations('32', { axes: 'hexagonal' })).toBe(operations('32', { setting: 1 }));
+    expect(operations('32', { setting: '312', axes: 'hexagonal' })).toBe(operations('32', { setting: 2 }));
+    expect(operations('3', { setting: '3', axes: 'rhombohedral' })).toBe(operations('3', { setting: 2 }));
+    expect(operations('6/mmm', { axes: 'hexagonal' })).toBe(operations('6/mmm'));
+    expect(findPointGroup('32', { axes: 'rhombohedral' })).toEqual({ key: '32', setting: 3 });
+    expect(findPointGroup('D3', { axes: 'rhombohedral' })).toEqual({ key: '32', setting: 3 });
+    expect(findPointGroup('2', { uniqueAxis: 'c' })).toEqual({ key: '2', setting: 2 });
+  });
+
+  it('refuses a symbol that names no setting, and criteria that no setting meets, naming the settings', () => {
     expect(() => operations('32', { setting: '3 2 2' })).toThrow(/has no setting "3 2 2" \(settings 1: 321/);
-    expect(() => operations('3', { setting: '3' })).toThrow(
-      /names 2 settings; give the index \(1: 3 \(3\), 2: 3 \(3, rhombohedral axes\)\)/,
+    expect(() => operations('32', { setting: '312', axes: 'rhombohedral' })).toThrow(
+      /has no setting "312", rhombohedral axes \(settings 1: 321 \(3 2 1, hexagonal axes\), 2: 312 .*3: 32 \(3 2, rhombohedral axes\)\)/,
     );
-    expect(() => operations('2', { setting: '2' })).toThrow(/give the full symbol or the index/);
+    expect(() => operations('32', { setting: 3, axes: 'hexagonal' })).toThrow(
+      /setting 3 does not have the hexagonal axes/,
+    );
+    expect(() => operations('6/mmm', { axes: 'rhombohedral' })).toThrow(/has no setting with rhombohedral axes/);
+    expect(() => operations('m-3m', { axes: 'hexagonal' })).toThrow(
+      /axes applies to the trigonal and hexagonal groups/,
+    );
+    expect(() => operations('mm2', { uniqueAxis: 'c' })).toThrow(/uniqueAxis applies to the monoclinic groups/);
+    expect(() => operations('2', { uniqueAxis: 'z' as never })).toThrow(/uniqueAxis must be 'a', 'b' or 'c'/);
+    expect(() => operations('32', { axes: 'trigonal' as never })).toThrow(/axes must be 'hexagonal' or 'rhombohedral'/);
+    expect(() => findPointGroup('mm2', { uniqueAxis: 'c' })).toThrow(/uniqueAxis applies to the monoclinic groups/);
+    expect(() => findPointGroup('32', { setting: 2 } as never)).toThrow(/takes the options axes and uniqueAxis/);
     expect(() => operations('32', { setting: [2] } as never)).toThrow(/must be an index or a symbol, not \[2\]/);
     expect(() => operations('32', { setting: true } as never)).toThrow(RangeError);
   });

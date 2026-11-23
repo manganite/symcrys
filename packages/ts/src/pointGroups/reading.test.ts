@@ -38,7 +38,7 @@ describe('normalizeSymbol', () => {
 
 describe('findPointGroup reads every symbol symbol() writes', () => {
   // The setting a symbol gives back: a key, a Schoenflies symbol and a symbol several settings share
-  // give the default; a full symbol written with spaces is read as a full symbol first.
+  // give the standard (default); spaces are ignored (#96, Thomas 2026-11-23).
   const roundTrip = (
     keys: readonly string[],
     settings: (key: never) => readonly { index: number; isDefault: boolean; symbol: string; fullSymbol: string }[],
@@ -53,9 +53,9 @@ describe('findPointGroup reads every symbol symbol() writes', () => {
         const full = symbol(key as never, { setting: s.index, form: 'full' });
         const schoenflies = symbol(key as never, { setting: s.index, form: 'schoenflies' });
         const shortShared = short === key || all.filter((t) => t.symbol === short).length > 1;
-        const fullShared = full.includes(' ')
-          ? all.filter((t) => t.fullSymbol === full).length > 1
-          : full === key || all.filter((t) => compactSymbol(t.fullSymbol) === full).length > 1;
+        const fullShared =
+          compactSymbol(full) === key ||
+          all.filter((t) => compactSymbol(t.fullSymbol) === compactSymbol(full)).length > 1;
         expect(find(short), `${key} ${short}`).toEqual({ key, setting: shortShared ? def : s.index });
         expect(find(full), `${key} ${full}`).toEqual({ key, setting: fullShared ? def : s.index });
         expect(find(schoenflies), `${key} ${schoenflies}`).toEqual({ key, setting: def });
@@ -108,12 +108,14 @@ describe('findPointGroup reads the spellings of print and pasted text', () => {
     expect(magnetic.findPointGroup("m3m1'")).toEqual({ key: "m-3m1'", setting: 1 });
   });
 
-  it('a symbol with spaces is read as a full symbol first; without spaces the key gives the default (#96)', () => {
-    expect(classes.findPointGroup('3 2')).toEqual({ key: '32', setting: 3 });
+  it('spaces are ignored; the axes choose the rhombohedral setting (#96, Thomas 2026-11-23)', () => {
+    expect(classes.findPointGroup('3 2')).toEqual({ key: '32', setting: 1 });
     expect(classes.findPointGroup('32')).toEqual({ key: '32', setting: 1 });
-    expect(classes.findPointGroup('-3 2/m')).toEqual({ key: '-3m', setting: 3 });
-    expect(magnetic.findPointGroup("3 2'")).toEqual({ key: "32'", setting: 3 });
-    expect(magnetic.findPointGroup("32'")).toEqual({ key: "32'", setting: 1 });
+    expect(classes.findPointGroup('3 2', { axes: 'rhombohedral' })).toEqual({ key: '32', setting: 3 });
+    expect(classes.findPointGroup('-3 2/m')).toEqual({ key: '-3m', setting: 3 }); // no other setting's symbol
+    expect(magnetic.findPointGroup("3 2'")).toEqual({ key: "32'", setting: 1 });
+    expect(magnetic.findPointGroup("3 1'")).toEqual({ key: "31'", setting: 1 });
+    expect(magnetic.findPointGroup("32'", { axes: 'rhombohedral' })).toEqual({ key: "32'", setting: 3 });
   });
 
   it('the crystallographic API finds no magnetic group, in any spelling; unknown symbols give undefined', () => {
@@ -133,7 +135,9 @@ describe('findPointGroup reads the spellings of print and pasted text', () => {
     expect(classes.findPointGroup('bar3 2/m')).toEqual({ key: '-3m', setting: 3 });
     expect(classes.findPointGroup('C_{3v}')).toEqual({ key: '3m', setting: 1 });
     expect(classes.operations('-6m2', { setting: '−6 2 m' })).toBe(classes.operations('-6m2', { setting: 2 }));
-    expect(magnetic.operations("32'", { setting: '3 2′' })).toBe(magnetic.operations("32'", { setting: 3 }));
+    expect(magnetic.operations("32'", { setting: '3 2′', axes: 'rhombohedral' })).toBe(
+      magnetic.operations("32'", { setting: 3 }),
+    );
     expect(magnetic.operations("-3m'", { setting: '3̄ 1 2′/m′' })).toBe(magnetic.operations("-3m'", { setting: 2 }));
   });
 });
