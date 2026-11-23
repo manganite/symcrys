@@ -18,9 +18,10 @@ group records the heading that the print sets over the column of coordinates.
 
 Transcription conventions: a leading minus sign is an overbar (`-x` for x̄, `-2x` for 2̄x); `n+` and
 `n-` are the superscripts of n⁺ and n⁻; `<=` is ≤; the spaces the print sets between the characters
-of an oriented site-symmetry symbol (`. m .`) are left out (`.m.`), except in "Origin", where the
-positions keep the spaces the print sets between them (`at 2 1 g`, so that `21g` is not read as a
-screw axis; read again from the page images on 2026-11-23, #137 C4). "Generators selected" leaves out
+of an oriented site-symmetry symbol (`. m .`) are left out (`.m.`), and so are the thin spaces the
+print sets between the characters of every Hermann–Mauguin symbol, except in "Origin", where they
+are kept as spaces between the positions (`at 2 1 g`, so that `21g` is not read as a screw axis;
+read again from the page images on 2026-11-23, #137 C4). "Generators selected" leaves out
 the identity (1) and the integer translations t(1,0), t(0,1) that begin every line in print; a
 centring translation is kept.
 

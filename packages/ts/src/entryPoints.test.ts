@@ -745,6 +745,40 @@ describe('every result is frozen, nested values included (#137 C4)', () => {
   it('in symcrys/plane', () => {
     for (const [name, args] of Object.entries(planeCalls)) expect(unfrozen(call(plane, name, args)), name).toEqual([]);
   });
+  it('covers every export: each function is called above or returns a primitive; every constant is frozen', () => {
+    const primitive = new Set([
+      'allowsProperty',
+      'allowsPropertyOf',
+      'angleBetweenDirections',
+      'angleBetweenPlanes',
+      'crystalFamily',
+      'holohedry',
+      'isCentrosymmetricOf',
+      'isEnantiomorphicOf',
+      'isPointGroupKey',
+      'isValidCell',
+      'symbol',
+    ]);
+    const check = (module: Record<string, unknown>, called: Record<string, unknown[]>, what: string) => {
+      for (const [name, value] of Object.entries(module)) {
+        if (typeof value === 'function') {
+          expect(name in called || primitive.has(name), `${what}.${name}: add it to the calls above`).toBe(true);
+        } else {
+          expect(unfrozen(value), `${what}.${name}`).toEqual([]);
+        }
+      }
+    };
+    check(classes, { ...point, ...classOnly }, 'symcrys');
+    check(magnetic, { ...point, tensorFormOf: [], allowedPropertiesOf: [] }, 'symcrys/magnetic');
+    check(plane, planeCalls, 'symcrys/plane');
+  });
+
+  it('tensorFormOf and allowedPropertiesOf of the magnetic API', () => {
+    const magneticOps = magnetic.operations('32');
+    expect(unfrozen(magnetic.tensorFormOf(magneticOps, 'piezoelectric'))).toEqual([]);
+    expect(unfrozen(magnetic.allowedPropertiesOf(magneticOps))).toEqual([]);
+  });
+
   it('residualOperations freezes the list, not the operations of the caller', () => {
     const mine = classes.operations('6/mmm').map((op) => ({ matrix: op.matrix }));
     const kept = classes.residualOperations(mine, basis);

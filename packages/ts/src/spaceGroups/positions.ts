@@ -114,21 +114,23 @@ function groupData(key: string): GroupData {
 const plainOperations = (key: string): readonly PlainOperation[] => groupData(key).ops;
 
 /**
- * The orbit of a point under a plane group: its distinct images in the conventional cell, each in
- * [0, 1), in the order of the operations that first produce them. Coinciding images (within the
- * tolerance) are merged.
+ * The orbit of a point under a plane group: the images of the point set onto its site symmetry
+ * (`planeSiteSymmetry`), each in [0, 1), in the order of the operations that first produce them,
+ * with the operations that map the point there: one entry per coset of the site symmetry.
  */
 export function planeOrbit(
   key: string,
   point: readonly number[],
   options?: PointOptions,
 ): { point: number[]; operations: number[] }[] {
-  checkPoint(point);
-  const tol = tolerance(options);
+  // The point is first set onto its site symmetry, as planeSiteSymmetry does, so that the images of
+  // one coset coincide exactly: merging images within the tolerance pairwise is not transitive, and
+  // near an element it could put operations together that form no coset (review of #153).
+  const site = planeSiteSymmetry(key, point, options);
   const out: { point: number[]; operations: number[] }[] = [];
   plainOperations(key).forEach((op, i) => {
-    const q = image(op, point).map(mod1);
-    const entry = out.find((r) => sameModLattice(r.point, q, tol));
+    const q = image(op, site.point).map(mod1);
+    const entry = out.find((r) => sameModLattice(r.point, q, 1e-9));
     if (entry) entry.operations.push(i);
     else out.push({ point: q, operations: [i] });
   });

@@ -946,7 +946,7 @@ while implementing gets its own note here.
   although `direction` is a float key of the fixed rule, which means a Cartesian vector there); a
   Wyckoff position gives all printed coordinates of its (0,0)+ set (`coordinates`, a list), since ITA
   prints them all for the plane groups; fields and functions as in `symcrys` where the notion is the
-  same (`crystalSystem`, `settings(key)` as a list of settings with `index`, `symbol`, `default`,
+  same (`crystalSystem`, `settings(key)` as a list of settings with `index`, `symbol`, `default` _(`isDefault` since #121 step 7d)_,
   `wyckoffPositionOf` giving the same record as `wyckoffPositions`; review of PR #82). Asked in a third round (Thomas,
   2026-11-22, #84, #85; recommendations taken): **`describeOperationsOf(operations)`** describes any
   list of operations of the plane, the name of the other entry points for the same notion; a

@@ -292,11 +292,11 @@ def snap_to_wyckoff_position(key: str, point: ArrayLike, *, tolerance: Optional[
 
 
 def orbit(key: str, point: ArrayLike, *, tolerance: Optional[float] = None) -> list[dict[str, Any]]:
-    """The orbit of a point (lattice basis) under a plane group: its distinct images in the
-    conventional cell, each in [0, 1), in the order of the operations that first give them, each
-    with the indices of the operations that map the point there (as the entries of the orbits of the
-    point groups); images that coincide within the tolerance are merged. Raises SymcrysError as
-    ``site_symmetry``.
+    """The orbit of a point (lattice basis) under a plane group: the images of the point set onto
+    its site symmetry (as ``site_symmetry`` sets it), each in [0, 1), in the order of the operations
+    that first give them, each with the indices of the operations that map the point there (as the
+    entries of the orbits of the point groups): one entry per coset of the site symmetry, so the
+    first entry holds the operations of ``site_symmetry``. Raises SymcrysError as ``site_symmetry``.
 
     Parameters
     ----------

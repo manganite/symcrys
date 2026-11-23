@@ -152,6 +152,31 @@ describe('plain numbers at the API', () => {
     expect(orbit.flatMap((e) => e.operations).sort((a, b) => a - b)).toEqual([0, 1, 2, 3]);
     expect(plane.orbit('p4', [0, 0])).toEqual([{ point: [0, 0], operations: [0, 1, 2, 3] }]);
     expect(Object.isFrozen(orbit[0].operations)).toBe(true);
+    // Every entry: its operations map the point (set onto its site symmetry) onto its point, and
+    // the first entry holds the site symmetry, also for a centred group and near an element with a
+    // tolerance (where merging images pairwise put 4+ and 4- without 2 together, review of #153).
+    const image = (op: plane.PlaneOperation, p: readonly number[]) =>
+      [0, 1].map((i) => op.matrix[i][0] * p[0] + op.matrix[i][1] * p[1] + op.translation[i]);
+    const sameMod1 = (a: readonly number[], b: readonly number[]) =>
+      a.every((x, i) => Math.abs(x - b[i] - Math.round(x - b[i])) < 1e-9);
+    const cases: [plane.PlaneGroupKey, number[], number | undefined][] = [
+      ['c2mm', [0, 0], undefined],
+      ['c2mm', [0.1, 0], undefined],
+      ['p4', [0.01, 0.002], 0.02],
+      ['p6mm', [0.335, 0.666], 0.01],
+      ['p31m', [0.1, 0.3], undefined],
+    ];
+    for (const [k, p, tolerance] of cases) {
+      const ops = plane.operations(k);
+      const options = tolerance === undefined ? undefined : { tolerance };
+      const site = plane.siteSymmetry(k, p, options);
+      const entries = plane.orbit(k, p, options);
+      expect(entries[0].operations, `${k} ${p}`).toEqual(site.operations);
+      expect(entries, `${k} ${p}`).toHaveLength(site.multiplicity);
+      for (const e of entries) {
+        for (const i of e.operations) expect(sameMod1(image(ops[i], site.point), e.point), `${k} ${p} ${i}`).toBe(true);
+      }
+    }
   });
 
   it('points', () => {

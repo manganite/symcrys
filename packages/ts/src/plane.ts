@@ -509,7 +509,7 @@ export function snapToWyckoffPosition(
 }
 
 /** One point of the orbit of a point. */
-export interface OrbitPoint {
+export interface PointOrbitEntry {
   /** The image, in the lattice basis, in [0, 1). */
   readonly point: readonly number[];
   /** Indices into `operations` of the operations that map the given point here (modulo the lattice), ascending. */
@@ -517,13 +517,17 @@ export interface OrbitPoint {
 }
 
 /**
- * The orbit of a point (lattice basis) under a plane group: its distinct images in the
- * conventional cell, each in [0, 1), in the order of the operations that first give them, each with
- * the indices of the operations that map the point there (as the entries of the orbits of the
- * point groups); images that coincide within the tolerance are merged. Throws a RangeError as
- * `siteSymmetry`.
+ * The orbit of a point (lattice basis) under a plane group: the images of the point set onto its
+ * site symmetry (as `siteSymmetry` sets it), each in [0, 1), in the order of the operations that
+ * first give them, each with the indices of the operations that map the point there (as the
+ * entries of the orbits of the point groups): one entry per coset of the site symmetry, so the
+ * first entry holds the operations of `siteSymmetry`. Throws a RangeError as `siteSymmetry`.
  */
-export function orbit(key: PlaneGroupKey, point: readonly number[], options?: PointOptions): readonly OrbitPoint[] {
+export function orbit(
+  key: PlaneGroupKey,
+  point: readonly number[],
+  options?: PointOptions,
+): readonly PointOrbitEntry[] {
   return Object.freeze(
     planeOrbit(groupKey(key, 'orbit'), point, options).map((e) =>
       Object.freeze({ point: Object.freeze(e.point), operations: Object.freeze(e.operations) }),
