@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { apply, type Vec3 } from '../linalg.js';
-import { siteSymmetry } from '../siteSymmetry.js';
+import { siteSymmetryOf } from '../siteSymmetry.js';
 import { CRYSTAL_FORM_TYPES, crystalForms } from './crystalForms.js';
 import { POINT_GROUP_KEYS, operations, settings } from './pointGroups.js';
-import { wyckoffPositionOf, wyckoffPositions } from './wyckoff.js';
+import { wyckoffPosition, wyckoffPositions } from './wyckoff.js';
 
 const ALL_SETTINGS = POINT_GROUP_KEYS.flatMap((key) => settings(key).map((s) => ({ key, s })));
 
@@ -46,10 +46,10 @@ describe('crystalForms', () => {
       for (const f of crystalForms(key, { setting: s.index })) {
         const label = `${key} #${s.index} ${f.letter} ${f.millerIndices}`;
         const v = f.representative.cartesian;
-        expect(wyckoffPositionOf(key, v, { setting: s.index }).letter, label).toBe(f.letter);
+        expect(wyckoffPosition(key, v, { setting: s.index }).letter, label).toBe(f.letter);
         expect(orbitSize(key, s.index, v), label).toBe(CRYSTAL_FORM_TYPES[f.formType - 1].faces);
         const ops = operations(key, { setting: s.index });
-        expect(ops.length / siteSymmetry(ops, v).operations.length, label).toBe(f.multiplicity);
+        expect(ops.length / siteSymmetryOf(ops, v).operations.length, label).toBe(f.multiplicity);
       }
     }
   });

@@ -135,7 +135,7 @@ export interface OrbitPole {
  * The orbit of a direction (any non-zero vector, Cartesian, e.g. a face normal) under a list of
  * operations, for instance those of a distorted crystal: the images of its unit vector under each
  * operation, coinciding images merged (closer than `tolerance`, default `EPSILON`, as for
- * `siteSymmetry`), in the order in which the operations reach them, each with the indices of the
+ * `siteSymmetryOf`), in the order in which the operations reach them, each with the indices of the
  * operations that map the direction there. The list is taken as it is, not closed into a group.
  * Time reversal is ignored. Throws a RangeError for a zero vector and for an operation without an orthogonal Cartesian matrix (`cartesian`; within `tolerance`, at least `EPSILON`).
  */

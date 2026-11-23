@@ -159,7 +159,7 @@ function expected(p: PrintedOperation, b: M): Expected {
     const v = parameterVectors(axisPart);
     expect(v).toHaveLength(2);
     const normal = unit(cross(times(b, v[0]), times(b, v[1])));
-    return { matrix: mirrorNormal(normal), kind: 'mirror', order: 2, cartesian: normal };
+    return { matrix: mirrorNormal(normal), kind: 'reflection', order: 2, cartesian: normal };
   }
   const s = /^(-?)([2346])([+-]?)$/.exec(p.symbol);
   if (!s) throw new Error(`Unreadable symbol ${p.symbol}`);
@@ -237,7 +237,7 @@ describe('describeOperations against the symmetry operations printed in ITA', ()
       used.add(hits[0]);
 
       const d = descriptions[hits[0]];
-      expect([d.kind, d.order, d.sense]).toEqual([x.kind, x.order, x.sense]);
+      expect([d.kind, d.n, d.sense]).toEqual([x.kind, x.order, x.sense]);
       if (x.cartesian) expect(parallel(d.axis!.cartesian, x.cartesian)).toBe(true);
       if (x.direction && x.order > 2) expect([...d.axis!.lattice]).toEqual(x.direction);
       else if (x.direction) expect(parallel(d.axis!.lattice, x.direction)).toBe(true);

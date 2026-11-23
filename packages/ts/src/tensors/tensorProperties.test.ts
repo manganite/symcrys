@@ -14,7 +14,7 @@ import {
   type MagneticPointGroupKey,
   type PointGroupKey,
 } from '../pointGroups/pointGroups.js';
-import { siteSymmetry } from '../siteSymmetry.js';
+import { siteSymmetryOf } from '../siteSymmetry.js';
 import { TENSOR_PROPERTIES, TENSOR_PROPERTY_NAMES, type TensorPropertyName } from './propertyTable.js';
 import type { Mat3 } from '../linalg.js';
 import { CLASS_ROWS, T4C, symbolClass } from '../testUtils/birssTensorTables.js';
@@ -23,7 +23,7 @@ import { allowedProperties, allowedPropertiesOf, allowsProperty, allowsPropertyO
 
 /** The fixed properties of a group, read from its record. */
 const isCentrosymmetric = (key: MagneticPointGroupKey) => pointGroup(key).centrosymmetric;
-const isChiral = (key: MagneticPointGroupKey) => pointGroup(key).chiral;
+const isChiral = (key: MagneticPointGroupKey) => pointGroup(key).enantiomorphic;
 const isPolar = (key: MagneticPointGroupKey) => pointGroup(key).polar;
 
 const count = (name: TensorPropertyName, type: 'I' | 'II' | 'III') =>
@@ -161,7 +161,7 @@ describe('allowsProperty and allowedProperties', () => {
 
   it('take any operations: the site symmetry of the threefold axis of m-3m is polar, the group is not', () => {
     const ops = operations('m-3m');
-    const site = siteSymmetry(ops, [1, 1, 1]).operations.map((i) => ops[i]);
+    const site = siteSymmetryOf(ops, [1, 1, 1]).operations.map((i) => ops[i]);
     // The site symmetry is 3m.
     expect(allowedPropertiesOf(site)).toEqual(allowedProperties('3m'));
     expect(allowedPropertiesOf(site)).toEqual(['pyroelectric', 'piezoelectric', 'magnetoelectric', 'piezomagnetic']);

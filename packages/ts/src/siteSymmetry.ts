@@ -7,7 +7,7 @@ import { apply, matricesEqual, multiply, type Vec3 } from './linalg.js';
 import { checkCartesianOperations, type CartesianOperation } from './operations.js';
 import { EPSILON } from './tolerances.js';
 
-/** Options of `siteSymmetry` and `wyckoffPositionOf`. */
+/** Options of `siteSymmetryOf`, `siteSymmetry` and `wyckoffPosition`. */
 export interface SiteSymmetryOptions {
   /**
    * A direction counts as fixed by an operation if the operation moves its unit vector by less
@@ -21,7 +21,7 @@ export interface SiteSymmetryOptions {
 export interface SiteSymmetry {
   /**
    * Indices into the given operations of those that leave the direction fixed, ascending: for a group,
-   * a subgroup (the operations fixing within the tolerance, closed under products, see `siteSymmetry`).
+   * a subgroup (the operations fixing within the tolerance, closed under products, see `siteSymmetryOf`).
    */
   readonly operations: readonly number[];
   /**
@@ -124,7 +124,7 @@ export function siteTolerance(options?: SiteSymmetryOptions): number {
  * `tolerance`, at least `EPSILON`), for a zero vector, and if the closed operations fix no common
  * direction or do not settle into a group (a tolerance far too large, e.g. 0.5).
  */
-export function siteSymmetry(
+export function siteSymmetryOf(
   operations: readonly CartesianOperation[],
   direction: Vec3,
   options?: SiteSymmetryOptions,

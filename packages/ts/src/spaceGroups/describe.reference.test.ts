@@ -45,10 +45,10 @@ function symbol(d: PlaneOperationDescription): string {
     case 'translation':
       return `t(${(d.translation ?? []).map(f).join(',')})`;
     case 'rotation':
-      return `${d.order}${d.sense ?? ''} ${(d.location ?? []).map(f).join(',')}`;
-    case 'mirror':
+      return `${d.n}${d.sense ?? ''} ${(d.location ?? []).map(f).join(',')}`;
+    case 'reflection':
       return `m ${line(d)}`;
-    case 'glide': {
+    case 'glide-reflection': {
       const [gx, gy] = (d.glide ?? []).map(f);
       const letter = gy === '0' && gx === '1/2' ? 'a' : gx === '0' && gy === '1/2' ? 'b' : `g(${gx},${gy})`;
       return `${letter} ${line(d)}`;
@@ -96,12 +96,12 @@ function checkInvariants(op: ExactOperation, d: PlaneOperationDescription): void
   if (d.kind === 'rotation') {
     const c = d.location ?? [];
     expect(same(image(c), c)).toBe(true); // the centre is fixed
-    if (d.order >= 3) {
+    if (d.n >= 3) {
       // '+': the rotation by +360°/n turns a towards b, i.e. W·a has a positive b component.
       expect(op.matrix[1][0] > 0).toBe(d.sense === '+');
     }
   }
-  if (d.kind === 'mirror' || d.kind === 'glide') {
+  if (d.kind === 'reflection' || d.kind === 'glide-reflection') {
     const p = d.location ?? [];
     const g = d.glide ?? [rational(0), rational(0)];
     // A point of the line goes to itself shifted by the glide vector.
@@ -131,8 +131,8 @@ describe('describePlaneOperation', () => {
   it('describes an operation whose glide vector is a lattice vector as a glide', () => {
     // m 0,y followed by t(0,1): x' = -x, y' = y + 1, geometrically a glide along the mirror line x = 0.
     expect(describePlaneOperation(parseOperation('-x,y+1'))).toEqual({
-      kind: 'glide',
-      order: 2,
+      kind: 'glide-reflection',
+      n: 2,
       location: [rational(0), rational(0)],
       direction: [0, 1],
       normal: [1, 0],
@@ -143,16 +143,16 @@ describe('describePlaneOperation', () => {
   it('gives lines along the axes with the shortest direction and a point on x = 0 or y = 0', () => {
     // m 1/4,y of p2mg: line x = 1/4 along b, met by y = 0 at (1/4, 0).
     expect(describePlaneOperation(parseOperation('-x+1/2,y'))).toEqual({
-      kind: 'mirror',
-      order: 2,
+      kind: 'reflection',
+      n: 2,
       location: [rational(1, 4), rational(0)],
       direction: [0, 1],
       normal: [1, 0],
     });
     // a x,1/4 of p2gg: line y = 1/4 along a, parallel to y = 0, so its point is on x = 0.
     expect(describePlaneOperation(parseOperation('x+1/2,-y+1/2'))).toEqual({
-      kind: 'glide',
-      order: 2,
+      kind: 'glide-reflection',
+      n: 2,
       location: [rational(0), rational(1, 4)],
       direction: [1, 0],
       normal: [0, 1],
@@ -164,7 +164,7 @@ describe('describePlaneOperation', () => {
     // -y,x+1/2: (I − W)p = w with W = 4+ gives p = (−1/4, 1/4); check: W·p + w = (−1/4, −1/4 + 1/2).
     expect(describePlaneOperation(parseOperation('-y,x+1/2'))).toEqual({
       kind: 'rotation',
-      order: 4,
+      n: 4,
       sense: '+',
       location: [rational(-1, 4), rational(1, 4)],
     });
@@ -209,7 +209,7 @@ describe('normals of mirror and glide lines against ITA Table 2.1.3.1 and the fu
     const fromOperations = new Set<string>();
     for (const op of planeGroupOperations(key)) {
       const d = describePlaneOperation(op);
-      if (d.kind === 'mirror' || d.kind === 'glide') {
+      if (d.kind === 'reflection' || d.kind === 'glide-reflection') {
         const n = d.normal ?? [0, 0];
         fromOperations.add(n.join(','));
         // Independent of the rule that computes it: W maps the normal onto its negative and the direction onto itself.

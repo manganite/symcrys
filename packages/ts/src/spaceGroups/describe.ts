@@ -9,17 +9,17 @@ import { determinant, dimensionOf, trace, type ExactOperation, type IntMatrix } 
 import { ZERO, add, multiply, rational, scale, type Rational } from './rational.js';
 
 /**
- * What an operation of a plane group is: `'mirror'` (a reflection in a line, as `'mirror'` of the
- * point groups) and `'glide'` (a glide reflection).
+ * What an operation of a plane group is, as ITA names the operations (Table 2.1.2.1): `'reflection'`
+ * (in a line, as `'reflection'` of the point groups) and `'glide-reflection'`.
  */
-export type PlaneOperationKind = 'identity' | 'translation' | 'rotation' | 'mirror' | 'glide';
+export type PlaneOperationKind = 'identity' | 'translation' | 'rotation' | 'reflection' | 'glide-reflection';
 
 /** One operation of a plane group described geometrically, in the lattice basis. */
 export interface PlaneOperationDescription {
   /** What the operation is. */
   readonly kind: PlaneOperationKind;
-  /** The order n of its linear part: 1 for identity and translation, 2 for a mirror or glide. */
-  readonly order: number;
+  /** The n of its linear part (an n-fold rotation): 1 for identity and translation, 2 for a reflection or glide reflection. */
+  readonly n: number;
   /** For a rotation with n ≥ 3: `'+'` if it turns a towards b, `'-'` otherwise. */
   readonly sense?: '+' | '-';
   /** For a translation: the translation vector. */
@@ -93,8 +93,8 @@ export function describePlaneOperation(op: ExactOperation): PlaneOperationDescri
     }
     if (n === 1) {
       return t.every((v) => v[0] === 0)
-        ? { kind: 'identity', order: 1 }
-        : { kind: 'translation', order: 1, translation: [...t] };
+        ? { kind: 'identity', n: 1 }
+        : { kind: 'translation', n: 1, translation: [...t] };
     }
     // The centre p solves (I − W) p = w; det(I − W) = 2 − trace W ≠ 0 for a rotation.
     const a = [
@@ -107,7 +107,7 @@ export function describePlaneOperation(op: ExactOperation): PlaneOperationDescri
       multiply(add(scale(a[1][1], t[0]), scale(-a[0][1], t[1])), inv),
       multiply(add(scale(-a[1][0], t[0]), scale(a[0][0], t[1])), inv),
     ];
-    const description: PlaneOperationDescription = { kind: 'rotation', order: n, location: Object.freeze(location) };
+    const description: PlaneOperationDescription = { kind: 'rotation', n, location: Object.freeze(location) };
     // The sense: the sign of a × W·a with a = (1, 0), the same in any right-handed basis.
     return Object.freeze(n === 2 ? description : { ...description, sense: w[1][0] > 0 ? '+' : '-' });
   }
@@ -136,14 +136,14 @@ export function describePlaneOperation(op: ExactOperation): PlaneOperationDescri
   const location: Rational[] =
     a[i][0] !== 0 ? [multiply(s[i], rational(1, a[i][0])), ZERO] : [ZERO, multiply(s[i], rational(1, a[i][1]))];
   const line = {
-    order: 2,
+    n: 2,
     location: Object.freeze(location),
     direction: Object.freeze(direction),
     normal: Object.freeze(normal),
   };
   return Object.freeze(
     glide.some((v) => v[0] !== 0)
-      ? { kind: 'glide' as const, ...line, glide: Object.freeze(glide) }
-      : { kind: 'mirror' as const, ...line },
+      ? { kind: 'glide-reflection' as const, ...line, glide: Object.freeze(glide) }
+      : { kind: 'reflection' as const, ...line },
   );
 }

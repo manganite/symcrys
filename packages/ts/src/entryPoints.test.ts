@@ -24,7 +24,7 @@ describe('the entry points', () => {
   });
 
   it('export the same names; only the Wyckoff positions and the crystal forms are crystallographic alone', () => {
-    const onlyClasses = ['CRYSTAL_FORM_TYPES', 'crystalForms', 'wyckoffPositionOf', 'wyckoffPositions'];
+    const onlyClasses = ['CRYSTAL_FORM_TYPES', 'crystalForms', 'wyckoffPosition', 'wyckoffPositions'];
     expect(Object.keys(classes).sort()).toEqual([...Object.keys(magnetic), ...onlyClasses].sort());
     for (const name of Object.keys(magnetic) as (keyof typeof magnetic)[]) {
       expect(typeof classes[name], name).toBe(typeof magnetic[name]);
@@ -63,8 +63,8 @@ describe('keys', () => {
       const m = magnetic.pointGroup(key);
       expect(Object.keys(g).sort()).toEqual([
         'centrosymmetric',
-        'chiral',
         'crystalSystem',
+        'enantiomorphic',
         'key',
         'laueClass',
         'order',
@@ -155,9 +155,9 @@ describe('the crystallographic API returns nothing about time reversal', () => {
       const g = classes.pointGroup(key);
       for (const list of ['operations', 'generators'] as const) {
         expect(classes.isCentrosymmetricOf(classes[list](key)), `${key} ${list}`).toBe(g.centrosymmetric);
-        expect(classes.isChiralOf(classes[list](key)), `${key} ${list}`).toBe(g.chiral);
+        expect(classes.isEnantiomorphicOf(classes[list](key)), `${key} ${list}`).toBe(g.enantiomorphic);
         expect(magnetic.isCentrosymmetricOf(magnetic[list](key)), `${key} ${list}`).toBe(g.centrosymmetric);
-        expect(magnetic.isChiralOf(magnetic[list](key)), `${key} ${list}`).toBe(g.chiral);
+        expect(magnetic.isEnantiomorphicOf(magnetic[list](key)), `${key} ${list}`).toBe(g.enantiomorphic);
         expect(classes.allowsPropertyOf(classes[list](key), 'pyroelectric'), `${key} ${list}`).toBe(g.polar);
       }
     }
@@ -173,9 +173,7 @@ describe('the crystallographic API returns nothing about time reversal', () => {
         const positions = classes.wyckoffPositions(key, { setting });
         expect(positions, `${key}, setting ${setting}`).toBe(wyckoff.wyckoffPositions(key, { setting }));
         const special = positions[positions.length - 1];
-        expect(classes.wyckoffPositionOf(key, special.representative.cartesian, { setting }).letter).toBe(
-          special.letter,
-        );
+        expect(classes.wyckoffPosition(key, special.representative.cartesian, { setting }).letter).toBe(special.letter);
       }
     }
     // 32: the twofold axes lie along other directions in the two settings.
@@ -183,10 +181,10 @@ describe('the crystallographic API returns nothing about time reversal', () => {
     // A direction 0.06° off the fourfold axis of 4mm: general by default, on the axis within 10⁻².
     const off = [0.001, 0.0005, 1] as const;
     const ops = classes.operations('4mm');
-    expect(classes.siteSymmetry(ops, off).multiplicity).toBe(8);
-    expect(classes.siteSymmetry(ops, off, { tolerance: 1e-2 }).multiplicity).toBe(1);
-    expect(classes.wyckoffPositionOf('4mm', off).letter).toBe('d');
-    expect(classes.wyckoffPositionOf('4mm', off, { tolerance: 1e-2 }).letter).toBe('a');
+    expect(classes.siteSymmetryOf(ops, off).multiplicity).toBe(8);
+    expect(classes.siteSymmetryOf(ops, off, { tolerance: 1e-2 }).multiplicity).toBe(1);
+    expect(classes.wyckoffPosition('4mm', off).letter).toBe('d');
+    expect(classes.wyckoffPosition('4mm', off, { tolerance: 1e-2 }).letter).toBe('a');
   });
 
   it('the named properties are those of time-even tensors, their specifications without time parity', () => {
@@ -223,7 +221,7 @@ describe('the crystallographic API refuses what involves time reversal', () => {
       classes.describeOperations,
       classes.symmetryDirections,
       classes.wyckoffPositions,
-      (key) => classes.wyckoffPositionOf(key, [0, 0, 1]),
+      (key) => classes.wyckoffPosition(key, [0, 0, 1]),
       classes.crystalForms,
       (key) => classes.orbit(key, { hkl: [1, 0, 0] }),
       (key) => classes.tensorForm(key, 'piezoelectric'),
@@ -284,7 +282,7 @@ describe('the crystallographic API refuses what involves time reversal', () => {
     const grey = magnetic.operations(GREY);
     const white = magnetic.operations('32');
     const calls = [
-      (ops: readonly classes.Operation[]) => classes.siteSymmetry(ops, [0, 0, 1]),
+      (ops: readonly classes.Operation[]) => classes.siteSymmetryOf(ops, [0, 0, 1]),
       (ops: readonly classes.Operation[]) => classes.orbitOf(ops, [1, 2, 3]),
       (ops: readonly classes.Operation[]) => classes.pointGroupOf(ops),
       (ops: readonly classes.Operation[]) => classes.describeOperationsOf(ops),
@@ -292,7 +290,7 @@ describe('the crystallographic API refuses what involves time reversal', () => {
       (ops: readonly classes.Operation[]) => classes.allowsPropertyOf(ops, 'piezoelectric'),
       (ops: readonly classes.Operation[]) => classes.allowedPropertiesOf(ops),
       (ops: readonly classes.Operation[]) => classes.isCentrosymmetricOf(ops),
-      (ops: readonly classes.Operation[]) => classes.isChiralOf(ops),
+      (ops: readonly classes.Operation[]) => classes.isEnantiomorphicOf(ops),
     ];
     const marked = (timeReversal: unknown) => [{ ...white[0], timeReversal } as classes.Operation];
     for (const call of calls) {
@@ -324,8 +322,8 @@ describe('every function for a list of Cartesian operations refuses a matrix tha
   it('in the crystallographic API', () => {
     const ops = [stretch] as unknown as readonly classes.Operation[];
     for (const call of [
-      () => classes.siteSymmetry(ops, [1, 0, 0]),
-      () => classes.siteSymmetry(ops, [0, 1, 0]),
+      () => classes.siteSymmetryOf(ops, [1, 0, 0]),
+      () => classes.siteSymmetryOf(ops, [0, 1, 0]),
       () => classes.orbitOf(ops, [1, 2, 3]),
       () => classes.pointGroupOf(ops),
       () => classes.describeOperationsOf(ops),
@@ -333,7 +331,7 @@ describe('every function for a list of Cartesian operations refuses a matrix tha
       () => classes.allowsPropertyOf(ops, 'piezoelectric'),
       () => classes.allowedPropertiesOf(ops),
       () => classes.isCentrosymmetricOf(ops),
-      () => classes.isChiralOf(ops),
+      () => classes.isEnantiomorphicOf(ops),
     ]) {
       expect(call).toThrow(RangeError);
       expect(call).toThrow(notOrthogonal);
@@ -345,17 +343,17 @@ describe('every function for a list of Cartesian operations refuses a matrix tha
     const rounded = classes.operations('6/mmm').map((op) => ({
       cartesian: op.cartesian.map((row) => row.map((x) => Math.round(x * 1e4) / 1e4)),
     })) as unknown as readonly classes.Operation[];
-    expect(() => classes.siteSymmetry(rounded, [0, 0, 1])).toThrow(/not an orthogonal/);
-    expect(classes.siteSymmetry(rounded, [0, 0, 1], { tolerance: 1e-4 }).multiplicity).toBe(2);
-    expect(classes.siteSymmetry(rounded, [1, 0, 0], { tolerance: 1e-4 }).multiplicity).toBe(6);
+    expect(() => classes.siteSymmetryOf(rounded, [0, 0, 1])).toThrow(/not an orthogonal/);
+    expect(classes.siteSymmetryOf(rounded, [0, 0, 1], { tolerance: 1e-4 }).multiplicity).toBe(2);
+    expect(classes.siteSymmetryOf(rounded, [1, 0, 0], { tolerance: 1e-4 }).multiplicity).toBe(6);
     expect(() => classes.orbitOf(rounded, [1, 0, 0])).toThrow(/not an orthogonal/);
     expect(classes.orbitOf(rounded, [1, 0, 0], { tolerance: 1e-4 })).toHaveLength(6);
   });
   it('in the magnetic API', () => {
     const ops = [{ ...stretch, timeReversal: false }] as unknown as readonly magnetic.Operation[];
     for (const call of [
-      () => magnetic.siteSymmetry(ops, [1, 0, 0]),
-      () => magnetic.siteSymmetry(ops, [0, 1, 0]),
+      () => magnetic.siteSymmetryOf(ops, [1, 0, 0]),
+      () => magnetic.siteSymmetryOf(ops, [0, 1, 0]),
       () => magnetic.orbitOf(ops, [1, 2, 3]),
       () => magnetic.pointGroupOf(ops),
       () => magnetic.describeOperationsOf(ops),
@@ -363,7 +361,7 @@ describe('every function for a list of Cartesian operations refuses a matrix tha
       () => magnetic.allowsPropertyOf(ops, 'pyroelectric'),
       () => magnetic.allowedPropertiesOf(ops),
       () => magnetic.isCentrosymmetricOf(ops),
-      () => magnetic.isChiralOf(ops),
+      () => magnetic.isEnantiomorphicOf(ops),
     ]) {
       expect(call).toThrow(RangeError);
       expect(call).toThrow(notOrthogonal);
@@ -380,7 +378,7 @@ describe('every function for a list of Cartesian operations reads cartesian, and
       .operations('6/mmm')
       .map((op) => ({ matrix: op.matrix })) as unknown as readonly classes.Operation[];
     for (const call of [
-      () => classes.siteSymmetry(ops, [1, 0, 0]),
+      () => classes.siteSymmetryOf(ops, [1, 0, 0]),
       () => classes.orbitOf(ops, [1, 2, 3]),
       () => classes.pointGroupOf(ops),
       () => classes.describeOperationsOf(ops),
@@ -388,13 +386,13 @@ describe('every function for a list of Cartesian operations reads cartesian, and
       () => classes.allowsPropertyOf(ops, 'piezoelectric'),
       () => classes.allowedPropertiesOf(ops),
       () => classes.isCentrosymmetricOf(ops),
-      () => classes.isChiralOf(ops),
+      () => classes.isEnantiomorphicOf(ops),
     ]) {
       expect(call).toThrow(RangeError);
       expect(call).toThrow(latticeOnly);
     }
     // Not a record at all: a RangeError, not a TypeError.
-    expect(() => classes.siteSymmetry([null as never], [1, 0, 0])).toThrow(RangeError);
+    expect(() => classes.siteSymmetryOf([null as never], [1, 0, 0])).toThrow(RangeError);
     expect(() => classes.tensorFormOf([7 as never], 'piezoelectric')).toThrow(RangeError);
     // A record as operations() gives it passes as it is.
     expect(classes.pointGroupOf(classes.operations('-6m2', { setting: 2 }))).toEqual({ key: '-6m2', setting: 2 });
@@ -404,7 +402,7 @@ describe('every function for a list of Cartesian operations reads cartesian, and
       .operations("6/m'mm")
       .map((op) => ({ matrix: op.matrix, timeReversal: op.timeReversal })) as unknown as readonly magnetic.Operation[];
     for (const call of [
-      () => magnetic.siteSymmetry(ops, [1, 0, 0]),
+      () => magnetic.siteSymmetryOf(ops, [1, 0, 0]),
       () => magnetic.orbitOf(ops, [1, 2, 3]),
       () => magnetic.pointGroupOf(ops),
       () => magnetic.describeOperationsOf(ops),
@@ -412,7 +410,7 @@ describe('every function for a list of Cartesian operations reads cartesian, and
       () => magnetic.allowsPropertyOf(ops, 'pyroelectric'),
       () => magnetic.allowedPropertiesOf(ops),
       () => magnetic.isCentrosymmetricOf(ops),
-      () => magnetic.isChiralOf(ops),
+      () => magnetic.isEnantiomorphicOf(ops),
     ]) {
       expect(call).toThrow(RangeError);
       expect(call).toThrow(latticeOnly);
@@ -433,7 +431,7 @@ describe('the magnetic API asks every operation whether it is combined with time
     (ops: readonly magnetic.Operation[]) => magnetic.allowsPropertyOf(ops, 'pyroelectric'),
     (ops: readonly magnetic.Operation[]) => magnetic.allowedPropertiesOf(ops),
     (ops: readonly magnetic.Operation[]) => magnetic.isCentrosymmetricOf(ops),
-    (ops: readonly magnetic.Operation[]) => magnetic.isChiralOf(ops),
+    (ops: readonly magnetic.Operation[]) => magnetic.isEnantiomorphicOf(ops),
     (ops: readonly magnetic.Operation[]) => magnetic.pointGroupOf(ops),
     (ops: readonly magnetic.Operation[]) => magnetic.describeOperationsOf(ops),
   ];
@@ -513,7 +511,7 @@ describe('the types keep the two entry points apart', () => {
     // @ts-expect-error operations of the magnetic API, which may be combined with time reversal
     attempt(() => classes.tensorFormOf(magnetic.operations("321'"), 'piezoelectric'));
     // @ts-expect-error also for the site symmetry
-    attempt(() => classes.siteSymmetry(magnetic.operations('32'), [0, 0, 1]));
+    attempt(() => classes.siteSymmetryOf(magnetic.operations('32'), [0, 0, 1]));
     // Accepted: time parity 'i' and no time reversal, stated.
     attempt(() => classes.tensorForm('32', { rank: 1, parity: 'polar', timeParity: 'i', intrinsic: 'none' }));
     attempt(() =>
@@ -612,10 +610,39 @@ describe('a time-even question has one answer: class, white group and grey group
         [1, 0, 0],
         [1, 2, 3],
       ] as const) {
-        const site = classes.siteSymmetry(classes.operations(key), direction);
-        expect(site).toEqual(magnetic.siteSymmetry(magnetic.operations(key), direction));
-        expect(magnetic.siteSymmetry(magnetic.operations(grey(key)), direction).multiplicity).toBe(site.multiplicity);
+        const site = classes.siteSymmetryOf(classes.operations(key), direction);
+        expect(site).toEqual(magnetic.siteSymmetryOf(magnetic.operations(key), direction));
+        expect(magnetic.siteSymmetryOf(magnetic.operations(grey(key)), direction).multiplicity).toBe(site.multiplicity);
       }
     }
+  });
+});
+
+describe('siteSymmetry of a key (#137 C1)', () => {
+  it('is siteSymmetryOf of the operations of the key in the same setting, in both entry points', () => {
+    const directions: classes.Vec3[] = [
+      [0, 0, 1],
+      [1, 0, 0],
+      [1, 1, 0],
+      [1, 2, 3],
+    ];
+    for (const key of magnetic.POINT_GROUP_KEYS) {
+      for (const s of magnetic.settings(key)) {
+        for (const d of directions) {
+          const ops = magnetic.operations(key, { setting: s.index });
+          expect(magnetic.siteSymmetry(key, d, { setting: s.index }), `${key} ${s.index}`).toEqual(
+            magnetic.siteSymmetryOf(ops, d),
+          );
+        }
+      }
+    }
+    for (const key of classes.POINT_GROUP_KEYS) {
+      expect(classes.siteSymmetry(key, [1, 1, 0])).toEqual(classes.siteSymmetryOf(classes.operations(key), [1, 1, 0]));
+    }
+    // The criteria and the tolerance as options.
+    expect(classes.siteSymmetry('32', [0, 0, 1], { axes: 'rhombohedral' }).multiplicity).toBe(2);
+    expect(classes.siteSymmetry('4mm', [1, 1.00004, 3], { tolerance: 1e-4 }).multiplicity).toBe(4);
+    expect(() => classes.siteSymmetry("4'mm'" as never, [0, 0, 1])).toThrow(/magnetic API/);
+    expect(() => classes.siteSymmetry('4mm', [0, 0, 0])).toThrow(RangeError);
   });
 });

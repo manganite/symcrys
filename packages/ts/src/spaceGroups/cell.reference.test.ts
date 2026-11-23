@@ -218,7 +218,7 @@ describe('symmetry elements in the cell', () => {
           }
         }
       }
-      expect(new Set(elements.rotations.map((r) => `${r.order}@${key(num(r.point))}`))).toEqual(expectedRotations);
+      expect(new Set(elements.rotationPoints.map((r) => `${r.n}@${key(num(r.point))}`))).toEqual(expectedRotations);
 
       // Mirror lines from the Wyckoff positions with one free parameter and a mirror.
       const expectedMirrors = new Set<string>();
@@ -297,14 +297,12 @@ describe('symmetry elements in the cell', () => {
 
       // No duplicates, and the documented order.
       expect(new Set(computed).size).toBe(computed.length);
-      const rotationKeys = elements.rotations.map((r) => key(num(r.point)));
+      const rotationKeys = elements.rotationPoints.map((r) => key(num(r.point)));
       expect(new Set(rotationKeys).size).toBe(rotationKeys.length);
-      for (let k = 1; k < elements.rotations.length; k++) {
-        const [a, b] = [elements.rotations[k - 1], elements.rotations[k]];
+      for (let k = 1; k < elements.rotationPoints.length; k++) {
+        const [a, b] = [elements.rotationPoints[k - 1], elements.rotationPoints[k]];
         const [pa, pb] = [num(a.point), num(b.point)];
-        expect(
-          a.order > b.order || (a.order === b.order && (pa[1] < pb[1] || (pa[1] === pb[1] && pa[0] < pb[0]))),
-        ).toBe(true);
+        expect(a.n > b.n || (a.n === b.n && (pa[1] < pb[1] || (pa[1] === pb[1] && pa[0] < pb[0])))).toBe(true);
       }
       for (let k = 1; k < elements.lines.length; k++) {
         const [a, b] = [elements.lines[k - 1], elements.lines[k]];

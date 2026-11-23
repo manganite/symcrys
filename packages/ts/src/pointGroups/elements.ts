@@ -21,7 +21,7 @@ import {
 } from './pointGroups.js';
 
 /** What a point operation is; a rotoinversion n̄ is the inversion times the rotation n (n = 3, 4, 6). */
-export type OperationKind = 'identity' | 'inversion' | 'rotation' | 'rotoinversion' | 'mirror';
+export type OperationKind = 'identity' | 'inversion' | 'rotation' | 'rotoinversion' | 'reflection';
 
 /** A symmetry direction: as a lattice direction [uvw] and as a Cartesian unit vector. */
 export interface Axis {
@@ -41,11 +41,11 @@ export interface OperationDescription {
   /** What the operation is, without time reversal. */
   readonly kind: OperationKind;
   /**
-   * The n of the symbol n or n̄: 1 for the identity and the inversion, 2 for a mirror (m = 2̄),
-   * otherwise the order of the rotation part.
+   * The n of the symbol n or n̄ (ITA § 1.2.1: an n-fold rotation): 1 for the identity and the
+   * inversion, 2 for a reflection (m = 2̄), otherwise the order of the rotation part.
    */
-  readonly order: number;
-  /** Rotation axis, rotoinversion axis or mirror normal; absent for the identity and the inversion. */
+  readonly n: number;
+  /** Rotation axis, rotoinversion axis or the normal of the mirror plane; absent for the identity and the inversion. */
   readonly axis?: Axis;
   /**
    * For n ≥ 3: `'+'` if the rotation part turns by +360°/n about `axis` (counter-clockwise seen
@@ -148,12 +148,12 @@ function describe(op: CartesianOperation, axes: readonly Axis[], what: string): 
   const proper = det(op.cartesian) > 0;
   const { r, n } = rotationPart(op.cartesian);
   const timeReversal = op.timeReversal;
-  if (n === 1) return Object.freeze({ kind: proper ? 'identity' : 'inversion', order: 1, timeReversal });
+  if (n === 1) return Object.freeze({ kind: proper ? 'identity' : 'inversion', n: 1, timeReversal });
   const axis = findAxis(axes, rotationAxis(r, n), what);
-  const kind: OperationKind = proper ? 'rotation' : n === 2 ? 'mirror' : 'rotoinversion';
-  if (n === 2) return Object.freeze({ kind, order: 2, axis, timeReversal });
+  const kind: OperationKind = proper ? 'rotation' : n === 2 ? 'reflection' : 'rotoinversion';
+  if (n === 2) return Object.freeze({ kind, n: 2, axis, timeReversal });
   const sense = dot(axialVector(r), axis.cartesian) > 0 ? '+' : '-';
-  return Object.freeze({ kind, order: n, axis, sense, timeReversal });
+  return Object.freeze({ kind, n, axis, sense, timeReversal });
 }
 
 interface Analysis {
@@ -193,12 +193,12 @@ function analysis(key: MagneticPointGroupKey, options?: SettingOptions): Analysi
       const elements = axes.map((a) => {
         const on = descriptions.filter((d) => d.axis === a);
         const max = (kind: OperationKind, none: number) =>
-          on.filter((d) => d.kind === kind).reduce((m, d) => Math.max(m, d.order), none);
+          on.filter((d) => d.kind === kind).reduce((m, d) => Math.max(m, d.n), none);
         return Object.freeze({
           ...a,
           rotation: max('rotation', 1),
           rotoinversion: max('rotoinversion', 0),
-          mirror: on.some((d) => d.kind === 'mirror'),
+          mirror: on.some((d) => d.kind === 'reflection'),
         });
       });
       const position: SymmetryDirection =

@@ -13,10 +13,11 @@ import {
   isPointGroupKey,
   operations,
   settings,
+  type MagneticPointGroupKey,
   type PointGroupKey,
   type SettingOptions,
 } from './pointGroups.js';
-import { siteSymmetry, siteTolerance, type SiteSymmetryOptions } from '../siteSymmetry.js';
+import { siteSymmetryOf, siteTolerance, type SiteSymmetry, type SiteSymmetryOptions } from '../siteSymmetry.js';
 import { ITA_WYCKOFF, type WyckoffRow } from './wyckoffData.js';
 
 /** A face (hkl): three Miller indices in the conventional basis (for hexagonal axes without i = −(h + k)). */
@@ -51,7 +52,7 @@ export interface WyckoffPosition {
   readonly siteSymmetryOperations: readonly number[];
 }
 
-/** The setting (`SettingOptions`) and the tolerance of `siteSymmetry` (`SiteSymmetryOptions`). */
+/** The setting (`SettingOptions`) and the tolerance (`SiteSymmetryOptions`) of `siteSymmetry` and `wyckoffPosition`. */
 export type WyckoffOptions = SettingOptions & SiteSymmetryOptions;
 
 /** The values substituted into ITA's Miller indices for the numeric representative. */
@@ -251,7 +252,7 @@ export function wyckoffPositions(key: PointGroupKey, options?: SettingOptions): 
         .map(([letter, multiplicity, site, coordinates, millerIndices]) => {
           const hkl = numericHkl(millerIndices, representativeValues(key, setting));
           const cartesian = normal(basis, hkl);
-          const stab = siteSymmetry(ops, cartesian);
+          const stab = siteSymmetryOf(ops, cartesian);
           if (stab.multiplicity !== multiplicity) {
             throw new Error(
               `Point group ${key}, setting ${setting}, position ${letter}: multiplicity differs from print`,
@@ -276,23 +277,32 @@ export function wyckoffPositions(key: PointGroupKey, options?: SettingOptions): 
   return result;
 }
 
+/**
+ * The site symmetry of a direction (any non-zero Cartesian vector) under a point group in a
+ * setting: `siteSymmetryOf` applied to `operations(key, options)`, so the indices refer to those
+ * operations (#137 C1). Time reversal is ignored. Throws a RangeError as `siteSymmetryOf` does.
+ */
+export function siteSymmetry(key: MagneticPointGroupKey, direction: Vec3, options?: WyckoffOptions): SiteSymmetry {
+  return siteSymmetryOf(operations(key, options), direction, options);
+}
+
 const sortedKey = (list: readonly number[]): string => [...list].sort((a, b) => a - b).join(',');
 
 /**
  * The Wyckoff position of a direction (any non-zero Cartesian vector) in a crystal class: the
  * position whose representative has a site symmetry conjugate to that of the
- * direction (ITA's definition). `tolerance` as for `siteSymmetry`; throws a RangeError if the
+ * direction (ITA's definition). `tolerance` as for `siteSymmetryOf`; throws a RangeError if the
  * operations found within it do not match any position (a tolerance too large).
  */
-export function wyckoffPositionOf(key: PointGroupKey, direction: Vec3, options?: WyckoffOptions): WyckoffPosition {
+export function wyckoffPosition(key: PointGroupKey, direction: Vec3, options?: WyckoffOptions): WyckoffPosition {
   const tolerance = siteTolerance(options);
   const setting = tableSetting(key, options);
   const ops = operations(key, { setting });
   const rows = wyckoffPositions(key, { setting });
-  const site = siteSymmetry(ops, direction, { tolerance });
+  const site = siteSymmetryOf(ops, direction, { tolerance });
   const candidates = rows.filter((r) => r.siteSymmetryOperations.length === site.operations.length);
   for (const g of ops) {
-    const k = sortedKey(siteSymmetry(ops, apply(g.cartesian, site.direction), { tolerance }).operations);
+    const k = sortedKey(siteSymmetryOf(ops, apply(g.cartesian, site.direction), { tolerance }).operations);
     const row = candidates.find((r) => sortedKey(r.siteSymmetryOperations) === k);
     if (row) return row;
   }

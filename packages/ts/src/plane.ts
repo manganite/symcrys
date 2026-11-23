@@ -108,8 +108,6 @@ export interface PlaneGroup {
   readonly centring: readonly (readonly number[])[];
   /** The block "Origin" as ITA prints it, e.g. `'at 2mm'`. */
   readonly origin: string;
-  /** The order of the group modulo the lattice: the number of `operations`. */
-  readonly order: number;
 }
 
 /** A plane point group. */
@@ -134,10 +132,13 @@ export interface Setting {
 
 /** What an operation is, geometrically, as ITA describes it under "Symmetry operations". */
 export interface OperationDescription {
-  /** `'identity'`, `'translation'`, `'rotation'`, `'mirror'` (a reflection in a line) or `'glide'` (a glide reflection). */
-  readonly kind: 'identity' | 'translation' | 'rotation' | 'mirror' | 'glide';
-  /** The order of the linear part: 1 for the identity and a translation, 2 for a mirror or glide. */
-  readonly order: number;
+  /**
+   * `'identity'`, `'translation'`, `'rotation'`, `'reflection'` (in a line) or `'glide-reflection'`,
+   * as ITA names the operations (Table 2.1.2.1).
+   */
+  readonly kind: 'identity' | 'translation' | 'rotation' | 'reflection' | 'glide-reflection';
+  /** The n of the linear part (an n-fold rotation): 1 for the identity and a translation, 2 for a reflection or glide reflection. */
+  readonly n: number;
   /** For a rotation of order 3 or more: `'+'` if it turns a towards b, `'-'` otherwise. */
   readonly sense?: '+' | '-';
   /** For a translation: the translation vector. */
@@ -198,10 +199,10 @@ export interface AsymmetricUnit {
   readonly inequalities: readonly (readonly number[])[];
 }
 
-/** A rotation centre in the cell. */
-export interface RotationCentre {
-  /** The highest order of a rotation about it. */
-  readonly order: number;
+/** A rotation point in the cell (ITA Table 2.1.2.1: the symmetry element of a rotation in the plane). */
+export interface RotationPoint {
+  /** The highest n of an n-fold rotation about it. */
+  readonly n: number;
   /** Its position in [0, 1]². */
   readonly point: readonly number[];
 }
@@ -222,8 +223,8 @@ export interface SymmetryLine {
 
 /** The symmetry elements of a plane group in its conventional cell [0, 1]², boundary included. */
 export interface SymmetryElements {
-  /** The rotation centres, by descending order, then by y and x. */
-  readonly rotations: readonly RotationCentre[];
+  /** The rotation points, by descending n, then by y and x. */
+  readonly rotationPoints: readonly RotationPoint[];
   /** The mirror and glide lines that cross the cell, by direction, then by the start of the segment (y, then x). */
   readonly lines: readonly SymmetryLine[];
 }
@@ -290,7 +291,7 @@ function describe(op: ExactOperation): OperationDescription {
   const d = describePlaneOperation(op);
   return Object.freeze({
     kind: d.kind,
-    order: d.order,
+    n: d.n,
     ...(d.sense ? { sense: d.sense } : {}),
     ...(d.translation ? { translation: Object.freeze(numbers(d.translation)) } : {}),
     ...(d.location ? { location: Object.freeze(numbers(d.location)) } : {}),
@@ -361,7 +362,6 @@ export function planeGroup(key: PlaneGroupKey): PlaneGroup {
       entry.centring.map((t) => Object.freeze(t.split(',').map((c) => toNumber(parseRational(c))))),
     ),
     origin: entry.origin,
-    order: planeGroupOperations(entry.symbol).length,
   });
 }
 
@@ -474,12 +474,8 @@ export function siteSymmetry(key: PlaneGroupKey, point: readonly number[], optio
  * it: the printed position of the point's multiplicity whose coordinates, with the centring, reach
  * the point set onto its site symmetry. Throws a RangeError as `siteSymmetry`.
  */
-export function wyckoffPositionOf(
-  key: PlaneGroupKey,
-  point: readonly number[],
-  options?: PointOptions,
-): WyckoffPosition {
-  const k = groupKey(key, 'wyckoffPositionOf');
+export function wyckoffPosition(key: PlaneGroupKey, point: readonly number[], options?: PointOptions): WyckoffPosition {
+  const k = groupKey(key, 'wyckoffPosition');
   const { letter } = planeWyckoffPositionOf(k, point, options);
   const found = wyckoffPositions(k).find((w) => w.letter === letter);
   if (!found) throw new Error(`No Wyckoff position ${letter} in ${k}`);
@@ -491,7 +487,7 @@ export function wyckoffPositionOf(
  * within the tolerance of it, measured per coordinate modulo the lattice: a position without a free
  * parameter (a point) before one with one (a line), before the general position, which always holds
  * the point; among positions of the same kind the nearest. Returns the position, as
- * `wyckoffPositions` gives it, and the nearest point on it, in [0, 1). Unlike `wyckoffPositionOf`,
+ * `wyckoffPositions` gives it, and the nearest point on it, in [0, 1). Unlike `wyckoffPosition`,
  * which asks whether the images of the point lie within the tolerance of it, this asks whether the
  * point lies within the tolerance of the position: an application that drags a point and lets it
  * snap passes a tolerance such as 10⁻². The point on a line is found by least squares in the
@@ -538,14 +534,14 @@ export function asymmetricUnit(key: PlaneGroupKey): AsymmetricUnit {
 
 /**
  * The symmetry elements of a plane group in its conventional cell [0, 1]², boundary included:
- * every rotation centre with the highest order of a rotation about it, and every mirror and glide
+ * every rotation point with the highest n of a rotation about it, and every mirror and glide
  * line that crosses the cell, with the segment inside it. Throws a RangeError for an unknown key.
  */
 export function symmetryElements(key: PlaneGroupKey): SymmetryElements {
   const e = planeCellElements(groupKey(key, 'symmetryElements'));
   return Object.freeze({
-    rotations: Object.freeze(
-      e.rotations.map((r) => Object.freeze({ order: r.order, point: Object.freeze(numbers(r.point)) })),
+    rotationPoints: Object.freeze(
+      e.rotationPoints.map((r) => Object.freeze({ n: r.n, point: Object.freeze(numbers(r.point)) })),
     ),
     lines: Object.freeze(
       e.lines.map((l) =>
