@@ -6,6 +6,7 @@
 
 import { INVERSION, det, inverse, matricesEqual, multiply, type Mat3 } from '../linalg.js';
 import { EPSILON } from '../tolerances.js';
+import { compactSymbol, normalizeSymbol } from '../notation.js';
 import { compose, operation, operationsEqual, type CartesianOperation, type Operation } from '../operations.js';
 import {
   ITC_CLASSES,
@@ -224,8 +225,8 @@ export function rejectConventionArgument(argumentCount: number): void {
   }
 }
 
-/** A symbol with its spaces normalized: trimmed, every run of spaces one space. */
-const spaced = (s: string): string => s.trim().replace(/\s+/g, ' ');
+/** A symbol in the spelling of this library with its spaces normalized (notation.ts). */
+const spaced = normalizeSymbol;
 
 /**
  * The setting a symbol names: the one whose full symbol it is, written with its spaces (`3 2'`, the
@@ -235,7 +236,7 @@ const spaced = (s: string): string => s.trim().replace(/\s+/g, ' ');
  */
 function settingOfSymbol(d: GroupData, text: string): number {
   const all = Array.from({ length: d.settingCount }, (_, i) => i + 1);
-  const byFull = all.filter((i) => spaced(settingSymbols(d, i).full) === spaced(text));
+  const byFull = all.filter((i) => settingSymbols(d, i).full === spaced(text));
   if (byFull.length === 1) return byFull[0]!;
   const target = compact(text);
   const named = all.filter((i) => {
@@ -661,43 +662,90 @@ export interface PointGroupInSetting<K extends MagneticPointGroupKey = PointGrou
   readonly setting: number;
 }
 
-const compact = (s: string): string => s.replace(/\s+/g, '');
+/** A symbol in the spelling of this library without spaces (notation.ts). */
+const compact = compactSymbol;
 
 function find(hm: string, classesOnly: boolean): PointGroupInSetting<MagneticPointGroupKey> | undefined {
   if (typeof hm !== 'string') return undefined;
-  const target = compact(hm);
+  const written = normalizeSymbol(hm);
+  const target = written.replace(/ /g, '');
   const candidates = [...BY_KEY.values()].filter((d) => !classesOnly || d.type === 'I');
-  /** The settings of `d` whose symbol of this form is the target. */
-  const named = (d: GroupData, form: 'short' | 'full'): number[] =>
-    Array.from({ length: d.settingCount }, (_, j) => j + 1).filter(
-      (i) =>
-        compact(settingSymbols(d, i)[form]) === target ||
-        (form === 'short' && compact(derivedSymbols(d, i).short) === target),
+  const indices = (d: GroupData) => Array.from({ length: d.settingCount }, (_, j) => j + 1);
+  /** The one group of the matches; several groups are an error that lists them (#96). */
+  const one = (
+    matches: readonly { readonly d: GroupData; readonly settings: readonly number[] }[],
+  ): PointGroupInSetting<MagneticPointGroupKey> | undefined => {
+    const found = matches.filter((m) => m.settings.length > 0);
+    if (found.length > 1) {
+      throw new RangeError(
+        `The symbol ${JSON.stringify(hm)} names several point groups: ${found.map((m) => m.d.key).join(', ')}`,
+      );
+    }
+    if (found.length === 0) return undefined;
+    const { d, settings: named } = found[0]!;
+    // One setting named: that one. Several (a monoclinic short symbol): the default.
+    return { key: d.key, setting: named.length === 1 ? named[0]! : d.itcDefault };
+  };
+  // A symbol written with spaces is read as a full symbol first: `3 2` is the full symbol of the
+  // rhombohedral setting of `32`, although without its spaces it is the key (Thomas, 2026-11-23, #96).
+  if (written.includes(' ')) {
+    const byFull = one(
+      candidates.map((d) => ({ d, settings: indices(d).filter((i) => settingSymbols(d, i).full === written) })),
     );
-  /** One setting named: that one. Several (a monoclinic short symbol) or none (a key): the default. */
-  const pick = (d: GroupData, settingsNamed: number[]): PointGroupInSetting<MagneticPointGroupKey> => ({
-    key: d.key,
-    setting: settingsNamed.length === 1 ? settingsNamed[0]! : d.itcDefault,
-  });
+    if (byFull) return byFull;
+  }
   // A key is the key, also where it is the symbol of a setting (`32`, the class with rhombohedral axes).
   const byKey = candidates.find((d) => d.key === target);
   if (byKey) return { key: byKey.key, setting: byKey.itcDefault };
   for (const form of ['short', 'full'] as const) {
-    for (const d of candidates) {
-      const settingsNamed = named(d, form);
-      if (settingsNamed.length > 0) return pick(d, settingsNamed);
-    }
+    const bySymbol = one(
+      candidates.map((d) => ({
+        d,
+        settings: indices(d).filter(
+          (i) =>
+            compact(settingSymbols(d, i)[form]) === target ||
+            (form === 'short' && compact(derivedSymbols(d, i).short) === target),
+        ),
+      })),
+    );
+    if (bySymbol) return bySymbol;
+  }
+  // A Schoenflies symbol, with ITA's `C3i` or ITC Vol. D's `S6` (the same symbol in two volumes),
+  // names the group, not an orientation: the default setting (Thomas, 2026-11-23, #96).
+  const inVolD = volDSchoenflies(target);
+  const bySchoenflies = one(
+    candidates.map((d) => ({
+      d,
+      settings: volDSchoenflies(d.schoenflies) === inVolD ? [d.itcDefault] : [],
+    })),
+  );
+  if (bySchoenflies) return bySchoenflies;
+  // Birss prints the cubic groups without the overbar on the 3, which takes the prime of the mirror
+  // before it (Birss Tables 3 and 6: `m3m`, `m'3` for `m-3m`, `m'-3'`); the cubic groups have one
+  // setting.
+  const birss = /^m('?)3(?!')(.*)$/.exec(target);
+  if (birss) {
+    const key = `m${birss[1]}-3${birss[1]}${birss[2]}`;
+    const d = candidates.find((c) => c.key === key);
+    if (d) return { key: d.key, setting: d.itcDefault };
   }
   return undefined;
 }
 
 /**
- * Finds a crystal class by a Hermann–Mauguin symbol: the short symbol of a setting, a full symbol,
- * or the key (spaces are ignored). A symbol that names one setting gives that setting; the key, and
- * a short symbol that several settings share (the monoclinic ones: `2` for unique axis b, c and a),
- * give the ITC default setting. Returns undefined if nothing matches, also for a value that is not a
- * string and for the symbol of a magnetic group with time reversal (`findMagneticPointGroup`).
- * Symbols are written as in this library, with `-` for the overbar (`m-3m`).
+ * Finds a crystal class by a symbol, read tolerantly.
+ * What is read (#96; docs/conventions.md, "Reading symbols"):
+ * - a symbol written with spaces as a full symbol first (`3 2`: the rhombohedral setting of `32`);
+ * - the key, which gives the default setting, also where it is the symbol of another setting (`32`);
+ * - the short or full symbol of a setting, spaces ignored; one that several settings share (`2`,
+ *   unique axis b, c and a) gives the default setting;
+ * - a Schoenflies symbol, ITA's or ITC Vol. D's (`D3`, `C3i`, `S6`), which gives the default setting;
+ * - Birss's cubic symbols without the overbar on the 3 (`m3m`).
+ *
+ * Spellings: the overbar as `-`, `−`, a combining overbar (`m3̄m`), `bar3` (also with a backslash and braces, as in LaTeX);
+ * Schoenflies subscripts also as Unicode subscripts (`C₃ᵥ`). Returns undefined if nothing matches,
+ * also for a value that is not a string and for the symbol of a magnetic group with time reversal
+ * (`findMagneticPointGroup`); a symbol that names several groups is a RangeError that lists them.
  */
 export function findPointGroup(hm: string): PointGroupInSetting | undefined {
   rejectConventionArgument(arguments.length);
@@ -705,12 +753,20 @@ export function findPointGroup(hm: string): PointGroupInSetting | undefined {
 }
 
 /**
- * Finds one of the 122 magnetic point groups (the 32 crystal classes included) by a symbol: the
- * short symbol of a setting, a full symbol, or the key (spaces are ignored). A prime `'` marks time
- * reversal: `4'/mmm'`, `2221'`. A symbol that names one setting gives that setting; the key, and a
- * short symbol that several settings share (the monoclinic ones: `2'` for unique axis b, c and a),
- * give the ITC default setting. Returns undefined if nothing matches, also for a value that is not
- * a string. Symbols are written as in this library, with `-` for the overbar (`m'-3'm`).
+ * Finds one of the 122 magnetic point groups (the 32 crystal classes included) by a symbol, read
+ * tolerantly. A prime marks time reversal: `4'/mmm'`, `2221'`.
+ * What is read (#96; docs/conventions.md, "Reading symbols"):
+ * - a symbol written with spaces as a full symbol first (`3 2`: the rhombohedral setting of `32`);
+ * - the key, which gives the default setting, also where it is the symbol of another setting (`32`);
+ * - the short or full symbol of a setting, spaces ignored; one that several settings share (`2`,
+ *   unique axis b, c and a) gives the default setting;
+ * - a Schoenflies symbol, ITA's or ITC Vol. D's (`D3`, `C3i`, `S6`), which gives the default setting;
+ * - Birss's cubic symbols without the overbar on the 3 (`m3m`).
+ *
+ * Spellings: the overbar as `-`, `−`, a combining overbar (`m3̄m`), `bar3` (also with a backslash and braces, as in LaTeX);
+ * the prime as `'`, `′`, `ʹ` or `’`; Schoenflies subscripts also as Unicode subscripts (`D₃d(S₆)`).
+ * Returns undefined if nothing matches, also for a value that is not a string; a symbol that names
+ * several groups is a RangeError that lists them.
  */
 export function findMagneticPointGroup(hm: string): PointGroupInSetting<MagneticPointGroupKey> | undefined {
   rejectConventionArgument(arguments.length);

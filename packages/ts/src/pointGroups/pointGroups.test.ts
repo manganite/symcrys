@@ -183,7 +183,9 @@ describe('findPointGroup', () => {
     expect(findPointGroup('4/m 2/m 2/m')).toEqual({ key: '4/mmm', setting: 1 });
     expect(findPointGroup('112')).toEqual({ key: '2', setting: 2 });
     expect(findPointGroup('m2m')).toEqual({ key: 'mm2', setting: 3 });
-    expect(findPointGroup('m3m')).toBeUndefined();
+    expect(findPointGroup('m3m')).toEqual({ key: 'm-3m', setting: 1 }); // Birss's spelling (#96)
+    expect(findPointGroup('m3m3')).toBeUndefined();
+    expect(findPointGroup('P4mm')).toBeUndefined();
     expect(findPointGroup(42 as unknown as string)).toBeUndefined();
   });
 });

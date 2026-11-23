@@ -251,8 +251,9 @@ describe('ITC symbols and operations of every setting', () => {
         });
 
         it(`${label}: findPointGroup finds this setting by its full symbol`, () => {
-          // A symbol that is, without spaces, the key (`3 2`, rhombohedral) gives the default setting.
-          const isKey = setting().fullSymbol.replace(/\s+/g, '') === key;
+          // A symbol with spaces is read as a full symbol first (`3 2`, rhombohedral; #96); one without
+          // spaces that is the key (`3`, rhombohedral) gives the default setting.
+          const isKey = !setting().fullSymbol.includes(' ') && setting().fullSymbol === key;
           const expected = isKey ? settings(key).find((s) => s.isDefault)!.index : setting().index;
           expect(findPointGroup(setting().fullSymbol)).toEqual({ key, setting: expected });
         });

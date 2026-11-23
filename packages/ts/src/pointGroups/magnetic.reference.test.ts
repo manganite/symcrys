@@ -105,6 +105,11 @@ describe('ITC Vol. D Table 1.5.2.3 (printed pp. 111–112) against symcrys, ITC 
         // The short symbol as printed for a black-and-white group (#137 B2); a crystal class keeps
         // ITA's symbol (`321` where the table prints `32`; CLAUDE.md, "Symbols per volume").
         if (pointGroup(key).type === 'III') expect(symbol(key)).toBe(short);
+        // The printed symbols find the group (#96): Schoenflies gives the default setting.
+        const def = settings(key).find((s) => s.isDefault)!.index;
+        expect(findMagneticPointGroup(schoenflies)).toEqual({ key, setting: def });
+        expect(findMagneticPointGroup(short)?.key).toBe(key);
+        expect(findMagneticPointGroup(full)).toEqual({ key, setting: def });
         // The Schoenflies symbol G(H) names the crystal class G.
         expect(symbol(crystalClassOf(key), { form: 'schoenflies' })).toBe(schoenflies.replace(/\(.+\)$/, ''));
       });
@@ -197,6 +202,14 @@ const sigmas = (cell: string, t: boolean): RefOp[] =>
  */
 describe('Birss Table 6 (printed pp. 91–98) against symcrys, in the ITC frame', () => {
   const rows = birssRows.slice(1);
+
+  it("findPointGroup reads Birss's printed symbols, and his Schoenflies symbols, as the groups they are (#96)", () => {
+    for (const r of rows) {
+      const key = KEY_OF_PRINTED[r[1]] ?? r[1];
+      expect(findMagneticPointGroup(r[1])?.key, r[1]).toBe(key);
+      if (pointGroup(key as MagneticPointGroupKey).type === 'I') expect(findPointGroup(r[1])?.key, r[1]).toBe(key);
+    }
+  });
 
   it('lists 90 groups, each once: the 32 crystal classes and the 58 black-and-white groups', () => {
     expect(rows).toHaveLength(90);
@@ -305,10 +318,13 @@ describe('symbols of every setting of the magnetic groups generate its operation
         const shortDirections = system === 'monoclinic' && positions.length === 1 ? [AXIS[s.uniqueAxis!]] : directions;
         expect(sameGroup(groupOfSymbol(s.symbol, shortDirections), ops)).toBe(true);
         expect(sameGroup(groupOfSymbol(s.fullSymbol, directions), ops)).toBe(true);
-        // A symbol that is, without spaces, the key gives the default setting (`3 2'`, rhombohedral).
+        // A symbol with spaces is read as a full symbol first (`3 2'`, rhombohedral; #96); one without
+        // spaces that is the key (`-3'`, rhombohedral) gives the default setting.
         const def = settings(key).find((x) => x.isDefault)!.index;
-        const isKey = s.fullSymbol.replace(/\s+/g, '') === key;
-        expect(findMagneticPointGroup(s.fullSymbol)).toEqual({ key, setting: isKey ? def : s.index });
+        const isKey = !s.fullSymbol.includes(' ') && s.fullSymbol === key;
+        // A full symbol of two settings (`3 1'` with hexagonal and rhombohedral axes) gives the default.
+        const sharedFull = settings(key).filter((t) => t.fullSymbol === s.fullSymbol).length > 1;
+        expect(findMagneticPointGroup(s.fullSymbol)).toEqual({ key, setting: isKey || sharedFull ? def : s.index });
       });
     }
   }
@@ -591,9 +607,11 @@ describe('the 122 magnetic point groups', () => {
           key,
           setting: shared ? def : s.index,
         });
-        const fullShared =
-          all.filter((t) => compact(t.fullSymbol) === compact(s.fullSymbol)).length > 1 ||
-          compact(s.fullSymbol) === key;
+        // A full symbol with spaces names its setting (#96); one without spaces is read as above.
+        const fullShared = s.fullSymbol.includes(' ')
+          ? all.filter((t) => t.fullSymbol === s.fullSymbol).length > 1
+          : all.filter((t) => compact(t.fullSymbol) === compact(s.fullSymbol)).length > 1 ||
+            compact(s.fullSymbol) === key;
         expect(findMagneticPointGroup(s.fullSymbol), `${what}: ${s.fullSymbol}`).toEqual({
           key,
           setting: fullShared ? def : s.index,
