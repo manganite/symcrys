@@ -34,7 +34,7 @@ symcrys.angle_between_planes(basis, [1, 0, 0], [0, 1, 0]), symcrys.direction_to_
 ```
 
 ```{code-cell} ipython3
-ops = symcrys.lattice_operations("6/mmm")
+ops = symcrys.operations("6/mmm")
 distorted = symcrys.lattice_from_parameters({"a": 3, "b": 3, "c": 5, "alpha": 90, "beta": 90, "gamma": 121})
 len(symcrys.residual_operations(ops, basis)), len(symcrys.residual_operations(ops, distorted))
 ```

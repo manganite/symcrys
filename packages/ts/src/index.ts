@@ -68,7 +68,6 @@ export {
   isCentrosymmetricOf,
   isChiralOf,
   isPointGroupKey,
-  latticeOperations,
   residualOperations,
   operations,
   orbit,

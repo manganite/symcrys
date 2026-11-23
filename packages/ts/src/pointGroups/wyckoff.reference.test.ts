@@ -370,7 +370,7 @@ describe('ITA Table 3.2.3.2: Wyckoff positions', () => {
           readings.some((h) =>
             sameGroup(
               h,
-              stab.map((s) => ({ matrix: s.m, timeReversal: false })),
+              stab.map((s) => ({ cartesian: s.m, timeReversal: false })),
             ),
           ),
           `site symmetry ${r[5]} read along ITA Table 2.1.3.1`,
@@ -441,7 +441,7 @@ describe('Settings ITA does not print: mm2 as 2mm and m2m', () => {
           readings.some((h) =>
             sameGroup(
               h,
-              stab.map((x) => ({ matrix: x.m, timeReversal: false })),
+              stab.map((x) => ({ cartesian: x.m, timeReversal: false })),
             ),
           ),
         ).toBe(true);
@@ -474,7 +474,7 @@ describe('Settings ITA does not print: monoclinic unique axis a', () => {
           readings.some((h) =>
             sameGroup(
               h,
-              stab.map((x) => ({ matrix: x.m, timeReversal: false })),
+              stab.map((x) => ({ cartesian: x.m, timeReversal: false })),
             ),
           ),
         ).toBe(true);

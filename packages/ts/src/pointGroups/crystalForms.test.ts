@@ -11,7 +11,7 @@ const ALL_SETTINGS = POINT_GROUP_KEYS.flatMap((key) => settings(key).map((s) => 
 function orbitSize(key: (typeof POINT_GROUP_KEYS)[number], setting: number, v: Vec3): number {
   const images: Vec3[] = [];
   for (const g of operations(key, { setting })) {
-    const w = apply(g.matrix, v);
+    const w = apply(g.cartesian, v);
     if (!images.some((u) => Math.hypot(u[0] - w[0], u[1] - w[1], u[2] - w[2]) < 1e-9)) images.push(w);
   }
   return images.length;

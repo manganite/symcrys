@@ -62,7 +62,8 @@ symcrys.symbol("32"), symcrys.symbol("32", setting=2), symcrys.symbol("32", form
 ```
 
 ```{code-cell} ipython3
-symcrys.operations("32")[1]["matrix"]
+op = symcrys.operations("32")[1]
+op["matrix"], op["cartesian"]  # ITA's W in the lattice basis, and the Cartesian matrix
 ```
 
 ```{code-cell} ipython3

@@ -8,8 +8,10 @@ console.log(pointGroup('32'));
 console.log(symbol('32'), symbol('32', { setting: '312' }), symbol('32', { form: 'schoenflies' }));
 console.log(settings('32').map((s) => `${s.index}: ${s.symbol}${s.isDefault ? ' (default)' : ''}`));
 
-// The operations: Cartesian matrices, x ∥ a and z ∥ c for hexagonal axes.
-console.log(operations('32').length, operations('32')[1].matrix);
+// The operations: each as ITA's matrix W in the lattice basis (the threefold rotation -y, x-y, z) and
+// as a Cartesian matrix, x ∥ a and z ∥ c for hexagonal axes.
+const threefold = operations('32')[1];
+console.log(operations('32').length, threefold.matrix, threefold.cartesian);
 
 // The form of a tensor: by its specification, or by the name of a property.
 const SHG = { rank: 3, parity: 'polar', intrinsic: 'jk' } as const;

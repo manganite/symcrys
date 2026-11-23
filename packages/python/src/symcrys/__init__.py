@@ -43,6 +43,7 @@ class TensorSpec(TypedDict):
 
 class Operation(TypedDict):
     matrix: NDArray[np.float64]
+    cartesian: NDArray[np.float64]
 
 
 __all__ = [
@@ -68,7 +69,6 @@ __all__ = [
     "is_centrosymmetric_of",
     "is_chiral_of",
     "is_point_group_key",
-    "lattice_operations",
     "lattice_basis",
     "lattice_from_parameters",
     "lattice_parameters",
@@ -177,8 +177,9 @@ def settings(key: str) -> list[dict[str, Any]]:
 def operations(key: str, *, setting: Optional[Union[int, str]] = None) -> list[Operation]:
     """All operations of the crystal class in the requested setting (default: the ITC default
     setting), in ITA's order: identity first, then as ITA numbers the general position
-    (docs/conventions.md, "Order of the operations"). The matrices are Cartesian
-    (docs/conventions.md, "Cartesian frame").
+    (docs/conventions.md, "Order of the operations"). Each operation is ITA's matrix W in the
+    lattice basis of the setting (``matrix``) with the same operation as a Cartesian matrix
+    (``cartesian``; docs/conventions.md, "Operations").
 
     Parameters
     ----------
@@ -190,7 +191,8 @@ def operations(key: str, *, setting: Optional[Union[int, str]] = None) -> list[O
     Returns
     -------
     list of dict
-        Dicts ``{"matrix"}``; each matrix is a float64 array of shape (3, 3).
+        Dicts ``{"matrix", "cartesian"}``; ``matrix`` is a float64 array of shape (3, 3) holding
+        integers (the fixed rule for matrices), ``cartesian`` a float64 array of shape (3, 3).
     """
     return list(_call("operations", key, _shared.options(setting=setting)))
 
@@ -211,7 +213,8 @@ def generators(key: str, *, setting: Optional[Union[int, str]] = None) -> list[O
     Returns
     -------
     list of dict
-        Dicts ``{"matrix"}``; each matrix is a float64 array of shape (3, 3).
+        Dicts ``{"matrix", "cartesian"}``; ``matrix`` is a float64 array of shape (3, 3) holding
+        integers (the fixed rule for matrices), ``cartesian`` a float64 array of shape (3, 3).
     """
     return list(_call("generators", key, _shared.options(setting=setting)))
 
@@ -346,9 +349,9 @@ def residual_operations(
     operations: Sequence[Mapping[str, Any]], basis: ArrayLike, *, tolerance: Optional[float] = None
 ) -> list[Operation]:
     """The operations of a list that keep the metric of a cell: W with WᵀGW = G, G the metric tensor
-    of ``basis``. The operations are integer matrices on lattice coordinates, as
-    ``lattice_operations`` gives them; the list is taken as it is and the kept operations are the
-    ones of the list, in its order. The deviation counts relative to the largest entry of G
+    of ``basis``. The operations are read by ``matrix``, the integer matrix W on lattice
+    coordinates, as ``operations`` gives them; the list is taken as it is and the kept operations
+    are the ones of the list, in its order. The deviation counts relative to the largest entry of G
     (``tolerance``, default ``EPSILON``). An operation combined with time reversal belongs to the
     magnetic API.
 
@@ -361,7 +364,7 @@ def residual_operations(
     return list(
         _call(
             "residualOperations",
-            _shared.operation_list(operations),
+            _shared.operation_list(operations, ("matrix",)),
             np.asarray(basis, dtype=np.float64),
             _shared.options(tolerance=tolerance),
         )
@@ -451,10 +454,11 @@ def point_group_of(
     symcrys (absent if the group is the class in another orientation, e.g. a threefold axis along
     [111]). The list is closed into a group first, two matrices being equal when no entry differs by
     ``tolerance`` (default ``EPSILON``) or more. Returns None if the operations generate no crystal
-    class (an operation of order 5, a group larger than 48). Raises SymcrysError for a matrix that
-    is not orthogonal (within ``tolerance``, at least ``EPSILON``). The classes ``1`` and ``-1``
-    have no orientation, so they always have setting 1. The first call builds a table of the groups
-    (about 0.1 s; docs/conventions.md, "Point group of a list of operations").
+    class (an operation of order 5, a group larger than 48). Raises SymcrysError for an operation
+    without an orthogonal Cartesian matrix (``cartesian``; within ``tolerance``, at least
+    ``EPSILON``). The classes ``1`` and ``-1`` have no orientation, so they always have setting 1.
+    The first call builds a table of the groups (about 0.1 s; docs/conventions.md, "Point group of a
+    list of operations").
 
     Parameters
     ----------
@@ -474,10 +478,10 @@ def describe_operations_of(
     Cartesian axis (rotation or rotoinversion axis, mirror normal) with its first non-zero
     component, in the order x, y, z, positive, and for n ≥ 3 the sense about that axis. The axes are
     not named by lattice directions, since the list need not belong to a setting; for a crystal
-    class given by its key, ``describe_operations`` names them. Raises SymcrysError for a matrix
-    that is not orthogonal or not a crystallographic operation (a rotation part by an angle other
-    than 360°/n, n = 1, 2, 3, 4, 6), both within ``tolerance`` (default ``EPSILON``, as for
-    ``point_group_of``).
+    class given by its key, ``describe_operations`` names them. Raises SymcrysError for an operation
+    without an orthogonal Cartesian matrix (``cartesian``) or not a crystallographic operation (a
+    rotation part by an angle other than 360°/n, n = 1, 2, 3, 4, 6), both within ``tolerance``
+    (default ``EPSILON``, as for ``point_group_of``).
 
     Parameters
     ----------
@@ -526,8 +530,8 @@ def symmetry_directions(
 def is_centrosymmetric_of(operations: Sequence[Mapping[str, Any]]) -> bool:
     """True if the group generated by ``operations`` contains the inversion, e.g. for the operations
     of a distorted crystal. A list that is not closed is closed first. For a crystal class, read
-    ``point_group(key)["centrosymmetric"]``. Raises SymcrysError for a matrix that is not
-    orthogonal.
+    ``point_group(key)["centrosymmetric"]``. Raises SymcrysError for an operation without an
+    orthogonal Cartesian matrix (``cartesian``).
     """
     return bool(_call("isCentrosymmetricOf", _shared.operation_list(operations)))
 
@@ -535,8 +539,8 @@ def is_centrosymmetric_of(operations: Sequence[Mapping[str, Any]]) -> bool:
 def is_chiral_of(operations: Sequence[Mapping[str, Any]]) -> bool:
     """True if the group generated by ``operations`` is chiral: proper rotations only. For a crystal
     class, read ``point_group(key)["chiral"]``. Polar is the named property ``'pyroelectric'``:
-    ``allows_property_of(operations, 'pyroelectric')``. Raises SymcrysError for a matrix that is not
-    orthogonal.
+    ``allows_property_of(operations, 'pyroelectric')``. Raises SymcrysError for an operation without
+    an orthogonal Cartesian matrix (``cartesian``).
     """
     return bool(_call("isChiralOf", _shared.operation_list(operations)))
 
@@ -552,11 +556,11 @@ def site_symmetry(
     operations fixing the direction within the tolerance are closed under the products found in the
     list and the direction is set onto their fixed space, repeated until stable, so that for a group
     the result is a subgroup and the set direction lies exactly on its elements. For a list that is
-    not a group, ``multiplicity`` may not be an integer. The matrices must be Cartesian and
-    orthogonal (not those of ``lattice_operations``). Raises SymcrysError for a matrix that is not
-    orthogonal (within ``tolerance``, at least ``EPSILON``), for a zero vector, and if the closed
-    operations fix no common direction or do not settle into a group (a tolerance far too large,
-    e.g. 0.5).
+    not a group, ``multiplicity`` may not be an integer. Each operation is read by its Cartesian
+    matrix (``cartesian``). Raises SymcrysError for an operation without an orthogonal Cartesian
+    matrix (``cartesian``; within ``tolerance``, at least ``EPSILON``), for a zero vector, and if
+    the closed operations fix no common direction or do not settle into a group (a tolerance far too
+    large, e.g. 0.5).
 
     Parameters
     ----------
@@ -574,36 +578,6 @@ def site_symmetry(
     return _shared.site(
         _call("siteSymmetry", _shared.operation_list(operations), np.asarray(direction), _shared.options(tolerance=tolerance))
     )
-
-
-def lattice_operations(
-    key: str, *, setting: Optional[Union[int, str]] = None
-) -> list[Operation]:
-    """The operations of the crystal class in the conventional lattice basis (a, b, c; for the
-    trigonal classes the hexagonal or the rhombohedral axes of the setting), in the order of
-    ``operations`` for the same setting: integer matrices W acting on the coordinates of a lattice
-    direction [uvw], W = B⁻¹·R·B with the basis B of the setting (columns a, b, c, as
-    ``lattice_basis`` gives them; for rhombohedral axes the obverse a_R, b_R, c_R in that hexagonal
-    cell) and the Cartesian matrix R of ``operations``. They do not depend on the cell angles, so
-    they exist for every family; for the monoclinic and triclinic families a, b, c are taken along
-    x, y, z, as for the Wyckoff positions. They are the matrices of ITA's general position (6th ed.,
-    Table 3.2.3.2). Not orthogonal in general: pass them to no function that takes Cartesian
-    operations (docs/conventions.md, "Lattice basis and orbits").
-
-    Parameters
-    ----------
-    setting : keyword-only, optional
-        The setting: its 1-based index, or its ITC symbol, short or full (spaces ignored: ``'312'``,
-        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b,
-        c and a) is an error that names them. Default: the ITC default setting.
-
-    Returns
-    -------
-    list of dict
-        Dicts ``{"matrix"}``; each matrix is a float64 array of shape (3, 3) holding integers (the
-        fixed rule for matrices).
-    """
-    return list(_call("latticeOperations", key, _shared.options(setting=setting)))
 
 
 def orbit(
@@ -644,8 +618,8 @@ def orbit_of(
     operation, coinciding images merged (closer than ``tolerance``, default ``EPSILON``, as for
     ``site_symmetry``), in the order in which the operations reach them, each with the indices of
     the operations that map the direction there. The list is taken as it is, not closed into a
-    group. Raises SymcrysError for a zero vector and for a matrix that is not orthogonal (within
-    ``tolerance``, at least ``EPSILON``).
+    group. Raises SymcrysError for a zero vector and for an operation without an orthogonal
+    Cartesian matrix (``cartesian``; within ``tolerance``, at least ``EPSILON``).
 
     Parameters
     ----------
@@ -788,9 +762,10 @@ def tensor_form_of(
 ) -> TensorForm:
     """The form of a tensor under the group generated by ``operations``, e.g. the site symmetry of a
     surface normal (``site_symmetry``) or the operations of a distorted crystal. The tensor is given
-    by its specification or by the name of a property in ``TENSOR_PROPERTIES``. The operations are
-    Cartesian and orthogonal; a list that is not closed is closed first. Raises SymcrysError for a
-    matrix that is not orthogonal.
+    by its specification or by the name of a property in ``TENSOR_PROPERTIES``. Each operation is
+    read by its Cartesian matrix (``cartesian``), which must be orthogonal; a list that is not
+    closed is closed first. Raises SymcrysError for an operation without an orthogonal Cartesian
+    matrix (``cartesian``).
 
     Returns
     -------
@@ -818,9 +793,10 @@ def allowed_properties(key: str) -> list[str]:
 
 def allows_property_of(operations: Sequence[Mapping[str, Any]], name: TensorPropertyName) -> bool:
     """True if the group generated by ``operations`` allows the named property, e.g. for the site
-    symmetry of a surface normal or the operations of a distorted crystal. The matrices must be
-    Cartesian and orthogonal; a list that is not closed is closed first. Raises SymcrysError for a
-    matrix that is not orthogonal.
+    symmetry of a surface normal or the operations of a distorted crystal. Each operation is read by
+    its Cartesian matrix (``cartesian``), which must be orthogonal; a list that is not closed is
+    closed first. Raises SymcrysError for an operation without an orthogonal Cartesian matrix
+    (``cartesian``).
     """
     return bool(_call("allowsPropertyOf", _shared.operation_list(operations), name))
 

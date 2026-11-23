@@ -255,7 +255,7 @@ describe('Birss Table 6 (printed pp. 91–98) against symcrys, in the ITC frame'
         const system = r[0].toLowerCase();
         expect(pointGroup(key).crystalSystem).toBe(system);
         const inBirssFrame = operations(key).map((op) => ({
-          matrix: toBirssFrame(key, op.matrix) as unknown as Mat3,
+          cartesian: toBirssFrame(key, op.cartesian) as unknown as Mat3,
           timeReversal: op.timeReversal,
         }));
         const actual = describeOperationsOf(inBirssFrame).map((d) => operationLabel(system, d));
@@ -263,7 +263,7 @@ describe('Birss Table 6 (printed pp. 91–98) against symcrys, in the ITC frame'
       });
 
       it('the printed symbol, read along Birss directions, generates the printed group', () => {
-        const ops = group.map((op) => ({ matrix: op.m, timeReversal: op.t }));
+        const ops = group.map((op) => ({ cartesian: op.m, timeReversal: op.t }));
         expect(sameGroup(groupOfSymbol(printed, BIRSS_DIRECTIONS[r[0].toLowerCase()]), ops)).toBe(true);
       });
     });
@@ -331,9 +331,12 @@ describe('orthorhombic groups: a setting for every orientation of the axes', () 
     [2, 1, 0],
   ];
   /** The operations of an orthorhombic group are diagonal: sign pattern and time reversal identify one. */
-  const signature = (ops: readonly { matrix: readonly (readonly number[])[]; timeReversal: boolean }[], p: number[]) =>
+  const signature = (
+    ops: readonly { cartesian: readonly (readonly number[])[]; timeReversal: boolean }[],
+    p: number[],
+  ) =>
     ops
-      .map((op) => p.map((i) => Math.round(op.matrix[i][i])).join(',') + (op.timeReversal ? "'" : ''))
+      .map((op) => p.map((i) => Math.round(op.cartesian[i][i])).join(',') + (op.timeReversal ? "'" : ''))
       .sort()
       .join(' ');
   const SAME_AXES = [0, 1, 2];
@@ -428,9 +431,9 @@ describe('orthorhombic groups: a setting for every orientation of the axes', () 
     const s = settings("2'm'm").find((x) => x.index === setting)!;
     expect(s.uniqueAxis).toBeUndefined();
     const mirror = operations("2'm'm", { setting }).find(
-      (op) => !op.timeReversal && op.matrix[0][0] * op.matrix[1][1] * op.matrix[2][2] < 0,
+      (op) => !op.timeReversal && op.cartesian[0][0] * op.cartesian[1][1] * op.cartesian[2][2] < 0,
     )!;
-    expect(mirror.matrix['abc'.indexOf(axis)]['abc'.indexOf(axis)]).toBe(-1);
+    expect(mirror.cartesian['abc'.indexOf(axis)]['abc'.indexOf(axis)]).toBe(-1);
     // It is the direction a spontaneous magnetization may have (ITC Vol. D Table 1.5.2.4: ⊥ m).
     const unit = [0, 1, 2].map((i) => (i === 'abc'.indexOf(axis) ? 1 : 0));
     expect(tensorForm("2'm'm", 'ferromagnetic', { setting }).basis).toEqual([unit]);
@@ -480,7 +483,7 @@ describe('the 122 magnetic point groups', () => {
         const ops = operations(key, { setting: s.index });
         expect(ops).toHaveLength(2 * classOps.length);
         for (const t of [false, true]) {
-          const part: RefOp[] = classOps.map((op) => ({ m: op.matrix.map((row) => [...row]), t }));
+          const part: RefOp[] = classOps.map((op) => ({ m: op.cartesian.map((row) => [...row]), t }));
           expect(part.every((p) => ops.some((o) => sameGroup([p], [o])))).toBe(true);
         }
       }
@@ -496,13 +499,13 @@ describe('the 122 magnetic point groups', () => {
         expect(ops.filter((op) => op.timeReversal)).toHaveLength(ops.length / 2);
         // Without time reversal the operations are those of the class in one of its settings with the
         // same axes (hexagonal and rhombohedral axes share the Cartesian operations).
-        const stripped = ops.map((op) => ({ matrix: op.matrix, timeReversal: false }));
+        const stripped = ops.map((op) => ({ cartesian: op.cartesian, timeReversal: false }));
         const match = settings(classKey).filter(
           (c) =>
             c.axes === s.axes &&
             sameGroup(
               operations(classKey, { setting: c.index }).map((op) => ({
-                m: op.matrix.map((row) => [...row]),
+                m: op.cartesian.map((row) => [...row]),
                 t: false,
               })),
               stripped,
@@ -519,14 +522,19 @@ describe('the 122 magnetic point groups', () => {
       const classKey = crystalClassOf(key);
       for (const s of settings(key)) {
         const ops = operations(key, { setting: s.index });
+        // The class setting with the same Cartesian operations and the same axes (hexagonal and
+        // rhombohedral axes share the Cartesian operations, not the lattice basis).
         const classSetting = settings(classKey).find((c) => {
+          if (c.axes !== s.axes) return false;
           const classOps = operations(classKey, { setting: c.index });
           return classOps.every((x) =>
-            ops.some((o) => sameGroup([{ m: x.matrix.map((r) => [...r]), t: o.timeReversal }], [o])),
+            ops.some((o) => sameGroup([{ m: x.cartesian.map((r) => [...r]), t: o.timeReversal }], [o])),
           );
         })!;
         const classOps = operations(classKey, { setting: classSetting.index });
         const expected = group.type === 'II' ? [...classOps, ...classOps] : classOps;
+        expect(ops.map((o) => o.cartesian)).toEqual(expected.map((o) => o.cartesian));
+        // And the same matrices W in the lattice basis, those of ITA's general position for the class.
         expect(ops.map((o) => o.matrix)).toEqual(expected.map((o) => o.matrix));
         if (group.type === 'II') {
           expect(ops.map((o) => o.timeReversal)).toEqual([...classOps.map(() => false), ...classOps.map(() => true)]);
@@ -535,10 +543,16 @@ describe('the 122 magnetic point groups', () => {
         const gens = generators(key, { setting: s.index });
         const classGens = generators(classKey, { setting: classSetting.index });
         const expectedGens =
-          group.type === 'II' ? [...classGens.map((g) => g.matrix), ops[0].matrix] : classGens.map((g) => g.matrix);
-        expect(gens.map((g) => g.matrix)).toEqual(expectedGens);
+          group.type === 'II'
+            ? [...classGens.map((g) => g.cartesian), ops[0].cartesian]
+            : classGens.map((g) => g.cartesian);
+        expect(gens.map((g) => g.cartesian)).toEqual(expectedGens);
+        const identityW = classOps[0].matrix;
+        expect(gens.map((g) => g.matrix)).toEqual(
+          group.type === 'II' ? [...classGens.map((g) => g.matrix), identityW] : classGens.map((g) => g.matrix),
+        );
         if (group.type === 'II') expect(gens[gens.length - 1].timeReversal).toBe(true);
-        expect(sameGroup(close(gens.map((g) => ({ m: g.matrix.map((r) => [...r]), t: g.timeReversal }))), ops)).toBe(
+        expect(sameGroup(close(gens.map((g) => ({ m: g.cartesian.map((r) => [...r]), t: g.timeReversal }))), ops)).toBe(
           true,
         );
       }

@@ -168,7 +168,7 @@ describe('allowsProperty and allowedProperties', () => {
     expect(allowsProperty('m-3m', 'pyroelectric')).toBe(false);
     expect(allowsPropertyOf(site, 'pyroelectric')).toBe(true);
     // Generators are enough: the list is closed first.
-    expect(allowedPropertiesOf([{ matrix: [[-1, 0, 0], [0, -1, 0], [0, 0, 1]], timeReversal: true }])).toEqual(allowedProperties("2'")); // prettier-ignore
+    expect(allowedPropertiesOf([{ cartesian: [[-1, 0, 0], [0, -1, 0], [0, 0, 1]], timeReversal: true }])).toEqual(allowedProperties("2'")); // prettier-ignore
   });
 
   it('throw a RangeError for an unknown key or name', () => {

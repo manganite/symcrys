@@ -131,7 +131,7 @@ function errorPins(add: (id: string, f: () => unknown) => void): void {
     classes.tensorFormOf(
       [
         {
-          matrix: [
+          cartesian: [
             [2, 0, 0],
             [0, 1, 0],
             [0, 0, 1],
@@ -146,7 +146,7 @@ function errorPins(add: (id: string, f: () => unknown) => void): void {
     const s = Math.sin(0.1);
     return classes.isCentrosymmetricOf([
       {
-        matrix: [
+        cartesian: [
           [c, -s, 0],
           [s, c, 0],
           [0, 0, 1],
@@ -172,6 +172,14 @@ function errorPins(add: (id: string, f: () => unknown) => void): void {
     ]),
   );
 }
+
+/** Operations in the shape of the pins of `operations` (captured before #121 step 6d): the Cartesian matrices. */
+const cartesianPins = (ops: readonly magnetic.Operation[]) =>
+  ops.map((op) => ({ matrix: op.cartesian, timeReversal: op.timeReversal }));
+
+/** Operations in the shape of the pins of `latticeOperations` (removed in #121 step 6d): the matrices W. */
+const latticePins = (ops: readonly magnetic.Operation[]) =>
+  ops.map((op) => ({ matrix: op.matrix, timeReversal: op.timeReversal }));
 
 /**
  * A setting in an id: its full symbol, and for rhombohedral axes that, since `3` and `-3` have the
@@ -206,9 +214,12 @@ function pointGroupPins(add: (id: string, f: () => unknown) => void, key: Magnet
         add(id(`classes.findPointGroup(${form})`), () => classes.findPointGroup(classSymbol));
       }
     }
-    add(id('magnetic.operations'), () => ops);
-    add(id('magnetic.generators'), () => magnetic.generators(key, options));
-    add(id('magnetic.latticeOperations'), () => magnetic.latticeOperations(key, options));
+    // Since #121 step 6d an operation is { matrix, cartesian, timeReversal }; the pins keep the shape
+    // they were captured in: `operations` and `generators` as the Cartesian matrices, the lattice
+    // operations as the matrices W (formerly `latticeOperations`).
+    add(id('magnetic.operations'), () => cartesianPins(ops));
+    add(id('magnetic.generators'), () => cartesianPins(magnetic.generators(key, options)));
+    add(id('magnetic.latticeOperations'), () => latticePins(ops));
     add(id('magnetic.describeOperations'), () => magnetic.describeOperations(key, options));
     add(id('magnetic.symmetryDirections'), () => magnetic.symmetryDirections(key, options));
     add(id('magnetic.pointGroupOf(operations)'), () => magnetic.pointGroupOf(ops));
@@ -231,8 +242,8 @@ function pointGroupPins(add: (id: string, f: () => unknown) => void, key: Magnet
       add(id(`magnetic.orbit [${uvw}]`), () => magnetic.orbit(key, { uvw }, options));
     if (isClass) {
       const classOps = classes.operations(key, options);
-      add(id('classes.operations'), () => classOps);
-      add(id('classes.generators'), () => classes.generators(key, options));
+      add(id('classes.operations'), () => classOps.map((op) => ({ matrix: op.cartesian })));
+      add(id('classes.generators'), () => classes.generators(key, options).map((op) => ({ matrix: op.cartesian })));
       add(id('classes.describeOperations'), () => classes.describeOperations(key, options));
       add(id('classes.wyckoffPositions'), () => classes.wyckoffPositions(key, options));
       add(id('classes.crystalForms'), () => classes.crystalForms(key, options));
@@ -298,13 +309,13 @@ function tensorPins(add: (id: string, f: () => unknown) => void, key: MagneticPo
 
 /** The tensor functions on a list of operations and the rotation of a tensor. */
 function tensorFunctionPins(add: (id: string, f: () => unknown) => void): void {
-  const rotation = magnetic.operations('6/mmm')[1].matrix;
+  const rotation = magnetic.operations('6/mmm')[1].cartesian;
   const piezo = magnetic.tensorForm('6mm', 'piezoelectric');
   add('rotateTensor piezoelectric of 6mm, first basis row, by the second operation of 6/mmm', () =>
     magnetic.rotateTensor(piezo.basis[0], rotation, 'piezoelectric'),
   );
   add('rotateTensor axial rank 2 by a mirror', () =>
-    classes.rotateTensor([1, 2, 3, 4, 5, 6, 7, 8, 9], classes.operations('m')[1].matrix, {
+    classes.rotateTensor([1, 2, 3, 4, 5, 6, 7, 8, 9], classes.operations('m')[1].cartesian, {
       rank: 2,
       parity: 'axial',
       intrinsic: 'none',
@@ -441,7 +452,7 @@ function generalPins(add: (id: string, f: () => unknown) => void): void {
       classes.angleBetweenPlanes(basis, [1, 0, 0], [1, 1, 1]),
     ]);
     add(`${id}: residualOperations of m-3m`, () =>
-      classes.residualOperations(classes.latticeOperations('m-3m'), basis),
+      classes.residualOperations(classes.operations('m-3m'), basis).map((op) => ({ matrix: op.matrix })),
     );
   }
   const P = [

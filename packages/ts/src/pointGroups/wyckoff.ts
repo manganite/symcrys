@@ -292,7 +292,7 @@ export function wyckoffPositionOf(key: PointGroupKey, direction: Vec3, options?:
   const site = siteSymmetry(ops, direction, { tolerance });
   const candidates = rows.filter((r) => r.siteSymmetryOperations.length === site.operations.length);
   for (const g of ops) {
-    const k = sortedKey(siteSymmetry(ops, apply(g.matrix, site.direction), { tolerance }).operations);
+    const k = sortedKey(siteSymmetry(ops, apply(g.cartesian, site.direction), { tolerance }).operations);
     const row = candidates.find((r) => sortedKey(r.siteSymmetryOperations) === k);
     if (row) return row;
   }

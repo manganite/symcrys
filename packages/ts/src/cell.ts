@@ -5,7 +5,7 @@
  */
 
 import { apply, inverse, isSingular, multiply, transpose, type Mat3, type Vec3 } from './linalg.js';
-import { checkTimeReversal, type Operation as MagneticOperation } from './operations.js';
+import { checkTimeReversal, type CartesianOperation as MagneticOperation } from './operations.js';
 import { EPSILON } from './tolerances.js';
 
 /** The lattice parameters of a cell: edge lengths and angles in degrees (α between b and c, β between a and c, γ between a and b). */
@@ -34,9 +34,9 @@ export interface CellAngles {
   readonly gamma: number;
 }
 
-/** An operation of a list given to `residualOperations`: at least its matrix; other fields are kept. */
+/** An operation of a list given to `residualOperations`: at least its matrix W; other fields are kept. */
 export interface CellOperation {
-  /** The 3×3 matrix W acting on lattice coordinates. */
+  /** The integer 3×3 matrix W acting on lattice coordinates (the `matrix` of an operation). */
   readonly matrix: Mat3;
 }
 
@@ -213,8 +213,8 @@ export function angleBetweenPlanes(basis: Mat3, h: Vec3, k: Vec3): number {
 }
 
 /**
- * The operations that leave the metric of a cell unchanged: those W (integer matrices on the
- * coordinates of a lattice direction, as `latticeOperations` gives them) with WᵀGW = G, G the metric
+ * The operations that leave the metric of a cell unchanged: those W (`matrix`, the integer matrices
+ * on the coordinates of a lattice direction, as `operations` gives them) with WᵀGW = G, G the metric
  * tensor of `basis`. It is the point symmetry of a distorted lattice among the operations of a group;
  * the list is taken as it is, not closed into a group, and the kept operations are the ones of the
  * list, in its order. The deviation counts relative to the largest entry of G (`tolerance`, default
@@ -240,6 +240,12 @@ export function residualOperations<T extends CellOperation>(
       m.length === 3 &&
       m.every((r) => Array.isArray(r) && r.length === 3 && r.every((x) => typeof x === 'number' && Number.isFinite(x)));
     if (!ok) throw new RangeError(`residualOperations: operation ${i} has no 3×3 matrix of finite numbers`);
+    // W is an integer matrix; a Cartesian matrix (±√3/2) passed as `matrix` would give a wrong answer.
+    if (!(m as number[][]).every((r) => r.every((x) => Math.abs(x - Math.round(x)) <= 1e-9))) {
+      throw new RangeError(
+        `residualOperations: the matrix of operation ${i} is not an integer matrix in the lattice basis (the field matrix of an operation, not cartesian): ${JSON.stringify(m)}`,
+      );
+    }
   });
   const scale = Math.max(...g.flat().map(Math.abs));
   return operations.filter((op) => {
@@ -256,8 +262,8 @@ export interface MagneticCellOperation extends CellOperation {
 
 /**
  * The operations of a list that keep the metric of a cell: W with WᵀGW = G, G the metric tensor
- * of `basis`. The operations are integer matrices on lattice coordinates, as `latticeOperations`
- * gives them; the list is taken as it is and the kept operations are the ones of the list, in its
+ * of `basis`. The operations are read by `matrix`, the integer matrix W on lattice coordinates, as
+ * `operations` gives them; the list is taken as it is and the kept operations are the ones of the list, in its
  * order. The deviation counts relative to the largest entry of G (`tolerance`, default `EPSILON`).
  * Every operation must say whether it is combined with time reversal (`timeReversal`), which is
  * kept; one that does not (an operation of the crystallographic API) is a RangeError.

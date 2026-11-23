@@ -75,8 +75,8 @@ const CASES: [PointGroupKey, number][] = POINT_GROUP_KEYS.flatMap((key) =>
   settings(key).map((s): [PointGroupKey, number] => [key, s.index]),
 );
 
-const inGroup = (ops: readonly { matrix: readonly (readonly number[])[] }[], m: M) =>
-  ops.some((o) => sameM(m, o.matrix));
+const inGroup = (ops: readonly { cartesian: readonly (readonly number[])[] }[], m: M) =>
+  ops.some((o) => sameM(m, o.cartesian));
 
 describe('describeOperations', () => {
   it.each(CASES)('%s, setting %i: each description rebuilds its operation', (key, setting) => {
@@ -84,7 +84,7 @@ describe('describeOperations', () => {
     const descriptions = describeOperations(key, { setting });
     expect(descriptions).toHaveLength(ops.length);
     descriptions.forEach((d, i) => {
-      expect(sameM(rebuild(d), ops[i].matrix)).toBe(true);
+      expect(sameM(rebuild(d), ops[i].cartesian)).toBe(true);
       expect(d.timeReversal).toBe(ops[i].timeReversal);
       if (d.kind === 'identity' || d.kind === 'inversion') {
         expect(d.axis).toBeUndefined();
@@ -138,14 +138,14 @@ describe('symmetryDirections', () => {
         elements += ops.filter((o) =>
           [2, 3, 4, 6].some((n) =>
             [1, -1].some(
-              (s) => sameM(rotationAbout(u, s / n), o.matrix) || sameM(neg(rotationAbout(u, s / n)), o.matrix),
+              (s) => sameM(rotationAbout(u, s / n), o.cartesian) || sameM(neg(rotationAbout(u, s / n)), o.cartesian),
             ),
           ),
         ).length;
       }
     }
     // Every operation other than the identity and the inversion lies along exactly one direction.
-    const trivial = ops.filter((o) => sameM(I3, o.matrix) || sameM(neg(I3), o.matrix)).length;
+    const trivial = ops.filter((o) => sameM(I3, o.cartesian) || sameM(neg(I3), o.cartesian)).length;
     expect(elements).toBe(ops.length - trivial);
   });
 

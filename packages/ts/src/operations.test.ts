@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { INVERSION, rotationZ } from './linalg.js';
-import { closeGroup, compose, operation, operationsEqual, type Operation } from './operations.js';
+import { closeGroup, compose, operation, operationsEqual, type CartesianOperation } from './operations.js';
 
 describe('closeGroup', () => {
   it('returns the identity first, then the generators', () => {
     const g = closeGroup([operation(rotationZ(90))]);
     expect(g).toHaveLength(4);
-    expect(g[0].matrix).toEqual([
+    expect(g[0].cartesian).toEqual([
       [1, 0, 0],
       [0, 1, 0],
       [0, 0, 1],
@@ -21,7 +21,7 @@ describe('closeGroup', () => {
   });
 
   it('keeps time reversal apart from the matrix', () => {
-    const primed: Operation = { matrix: rotationZ(180), timeReversal: true };
+    const primed: CartesianOperation = { cartesian: rotationZ(180), timeReversal: true };
     const g = closeGroup([primed]);
     expect(g).toHaveLength(2);
     expect(g[1].timeReversal).toBe(true);

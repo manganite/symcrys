@@ -484,7 +484,17 @@ The conventions themselves are in `docs/conventions.md`; here, what was decided 
   convention (`docs/conventions.md`, "Generators").
 - **Cartesian floating-point matrices with snapping** (maintainer, 2026-11-08, #13), as in
   birss-app, so its tests carry over; exact lattice-basis matrices when a consumer needs them
-  (since #24: `latticeOperations`).
+  (#24; since #121 step 6d the field `matrix` of every operation, "The operation record" below).
+- **The operation record** (#137 A2, decided by Thomas on 2026-11-22; #94; #121 step 6d): an
+  operation is `{ matrix, cartesian }`, in the magnetic API with `timeReversal`: `matrix` is ITA's
+  W in the lattice basis in every entry point (as in `symcrys/plane`), `cartesian` the orthogonal
+  matrix; `latticeOperations` is removed. Every function that takes operations from a caller and
+  computes with Cartesian matrices reads `cartesian` and refuses a record without it, so that W
+  cannot pass for a Cartesian matrix silently; `residualOperations` reads `matrix` and refuses one
+  that is not integer. Chosen while implementing: inside the library the calculations work on
+  `CartesianOperation` (`{ cartesian, timeReversal }`), so a record of the API passes as it is and
+  a caller may build `{ cartesian }` alone; in Python `matrix` stays float64 by the fixed rule
+  for matrices (#137 H may revisit it).
 - **Properties that need tensors** come with the tensor module (maintainer, 2026-11-08, #13), as
   named tensor properties ("Tensors" below, #41).
 - **Hexagonal frame x ∥ a, z ∥ c** (maintainer, 2026-11-08, #6): birss-app's frame, in which its
@@ -536,7 +546,8 @@ The conventions themselves are in `docs/conventions.md`; here, what was decided 
   the forms of a class refer by number; the English names are terms of the print source, like the
   symbols, while names in other languages (stereography's German ones) and the link ids stay in the
   apps; point forms are left out. **Names**, in the `…Of` scheme: `crystalForms(key, { setting })`;
-  `pointGroupOf(operations)` beside `pointGroup(key)`; `latticeOperations(key, { setting })`;
+  `pointGroupOf(operations)` beside `pointGroup(key)`; `latticeOperations(key, { setting })` _(replaced
+  by the field `matrix` of every operation, #121 step 6d)_;
   `orbit(key, …)`, exact in the lattice basis, and `orbitOf(operations, direction)`, Cartesian, with
   coinciding poles merged. **Tolerance:** an optional `tolerance`, default `EPSILON`, as for
   `siteSymmetry`. **Lattice-basis operations** for all families and settings, integer and without
@@ -548,7 +559,8 @@ The conventions themselves are in `docs/conventions.md`; here, what was decided 
   point group; the elements of any list of operations come from `describeOperationsOf`. **Three
   PRs, one MINOR:** forms; lattice operations and orbits; identification. Crystal forms are given in
   the ITC convention only, like the Wyckoff positions they belong to (decided by that precedent, not
-  asked again). Asked while implementing the second PR _(under review, #94)_: `latticeOperations` returns the shape of
+  asked again). Asked while implementing the second PR _(replaced by "The operation record" above,
+  #121 step 6d)_: `latticeOperations` returns the shape of
   `operations` (`{ matrix }`, index for index, in the magnetic API with `timeReversal`), so that a
   caller switches between the two lists, although Python then gives the integer matrices as float64
   under the fixed rule for `matrix`; `latticeOperations`, `orbit` and `orbitOf` are in both entry
@@ -586,7 +598,7 @@ The conventions themselves are in `docs/conventions.md`; here, what was decided 
   Chosen by Thomas among three proposals: two entry points with the same function names (the import
   decides the reading), rather than two families of names in one entry point
   (`tensorForm` / `magneticTensorForm`) or a context option. The crystallographic API has no time
-  reversal at all (operations `{ matrix }`, no time parity, no `type`, the time-even properties
+  reversal at all (operations `{ matrix, cartesian }` since #121 step 6d, no time parity, no `type`, the time-even properties
   only), and a question that involves time reversal is an error that names the magnetic API,
   because a wrong reading should fail, not answer. Chosen while implementing _(under review, #110
   item 8)_: `timeParity: 'i'` and
@@ -765,10 +777,12 @@ while implementing gets its own note here.
   as fractions (integer numerator over the smallest denominator), so that comparing operations and
   points of the group data modulo the lattice needs no tolerance. At the API it is
   `{ matrix, translation }` in the lattice basis: `matrix` a d × d matrix with integer entries, the
-  object shape `{ matrix }` of `latticeOperations` with `translation` added, and `translation` as
+  object shape `{ matrix }` of the lattice operations of the point groups with `translation` added, and `translation` as
   numbers (1/3 as the nearest double), as spglib gives its symmetry (integer rotations, float
   translations), which is what users of such a library expect. The Cartesian operations of the
-  crystal classes and magnetic groups (`operations`, tensors) stay as they are. The alternatives were
+  crystal classes and magnetic groups (`operations`, tensors) stay as they are _(since #121 step 6d
+  an operation of a point group is `{ matrix, cartesian }`, `matrix` W as here, "The operation
+  record")_. The alternatives were
   exact fractions at the API ([numerator, denominator] pairs: unusual, and every consumer would
   compute with fractions itself), floating point with snapping as for the point groups (not exact;
   comparisons modulo 1 with a tolerance, cf. plane-groups `CLAUDE.md`, "Toleranzen der Bestimmung")
@@ -873,7 +887,7 @@ while implementing gets its own note here.
   (coefficients of a·x + b·y ≤ c) with its vertices, the elements as rotation centres with their
   order and lines with kind, glide vector and segment in the cell [0, 1]², so that the calculation
   is in one place for all apps; the segment is the part nearest the drawing that still is geometry.
-  **Python:** `matrix` float64 by the fixed rule, as for `latticeOperations`; `translation` float64.
+  **Python:** `matrix` float64 by the fixed rule, as for the point groups; `translation` float64.
   Asked in a second round (Thomas, 2026-11-22, #31, all four recommendations taken): **functions of a
   point take the key**, `siteSymmetry(key, point)`, `wyckoffPositionOf(key, point)`,
   `orbit(key, point)` with `{ tolerance }` (the site symmetry needs the group modulo the lattice;

@@ -9,7 +9,7 @@
 
 import { matricesEqual, type Mat3, type Vec3 } from '../linalg.js';
 import { crystalFamily, latticeBasis, type CrystalFamily, type CrystalSystem } from '../lattice.js';
-import type { Operation } from '../operations.js';
+import type { CartesianOperation } from '../operations.js';
 import { LATTICE_SYMMETRY_DIRECTIONS } from '../symmetryDirections.js';
 
 /** The Cartesian direction of the first symmetry direction of each position of the full symbol. */
@@ -48,14 +48,14 @@ function rotation(u: Vec3, n: number, sign: 1 | -1): Mat3 {
 }
 
 /** `'` if the operation with this matrix is combined with time reversal in `ops`, otherwise ``. */
-function prime(ops: readonly Operation[], matrix: Mat3, what: string): string {
-  const op = ops.find((x) => matricesEqual(x.matrix, matrix));
+function prime(ops: readonly CartesianOperation[], matrix: Mat3, what: string): string {
+  const op = ops.find((x) => matricesEqual(x.cartesian, matrix));
   if (!op) throw new Error(`${what}: the group does not contain the operation its symbol names`);
   return op.timeReversal ? "'" : '';
 }
 
 /** One position (`N`, `-N`, `N/m`, `m`, `1`) with the primes of the operations along `u`. */
-function primedToken(token: string, u: Vec3 | undefined, ops: readonly Operation[], what: string): string {
+function primedToken(token: string, u: Vec3 | undefined, ops: readonly CartesianOperation[], what: string): string {
   if (token === '1') return token;
   const parts = /^(?:(-?)([1-6]))?(\/?m)?$/.exec(token);
   if (!parts || token === '') throw new Error(`${what}: unreadable position ${JSON.stringify(token)}`);
@@ -91,7 +91,7 @@ function shortTokens(symbol: string): string[] {
 export function primedSymbols(
   classSymbols: { readonly short: string; readonly full: string },
   system: CrystalSystem,
-  ops: readonly Operation[],
+  ops: readonly CartesianOperation[],
 ): { short: string; full: string } {
   const family = crystalFamily(system);
   // The positions of the family, also for a setting with rhombohedral axes: their Cartesian

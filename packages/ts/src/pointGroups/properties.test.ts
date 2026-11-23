@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from 'vitest';
 import { det } from '../linalg.js';
-import type { Operation } from '../operations.js';
+import type { CartesianOperation } from '../operations.js';
 import { tensorFormOf } from '../tensors/tensorForm.js';
 import { MAGNETIC_POINT_GROUP_KEYS, generators, operations, pointGroup } from './pointGroups.js';
 import { isCentrosymmetricOf, isChiralOf } from './properties.js';
@@ -40,21 +40,21 @@ describe('centrosymmetric and chiral for a list of operations', () => {
   it('an empty list is the group 1; a list need not be closed', () => {
     expect(isCentrosymmetricOf([])).toBe(false);
     expect(isChiralOf([])).toBe(true);
-    const fourBar = operations('-4').find((op) => det(op.matrix) < 0)!;
+    const fourBar = operations('-4').find((op) => det(op.cartesian) < 0)!;
     expect(isChiralOf([fourBar])).toBe(false);
     expect(isCentrosymmetricOf([fourBar])).toBe(false);
   });
 
   it('an operation that does not say whether it has time reversal is refused by both', () => {
-    const inversion = { matrix: operations('-1')[1].matrix } as unknown as Operation;
+    const inversion = { cartesian: operations('-1')[1].cartesian } as unknown as CartesianOperation;
     expect(() => isCentrosymmetricOf([inversion])).toThrow(/Operation 0: timeReversal must be true or false/);
     expect(() => isChiralOf([inversion])).toThrow(/Operation 0: timeReversal must be true or false/);
   });
 
   it('a matrix that is not orthogonal is refused by both, as by tensorFormOf', () => {
-    const stretched: Operation = { matrix: [[2, 0, 0], [0, 1, 0], [0, 0, 1]], timeReversal: false }; // prettier-ignore
-    const nearly: Operation = { matrix: [[-1, 0, 0], [0, -1, 0], [0, 0, -1.0001]], timeReversal: false }; // prettier-ignore
-    const nan: Operation = { matrix: [[NaN, 0, 0], [0, 1, 0], [0, 0, 1]], timeReversal: false }; // prettier-ignore
+    const stretched: CartesianOperation = { cartesian: [[2, 0, 0], [0, 1, 0], [0, 0, 1]], timeReversal: false }; // prettier-ignore
+    const nearly: CartesianOperation = { cartesian: [[-1, 0, 0], [0, -1, 0], [0, 0, -1.0001]], timeReversal: false }; // prettier-ignore
+    const nan: CartesianOperation = { cartesian: [[NaN, 0, 0], [0, 1, 0], [0, 0, 1]], timeReversal: false }; // prettier-ignore
     for (const op of [stretched, nearly, nan]) {
       const list = [operations('2')[1], op];
       expect(() => isCentrosymmetricOf(list)).toThrow(/Operation 1 is not an orthogonal \(Cartesian\) matrix/);
