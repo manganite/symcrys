@@ -323,7 +323,8 @@ can be completed:
   twin symbol K* = 2'/m' 2'/m' 2/m (p. 418, read from the image) and "orthorhombic 2'22' ↔
   monoclinic 121" for Rochelle salt (p. 443, read from the image) — dichromatic (twin) groups, of
   the types of mm'm' and 2'2'2 in non-standard orientations; `m2m` for NH4LiSO4 and another
-  ferroelectric (pp. 452, 455); `2mm`, `m2m` (pp. 472–473).
+  ferroelectric (pp. 452, 455); `2mm`, `m2m` (pp. 472–473); the twin groups K* = `312'` and
+  `31m'` and the composite `-312'/m'` (p. 427, read from the image by the review of #121 step 6a).
 - Chapter 3.1: "C2v (2mm)" (p. 383).
 - Chapter 3.4: `112`, `11m`, `112/m`, `211`, `m11` (p. 526, read from the image) are layer-group
   and sectional-group symbols relative to a plane, not point-group settings.
