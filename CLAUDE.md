@@ -611,7 +611,9 @@ The conventions themselves are in `docs/conventions.md`; here, what was decided 
   birss-app. Not changed: the monoclinic groups keep two settings (unique axis b and c; a is not a
   standard setting, as in birss-app).
 - **Magnetic point groups: data** _(Storage in the Birss frame replaced by "Pure ITC" above; the reason
-  given for the type names is corrected in #109.)_ (2026-11-19, #13): stored like the classes, in the Birss frame
+  given for the type names is corrected in #109. Since #122 PR 2c the ITC full symbols of the
+  black-and-white groups are stored, one per setting, and the rule runs the other way: the time
+  reversal of the operations is derived from them (`pointGroups/itcMagneticData.ts`).)_ (2026-11-19, #13): stored like the classes, in the Birss frame
   with birss-app's generators and settings (birss-app 2be5fe3), ITC derived. Not stored: the grey
   groups (class and time reversal, ITC Vol. D eq. (1.5.2.1)) and the symbols of the black-and-white
   groups, which are the symbols of the class in the same frame with the primes of the operations;

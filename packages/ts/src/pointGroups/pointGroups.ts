@@ -498,11 +498,11 @@ export function settings(key: MagneticPointGroupKey, conventionName: Convention 
     const symbols = settingSymbols(d, i + 1, c);
     // A class in the ITC convention: the unique axis of the ITC class data.
     const uniqueAxis =
-      c === 'birss' || d.type === 'II'
+      c === 'birss'
         ? s.uniqueAxis
-        : d.type === 'I'
-          ? itcSetting(d.key as PointGroupKey, i + 1).uniqueAxis
-          : itcBlackWhiteSetting(d.key as BlackWhitePointGroupKey, i + 1).uniqueAxis;
+        : d.type === 'III'
+          ? itcBlackWhiteSetting(d.key as BlackWhitePointGroupKey, i + 1).uniqueAxis
+          : itcSetting(d.crystalClass.key as PointGroupKey, i + 1).uniqueAxis;
     return Object.freeze({
       index: i + 1,
       symbol: symbols.short,

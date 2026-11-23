@@ -9,10 +9,10 @@
  *
  * Print anchors (tests): the symbols of the ITC default settings and their operations are those of
  * ITC Vol. D Table 1.5.2.3 (pp. 111–112; `itcMagneticData.reference.test.ts`,
- * `magnetic.reference.test.ts`); symbols of other settings are compared with print where ITC prints
- * them (Tables 1.5.2.4, 1.5.7.1, 1.5.8.1). The settings that ITC does not print, and the field
- * `uniqueAxis` of the orthorhombic groups, are those of the API so far; which settings stay and
- * what a setting records is decided in step 3 of #121 (#116, #123).
+ * `magnetic.reference.test.ts`). The symbols of the other settings and the field `uniqueAxis` of the
+ * orthorhombic groups are those of the API so far (derived from Birss's frames before #122); where
+ * ITC prints such a symbol (Tables 1.5.2.4, 1.5.7.1, 1.5.8.1) the tests compare it with print.
+ * Which settings stay and what a setting records is decided in step 3 of #121 (#116, #123).
  *
  * Internal; the setting indices are those of the current API until the renumbering (#137 A4).
  */
