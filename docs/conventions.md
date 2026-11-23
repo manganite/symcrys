@@ -461,7 +461,7 @@ on the setting. For a magnetic point group:
   are the same restriction, the absence of improper rotations); `laueClass`: the class with the inversion added.
 
 **For a list of operations** (a site symmetry, the operations of a distorted crystal):
-`isCentrosymmetricOf(operations)` and `isChiralOf(operations)`, for the group the operations
+`isCentrosymmetricOf(operations)` and `isEnantiomorphicOf(operations)`, for the group the operations
 generate, with what `tensorFormOf` asks of the list ("Two entry points", "Operations passed in").
 Polar is there the named property: `allowsPropertyOf(operations, 'pyroelectric')`. A list of operations has no Laue class as a key; `pointGroupOf` identifies the group first
 ("Point group of a list of operations").
@@ -528,13 +528,13 @@ perpendicular.
 
 `describeOperations(key, options)` describes each operation, in the order of `operations`:
 
-| Field          | Meaning                                                                                                                                                   |
-| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `kind`         | `identity`, `inversion`, `rotation`, `rotoinversion` (n̄ = inversion × rotation n, n = 3, 4, 6), `reflection`, as ITA names the operations (Table 2.1.2.1) |
-| `n`            | the n of n or n̄ (ITA § 1.2.1: an n-fold rotation); 1 for the identity and the inversion, 2 for a reflection (m = 2̄)                                       |
-| `axis`         | rotation or rotoinversion axis, or the normal of the mirror plane: `lattice` [uvw] and `cartesian` unit vector                                            |
-| `sense`        | for n ≥ 3: `+` or `-`                                                                                                                                     |
-| `timeReversal` | magnetic API: as in the operation                                                                                                                         |
+| Field          | Meaning                                                                                                                                                                    |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `kind`         | `identity`, `inversion`, `rotation`, `rotoinversion` (n̄ = inversion × rotation n, n = 3, 4, 6), `reflection`, as ITA names the operations (ITA 2016 Table 2.1.2.1, p. 145) |
+| `n`            | the n of n or n̄ (ITA 2016 § 1.2.1, p. 12: an n-fold rotation); 1 for the identity and the inversion, 2 for a reflection (m = 2̄)                                            |
+| `axis`         | rotation or rotoinversion axis, or the normal of the mirror plane: `lattice` [uvw] and `cartesian` unit vector                                                             |
+| `sense`        | for n ≥ 3: `+` or `-`                                                                                                                                                      |
+| `timeReversal` | magnetic API: as in the operation                                                                                                                                          |
 
 - **Axis.** Every axis and mirror normal of a crystal class lies along one of its symmetry
   directions; the axis is that direction, as [uvw] with the sign of Table 2.1.3.1 and as a
@@ -1001,7 +1001,7 @@ symmorphic (`pg`, `cm`, `p4gm`, …).
 
 **Descriptions.** `describeOperations` describes each operation as ITA does under "Symmetry
 operations": its kind (`'identity'`, `'translation'`, `'rotation'`, `'reflection'` or
-`'glide-reflection'`, as ITA names the operations in Table 2.1.2.1), the n and sense of a rotation, the centre of a rotation, the direction of a line and one point of
+`'glide-reflection'`, as ITA names the operations in Table 2.1.2.1, p. 145), the n and sense of a rotation, the centre of a rotation, the direction of a line and one point of
 it (on y = 0, or on x = 0 for a line along a), and the glide vector (w + W·w)/2. An operation whose
 glide vector is a non-zero lattice vector is a glide, as it is geometrically. A mirror or glide line
 also carries its `normal`, its symmetry direction in the sense of ITA Table 2.1.3.1 (p. 151): the

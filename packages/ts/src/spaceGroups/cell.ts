@@ -1,7 +1,7 @@
 /**
  * The asymmetric unit of a plane group and its symmetry elements in the conventional cell, as numbers
  * (CLAUDE.md, "The API of `symcrys/plane`"): the asymmetric unit as inequalities with its vertices,
- * the elements as rotation centres with their order and as mirror and glide lines with the segment
+ * the elements as rotation points with their n and as mirror and glide lines with the segment
  * that lies in the cell [0, 1]². Exact, in the lattice basis; drawing them stays with the
  * applications. Internal for now.
  */
@@ -36,7 +36,7 @@ export interface AsymmetricUnit {
   readonly inequalities: readonly Inequality[];
 }
 
-/** A rotation point in the cell (ITA Table 2.1.2.1: the symmetry element of a rotation in the plane). */
+/** A rotation point in the cell (ITA 2016 Table 2.1.2.1, p. 145: the symmetry element of a rotation in the plane). */
 export interface RotationPoint {
   /** The highest n of an n-fold rotation about it. */
   readonly n: number;
@@ -292,7 +292,7 @@ const elementCache = new Map<string, CellElements>();
 
 /**
  * The symmetry elements of a plane group in its conventional cell [0, 1]², boundary included: every
- * rotation centre with the highest order of a rotation about it, and every mirror and glide line
+ * rotation point with the highest n of a rotation about it, and every mirror and glide line
  * that crosses the cell, with the segment inside it. A line that carries a glide is a glide line
  * with its shortest glide vector along the line (between 0 and the lattice vector). Frozen.
  */

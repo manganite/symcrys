@@ -134,7 +134,7 @@ export interface Setting {
 export interface OperationDescription {
   /**
    * `'identity'`, `'translation'`, `'rotation'`, `'reflection'` (in a line) or `'glide-reflection'`,
-   * as ITA names the operations (Table 2.1.2.1).
+   * as ITA names the operations (ITA 2016 Table 2.1.2.1, p. 145).
    */
   readonly kind: 'identity' | 'translation' | 'rotation' | 'reflection' | 'glide-reflection';
   /** The n of the linear part (an n-fold rotation): 1 for the identity and a translation, 2 for a reflection or glide reflection. */
@@ -199,7 +199,7 @@ export interface AsymmetricUnit {
   readonly inequalities: readonly (readonly number[])[];
 }
 
-/** A rotation point in the cell (ITA Table 2.1.2.1: the symmetry element of a rotation in the plane). */
+/** A rotation point in the cell (ITA 2016 Table 2.1.2.1, p. 145: the symmetry element of a rotation in the plane). */
 export interface RotationPoint {
   /** The highest n of an n-fold rotation about it. */
   readonly n: number;
@@ -412,7 +412,7 @@ export function generators(key: PlaneGroupKey | PointGroupKey, options?: Setting
 
 /**
  * Each operation of `operations` (same key and setting) described geometrically, index for index:
- * what it is, its order and sense, where its symmetry element lies, its glide part. Throws a
+ * what it is, its n and sense, where its symmetry element lies, its glide part. Throws a
  * RangeError for an unknown key or setting.
  */
 export function describeOperations(

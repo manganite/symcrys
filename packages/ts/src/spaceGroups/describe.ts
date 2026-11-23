@@ -1,6 +1,6 @@
 /**
  * The geometric description of an operation of a plane group, as ITA gives it under "Symmetry
- * operations" (ITA 2016, § 2.1.3.9, pp. 160–161): what it is, its order and sense, where its
+ * operations" (ITA 2016, § 2.1.3.9, pp. 160–161): what it is, its n and sense, where its
  * symmetry element lies and its glide part. Structured data; the symbols such as `g(1/2,1/2) x,x`
  * stay with the applications (CLAUDE.md, "Symmetry elements as structured data").
  */
@@ -9,7 +9,7 @@ import { determinant, dimensionOf, trace, type ExactOperation, type IntMatrix } 
 import { ZERO, add, multiply, rational, scale, type Rational } from './rational.js';
 
 /**
- * What an operation of a plane group is, as ITA names the operations (Table 2.1.2.1): `'reflection'`
+ * What an operation of a plane group is, as ITA names the operations (ITA 2016 Table 2.1.2.1, p. 145): `'reflection'`
  * (in a line, as `'reflection'` of the point groups) and `'glide-reflection'`.
  */
 export type PlaneOperationKind = 'identity' | 'translation' | 'rotation' | 'reflection' | 'glide-reflection';

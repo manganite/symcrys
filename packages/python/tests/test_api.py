@@ -388,7 +388,9 @@ def test_site_symmetry_of_a_key_and_of_a_list() -> None:
     by_key = symcrys.site_symmetry("4mm", [1, 1, 0], setting=1)
     by_list = symcrys.site_symmetry_of(symcrys.operations("4mm"), [1, 1, 0])
     assert by_key["operations"].tolist() == by_list["operations"].tolist() and by_key["multiplicity"] == 4
-    assert magnetic.site_symmetry("32'", [0, 0, 1], axes="rhombohedral")["multiplicity"] == 2
+    # [100] lies on the twofold axis of unique axis a only.
+    assert magnetic.site_symmetry("2'", [1, 0, 0])["multiplicity"] == 2
+    assert magnetic.site_symmetry("2'", [1, 0, 0], unique_axis="a")["multiplicity"] == 1
     assert symcrys.wyckoff_position("4mm", [0, 0, 1])["letter"] == "a"
     assert plane.symmetry_elements("p4")["rotation_points"][0]["n"] == 4
     assert [d["n"] for d in plane.describe_operations("p4")] == [1, 2, 4, 4]

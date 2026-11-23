@@ -103,23 +103,26 @@ All notable changes to symcrys are recorded here. The format follows
 
 - **Names of ITA** (#137 C1, C2, #121 step 7c):
 
-  | Up to 0.10                                                          | From 0.11                                                                |
-  | ------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-  | `siteSymmetry(operations, direction)` (Python `site_symmetry`)      | `siteSymmetryOf(operations, direction)` (`site_symmetry_of`)             |
-  | (none)                                                              | `siteSymmetry(key, direction, { setting, axes, uniqueAxis, tolerance })` |
-  | `wyckoffPositionOf(key, x)`, also in `symcrys/plane`                | `wyckoffPosition(key, x)`                                                |
-  | description `order`, kind `'mirror'`, plane kind `'glide'`          | `n`, `'reflection'`, `'glide-reflection'` (ITA Table 2.1.2.1)            |
-  | `pointGroup(key).chiral`, `isChiralOf`                              | `enantiomorphic`, `isEnantiomorphicOf` (ITA § 3.2.2.1.3)                 |
-  | plane `symmetryElements(key).rotations`, entries `{ order, point }` | `rotationPoints`, entries `{ n, point }`                                 |
-  | plane `planeGroup(key).order`                                       | removed: `operations(key).length`                                        |
+  | Up to 0.10                                                          | From 0.11                                                                  |
+  | ------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+  | `siteSymmetry(operations, direction)` (Python `site_symmetry`)      | `siteSymmetryOf(operations, direction)` (`site_symmetry_of`)               |
+  | (none)                                                              | `siteSymmetry(key, direction, { setting, axes, uniqueAxis, tolerance })`   |
+  | `wyckoffPositionOf(key, x)`, also in `symcrys/plane`                | `wyckoffPosition(key, x)`                                                  |
+  | description `order`, kind `'mirror'`, plane kind `'glide'`          | `n`, `'reflection'`, `'glide-reflection'` (ITA 2016 Table 2.1.2.1, p. 145) |
+  | `pointGroup(key).chiral`, `isChiralOf`                              | `enantiomorphic`, `isEnantiomorphicOf` (ITA § 3.2.2.1.3)                   |
+  | plane `symmetryElements(key).rotations`, entries `{ order, point }` | `rotationPoints`, entries `{ n, point }`                                   |
 
   The lines of `symmetryElements` keep `kind: 'mirror' | 'glide'`, the names of the elements. The
-  values are unchanged.
+  values are unchanged. Python follows by its fixed rules: `site_symmetry_of`, `site_symmetry`,
+  `wyckoff_position`, `is_enantiomorphic_of`, the keys `enantiomorphic`, `n`, `rotation_points`.
 
 ### Removed
 
 - **`latticeOperations`** (Python `lattice_operations`), in both entry points (#121 step 6d): its
   matrices are the `matrix` of `operations`, index for index.
+- **`planeGroup(key).order`** in `symcrys/plane` (#137 C2, #121 step 7c): it was the number of
+  `operations` (the multiplicity of the general position), not the order of a group; use
+  `operations(key).length`.
 
 - **The Birss convention** (#110, #121 step 5): symcrys follows ITC only. The option `convention`
   goes from every function (`operations`, `generators`, `symbol`, `describeOperations`,

@@ -165,7 +165,7 @@ def generators(key: str, *, setting: Optional[int] = None) -> list[Operation]:
 
 def describe_operations(key: str, *, setting: Optional[int] = None) -> list[dict[str, Any]]:
     """Each operation of ``operations`` (same key and setting) described geometrically, index for
-    index: what it is, its order and sense, where its symmetry element lies, its glide part. Raises
+    index: what it is, its n and sense, where its symmetry element lies, its glide part. Raises
     SymcrysError for an unknown key or setting.
 
     Parameters

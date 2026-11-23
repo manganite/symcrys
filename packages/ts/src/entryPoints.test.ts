@@ -640,7 +640,9 @@ describe('siteSymmetry of a key (#137 C1)', () => {
       expect(classes.siteSymmetry(key, [1, 1, 0])).toEqual(classes.siteSymmetryOf(classes.operations(key), [1, 1, 0]));
     }
     // The criteria and the tolerance as options.
-    expect(classes.siteSymmetry('32', [0, 0, 1], { axes: 'rhombohedral' }).multiplicity).toBe(2);
+    // A criterion reaches the operations: [100] lies on the twofold axis of unique axis a only.
+    expect(classes.siteSymmetry('2', [1, 0, 0]).multiplicity).toBe(2);
+    expect(classes.siteSymmetry('2', [1, 0, 0], { uniqueAxis: 'a' }).multiplicity).toBe(1);
     expect(classes.siteSymmetry('4mm', [1, 1.00004, 3], { tolerance: 1e-4 }).multiplicity).toBe(4);
     expect(() => classes.siteSymmetry("4'mm'" as never, [0, 0, 1])).toThrow(/magnetic API/);
     expect(() => classes.siteSymmetry('4mm', [0, 0, 0])).toThrow(RangeError);

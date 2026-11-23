@@ -465,9 +465,9 @@ The conventions themselves are in `docs/conventions.md`; here, what was decided 
 - **Names of ITA** (#137 C1, C2, decided by Thomas on 2026-11-22; #121 step 7c): the suffix `…Of`
   means "of a list of operations" and only that: `siteSymmetryOf(operations, direction)` beside
   `siteSymmetry(key, direction, options)`, and `wyckoffPosition(key, x)` (was `wyckoffPositionOf`,
-  also in `symcrys/plane`); ITA's terms: in operation descriptions `n` (was `order`, ITA § 1.2.1)
+  also in `symcrys/plane`); ITA's terms: in operation descriptions `n` (was `order`, ITA 2016 § 1.2.1, p. 12)
   and the kinds `'reflection'`, `'glide-reflection'` (were `'mirror'`, `'glide'`; ITA Table
-  2.1.2.1 names the operations so, and the elements mirror and glide line, which `symmetryElements`
+  2.1.2.1, p. 145, names the operations so, and the elements mirror and glide line, which `symmetryElements`
   keeps), `enantiomorphic` and `isEnantiomorphicOf` (were `chiral`, `isChiralOf`; ITA § 3.2.2.1.3,
   p. 738), in `symcrys/plane` `rotationPoints` (was `rotations`) and no `planeGroup(key).order`.
   Chosen while implementing: a rotation point carries `n` too, as the operation that it is the
