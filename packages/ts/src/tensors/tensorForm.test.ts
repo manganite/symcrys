@@ -170,9 +170,10 @@ describe('a tensor form', () => {
   });
 
   it('is that of the requested setting, the ITC default without one', () => {
-    // Class 2: ITC default unique axis b (setting 2), setting 1 unique axis c (docs/conventions.md, "Settings").
+    // Class 2: ITC default unique axis b (setting 1), setting 2 unique axis c (docs/conventions.md, "Settings").
     expect(tensorForm('2', spec(1)).parameters).toEqual([[1]]);
-    expect(tensorForm('2', spec(1), { setting: 1 }).parameters).toEqual([[2]]);
+    expect(tensorForm('2', spec(1), { setting: 2 }).parameters).toEqual([[2]]);
+    expect(tensorForm('2', spec(1), { setting: '1 1 2' }).parameters).toEqual([[2]]);
     expect(() => tensorForm('2', spec(1), { convention: 'birss' } as never)).toThrow(/option convention was removed/);
   });
 

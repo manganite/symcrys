@@ -17,12 +17,12 @@ export type IntMat3 = readonly [
   readonly [number, number, number],
 ];
 
-/** ITA's selected generators per setting (`key#setting`), in printed order (identity and translations left out). */
+/** ITA's selected generators per setting (`key|full ITC symbol of the setting`), in printed order (identity and translations left out). */
 export const ITA_GENERATORS: Readonly<Record<string, readonly IntMat3[]>> = {
   // 1: P1 (No. 1), p. 113
-  '1#1': [],
+  '1|1': [],
   // -1: P-1 (No. 2), p. 115
-  '-1#1': [
+  '-1|-1': [
     /* (2) -x,-y,-z */ [
       [-1, 0, 0],
       [0, -1, 0],
@@ -30,7 +30,7 @@ export const ITA_GENERATORS: Readonly<Record<string, readonly IntMat3[]>> = {
     ],
   ],
   // 2, unique axis b: P121 (No. 3), p. 117
-  '2#2': [
+  '2|1 2 1': [
     /* (2) -x,y,-z */ [
       [-1, 0, 0],
       [0, 1, 0],
@@ -38,7 +38,7 @@ export const ITA_GENERATORS: Readonly<Record<string, readonly IntMat3[]>> = {
     ],
   ],
   // 2, unique axis c: P112 (No. 3), p. 119
-  '2#1': [
+  '2|1 1 2': [
     /* (2) -x,-y,z */ [
       [-1, 0, 0],
       [0, -1, 0],
@@ -46,7 +46,7 @@ export const ITA_GENERATORS: Readonly<Record<string, readonly IntMat3[]>> = {
     ],
   ],
   // m, unique axis b: P1m1 (No. 6), p. 133
-  'm#2': [
+  'm|1 m 1': [
     /* (2) x,-y,z */ [
       [1, 0, 0],
       [0, -1, 0],
@@ -54,7 +54,7 @@ export const ITA_GENERATORS: Readonly<Record<string, readonly IntMat3[]>> = {
     ],
   ],
   // m, unique axis c: P11m (No. 6), p. 135
-  'm#1': [
+  'm|1 1 m': [
     /* (2) x,y,-z */ [
       [1, 0, 0],
       [0, 1, 0],
@@ -62,7 +62,7 @@ export const ITA_GENERATORS: Readonly<Record<string, readonly IntMat3[]>> = {
     ],
   ],
   // 2/m, unique axis b: P12/m1 (No. 10), p. 161
-  '2/m#2': [
+  '2/m|1 2/m 1': [
     /* (2) -x,y,-z */ [
       [-1, 0, 0],
       [0, 1, 0],
@@ -75,7 +75,7 @@ export const ITA_GENERATORS: Readonly<Record<string, readonly IntMat3[]>> = {
     ],
   ],
   // 2/m, unique axis c: P112/m (No. 10), p. 163
-  '2/m#1': [
+  '2/m|1 1 2/m': [
     /* (2) -x,-y,z */ [
       [-1, 0, 0],
       [0, -1, 0],
@@ -88,7 +88,7 @@ export const ITA_GENERATORS: Readonly<Record<string, readonly IntMat3[]>> = {
     ],
   ],
   // 222: P222 (No. 16), p. 201
-  '222#1': [
+  '222|2 2 2': [
     /* (2) -x,-y,z */ [
       [-1, 0, 0],
       [0, -1, 0],
@@ -101,7 +101,7 @@ export const ITA_GENERATORS: Readonly<Record<string, readonly IntMat3[]>> = {
     ],
   ],
   // mm2: Pmm2 (No. 25), p. 219
-  'mm2#1': [
+  'mm2|m m 2': [
     /* (2) -x,-y,z */ [
       [-1, 0, 0],
       [0, -1, 0],
@@ -114,7 +114,7 @@ export const ITA_GENERATORS: Readonly<Record<string, readonly IntMat3[]>> = {
     ],
   ],
   // mmm: Pmmm (No. 47), p. 263
-  'mmm#1': [
+  'mmm|2/m 2/m 2/m': [
     /* (2) -x,-y,z */ [
       [-1, 0, 0],
       [0, -1, 0],
@@ -132,7 +132,7 @@ export const ITA_GENERATORS: Readonly<Record<string, readonly IntMat3[]>> = {
     ],
   ],
   // 4: P4 (No. 75), p. 332
-  '4#1': [
+  '4|4': [
     /* (2) -x,-y,z */ [
       [-1, 0, 0],
       [0, -1, 0],
@@ -145,7 +145,7 @@ export const ITA_GENERATORS: Readonly<Record<string, readonly IntMat3[]>> = {
     ],
   ],
   // -4: P-4 (No. 81), p. 341
-  '-4#1': [
+  '-4|-4': [
     /* (2) -x,-y,z */ [
       [-1, 0, 0],
       [0, -1, 0],
@@ -158,7 +158,7 @@ export const ITA_GENERATORS: Readonly<Record<string, readonly IntMat3[]>> = {
     ],
   ],
   // 4/m: P4/m (No. 83), p. 345
-  '4/m#1': [
+  '4/m|4/m': [
     /* (2) -x,-y,z */ [
       [-1, 0, 0],
       [0, -1, 0],
@@ -176,7 +176,7 @@ export const ITA_GENERATORS: Readonly<Record<string, readonly IntMat3[]>> = {
     ],
   ],
   // 422: P422 (No. 89), p. 363
-  '422#1': [
+  '422|4 2 2': [
     /* (2) -x,-y,z */ [
       [-1, 0, 0],
       [0, -1, 0],
@@ -194,7 +194,7 @@ export const ITA_GENERATORS: Readonly<Record<string, readonly IntMat3[]>> = {
     ],
   ],
   // 4mm: P4mm (No. 99), p. 383
-  '4mm#1': [
+  '4mm|4 m m': [
     /* (2) -x,-y,z */ [
       [-1, 0, 0],
       [0, -1, 0],
@@ -212,7 +212,7 @@ export const ITA_GENERATORS: Readonly<Record<string, readonly IntMat3[]>> = {
     ],
   ],
   // -42m: P-42m (No. 111), p. 407
-  '-42m#1': [
+  '-42m|-4 2 m': [
     /* (2) -x,-y,z */ [
       [-1, 0, 0],
       [0, -1, 0],
@@ -230,7 +230,7 @@ export const ITA_GENERATORS: Readonly<Record<string, readonly IntMat3[]>> = {
     ],
   ],
   // -4m2: P-4m2 (No. 115), p. 415
-  '-42m#2': [
+  '-42m|-4 m 2': [
     /* (2) -x,-y,z */ [
       [-1, 0, 0],
       [0, -1, 0],
@@ -248,7 +248,7 @@ export const ITA_GENERATORS: Readonly<Record<string, readonly IntMat3[]>> = {
     ],
   ],
   // 4/mmm: P4/mmm (No. 123), p. 431
-  '4/mmm#1': [
+  '4/mmm|4/m 2/m 2/m': [
     /* (2) -x,-y,z */ [
       [-1, 0, 0],
       [0, -1, 0],
@@ -271,7 +271,7 @@ export const ITA_GENERATORS: Readonly<Record<string, readonly IntMat3[]>> = {
     ],
   ],
   // 3: P3 (No. 143), p. 491
-  '3#1': [
+  '3|3': [
     /* (2) -y,x-y,z */ [
       [0, -1, 0],
       [1, -1, 0],
@@ -279,7 +279,7 @@ export const ITA_GENERATORS: Readonly<Record<string, readonly IntMat3[]>> = {
     ],
   ],
   // -3: P-3 (No. 147), p. 499
-  '-3#1': [
+  '-3|-3': [
     /* (2) -y,x-y,z */ [
       [0, -1, 0],
       [1, -1, 0],
@@ -292,7 +292,7 @@ export const ITA_GENERATORS: Readonly<Record<string, readonly IntMat3[]>> = {
     ],
   ],
   // 312: P312 (No. 149), p. 505
-  '32#1': [
+  '32|3 1 2': [
     /* (2) -y,x-y,z */ [
       [0, -1, 0],
       [1, -1, 0],
@@ -305,7 +305,7 @@ export const ITA_GENERATORS: Readonly<Record<string, readonly IntMat3[]>> = {
     ],
   ],
   // 321: P321 (No. 150), p. 507
-  '32#2': [
+  '32|3 2 1': [
     /* (2) -y,x-y,z */ [
       [0, -1, 0],
       [1, -1, 0],
@@ -318,7 +318,7 @@ export const ITA_GENERATORS: Readonly<Record<string, readonly IntMat3[]>> = {
     ],
   ],
   // 3m1: P3m1 (No. 156), p. 521
-  '3m#2': [
+  '3m|3 m 1': [
     /* (2) -y,x-y,z */ [
       [0, -1, 0],
       [1, -1, 0],
@@ -331,7 +331,7 @@ export const ITA_GENERATORS: Readonly<Record<string, readonly IntMat3[]>> = {
     ],
   ],
   // 31m: P31m (No. 157), p. 523
-  '3m#1': [
+  '3m|3 1 m': [
     /* (2) -y,x-y,z */ [
       [0, -1, 0],
       [1, -1, 0],
@@ -344,7 +344,7 @@ export const ITA_GENERATORS: Readonly<Record<string, readonly IntMat3[]>> = {
     ],
   ],
   // -31m: P-31m (No. 162), p. 537
-  '-3m#1': [
+  '-3m|-3 1 2/m': [
     /* (2) -y,x-y,z */ [
       [0, -1, 0],
       [1, -1, 0],
@@ -362,7 +362,7 @@ export const ITA_GENERATORS: Readonly<Record<string, readonly IntMat3[]>> = {
     ],
   ],
   // -3m1: P-3m1 (No. 164), p. 541
-  '-3m#2': [
+  '-3m|-3 2/m 1': [
     /* (2) -y,x-y,z */ [
       [0, -1, 0],
       [1, -1, 0],
@@ -380,7 +380,7 @@ export const ITA_GENERATORS: Readonly<Record<string, readonly IntMat3[]>> = {
     ],
   ],
   // 6: P6 (No. 168), p. 553
-  '6#1': [
+  '6|6': [
     /* (2) -y,x-y,z */ [
       [0, -1, 0],
       [1, -1, 0],
@@ -393,7 +393,7 @@ export const ITA_GENERATORS: Readonly<Record<string, readonly IntMat3[]>> = {
     ],
   ],
   // -6: P-6 (No. 174), p. 561
-  '-6#1': [
+  '-6|-6': [
     /* (2) -y,x-y,z */ [
       [0, -1, 0],
       [1, -1, 0],
@@ -406,7 +406,7 @@ export const ITA_GENERATORS: Readonly<Record<string, readonly IntMat3[]>> = {
     ],
   ],
   // 6/m: P6/m (No. 175), p. 563
-  '6/m#1': [
+  '6/m|6/m': [
     /* (2) -y,x-y,z */ [
       [0, -1, 0],
       [1, -1, 0],
@@ -424,7 +424,7 @@ export const ITA_GENERATORS: Readonly<Record<string, readonly IntMat3[]>> = {
     ],
   ],
   // 622: P622 (No. 177), p. 567
-  '622#1': [
+  '622|6 2 2': [
     /* (2) -y,x-y,z */ [
       [0, -1, 0],
       [1, -1, 0],
@@ -442,7 +442,7 @@ export const ITA_GENERATORS: Readonly<Record<string, readonly IntMat3[]>> = {
     ],
   ],
   // 6mm: P6mm (No. 183), p. 579
-  '6mm#1': [
+  '6mm|6 m m': [
     /* (2) -y,x-y,z */ [
       [0, -1, 0],
       [1, -1, 0],
@@ -460,7 +460,7 @@ export const ITA_GENERATORS: Readonly<Record<string, readonly IntMat3[]>> = {
     ],
   ],
   // -6m2: P-6m2 (No. 187), p. 587
-  '-6m2#2': [
+  '-6m2|-6 m 2': [
     /* (2) -y,x-y,z */ [
       [0, -1, 0],
       [1, -1, 0],
@@ -478,7 +478,7 @@ export const ITA_GENERATORS: Readonly<Record<string, readonly IntMat3[]>> = {
     ],
   ],
   // -62m: P-62m (No. 189), p. 591
-  '-6m2#1': [
+  '-6m2|-6 2 m': [
     /* (2) -y,x-y,z */ [
       [0, -1, 0],
       [1, -1, 0],
@@ -496,7 +496,7 @@ export const ITA_GENERATORS: Readonly<Record<string, readonly IntMat3[]>> = {
     ],
   ],
   // 6/mmm: P6/mmm (No. 191), p. 595
-  '6/mmm#1': [
+  '6/mmm|6/m 2/m 2/m': [
     /* (2) -y,x-y,z */ [
       [0, -1, 0],
       [1, -1, 0],
@@ -519,7 +519,7 @@ export const ITA_GENERATORS: Readonly<Record<string, readonly IntMat3[]>> = {
     ],
   ],
   // 23: P23 (No. 195), p. 603
-  '23#1': [
+  '23|2 3': [
     /* (2) -x,-y,z */ [
       [-1, 0, 0],
       [0, -1, 0],
@@ -537,7 +537,7 @@ export const ITA_GENERATORS: Readonly<Record<string, readonly IntMat3[]>> = {
     ],
   ],
   // m-3: Pm-3 (No. 200), p. 615
-  'm-3#1': [
+  'm-3|2/m -3': [
     /* (2) -x,-y,z */ [
       [-1, 0, 0],
       [0, -1, 0],
@@ -560,7 +560,7 @@ export const ITA_GENERATORS: Readonly<Record<string, readonly IntMat3[]>> = {
     ],
   ],
   // 432: P432 (No. 207), p. 635
-  '432#1': [
+  '432|4 3 2': [
     /* (2) -x,-y,z */ [
       [-1, 0, 0],
       [0, -1, 0],
@@ -583,7 +583,7 @@ export const ITA_GENERATORS: Readonly<Record<string, readonly IntMat3[]>> = {
     ],
   ],
   // -43m: P-43m (No. 215), p. 657
-  '-43m#1': [
+  '-43m|-4 3 m': [
     /* (2) -x,-y,z */ [
       [-1, 0, 0],
       [0, -1, 0],
@@ -606,7 +606,7 @@ export const ITA_GENERATORS: Readonly<Record<string, readonly IntMat3[]>> = {
     ],
   ],
   // m-3m: Pm-3m (No. 221), p. 673
-  'm-3m#1': [
+  'm-3m|4/m -3 2/m': [
     /* (2) -x,-y,z */ [
       [-1, 0, 0],
       [0, -1, 0],

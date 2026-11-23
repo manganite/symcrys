@@ -58,7 +58,7 @@ symcrys.point_group("32")
 ```
 
 ```{code-cell} ipython3
-symcrys.symbol("32"), symcrys.symbol("32", setting=1), symcrys.symbol("32", form="schoenflies")
+symcrys.symbol("32"), symcrys.symbol("32", setting=2), symcrys.symbol("32", form="schoenflies")
 ```
 
 ```{code-cell} ipython3

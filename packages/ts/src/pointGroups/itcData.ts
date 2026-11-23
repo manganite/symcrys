@@ -11,8 +11,8 @@
  * `m2m` come from `mm2` by the settings cab and bca of ITA 2016 Table 1.5.4.4 (§ 1.5.4.3, p. 96:
  * cab turns Pmm2 into P2mm); their operations keep the order of the printed setting.
  *
- * Internal; read by the ITC path of the classes in pointGroups.ts and orbits.ts (#122). The setting indices are those of the current
- * API, until the settings are renumbered (#137 A4).
+ * Internal; read by pointGroups.ts and orbits.ts (#122). The settings are numbered by the rule of
+ * #137 A4 (`ItcSetting.index`).
  */
 
 import { crystalFamily, latticeBasis, type CrystalSystem } from '../lattice.js';
@@ -22,14 +22,20 @@ import { ITA_GENERATORS, type IntMat3 } from './itaOrder.js';
 
 /** One ITC setting of a class. */
 export interface ItcSetting {
-  /** The index in the current API (#137 A4 renumbers). */
+  /**
+   * 1-based, by the rule of #137 A4: the ITC default first; then monoclinic unique axis c (b is the
+   * default); orthorhombic the orientations in the column order of ITA 2016 Table 1.5.4.4; the other
+   * orientation of `-42m`, `-6m2` and the trigonal classes.
+   */
   readonly index: number;
   /** The ITC short symbol. */
   readonly short: string;
   /** The ITC full symbol, positions separated by single spaces. */
   readonly full: string;
-  /** Monoclinic: the unique axis; `mm2`: the axis of the twofold rotation. */
+  /** Monoclinic only: the unique axis. */
   readonly uniqueAxis?: 'a' | 'b' | 'c';
+  /** Trigonal only: the axes of the conventional basis. */
+  readonly axes?: 'hexagonal' | 'rhombohedral';
   /** The ITC default setting of the class. */
   readonly isDefault: boolean;
   /**
@@ -77,37 +83,42 @@ const single = (
   key,
   crystalSystem,
   schoenflies,
-  settings: [one(1, key, full)],
+  settings: [crystalSystem === 'trigonal' ? { ...one(1, key, full), axes: 'hexagonal' } : one(1, key, full)],
 });
 
-/** A monoclinic class: setting 1 unique axis c, setting 2 unique axis b (the ITC default, ITA § 2.1.3.15). */
+/** A monoclinic class: setting 1 unique axis b (the ITC default, ITA § 2.1.3.15), setting 2 unique axis c. */
 const monoclinic = (key: PointGroupKey, schoenflies: string, full: (inner: string) => string): ItcClass => ({
   key,
   crystalSystem: 'monoclinic',
   schoenflies,
   settings: [
-    { index: 1, short: key, full: full('c'), uniqueAxis: 'c', isDefault: false },
-    { index: 2, short: key, full: full('b'), uniqueAxis: 'b', isDefault: true },
+    { index: 1, short: key, full: full('b'), uniqueAxis: 'b', isDefault: true },
+    { index: 2, short: key, full: full('c'), uniqueAxis: 'c', isDefault: false },
   ],
 });
 
-/** A class with two orientations, setting `defaultIndex` the ITC default (docs/conventions.md, "Settings"). */
+/**
+ * A class with two orientations: the ITC default first (docs/conventions.md, "Settings"), then the
+ * other one; with hexagonal axes for a trigonal class.
+ */
 const pair = (
   key: PointGroupKey,
   crystalSystem: CrystalSystem,
   schoenflies: string,
-  first: [string, string],
-  second: [string, string],
-  defaultIndex: 1 | 2,
-): ItcClass => ({
-  key,
-  crystalSystem,
-  schoenflies,
-  settings: [
-    { index: 1, short: first[0], full: first[1], isDefault: defaultIndex === 1 },
-    { index: 2, short: second[0], full: second[1], isDefault: defaultIndex === 2 },
-  ],
-});
+  standard: [string, string],
+  other: [string, string],
+): ItcClass => {
+  const axes = crystalSystem === 'trigonal' ? ({ axes: 'hexagonal' } as const) : {};
+  return {
+    key,
+    crystalSystem,
+    schoenflies,
+    settings: [
+      { index: 1, short: standard[0], full: standard[1], ...axes, isDefault: true },
+      { index: 2, short: other[0], full: other[1], ...axes, isDefault: false },
+    ],
+  };
+};
 
 /** The 32 classes in the order of `POINT_GROUP_KEYS`, with the ITC symbols of ITA Table 3.2.3.2 (headlines). */
 export const ITC_CLASSES: readonly ItcClass[] = [
@@ -122,12 +133,11 @@ export const ITC_CLASSES: readonly ItcClass[] = [
     crystalSystem: 'orthorhombic',
     schoenflies: 'C2v',
     settings: [
-      { index: 1, short: 'mm2', full: 'm m 2', uniqueAxis: 'c', isDefault: true },
+      { index: 1, short: 'mm2', full: 'm m 2', isDefault: true },
       {
         index: 2,
         short: '2mm',
         full: '2 m m',
-        uniqueAxis: 'a',
         isDefault: false,
         from: { index: 1, basis: SETTING_CAB },
       },
@@ -135,7 +145,6 @@ export const ITC_CLASSES: readonly ItcClass[] = [
         index: 3,
         short: 'm2m',
         full: 'm 2 m',
-        uniqueAxis: 'b',
         isDefault: false,
         from: { index: 1, basis: SETTING_BCA },
       },
@@ -147,19 +156,19 @@ export const ITC_CLASSES: readonly ItcClass[] = [
   single('4/m', 'tetragonal', 'C4h'),
   single('422', 'tetragonal', 'D4', '4 2 2'),
   single('4mm', 'tetragonal', 'C4v', '4 m m'),
-  pair('-42m', 'tetragonal', 'D2d', ['-42m', '-4 2 m'], ['-4m2', '-4 m 2'], 1),
+  pair('-42m', 'tetragonal', 'D2d', ['-42m', '-4 2 m'], ['-4m2', '-4 m 2']),
   single('4/mmm', 'tetragonal', 'D4h', '4/m 2/m 2/m'),
   single('3', 'trigonal', 'C3'),
   single('-3', 'trigonal', 'C3i'),
-  pair('32', 'trigonal', 'D3', ['312', '3 1 2'], ['321', '3 2 1'], 2),
-  pair('3m', 'trigonal', 'C3v', ['31m', '3 1 m'], ['3m1', '3 m 1'], 2),
-  pair('-3m', 'trigonal', 'D3d', ['-31m', '-3 1 2/m'], ['-3m1', '-3 2/m 1'], 2),
+  pair('32', 'trigonal', 'D3', ['321', '3 2 1'], ['312', '3 1 2']),
+  pair('3m', 'trigonal', 'C3v', ['3m1', '3 m 1'], ['31m', '3 1 m']),
+  pair('-3m', 'trigonal', 'D3d', ['-3m1', '-3 2/m 1'], ['-31m', '-3 1 2/m']),
   single('6', 'hexagonal', 'C6'),
   single('-6', 'hexagonal', 'C3h'),
   single('6/m', 'hexagonal', 'C6h'),
   single('622', 'hexagonal', 'D6', '6 2 2'),
   single('6mm', 'hexagonal', 'C6v', '6 m m'),
-  pair('-6m2', 'hexagonal', 'D3h', ['-62m', '-6 2 m'], ['-6m2', '-6 m 2'], 2),
+  pair('-6m2', 'hexagonal', 'D3h', ['-6m2', '-6 m 2'], ['-62m', '-6 2 m']),
   single('6/mmm', 'hexagonal', 'D6h', '6/m 2/m 2/m'),
   single('23', 'cubic', 'T', '2 3'),
   single('m-3', 'cubic', 'Th', '2/m -3'),
@@ -220,7 +229,7 @@ const transform = (w: IntMat3, p: IntMat3): IntMat3 => imul(imul(iinverse(p), w)
 export function itcLatticeGenerators(key: PointGroupKey, index: number): readonly IntMat3[] {
   const s = itcSetting(key, index);
   if (s.from) return itcLatticeGenerators(key, s.from.index).map((w) => transform(w, s.from!.basis));
-  const gens = ITA_GENERATORS[`${key}#${index}`];
+  const gens = ITA_GENERATORS[`${key}|${s.full}`];
   if (!gens) throw new Error(`No ITA generators for ${key} setting ${index}`);
   return gens;
 }

@@ -45,11 +45,11 @@ form["parameters"]
 ```
 
 The components depend on the frame, so on the **setting**: the default setting of `3m` is `3m1`,
-setting 1 is `31m`, turned by 30° about z. The free components differ:
+setting 2 is `31m`, turned by 30° about z. The free components differ:
 
 ```{code-cell} ipython3
 SHG = {"rank": 3, "parity": "polar", "intrinsic": "jk"}
-[symcrys.tensor_form("3m", SHG, setting=s)["parameters"][0] for s in (2, 1)]
+[symcrys.tensor_form("3m", SHG, setting=s)["parameters"][0] for s in ("3m1", "31m")]
 ```
 
 Settings and frames: [Conventions, "Settings"](conventions.md#settings) and

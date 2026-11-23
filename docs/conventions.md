@@ -167,29 +167,38 @@ generators, exact integer matrices in the conventional basis (`pointGroups/itcDa
 ITA does not print is a printed one in another basis. A black-and-white group is given by its ITC
 symbol in each setting, from which its operations follow (`pointGroups/itcMagneticData.ts`).
 
+**Numbering** (#137 A4): the ITC default is setting 1; then, for the monoclinic classes, unique
+axis c; for the orthorhombic groups, the further orientations in the order of the columns of ITA
+(2016) Table 1.5.4.4 (abc, ba-c, cab, -cba, bca, a-cb), each orientation once; otherwise the other
+orientation. A setting is chosen by its index or by its ITC symbol, short or full (`{ setting: '312' }`,
+`{ setting: '1 1 2' }`); a symbol that several settings share (`'2'` for unique axis b and c) is an
+error that names them. The record of a setting (`settings(key)`) has `index`, `symbol`,
+`fullSymbol`, `isDefault`, and `uniqueAxis` for a monoclinic setting, `axes` (`'hexagonal'`) for a
+trigonal one.
+
 Classes with more than one setting (short symbol, full symbol in parentheses):
 
-| Class  | Setting | Axis | ITC                             |
-| ------ | ------- | ---- | ------------------------------- |
-| `2`    | 1       | c    | `2` (`1 1 2`)                   |
-|        | 2       | b    | `2` (`1 2 1`) **default**       |
-| `m`    | 1       | c    | `m` (`1 1 m`)                   |
-|        | 2       | b    | `m` (`1 m 1`) **default**       |
-| `2/m`  | 1       | c    | `2/m` (`1 1 2/m`)               |
-|        | 2       | b    | `2/m` (`1 2/m 1`) **default**   |
-| `mm2`  | 1       | c    | `mm2` (`m m 2`) **default**     |
-|        | 2       | a    | `2mm` (`2 m m`)                 |
-|        | 3       | b    | `m2m` (`m 2 m`)                 |
-| `-42m` | 1       |      | `-42m` (`-4 2 m`) **default**   |
-|        | 2       |      | `-4m2` (`-4 m 2`)               |
-| `32`   | 1       |      | `312` (`3 1 2`)                 |
-|        | 2       |      | `321` (`3 2 1`) **default**     |
-| `3m`   | 1       |      | `31m` (`3 1 m`)                 |
-|        | 2       |      | `3m1` (`3 m 1`) **default**     |
-| `-3m`  | 1       |      | `-31m` (`-3 1 2/m`)             |
-|        | 2       |      | `-3m1` (`-3 2/m 1`) **default** |
-| `-6m2` | 1       |      | `-62m` (`-6 2 m`)               |
-|        | 2       |      | `-6m2` (`-6 m 2`) **default**   |
+| Class  | Setting | ITC                                           |
+| ------ | ------- | --------------------------------------------- |
+| `2`    | 1       | `2` (`1 2 1`), unique axis b, **default**     |
+|        | 2       | `2` (`1 1 2`), unique axis c                  |
+| `m`    | 1       | `m` (`1 m 1`), unique axis b, **default**     |
+|        | 2       | `m` (`1 1 m`), unique axis c                  |
+| `2/m`  | 1       | `2/m` (`1 2/m 1`), unique axis b, **default** |
+|        | 2       | `2/m` (`1 1 2/m`), unique axis c              |
+| `mm2`  | 1       | `mm2` (`m m 2`) **default**                   |
+|        | 2       | `2mm` (`2 m m`)                               |
+|        | 3       | `m2m` (`m 2 m`)                               |
+| `-42m` | 1       | `-42m` (`-4 2 m`) **default**                 |
+|        | 2       | `-4m2` (`-4 m 2`)                             |
+| `32`   | 1       | `321` (`3 2 1`) **default**                   |
+|        | 2       | `312` (`3 1 2`)                               |
+| `3m`   | 1       | `3m1` (`3 m 1`) **default**                   |
+|        | 2       | `31m` (`3 1 m`)                               |
+| `-3m`  | 1       | `-3m1` (`-3 2/m 1`) **default**               |
+|        | 2       | `-31m` (`-3 1 2/m`)                           |
+| `-6m2` | 1       | `-6m2` (`-6 m 2`) **default**                 |
+|        | 2       | `-62m` (`-6 2 m`)                             |
 
 ITA describes the monoclinic classes with unique axis b and c, `-42m` and `-6m2` in two
 orientations, and `32`, `3m`, `-3m` with hexagonal axes in two orientations, without naming one
@@ -204,25 +213,24 @@ The ITC defaults of symcrys:
 - `-6m2`: ITC Vol. D Table 1.5.2.3, and the first entry in ITA (#17);
 - `-42m`, `mm2`: the first or only entry in ITA.
 
-Frames relative to setting 1: monoclinic setting 2 maps z to y (rotation by 180° about [011]);
-orthorhombic settings 2 and 3 move the twofold axis from z to x and to y (cyclic permutations of
-the axes); `-42m` setting 2 is rotated by 45° about z, the trigonal and hexagonal pairs by 30°.
-
-"Axis" is the unique axis of a monoclinic setting and the axis of the twofold rotation of `mm2`.
+Frames: the monoclinic settings have the unique axis along y and z; `2mm` and `m2m` are `mm2` with
+the twofold axis along x and y (the settings cab and bca of ITA 2016 Table 1.5.4.4); the second
+setting of `-42m` is rotated by 45° about z, those of the trigonal and hexagonal classes by 30°.
 The classes `222` and `mmm` have one setting only: their three axes are equivalent.
 
 ### Settings of the magnetic groups
 
-A **grey group** has the settings of its class, with the same indices, frames and defaults.
+A **grey group** has the settings of its class, with the same indices, frames and defaults; ITC
+prints grey groups in their standard orientation only, but a grey group is its class with time
+reversal (CLAUDE.md, "Pure ITC").
 
-A **black-and-white group** has the settings it has had since symcrys took them over from birss-app
-(#17), and `2'm'm` three more; which of them stay, because ITC prints them, is decided in step 6 of
-#121:
+A **black-and-white group** has the orientations ITC prints (`references/itc/orientations.md`),
+numbered as above:
 
-- monoclinic (5 groups): setting 1 with unique axis c, setting 2 with unique axis b, as the classes;
-- orthorhombic `2'2'2`, `m'm'2`, `mm'm'`, `mmm'`: three settings, the cyclic permutations of the axes
-  as for `mm2` (`uniqueAxis` c, a, b: the axis that is c in setting 1). The classes `222` and `mmm`
-  need one setting, but time reversal singles out one axis. `m'm'm'` has one setting;
+- monoclinic (5 groups): unique axis b, then c, as the classes;
+- orthorhombic `2'2'2`, `m'm'2`, `mm'm'`, `mmm'`: three settings, the distinct orientations of the
+  default in the column order of Table 1.5.4.4. The classes `222` and `mmm` need one setting, but
+  time reversal singles out one axis. `m'm'm'` has one setting;
 - orthorhombic `2'm'm`: six settings (below);
 - tetragonal `4'22'`, `4'mm'`, `-4'2m'`, `-4'm2'`, `-42'm'`, `4'/mmm'`, `4'/m'm'm`: two settings 45°
   apart about z. For `422`, `4mm` and `4/mmm` the two frames hold the same operations; with time
@@ -231,40 +239,33 @@ A **black-and-white group** has the settings it has had since symcrys took them 
   `-6m'2'`, `6'/m'mm'`, `6'/mmm'`: two settings 30° apart about z;
 - all other groups: one setting.
 
-**The six settings of `2'm'm`.** An orthorhombic group has a setting for every distinct orientation
-of its axes. For all but one this is birss-app's scheme, which of x, y, z carries the unique
-element (at most three). `2'm'm` (C2v(Cs)) is the one orthorhombic group whose three elements all
-differ, so exchanging the other two axes gives a further orientation: six in all, and print uses
-every one of them. Settings 1 to 3 are birss-app's, with their indices; 4 to 6 exchange the other
-two axes at the same unique axis (maintainer, 2026-11-20). `uniqueAxis` is the normal of the mirror
-plane without time reversal, the direction a spontaneous magnetization may have; two settings share
-each axis, so for this group it does not identify a setting: the symbol or the index does.
+**The six settings of `2'm'm`.** `2'm'm` (C2v(Cs)) is the one orthorhombic group whose three
+elements all differ, so every permutation of the axes gives a further orientation: six in all, and
+print uses every one of them. "Mirror" is the normal of the mirror plane without time reversal, the
+direction a spontaneous magnetization may have.
 
-| Setting | Symbol  | Axis | Operations besides 1 | Symbol printed in                                                                                              |
-| ------- | ------- | ---- | -------------------- | -------------------------------------------------------------------------------------------------------------- |
-| 1       | `2'm'm` | c    | 2′_x, m′_y, m_z      | Birss Table 6; ITC Vol. D Tables 1.5.2.3 (p. 111), 1.5.7.1 (in brackets, p. 135), list on p. 140 (in brackets) |
-| 2       | `m2'm'` | a    | m_x, 2′_y, m′_z      | ITC Vol. D Table 1.5.8.1 (in brackets, p. 139), list on p. 136 (in brackets)                                   |
-| 3       | `m'm2'` | b    | m′_x, m_y, 2′_z      | ITC Vol. D Table 1.5.2.4 (p. 113), lists on pp. 136 and 140                                                    |
-| 4       | `m'2'm` | c    | m′_x, 2′_y, m_z      | ITC Vol. D Table 1.5.7.1 (p. 135), list on p. 140 (in brackets)                                                |
-| 5       | `mm'2'` | a    | m_x, m′_y, 2′_z      | ITC Vol. D, lists on pp. 136 and 140; Paufler (1986), p. 62 and Table A 6, no. 15, p. 316                      |
-| 6       | `2'mm'` | b    | 2′_x, m_y, m′_z      | ITC Vol. D Tables 1.5.8.1 (p. 139) and 1.2.6.12 (p. 66), list on p. 136                                        |
+| Setting | Symbol  | Mirror | Operations besides 1 | Symbol printed in                                                                                              |
+| ------- | ------- | ------ | -------------------- | -------------------------------------------------------------------------------------------------------------- |
+| 1       | `2'm'm` | z      | 2′_x, m′_y, m_z      | Birss Table 6; ITC Vol. D Tables 1.5.2.3 (p. 111), 1.5.7.1 (in brackets, p. 135), list on p. 140 (in brackets) |
+| 2       | `m'2'm` | z      | m′_x, 2′_y, m_z      | ITC Vol. D Table 1.5.7.1 (p. 135), list on p. 140 (in brackets)                                                |
+| 3       | `m2'm'` | x      | m_x, 2′_y, m′_z      | ITC Vol. D Table 1.5.8.1 (in brackets, p. 139), list on p. 136 (in brackets)                                   |
+| 4       | `mm'2'` | x      | m_x, m′_y, 2′_z      | ITC Vol. D, lists on pp. 136 and 140; Paufler (1986), p. 62 and Table A 6, no. 15, p. 316                      |
+| 5       | `m'm2'` | y      | m′_x, m_y, 2′_z      | ITC Vol. D Table 1.5.2.4 (p. 113), lists on pp. 136 and 140                                                    |
+| 6       | `2'mm'` | y      | 2′_x, m_y, m′_z      | ITC Vol. D Tables 1.5.8.1 (p. 139) and 1.2.6.12 (p. 66), list on p. 136                                        |
 
 Birss (Table 6) and Paufler (Table A 6) print the operations with the symbol; for the other rows
 the operations are those the symbol names, each position read along x, y, z.
 
-Setting 1 is the default.
-
 A setting of a black-and-white group is a frame of its crystal class, but not always the one with
-the same index: setting 1 of `-6'2m'` (twofold axes along y) is the frame of setting 2 of `-6m2`.
-The setting of the class is the one whose symbol is the group's without primes.
+the same index: setting 1 of `-6'2m'` (twofold axes along a, x) is the frame of setting 2 of `-6m2`
+(`-62m`). The setting of the class is the one whose symbol is the group's without primes.
 
-**Defaults.** The frame in which the key, read along ITA's symmetry
-directions (Table 2.1.3.1), describes the group. For the triclinic to tetragonal systems this is
-the frame of the operators printed in ITC Vol. D Table 1.5.2.3 (monoclinic `2'_y`; `mm'm'` with
-`2_x`, `2'_y`, `2'_z`; tetragonal with their x, y and diagonal axes); for the trigonal and hexagonal
-groups, whose lateral operators the table prints without axes (`3(2'_⊥)`), it follows from the
-symbol alone. So the ITC default is setting 2 for the monoclinic groups, for `mm'm'`, and for the
-trigonal and hexagonal groups with two settings except `6'/mmm'`, and setting 1 otherwise.
+**Defaults.** The frame in which the key, read along ITA's symmetry directions (Table 2.1.3.1),
+describes the group. For the triclinic to tetragonal systems this is the frame of the operators
+printed in ITC Vol. D Table 1.5.2.3 (monoclinic `2'_y`; `mm'm'` with `2_x`, `2'_y`, `2'_z`; tetragonal
+with their x, y and diagonal axes); for the trigonal and hexagonal groups, whose lateral operators
+the table prints without axes (`3(2'_⊥)`), it follows from the symbol alone. The default is
+setting 1.
 
 ## Birss as a second print check
 
@@ -716,7 +717,7 @@ Relation strings (`\chi_{xxx} = -\chi_{xyy}`), Voigt matrices, Nye diagrams and 
 presentation and stay in the applications; they follow from these numbers.
 
 **Settings.** A tensor form is Cartesian, so it depends on the setting (above, "Settings"): for `2`
-the polar vector lies along y in the default setting (unique axis b) and along z in setting 1.
+the polar vector lies along y in the default setting (unique axis b) and along z in setting 2 (unique axis c).
 
 **Time reversal** (magnetic API). An operation with time reversal changes the sign of a `'c'`-tensor.
 The 32 white groups have none, so their `'c'`-forms equal their `'i'`-forms. A grey group contains time reversal

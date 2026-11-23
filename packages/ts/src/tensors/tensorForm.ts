@@ -12,7 +12,12 @@
 
 import { det, type Mat3 } from '../linalg.js';
 import { checkOrthogonal, checkTimeReversal, closeGroup, type Operation } from '../operations.js';
-import { operations, settings, type MagneticPointGroupKey, type SettingOptions } from '../pointGroups/pointGroups.js';
+import {
+  operations,
+  settingIndexOf,
+  type MagneticPointGroupKey,
+  type SettingOptions,
+} from '../pointGroups/pointGroups.js';
 import { specOf, type TensorPropertyName } from './propertyTable.js';
 import { EPSILON, SNAP_EPSILON } from '../tolerances.js';
 import { rowEchelonWithPivots } from './rowEchelon.js';
@@ -231,7 +236,7 @@ export function tensorForm(
   const resolved = specOf(spec);
   const perms = checkSpec(resolved);
   const ops = operations(key, options); // checks key and setting
-  const index = options?.setting ?? settings(key).find((s) => s.isDefault)!.index;
+  const index = settingIndexOf(key, options);
   const cacheKey = `${key}#${index}#${specKey(resolved)}`;
   let form = formCache.get(cacheKey);
   if (!form) {

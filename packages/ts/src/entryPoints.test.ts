@@ -94,8 +94,8 @@ describe('keys', () => {
         }
       }
     }
-    // D3h: the symbol of setting 1 (docs/conventions.md, "Keys").
-    expect(classes.findPointGroup('-62m')).toEqual({ key: '-6m2', setting: 1 });
+    // D3h: the symbol of setting 2 (docs/conventions.md, "Keys").
+    expect(classes.findPointGroup('-62m')).toEqual({ key: '-6m2', setting: 2 });
     // The convention argument, removed in 0.11.0, is refused in both entry points.
     for (const api of [classes, magnetic]) {
       expect(() => (api.settings as (...args: unknown[]) => unknown)('32', 'birss')).toThrow(RangeError);
@@ -522,7 +522,7 @@ describe('a time-even question has one answer: class, white group and grey group
         );
       }
     }
-    expect(magnetic.pointGroupOf(magnetic.operations("321'"))).toEqual({ key: "321'", setting: 2 });
+    expect(magnetic.pointGroupOf(magnetic.operations("321'"))).toEqual({ key: "321'", setting: 1 });
   });
 
   it('lattice operations and orbits agree; the magnetic ones carry time reversal', () => {

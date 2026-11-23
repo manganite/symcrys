@@ -75,21 +75,22 @@ export interface Setting {
   readonly symbol: string;
   /** Full symbol, symmetry directions separated by single spaces. */
   readonly fullSymbol: string;
-  /**
-   * Monoclinic: the unique axis. Orthorhombic `mm2`: the axis of the twofold rotation. In the
-   * magnetic API also: orthorhombic groups with three settings, the axis that is c in setting 1;
-   * `2'm'm`, with six settings, two for each axis, the normal of the mirror plane without time
-   * reversal (there the axis does not identify a setting).
-   */
+  /** Monoclinic settings only: the unique axis. */
   readonly uniqueAxis?: 'a' | 'b' | 'c';
+  /** Trigonal settings only: the axes of the conventional basis, `'hexagonal'` or `'rhombohedral'`. */
+  readonly axes?: 'hexagonal' | 'rhombohedral';
   /** True for the ITC default setting. */
   readonly isDefault: boolean;
 }
 
 /** Which setting a function answers in. */
 export interface SettingOptions {
-  /** 1-based setting index; default: the ITC default setting. */
-  readonly setting?: number;
+  /**
+   * The setting: its 1-based index, or its ITC symbol, short or full (spaces ignored: `'312'`,
+   * `'3 1 2'`, `'1 1 2'`). A symbol that several settings share (`'2'` for unique axis b and c) is
+   * an error that names them. Default: the ITC default setting.
+   */
+  readonly setting?: number | string;
 }
 
 /** Setting and form of a symbol. */
@@ -209,15 +210,43 @@ export function rejectConventionArgument(argumentCount: number): void {
   }
 }
 
+/** The setting a symbol names: the one whose short or full symbol it is, spaces ignored. */
+function settingOfSymbol(d: GroupData, text: string): number {
+  const target = compact(text);
+  const all = Array.from({ length: d.settingCount }, (_, i) => i + 1);
+  const named = all.filter((i) => {
+    const s = settingSymbols(d, i);
+    return compact(s.short) === target || compact(s.full) === target;
+  });
+  const list = (indices: number[]) =>
+    indices.map((i) => `${i}: ${settingSymbols(d, i).short} (${settingSymbols(d, i).full})`).join(', ');
+  if (named.length === 1) return named[0]!;
+  if (named.length > 1) {
+    throw new RangeError(
+      `Point group ${d.key}: the symbol ${JSON.stringify(text)} names ${named.length} settings; give the full symbol or the index (${list(named)})`,
+    );
+  }
+  throw new RangeError(`Point group ${d.key} has no setting ${JSON.stringify(text)} (settings ${list(all)})`);
+}
+
 /** The requested setting index, checked; the ITC default if none is given. */
 function settingIndex(d: GroupData, options?: SettingOptions): number {
   rejectConvention(options);
-  const index = options?.setting ?? d.itcDefault;
+  const requested = options?.setting;
+  const index = typeof requested === 'string' ? settingOfSymbol(d, requested) : (requested ?? d.itcDefault);
   const count = d.settingCount;
   if (!Number.isInteger(index) || index < 1 || index > count) {
     throw new RangeError(`Point group ${d.key} has no setting ${String(index)} (settings 1 to ${count})`);
   }
   return index;
+}
+
+/**
+ * The index of the requested setting (an index or a symbol; the ITC default if none), checked.
+ * Internal: for the modules that cache by setting.
+ */
+export function settingIndexOf(key: MagneticPointGroupKey, options?: SettingOptions): number {
+  return settingIndex(data(key), options);
 }
 
 function freezeOperation(op: Operation): Operation {
@@ -427,15 +456,16 @@ export function settings(key: MagneticPointGroupKey): readonly Setting[] {
   const d = data(key);
   return Array.from({ length: d.settingCount }, (_, i) => {
     const symbols = settingSymbols(d, i + 1);
-    const uniqueAxis =
+    const data =
       d.type === 'III'
-        ? itcBlackWhiteSetting(d.key as BlackWhitePointGroupKey, i + 1).uniqueAxis
-        : itcSetting(d.crystalClass.key as PointGroupKey, i + 1).uniqueAxis;
+        ? itcBlackWhiteSetting(d.key as BlackWhitePointGroupKey, i + 1)
+        : itcSetting(d.crystalClass.key as PointGroupKey, i + 1);
     return Object.freeze({
       index: i + 1,
       symbol: symbols.short,
       fullSymbol: symbols.full,
-      ...(uniqueAxis ? { uniqueAxis } : {}),
+      ...(data.uniqueAxis ? { uniqueAxis: data.uniqueAxis } : {}),
+      ...(data.axes ? { axes: data.axes } : {}),
       isDefault: i + 1 === d.itcDefault,
     });
   });

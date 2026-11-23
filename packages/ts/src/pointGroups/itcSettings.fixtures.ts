@@ -26,7 +26,7 @@
  *   twofold axis parallel to Ox₁; group 3m: mirror perpendicular to Ox₁), as recorded on #6;
  * - -3m1: a consistency choice, not a print statement: the Laue class of 321 and 3m1, in the same
  *   frame. ITC Vol. D Table 1.5.2.3 prints its full symbol -3 2/m 1 for D3d;
- * - -6m2: ITC Vol. D Table 1.5.2.3, the key decision on #13 and birss-app (decision on #17); ITA
+ * - -6m2: ITC Vol. D Table 1.5.2.3 and the key decision on #13 (#17); ITA
  *   lists it first (§ 3.2.1.2.1 (b), p. 721; Table 3.2.3.2, p. 762), its class tables print -62m.
  */
 
@@ -81,9 +81,9 @@ export const ITC_SETTINGS: Record<string, ItcSettingFixture[]> = {
   '2/m': monoclinic('2/m', '1 2/m 1', '1 1 2/m'),
   '222': [printed('222')],
   mm2: [
-    { ...printed('mm2'), uniqueAxis: 'c' },
-    { short: '2mm', full: '2mm', uniqueAxis: 'a', standard: false, shortSource: DERIVED, fullSource: DERIVED },
-    { short: 'm2m', full: 'm2m', uniqueAxis: 'b', standard: false, shortSource: DERIVED, fullSource: DERIVED },
+    printed('mm2'),
+    { short: '2mm', full: '2mm', standard: false, shortSource: DERIVED, fullSource: DERIVED },
+    { short: 'm2m', full: 'm2m', standard: false, shortSource: DERIVED, fullSource: DERIVED },
   ],
   mmm: [printed('mmm', '2/m 2/m 2/m')],
   '4': [printed('4')],

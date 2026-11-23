@@ -88,9 +88,11 @@ describe('allowsProperty and allowedProperties', () => {
     }).map((row) => row.key);
     expect(printed).toEqual(['1', '-1', '2', 'm', '2/m', '4', '-4', '4/m', '3', '-3', '6', '-6', '6/m']);
     expect(POINT_GROUP_KEYS.filter((key) => allowsProperty(key, 'ferroaxial'))).toEqual(printed);
-    // The axial vector lies along the unique axis (z in setting 1); any direction in 1 and -1.
+    // The axial vector lies along the unique axis (z: unique axis c, the setting Birss prints); any
+    // direction in 1 and -1.
     for (const row of CLASS_ROWS.filter((r) => printed.includes(r.key))) {
-      const form = tensorForm(row.key as PointGroupKey, 'ferroaxial', { setting: 1 });
+      const setting = ['2', 'm', '2/m'].includes(row.key) ? 2 : 1;
+      const form = tensorForm(row.key as PointGroupKey, 'ferroaxial', { setting });
       const cells = T4C.get(symbolClass(row, 1, 'axial')!)!;
       expect(
         form.parameters.map(([i]) => i),
