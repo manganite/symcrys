@@ -133,8 +133,8 @@ option.
   is derived from Birss any more (how they are stored: #122). Long-term clarity and the inner
   structure of the project come before the amount of work. The print-verified Birss tests (Birss
   Tables 3, 4a–4f, 6, 7 and the generating matrices σ(N) of eq. (2.17); Tables 3 and σ(N) confirmed
-  by Thomas on 2026-11-22) stay as an independent second print check: they rotate Birss's forms and
-  operations into the ITC frame and compare there.
+  by Thomas on 2026-11-22) stay as an independent second print check: Birss's operations and the ITC forms are
+  carried into one frame and compared there (`testUtils/birssFrame.ts`).
 - **Settings as ITC prints them.** Only settings that ITC prints, selected by their ITC symbol
   with the index as a second handle (#116; design of the setting record: #123); missing ones are
   added (unique axis a, rhombohedral axes #111). "Printed by ITC" means printed as the symbol of

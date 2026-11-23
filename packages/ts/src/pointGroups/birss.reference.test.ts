@@ -1,13 +1,16 @@
 /**
- * Birss convention against its print source (fixture class (a)): Birss Table 3 (printed pp. 36–38)
- * and the generating matrices σ(N) of equation (2.17) (printed pp. 48–49), re-parsed from references/.
- * For every crystal class, the printed generators, closed with the independent algebra of
- * testUtils, must give exactly the operations of symcrys in the Birss default setting; the short
- * symbol, Schoenflies symbol, crystal system and order must match the print.
+ * The crystal classes against Birss's print (fixture class (a)), an independent second print check
+ * of the ITC output: Birss Table 3 (printed pp. 36–38) and the generating matrices σ(N) of equation
+ * (2.17) (printed pp. 48–49), re-parsed from references/. For every crystal class, the printed
+ * generators, closed with the independent algebra of testUtils and carried from Birss's frame into
+ * the ITC frame (testUtils/birssFrame.ts), must give exactly the operations of symcrys in the ITC
+ * default setting; Birss's printed symbol, read along Birss's directions, must generate the printed
+ * group; Schoenflies symbol, crystal system and order must match the print.
  */
 
 import { describe, expect, it } from 'vitest';
 import { groupOfSymbol, hmTokens } from '../testUtils/hermannMauguin.js';
+import { BIRSS_DIRECTIONS, toItcFrame } from '../testUtils/birssFrame.js';
 import { close, sameGroup, type M, type RefOp } from '../testUtils/independentGroups.js';
 import { expectHeader, readReference, section, tableRows } from '../testUtils/references.js';
 import {
@@ -99,7 +102,7 @@ const TABLE3: Table3Row[] = rows.slice(1).map((r) => {
   };
 });
 
-describe('Birss Table 3 (printed pp. 36–38) against symcrys, Birss convention', () => {
+describe('Birss Table 3 (printed pp. 36–38) against symcrys, in the ITC frame', () => {
   it('lists the 32 crystal classes, each once, and the σ pool has ten matrices', () => {
     expect(TABLE3).toHaveLength(32);
     expect(new Set(TABLE3.map((r) => r.key)).size).toBe(32);
@@ -112,21 +115,23 @@ describe('Birss Table 3 (printed pp. 36–38) against symcrys, Birss convention'
 
   for (const row of TABLE3) {
     describe(row.key, () => {
-      it('operations of the Birss default setting = closure of the printed σ generators', () => {
+      it('operations of the ITC default setting = closure of the printed σ generators, in the ITC frame', () => {
         const ref = close(row.generators);
         expect(ref).toHaveLength(row.order);
-        expect(sameGroup(ref, operations(row.key, { convention: 'birss' }))).toBe(true);
+        const inItcFrame = ref.map((op) => ({ ...op, m: toItcFrame(row.key, op.m) }));
+        expect(sameGroup(inItcFrame, operations(row.key))).toBe(true);
       });
 
-      it('the Birss default is setting 1, the stored frame', () => {
-        expect(settings(row.key, 'birss').find((s) => s.isDefault)?.index).toBe(1);
+      it('the printed symbol, read along Birss directions, generates the printed group', () => {
+        // Birss reads the unique axis of a monoclinic class along z (Table 4a, p. 56: `2//z`; σ(3) of `2` is a rotation about z).
+        const printedGroup = close(row.generators).map((op) => ({ matrix: op.m, timeReversal: op.t }));
+        expect(sameGroup(groupOfSymbol(row.printedSymbol, BIRSS_DIRECTIONS[row.system]), printedGroup)).toBe(true);
       });
 
-      it('order, crystal system, Schoenflies and short symbol as printed', () => {
+      it('order, crystal system and Schoenflies symbol as printed', () => {
         expect(pointGroup(row.key).order).toBe(row.order);
         expect(pointGroup(row.key).crystalSystem).toBe(row.system);
         expect(symbol(row.key, { form: 'schoenflies' })).toBe(row.schoenflies);
-        expect(symbol(row.key, { convention: 'birss' })).toBe(row.key);
       });
     });
   }

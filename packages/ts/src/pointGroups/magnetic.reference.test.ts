@@ -27,12 +27,15 @@
  */
 
 import { describe, expect, it } from 'vitest';
+import type { Mat3 } from '../linalg.js';
+import { BIRSS_DIRECTIONS, toBirssFrame, toItcFrame } from '../testUtils/birssFrame.js';
 import { groupOfSymbol, hmTokens } from '../testUtils/hermannMauguin.js';
 import { close, sameGroup, type M, type RefOp } from '../testUtils/independentGroups.js';
 import { operationLabel, printedLabels } from '../testUtils/operatorLists.js';
 import { expectHeader, readReference, section, tableRows } from '../testUtils/references.js';
 import { tensorForm } from '../tensors/tensorForm.js';
 import { describeOperations } from './elements.js';
+import { describeOperationsOf } from './identify.js';
 import {
   MAGNETIC_POINT_GROUP_KEYS,
   POINT_GROUP_KEYS,
@@ -184,15 +187,6 @@ const KEY_OF_PRINTED: Record<string, string> = {
   "m'm'm": "mm'm'",
   "6'/mm'm": "6'/mmm'",
 };
-/** Birss's symbol as symcrys writes it in the Birss convention: with the overbar on the cubic 3. */
-const BIRSS_SYMBOL_OF_PRINTED: Record<string, string> = {
-  m3: 'm-3',
-  "m'3": "m'-3'",
-  m3m: 'm-3m',
-  "m3m'": "m-3m'",
-  "m'3m'": "m'-3'm'",
-  "m'3m": "m'-3'm",
-};
 
 const sigmas = (cell: string, t: boolean): RefOp[] =>
   [...cell.matchAll(/σ'?\((\d)\)/g)].map((m) => {
@@ -201,7 +195,12 @@ const sigmas = (cell: string, t: boolean): RefOp[] =>
     return { m: matrix, t };
   });
 
-describe('Birss Table 6 (printed pp. 91–98) against symcrys, Birss convention', () => {
+/**
+ * Birss's Table 6, an independent second print check of the ITC output: the printed group, closed
+ * from the printed generators in Birss's frame, is carried into the ITC frame (testUtils/birssFrame.ts)
+ * and compared with the operations of the ITC default setting.
+ */
+describe('Birss Table 6 (printed pp. 91–98) against symcrys, in the ITC frame', () => {
   const rows = birssRows.slice(1);
 
   it('lists 90 groups, each once: the 32 crystal classes and the 58 black-and-white groups', () => {
@@ -238,28 +237,34 @@ describe('Birss Table 6 (printed pp. 91–98) against symcrys, Birss convention'
       const subgroup = close(sigmas(r[6], false));
       const group = close([...sigmas(r[6], false), ...sigmas(additional, true)]);
 
-      it('operations of the Birss default setting = closure of the printed σ and σ′ generators', () => {
-        expect(sameGroup(group, operations(key, { convention: 'birss' }))).toBe(true);
-        expect(settings(key, 'birss').find((s) => s.isDefault)?.index).toBe(1);
+      const inItcFrame = (ops: RefOp[]) => ops.map((op) => ({ ...op, m: toItcFrame(key, op.m) }));
+
+      it('operations of the ITC default setting = closure of the printed σ and σ′ generators, in the ITC frame', () => {
+        expect(sameGroup(inItcFrame(group), operations(key))).toBe(true);
       });
 
       it('the classical subgroup holds the operations without time reversal', () => {
-        const unprimed = operations(key, { convention: 'birss' }).filter((op) => !op.timeReversal);
-        expect(sameGroup(subgroup, unprimed)).toBe(true);
+        const unprimed = operations(key).filter((op) => !op.timeReversal);
+        expect(sameGroup(inItcFrame(subgroup), unprimed)).toBe(true);
         const blackWhite = r[3] !== '-';
         expect(pointGroup(key).type).toBe(blackWhite ? 'III' : 'I');
         expect(unprimed).toHaveLength(blackWhite ? pointGroup(key).order / 2 : pointGroup(key).order);
       });
 
-      it('the printed symmetry operators name the operations', () => {
+      it("the printed symmetry operators name the operations, carried into Birss's frame", () => {
         const system = r[0].toLowerCase();
         expect(pointGroup(key).crystalSystem).toBe(system);
-        const actual = describeOperations(key, { convention: 'birss' }).map((d) => operationLabel(system, d));
+        const inBirssFrame = operations(key).map((op) => ({
+          matrix: toBirssFrame(key, op.matrix) as unknown as Mat3,
+          timeReversal: op.timeReversal,
+        }));
+        const actual = describeOperationsOf(inBirssFrame).map((d) => operationLabel(system, d));
         expect(sorted(actual)).toEqual(sorted(printedLabels(corrected(printed, 'Symmetry operators', r[5]))));
       });
 
-      it('the Birss symbol of the default setting is the printed symbol', () => {
-        expect(symbol(key, { convention: 'birss' })).toBe(BIRSS_SYMBOL_OF_PRINTED[printed] ?? printed);
+      it('the printed symbol, read along Birss directions, generates the printed group', () => {
+        const ops = group.map((op) => ({ matrix: op.m, timeReversal: op.t }));
+        expect(sameGroup(groupOfSymbol(printed, BIRSS_DIRECTIONS[r[0].toLowerCase()]), ops)).toBe(true);
       });
     });
   }
@@ -474,6 +479,19 @@ describe('orthorhombic groups: a setting for every orientation of the axes', () 
 });
 
 // --- Structure --------------------------------------------------------------------------------------
+
+/**
+ * Birss's symbol as symcrys writes it in the Birss convention: with the overbar on the cubic 3. Used
+ * by the test of the Birss convention below, which goes with it (#121, step 5).
+ */
+const BIRSS_SYMBOL_OF_PRINTED: Record<string, string> = {
+  m3: 'm-3',
+  "m'3": "m'-3'",
+  m3m: 'm-3m',
+  "m3m'": "m-3m'",
+  "m'3m'": "m'-3'm'",
+  "m'3m": "m'-3'm",
+};
 
 describe('the 122 magnetic point groups', () => {
   it('are 32 crystal classes, 32 grey and 58 black-and-white groups, classes first', () => {

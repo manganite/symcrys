@@ -121,10 +121,7 @@ describe('Hoshi et al. (1995), Eqs. (11)–(12)', () => {
     });
   }
 
-  it('6/mmm and 6mm have the same form, in both conventions', () => {
-    const forms = (['itc', 'birss'] as const).flatMap((convention) =>
-      (['6/mmm', '6mm'] as const).map((k) => tensorForm(k, EQ, { convention }).basis),
-    );
-    for (const f of forms) expect(f).toEqual(forms[0]);
+  it('6/mmm and 6mm have the same form', () => {
+    expect(tensorForm('6/mmm', EQ).basis).toEqual(tensorForm('6mm', EQ).basis);
   });
 });
