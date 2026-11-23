@@ -24,8 +24,8 @@ All notable changes to symcrys are recorded here. The format follows
   operations equal those of setting 1: `pointGroupOf` names them setting 1. `findPointGroup('32')`
   still gives the default, since `32` is the key; choose the setting by its index or as
   `{ setting: '32' }`. `{ setting: '3' }` for class `3` names two settings and is an error that lists
-  them. The representative face of a position with rhombohedral axes is (421), since (321) lies on a
-  limiting form there.
+  them. The representative face of a position with rhombohedral axes takes h = 5 ((521) for the
+  general position), since (321) lies on a limiting form there.
 
 ### Changed
 

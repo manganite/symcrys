@@ -147,13 +147,13 @@ function hklOf(miller: string, value: Record<string, number>): number[] {
 /** h, k, l of the representative: 3, 2, 1, or 1, 2, 3 where the printed condition is |h| < |l|. */
 /**
  * The values of the representative: h = 1, l = 3 under the condition; otherwise h = 3, k = 2, l = 1,
- * and for rhombohedral axes h = 4, since (321) is there the face (h,k,2k-h) of a limiting form.
+ * and for rhombohedral axes h = 5, since (321) lies there on the limiting form (h,k,2k-h).
  */
 const valuesFor = (condition: string, axes = ''): Record<string, number> =>
   condition === 'abs(h)<abs(l)'
     ? { h: 1, k: 2, l: 3 }
     : axes === 'rhombohedral axes'
-      ? { h: 4, k: 2, l: 1 }
+      ? { h: 5, k: 2, l: 1 }
       : { h: 3, k: 2, l: 1 };
 
 const faceNormal = (basis: M, hkl: number[]): number[] => unit(apply(transpose(inverse(basis)), hkl));

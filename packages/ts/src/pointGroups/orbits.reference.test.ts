@@ -5,10 +5,11 @@
  * The lattice operations of every printed ITC setting must be, in order, the matrices of the printed
  * general position (vol-a-table-3.2.3.2-general-positions.md: the coordinate triplets are the rows
  * of W); the orbit of a lattice direction [uvw] must be the printed general position with x, y, z =
- * u, v, w; and for the 16 entries with hexagonal axes, where the lattice basis is not orthonormal,
- * the orbit of a face (hkl) must be the printed faces of the general form, in the order of the
- * general position (vol-a-table-3.2.3.2-general-faces.md; 6/m and 6mm print two rows of faces in
- * the other order, which the test reproduces).
+ * u, v, w; and for the 16 entries with hexagonal axes and the 5 with rhombohedral axes, where the
+ * lattice basis is not orthonormal, the orbit of a face (hkl) must be the printed faces of the
+ * general form, in the order of the general position (vol-a-table-3.2.3.2-general-faces.md; 6/m and
+ * 6mm print two rows of faces in the other order, and 32, 3m and -3m with rhombohedral axes one row
+ * shifted by one, which the test reproduces).
  */
 
 import { describe, expect, it } from 'vitest';

@@ -383,7 +383,7 @@ crystal system, the Laue groups in full boxes of ITA Table 2.1.1.1 (p. 143): `-1
 `4/mmm`, `-3m`, `6/mmm`, `m-3m`. It is a function of the system and not a field of the point
 group, because there are two readings for the trigonal classes and both have a consumer: the
 holohedry of the trigonal system is `-3m` (the rhombohedral lattice; birss-app shows it), while
-with hexagonal axes, as symcrys stores the trigonal classes ("Cartesian frame"), the lattice has
+with hexagonal axes, the default setting of the trigonal classes ("Cartesian frame"), the lattice has
 the symmetry `6/mmm`: `holohedry(crystalFamily('trigonal'))` (stereography uses it for the lattice
 of a crystal). For the other six systems the two calls agree.
 
@@ -503,7 +503,7 @@ prints them for that setting (ITA 6th ed., Table 3.2.3.2, pp. 745–769):
 | `siteSymmetry`           | oriented site-symmetry symbol as printed, e.g. `..m`, `4m.m`; the positions are those of the symmetry directions of ITA Table 2.1.3.1                      |
 | `coordinates`            | the first printed coordinate triplet, e.g. `x,x,z` (a representative point)                                                                                |
 | `millerIndices`          | the first printed face, e.g. `h,h,l`, Bravais–Miller indices for hexagonal axes, e.g. `h,h,-2h,l`                                                          |
-| `representative`         | that face with h = 3, k = 2, l = 1 (rhombohedral axes: h = 4, below): `hkl` (three indices, without i) and its Cartesian unit normal h a\* + k b\* + l c\* |
+| `representative`         | that face with h = 3, k = 2, l = 1 (rhombohedral axes: h = 5, below): `hkl` (three indices, without i) and its Cartesian unit normal h a\* + k b\* + l c\* |
 | `siteSymmetryOperations` | indices into `operations` (same setting) of the operations fixing the representative                                                                       |
 
 - The **point at the origin** (letter o, site symmetry the whole group), which ITA 2016 prints for
@@ -514,8 +514,10 @@ prints them for that setting (ITA 6th ed., Table 3.2.3.2, pp. 745–769):
   (112̄0) (on the twofold axis along [110]). Both belong to the position; the representative of
   symcrys is the face, as the applications work with face poles.
 - **Rhombohedral axes:** three Miller indices, some printed as sums (`h,k,-h-k`, `h,k,2k-h`). The
-  representative takes h = 4, k = 2, l = 1, since (321) lies on the limiting form (h,k,2k−h)
-  printed for 32, 3m and -3m (pp. 755–759); (421) is (217) in hexagonal axes, (321) would be (116).
+  representative takes h = 5, k = 2, l = 1, since (321) lies on the limiting form (h,k,2k−h)
+  printed for 32, 3m and -3m (pp. 755–759), (116) in hexagonal axes; (521) is (318) there, and
+  every printed face of these entries is in lowest terms with these values, as with 3, 2, 1
+  elsewhere (h = 4 would give (4,2,−6) and (4,2,0)).
 - Where ITA prints a face with "or", e.g. (001) or (001̄) for the pedion of 4mm, the two faces
   belong to the same Wyckoff position (ITA 6th ed., § 3.2.1.2.4 (i), p. 729); the first is the
   representative.
@@ -579,7 +581,7 @@ tetragonal dipyramids of 422, (h0l) and (hhl)).
   tetragon-tritetrahedron in 23 and -43m, trigon- and tetragon-trioctahedron in m-3, 432 and m-3m).
   ITA prints both with the condition, which `condition` gives as `'|h|<|l|'` or `'|h|>|l|'`; in
   -43m and m-3m both are basic forms of the position, elsewhere both are limiting forms. The
-  representative takes h = 3, k = 2, l = 1 as for the Wyckoff positions (rhombohedral axes: h = 4),
+  representative takes h = 3, k = 2, l = 1 as for the Wyckoff positions (rhombohedral axes: h = 5),
   and h = 1, l = 3 where the condition is |h| < |l|: (331) and (113).
 - **Groups.** As the Wyckoff positions: the 32 crystal classes only (a RangeError otherwise), and the settings ITA does not print (`mm2` settings 2 and 3, monoclinic unique axis a) are
   setting 1 carried into their frame.

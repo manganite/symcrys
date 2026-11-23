@@ -8,8 +8,7 @@
  * Every pin is one entry `{ id, value }`, one line in the file, so that a change of behaviour shows
  * as the few entries it touches. A setting is named in an id by its full symbol, not by its index,
  * so that a renumbering of the settings (#137, A4) changes only the entries that hold the index; a
-setting with rhombohedral axes adds "(rhombohedral axes)". The
- * collection is written once, here, and used by both the capture and the test: when a later PR
+ * setting with rhombohedral axes adds "(rhombohedral axes)". The collection is written once, here, and used by both the capture and the test: when a later PR
  * renames a function or a field, only the calls below follow it, and the ids and values keep their
  * shape. Test-only code.
  */
@@ -174,7 +173,6 @@ function errorPins(add: (id: string, f: () => unknown) => void): void {
   );
 }
 
-/** The point-group pins of one key of the magnetic API (all 122), and of the crystallographic API for the 32 classes. */
 /**
  * A setting in an id: its full symbol, and for rhombohedral axes that, since `3` and `-3` have the
  * same full symbol with both axes.
@@ -182,6 +180,7 @@ function errorPins(add: (id: string, f: () => unknown) => void): void {
 const settingName = (s: { readonly fullSymbol: string; readonly axes?: string }): string =>
   s.axes === 'rhombohedral' ? `${s.fullSymbol} (rhombohedral axes)` : s.fullSymbol;
 
+/** The point-group pins of one key of the magnetic API (all 122), and of the crystallographic API for the 32 classes. */
 function pointGroupPins(add: (id: string, f: () => unknown) => void, key: MagneticPointGroupKey): void {
   const isClass = classes.isPointGroupKey(key);
   add(`${key}: magnetic.pointGroup`, () => magnetic.pointGroup(key));

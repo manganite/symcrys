@@ -37,7 +37,7 @@ export interface WyckoffPosition {
    * `h,h,-2h,l` (Bravais–Miller indices) for hexagonal axes.
    */
   readonly millerIndices: string;
-  /** A representative face with numbers: `millerIndices` with h = 3, k = 2, l = 1 (rhombohedral axes: h = 4). */
+  /** A representative face with numbers: `millerIndices` with h = 3, k = 2, l = 1 (rhombohedral axes: h = 5). */
   readonly representative: {
     /** The Miller indices (hkl) of the face. */
     readonly hkl: Hkl;
@@ -58,11 +58,13 @@ export type WyckoffOptions = SettingOptions & SiteSymmetryOptions;
 export const REPRESENTATIVE_VALUES: Readonly<Record<'h' | 'k' | 'l', number>> = { h: 3, k: 2, l: 1 };
 
 /**
- * The values for rhombohedral axes: h = 4, k = 2, l = 1. With 3, 2, 1 the face (h,k,l) would lie on
+ * The values for rhombohedral axes: h = 5, k = 2, l = 1. With 3, 2, 1 the face (h,k,l) would lie on
  * the limiting form (h,k,2k-h) that ITA prints there (Table 3.2.3.2, 32, 3m and -3m with rhombohedral
- * axes, pp. 755–759): (321) is (116) in hexagonal axes, (421) is (217).
+ * axes, pp. 755–759): (321) is (116) in hexagonal axes. (521), (318) in hexagonal axes, lies on no
+ * printed limiting form, and every printed face with these values is in lowest terms ((5,2,-7),
+ * (5,2,-1), (5,5,1)); h = 4 would give (4,2,-6) and (4,2,0).
  */
-export const RHOMBOHEDRAL_VALUES: Readonly<Record<'h' | 'k' | 'l', number>> = { h: 4, k: 2, l: 1 };
+export const RHOMBOHEDRAL_VALUES: Readonly<Record<'h' | 'k' | 'l', number>> = { h: 5, k: 2, l: 1 };
 
 /** The values of h, k, l for the representative faces of a setting. */
 export function representativeValues(key: PointGroupKey, setting: number): Readonly<Record<'h' | 'k' | 'l', number>> {
@@ -74,10 +76,12 @@ export function representativeValues(key: PointGroupKey, setting: number): Reado
  * as printed for rhombohedral axes).
  */
 function index(component: string, values: Readonly<Record<'h' | 'k' | 'l', number>>): number {
-  const terms = component.match(/[+-]?\d*[hkil]?/g)?.filter((t) => t !== '' && t !== '+' && t !== '-') ?? [];
-  if (terms.length === 0 || terms.join('').replace(/^\+/, '') !== component) {
+  // A term is a signed number, or a signed letter with an optional factor; terms after the first
+  // begin with their sign, so that run-together terms (`hk`, `h2`) are unreadable.
+  if (!/^-?(\d+|\d*[hkil])([+-](\d+|\d*[hkil]))*$/.test(component)) {
     throw new Error(`Unreadable Miller index: ${component}`);
   }
+  const terms = component.match(/[+-]?\d*[hkil]?/g)!.filter((t) => t !== '');
   return terms.reduce((sum, term) => {
     const m = /^([+-]?)(\d*)([hkil]?)$/.exec(term);
     if (!m || (m[2] === '' && m[3] === '')) throw new Error(`Unreadable Miller index: ${component}`);

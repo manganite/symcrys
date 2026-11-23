@@ -60,7 +60,7 @@ export interface CrystalForm {
   readonly condition?: string;
   /**
    * A face of the form with numbers: `millerIndices` with h = 3, k = 2, l = 1 (rhombohedral axes:
-   * h = 4), and with h = 1, l = 3 where the condition is `|h|<|l|`.
+   * h = 5), and with h = 1, l = 3 where the condition is `|h|<|l|`.
    */
   readonly representative: {
     /** The Miller indices (hkl) of the face. */

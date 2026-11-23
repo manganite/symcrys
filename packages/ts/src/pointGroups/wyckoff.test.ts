@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { apply, matricesEqual, multiply, type Vec3 } from '../linalg.js';
 import { siteSymmetry } from '../siteSymmetry.js';
 import { POINT_GROUP_KEYS, operations, settings } from './pointGroups.js';
-import { wyckoffPositionOf, wyckoffPositions } from './wyckoff.js';
+import { numericHkl, wyckoffPositionOf, wyckoffPositions } from './wyckoff.js';
 
 const ALL_SETTINGS = POINT_GROUP_KEYS.flatMap((key) => settings(key).map((s) => ({ key, s })));
 const DIRECTIONS: Vec3[] = [
@@ -219,5 +219,20 @@ describe('magnetic point groups', () => {
     const site = siteSymmetry(operations("4'/mmm'"), [0, 0, 1]);
     expect(site.operations).toHaveLength(8);
     expect(site.multiplicity).toBe(2);
+  });
+});
+
+describe('reading printed Miller indices', () => {
+  it('reads terms and sums of terms, with h = 3, k = 2, l = 1 unless given', () => {
+    expect(numericHkl('h,k,-h-k')).toEqual([3, 2, -5]);
+    expect(numericHkl('h,k,2k-h', { h: 5, k: 2, l: 1 })).toEqual([5, 2, -1]);
+    expect(numericHkl('h,h,-2h,l')).toEqual([3, 3, 1]);
+    expect(numericHkl('1,-1,0')).toEqual([1, -1, 0]);
+  });
+
+  it('refuses run-together terms and stray signs', () => {
+    for (const bad of ['hk,0,0', 'h2,0,0', 'h+,0,0', '+h,0,0', 'h--k,0,0', 'x,0,0']) {
+      expect(() => numericHkl(bad), bad).toThrow(/Unreadable/);
+    }
   });
 });

@@ -128,7 +128,10 @@ describe('a setting by its symbol', () => {
     expect(operations('2', { setting: '2 1 1' })).toBe(operations('2', { setting: 3 }));
     expect(operations('32', { setting: '32' })).toBe(operations('32', { setting: 3 }));
     expect(() => operations('32', { setting: '3 2 2' })).toThrow(/has no setting "3 2 2" \(settings 1: 321/);
-    expect(() => operations('3', { setting: '3' })).toThrow(/names 2 settings.*2: 3 \(3, rhombohedral axes\)/);
+    expect(() => operations('3', { setting: '3' })).toThrow(
+      /names 2 settings; give the index \(1: 3 \(3\), 2: 3 \(3, rhombohedral axes\)\)/,
+    );
+    expect(() => operations('2', { setting: '2' })).toThrow(/give the full symbol or the index/);
     expect(() => operations('32', { setting: [2] } as never)).toThrow(/must be an index or a symbol, not \[2\]/);
     expect(() => operations('32', { setting: true } as never)).toThrow(RangeError);
   });

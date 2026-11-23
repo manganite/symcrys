@@ -185,10 +185,10 @@ const ENTRIES: Entry[] = generalRows.slice(1).map((g) => {
 });
 
 /** Printed Miller indices (`h,h,-2h,l`, `0,1,0`; four for hexagonal axes) with h = 3, k = 2, l = 1. */
-/** h = 3, k = 2, l = 1; for rhombohedral axes h = 4, since (321) is there a special face, (116) in hexagonal axes. */
+/** h = 3, k = 2, l = 1; for rhombohedral axes h = 5, since (321) lies there on the limiting form (h,k,2k-h). */
 function hklOf(miller: string, axes = ''): number[] {
   const value: Record<string, number> =
-    axes === 'rhombohedral axes' ? { h: 4, k: 2, l: 1, i: -6 } : { h: 3, k: 2, l: 1, i: -5 };
+    axes === 'rhombohedral axes' ? { h: 5, k: 2, l: 1, i: -7 } : { h: 3, k: 2, l: 1, i: -5 };
   const parts = miller.split(',').map((c) => {
     const m = /^(-?)(\d*)([hkil]?)$/.exec(c);
     if (!m || (m[2] === '' && m[3] === '')) throw new Error(`Unreadable index: ${c}`);

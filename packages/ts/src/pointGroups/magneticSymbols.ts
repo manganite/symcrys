@@ -94,6 +94,10 @@ export function primedSymbols(
   ops: readonly Operation[],
 ): { short: string; full: string } {
   const family = crystalFamily(system);
+  // The positions of the family, also for a setting with rhombohedral axes: their Cartesian
+  // directions are those of [111] and [1-10] in the obverse rhombohedral cell, the c and a axes of
+  // the hexagonal cell (docs/conventions.md, "Cartesian frame"), and its symbol has only these two
+  // positions, so reading it along the first two hexagonal positions gives the same primes.
   const directions = positionDirections(family);
   const what = `Symbol ${classSymbols.short}`;
   const fullTokens = classSymbols.full.split(' ');

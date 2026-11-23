@@ -227,8 +227,12 @@ function settingOfSymbol(d: GroupData, text: string): number {
       .join(', ');
   if (named.length === 1) return named[0]!;
   if (named.length > 1) {
+    // The full symbols tell the settings apart unless they too are the same (`3` with hexagonal and
+    // rhombohedral axes); then only the index does.
+    const fulls = new Set(named.map((i) => compact(settingSymbols(d, i).full)));
+    const advice = fulls.size === named.length ? 'give the full symbol or the index' : 'give the index';
     throw new RangeError(
-      `Point group ${d.key}: the symbol ${JSON.stringify(text)} names ${named.length} settings; give the full symbol or the index (${list(named)})`,
+      `Point group ${d.key}: the symbol ${JSON.stringify(text)} names ${named.length} settings; ${advice} (${list(named)})`,
     );
   }
   throw new RangeError(`Point group ${d.key} has no setting ${JSON.stringify(text)} (settings ${list(all)})`);
