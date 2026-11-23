@@ -41,7 +41,7 @@ export {
   type FourIndices,
 } from './indices.js';
 
-export type { Convention, PointGroupKey, Setting, SettingOptions, SymbolOptions } from './pointGroups/pointGroups.js';
+export type { PointGroupKey, Setting, SettingOptions, SymbolOptions } from './pointGroups/pointGroups.js';
 export { LATTICE_SYMMETRY_DIRECTIONS, type Uvw } from './symmetryDirections.js';
 export type { Axis, DirectionElements, OperationKind, SymmetryDirection } from './pointGroups/elements.js';
 export type { SiteSymmetry, SiteSymmetryOptions } from './siteSymmetry.js';

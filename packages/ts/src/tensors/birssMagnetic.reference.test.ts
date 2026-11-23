@@ -1,16 +1,17 @@
 /**
- * Tensor forms of the magnetic point groups in the Birss convention against Birss's Table 7
- * (fixture class (a)), re-parsed from references/birss/table-7.md: for each of the 58 groups with
- * operations combined with time reversal, and each rank 0 to 4, the i- and c-tensors, polar and
- * axial, must be exactly the solution space of the relations Tables 4b–4f print for the symbol
- * class Table 7 names. A symbol class without parentheses holds in Birss's frame (setting 1); one
- * in parentheses holds in a rotated setting and not in setting 1.
+ * Tensor forms of the magnetic point groups against Birss's Table 7 (fixture class (a)), an
+ * independent second print check of the ITC output, re-parsed from references/birss/table-7.md: for
+ * each of the 58 groups with operations combined with time reversal, and each rank 0 to 4, the i- and
+ * c-tensors, polar and axial, of the ITC default setting, carried into Birss's frame
+ * (testUtils/birssFrame.ts), must be exactly the solution space of the relations Tables 4b–4f print
+ * for the symbol class Table 7 names. A symbol class without parentheses holds in Birss's frame; one
+ * in parentheses holds in a frame rotated against it (Birss p. 110) and not in Birss's frame.
  *
  * Table 7 also names two classical groups, A and B, from which Birss reads the c-tensors. Both are
- * built here from the operations of the group, A by Birss's eq. (3.24) (p. 109), B by a rule
- * derived for this test (references/birss/table-7.md), and compared with the print, symbol and
- * parentheses, which identifies each row independently of its symbol in column 2. For the 32 groups with time reversal itself, Birss gives no
- * table: their c-tensors vanish and their i-tensors are those of the class (p. 102).
+ * built here from the operations of the group, A by Birss's eq. (3.24) (p. 109), B by a rule derived
+ * for this test (references/birss/table-7.md), and compared with Birss's printed symbol, read along
+ * his directions, and with the parentheses. For the 32 groups with time reversal itself, Birss gives
+ * no table: their c-tensors vanish and their i-tensors are those of the class (p. 102).
  */
 
 import { describe, expect, it } from 'vitest';

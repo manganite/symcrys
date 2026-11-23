@@ -94,11 +94,9 @@ describe('pointGroupOf', () => {
   for (const key of MAGNETIC_POINT_GROUP_KEYS) {
     it(`identifies ${key} in every setting with its setting, from all operations and from the generators`, () => {
       for (const s of settings(key)) {
-        for (const convention of ['itc', 'birss'] as const) {
-          const options = { convention, setting: s.index };
-          expect(pointGroupOf(operations(key, options)), `#${s.index}`).toEqual({ key, setting: s.index });
-          expect(pointGroupOf(generators(key, options)), `#${s.index} gen`).toEqual({ key, setting: s.index });
-        }
+        const options = { setting: s.index };
+        expect(pointGroupOf(operations(key, options)), `#${s.index}`).toEqual({ key, setting: s.index });
+        expect(pointGroupOf(generators(key, options)), `#${s.index} gen`).toEqual({ key, setting: s.index });
       }
     });
   }

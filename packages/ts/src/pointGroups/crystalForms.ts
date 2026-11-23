@@ -1,5 +1,5 @@
 /**
- * Crystal forms of the crystal classes, in the ITC convention: for each Wyckoff position the basic
+ * Crystal forms of the crystal classes, as ITA gives them: for each Wyckoff position the basic
  * form and the limiting forms as ITA prints them, with the 47 forms of ITA Table 3.2.1.3
  * (docs/conventions.md, "Crystal forms").
  */
@@ -100,8 +100,8 @@ const cache = new Map<string, readonly CrystalForm[]>();
 /**
  * The crystal forms of a crystal class in ITA's order: by Wyckoff position (general position
  * first), each position's basic forms before its limiting forms, as ITA 6th ed. Table 3.2.3.2
- * prints them. ITC convention only (throws a RangeError for `'birss'` and for a magnetic point
- * group with time reversal), like the Wyckoff positions. For `mm2` settings 2 and 3 (`2mm`, `m2m`),
+ * prints them. Crystal classes only (throws a RangeError for a magnetic point group with time
+ * reversal), like the Wyckoff positions. For `mm2` settings 2 and 3 (`2mm`, `m2m`),
  * which ITA does not print, the forms of setting 1 carried into their frame.
  */
 export function crystalForms(key: PointGroupKey, options?: SettingOptions): readonly CrystalForm[] {
@@ -109,7 +109,7 @@ export function crystalForms(key: PointGroupKey, options?: SettingOptions): read
   const cacheKey = `${key}#${setting}`;
   let result = cache.get(cacheKey);
   if (!result) {
-    const positions = wyckoffPositions(key, { convention: 'itc', setting });
+    const positions = wyckoffPositions(key, { setting });
     const basis = faceBasis(key);
     result = Object.freeze(
       printedRows(key, setting).map(([letter, basic, formType, millerIndices, condition]) => {

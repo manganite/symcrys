@@ -1,5 +1,5 @@
 /**
- * Wyckoff positions of the crystal classes for directions (face normals), in the ITC convention:
+ * Wyckoff positions of the crystal classes for directions (face normals), as ITA gives them:
  * ITA's letters, multiplicities and oriented site-symmetry symbols, a representative face, and the
  * Wyckoff position of any direction (docs/conventions.md, "Site symmetry and Wyckoff positions").
  */
@@ -46,11 +46,11 @@ export interface WyckoffPosition {
      */
     readonly cartesian: Vec3;
   };
-  /** Indices into `operations` (same setting, ITC convention) of the site symmetry of the representative. */
+  /** Indices into `operations` (same setting) of the site symmetry of the representative. */
   readonly siteSymmetryOperations: readonly number[];
 }
 
-/** Convention and setting (`SettingOptions`) and the tolerance of `siteSymmetry` (`SiteSymmetryOptions`). */
+/** The setting (`SettingOptions`) and the tolerance of `siteSymmetry` (`SiteSymmetryOptions`). */
 export type WyckoffOptions = SettingOptions & SiteSymmetryOptions;
 
 /** The values substituted into ITA's Miller indices for the numeric representative. */
@@ -153,7 +153,7 @@ export function printedEntry<E extends { readonly symbol: string; readonly uniqu
   key: PointGroupKey,
   setting: number,
 ): E | undefined {
-  const s = settings(key, 'itc')[setting - 1];
+  const s = settings(key)[setting - 1];
   return table.find((e) => e.symbol === s.symbol && (e.uniqueAxis === undefined || e.uniqueAxis === s.uniqueAxis));
 }
 
@@ -184,9 +184,8 @@ export function faceBasis(key: PointGroupKey): Mat3 {
 const cache = new Map<string, readonly WyckoffPosition[]>();
 
 /**
- * The setting index for a table that exists for the crystal classes in the ITC convention only
- * (`what`: 'Wyckoff positions', 'Crystal forms'); throws a RangeError for a magnetic point group
- * with time reversal and for another convention.
+ * The setting index for a table that exists for the crystal classes only (`what`: 'Wyckoff
+ * positions', 'Crystal forms'); throws a RangeError for a magnetic point group with time reversal.
  */
 export function tableSetting(key: PointGroupKey, options?: SettingOptions, what = 'Wyckoff positions'): number {
   if (isMagneticPointGroupKey(key) && !isPointGroupKey(key)) {
@@ -194,19 +193,16 @@ export function tableSetting(key: PointGroupKey, options?: SettingOptions, what 
       `${what} are given for the 32 crystal classes only; ${JSON.stringify(key)} is a magnetic point group`,
     );
   }
-  if ((options?.convention ?? 'itc') !== 'itc') {
-    throw new RangeError(`${what} exist in the ITC convention only (convention 'itc')`);
-  }
-  const list = settings(key, 'itc');
+  const list = settings(key);
   const index = options?.setting ?? list.find((s) => s.isDefault)?.index ?? 1;
-  operations(key, { convention: 'itc', setting: index }); // validates the setting index
+  operations(key, options); // validates the setting index
   return index;
 }
 
 /**
  * The Wyckoff positions of a point group for directions, in ITA's printed order (general position
- * first), for the 32 crystal classes and in the ITC convention only (throws a RangeError for a
- * magnetic point group with time reversal and for `'birss'`). The point at the origin
+ * first), for the 32 crystal classes only (throws a RangeError for a magnetic point group with
+ * time reversal). The point at the origin
  * (letter o) is not a direction and is left out. For `mm2` settings 2 and 3 (`2mm`, `m2m`), which
  * ITA does not print, the positions of setting 1 carried into their frame.
  */
@@ -215,7 +211,7 @@ export function wyckoffPositions(key: PointGroupKey, options?: SettingOptions): 
   const cacheKey = `${key}#${setting}`;
   let result = cache.get(cacheKey);
   if (!result) {
-    const ops = operations(key, { convention: 'itc', setting });
+    const ops = operations(key, { setting });
     const basis = faceBasis(key);
     result = Object.freeze(
       printedRows(key, setting)
@@ -251,16 +247,16 @@ export function wyckoffPositions(key: PointGroupKey, options?: SettingOptions): 
 const sortedKey = (list: readonly number[]): string => [...list].sort((a, b) => a - b).join(',');
 
 /**
- * The Wyckoff position of a direction (any non-zero Cartesian vector) in a point group, ITC
- * convention only: the position whose representative has a site symmetry conjugate to that of the
+ * The Wyckoff position of a direction (any non-zero Cartesian vector) in a crystal class: the
+ * position whose representative has a site symmetry conjugate to that of the
  * direction (ITA's definition). `tolerance` as for `siteSymmetry`; throws a RangeError if the
  * operations found within it do not match any position (a tolerance too large).
  */
 export function wyckoffPositionOf(key: PointGroupKey, direction: Vec3, options?: WyckoffOptions): WyckoffPosition {
   const tolerance = siteTolerance(options);
   const setting = tableSetting(key, options);
-  const ops = operations(key, { convention: 'itc', setting });
-  const rows = wyckoffPositions(key, { convention: 'itc', setting });
+  const ops = operations(key, { setting });
+  const rows = wyckoffPositions(key, { setting });
   const site = siteSymmetry(ops, direction, { tolerance });
   const candidates = rows.filter((r) => r.siteSymmetryOperations.length === site.operations.length);
   for (const g of ops) {

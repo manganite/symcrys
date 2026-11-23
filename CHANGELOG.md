@@ -6,6 +6,23 @@ All notable changes to symcrys are recorded here. The format follows
 
 ## [Unreleased]
 
+### Removed
+
+- **The Birss convention** (#110, #121 step 5): symcrys follows ITC only. The option `convention`
+  goes from every function (`operations`, `generators`, `symbol`, `describeOperations`,
+  `symmetryDirections`, `latticeOperations`, `orbit`, `tensorForm`, the Wyckoff positions and forms),
+  the second argument of `settings` and `findPointGroup`, and the type `Convention`; in Python the
+  keyword `convention`. An options object that still has `convention` throws a RangeError (Python:
+  `SymcrysError`) that names this change, so that a caller asking for Birss's presentation is not
+  answered in ITC's without notice. Results in the ITC convention are unchanged.
+
+  | Up to 0.10                                                                                                   | From 0.11                                                                                                                           |
+  | ------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
+  | `operations(key)`, `{ convention: 'itc' }`                                                                   | `operations(key)`, without the option                                                                                               |
+  | `settings(key, 'itc')`, `findPointGroup(hm, 'itc')`                                                          | `settings(key)`, `findPointGroup(hm)`                                                                                               |
+  | `{ convention: 'birss' }`: Birss's default setting, symbols, order of the operations, generators, axis signs | gone; Birss's presentation is the application's (birss-app, #125). The frames: docs/conventions.md, "Birss as a second print check" |
+  | `findPointGroup("m'm'm", 'birss')` and the reading of `mm'm'`, `6'/mmm'` as Birss symbols (#46)              | gone: a key gives the ITC default setting                                                                                           |
+
 ## [0.10.1] - 2026-11-22
 
 ### Fixed

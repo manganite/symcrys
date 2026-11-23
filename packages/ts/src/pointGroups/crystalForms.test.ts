@@ -5,7 +5,7 @@ import { CRYSTAL_FORM_TYPES, crystalForms } from './crystalForms.js';
 import { POINT_GROUP_KEYS, operations, settings } from './pointGroups.js';
 import { wyckoffPositionOf, wyckoffPositions } from './wyckoff.js';
 
-const ALL_SETTINGS = POINT_GROUP_KEYS.flatMap((key) => settings(key, 'itc').map((s) => ({ key, s })));
+const ALL_SETTINGS = POINT_GROUP_KEYS.flatMap((key) => settings(key).map((s) => ({ key, s })));
 
 /** The distinct images of a direction under a list of operations. */
 function orbitSize(key: (typeof POINT_GROUP_KEYS)[number], setting: number, v: Vec3): number {
@@ -96,11 +96,9 @@ describe('crystalForms', () => {
     expect(crystalForms('2', { setting: 1 }).at(-1)?.millerIndices).toBe('0,0,1');
   });
 
-  it('are not defined in the Birss convention', () => {
-    expect(() => crystalForms('mmm', { convention: 'birss' })).toThrow(RangeError);
-    expect(() => crystalForms('mmm', { convention: 'birss' })).toThrow(
-      /Crystal forms exist in the ITC convention only/,
-    );
+  it('refuse the option convention, removed in 0.11.0', () => {
+    expect(() => crystalForms('mmm', { convention: 'birss' } as never)).toThrow(RangeError);
+    expect(() => crystalForms('mmm', { convention: 'itc' } as never)).toThrow(/option convention was removed/);
   });
 
   it('reject an unknown setting', () => {

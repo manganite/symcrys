@@ -219,10 +219,9 @@ const formCache = new Map<string, TensorForm>();
 
 /**
  * The form of a tensor under a point group, a crystal class or a magnetic point group, in the
- * requested setting (default: the default setting of the convention, `'itc'` unless given). The
- * tensor is given by its specification or by the name of a property in `TENSOR_PROPERTIES`
- * (`'piezoelectric'`). The convention matters only through the setting: the same setting index
- * gives the same form in both conventions (docs/conventions.md, "Tensors").
+ * requested setting (default: the ITC default setting). The tensor is given by its specification
+ * or by the name of a property in `TENSOR_PROPERTIES` (`'piezoelectric'`; docs/conventions.md,
+ * "Tensors").
  */
 export function tensorForm(
   key: MagneticPointGroupKey,
@@ -231,8 +230,8 @@ export function tensorForm(
 ): TensorForm {
   const resolved = specOf(spec);
   const perms = checkSpec(resolved);
-  const ops = operations(key, options); // checks key, convention and setting
-  const index = options?.setting ?? settings(key, options?.convention).find((s) => s.isDefault)!.index;
+  const ops = operations(key, options); // checks key and setting
+  const index = options?.setting ?? settings(key).find((s) => s.isDefault)!.index;
   const cacheKey = `${key}#${index}#${specKey(resolved)}`;
   let form = formCache.get(cacheKey);
   if (!form) {

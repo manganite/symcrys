@@ -28,7 +28,7 @@ from numpy.typing import ArrayLike, NDArray
 from . import _shared
 from ._convert import from_js
 from ._engine import SymcrysError
-from ._shared import Convention, IntrinsicSymmetry, SiteSymmetry, TensorForm, TensorParity
+from ._shared import IntrinsicSymmetry, SiteSymmetry, TensorForm, TensorParity
 
 TensorPropertyName = Literal["pyroelectric", "ferroaxial", "piezoelectric", "gyrotropic"]
 
@@ -155,93 +155,81 @@ def is_point_group_key(key: str) -> bool:
     return bool(_call("isPointGroupKey", key))
 
 
-def find_point_group(hm: str, convention: Optional[Convention] = None) -> Optional[dict[str, Any]]:
-    """Finds a crystal class by a Hermann–Mauguin symbol in the given convention (default
-    ``'itc'``): the short symbol of a setting, a full symbol, or the key (spaces are ignored). A
-    symbol that names one setting gives that setting; the key, and a short symbol that several
-    settings share (the monoclinic ones: ``2`` for unique axis b and c), give the default setting of
-    the convention. Returns None if nothing matches, also for a value that is not a string and for
-    the symbol of a magnetic group with time reversal. Symbols are written as in this library: ``-``
-    for the overbar, also in the Birss convention (``m-3m``, where Birss prints ``m3m``;
-    docs/conventions.md, "Where ITC and Birss differ").
+def find_point_group(hm: str) -> Optional[dict[str, Any]]:
+    """Finds a crystal class by a Hermann–Mauguin symbol: the short symbol of a setting, a full
+    symbol, or the key (spaces are ignored). A symbol that names one setting gives that setting; the
+    key, and a short symbol that several settings share (the monoclinic ones: ``2`` for unique axis
+    b and c), give the ITC default setting. Returns None if nothing matches, also for a value that
+    is not a string and for the symbol of a magnetic group with time reversal. Symbols are written
+    as in this library, with ``-`` for the overbar (``m-3m``).
     """
-    args = [hm] if convention is None else [hm, convention]
+    args = [hm]
     result = _call("findPointGroup", *args)
     return None if result is None else dict(result)
 
 
-def settings(key: str, convention: Optional[Convention] = None) -> list[dict[str, Any]]:
-    """The settings of a crystal class, with symbols and the default of the given convention
-    (default ``'itc'``).
-    """
-    args = [key] if convention is None else [key, convention]
+def settings(key: str) -> list[dict[str, Any]]:
+    """The settings of a crystal class, with their symbols and the ITC default."""
+    args = [key]
     return list(_call("settings", *args))
 
 
-def operations(key: str, *, convention: Optional[Convention] = None, setting: Optional[int] = None) -> list[Operation]:
-    """All operations of the crystal class in the requested setting (default: the convention's
-    default setting). ITC convention: in ITA's order, identity first, then as ITA numbers the
-    general position. Birss convention: in birss-app's order (docs/conventions.md, "Order of the
-    operations"). The matrices are Cartesian (docs/conventions.md, "Cartesian frame").
+def operations(key: str, *, setting: Optional[int] = None) -> list[Operation]:
+    """All operations of the crystal class in the requested setting (default: the ITC default
+    setting), in ITA's order: identity first, then as ITA numbers the general position
+    (docs/conventions.md, "Order of the operations"). The matrices are Cartesian
+    (docs/conventions.md, "Cartesian frame").
 
     Parameters
     ----------
-    convention : keyword-only, optional
-        Default ``'itc'``.
     setting : keyword-only, optional
-        1-based setting index; default: the default setting of the convention.
+        1-based setting index; default: the ITC default setting.
 
     Returns
     -------
     list of dict
         Dicts ``{"matrix"}``; each matrix is a float64 array of shape (3, 3).
     """
-    return list(_call("operations", key, _shared.options(convention=convention, setting=setting)))
+    return list(_call("operations", key, _shared.options(setting=setting)))
 
 
-def generators(key: str, *, convention: Optional[Convention] = None, setting: Optional[int] = None) -> list[Operation]:
-    """Generators of the crystal class in the requested setting (docs/conventions.md, "Generators").
-    ITC convention: ITA's selected generators in printed order, without the identity and ITA's
-    lattice translations, so the list is empty for ``1``; for ``mm2`` settings 2 and 3, which ITA
-    does not list, those of setting 1 carried into their frame. Birss convention: birss-app's
-    generators (for ``1`` the identity, as in birss-app).
+def generators(key: str, *, setting: Optional[int] = None) -> list[Operation]:
+    """Generators of the crystal class in the requested setting (docs/conventions.md, "Generators"):
+    ITA's selected generators in printed order, without the identity and ITA's lattice translations,
+    so the list is empty for ``1``; for ``mm2`` settings 2 and 3, which ITA does not list, those of
+    setting 1 carried into their frame.
 
     Parameters
     ----------
-    convention : keyword-only, optional
-        Default ``'itc'``.
     setting : keyword-only, optional
-        1-based setting index; default: the default setting of the convention.
+        1-based setting index; default: the ITC default setting.
 
     Returns
     -------
     list of dict
         Dicts ``{"matrix"}``; each matrix is a float64 array of shape (3, 3).
     """
-    return list(_call("generators", key, _shared.options(convention=convention, setting=setting)))
+    return list(_call("generators", key, _shared.options(setting=setting)))
 
 
 def symbol(
     key: str,
     *,
-    convention: Optional[Convention] = None,
     setting: Optional[int] = None,
     form: Optional[Literal["short", "full", "schoenflies"]] = None,
 ) -> str:
-    """A symbol of the crystal class in the requested convention and setting.
+    """A symbol of the crystal class in the requested setting.
 
     Parameters
     ----------
-    convention : keyword-only, optional
-        Default ``'itc'``.
     setting : keyword-only, optional
-        1-based setting index; default: the default setting of the convention.
+        1-based setting index; default: the ITC default setting.
     form : keyword-only, optional
         ``'short'`` (default): short symbol of the setting, e.g. ``321`` (ITC) for class ``32``.
         ``'full'``: full symbol, positions separated by spaces, e.g. ``-3 2/m 1``.
         ``'schoenflies'``: Schoenflies symbol, subscripts written inline (``C3v``, ``D2d``, ``Oh``).
     """
-    return str(_call("symbol", key, _shared.options(convention=convention, setting=setting, form=form)))
+    return str(_call("symbol", key, _shared.options(setting=setting, form=form)))
 
 
 def crystal_family(system: str) -> str:
@@ -427,20 +415,16 @@ def change_of_axes(p: ArrayLike) -> dict[str, NDArray[np.float64]]:
 
 
 def describe_operations(
-    key: str, *, convention: Optional[Convention] = None, setting: Optional[int] = None
+    key: str, *, setting: Optional[int] = None
 ) -> list[dict[str, Any]]:
     """Each operation of the crystal class described geometrically, in the order of ``operations``
-    for the same key and options. Axes are named by the symmetry direction they lie along: in the
-    ITC convention with the sign of ITA Table 2.1.3.1, in the Birss convention signed as birss-app
-    signs them (first non-zero Cartesian component positive); the sign fixes what the sense refers
-    to.
+    for the same key and options. Axes are named by the symmetry direction they lie along, with the
+    sign of ITA Table 2.1.3.1; the sign fixes what the sense refers to.
 
     Parameters
     ----------
-    convention : keyword-only, optional
-        Default ``'itc'``.
     setting : keyword-only, optional
-        1-based setting index; default: the default setting of the convention.
+        1-based setting index; default: the ITC default setting.
 
     Returns
     -------
@@ -448,7 +432,7 @@ def describe_operations(
         In each, ``axis`` (if present) has ``lattice`` (int64, shape (3,)) and ``cartesian``
         (float64, shape (3,)).
     """
-    return list(_call("describeOperations", key, _shared.options(convention=convention, setting=setting)))
+    return list(_call("describeOperations", key, _shared.options(setting=setting)))
 
 
 def point_group_of(
@@ -503,21 +487,18 @@ def describe_operations_of(
 
 
 def symmetry_directions(
-    key: str, *, convention: Optional[Convention] = None, setting: Optional[int] = None
+    key: str, *, setting: Optional[int] = None
 ) -> list[dict[str, Any]]:
-    """The positions of the full Hermann–Mauguin symbol in the requested convention and setting,
-    each with its symmetry directions (ITA Table 2.1.3.1) and the symmetry elements along them. All
-    positions of the crystal family are listed, also those the symbol of the class leaves out (then
-    without ``symbol``); the triclinic family has none. The directions keep the sign of Table
-    2.1.3.1 in both conventions; in the Birss convention an axis of ``describe_operations`` may be
-    reversed, so match it to a direction whose dot product with it is ±1, not by identity.
+    """The positions of the full Hermann–Mauguin symbol in the requested setting, each with its
+    symmetry directions (ITA Table 2.1.3.1) and the symmetry elements along them. All positions of
+    the crystal family are listed, also those the symbol of the class leaves out (then without
+    ``symbol``); the triclinic family has none. The axes of ``describe_operations`` are the same
+    objects.
 
     Parameters
     ----------
-    convention : keyword-only, optional
-        Default ``'itc'``.
     setting : keyword-only, optional
-        1-based setting index; default: the default setting of the convention.
+        1-based setting index; default: the ITC default setting.
 
     Returns
     -------
@@ -525,7 +506,7 @@ def symmetry_directions(
         Each entry of ``directions`` has ``lattice`` (int64, shape (3,)) and ``cartesian`` (float64,
         shape (3,)).
     """
-    return list(_call("symmetryDirections", key, _shared.options(convention=convention, setting=setting)))
+    return list(_call("symmetryDirections", key, _shared.options(setting=setting)))
 
 
 # --- properties of a list of operations ----------------------------------------------------------
@@ -585,24 +566,21 @@ def site_symmetry(
 
 
 def lattice_operations(
-    key: str, *, convention: Optional[Convention] = None, setting: Optional[int] = None
+    key: str, *, setting: Optional[int] = None
 ) -> list[Operation]:
     """The operations of the crystal class in the conventional lattice basis (a, b, c; for the
-    trigonal classes the hexagonal axes), in the order of ``operations`` for the same setting and
-    convention: integer matrices W acting on the coordinates of a lattice direction [uvw], W =
-    B⁻¹·R·B with the basis B of ``lattice_basis`` and the Cartesian matrix R of ``operations``. They
-    do not depend on the cell angles, so they exist for every family; for the monoclinic and
-    triclinic families a, b, c are taken along x, y, z, as for the Wyckoff positions. In the ITC
-    convention they are the matrices of ITA's general position (6th ed., Table 3.2.3.2). Not
-    orthogonal in general: pass them to no function that takes Cartesian operations
-    (docs/conventions.md, "Lattice basis and orbits").
+    trigonal classes the hexagonal axes), in the order of ``operations`` for the same setting:
+    integer matrices W acting on the coordinates of a lattice direction [uvw], W = B⁻¹·R·B with the
+    basis B of ``lattice_basis`` and the Cartesian matrix R of ``operations``. They do not depend on
+    the cell angles, so they exist for every family; for the monoclinic and triclinic families a, b,
+    c are taken along x, y, z, as for the Wyckoff positions. They are the matrices of ITA's general
+    position (6th ed., Table 3.2.3.2). Not orthogonal in general: pass them to no function that
+    takes Cartesian operations (docs/conventions.md, "Lattice basis and orbits").
 
     Parameters
     ----------
-    convention : keyword-only, optional
-        Default ``'itc'``.
     setting : keyword-only, optional
-        1-based setting index; default: the default setting of the convention.
+        1-based setting index; default: the ITC default setting.
 
     Returns
     -------
@@ -610,30 +588,27 @@ def lattice_operations(
         Dicts ``{"matrix"}``; each matrix is a float64 array of shape (3, 3) holding integers (the
         fixed rule for matrices).
     """
-    return list(_call("latticeOperations", key, _shared.options(convention=convention, setting=setting)))
+    return list(_call("latticeOperations", key, _shared.options(setting=setting)))
 
 
 def orbit(
     key: str,
     indices: Mapping[str, ArrayLike],
     *,
-    convention: Optional[Convention] = None,
     setting: Optional[int] = None,
 ) -> list[dict[str, Any]]:
     """The orbit of a face (hkl) or of a lattice direction [uvw] under a crystal class, exactly, in
     the lattice basis: the distinct faces (directions), in the order in which the operations reach
-    them (so in the ITC convention the given face first), each with the indices of the operations
-    that map the given one onto it. A face transforms with the inverse transpose of a lattice
-    operation, h' = W⁻ᵀ·h, a direction with the operation itself, u' = W·u. The number of entries is
-    the multiplicity of the face (direction). Raises SymcrysError unless exactly one of ``hkl`` and
-    ``uvw`` is given, as three integers not all zero (hexagonal axes: three indices, without i).
+    them (so the given face first), each with the indices of the operations that map the given one
+    onto it. A face transforms with the inverse transpose of a lattice operation, h' = W⁻ᵀ·h, a
+    direction with the operation itself, u' = W·u. The number of entries is the multiplicity of the
+    face (direction). Raises SymcrysError unless exactly one of ``hkl`` and ``uvw`` is given, as
+    three integers not all zero (hexagonal axes: three indices, without i).
 
     Parameters
     ----------
-    convention : keyword-only, optional
-        Default ``'itc'``.
     setting : keyword-only, optional
-        1-based setting index; default: the default setting of the convention.
+        1-based setting index; default: the ITC default setting.
 
     Returns
     -------
@@ -641,7 +616,7 @@ def orbit(
         In each, ``hkl`` (or ``uvw``) is an int64 array of shape (3,) and ``operations`` an int64
         array of shape (n,); ``indices`` is a dict ``{"hkl": ...}`` or ``{"uvw": ...}``.
     """
-    return list(_call("orbit", key, dict(indices), _shared.options(convention=convention, setting=setting)))
+    return list(_call("orbit", key, dict(indices), _shared.options(setting=setting)))
 
 
 def orbit_of(
@@ -674,18 +649,15 @@ def orbit_of(
 
 
 def wyckoff_positions(
-    key: str, *, convention: Optional[Convention] = None, setting: Optional[int] = None
+    key: str, *, setting: Optional[int] = None
 ) -> list[dict[str, Any]]:
     """The Wyckoff positions of a crystal class for directions, as ITA tabulates them (general
-    position first), in the ITC convention only (docs/conventions.md, "Site symmetry and Wyckoff
-    positions").
+    position first) (docs/conventions.md, "Site symmetry and Wyckoff positions").
 
     Parameters
     ----------
-    convention : keyword-only, optional
-        Default ``'itc'``.
     setting : keyword-only, optional
-        1-based setting index; default: the default setting of the convention.
+        1-based setting index; default: the ITC default setting.
 
     Returns
     -------
@@ -693,14 +665,13 @@ def wyckoff_positions(
         In each, ``representative`` has ``hkl`` (int64, shape (3,)) and ``cartesian`` (float64,
         shape (3,)), ``site_symmetry_operations`` is an int64 array of shape (n,).
     """
-    return list(_call("wyckoffPositions", key, _shared.options(convention=convention, setting=setting)))
+    return list(_call("wyckoffPositions", key, _shared.options(setting=setting)))
 
 
 def wyckoff_position_of(
     key: str,
     direction: ArrayLike,
     *,
-    convention: Optional[Convention] = None,
     setting: Optional[int] = None,
     tolerance: Optional[float] = None,
 ) -> dict[str, Any]:
@@ -710,10 +681,8 @@ def wyckoff_position_of(
 
     Parameters
     ----------
-    convention : keyword-only, optional
-        Default ``'itc'``.
     setting : keyword-only, optional
-        1-based setting index; default: the default setting of the convention.
+        1-based setting index; default: the ITC default setting.
     tolerance : keyword-only, optional
         A direction counts as fixed by an operation if the operation moves its unit vector by less
         than this (Euclidean distance). Default 10⁻⁶; a caller whose directions carry rounding
@@ -730,7 +699,7 @@ def wyckoff_position_of(
             "wyckoffPositionOf",
             key,
             np.asarray(direction),
-            _shared.options(convention=convention, setting=setting, tolerance=tolerance),
+            _shared.options(setting=setting, tolerance=tolerance),
         )
     )
 
@@ -739,19 +708,16 @@ def wyckoff_position_of(
 
 
 def crystal_forms(
-    key: str, *, convention: Optional[Convention] = None, setting: Optional[int] = None
+    key: str, *, setting: Optional[int] = None
 ) -> list[dict[str, Any]]:
     """The crystal forms of a crystal class, as ITA 6th ed. Table 3.2.3.2 prints them: for each
     Wyckoff position (general position first) its basic form (two for the cubic faces (hhl) of -43m
-    and m-3m), then its limiting forms. In the ITC convention only, like the Wyckoff positions
-    (docs/conventions.md, "Crystal forms").
+    and m-3m), then its limiting forms (docs/conventions.md, "Crystal forms").
 
     Parameters
     ----------
-    convention : keyword-only, optional
-        Default ``'itc'``.
     setting : keyword-only, optional
-        1-based setting index; default: the default setting of the convention.
+        1-based setting index; default: the ITC default setting.
 
     Returns
     -------
@@ -759,7 +725,7 @@ def crystal_forms(
         In each, ``representative`` has ``hkl`` (int64, shape (3,)) and ``cartesian`` (float64,
         shape (3,)).
     """
-    return list(_call("crystalForms", key, _shared.options(convention=convention, setting=setting)))
+    return list(_call("crystalForms", key, _shared.options(setting=setting)))
 
 
 # --- tensors -------------------------------------------------------------------------------------
@@ -769,21 +735,16 @@ def tensor_form(
     key: str,
     spec: TensorSpec | Mapping[str, Any] | TensorPropertyName,
     *,
-    convention: Optional[Convention] = None,
     setting: Optional[int] = None,
 ) -> TensorForm:
-    """The form of a tensor under a crystal class in the requested setting (default: the default
-    setting of the convention, ``'itc'`` unless given). The tensor is given by its specification or
-    by the name of a property in ``TENSOR_PROPERTIES`` (``'piezoelectric'``). The convention matters
-    only through the setting: the same setting index gives the same form in both conventions
-    (docs/conventions.md, "Tensors").
+    """The form of a tensor under a crystal class in the requested setting (default: the ITC default
+    setting). The tensor is given by its specification or by the name of a property in
+    ``TENSOR_PROPERTIES`` (``'piezoelectric'``; docs/conventions.md, "Tensors").
 
     Parameters
     ----------
-    convention : keyword-only, optional
-        Default ``'itc'``.
     setting : keyword-only, optional
-        1-based setting index; default: the default setting of the convention.
+        1-based setting index; default: the ITC default setting.
 
     Returns
     -------
@@ -793,7 +754,7 @@ def tensor_form(
         number of free parameters. A row of ``basis`` reshaped to ``(3,) * rank`` is a tensor.
     """
     return _shared.form(
-        _call("tensorForm", key, _shared.spec(spec), _shared.options(convention=convention, setting=setting))
+        _call("tensorForm", key, _shared.spec(spec), _shared.options(setting=setting))
     )
 
 
@@ -820,8 +781,7 @@ def allows_property(key: str, name: TensorPropertyName) -> bool:
     """True if the crystal class allows the named property, e.g. ``allows_property('-6m2',
     'piezoelectric')``: the tensor that describes it (``TENSOR_PROPERTIES``) has a non-zero form
     under the class. Symmetry only allows a property; whether a crystal shows it is a question of
-    the material. It does not depend on setting or convention. Raises SymcrysError for an unknown
-    key or name.
+    the material. It does not depend on the setting. Raises SymcrysError for an unknown key or name.
     """
     return bool(_call("allowsProperty", key, name))
 

@@ -44,17 +44,15 @@ form = symcrys.tensor_form("3m", {"rank": 3, "parity": "polar", "intrinsic": "jk
 form["parameters"]
 ```
 
-The components depend on the frame, so on the **setting** and on the **convention**: the default
-setting of `3m` is `3m1` in the ITC convention and setting 1 in the Birss convention, which Birss
-writes `3m` and ITC `31m`. The free components differ:
+The components depend on the frame, so on the **setting**: the default setting of `3m` is `3m1`,
+setting 1 is `31m`, turned by 30° about z. The free components differ:
 
 ```{code-cell} ipython3
 SHG = {"rank": 3, "parity": "polar", "intrinsic": "jk"}
-[symcrys.tensor_form("3m", SHG, convention=c)["parameters"][0] for c in ("itc", "birss")]
+[symcrys.tensor_form("3m", SHG, setting=s)["parameters"][0] for s in (2, 1)]
 ```
 
-The same setting index gives the same form in both conventions; only the default differs. Settings
-and frames: [Conventions, "Settings"](conventions.md#settings) and
+Settings and frames: [Conventions, "Settings"](conventions.md#settings) and
 [Conventions, "Cartesian frame"](conventions.md#cartesian-frame).
 
 ## Named properties

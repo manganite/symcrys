@@ -13,7 +13,6 @@ import * as classes from './index.js';
 import * as magnetic from './magnetic.js';
 import * as wyckoff from './pointGroups/wyckoff.js';
 
-const CONVENTIONS = ['itc', 'birss'] as const;
 const MAGNETIC_API = /symcrys\/magnetic/;
 
 /** The crystallographic API takes keys of crystal classes; tests pass it other keys on purpose. */
@@ -83,47 +82,41 @@ describe('keys', () => {
     classes.pointGroups().forEach((g, i) => expect(g).toBe(classes.pointGroup(classes.POINT_GROUP_KEYS[i])));
   });
 
-  it('a class is found by the symbol of each of its settings, in the convention asked for', () => {
+  it('a class is found by the symbol of each of its settings', () => {
     for (const key of classes.POINT_GROUP_KEYS) {
-      for (const convention of CONVENTIONS) {
-        for (const setting of classes.settings(key, convention)) {
-          for (const hm of [setting.symbol, setting.fullSymbol]) {
-            const found = classes.findPointGroup(hm, convention);
-            const what = `${hm} (${key}, ${convention})`;
-            expect(found?.key, what).toBe(key);
-            const again = classes.settings(key, convention)[found!.setting - 1];
-            expect([again.symbol, again.fullSymbol], what).toContain(hm);
-          }
+      for (const setting of classes.settings(key)) {
+        for (const hm of [setting.symbol, setting.fullSymbol]) {
+          const found = classes.findPointGroup(hm);
+          const what = `${hm} (${key})`;
+          expect(found?.key, what).toBe(key);
+          const again = classes.settings(key)[found!.setting - 1];
+          expect([again.symbol, again.fullSymbol], what).toContain(hm);
         }
       }
     }
-    // D3h: the two conventions give the same symbol to different settings (docs/conventions.md, "Keys").
+    // D3h: the symbol of setting 1 (docs/conventions.md, "Keys").
     expect(classes.findPointGroup('-62m')).toEqual({ key: '-6m2', setting: 1 });
-    expect(classes.findPointGroup('-62m', 'itc')).toEqual({ key: '-6m2', setting: 1 });
-    expect(classes.findPointGroup('-62m', 'birss')).toEqual({ key: '-6m2', setting: 2 });
   });
 });
 
 describe('the crystallographic API returns nothing about time reversal', () => {
   it('operations and generators are matrices, those of the white group, in its order', () => {
     for (const key of classes.POINT_GROUP_KEYS) {
-      for (const convention of CONVENTIONS) {
-        for (const { index: setting } of classes.settings(key, convention)) {
-          const options = { convention, setting };
-          for (const list of ['operations', 'generators'] as const) {
-            const ops = classes[list](key, options);
-            const white = magnetic[list](key, options);
-            const what = `${list} of ${key}, ${convention}, setting ${setting}`;
-            expect(ops, what).toHaveLength(white.length);
-            ops.forEach((op, i) => {
-              expect(Object.keys(op), what).toEqual(['matrix']);
-              expect(op.matrix, what).toBe(white[i].matrix);
-              expect(white[i].timeReversal, what).toBe(false);
-              expect(Object.isFrozen(op), what).toBe(true);
-            });
-            expect(Object.isFrozen(ops), what).toBe(true);
-            expect(classes[list](key, options), what).toBe(ops);
-          }
+      for (const { index: setting } of classes.settings(key)) {
+        const options = { setting };
+        for (const list of ['operations', 'generators'] as const) {
+          const ops = classes[list](key, options);
+          const white = magnetic[list](key, options);
+          const what = `${list} of ${key}, setting ${setting}`;
+          expect(ops, what).toHaveLength(white.length);
+          ops.forEach((op, i) => {
+            expect(Object.keys(op), what).toEqual(['matrix']);
+            expect(op.matrix, what).toBe(white[i].matrix);
+            expect(white[i].timeReversal, what).toBe(false);
+            expect(Object.isFrozen(op), what).toBe(true);
+          });
+          expect(Object.isFrozen(ops), what).toBe(true);
+          expect(classes[list](key, options), what).toBe(ops);
         }
       }
     }
@@ -131,24 +124,20 @@ describe('the crystallographic API returns nothing about time reversal', () => {
 
   it('descriptions of operations have no time reversal and are otherwise those of the white group', () => {
     for (const key of classes.POINT_GROUP_KEYS) {
-      for (const convention of CONVENTIONS) {
-        const described = classes.describeOperations(key, { convention });
-        const white = magnetic.describeOperations(key, { convention });
-        expect(described.map((d) => ({ ...d, timeReversal: false }))).toEqual(white);
-        for (const d of described) expect('timeReversal' in d).toBe(false);
-        expect(classes.describeOperations(key, { convention })).toBe(described);
-        expect(classes.symmetryDirections(key, { convention })).toBe(magnetic.symmetryDirections(key, { convention }));
-      }
+      const described = classes.describeOperations(key);
+      const white = magnetic.describeOperations(key);
+      expect(described.map((d) => ({ ...d, timeReversal: false }))).toEqual(white);
+      for (const d of described) expect('timeReversal' in d).toBe(false);
+      expect(classes.describeOperations(key)).toBe(described);
+      expect(classes.symmetryDirections(key)).toBe(magnetic.symmetryDirections(key));
     }
   });
 
   it('settings, symbols and the properties of the operations are those of the white group', () => {
     for (const key of classes.POINT_GROUP_KEYS) {
-      for (const convention of CONVENTIONS) {
-        expect(classes.settings(key, convention)).toEqual(magnetic.settings(key, convention));
-        for (const form of ['short', 'full', 'schoenflies'] as const) {
-          expect(classes.symbol(key, { convention, form })).toBe(magnetic.symbol(key, { convention, form }));
-        }
+      expect(classes.settings(key)).toEqual(magnetic.settings(key));
+      for (const form of ['short', 'full', 'schoenflies'] as const) {
+        expect(classes.symbol(key, { form })).toBe(magnetic.symbol(key, { form }));
       }
       // … and for a list of operations: the same answers as the fields, and as the magnetic API.
       const g = classes.pointGroup(key);

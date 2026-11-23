@@ -24,7 +24,6 @@
     "docs:site": "sphinx-build -W --keep-going -n -b html docs build/docs/html",
     "docs:linkcheck": "sphinx-build -W --keep-going -b linkcheck docs build/docs/linkcheck",
     "audit:point-groups": "vitest run --config audit/point-groups/vitest.config.ts",
-    "audit:birss-app": "vitest run --config audit/birss-app/vitest.config.ts",
     "audit:wyckoff-2006": "vitest run --config audit/wyckoff-2006/vitest.config.ts",
     "audit:forms-2006": "vitest run --config audit/forms-2006/vitest.config.ts",
     "audit:plane-groups-2006": "vitest run --config audit/plane-groups-2006/vitest.config.ts",

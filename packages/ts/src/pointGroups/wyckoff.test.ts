@@ -4,7 +4,7 @@ import { siteSymmetry } from '../siteSymmetry.js';
 import { POINT_GROUP_KEYS, operations, settings } from './pointGroups.js';
 import { wyckoffPositionOf, wyckoffPositions } from './wyckoff.js';
 
-const ALL_SETTINGS = POINT_GROUP_KEYS.flatMap((key) => settings(key, 'itc').map((s) => ({ key, s })));
+const ALL_SETTINGS = POINT_GROUP_KEYS.flatMap((key) => settings(key).map((s) => ({ key, s })));
 const DIRECTIONS: Vec3[] = [
   [1, 0, 0],
   [0, 1, 0],
@@ -36,9 +36,9 @@ describe('wyckoffPositions', () => {
     expect(wyckoffPositions('32', { setting: 1 })[1].siteSymmetry).toBe('..2');
   });
 
-  it('are not defined in the Birss convention', () => {
-    expect(() => wyckoffPositions('mmm', { convention: 'birss' })).toThrow(RangeError);
-    expect(() => wyckoffPositionOf('mmm', [0, 0, 1], { convention: 'birss' })).toThrow(RangeError);
+  it('refuse the option convention, removed in 0.11.0', () => {
+    expect(() => wyckoffPositions('mmm', { convention: 'birss' } as never)).toThrow(/option convention was removed/);
+    expect(() => wyckoffPositionOf('mmm', [0, 0, 1], { convention: 'birss' } as never)).toThrow(RangeError);
   });
 
   it('reject an unknown setting', () => {

@@ -2,8 +2,9 @@
  * Hermann–Mauguin symbols of the black-and-white point groups. The symbol of such a group in a
  * given frame is the symbol of its crystal class in that frame, each position carrying a prime if
  * the operation it names is combined with time reversal (ITC Vol. D, § 1.5.2.1, Table 1.5.2.3).
- * So no symbols are stored for these groups: they follow from the symbols of the class
- * (data.ts) and the operations (docs/conventions.md, "Symbols").
+ * The ITC symbols of these groups are stored (itcMagneticData.ts); this module writes the symbol a
+ * group has with given operations, from which the time reversal of the operations is derived
+ * (docs/conventions.md, "Symbols").
  */
 
 import { matricesEqual, type Mat3, type Vec3 } from '../linalg.js';
@@ -12,12 +13,8 @@ import type { Operation } from '../operations.js';
 import { LATTICE_SYMMETRY_DIRECTIONS } from '../symmetryDirections.js';
 
 /** The Cartesian direction of the first symmetry direction of each position of the full symbol. */
-function positionDirections(family: CrystalFamily, convention: 'itc' | 'birss'): readonly Vec3[] {
+function positionDirections(family: CrystalFamily): readonly Vec3[] {
   const positions = LATTICE_SYMMETRY_DIRECTIONS[family];
-  // Birss reads position 2 of the hexagonal family along y and position 3 along x
-  // (docs/conventions.md, "Where ITC and Birss differ").
-  const ordered =
-    convention === 'birss' && family === 'hexagonal' ? [positions[0], positions[2], positions[1]] : positions;
   // Monoclinic: a, b, c along x, y, z, exact for the unique axis, the only one with an element.
   const b: Mat3 =
     family === 'monoclinic' || family === 'triclinic'
@@ -27,7 +24,7 @@ function positionDirections(family: CrystalFamily, convention: 'itc' | 'birss'):
           [0, 0, 1],
         ]
       : latticeBasis(family);
-  return ordered.map(([uvw]) => [
+  return positions.map(([uvw]) => [
     b[0][0] * uvw[0] + b[0][1] * uvw[1] + b[0][2] * uvw[2],
     b[1][0] * uvw[0] + b[1][1] * uvw[1] + b[1][2] * uvw[2],
     b[2][0] * uvw[0] + b[2][1] * uvw[1] + b[2][2] * uvw[2],
@@ -88,17 +85,16 @@ function shortTokens(symbol: string): string[] {
 
 /**
  * The symbols of a black-and-white group in one frame: the short and the full symbol of its
- * crystal class in that frame, in the given convention, with primes taken from `ops`, the
+ * crystal class in that frame, with primes taken from `ops`, the
  * operations of the group in that frame.
  */
 export function primedSymbols(
   classSymbols: { readonly short: string; readonly full: string },
   system: CrystalSystem,
-  convention: 'itc' | 'birss',
   ops: readonly Operation[],
 ): { short: string; full: string } {
   const family = crystalFamily(system);
-  const directions = positionDirections(family, convention);
+  const directions = positionDirections(family);
   const what = `Symbol ${classSymbols.short}`;
   const fullTokens = classSymbols.full.split(' ');
   const full = fullTokens.map((t, i) => primedToken(t, directions[i], ops, what)).join(' ');

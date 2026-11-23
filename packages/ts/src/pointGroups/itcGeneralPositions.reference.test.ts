@@ -87,7 +87,7 @@ function cartesian(e: Entry): RefOp[] {
 function settingOf(e: Entry): { key: PointGroupKey; index: number }[] {
   const axis = /^unique axis (b|c)$/.exec(e.axes)?.[1];
   return POINT_GROUP_KEYS.flatMap((key) =>
-    settings(key, 'itc')
+    settings(key)
       .filter((s) => s.symbol === e.short && (axis === undefined || s.uniqueAxis === axis))
       .map((s) => ({ key, index: s.index })),
   );
@@ -102,7 +102,7 @@ describe('ITA Table 3.2.3.2: general positions', () => {
   it('covers every ITC setting of symcrys except 2mm and m2m, which ITA does not list', () => {
     const covered = new Set(ENTRIES.flatMap((e) => settingOf(e).map((s) => `${s.key}#${s.index}`)));
     const all = POINT_GROUP_KEYS.flatMap((key) =>
-      settings(key, 'itc')
+      settings(key)
         .filter((s) => s.symbol !== '2mm' && s.symbol !== 'm2m')
         .map((s) => `${key}#${s.index}`),
     );
@@ -126,7 +126,7 @@ describe('ITA Table 3.2.3.2: general positions', () => {
     it(`${label}: the printed operations are those of the ITC setting`, () => {
       const matches = settingOf(e);
       expect(matches).toHaveLength(1);
-      const ops = operations(matches[0].key, { convention: 'itc', setting: matches[0].index });
+      const ops = operations(matches[0].key, { setting: matches[0].index });
       expect(sameGroup(cartesian(e), ops)).toBe(true);
     });
   }

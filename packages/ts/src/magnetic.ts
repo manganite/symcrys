@@ -75,7 +75,6 @@ export {
   pointGroup,
   settings,
   symbol,
-  type Convention,
   type PointGroupType,
   type Setting,
   type SettingOptions,

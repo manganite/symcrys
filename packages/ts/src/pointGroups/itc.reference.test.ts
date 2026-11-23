@@ -201,7 +201,7 @@ describe('ITC symbols and operations of every setting', () => {
   for (const key of POINT_GROUP_KEYS) {
     describe(key, () => {
       const expected = ITC_SETTINGS[key];
-      const actual = settings(key, 'itc');
+      const actual = settings(key);
       const system = crystalSystemOf(key);
 
       it('settings match the fixture one to one, with the standard setting as default', () => {
@@ -222,17 +222,17 @@ describe('ITC symbols and operations of every setting', () => {
         });
 
         it(`${label}: operations = group of the short symbol along the ITA symmetry directions`, () => {
-          const ops = operations(key, { convention: 'itc', setting: setting().index });
+          const ops = operations(key, { setting: setting().index });
           expect(sameGroup(groupOfSymbol(e.short, directions(system, e.short, e.uniqueAxis)), ops)).toBe(true);
         });
 
         it(`${label}: operations = group of the full symbol along the ITA symmetry directions`, () => {
-          const ops = operations(key, { convention: 'itc', setting: setting().index });
+          const ops = operations(key, { setting: setting().index });
           expect(sameGroup(groupOfSymbol(e.full, directions(system, e.full, e.uniqueAxis)), ops)).toBe(true);
         });
 
         it(`${label}: findPointGroup finds this setting by its full symbol`, () => {
-          expect(findPointGroup(setting().fullSymbol, 'itc')).toEqual({ key, setting: setting().index });
+          expect(findPointGroup(setting().fullSymbol)).toEqual({ key, setting: setting().index });
         });
       }
     });

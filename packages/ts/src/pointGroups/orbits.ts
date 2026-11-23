@@ -51,10 +51,10 @@ const latticeCache = new WeakMap<readonly Operation[], readonly Operation[]>();
 /**
  * The operations of a point group in the conventional lattice basis (a, b, c; for the trigonal
  * classes the hexagonal axes), in the order and with the time reversal of `operations` for the same
- * setting and convention: integer matrices W acting on the coordinates of a lattice vector [uvw],
+ * setting: integer matrices W acting on the coordinates of a lattice vector [uvw],
  * W = B⁻¹·R·B with the basis B of `latticeBasis` and the Cartesian matrix R. They do not depend on
  * the cell angles, so they exist for every family; for the monoclinic and triclinic families a, b,
- * c are taken along x, y, z, as for the Wyckoff positions. In the ITC convention they are the
+ * c are taken along x, y, z, as for the Wyckoff positions. They are the
  * matrices of ITA's general position (6th ed., Table 3.2.3.2). Not orthogonal in general: pass
  * them to no function that takes Cartesian operations (docs/conventions.md, "Lattice basis and
  * orbits").
@@ -63,9 +63,9 @@ export function latticeOperations(key: MagneticPointGroupKey, options?: SettingO
   const ops = groupOperations(key, options);
   let result = latticeCache.get(ops);
   if (!result) {
-    if (isPointGroupKey(key) && (options?.convention ?? 'itc') === 'itc') {
-      // A class in the ITC convention: the exact matrices of the ITC class data, in the same order.
-      const index = options?.setting ?? settings(key, 'itc').find((s) => s.isDefault)!.index;
+    if (isPointGroupKey(key)) {
+      // A crystal class: the exact matrices of the ITC class data, in the same order.
+      const index = options?.setting ?? settings(key).find((s) => s.isDefault)!.index;
       result = Object.freeze(
         itcLatticeOperations(key, index).map((w, i) =>
           Object.freeze({ matrix: deepFreeze(w as unknown as Mat3), timeReversal: ops[i].timeReversal }),
@@ -110,7 +110,7 @@ function indicesOf(value: unknown, name: string): readonly [number, number, numb
 export interface FaceOrbitEntry {
   /** Miller indices (hkl) of the face, in the conventional basis (hexagonal axes: without i). */
   readonly hkl: Hkl;
-  /** Indices into `operations` (same setting and convention) of the operations that map the given face onto this one, ascending. */
+  /** Indices into `operations` (same setting) of the operations that map the given face onto this one, ascending. */
   readonly operations: readonly number[];
 }
 
@@ -118,14 +118,14 @@ export interface FaceOrbitEntry {
 export interface DirectionOrbitEntry {
   /** The lattice direction [uvw] in the conventional basis. */
   readonly uvw: Uvw;
-  /** Indices into `operations` (same setting and convention) of the operations that map the given direction onto this one, ascending. */
+  /** Indices into `operations` (same setting) of the operations that map the given direction onto this one, ascending. */
   readonly operations: readonly number[];
 }
 
 /**
  * The orbit of a face (hkl) or of a lattice direction [uvw] under a point group, exactly, in the
  * lattice basis: the distinct faces (directions), in the order in which the operations reach them
- * (so in the ITC convention the given face first), each with the indices of the operations that map
+ * (so the given face first), each with the indices of the operations that map
  * the given one onto it. A face transforms with the inverse transpose of a lattice operation,
  * h' = W⁻ᵀ·h, a direction with the operation itself, u' = W·u. The number of entries is the
  * multiplicity of the face (direction), and the operations of the first entry, if it is the given

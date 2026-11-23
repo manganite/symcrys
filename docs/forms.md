@@ -10,7 +10,7 @@ kernelspec:
 A crystal form is a set of faces that a point group makes equivalent. ITA (6th ed.) lists, for every
 crystal class and every Wyckoff position, the forms that occur there: the **basic** form and the
 **limiting** forms, which have the same face symmetry but a higher eigensymmetry. symcrys gives these
-lists, in the ITC convention, together with ITA's table of the 47 forms (number, English name,
+lists, together with ITA's table of the 47 forms (number, English name,
 number of faces, eigensymmetry). The rules and the print anchors are in
 [Conventions](conventions.md), "Crystal forms" and "Site symmetry and Wyckoff positions".
 

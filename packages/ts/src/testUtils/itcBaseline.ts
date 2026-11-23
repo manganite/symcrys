@@ -178,25 +178,25 @@ function pointGroupPins(add: (id: string, f: () => unknown) => void, key: Magnet
   const isClass = classes.isPointGroupKey(key);
   add(`${key}: magnetic.pointGroup`, () => magnetic.pointGroup(key));
   add(`${key}: magnetic.allowedProperties`, () => magnetic.allowedProperties(key));
-  add(`${key}: magnetic.settings`, () => magnetic.settings(key, 'itc'));
+  add(`${key}: magnetic.settings`, () => magnetic.settings(key));
   if (isClass) {
     add(`${key}: classes.pointGroup`, () => classes.pointGroup(key));
     add(`${key}: classes.allowedProperties`, () => classes.allowedProperties(key));
-    add(`${key}: classes.settings`, () => classes.settings(key, 'itc'));
+    add(`${key}: classes.settings`, () => classes.settings(key));
   }
-  for (const s of magnetic.settings(key, 'itc')) {
-    const options = { convention: 'itc', setting: s.index } as const;
+  for (const s of magnetic.settings(key)) {
+    const options = { setting: s.index } as const;
     const id = (what: string) => `${key} | ${s.fullSymbol}: ${what}`;
     const ops = magnetic.operations(key, options);
     add(id('setting index'), () => s.index);
     for (const form of ['short', 'full', 'schoenflies'] as const) {
       const sym = magnetic.symbol(key, { ...options, form });
       add(id(`magnetic.symbol ${form}`), () => sym);
-      add(id(`magnetic.findPointGroup(${form})`), () => magnetic.findPointGroup(sym, 'itc'));
+      add(id(`magnetic.findPointGroup(${form})`), () => magnetic.findPointGroup(sym));
       if (isClass) {
         const classSymbol = classes.symbol(key, { ...options, form });
         add(id(`classes.symbol ${form}`), () => classSymbol);
-        add(id(`classes.findPointGroup(${form})`), () => classes.findPointGroup(classSymbol, 'itc'));
+        add(id(`classes.findPointGroup(${form})`), () => classes.findPointGroup(classSymbol));
       }
     }
     add(id('magnetic.operations'), () => ops);
@@ -281,12 +281,10 @@ const formPin = (form: magnetic.TensorForm) => ({
  * of its class; a grey group allows no time-odd tensor and has the time-even forms of its class).
  */
 function tensorPins(add: (id: string, f: () => unknown) => void, key: MagneticPointGroupKey, timeParity: 'i' | 'c') {
-  for (const s of magnetic.settings(key, 'itc')) {
+  for (const s of magnetic.settings(key)) {
     for (const spec of specs(timeParity)) {
       const label = `${spec.rank} ${spec.parity} ${spec.timeParity} ${spec.intrinsic}`;
-      add(`${key} | ${s.fullSymbol}: ${label}`, () =>
-        formPin(magnetic.tensorForm(key, spec, { convention: 'itc', setting: s.index })),
-      );
+      add(`${key} | ${s.fullSymbol}: ${label}`, () => formPin(magnetic.tensorForm(key, spec, { setting: s.index })));
     }
   }
 }
@@ -406,8 +404,8 @@ function generalPins(add: (id: string, f: () => unknown) => void): void {
   add('classes.TENSOR_PROPERTIES', () => classes.TENSOR_PROPERTIES);
   add('LATTICE_SYMMETRY_DIRECTIONS', () => classes.LATTICE_SYMMETRY_DIRECTIONS);
   for (const symbol of SEARCHED_SYMBOLS) {
-    add(`classes.findPointGroup ${JSON.stringify(symbol)}`, () => classes.findPointGroup(symbol, 'itc'));
-    add(`magnetic.findPointGroup ${JSON.stringify(symbol)}`, () => magnetic.findPointGroup(symbol, 'itc'));
+    add(`classes.findPointGroup ${JSON.stringify(symbol)}`, () => classes.findPointGroup(symbol));
+    add(`magnetic.findPointGroup ${JSON.stringify(symbol)}`, () => magnetic.findPointGroup(symbol));
   }
   for (const f of ['orthorhombic', 'tetragonal', 'hexagonal', 'cubic'] as const) {
     add(`latticeBasis ${f}`, () => classes.latticeBasis(f));

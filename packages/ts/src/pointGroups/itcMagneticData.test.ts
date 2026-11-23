@@ -10,7 +10,7 @@
 
 import { describe, expect, it } from 'vitest';
 import { matricesEqual } from '../linalg.js';
-import { BLACK_WHITE_POINT_GROUP_KEYS } from './magneticData.js';
+import { BLACK_WHITE_POINT_GROUP_KEYS } from './keys.js';
 import { itcLatticeOperations } from './itcData.js';
 import { ITC_BLACK_WHITE, itcBlackWhiteClassSetting, itcBlackWhiteOperations } from './itcMagneticData.js';
 import { operations, settings, symbol } from './pointGroups.js';
@@ -24,8 +24,7 @@ describe('the ITC data of the black-and-white groups', () => {
     expect(ITC_BLACK_WHITE.map((g) => g.key)).toEqual([...BLACK_WHITE_POINT_GROUP_KEYS]);
     for (const g of ITC_BLACK_WHITE) {
       expect(g.settings.filter((s) => s.isDefault)).toHaveLength(1);
-      expect(settings(g.key, 'itc')).toHaveLength(g.settings.length);
-      expect(settings(g.key, 'birss')).toHaveLength(g.settings.length);
+      expect(settings(g.key)).toHaveLength(g.settings.length);
     }
   });
 
@@ -38,7 +37,7 @@ describe('the ITC data of the black-and-white groups', () => {
   });
 
   it.each(SETTINGS)('%s: the API gives the data', (_, g, s) => {
-    const api = settings(g.key, 'itc').find((x) => x.index === s.index)!;
+    const api = settings(g.key).find((x) => x.index === s.index)!;
     expect(api.fullSymbol).toBe(s.full);
     expect(api.isDefault).toBe(s.isDefault);
     expect(api.uniqueAxis).toBe(s.uniqueAxis);

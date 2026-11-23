@@ -16,7 +16,7 @@ import type { Mat3, Vec3 } from './linalg.js';
 import type { Operation as MagneticOperation } from './operations.js';
 import * as elements from './pointGroups/elements.js';
 import * as groups from './pointGroups/pointGroups.js';
-import type { Convention, PointGroupKey, Setting, SettingOptions, SymbolOptions } from './pointGroups/pointGroups.js';
+import type { PointGroupKey, Setting, SettingOptions, SymbolOptions } from './pointGroups/pointGroups.js';
 import * as properties from './pointGroups/properties.js';
 import * as forms from './pointGroups/crystalForms.js';
 import * as identify from './pointGroups/identify.js';
@@ -235,46 +235,42 @@ export function pointGroups(): readonly PointGroup[] {
 }
 
 /**
- * Finds a crystal class by a Hermann–Mauguin symbol in the given convention (default `'itc'`): the
- * short symbol of a setting, a full symbol, or the key (spaces are ignored). A symbol that names
- * one setting gives that setting; the key, and a short symbol that several settings share (the
- * monoclinic ones: `2` for unique axis b and c), give the default setting of the convention.
- * Returns undefined if nothing matches, also for a value that is not a string and for the
- * symbol of a magnetic group with time reversal. Symbols are written as in this library: `-` for
- * the overbar, also in the Birss convention (`m-3m`, where Birss prints `m3m`; docs/conventions.md,
- * "Where ITC and Birss differ").
+ * Finds a crystal class by a Hermann–Mauguin symbol: the short symbol of a setting, a full symbol,
+ * or the key (spaces are ignored). A symbol that names one setting gives that setting; the key, and
+ * a short symbol that several settings share (the monoclinic ones: `2` for unique axis b and c),
+ * give the ITC default setting. Returns undefined if nothing matches, also for a value that is not a
+ * string and for the symbol of a magnetic group with time reversal. Symbols are written as in this
+ * library, with `-` for the overbar (`m-3m`).
  */
-export function findPointGroup(hm: string, conventionName: Convention = 'itc'): PointGroupInSetting | undefined {
-  return groups.findPointGroup(hm, conventionName);
+export function findPointGroup(hm: string): PointGroupInSetting | undefined {
+  return groups.findPointGroup(hm);
 }
 
-/** The settings of a crystal class, with symbols and the default of the given convention (default `'itc'`). */
-export function settings(key: PointGroupKey, conventionName: Convention = 'itc'): readonly Setting[] {
-  return groups.settings(classKey(key), conventionName);
+/** The settings of a crystal class, with their symbols and the ITC default. */
+export function settings(key: PointGroupKey): readonly Setting[] {
+  return groups.settings(classKey(key));
 }
 
 /**
- * All operations of the crystal class in the requested setting (default: the convention's default
- * setting). ITC convention: in ITA's order, identity first, then as ITA numbers the general
- * position. Birss convention: in birss-app's order (docs/conventions.md, "Order of the
- * operations"). The matrices are Cartesian (docs/conventions.md, "Cartesian frame").
+ * All operations of the crystal class in the requested setting (default: the ITC default setting),
+ * in ITA's order: identity first, then as ITA numbers the general position (docs/conventions.md,
+ * "Order of the operations"). The matrices are Cartesian (docs/conventions.md, "Cartesian frame").
  */
 export function operations(key: PointGroupKey, options?: SettingOptions): readonly Operation[] {
   return matricesOnly(groups.operations(classKey(key), options));
 }
 
 /**
- * Generators of the crystal class in the requested setting (docs/conventions.md, "Generators"). ITC
- * convention: ITA's selected generators in printed order, without the identity and ITA's lattice
- * translations, so the list is empty for `1`; for `mm2` settings 2 and 3, which ITA does not list,
- * those of setting 1 carried into their frame. Birss convention: birss-app's generators (for `1`
- * the identity, as in birss-app).
+ * Generators of the crystal class in the requested setting (docs/conventions.md, "Generators"):
+ * ITA's selected generators in printed order, without the identity and ITA's lattice translations,
+ * so the list is empty for `1`; for `mm2` settings 2 and 3, which ITA does not list, those of
+ * setting 1 carried into their frame.
  */
 export function generators(key: PointGroupKey, options?: SettingOptions): readonly Operation[] {
   return matricesOnly(groups.generators(classKey(key), options));
 }
 
-/** A symbol of the crystal class in the requested convention and setting. */
+/** A symbol of the crystal class in the requested setting. */
 export function symbol(key: PointGroupKey, options?: SymbolOptions): string {
   return groups.symbol(classKey(key), options);
 }
@@ -360,9 +356,8 @@ export function describeOperationsOf(
 
 /**
  * Each operation of the crystal class described geometrically, in the order of `operations` for
- * the same key and options. Axes are named by the symmetry direction they lie along: in the ITC
- * convention with the sign of ITA Table 2.1.3.1, in the Birss convention signed as birss-app signs
- * them (first non-zero Cartesian component positive); the sign fixes what the sense refers to.
+ * the same key and options. Axes are named by the symmetry direction they lie along, with the sign
+ * of ITA Table 2.1.3.1; the sign fixes what the sense refers to.
  */
 export function describeOperations(key: PointGroupKey, options?: SettingOptions): readonly OperationDescription[] {
   const described = elements.describeOperations(classKey(key), options);
@@ -379,12 +374,10 @@ export function describeOperations(key: PointGroupKey, options?: SettingOptions)
 }
 
 /**
- * The positions of the full Hermann–Mauguin symbol in the requested convention and setting, each
- * with its symmetry directions (ITA Table 2.1.3.1) and the symmetry elements along them. All
- * positions of the crystal family are listed, also those the symbol of the class leaves out (then
- * without `symbol`); the triclinic family has none. The directions keep the sign of Table 2.1.3.1
- * in both conventions; in the Birss convention an axis of `describeOperations` may be reversed, so
- * match it to a direction whose dot product with it is ±1, not by identity.
+ * The positions of the full Hermann–Mauguin symbol in the requested setting, each with its
+ * symmetry directions (ITA Table 2.1.3.1) and the symmetry elements along them. All positions of the
+ * crystal family are listed, also those the symbol of the class leaves out (then without `symbol`);
+ * the triclinic family has none. The axes of `describeOperations` are the same objects.
  */
 export function symmetryDirections(
   key: PointGroupKey,
@@ -418,7 +411,7 @@ export function siteSymmetry(
 
 /**
  * The Wyckoff positions of a crystal class for directions, as ITA tabulates them (general position
- * first), in the ITC convention only (docs/conventions.md, "Site symmetry and Wyckoff positions").
+ * first) (docs/conventions.md, "Site symmetry and Wyckoff positions").
  */
 export function wyckoffPositions(key: PointGroupKey, options?: SettingOptions): readonly wyckoff.WyckoffPosition[] {
   return wyckoff.wyckoffPositions(classKey(key), options);
@@ -457,12 +450,12 @@ export function residualOperations<T extends OperationArgument>(
 
 /**
  * The operations of the crystal class in the conventional lattice basis (a, b, c; for the trigonal
- * classes the hexagonal axes), in the order of `operations` for the same setting and convention:
+ * classes the hexagonal axes), in the order of `operations` for the same setting:
  * integer matrices W acting on the coordinates of a lattice direction [uvw], W = B⁻¹·R·B with the
  * basis B of `latticeBasis` and the Cartesian matrix R of `operations`. They do not depend on the
  * cell angles, so they exist for every family; for the monoclinic and triclinic families a, b, c
- * are taken along x, y, z, as for the Wyckoff positions. In the ITC convention they are the
- * matrices of ITA's general position (6th ed., Table 3.2.3.2). Not orthogonal in general: pass
+ * are taken along x, y, z, as for the Wyckoff positions. They are the matrices of ITA's general
+ * position (6th ed., Table 3.2.3.2). Not orthogonal in general: pass
  * them to no function that takes Cartesian operations (docs/conventions.md, "Lattice basis and
  * orbits").
  */
@@ -473,7 +466,7 @@ export function latticeOperations(key: PointGroupKey, options?: SettingOptions):
 /**
  * The orbit of a face (hkl) or of a lattice direction [uvw] under a crystal class, exactly, in the
  * lattice basis: the distinct faces (directions), in the order in which the operations reach them
- * (so in the ITC convention the given face first), each with the indices of the operations that map
+ * (so the given face first), each with the indices of the operations that map
  * the given one onto it. A face transforms with the inverse transpose of a lattice operation,
  * h' = W⁻ᵀ·h, a direction with the operation itself, u' = W·u. The number of entries is the
  * multiplicity of the face (direction). Throws a RangeError unless exactly one of `hkl` and `uvw` is
@@ -533,8 +526,7 @@ export const CRYSTAL_FORM_TYPES: readonly forms.CrystalFormType[] = forms.CRYSTA
 /**
  * The crystal forms of a crystal class, as ITA 6th ed. Table 3.2.3.2 prints them: for each Wyckoff
  * position (general position first) its basic form (two for the cubic faces (hhl) of -43m and
- * m-3m), then its limiting forms. In the ITC convention
- * only, like the Wyckoff positions (docs/conventions.md, "Crystal forms").
+ * m-3m), then its limiting forms (docs/conventions.md, "Crystal forms").
  */
 export function crystalForms(key: PointGroupKey, options?: SettingOptions): readonly forms.CrystalForm[] {
   return forms.crystalForms(classKey(key), options);
@@ -543,11 +535,9 @@ export function crystalForms(key: PointGroupKey, options?: SettingOptions): read
 // --- tensors ---------------------------------------------------------------------------------------
 
 /**
- * The form of a tensor under a crystal class in the requested setting (default: the default
- * setting of the convention, `'itc'` unless given). The tensor is given by its specification or by
- * the name of a property in `TENSOR_PROPERTIES` (`'piezoelectric'`). The convention matters only
- * through the setting: the same setting index gives the same form in both conventions
- * (docs/conventions.md, "Tensors").
+ * The form of a tensor under a crystal class in the requested setting (default: the ITC default
+ * setting). The tensor is given by its specification or by the name of a property in
+ * `TENSOR_PROPERTIES` (`'piezoelectric'`; docs/conventions.md, "Tensors").
  */
 export function tensorForm(
   key: PointGroupKey,
@@ -590,7 +580,7 @@ export function rotateTensor(
  * True if the crystal class allows the named property, e.g. `allowsProperty('-6m2',
  * 'piezoelectric')`: the tensor that describes it (`TENSOR_PROPERTIES`) has a non-zero form under
  * the class. Symmetry only allows a property; whether a crystal shows it is a question of the
- * material. It does not depend on setting or convention. Throws a RangeError for an unknown key or
+ * material. It does not depend on the setting. Throws a RangeError for an unknown key or
  * name.
  */
 export function allowsProperty(key: PointGroupKey, name: TensorPropertyName): boolean {
