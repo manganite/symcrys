@@ -171,7 +171,7 @@ symbol in each setting, from which its operations follow (`pointGroups/itcMagnet
 axis c and unique axis a; for the orthorhombic groups, the further orientations in the order of the columns of ITA
 (2016) Table 1.5.4.4 (abc, ba-c, cab, -cba, bca, a-cb), each orientation once; otherwise the other
 orientation. A setting is chosen by its index or by its ITC symbol, short or full (`{ setting: '312' }`,
-`{ setting: '1 1 2' }`); a symbol that several settings share (`'2'` for unique axis b and c) is an
+`{ setting: '1 1 2' }`); a symbol that several settings share (`'2'` for unique axis b, c and a) is an
 error that names them. The record of a setting (`settings(key)`) has `index`, `symbol`,
 `fullSymbol`, `isDefault`, and `uniqueAxis` for a monoclinic setting, `axes` (`'hexagonal'`) for a
 trigonal one.
@@ -219,7 +219,8 @@ The ITC defaults of symcrys:
 - `-42m`, `mm2`: the first or only entry in ITA.
 
 Frames: the monoclinic settings have the unique axis along y, z and x (unique axis a: from b by
-the setting bca of ITA 2016 Table 1.5.4.4); `2mm` and `m2m` are `mm2` with
+a′ = b, b′ = c, c′ = a, as the column abc of unique axis a in the monoclinic part of ITA 2016 Table
+1.5.4.4, p. 97, is that of unique axis b: C121 → B211, P1c1 → Pb11); `2mm` and `m2m` are `mm2` with
 the twofold axis along x and y (the settings cab and bca of ITA 2016 Table 1.5.4.4); the second
 setting of `-42m` is rotated by 45° about z, those of the trigonal and hexagonal classes by 30°.
 The classes `222` and `mmm` have one setting only: their three axes are equivalent.
@@ -369,9 +370,9 @@ its selected generators (`generators`, below; 5th ed., § 2.2.11 (iv), p. 27; "G
 of the symmorphic P group in Part 7) and takes the next generator as soon as a power of the current
 one lies in the group generated so far (§ 8.3.5, p. 737). Starting from the identity, each generator
 g therefore extends the group H generated so far by the cosets gH, g²H, … until a power of g lies in
-H. For the two settings ITA does not list, `mm2` settings 2 (`2mm`) and 3 (`m2m`), the order is that
-of setting 1, carried into their frame by the change of basis of the settings cab and bca of ITA
-(2016) Table 1.5.4.4. `describeOperations` follows the order of `operations`.
+H. For the settings ITA does not list, `mm2` settings 2 (`2mm`) and 3 (`m2m`) and monoclinic unique
+axis a, the order is that of setting 1, carried into their frame by the change of basis of ITA
+(2016) Table 1.5.4.4 (cab, bca; for unique axis a, a′ = b, b′ = c, c′ = a, see "Settings"). `describeOperations` follows the order of `operations`.
 
 **Magnetic groups** (maintainer, 2026-11-19). ITC Vol. D prints no order of the
 individual operations: Table 1.5.2.3 lists them grouped (`±4_z`, `3(2_⊥)`, `4(±3)`). symcrys keeps
@@ -384,8 +385,8 @@ lists the operations of its class, then the same sequence combined with time rev
 
 `generators` returns ITA's selected generators of the setting ("Generators
 selected" of the symmorphic P group, 5th ed., Part 7), in printed order and without the identity;
-for `mm2` settings 2 and 3, which ITA does not list, those of setting 1 carried into their frame
-(the settings cab and bca of ITA (2016) Table 1.5.4.4). A magnetic group has
+for the settings ITA does not list (`mm2` settings 2 and 3, monoclinic unique axis a), those of
+setting 1 carried into their frame (ITA (2016) Table 1.5.4.4). A magnetic group has
 the generators of its class in the same frame, each with the time reversal it has in the group (they
 generate the group, because dropping time reversal maps a black-and-white group one to one onto its
 class), a grey group those of its class followed by time reversal `1'`; ITC Vol. D prints no
@@ -488,7 +489,9 @@ prints them for that setting (ITA 6th ed., Table 3.2.3.2, pp. 745–769):
   `describeOperations` does, since a point group does not fix the cell angles. This is exact for the
   unique axis; for any other face it is the normal for orthogonal axes, not the true pole for
   β ≠ 90°, but it gives the correct site symmetry, which does not depend on the cell angles.
-- **Settings ITA does not print** (`mm2` settings 2 and 3, `2mm` and `m2m`): the positions of
+- **Settings ITA does not print** (`mm2` settings 2 and 3, `2mm` and `m2m`; monoclinic unique
+  axis a, whose site symmetries `2`, `m`, `2/m` name the element on the unique axis and are not
+  permuted): the positions of
   setting 1 carried into their frame, a permutation of the axes (the settings cab and bca of ITA
   (2016) Table 1.5.4.4; maintainer decision, 2026-11-18, #24): same letters and multiplicities, the
   positions of the oriented symbol permuted, the coordinates and Miller indices permuted and their
@@ -544,7 +547,7 @@ tetragonal dipyramids of 422, (h0l) and (hhl)).
   -43m and m-3m both are basic forms of the position, elsewhere both are limiting forms. The
   representative takes h = 3, k = 2, l = 1 as for the Wyckoff positions, and h = 1, l = 3 where the
   condition is |h| < |l|: (331) and (113).
-- **Groups.** As the Wyckoff positions: the 32 crystal classes only (a RangeError otherwise), and the settings ITA does not print (`mm2` settings 2 and 3) are
+- **Groups.** As the Wyckoff positions: the 32 crystal classes only (a RangeError otherwise), and the settings ITA does not print (`mm2` settings 2 and 3, monoclinic unique axis a) are
   setting 1 carried into their frame.
 - **Monoclinic and triclinic:** the Cartesian normal of the representative takes a, b, c along x, y,
   z, as for the Wyckoff positions; the form and its number do not depend on the cell angles.
@@ -651,7 +654,8 @@ basis as the columns a, b, c of a Cartesian matrix: **a along x, b in the xy pla
 +z**, so z ∥ c\* (the usual orthogonalization of crystallography). It is right-handed, with
 a = (a, 0, 0), b = (b cos γ, b sin γ, 0), c = (c cos β, c (cos α − cos β cos γ)/sin γ, V/(ab sin γ)). It
 agrees with `latticeBasis` where that exists (hexagonal axes: b at 120° from a, c ∥ z) and holds
-for both monoclinic settings (unique axis b: b ∥ y, c in the xz plane; unique axis c: c ∥ z). Chosen
+for the monoclinic settings (unique axis b: b ∥ y, c in the xz plane; unique axis c: c ∥ z; unique
+axis a: a ∥ x, b and c in the yz plane). Chosen
 by the maintainer's rule (2026-11-21) that symcrys follows the ITC standard and an application whose
 frame differs converts in the application (stereography, for instance, rotates into its own frame).
 Not checked against a printed page: the orthogonalization of ITA Vol. B is not yet read; a printed

@@ -579,7 +579,7 @@ describe('the 122 magnetic point groups', () => {
         setting: named.length === 1 ? named[0].index : def,
       });
     }
-    // Only the monoclinic groups share a short symbol between settings (unique axis b and c).
+    // Only the monoclinic groups share a short symbol between settings (unique axis b, c and a).
     const sharing = MAGNETIC_POINT_GROUP_KEYS.filter((key) => {
       const symbols = settings(key).map((s) => s.symbol);
       return new Set(symbols).size < symbols.length;

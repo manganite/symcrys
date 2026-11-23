@@ -101,8 +101,8 @@ const cache = new Map<string, readonly CrystalForm[]>();
  * The crystal forms of a crystal class in ITA's order: by Wyckoff position (general position
  * first), each position's basic forms before its limiting forms, as ITA 6th ed. Table 3.2.3.2
  * prints them. Crystal classes only (throws a RangeError for a magnetic point group with time
- * reversal), like the Wyckoff positions. For `mm2` settings 2 and 3 (`2mm`, `m2m`),
- * which ITA does not print, the forms of setting 1 carried into their frame.
+ * reversal), like the Wyckoff positions. For the settings ITA does not print (`mm2` settings 2 and 3, monoclinic unique axis a), the forms of
+ * setting 1 carried into their frame.
  */
 export function crystalForms(key: PointGroupKey, options?: SettingOptions): readonly CrystalForm[] {
   const setting = tableSetting(key, options, 'Crystal forms');

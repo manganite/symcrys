@@ -90,6 +90,18 @@ describe('crystalForms', () => {
     ]);
   });
 
+  it('carry unique axis b into unique axis a (a′ = b, b′ = c, c′ = a), which ITA does not print', () => {
+    // By hand from the printed unique-axis-b lists (ITA Table 3.2.3.2, pp. 745–746), h, k, l renamed
+    // after their new axes: (h0l) → (0kl), (010) → (100).
+    expect(crystalForms('2', { setting: 3 }).map((f) => f.millerIndices)).toEqual(['h,k,l', '0,k,l', '1,0,0']);
+    expect(crystalForms('m', { setting: 3 }).map((f) => f.millerIndices)).toEqual(['h,k,l', '1,0,0', '0,k,l']);
+    expect(crystalForms('2/m', { setting: '2/m 1 1' }).map((f) => f.millerIndices)).toEqual([
+      'h,k,l',
+      '0,k,l',
+      '1,0,0',
+    ]);
+  });
+
   it('default to the ITC default setting', () => {
     expect(crystalForms('32')).toBe(crystalForms('32', { setting: 1 }));
     expect(crystalForms('32')).toBe(crystalForms('32', { setting: '321' }));

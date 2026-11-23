@@ -159,9 +159,9 @@ def find_point_group(hm: str) -> Optional[dict[str, Any]]:
     """Finds a crystal class by a Hermann–Mauguin symbol: the short symbol of a setting, a full
     symbol, or the key (spaces are ignored). A symbol that names one setting gives that setting; the
     key, and a short symbol that several settings share (the monoclinic ones: ``2`` for unique axis
-    b and c), give the ITC default setting. Returns None if nothing matches, also for a value that
-    is not a string and for the symbol of a magnetic group with time reversal. Symbols are written
-    as in this library, with ``-`` for the overbar (``m-3m``).
+    b, c and a), give the ITC default setting. Returns None if nothing matches, also for a value
+    that is not a string and for the symbol of a magnetic group with time reversal. Symbols are
+    written as in this library, with ``-`` for the overbar (``m-3m``).
     """
     args = [hm]
     result = _call("findPointGroup", *args)
@@ -184,8 +184,8 @@ def operations(key: str, *, setting: Optional[Union[int, str]] = None) -> list[O
     ----------
     setting : keyword-only, optional
         The setting: its 1-based index, or its ITC symbol, short or full (spaces ignored: ``'312'``,
-        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b
-        and c) is an error that names them. Default: the ITC default setting.
+        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b,
+        c and a) is an error that names them. Default: the ITC default setting.
 
     Returns
     -------
@@ -198,15 +198,15 @@ def operations(key: str, *, setting: Optional[Union[int, str]] = None) -> list[O
 def generators(key: str, *, setting: Optional[Union[int, str]] = None) -> list[Operation]:
     """Generators of the crystal class in the requested setting (docs/conventions.md, "Generators"):
     ITA's selected generators in printed order, without the identity and ITA's lattice translations,
-    so the list is empty for ``1``; for ``mm2`` settings 2 and 3, which ITA does not list, those of
-    setting 1 carried into their frame.
+    so the list is empty for ``1``; for the settings ITA does not print (``mm2`` settings 2 and 3,
+    monoclinic unique axis a), those of setting 1 carried into their frame.
 
     Parameters
     ----------
     setting : keyword-only, optional
         The setting: its 1-based index, or its ITC symbol, short or full (spaces ignored: ``'312'``,
-        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b
-        and c) is an error that names them. Default: the ITC default setting.
+        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b,
+        c and a) is an error that names them. Default: the ITC default setting.
 
     Returns
     -------
@@ -228,8 +228,8 @@ def symbol(
     ----------
     setting : keyword-only, optional
         The setting: its 1-based index, or its ITC symbol, short or full (spaces ignored: ``'312'``,
-        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b
-        and c) is an error that names them. Default: the ITC default setting.
+        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b,
+        c and a) is an error that names them. Default: the ITC default setting.
     form : keyword-only, optional
         ``'short'`` (default): short symbol of the setting, e.g. ``321`` (ITC) for class ``32``.
         ``'full'``: full symbol, positions separated by spaces, e.g. ``-3 2/m 1``.
@@ -431,8 +431,8 @@ def describe_operations(
     ----------
     setting : keyword-only, optional
         The setting: its 1-based index, or its ITC symbol, short or full (spaces ignored: ``'312'``,
-        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b
-        and c) is an error that names them. Default: the ITC default setting.
+        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b,
+        c and a) is an error that names them. Default: the ITC default setting.
 
     Returns
     -------
@@ -508,8 +508,8 @@ def symmetry_directions(
     ----------
     setting : keyword-only, optional
         The setting: its 1-based index, or its ITC symbol, short or full (spaces ignored: ``'312'``,
-        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b
-        and c) is an error that names them. Default: the ITC default setting.
+        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b,
+        c and a) is an error that names them. Default: the ITC default setting.
 
     Returns
     -------
@@ -592,8 +592,8 @@ def lattice_operations(
     ----------
     setting : keyword-only, optional
         The setting: its 1-based index, or its ITC symbol, short or full (spaces ignored: ``'312'``,
-        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b
-        and c) is an error that names them. Default: the ITC default setting.
+        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b,
+        c and a) is an error that names them. Default: the ITC default setting.
 
     Returns
     -------
@@ -622,8 +622,8 @@ def orbit(
     ----------
     setting : keyword-only, optional
         The setting: its 1-based index, or its ITC symbol, short or full (spaces ignored: ``'312'``,
-        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b
-        and c) is an error that names them. Default: the ITC default setting.
+        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b,
+        c and a) is an error that names them. Default: the ITC default setting.
 
     Returns
     -------
@@ -673,8 +673,8 @@ def wyckoff_positions(
     ----------
     setting : keyword-only, optional
         The setting: its 1-based index, or its ITC symbol, short or full (spaces ignored: ``'312'``,
-        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b
-        and c) is an error that names them. Default: the ITC default setting.
+        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b,
+        c and a) is an error that names them. Default: the ITC default setting.
 
     Returns
     -------
@@ -700,8 +700,8 @@ def wyckoff_position_of(
     ----------
     setting : keyword-only, optional
         The setting: its 1-based index, or its ITC symbol, short or full (spaces ignored: ``'312'``,
-        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b
-        and c) is an error that names them. Default: the ITC default setting.
+        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b,
+        c and a) is an error that names them. Default: the ITC default setting.
     tolerance : keyword-only, optional
         A direction counts as fixed by an operation if the operation moves its unit vector by less
         than this (Euclidean distance). Default 10⁻⁶; a caller whose directions carry rounding
@@ -737,8 +737,8 @@ def crystal_forms(
     ----------
     setting : keyword-only, optional
         The setting: its 1-based index, or its ITC symbol, short or full (spaces ignored: ``'312'``,
-        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b
-        and c) is an error that names them. Default: the ITC default setting.
+        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b,
+        c and a) is an error that names them. Default: the ITC default setting.
 
     Returns
     -------
@@ -766,8 +766,8 @@ def tensor_form(
     ----------
     setting : keyword-only, optional
         The setting: its 1-based index, or its ITC symbol, short or full (spaces ignored: ``'312'``,
-        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b
-        and c) is an error that names them. Default: the ITC default setting.
+        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b,
+        c and a) is an error that names them. Default: the ITC default setting.
 
     Returns
     -------

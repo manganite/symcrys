@@ -429,3 +429,36 @@ describe('Settings ITA does not print: mm2 as 2mm and m2m', () => {
     });
   }
 });
+
+describe('Settings ITA does not print: monoclinic unique axis a', () => {
+  for (const key of ['2', 'm', '2/m'] as const) {
+    const s = settings(key).find((x) => x.uniqueAxis === 'a')!;
+    it(`${key} ${s.fullSymbol}: every position read along x gives the site symmetry of its representative`, () => {
+      // The full symbol read along a, b, c = x, y, z; the unique axis a is x.
+      const group = groupOfSymbol(s.fullSymbol, ORTHONORMAL);
+      const lib = wyckoffPositions(key, { setting: s.index });
+      expect(lib.map((w) => w.letter)).toEqual(wyckoffPositions(key, { setting: 1 }).map((w) => w.letter));
+      for (const w of lib) {
+        const n = faceNormal(ORTHONORMAL, hklOf(w.millerIndices));
+        expect(sameV(w.representative.cartesian, n)).toBe(true);
+        const stab = stabilizerOf(group, n);
+        expect(stab.length * w.multiplicity).toBe(group.length);
+        const readings = symbolGroups(w.siteSymmetry, 'monoclinic', ORTHONORMAL, [1, 0, 0], n);
+        expect(
+          readings.some((h) =>
+            sameGroup(
+              h,
+              stab.map((x) => ({ matrix: x.m, timeReversal: false })),
+            ),
+          ),
+        ).toBe(true);
+        const p = point(ORTHONORMAL, w.coordinates);
+        const conj = group.some((g) => {
+          const s2 = stabilizerOf(group, apply(g.m, p));
+          return s2.length === stab.length && s2.every((x) => stab.some((y) => sameM(x.m, y.m)));
+        });
+        expect(conj, `point ${w.coordinates} in the same position`).toBe(true);
+      }
+    });
+  }
+});

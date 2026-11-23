@@ -149,8 +149,8 @@ def find_point_group(hm: str) -> Optional[dict[str, Any]]:
     short symbol of a setting, a full symbol, or the key (spaces are ignored). A prime ``'`` marks
     time reversal: ``4'/mmm'``, ``2221'``. A symbol that names one setting gives that setting; the
     key, and a short symbol that several settings share (the monoclinic ones: ``2'`` for unique axis
-    b and c), give the ITC default setting. Returns None if nothing matches, also for a value that
-    is not a string. Symbols are written as in this library, with ``-`` for the overbar
+    b, c and a), give the ITC default setting. Returns None if nothing matches, also for a value
+    that is not a string. Symbols are written as in this library, with ``-`` for the overbar
     (``m'-3'm``).
     """
     args = [hm]
@@ -175,8 +175,8 @@ def operations(key: str, *, setting: Optional[Union[int, str]] = None) -> list[O
     ----------
     setting : keyword-only, optional
         The setting: its 1-based index, or its ITC symbol, short or full (spaces ignored: ``'312'``,
-        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b
-        and c) is an error that names them. Default: the ITC default setting.
+        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b,
+        c and a) is an error that names them. Default: the ITC default setting.
 
     Returns
     -------
@@ -189,16 +189,17 @@ def operations(key: str, *, setting: Optional[Union[int, str]] = None) -> list[O
 def generators(key: str, *, setting: Optional[Union[int, str]] = None) -> list[Operation]:
     """Generators of the point group in the requested setting (docs/conventions.md, "Generators"):
     ITA's selected generators in printed order, without the identity and ITA's lattice translations,
-    so the list is empty for ``1``; for ``mm2`` settings 2 and 3, which ITA does not list, those of
-    setting 1 carried into their frame; for a magnetic group, those of its class with the time
-    reversal they have in the group, for a grey group followed by ``1'``.
+    so the list is empty for ``1``; for the settings ITA does not print (``mm2`` settings 2 and 3,
+    monoclinic unique axis a), those of setting 1 carried into their frame; for a magnetic group,
+    those of its class with the time reversal they have in the group, for a grey group followed by
+    ``1'``.
 
     Parameters
     ----------
     setting : keyword-only, optional
         The setting: its 1-based index, or its ITC symbol, short or full (spaces ignored: ``'312'``,
-        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b
-        and c) is an error that names them. Default: the ITC default setting.
+        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b,
+        c and a) is an error that names them. Default: the ITC default setting.
 
     Returns
     -------
@@ -220,8 +221,8 @@ def symbol(
     ----------
     setting : keyword-only, optional
         The setting: its 1-based index, or its ITC symbol, short or full (spaces ignored: ``'312'``,
-        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b
-        and c) is an error that names them. Default: the ITC default setting.
+        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b,
+        c and a) is an error that names them. Default: the ITC default setting.
     form : keyword-only, optional
         ``'short'`` (default): short symbol of the setting, e.g. ``321`` (ITC) for class ``32``.
         ``'full'``: full symbol, positions separated by spaces, e.g. ``-3 2/m 1``.
@@ -424,8 +425,8 @@ def describe_operations(
     ----------
     setting : keyword-only, optional
         The setting: its 1-based index, or its ITC symbol, short or full (spaces ignored: ``'312'``,
-        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b
-        and c) is an error that names them. Default: the ITC default setting.
+        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b,
+        c and a) is an error that names them. Default: the ITC default setting.
 
     Returns
     -------
@@ -503,8 +504,8 @@ def symmetry_directions(
     ----------
     setting : keyword-only, optional
         The setting: its 1-based index, or its ITC symbol, short or full (spaces ignored: ``'312'``,
-        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b
-        and c) is an error that names them. Default: the ITC default setting.
+        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b,
+        c and a) is an error that names them. Default: the ITC default setting.
 
     Returns
     -------
@@ -589,8 +590,8 @@ def lattice_operations(
     ----------
     setting : keyword-only, optional
         The setting: its 1-based index, or its ITC symbol, short or full (spaces ignored: ``'312'``,
-        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b
-        and c) is an error that names them. Default: the ITC default setting.
+        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b,
+        c and a) is an error that names them. Default: the ITC default setting.
 
     Returns
     -------
@@ -620,8 +621,8 @@ def orbit(
     ----------
     setting : keyword-only, optional
         The setting: its 1-based index, or its ITC symbol, short or full (spaces ignored: ``'312'``,
-        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b
-        and c) is an error that names them. Default: the ITC default setting.
+        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b,
+        c and a) is an error that names them. Default: the ITC default setting.
 
     Returns
     -------
@@ -680,8 +681,8 @@ def tensor_form(
     ----------
     setting : keyword-only, optional
         The setting: its 1-based index, or its ITC symbol, short or full (spaces ignored: ``'312'``,
-        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b
-        and c) is an error that names them. Default: the ITC default setting.
+        ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b,
+        c and a) is an error that names them. Default: the ITC default setting.
 
     Returns
     -------

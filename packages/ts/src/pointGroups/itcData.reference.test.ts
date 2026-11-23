@@ -38,7 +38,7 @@ function settingOf(short: string, axes: string) {
 describe('ITA Table 3.2.3.2 against the exact class data', () => {
   const entries = positionRows.slice(1);
 
-  it('names every setting of the class data once, except 2mm and m2m, which ITA does not list', () => {
+  it('names every setting of the class data once, except 2mm, m2m and unique axis a, which ITA does not list', () => {
     const named = entries.flatMap((r) => settingOf(r[0], r[1]).map(({ c, s }) => `${c.key}#${s.index}`));
     const all = ITC_CLASSES.flatMap((c) => c.settings.filter((s) => !s.from).map((s) => `${c.key}#${s.index}`));
     expect(named.sort()).toEqual(all.sort());

@@ -237,7 +237,7 @@ export function pointGroups(): readonly PointGroup[] {
 /**
  * Finds a crystal class by a Hermann–Mauguin symbol: the short symbol of a setting, a full symbol,
  * or the key (spaces are ignored). A symbol that names one setting gives that setting; the key, and
- * a short symbol that several settings share (the monoclinic ones: `2` for unique axis b and c),
+ * a short symbol that several settings share (the monoclinic ones: `2` for unique axis b, c and a),
  * give the ITC default setting. Returns undefined if nothing matches, also for a value that is not a
  * string and for the symbol of a magnetic group with time reversal. Symbols are written as in this
  * library, with `-` for the overbar (`m-3m`).
@@ -265,8 +265,8 @@ export function operations(key: PointGroupKey, options?: SettingOptions): readon
 /**
  * Generators of the crystal class in the requested setting (docs/conventions.md, "Generators"):
  * ITA's selected generators in printed order, without the identity and ITA's lattice translations,
- * so the list is empty for `1`; for `mm2` settings 2 and 3, which ITA does not list, those of
- * setting 1 carried into their frame.
+ * so the list is empty for `1`; for the settings ITA does not print (`mm2` settings 2 and 3, monoclinic unique axis a), those of setting 1
+ * carried into their frame.
  */
 export function generators(key: PointGroupKey, options?: SettingOptions): readonly Operation[] {
   return matricesOnly(groups.generators(classKey(key), options));

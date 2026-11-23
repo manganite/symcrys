@@ -206,8 +206,8 @@ export function tableSetting(key: PointGroupKey, options?: SettingOptions, what 
  * The Wyckoff positions of a point group for directions, in ITA's printed order (general position
  * first), for the 32 crystal classes only (throws a RangeError for a magnetic point group with
  * time reversal). The point at the origin
- * (letter o) is not a direction and is left out. For `mm2` settings 2 and 3 (`2mm`, `m2m`), which
- * ITA does not print, the positions of setting 1 carried into their frame.
+ * (letter o) is not a direction and is left out. For the settings ITA does not print (`mm2` settings 2 and 3, monoclinic unique axis a), the positions
+ * of setting 1 carried into their frame.
  */
 export function wyckoffPositions(key: PointGroupKey, options?: SettingOptions): readonly WyckoffPosition[] {
   const setting = tableSetting(key, options);

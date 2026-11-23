@@ -90,7 +90,9 @@ const single = (
  * A monoclinic class: setting 1 unique axis b (the ITC default, ITA § 2.1.3.15), setting 2 unique
  * axis c, both printed in ITA Table 3.2.3.2; setting 3 unique axis a, which ITA prints for the
  * space groups (Table 1.5.4.4) and ITC Vol. D for the point groups (`references/itc/orientations.md`),
- * from unique axis b by the setting bca of ITA 2016 Table 1.5.4.4 (a′ = b, b′ = c, c′ = a).
+ * from unique axis b by a′ = b, b′ = c, c′ = a (bca): the column abc of unique axis a in the
+ * monoclinic part of ITA 2016 Table 1.5.4.4 (p. 97) is that of unique axis b so carried (C121 →
+ * B211, P1c1 → Pb11).
  */
 const monoclinic = (key: PointGroupKey, schoenflies: string): ItcClass => {
   const full = (position: number) => [0, 1, 2].map((i) => (i === position ? key : '1')).join(' ');
@@ -291,8 +293,8 @@ export function itcLatticeOperations(key: PointGroupKey, index: number): readonl
 /**
  * W as a Cartesian matrix B·W·B⁻¹, snapped to the exact values. B is the basis of `latticeBasis` for
  * the families with fixed angles; for the monoclinic and triclinic families W itself: their
- * operations are ±1 on the diagonal, and the unique axis (y or z) is perpendicular to the other two,
- * so B·W·B⁻¹ = W for every cell with that axis along y or z, whatever its angles.
+ * operations are ±1 on the diagonal, and the unique axis (x, y or z) is perpendicular to the other
+ * two, so B·W·B⁻¹ = W for every cell with that axis along x, y or z, whatever its angles.
  */
 export function cartesianOf(w: IntMat3, system: CrystalSystem): Mat3 {
   const family = crystalFamily(system);
