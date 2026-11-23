@@ -25,6 +25,8 @@ function resolve(p: YarivPanel): { key: string; setting: number }[] {
   const want = cellsOf(printedScheme(p)).join(',');
   return p.groups.flatMap((key) =>
     settings(key as PointGroupKey)
+      // A setting with rhombohedral axes has the Cartesian forms of setting 1.
+      .filter((s) => s.axes !== 'rhombohedral')
       .map((s) => s.index)
       .filter((setting) => cellsOf(schemeAt(key, setting)).join(',') === want)
       .map((setting) => ({ key, setting })),

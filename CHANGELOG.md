@@ -13,6 +13,19 @@ All notable changes to symcrys are recorded here. The format follows
   `2' 1 1`, …), as ITC Vol. D prints it; its operations come from unique axis b by a′ = b, b′ = c, c′ = a
   (the column abc of unique axis a in ITA 2016 Table 1.5.4.4 is unique axis b so carried: C121 →
   B211), its Wyckoff positions and crystal forms likewise.
+- **Rhombohedral axes** (#111, #121 step 6c): every trigonal group gets a setting with rhombohedral
+  axes, as the last setting: `3` and `-3` (setting 2), `32`, `3m`, `-3m` (setting 3, symbols `32`,
+  `3m`, `-3m`, full `3 2`, `3 m`, `-3 2/m`), their grey groups, and the black-and-white groups `-3'`,
+  `32'`, `3m'`, `-3m'`, `-3'm'`, `-3'm` (Thomas, 2026-11-23). The operations are numbered as ITA prints
+  them for rhombohedral axes (from the selected generators of R3, R-3, R32, R3m, R-3m); the lattice
+  operations, orbits, symmetry directions ([111]; [1-10], [01-1], [-101]), Wyckoff positions and
+  crystal forms are those of ITA Table 3.2.3.2 for rhombohedral axes (pp. 753–759). The axes are the
+  obverse ones in the hexagonal cell of setting 1 (ITA 2016 Table 1.5.1.1, p. 78, the matrix Q of R₁ obverse), so the Cartesian
+  operations equal those of setting 1: `pointGroupOf` names them setting 1. `findPointGroup('32')`
+  still gives the default, since `32` is the key; choose the setting by its index or as
+  `{ setting: '32' }`. `{ setting: '3' }` for class `3` names two settings and is an error that lists
+  them. The representative face of a position with rhombohedral axes is (421), since (321) lies on a
+  limiting form there.
 
 ### Changed
 
@@ -39,7 +52,7 @@ All notable changes to symcrys are recorded here. The format follows
   them (`'2'`: give `'1 2 1'` or `'1 1 2'`).
 - **The record of a setting** (#137 A3, C4): `uniqueAxis` only for the monoclinic settings (it
   went for `mm2` and the orthorhombic magnetic groups, where a setting is identified by its symbol),
-  and `axes: 'hexagonal'` for the trigonal settings.
+  and `axes` (`'hexagonal'` or `'rhombohedral'`) for the trigonal settings.
 
 ### Removed
 

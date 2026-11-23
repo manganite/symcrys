@@ -23,7 +23,13 @@ import {
   type RefOp,
 } from '../testUtils/independentGroups.js';
 import { groupOfSymbol } from '../testUtils/hermannMauguin.js';
-import { expectHeader, readReference, tableRows, notRhombohedral } from '../testUtils/references.js';
+import {
+  expectHeader,
+  readReference,
+  tableRows,
+  sameAxes,
+  RHOMBOHEDRAL_IN_HEXAGONAL,
+} from '../testUtils/references.js';
 import { POINT_GROUP_KEYS, operations, settings, type PointGroupKey } from './pointGroups.js';
 import { wyckoffPositions } from './wyckoff.js';
 import { ITA_WYCKOFF } from './wyckoffData.js';
@@ -45,6 +51,14 @@ const HEXAGONAL: M = [
  * symbol: primary, secondary, tertiary. Monoclinic: the unique axis only.
  */
 const DIRECTIONS: Record<string, number[][][]> = {
+  rhombohedral: [
+    [[1, 1, 1]],
+    [
+      [1, -1, 0],
+      [0, 1, -1],
+      [-1, 0, 1],
+    ],
+  ],
   orthorhombic: [[[1, 0, 0]], [[0, 1, 0]], [[0, 0, 1]]],
   tetragonal: [
     [[0, 0, 1]],
@@ -104,9 +118,9 @@ const transpose = (m: M): M => [0, 1, 2].map((i) => [0, 1, 2].map((j) => m[j][i]
 
 const headlineRows = tableRows(readReference('itc/vol-a-table-3.2.3.2-headlines.md'));
 expectHeader(headlineRows, ['System', 'Short', 'Full', 'Schoenflies', 'Axes', 'Page']);
-const generalRows = tableRows(readReference('itc/vol-a-table-3.2.3.2-general-positions.md')).filter(notRhombohedral);
+const generalRows = tableRows(readReference('itc/vol-a-table-3.2.3.2-general-positions.md'));
 expectHeader(generalRows, ['Short', 'Axes', 'Page', 'Multiplicity', 'General position']);
-const wyckoffRows = tableRows(readReference('itc/vol-a-table-3.2.3.2-wyckoff-positions.md')).filter(notRhombohedral);
+const wyckoffRows = tableRows(readReference('itc/vol-a-table-3.2.3.2-wyckoff-positions.md'));
 expectHeader(wyckoffRows, [
   'Short',
   'Axes',
@@ -151,7 +165,12 @@ const ENTRIES: Entry[] = generalRows.slice(1).map((g) => {
   const headline = headlineRows.find((h) => h[1] === g[0] && h[4] === g[1]);
   if (!headline) throw new Error(`No headline for ${g[0]} ${g[1]}`);
   const family = familyOf(headline[0].toLowerCase());
-  const basis = family === 'hexagonal' ? HEXAGONAL : ORTHONORMAL;
+  const basis =
+    g[1] === 'rhombohedral axes'
+      ? mul(HEXAGONAL, RHOMBOHEDRAL_IN_HEXAGONAL)
+      : family === 'hexagonal'
+        ? HEXAGONAL
+        : ORTHONORMAL;
   const bInv = inverse(basis);
   const group = g[4].split(/\s+/).map((t) => ({ m: mul(mul(basis, t.split(',').map(coefficients)), bInv), t: false }));
   return {
@@ -166,8 +185,10 @@ const ENTRIES: Entry[] = generalRows.slice(1).map((g) => {
 });
 
 /** Printed Miller indices (`h,h,-2h,l`, `0,1,0`; four for hexagonal axes) with h = 3, k = 2, l = 1. */
-function hklOf(miller: string): number[] {
-  const value: Record<string, number> = { h: 3, k: 2, l: 1, i: -5 };
+/** h = 3, k = 2, l = 1; for rhombohedral axes h = 4, since (321) is there a special face, (116) in hexagonal axes. */
+function hklOf(miller: string, axes = ''): number[] {
+  const value: Record<string, number> =
+    axes === 'rhombohedral axes' ? { h: 4, k: 2, l: 1, i: -6 } : { h: 3, k: 2, l: 1, i: -5 };
   const parts = miller.split(',').map((c) => {
     const m = /^(-?)(\d*)([hkil]?)$/.exec(c);
     if (!m || (m[2] === '' && m[3] === '')) throw new Error(`Unreadable index: ${c}`);
@@ -243,7 +264,8 @@ function symbolGroups(
   }
   const sets = DIRECTIONS[family].map((set) => set.map((d) => unit(apply(basis, d))));
   const results: RefOp[][] = [];
-  for (const split of splits(tokens, 3)) {
+  // Three positions, two for rhombohedral axes (ITA Table 2.1.3.1).
+  for (const split of splits(tokens, sets.length)) {
     // For each position, every assignment of its tokens to distinct directions whose elements fix v.
     const perPosition: M[][][] = split.map((group, p) => {
       if (group[0] === '.') return [[]];
@@ -261,7 +283,7 @@ function symbolGroups(
       return assign(0, []);
     });
     const combine = (p: number, acc: M[]): void => {
-      if (p === 3) {
+      if (p === sets.length) {
         results.push(close(acc.map((m) => ({ m, t: false }))));
         return;
       }
@@ -277,7 +299,7 @@ function settingOf(e: Entry): { key: PointGroupKey; index: number } {
   const axis = /^unique axis (b|c)$/.exec(e.axes)?.[1];
   const found = POINT_GROUP_KEYS.flatMap((key) =>
     settings(key)
-      .filter((s) => s.symbol === e.short && (axis === undefined || s.uniqueAxis === axis))
+      .filter((s) => s.symbol === e.short && (axis === undefined || s.uniqueAxis === axis) && sameAxes(e.axes, s))
       .map((s) => ({ key, index: s.index })),
   );
   if (found.length !== 1) throw new Error(`No unique setting for ${e.short} ${e.axes}`);
@@ -293,9 +315,11 @@ describe('ITA Table 3.2.3.2: Wyckoff positions', () => {
         e.symbol,
         e.uniqueAxis
           ? `unique axis ${e.uniqueAxis}`
-          : ['3', '-3', '312', '321', '3m1', '31m', '-31m', '-3m1'].includes(e.symbol)
-            ? 'hexagonal axes'
-            : '',
+          : e.axes === 'rhombohedral'
+            ? 'rhombohedral axes'
+            : ['3', '-3', '312', '321', '3m1', '31m', '-31m', '-3m1'].includes(e.symbol)
+              ? 'hexagonal axes'
+              : '',
         String(e.page),
         String(r[1]),
         r[0],
@@ -307,8 +331,8 @@ describe('ITA Table 3.2.3.2: Wyckoff positions', () => {
     expect(fromData).toEqual(wyckoffRows.slice(1));
   });
 
-  it('has Wyckoff positions for each of the 40 printed entries, on the page of the entry', () => {
-    expect(ENTRIES).toHaveLength(40);
+  it('has Wyckoff positions for each of the 45 printed entries, on the page of the entry', () => {
+    expect(ENTRIES).toHaveLength(45);
     for (const e of ENTRIES) {
       expect(e.rows.length, `${e.short} ${e.axes}`).toBeGreaterThan(0);
       for (const r of e.rows) expect(Number(r[2]), `${e.short} ${e.axes}`).toBe(e.page);
@@ -336,10 +360,12 @@ describe('ITA Table 3.2.3.2: Wyckoff positions', () => {
 
     for (const r of e.rows.filter((x) => x[4] !== 'o')) {
       it(`${label}, ${r[3]}${r[4]} ${r[5]}: face and point lie in the position the symbol describes`, () => {
-        const n = faceNormal(e.basis, hklOf(r[7]));
+        const n = faceNormal(e.basis, hklOf(r[7], e.axes));
         const stab = stabilizerOf(e.group, n);
         expect(stab.length * Number(r[3]), 'order of the site symmetry × multiplicity').toBe(order);
-        const readings = symbolGroups(r[5], e.family, e.basis, uniqueAxis, n);
+        // Rhombohedral axes: the symmetry directions of ITA Table 2.1.3.1 for them.
+        const family = e.axes === 'rhombohedral axes' ? 'rhombohedral' : e.family;
+        const readings = symbolGroups(r[5], family, e.basis, uniqueAxis, n);
         expect(
           readings.some((h) =>
             sameGroup(
@@ -363,7 +389,7 @@ describe('ITA Table 3.2.3.2: Wyckoff positions', () => {
     it(`${label}: different letters are different positions (site symmetries not conjugate)`, () => {
       const stabs = e.rows
         .filter((x) => x[4] !== 'o')
-        .map((x) => stabilizerOf(e.group, faceNormal(e.basis, hklOf(x[7]))));
+        .map((x) => stabilizerOf(e.group, faceNormal(e.basis, hklOf(x[7], e.axes))));
       for (let i = 0; i < stabs.length; i++) {
         for (let j = i + 1; j < stabs.length; j++) {
           const conjugate = e.group.some((g) => {
@@ -385,7 +411,7 @@ describe('ITA Table 3.2.3.2: Wyckoff positions', () => {
         lib.map((w) => [w.letter, String(w.multiplicity), w.siteSymmetry, w.coordinates, w.millerIndices]),
       ).toEqual(faces.map((x) => [x[4], x[3], x[5], x[6], x[7]]));
       lib.forEach((w, i) => {
-        const n = faceNormal(e.basis, hklOf(faces[i][7]));
+        const n = faceNormal(e.basis, hklOf(faces[i][7], e.axes));
         expect(sameV(w.representative.cartesian, n)).toBe(true);
         const stab = stabilizerOf(e.group, n).map((s) => ({ m: s.m, t: false }));
         expect(

@@ -6,10 +6,12 @@
  */
 
 import { det, trace, type Mat3, type Vec3 } from '../linalg.js';
-import { crystalFamily, latticeBasis, type CrystalFamily } from '../lattice.js';
+import { crystalFamily } from '../lattice.js';
 import type { Operation } from '../operations.js';
-import { LATTICE_SYMMETRY_DIRECTIONS, type Uvw } from '../symmetryDirections.js';
+import type { Uvw } from '../symmetryDirections.js';
+import { itcBasis, itcSymmetryDirections } from './itcData.js';
 import {
+  classSettingOf,
   operations,
   pointGroup,
   settingIndexOf,
@@ -90,23 +92,8 @@ function normalize(v: Vec3): Vec3 {
 
 const dot = (a: Vec3, b: Vec3): number => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 
-/**
- * The basis used to turn [uvw] into a Cartesian direction. Monoclinic and triclinic have no fixed
- * basis (`latticeBasis`); there the axes a, b, c are taken along x, y, z, which is exact for the
- * monoclinic unique axis, the only symmetry direction that carries an element in a symcrys frame.
- */
-function basisOf(family: CrystalFamily): Mat3 {
-  if (family === 'monoclinic' || family === 'triclinic')
-    return [
-      [1, 0, 0],
-      [0, 1, 0],
-      [0, 0, 1],
-    ];
-  return latticeBasis(family);
-}
-
-function axisOf(family: CrystalFamily, uvw: Uvw): Axis {
-  const b = basisOf(family);
+/** [uvw] in the basis `b` (columns a, b, c) as a Cartesian unit vector, with the direction itself. */
+function axisOf(b: Mat3, uvw: Uvw): Axis {
   const v: Vec3 = [
     b[0][0] * uvw[0] + b[0][1] * uvw[1] + b[0][2] * uvw[2],
     b[1][0] * uvw[0] + b[1][1] * uvw[1] + b[1][2] * uvw[2],
@@ -184,7 +171,12 @@ function analysis(key: MagneticPointGroupKey, options?: SettingOptions): Analysi
   if (hit) return hit;
 
   const family = crystalFamily(pointGroup(key).crystalSystem);
-  const positions = LATTICE_SYMMETRY_DIRECTIONS[family].map((dirs) => dirs.map((d) => axisOf(family, d)));
+  // The basis and the symmetry directions of the setting: for rhombohedral axes those of ITA Table
+  // 2.1.3.1 for rhombohedral axes; monoclinic and triclinic a, b, c along x, y, z, exact for the
+  // unique axis, the only symmetry direction that carries an element (itcData.ts, `itcBasis`).
+  const c = classSettingOf(key, options);
+  const basis = itcBasis(c.key, c.index);
+  const positions = itcSymmetryDirections(c.key, c.index).map((dirs) => dirs.map((d) => axisOf(basis, d)));
   const all = positions.flat();
   const what = `Point group ${key}`;
   const descriptions = Object.freeze(ops.map((op) => describe(op, all, what)));

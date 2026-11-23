@@ -142,16 +142,25 @@ All matrices are Cartesian, in a right-handed orthonormal frame x, y, z, row-maj
 column vectors. How the conventional lattice basis a, b, c sits in that frame
 (`latticeBasis(family)`, columns a, b, c with unit edge lengths):
 
-| Family                     | Frame                                      |
-| -------------------------- | ------------------------------------------ |
-| orthorhombic, tetragonal   | x ∥ a, y ∥ b, z ∥ c                        |
-| cubic                      | x ∥ a, y ∥ b, z ∥ c                        |
-| hexagonal (hexagonal axes) | x ∥ a, z ∥ c, y = z × x; b at 120° from a  |
-| monoclinic                 | unique axis ∥ y (unique axis b) or ∥ z (c) |
-| triclinic                  | no symmetry direction; no fixed basis      |
+| Family                      | Frame                                               |
+| --------------------------- | --------------------------------------------------- |
+| orthorhombic, tetragonal    | x ∥ a, y ∥ b, z ∥ c                                 |
+| cubic                       | x ∥ a, y ∥ b, z ∥ c                                 |
+| hexagonal (hexagonal axes)  | x ∥ a, z ∥ c, y = z × x; b at 120° from a           |
+| trigonal, rhombohedral axes | a_R, b_R, c_R of the hexagonal cell above (below)   |
+| monoclinic                  | unique axis ∥ y (unique axis b), ∥ z (c) or ∥ x (a) |
+| triclinic                   | no symmetry direction; no fixed basis               |
 
 For the monoclinic and triclinic families the cell angles are free, so `latticeBasis` gives no
 basis for them; only the direction of the monoclinic unique axis is fixed.
+
+**Rhombohedral axes** are those of the obverse setting in the hexagonal cell (ITA 2016 Table
+1.5.1.1, p. 78, the matrix Q of the row R₁ obverse): a_R = (2a + b + c)/3, b_R = (−a + b + c)/3, c_R = (−a − 2b + c)/3, with the hexagonal a, b,
+c above, so that [111] lies along z and the twofold axes of `32` along the a directions of the
+hexagonal cell, as in `321`. A setting with rhombohedral axes therefore has the Cartesian operations
+of the default setting with hexagonal axes; it differs in its lattice basis, and so in the lattice
+operations, the Miller indices and the symmetry directions. As for hexagonal axes, the cell is the one of unit edge lengths a = c = 1; a
+crystal's own cell is given by `latticeFromParameters`.
 
 The hexagonal frame puts the secondary symmetry directions of the trigonal classes (the a axes) on
 x, as ITC Vol. D does in its tensor tables (§ 1.1.4.10.4.4: group 32 with the twofold axis
@@ -170,11 +179,12 @@ symbol in each setting, from which its operations follow (`pointGroups/itcMagnet
 **Numbering** (#137 A4): the ITC default is setting 1; then, for the monoclinic classes, unique
 axis c and unique axis a; for the orthorhombic groups, the further orientations in the order of the columns of ITA
 (2016) Table 1.5.4.4 (abc, ba-c, cab, -cba, bca, a-cb), each orientation once; otherwise the other
-orientation. A setting is chosen by its index or by its ITC symbol, short or full (`{ setting: '312' }`,
-`{ setting: '1 1 2' }`); a symbol that several settings share (`'2'` for unique axis b, c and a) is an
-error that names them. The record of a setting (`settings(key)`) has `index`, `symbol`,
-`fullSymbol`, `isDefault`, and `uniqueAxis` for a monoclinic setting, `axes` (`'hexagonal'`) for a
-trigonal one.
+orientation; for the trigonal groups the setting with rhombohedral axes last. A setting is chosen
+by its index or by its ITC symbol, short or full (`{ setting: '312' }`, `{ setting: '1 1 2' }`); a
+symbol that several settings share (`'2'` for unique axis b, c and a; `'3'` for hexagonal and
+rhombohedral axes) is an error that names them. The record of a setting (`settings(key)`) has
+`index`, `symbol`, `fullSymbol`, `isDefault`, and `uniqueAxis` for a monoclinic setting, `axes`
+(`'hexagonal'` or `'rhombohedral'`) for a trigonal one.
 
 Classes with more than one setting (short symbol, full symbol in parentheses):
 
@@ -194,12 +204,19 @@ Classes with more than one setting (short symbol, full symbol in parentheses):
 |        | 3       | `m2m` (`m 2 m`)                               |
 | `-42m` | 1       | `-42m` (`-4 2 m`) **default**                 |
 |        | 2       | `-4m2` (`-4 m 2`)                             |
+| `3`    | 1       | `3` (`3`), hexagonal axes, **default**        |
+|        | 2       | `3` (`3`), rhombohedral axes                  |
+| `-3`   | 1       | `-3` (`-3`), hexagonal axes, **default**      |
+|        | 2       | `-3` (`-3`), rhombohedral axes                |
 | `32`   | 1       | `321` (`3 2 1`) **default**                   |
 |        | 2       | `312` (`3 1 2`)                               |
+|        | 3       | `32` (`3 2`), rhombohedral axes               |
 | `3m`   | 1       | `3m1` (`3 m 1`) **default**                   |
 |        | 2       | `31m` (`3 1 m`)                               |
+|        | 3       | `3m` (`3 m`), rhombohedral axes               |
 | `-3m`  | 1       | `-3m1` (`-3 2/m 1`) **default**               |
 |        | 2       | `-31m` (`-3 1 2/m`)                           |
+|        | 3       | `-3m` (`-3 2/m`), rhombohedral axes           |
 | `-6m2` | 1       | `-6m2` (`-6 m 2`) **default**                 |
 |        | 2       | `-62m` (`-6 2 m`)                             |
 
@@ -207,7 +224,8 @@ ITA describes the monoclinic classes with unique axis b and c (unique axis a it 
 space groups, Table 1.5.4.4; ITC Vol. D prints `211`, `m11`, `2/m11`, `references/itc/orientations.md`),
 `-42m` and `-6m2` in two
 orientations, and `32`, `3m`, `-3m` with hexagonal axes in two orientations, without naming one
-standard (§ 3.2.1.2.1 (a), (b), (d), p. 721; Table 3.2.3.2); `mm2` it gives in one setting only.
+standard (§ 3.2.1.2.1 (a), (b), (d), p. 721; Table 3.2.3.2), and the five trigonal classes also with
+rhombohedral axes (Table 3.2.3.2, pp. 753–759); `mm2` it gives in one setting only.
 The ITC defaults of symcrys:
 
 - unique axis b: the IUCr accepts the b-axis setting as standard for morphological and structural
@@ -223,6 +241,13 @@ a′ = b, b′ = c, c′ = a, as the column abc of unique axis a in the monoclin
 1.5.4.4, p. 97, is that of unique axis b: C121 → B211, P1c1 → Pb11); `2mm` and `m2m` are `mm2` with
 the twofold axis along x and y (the settings cab and bca of ITA 2016 Table 1.5.4.4); the second
 setting of `-42m` is rotated by 45° about z, those of the trigonal and hexagonal classes by 30°.
+The setting with rhombohedral axes has the frame of setting 1 and its Cartesian operations, in the
+lattice basis a_R, b_R, c_R ("Cartesian frame"); its operations are numbered as ITA prints them for
+rhombohedral axes, from ITA's selected generators of R3, R-3, R32, R3m and R-3m (5th ed., pp. 496,
+502, 518, 530, 547). Since setting 1 and the rhombohedral setting hold the same Cartesian
+operations, `pointGroupOf` names such operations setting 1; and since the symbol of the rhombohedral
+setting of `32`, `3m`, `-3m` is the key, `findPointGroup('32')` gives the default, as a key always
+does. The rhombohedral setting is chosen by its index or as `{ setting: '32' }`.
 The classes `222` and `mmm` have one setting only: their three axes are equivalent.
 
 ### Settings of the magnetic groups
@@ -243,8 +268,12 @@ numbered as above:
 - tetragonal `4'22'`, `4'mm'`, `-4'2m'`, `-4'm2'`, `-42'm'`, `4'/mmm'`, `4'/m'm'm`: two settings 45°
   apart about z. For `422`, `4mm` and `4/mmm` the two frames hold the same operations; with time
   reversal on the fourfold rotation they differ in which lateral elements carry it;
-- trigonal `32'`, `3m'`, `-3m'`, `-3'm'`, `-3'm` and hexagonal `6'22'`, `6'mm'`, `-6'2m'`, `-6'm2'`,
-  `-6m'2'`, `6'/m'mm'`, `6'/mmm'`: two settings 30° apart about z;
+- trigonal `32'`, `3m'`, `-3m'`, `-3'm'`, `-3'm`: two settings 30° apart about z, and as setting 3
+  the setting with rhombohedral axes in the frame of setting 1 (`3 2'`, `3 m'`, `-3 2'/m'`,
+  `-3' 2/m'`, `-3' 2'/m`); `-3'`: hexagonal and rhombohedral axes, as its class (every trigonal
+  group gets the rhombohedral setting of its class; Thomas, 2026-11-23, CLAUDE.md, "Pure ITC");
+- hexagonal `6'22'`, `6'mm'`, `-6'2m'`, `-6'm2'`, `-6m'2'`, `6'/m'mm'`, `6'/mmm'`: two settings 30°
+  apart about z;
 - all other groups: one setting.
 
 **The six settings of `2'm'm`.** `2'm'm` (C2v(Cs)) is the one orthorhombic group whose three
@@ -309,7 +338,8 @@ Everywhere else the two books agree: same frame, same symbols, same Schoenflies 
   headline of ITA Table 3.2.3.2, with the trailing or inner `1` that fixes the orientation (`321`,
   `31m`, `-3m1`). With hexagonal axes ITA keeps the `1` (`321`, `312`; Table 3.2.3.2, p. 754),
   because without it the two orientations cannot be told apart; `32` there is the description with
-  rhombohedral axes (p. 755).
+  rhombohedral axes (p. 755), the symbol of setting 3 (full `3 2`: two positions, [111] and the
+  directions [1-10], [01-1], [-101] of ITA Table 2.1.3.1).
 - **Full symbol** (`form: 'full'`): one entry per symmetry direction, separated by single spaces,
   `1` for a direction without symmetry: `-3 2/m 1`, `1 2 1`, `4/m -3 2/m`.
 - **Schoenflies** (`form: 'schoenflies'`): subscripts written inline (`C3v`, `D2d`, `Oh`); the same
@@ -400,7 +430,8 @@ group they generate.
 2.1.3.1, grouped by position of the full symbol, in the printed order and with the printed signs:
 primary, secondary, tertiary (hexagonal family: the row "Hexagonal", also for the trigonal classes
 with hexagonal axes). The monoclinic full symbol reads along a, b, c, so the monoclinic family has
-the orthorhombic positions; the triclinic family has none.
+the orthorhombic positions; the triclinic family has none. A setting with rhombohedral axes has the
+two positions of the row "Rhombohedral (rhombohedral axes)": [111], and [1-10], [01-1], [-101].
 
 `symmetryDirections(key, options)` lists, for a setting, every position of the family with the
 symbol at that position (if the full symbol has it) and, for each direction, the elements along
@@ -426,7 +457,7 @@ perpendicular.
 - **Sense** follows ITA § 11.1.2 (5th ed., pp. 810–811): `+` if the rotation is counter-clockwise
   seen from the tip of the axis looking towards the origin, i.e. by +360°/n about it; for a
   rotoinversion, angle and sense refer to the rotation part. The sense refers to the sign of the
-  axis. For all 40 settings of ITA's tables the printed
+  axis. For all 45 entries of ITA's tables (5 with rhombohedral axes) the printed
   axis of every operation with n ≥ 3 has exactly this sign, so `sense` equals the printed one
   (test below).
 - **Time reversal** (magnetic API) is the `timeReversal` of each described operation. The elements along a
@@ -465,15 +496,15 @@ such a group, use the key of its crystal class or `siteSymmetry` with its operat
 `wyckoffPositions(key, { setting })` lists them in ITA's order, general position first, as ITA
 prints them for that setting (ITA 6th ed., Table 3.2.3.2, pp. 745–769):
 
-| Field                    | Meaning                                                                                                                               |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `letter`                 | ITA's Wyckoff letter                                                                                                                  |
-| `multiplicity`           | number of equivalent directions (faces of the form)                                                                                   |
-| `siteSymmetry`           | oriented site-symmetry symbol as printed, e.g. `..m`, `4m.m`; the positions are those of the symmetry directions of ITA Table 2.1.3.1 |
-| `coordinates`            | the first printed coordinate triplet, e.g. `x,x,z` (a representative point)                                                           |
-| `millerIndices`          | the first printed face, e.g. `h,h,l`, Bravais–Miller indices for hexagonal axes, e.g. `h,h,-2h,l`                                     |
-| `representative`         | that face with h = 3, k = 2, l = 1: `hkl` (three indices, without i) and its Cartesian unit normal h a\* + k b\* + l c\*              |
-| `siteSymmetryOperations` | indices into `operations` (same setting) of the operations fixing the representative                                                  |
+| Field                    | Meaning                                                                                                                                                    |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `letter`                 | ITA's Wyckoff letter                                                                                                                                       |
+| `multiplicity`           | number of equivalent directions (faces of the form)                                                                                                        |
+| `siteSymmetry`           | oriented site-symmetry symbol as printed, e.g. `..m`, `4m.m`; the positions are those of the symmetry directions of ITA Table 2.1.3.1                      |
+| `coordinates`            | the first printed coordinate triplet, e.g. `x,x,z` (a representative point)                                                                                |
+| `millerIndices`          | the first printed face, e.g. `h,h,l`, Bravais–Miller indices for hexagonal axes, e.g. `h,h,-2h,l`                                                          |
+| `representative`         | that face with h = 3, k = 2, l = 1 (rhombohedral axes: h = 4, below): `hkl` (three indices, without i) and its Cartesian unit normal h a\* + k b\* + l c\* |
+| `siteSymmetryOperations` | indices into `operations` (same setting) of the operations fixing the representative                                                                       |
 
 - The **point at the origin** (letter o, site symmetry the whole group), which ITA 2016 prints for
   every group except the ten polar ones (1, 2, m, mm2, 4, 4mm, 3, 3m, 6, 6mm), is not a direction
@@ -482,6 +513,9 @@ prints them for that setting (ITA 6th ed., Table 3.2.3.2, pp. 745–769):
   elements**: in 321, position b prints the point x,0,0 (on the twofold axis along a) and the face
   (112̄0) (on the twofold axis along [110]). Both belong to the position; the representative of
   symcrys is the face, as the applications work with face poles.
+- **Rhombohedral axes:** three Miller indices, some printed as sums (`h,k,-h-k`, `h,k,2k-h`). The
+  representative takes h = 4, k = 2, l = 1, since (321) lies on the limiting form (h,k,2k−h)
+  printed for 32, 3m and -3m (pp. 755–759); (421) is (217) in hexagonal axes, (321) would be (116).
 - Where ITA prints a face with "or", e.g. (001) or (001̄) for the pedion of 4mm, the two faces
   belong to the same Wyckoff position (ITA 6th ed., § 3.2.1.2.4 (i), p. 729); the first is the
   representative.
@@ -545,8 +579,8 @@ tetragonal dipyramids of 422, (h0l) and (hhl)).
   tetragon-tritetrahedron in 23 and -43m, trigon- and tetragon-trioctahedron in m-3, 432 and m-3m).
   ITA prints both with the condition, which `condition` gives as `'|h|<|l|'` or `'|h|>|l|'`; in
   -43m and m-3m both are basic forms of the position, elsewhere both are limiting forms. The
-  representative takes h = 3, k = 2, l = 1 as for the Wyckoff positions, and h = 1, l = 3 where the
-  condition is |h| < |l|: (331) and (113).
+  representative takes h = 3, k = 2, l = 1 as for the Wyckoff positions (rhombohedral axes: h = 4),
+  and h = 1, l = 3 where the condition is |h| < |l|: (331) and (113).
 - **Groups.** As the Wyckoff positions: the 32 crystal classes only (a RangeError otherwise), and the settings ITA does not print (`mm2` settings 2 and 3, monoclinic unique axis a) are
   setting 1 carried into their frame.
 - **Monoclinic and triclinic:** the Cartesian normal of the representative takes a, b, c along x, y,
@@ -566,7 +600,9 @@ tetragonal dipyramids of 422, (h0l) and (hhl)).
   tell apart all forms with the same number of faces and eigensymmetry (tetragonal dipyramid and
   ditetragonal prism; the two forms on (hhl)). A form is listed once per position, except the
   limiting forms Table 3.2.1.3 marks with †: three rhombic prisms in 222, two dipyramids in 422
-  and 622 (pp. 726–727).
+  and 622 (pp. 726–727). Table 3.2.1.3 prints the rhombohedral description of 32, 3m and -3m as
+  the third line of a brace; where a form has no such line (3 and -3, and forms such as the pedion of
+  3m), its one row serves both axes.
 - **ITA 2006.** The 5th edition prints the forms of the point groups as Table 10.1.2.2 and the 47
   forms as Table 10.1.2.3. stereography's catalogue follows it, with the basic forms only and the
   numbers of Table 10.1.2.3; `audit/forms-2006` compares the 47 forms (number of faces,
@@ -611,8 +647,9 @@ not orthogonal, or whose rotation part does not turn by 360°/n with n = 1, 2, 3
 ## Lattice basis and orbits
 
 **Operations in the lattice basis.** `latticeOperations(key, { setting })` gives the
-operations of a point group as integer matrices W in the conventional basis a, b, c (hexagonal axes
-for the trigonal classes): W = B⁻¹·R·B, with B the basis of `latticeBasis` (columns a, b, c) and R
+operations of a point group as integer matrices W in the conventional basis a, b, c (hexagonal or
+rhombohedral axes, as the setting has them, for the trigonal classes): W = B⁻¹·R·B, with B the basis
+of `latticeBasis` (columns a, b, c; for rhombohedral axes a_R, b_R, c_R, "Cartesian frame") and R
 the Cartesian matrix of `operations`. W acts on the coordinates of a lattice direction [uvw]. The
 list has the shape of `operations` (`{ matrix }`, in the magnetic API with `timeReversal`) and its
 order, index for index, so that a caller can switch between the two. The matrices are not
@@ -637,8 +674,9 @@ rotation of class 3, [100] goes to [010], (100) to (1̄10). Indices for hexagona
 without i = −(h + k). The number of entries is the multiplicity, and the
 first entry is the given face with its site symmetry. For the general face (321) the orbit is
 ITA's general form in the order of the general position; ITA prints the faces in that order for 14
-of the 16 entries with hexagonal axes, and for 6/m and 6mm with the third and fourth rows
-exchanged (`references/itc/vol-a-table-3.2.3.2-general-faces.md`).
+of the 16 entries with hexagonal axes, for 6/m and 6mm with the third and fourth rows
+exchanged, and for 32, 3m and -3m with rhombohedral axes with the row of the second coset shifted
+by one (`references/itc/vol-a-table-3.2.3.2-general-faces.md`).
 
 `orbitOf(operations, direction, { tolerance })` does the same for a Cartesian direction (a face
 normal, a pole) under any list of Cartesian operations, for instance those left after distorting a

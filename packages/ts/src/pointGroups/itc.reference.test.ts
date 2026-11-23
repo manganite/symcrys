@@ -112,32 +112,36 @@ function crystalSystemOf(key: PointGroupKey): string {
   throw new Error(`No crystal system for ${key} in Table 2.1.1.1`);
 }
 
-/** Headlines of ITA Table 3.2.3.2 (hexagonal axes for the trigonal groups; rhombohedral entries left out). */
+/** Headlines of ITA Table 3.2.3.2 (hexagonal and rhombohedral axes for the trigonal groups). */
 interface Headline {
   short: string;
   full: string;
   schoenflies: string;
   axis?: 'b' | 'c';
+  rhombohedral?: true;
 }
 const HEADLINES: Headline[] = (() => {
   const rows = tableRows(readReference('itc/vol-a-table-3.2.3.2-headlines.md'));
   expectHeader(rows, ['System', 'Short', 'Full', 'Schoenflies', 'Axes', 'Page']);
-  return rows
-    .slice(1)
-    .filter((r) => r[4] !== 'rhombohedral axes')
-    .map((r) => {
-      const axis = /^unique axis (b|c)$/.exec(r[4])?.[1] as 'b' | 'c' | undefined;
-      // The table prints a full symbol if it differs from the short one (§ 3.2.1.2.1, p. 721); the
-      // monoclinic full symbols it does not print, and the fixture takes those from elsewhere.
-      const h: Headline = { short: r[1], full: r[2] || r[1], schoenflies: r[3] };
-      return axis ? { ...h, axis } : h;
-    });
+  return rows.slice(1).map((r) => {
+    const axis = /^unique axis (b|c)$/.exec(r[4])?.[1] as 'b' | 'c' | undefined;
+    // The table prints a full symbol if it differs from the short one (§ 3.2.1.2.1, p. 721); the
+    // monoclinic full symbols it does not print, and the fixture takes those from elsewhere.
+    const h: Headline = { short: r[1], full: r[2] || r[1], schoenflies: r[3] };
+    if (r[4] === 'rhombohedral axes') return { ...h, rhombohedral: true as const };
+    return axis ? { ...h, axis } : h;
+  });
 })();
 
 /** The headline of a fixture setting; the axis counts for the monoclinic settings only. */
 function headlineOf(f: ItcSettingFixture): Headline | undefined {
   const monoclinic = ['2', 'm', '2/m'].includes(f.short);
-  return HEADLINES.find((h) => h.short === f.short && h.axis === (monoclinic ? f.uniqueAxis : undefined));
+  return HEADLINES.find(
+    (h) =>
+      h.short === f.short &&
+      h.axis === (monoclinic ? f.uniqueAxis : undefined) &&
+      Boolean(h.rhombohedral) === Boolean(f.rhombohedral),
+  );
 }
 
 /** Class column of Table 3.2.2.2 (rhombohedral rows left out), as a cross-check of the settings. */
@@ -173,7 +177,7 @@ describe('ITC settings fixture against print', () => {
     }
   });
 
-  it('every entry of Table 3.2.3.2 (hexagonal axes) is a setting in the fixture', () => {
+  it('every entry of Table 3.2.3.2 is a setting in the fixture', () => {
     for (const h of HEADLINES) {
       expect(
         FIXTURE.some(([, f]) => headlineOf(f) === h),
@@ -209,15 +213,26 @@ describe('ITC symbols and operations of every setting', () => {
       it('settings match the fixture one to one, with the standard setting as default', () => {
         expect(actual).toHaveLength(expected.length);
         for (const e of expected) {
-          const match = actual.filter((s) => s.symbol === e.short && s.uniqueAxis === e.uniqueAxis);
+          const match = actual.filter(
+            (s) =>
+              s.symbol === e.short &&
+              s.uniqueAxis === e.uniqueAxis &&
+              (s.axes === 'rhombohedral') === Boolean(e.rhombohedral),
+          );
           expect(match).toHaveLength(1);
           expect(match[0].isDefault).toBe(e.standard);
         }
       });
 
       for (const e of expected) {
-        const label = `${e.short}${e.uniqueAxis ? ` (axis ${e.uniqueAxis})` : ''}`;
-        const setting = () => actual.find((x) => x.symbol === e.short && x.uniqueAxis === e.uniqueAxis)!;
+        const label = `${e.short}${e.uniqueAxis ? ` (axis ${e.uniqueAxis})` : ''}${e.rhombohedral ? ' (rhombohedral axes)' : ''}`;
+        const setting = () =>
+          actual.find(
+            (x) =>
+              x.symbol === e.short &&
+              x.uniqueAxis === e.uniqueAxis &&
+              (x.axes === 'rhombohedral') === Boolean(e.rhombohedral),
+          )!;
 
         it(`${label}: full symbol as in the fixture (${e.fullSource})`, () => {
           expect(hmTokens(setting().fullSymbol)).toEqual(hmTokens(e.full));
@@ -234,7 +249,10 @@ describe('ITC symbols and operations of every setting', () => {
         });
 
         it(`${label}: findPointGroup finds this setting by its full symbol`, () => {
-          expect(findPointGroup(setting().fullSymbol)).toEqual({ key, setting: setting().index });
+          // A symbol that is, without spaces, the key (`3 2`, rhombohedral) gives the default setting.
+          const isKey = setting().fullSymbol.replace(/\s+/g, '') === key;
+          const expected = isKey ? settings(key).find((s) => s.isDefault)!.index : setting().index;
+          expect(findPointGroup(setting().fullSymbol)).toEqual({ key, setting: expected });
         });
       }
     });

@@ -578,13 +578,14 @@ def lattice_operations(
     key: str, *, setting: Optional[Union[int, str]] = None
 ) -> list[Operation]:
     """The operations of a point group in the conventional lattice basis (a, b, c; for the trigonal
-    classes the hexagonal axes), in the order and with the time reversal of ``operations`` for the
-    same setting: integer matrices W acting on the coordinates of a lattice vector [uvw], W =
-    B⁻¹·R·B with the basis B of ``lattice_basis`` and the Cartesian matrix R. They do not depend on
-    the cell angles, so they exist for every family; for the monoclinic and triclinic families a, b,
-    c are taken along x, y, z, as for the Wyckoff positions. They are the matrices of ITA's general
-    position (6th ed., Table 3.2.3.2). Not orthogonal in general: pass them to no function that
-    takes Cartesian operations (docs/conventions.md, "Lattice basis and orbits").
+    classes the hexagonal or the rhombohedral axes of the setting), in the order and with the time
+    reversal of ``operations`` for the same setting: integer matrices W acting on the coordinates of
+    a lattice vector [uvw], W = B⁻¹·R·B with the basis B of the setting (itcData.ts, ``itc_basis``)
+    and the Cartesian matrix R. They do not depend on the cell angles, so they exist for every
+    family; for the monoclinic and triclinic families a, b, c are taken along x, y, z, as for the
+    Wyckoff positions. They are the matrices of ITA's general position (6th ed., Table 3.2.3.2). Not
+    orthogonal in general: pass them to no function that takes Cartesian operations
+    (docs/conventions.md, "Lattice basis and orbits").
 
     Parameters
     ----------

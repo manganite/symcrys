@@ -48,27 +48,30 @@ export interface ItcBlackWhite {
  * A group with its settings, given by their ITC full symbols in the order of #137 A4: the ITC
  * default first; monoclinic unique axis b, then c, then a; orthorhombic the orientations of the default in
  * the column order of ITA 2016 Table 1.5.4.4 (abc, ba-c, cab, -cba, bca, a-cb), each once; otherwise
- * the other orientation. The unique axis of a monoclinic setting is the position of its symbol
+ * the other orientation; for a trigonal group, last, the setting with rhombohedral axes (marked so)
+ * of the hexagonal setting 1, its symbol that of setting 1 without the trailing `1`. The unique axis of a monoclinic setting is the position of its symbol
  * that is not `1`; a trigonal setting has hexagonal axes.
  */
 function bw(
   key: BlackWhitePointGroupKey,
   crystalClass: PointGroupKey,
   schoenflies: string,
-  fullSymbols: readonly string[],
+  fullSymbols: readonly (string | readonly [string, 'rhombohedral'])[],
 ): ItcBlackWhite {
   const system = itcClass(crystalClass).crystalSystem;
   return {
     key,
     crystalClass,
     schoenflies,
-    settings: fullSymbols.map((full, i) => {
+    settings: fullSymbols.map((entry, i) => {
+      const full = typeof entry === 'string' ? entry : entry[0];
       const unique = full.split(' ').findIndex((t) => t !== '1');
+      const axes = typeof entry === 'string' ? 'hexagonal' : 'rhombohedral';
       return {
         index: i + 1,
         full,
         ...(system === 'monoclinic' ? { uniqueAxis: (['a', 'b', 'c'] as const)[unique] } : {}),
-        ...(system === 'trigonal' ? { axes: 'hexagonal' as const } : {}),
+        ...(system === 'trigonal' ? { axes } : {}),
         isDefault: i === 0,
       };
     }),
@@ -106,12 +109,12 @@ export const ITC_BLACK_WHITE: readonly ItcBlackWhite[] = [
   bw("4/m'm'm'", '4/mmm', 'D4h(D4)', ["4/m' 2/m' 2/m'"]),
   bw("4/m'mm", '4/mmm', 'D4h(C4v)', ["4/m' 2'/m 2'/m"]),
   bw("4'/m'm'm", '4/mmm', 'D4h(D2d)', ["4'/m' 2/m' 2'/m", "4'/m' 2'/m 2/m'"]),
-  bw("-3'", '-3', 'C3i(C3)', ["-3'"]),
-  bw("32'", '32', 'D3(C3)', ["3 2' 1", "3 1 2'"]),
-  bw("3m'", '3m', 'C3v(C3)', ["3 m' 1", "3 1 m'"]),
-  bw("-3m'", '-3m', 'D3d(C3i)', ["-3 2'/m' 1", "-3 1 2'/m'"]),
-  bw("-3'm'", '-3m', 'D3d(D3)', ["-3' 2/m' 1", "-3' 1 2/m'"]),
-  bw("-3'm", '-3m', 'D3d(C3v)', ["-3' 2'/m 1", "-3' 1 2'/m"]),
+  bw("-3'", '-3', 'C3i(C3)', ["-3'", ["-3'", 'rhombohedral']]),
+  bw("32'", '32', 'D3(C3)', ["3 2' 1", "3 1 2'", ["3 2'", 'rhombohedral']]),
+  bw("3m'", '3m', 'C3v(C3)', ["3 m' 1", "3 1 m'", ["3 m'", 'rhombohedral']]),
+  bw("-3m'", '-3m', 'D3d(C3i)', ["-3 2'/m' 1", "-3 1 2'/m'", ["-3 2'/m'", 'rhombohedral']]),
+  bw("-3'm'", '-3m', 'D3d(D3)', ["-3' 2/m' 1", "-3' 1 2/m'", ["-3' 2/m'", 'rhombohedral']]),
+  bw("-3'm", '-3m', 'D3d(C3v)', ["-3' 2'/m 1", "-3' 1 2'/m", ["-3' 2'/m", 'rhombohedral']]),
   bw("6'", '6', 'C6(C3)', ["6'"]),
   bw("-6'", '-6', 'C3h(C3)', ["-6'"]),
   bw("6'/m'", '6/m', 'C6h(C3i)', ["6'/m'"]),
@@ -156,8 +159,9 @@ export function itcBlackWhiteSetting(key: BlackWhitePointGroupKey, index: number
 /** The setting of the crystal class that a setting of the group lies in: the one whose full symbol is the group's without primes. */
 export function itcBlackWhiteClassSetting(key: BlackWhitePointGroupKey, index: number): number {
   const g = itcBlackWhite(key);
-  const plain = itcBlackWhiteSetting(key, index).full.replace(/'/g, '');
-  const matches = itcClass(g.crystalClass).settings.filter((s) => s.full === plain);
+  const s = itcBlackWhiteSetting(key, index);
+  const plain = s.full.replace(/'/g, '');
+  const matches = itcClass(g.crystalClass).settings.filter((c) => c.full === plain && c.axes === s.axes);
   if (matches.length !== 1)
     throw new Error(
       `${key} setting ${index}: ${matches.length} settings of ${g.crystalClass} have the symbol ${plain}`,

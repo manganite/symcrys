@@ -3,37 +3,20 @@
  * "Lattice basis and orbits"). Shared by both entry points.
  */
 
-import { crystalFamily, latticeBasis } from '../lattice.js';
 import { apply, inverse, multiply, type Mat3, type Vec3 } from '../linalg.js';
 import { checkOrthogonalWithin, type Operation } from '../operations.js';
 import { siteTolerance } from '../siteSymmetry.js';
 import type { Uvw } from '../symmetryDirections.js';
-import { itcLatticeOperations } from './itcData.js';
+import { itcBasis, itcLatticeOperations } from './itcData.js';
 import {
+  classSettingOf,
   settingIndexOf,
   operations as groupOperations,
   isPointGroupKey,
-  pointGroup,
   type MagneticPointGroupKey,
   type SettingOptions,
 } from './pointGroups.js';
 import type { Hkl } from './wyckoff.js';
-
-const IDENTITY: Mat3 = [
-  [1, 0, 0],
-  [0, 1, 0],
-  [0, 0, 1],
-];
-
-/**
- * The conventional basis a, b, c (columns) in the Cartesian frame of a point group: that of
- * `latticeBasis`, and for the monoclinic and triclinic families a, b, c along x, y, z, as for the
- * Wyckoff positions (the integer matrices do not depend on the cell angles).
- */
-function conventionalBasis(key: MagneticPointGroupKey): Mat3 {
-  const family = crystalFamily(pointGroup(key).crystalSystem);
-  return family === 'monoclinic' || family === 'triclinic' ? IDENTITY : latticeBasis(family);
-}
 
 /** An integer matrix from one that should be one; throws if it is not (a data error). */
 function integer(m: Mat3, what: string): Mat3 {
@@ -50,9 +33,9 @@ const latticeCache = new WeakMap<readonly Operation[], readonly Operation[]>();
 
 /**
  * The operations of a point group in the conventional lattice basis (a, b, c; for the trigonal
- * classes the hexagonal axes), in the order and with the time reversal of `operations` for the same
+ * classes the hexagonal or the rhombohedral axes of the setting), in the order and with the time reversal of `operations` for the same
  * setting: integer matrices W acting on the coordinates of a lattice vector [uvw],
- * W = B⁻¹·R·B with the basis B of `latticeBasis` and the Cartesian matrix R. They do not depend on
+ * W = B⁻¹·R·B with the basis B of the setting (itcData.ts, `itcBasis`) and the Cartesian matrix R. They do not depend on
  * the cell angles, so they exist for every family; for the monoclinic and triclinic families a, b,
  * c are taken along x, y, z, as for the Wyckoff positions. They are the
  * matrices of ITA's general position (6th ed., Table 3.2.3.2). Not orthogonal in general: pass
@@ -72,7 +55,9 @@ export function latticeOperations(key: MagneticPointGroupKey, options?: SettingO
         ),
       );
     } else {
-      const b = conventionalBasis(key);
+      // A magnetic group: B⁻¹·R·B in the basis of the setting of its class (itcData.ts, `itcBasis`).
+      const c = classSettingOf(key, options);
+      const b = itcBasis(c.key, c.index);
       const bInv = inverse(b);
       result = Object.freeze(
         ops.map((op, i) =>

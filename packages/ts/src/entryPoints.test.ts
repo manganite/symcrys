@@ -84,7 +84,8 @@ describe('keys', () => {
 
   it('a class is found by the symbol of each of its settings', () => {
     for (const key of classes.POINT_GROUP_KEYS) {
-      for (const setting of classes.settings(key)) {
+      // A rhombohedral symbol (`32`, `3 2`) is, without spaces, the key, which gives the default.
+      for (const setting of classes.settings(key).filter((s) => s.axes !== 'rhombohedral')) {
         for (const hm of [setting.symbol, setting.fullSymbol]) {
           const found = classes.findPointGroup(hm);
           const what = `${hm} (${key})`;
@@ -513,10 +514,12 @@ describe('a time-even question has one answer: class, white group and grey group
 
   it('the point group of a list: the class, and the white group of its operations', () => {
     for (const key of classes.POINT_GROUP_KEYS) {
-      for (const { index: setting } of classes.settings(key)) {
-        expect(classes.pointGroupOf(classes.operations(key, { setting }))).toEqual({ key, setting });
+      for (const { index: setting, axes } of classes.settings(key)) {
+        // Rhombohedral axes have the Cartesian operations of setting 1: the same frame.
+        const found = { key, setting: axes === 'rhombohedral' ? 1 : setting };
+        expect(classes.pointGroupOf(classes.operations(key, { setting }))).toEqual(found);
         const white = magnetic.operations(key, { setting });
-        expect(magnetic.pointGroupOf(white)).toEqual({ key, setting });
+        expect(magnetic.pointGroupOf(white)).toEqual(found);
         expect(classes.describeOperationsOf(classes.operations(key, { setting }))).toEqual(
           magnetic.describeOperationsOf(white).map(({ timeReversal: _t, ...d }) => d),
         );

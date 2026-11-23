@@ -53,8 +53,18 @@ export function expectHeader(rows: string[][], expected: string[]): void {
 }
 
 /**
- * Keeps the rows of a table of ITA Table 3.2.3.2 that are not for rhombohedral axes (column 2,
- * `Axes`). The rhombohedral entries are transcribed, but symcrys has no setting with rhombohedral
- * axes yet; the tests take them up with those settings (#121, step 6c).
+ * True if a printed entry of ITA Table 3.2.3.2 (its `Axes` column) and a setting of symcrys have the
+ * same axes: rhombohedral for both, or hexagonal or none for both.
  */
-export const notRhombohedral = (row: readonly string[]): boolean => row[1] !== 'rhombohedral axes';
+export const sameAxes = (printed: string, setting: { readonly axes?: string }): boolean =>
+  (printed === 'rhombohedral axes') === (setting.axes === 'rhombohedral');
+
+/**
+ * The rhombohedral basis in the hexagonal one, obverse (ITA 2016 Table 1.5.1.1, p. 78, the matrix Q of R₁ obverse): the columns
+ * a_R = (2a + b + c)/3, b_R = (−a + b + c)/3, c_R = (−a − 2b + c)/3; typed here independently of src/.
+ */
+export const RHOMBOHEDRAL_IN_HEXAGONAL: number[][] = [
+  [2 / 3, -1 / 3, -1 / 3],
+  [1 / 3, 1 / 3, -2 / 3],
+  [1 / 3, 1 / 3, 1 / 3],
+];

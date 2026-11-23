@@ -9,7 +9,13 @@
 
 import { describe, expect, it } from 'vitest';
 import { close, inverse, mul, sameGroup, sameM, type M, type RefOp } from '../testUtils/independentGroups.js';
-import { expectHeader, readReference, tableRows, notRhombohedral } from '../testUtils/references.js';
+import {
+  expectHeader,
+  readReference,
+  tableRows,
+  sameAxes,
+  RHOMBOHEDRAL_IN_HEXAGONAL,
+} from '../testUtils/references.js';
 import { POINT_GROUP_KEYS, operations, settings, type PointGroupKey } from './pointGroups.js';
 
 /**
@@ -34,7 +40,7 @@ const HEXAGONAL: M = [
 const headlineRows = tableRows(readReference('itc/vol-a-table-3.2.3.2-headlines.md'));
 expectHeader(headlineRows, ['System', 'Short', 'Full', 'Schoenflies', 'Axes', 'Page']);
 
-const positionRows = tableRows(readReference('itc/vol-a-table-3.2.3.2-general-positions.md')).filter(notRhombohedral);
+const positionRows = tableRows(readReference('itc/vol-a-table-3.2.3.2-general-positions.md'));
 expectHeader(positionRows, ['Short', 'Axes', 'Page', 'Multiplicity', 'General position']);
 
 /** One coordinate, e.g. `-x+y`, as the row of W: the coefficients of x, y, z. */
@@ -78,7 +84,12 @@ const ENTRIES: Entry[] = positionRows.slice(1).map((r) => {
 });
 
 function cartesian(e: Entry): RefOp[] {
-  const b = e.system === 'trigonal' || e.system === 'hexagonal' ? HEXAGONAL : ORTHONORMAL;
+  const b =
+    e.axes === 'rhombohedral axes'
+      ? mul(HEXAGONAL, RHOMBOHEDRAL_IN_HEXAGONAL)
+      : e.system === 'trigonal' || e.system === 'hexagonal'
+        ? HEXAGONAL
+        : ORTHONORMAL;
   const bInv = inverse(b);
   return e.triplets.map((t) => ({ m: mul(mul(b, latticeMatrix(t)), bInv), t: false }));
 }
@@ -88,15 +99,15 @@ function settingOf(e: Entry): { key: PointGroupKey; index: number }[] {
   const axis = /^unique axis (b|c)$/.exec(e.axes)?.[1];
   return POINT_GROUP_KEYS.flatMap((key) =>
     settings(key)
-      .filter((s) => s.symbol === e.short && (axis === undefined || s.uniqueAxis === axis))
+      .filter((s) => s.symbol === e.short && (axis === undefined || s.uniqueAxis === axis) && sameAxes(e.axes, s))
       .map((s) => ({ key, index: s.index })),
   );
 }
 
 describe('ITA Table 3.2.3.2: general positions', () => {
-  it('has the 40 entries with hexagonal or no special axes, each once', () => {
-    expect(ENTRIES).toHaveLength(40);
-    expect(new Set(ENTRIES.map((e) => `${e.short}|${e.axes}`)).size).toBe(40);
+  it('has the 45 entries, each once (5 with rhombohedral axes)', () => {
+    expect(ENTRIES).toHaveLength(45);
+    expect(new Set(ENTRIES.map((e) => `${e.short}|${e.axes}`)).size).toBe(45);
   });
 
   it('covers every ITC setting of symcrys except 2mm, m2m and unique axis a, which ITA does not list', () => {

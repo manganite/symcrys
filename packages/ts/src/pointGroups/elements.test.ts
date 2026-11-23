@@ -25,12 +25,34 @@ const familyOf = (key: PointGroupKey) => {
   return s === 'trigonal' ? 'hexagonal' : s;
 };
 
-function cartesianOf(key: PointGroupKey, uvw: readonly number[]): number[] {
+/**
+ * Rhombohedral axes in the hexagonal basis, obverse (ITA 2016 Table 1.5.1.1, p. 78, the matrix Q of R₁ obverse): a_R = (2a + b + c)/3,
+ * b_R = (−a + b + c)/3, c_R = (−a − 2b + c)/3, typed here independently of src/.
+ */
+const RHOMBOHEDRAL: M = mul(HEXAGONAL, [
+  [2 / 3, -1 / 3, -1 / 3],
+  [1 / 3, 1 / 3, -2 / 3],
+  [1 / 3, 1 / 3, 1 / 3],
+]);
+
+/** ITA Table 2.1.3.1, rhombohedral axes: [111]; [1-10], [01-1], [-101]. */
+const RHOMBOHEDRAL_DIRECTIONS = [
+  [1, 1, 1],
+  [1, -1, 0],
+  [0, 1, -1],
+  [-1, 0, 1],
+];
+
+const rhombohedral = (key: PointGroupKey, setting: number) =>
+  settings(key).find((s) => s.index === setting)?.axes === 'rhombohedral';
+
+function cartesianOf(key: PointGroupKey, setting: number, uvw: readonly number[]): number[] {
   const system = pointGroup(key).crystalSystem;
+  const basis = rhombohedral(key, setting) ? RHOMBOHEDRAL : HEXAGONAL;
   const v =
     system === 'trigonal' || system === 'hexagonal'
       ? mul(
-          HEXAGONAL,
+          basis,
           uvw.map((x) => [x]),
         ).map((r) => r[0])
       : [...uvw];
@@ -68,10 +90,12 @@ describe('describeOperations', () => {
         expect(d.axis).toBeUndefined();
         expect(d.order).toBe(1);
       } else {
-        const c = cartesianOf(key, d.axis!.lattice);
+        const c = cartesianOf(key, setting, d.axis!.lattice);
         expect(c.every((x, k) => Math.abs(x - d.axis!.cartesian[k]) < 1e-9)).toBe(true);
         expect(d.axis!.lattice.every(Number.isInteger)).toBe(true);
-        const table = LATTICE_SYMMETRY_DIRECTIONS[familyOf(key)].flat().map((u) => [...u]);
+        const table = rhombohedral(key, setting)
+          ? RHOMBOHEDRAL_DIRECTIONS
+          : LATTICE_SYMMETRY_DIRECTIONS[familyOf(key)].flat().map((u) => [...u]);
         // the sign of ITA Table 2.1.3.1, also for twofold axes and mirror normals
         expect(table).toContainEqual([...d.axis!.lattice]);
       }
@@ -102,7 +126,7 @@ describe('symmetryDirections', () => {
     let elements = 0;
     for (const p of positions) {
       for (const d of p.directions) {
-        const u = cartesianOf(key, d.lattice);
+        const u = cartesianOf(key, setting, d.lattice);
         const rotation = [6, 4, 3, 2].find((n) => inGroup(ops, rotationAbout(u, 1 / n))) ?? 1;
         const rotoinversion = [6, 4, 3].find((n) => inGroup(ops, neg(rotationAbout(u, 1 / n)))) ?? 0;
         expect([d.rotation, d.rotoinversion, d.mirror]).toEqual([
