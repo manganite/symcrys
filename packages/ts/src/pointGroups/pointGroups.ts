@@ -87,7 +87,7 @@ export interface Setting {
 export interface SettingOptions {
   /**
    * The setting: its 1-based index, or its ITC symbol, short or full (spaces ignored: `'312'`,
-   * `'3 1 2'`, `'1 1 2'`). A symbol that several settings share (`'2'` for unique axis b and c) is
+   * `'3 1 2'`, `'1 1 2'`). A symbol that several settings share (`'2'` for unique axis b, c and a) is
    * an error that names them. Default: the ITC default setting.
    */
   readonly setting?: number | string;
@@ -489,8 +489,8 @@ export function operations(key: MagneticPointGroupKey, options?: SettingOptions)
 /**
  * Generators of the point group in the requested setting (docs/conventions.md, "Generators"): ITA's
  * selected generators in printed order, without the identity and ITA's lattice translations, so
- * the list is empty for `1`; for `mm2` settings 2 and 3, which ITA does not list, those of setting 1
- * carried into their frame; for a magnetic group, those of its class with the time reversal they
+ * the list is empty for `1`; for the settings ITA does not print (`mm2` settings 2 and 3, monoclinic unique axis a), those of setting 1 carried
+ * into their frame; for a magnetic group, those of its class with the time reversal they
  * have in the group, for a grey group followed by `1'`.
  */
 export function generators(key: MagneticPointGroupKey, options?: SettingOptions): readonly Operation[] {
@@ -547,7 +547,7 @@ function find(hm: string, classesOnly: boolean): PointGroupInSetting<MagneticPoi
 /**
  * Finds a crystal class by a Hermann–Mauguin symbol: the short symbol of a setting, a full symbol,
  * or the key (spaces are ignored). A symbol that names one setting gives that setting; the key, and
- * a short symbol that several settings share (the monoclinic ones: `2` for unique axis b and c),
+ * a short symbol that several settings share (the monoclinic ones: `2` for unique axis b, c and a),
  * give the ITC default setting. Returns undefined if nothing matches, also for a value that is not a
  * string and for the symbol of a magnetic group with time reversal (`findMagneticPointGroup`).
  * Symbols are written as in this library, with `-` for the overbar (`m-3m`).
@@ -561,7 +561,7 @@ export function findPointGroup(hm: string): PointGroupInSetting | undefined {
  * Finds one of the 122 magnetic point groups (the 32 crystal classes included) by a symbol: the
  * short symbol of a setting, a full symbol, or the key (spaces are ignored). A prime `'` marks time
  * reversal: `4'/mmm'`, `2221'`. A symbol that names one setting gives that setting; the key, and a
- * short symbol that several settings share (the monoclinic ones: `2'` for unique axis b and c),
+ * short symbol that several settings share (the monoclinic ones: `2'` for unique axis b, c and a),
  * give the ITC default setting. Returns undefined if nothing matches, also for a value that is not
  * a string. Symbols are written as in this library, with `-` for the overbar (`m'-3'm`).
  */

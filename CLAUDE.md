@@ -493,7 +493,7 @@ The conventions themselves are in `docs/conventions.md`; here, what was decided 
   print anchor (class (a)) and so stronger than a derivation; it is also the basis for exact
   lattice-basis matrices later. In addition the ITC symbol of each setting, read along the symmetry
   directions of ITA Table 2.1.3.1 and closed independently, must give the same operations; this
-  also covers `2mm` and `m2m`, which ITA does not list. ITC Vol. D Table 1.5.2.3 is transcribed with
+  also covers `2mm`, `m2m` and monoclinic unique axis a, which ITA does not list. ITC Vol. D Table 1.5.2.3 is transcribed with
   the magnetic groups.
 - **Stored frame and settings** _(Storage in the Birss frame and the Birss part replaced by "Pure ITC" above;
   the settings follow #116.)_ (2026-11-09, #14): data are stored once, in Birss's frame (setting
@@ -518,7 +518,8 @@ The conventions themselves are in `docs/conventions.md`; here, what was decided 
   #110 item 10, #115)_ with its
   Cartesian normal, since the apps work with face poles. "Lies on the element" uses an optional
   `tolerance`, default `EPSILON`, so that stereography can pass 10⁻⁴ for its rounded links while
-  symcrys projects onto the fixed space. `mm2` settings 2 and 3, which ITA does not print, are
+  symcrys projects onto the fixed space. `mm2` settings 2 and 3 and monoclinic unique axis a, which
+  ITA does not print, are
   derived from setting 1 by a permutation of the axes (settings cab and bca of ITA 2016 Table
   1.5.4.4, #122), with a test that reads the oriented symbol independently, as for the symbols.
   `siteSymmetry` takes any list of operations, so that a consumer can use it for
@@ -615,7 +616,7 @@ The conventions themselves are in `docs/conventions.md`; here, what was decided 
   elements all differ; it has six orientations, and print uses all of them (Birss, four tables of
   ITC Vol. D, Paufler), so a reader who takes a symbol from print must be able to select it.
   Since #121 step 6b the six are numbered by the column order of ITA 2016 Table 1.5.4.4 (#137 A4;
-  `docs/conventions.md`, "Settings"), and unique axis a comes with step 6c (#137 A5).
+  `docs/conventions.md`, "Settings"), and monoclinic unique axis a is setting 3 (#121 step 6c, #137 A5).
 - **Magnetic point groups: data** _(Storage in the Birss frame replaced by "Pure ITC" above; the reason
   given for the type names is corrected in #109. Since #122 PR 2c the ITC full symbols of the
   black-and-white groups are stored, one per setting, and the rule runs the other way: the time

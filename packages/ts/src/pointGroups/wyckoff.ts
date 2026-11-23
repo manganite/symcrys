@@ -124,7 +124,8 @@ function permuteSymbol(symbolText: string, r: Mat3): string {
 
 /**
  * The permutation r that carries setting 1 of a class into `setting` (new axis i = r[i][j] × old
- * axis j), for the settings ITA does not print (`mm2` settings 2 and 3): the transpose of the change
+ * axis j), for the settings ITA does not print (`mm2` settings 2 and 3, monoclinic unique axis a):
+ * the transpose of the change
  * of basis P of the ITC class data ((a′, b′, c′) = (a, b, c)·P, itcData.ts). Coordinates (P⁻¹·x)
  * and Miller indices (h·P) are carried by the same r only because P is a signed permutation
  * (P⁻¹ = Pᵀ); throws for a setting that is not carried from setting 1 by one.
@@ -164,10 +165,12 @@ function printedRows(key: PointGroupKey, setting: number): readonly WyckoffRow[]
   if (entry) return entry.rows;
   if (setting === 1) throw new Error(`Point group ${key}: no printed Wyckoff positions for setting 1`);
   const r = permutationFromSetting1(key, setting);
+  // A monoclinic site symmetry (`2`, `m`, `2/m`) names the element on the unique axis, not a position.
+  const oriented = crystalFamily(itcClass(key).crystalSystem) !== 'monoclinic';
   return printedRows(key, 1).map(([letter, mult, site, coords, miller]) => [
     letter,
     mult,
-    permuteSymbol(site, r),
+    oriented ? permuteSymbol(site, r) : site,
     permutePattern(coords, r, XYZ),
     miller === '' ? '' : permutePattern(miller, r, HKL),
   ]);
@@ -203,8 +206,8 @@ export function tableSetting(key: PointGroupKey, options?: SettingOptions, what 
  * The Wyckoff positions of a point group for directions, in ITA's printed order (general position
  * first), for the 32 crystal classes only (throws a RangeError for a magnetic point group with
  * time reversal). The point at the origin
- * (letter o) is not a direction and is left out. For `mm2` settings 2 and 3 (`2mm`, `m2m`), which
- * ITA does not print, the positions of setting 1 carried into their frame.
+ * (letter o) is not a direction and is left out. For the settings ITA does not print (`mm2` settings 2 and 3, monoclinic unique axis a), the positions
+ * of setting 1 carried into their frame.
  */
 export function wyckoffPositions(key: PointGroupKey, options?: SettingOptions): readonly WyckoffPosition[] {
   const setting = tableSetting(key, options);
