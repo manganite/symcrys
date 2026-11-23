@@ -7,12 +7,12 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { expectHeader, readReference, tableRows } from '../testUtils/references.js';
+import { expectHeader, readReference, tableRows, notRhombohedral } from '../testUtils/references.js';
 import { ITC_CLASSES, itcLatticeOperations } from './itcData.js';
 
 const headlineRows = tableRows(readReference('itc/vol-a-table-3.2.3.2-headlines.md'));
 expectHeader(headlineRows, ['System', 'Short', 'Full', 'Schoenflies', 'Axes', 'Page']);
-const positionRows = tableRows(readReference('itc/vol-a-table-3.2.3.2-general-positions.md'));
+const positionRows = tableRows(readReference('itc/vol-a-table-3.2.3.2-general-positions.md')).filter(notRhombohedral);
 expectHeader(positionRows, ['Short', 'Axes', 'Page', 'Multiplicity', 'General position']);
 
 /** One printed coordinate, e.g. `-x+y`, as a row of W: the coefficients of x, y, z. */

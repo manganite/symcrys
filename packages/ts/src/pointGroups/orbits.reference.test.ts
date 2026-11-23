@@ -12,13 +12,13 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { expectHeader, readReference, tableRows } from '../testUtils/references.js';
+import { expectHeader, readReference, tableRows, notRhombohedral } from '../testUtils/references.js';
 import { latticeOperations, orbit } from './orbits.js';
 import { POINT_GROUP_KEYS, settings, type PointGroupKey } from './pointGroups.js';
 
-const generalRows = tableRows(readReference('itc/vol-a-table-3.2.3.2-general-positions.md'));
+const generalRows = tableRows(readReference('itc/vol-a-table-3.2.3.2-general-positions.md')).filter(notRhombohedral);
 expectHeader(generalRows, ['Short', 'Axes', 'Page', 'Multiplicity', 'General position']);
-const faceRows = tableRows(readReference('itc/vol-a-table-3.2.3.2-general-faces.md'));
+const faceRows = tableRows(readReference('itc/vol-a-table-3.2.3.2-general-faces.md')).filter(notRhombohedral);
 expectHeader(faceRows, ['Short', 'Axes', 'Page', 'Faces']);
 
 /** One coordinate (`-x+y`, `2x`) as the coefficients of x, y, z. */

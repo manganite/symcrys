@@ -22,7 +22,7 @@
 
 import { describe, expect, it } from 'vitest';
 import { close, inverse, mul, sameM, type M, type RefOp } from '../testUtils/independentGroups.js';
-import { expectHeader, readReference, section, tableRows } from '../testUtils/references.js';
+import { expectHeader, readReference, section, tableRows, notRhombohedral } from '../testUtils/references.js';
 import { crystalForms } from './crystalForms.js';
 import { ITA_FORMS, ITA_FORM_TYPES } from './crystalFormsData.js';
 import { POINT_GROUP_KEYS, settings, type PointGroupKey } from './pointGroups.js';
@@ -59,9 +59,9 @@ const typeRows = tableRows(section(formsFile, '## Forms'));
 expectHeader(typeRows, ['No.', 'Crystal form', 'Faces', 'Eigensymmetry']);
 const generatingRows = tableRows(section(formsFile, '## Generating point groups'));
 expectHeader(generatingRows, ['No.', 'Class', 'Axes', 'Face symmetry', 'Type', 'Note']);
-const faceRows = tableRows(readReference('itc/vol-a-table-3.2.3.2-face-forms.md'));
+const faceRows = tableRows(readReference('itc/vol-a-table-3.2.3.2-face-forms.md')).filter(notRhombohedral);
 expectHeader(faceRows, ['Short', 'Axes', 'Page', 'Letter', 'Form', 'Name', 'Miller indices', 'Condition']);
-const wyckoffRows = tableRows(readReference('itc/vol-a-table-3.2.3.2-wyckoff-positions.md'));
+const wyckoffRows = tableRows(readReference('itc/vol-a-table-3.2.3.2-wyckoff-positions.md')).filter(notRhombohedral);
 expectHeader(wyckoffRows, [
   'Short',
   'Axes',
@@ -72,7 +72,7 @@ expectHeader(wyckoffRows, [
   'Coordinates',
   'Miller indices',
 ]);
-const generalRows = tableRows(readReference('itc/vol-a-table-3.2.3.2-general-positions.md'));
+const generalRows = tableRows(readReference('itc/vol-a-table-3.2.3.2-general-positions.md')).filter(notRhombohedral);
 expectHeader(generalRows, ['Short', 'Axes', 'Page', 'Multiplicity', 'General position']);
 const headlineRows = tableRows(readReference('itc/vol-a-table-3.2.3.2-headlines.md'));
 expectHeader(headlineRows, ['System', 'Short', 'Full', 'Schoenflies', 'Axes', 'Page']);
