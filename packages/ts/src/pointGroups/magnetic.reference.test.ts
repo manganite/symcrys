@@ -624,7 +624,7 @@ describe('the 122 magnetic point groups', () => {
       "-3'm'",
       "-3'm",
     ]);
-    for (const key of ["321'", "32'", "-3'm"]) {
+    for (const key of ["321'", "32'", "-3'm"] as const) {
       const s = settings(key);
       expect(s[0].symbol, key).toBe(s[s.length - 1].symbol);
       expect(s[0].fullSymbol, key).not.toBe(s[s.length - 1].fullSymbol);

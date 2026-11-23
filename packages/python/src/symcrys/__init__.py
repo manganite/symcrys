@@ -225,7 +225,8 @@ def symbol(
     setting: Optional[Union[int, str]] = None,
     form: Optional[Literal["short", "full", "schoenflies"]] = None,
 ) -> str:
-    """A symbol of the crystal class in the requested setting.
+    """A symbol of the crystal class in the requested setting, as ITA writes it (Tables 3.2.1.2 and
+    3.2.3.2: ``321``, ``C3i``; docs/conventions.md, "Symbols").
 
     Parameters
     ----------
@@ -234,9 +235,13 @@ def symbol(
         ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (``'2'`` for unique axis b,
         c and a) is an error that names them. Default: the ITC default setting.
     form : keyword-only, optional
-        ``'short'`` (default): short symbol of the setting, e.g. ``321`` (ITC) for class ``32``.
-        ``'full'``: full symbol, positions separated by spaces, e.g. ``-3 2/m 1``.
-        ``'schoenflies'``: Schoenflies symbol, subscripts written inline (``C3v``, ``D2d``, ``Oh``).
+        ``'short'`` (default): short symbol of the setting, e.g. ``321`` for class ``32`` (ITA Table
+        3.2.3.2); in the magnetic API the default setting of a grey or black-and-white group has the
+        symbol ITC Vol. D prints (Table 1.5.2.3), its key (``32'``, ``321'``). ``'full'``: full
+        symbol, positions separated by spaces, e.g. ``-3 2/m 1``. ``'schoenflies'``: Schoenflies
+        symbol, subscripts written inline (``C3v``, ``D2d``, ``Oh``); ``C3i`` for the class -3 in
+        the crystallographic API (ITA), ``S6`` in the magnetic API (ITC Vol. D: ``S6(C3)``,
+        ``D3d(S6)``).
     """
     return str(_call("symbol", key, _shared.options(setting=setting, form=form)))
 
