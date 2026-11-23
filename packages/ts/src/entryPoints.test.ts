@@ -143,9 +143,14 @@ describe('the crystallographic API returns nothing about time reversal', () => {
   it('settings, symbols and the properties of the operations are those of the white group', () => {
     for (const key of classes.POINT_GROUP_KEYS) {
       expect(classes.settings(key)).toEqual(magnetic.settings(key));
-      for (const form of ['short', 'full', 'schoenflies'] as const) {
+      for (const form of ['short', 'full'] as const) {
         expect(classes.symbol(key, { form })).toBe(magnetic.symbol(key, { form }));
       }
+      // Schoenflies: ITA's in the crystallographic API, ITC Vol. D's in the magnetic API (#137 B3),
+      // which differ for -3 only.
+      const ita = classes.symbol(key, { form: 'schoenflies' });
+      expect(magnetic.symbol(key, { form: 'schoenflies' })).toBe(key === '-3' ? 'S6' : ita);
+      if (key === '-3') expect(ita).toBe('C3i');
       // … and for a list of operations: the same answers as the fields, and as the magnetic API.
       const g = classes.pointGroup(key);
       for (const list of ['operations', 'generators'] as const) {

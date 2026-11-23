@@ -79,8 +79,9 @@ and 19 describe antiferromagnets). symcrys keeps the two readings
 apart by its two entry points ("Two entry points", below).
 
 The **crystal class** of a magnetic group is the class it becomes when time reversal is dropped
-from every operation. The numbers I, II, III are the usual ones (birss-app uses them). ITC Vol. D
-Ch. 1.5 numbers differently: its first type are the grey groups (§ 1.5.2.1, eq. (1.5.2.1)), its
+from every operation. The numbers I, II, III are those of ITC Vol. D Table 1.2.6.12 (p. 66,
+"Magnetic point groups": type I the 32 classes, type II the grey groups `11'`, `21'`, …, type III
+the black-and-white groups; #137 B5). ITC Vol. D Ch. 1.5 numbers differently: its first type are the grey groups (§ 1.5.2.1, eq. (1.5.2.1)), its
 second type the crystal classes, its third type the black-and-white groups; its Table 1.5.2.3,
 "The 90 magnetic point groups of types 2 and 3", therefore lists the 32 classes and the 58
 black-and-white groups, not the grey groups. Birss's Table 6 lists the same 90 groups.
@@ -114,10 +115,11 @@ may be magnetoelectric and piezomagnetic. It has every function of the crystallo
 the Wyckoff positions and the crystal forms, which ITA tabulates for the crystal classes.
 
 **The two agree where both can be asked.** A question without time reversal has one answer for a
-crystal class and its white group, which have the same operations: the same settings, symbols,
+crystal class and its white group, which have the same operations: the same settings, symbols
+(except the Schoenflies symbol of `-3`, `C3i` and `S6`, "Symbols"),
 matrices in the same order, generators, symmetry elements, site symmetries, and forms of time-even
 tensors. The crystallographic API is computed by the same code and returns the answer of the white
-group with time reversal left out. The grey group of the class has other symbols (`3211'`) and
+group with time reversal left out. The grey group of the class has other symbols (`321'`, `3121'`) and
 twice the operations, but the same settings, the same properties of the operations
 (centrosymmetric, polar, chiral, Laue class), the same multiplicity of a direction, the same forms
 of time-even tensors and so the same time-even properties. `entryPoints.test.ts` checks both for
@@ -352,7 +354,8 @@ symbols show:
 - **cubic symbols:** Birss prints `m3` and `m3m`, ITC `m-3` and `m-3m`.
 
 Everywhere else the two books agree: same frame, same symbols, same Schoenflies symbols (`-3` is
-`C3i` in both Birss Table 3 and ITA Tables 3.2.1.2 and 3.2.3.2).
+`C3i` in both Birss Table 3 and ITA Tables 3.2.1.2 and 3.2.3.2, which the crystallographic API
+writes; ITC Vol. D and the magnetic API write `S6`).
 
 ## Symbols
 
@@ -362,9 +365,17 @@ Everywhere else the two books agree: same frame, same symbols, same Schoenflies 
   names is combined with time reversal (ITC Vol. D § 1.5.2.1, Table 1.5.2.3): `4/m 2/m 2/m` becomes
   `4'/m 2/m 2'/m'`, short `4'/mmm'`. symcrys derives these symbols from the symbols of the class
   and the operations; the ITC full symbols of the default settings equal the printed ones for all
-  58 groups. As for the classes, the ITC short symbol of a trigonal setting keeps the `1`
-  (`32'1`, `-3'1m`), while the key is the printed short symbol (`32'`). A grey group has the symbols
-  of its class followed by `1'` (short `mm21'`, full `m m 2 1'`).
+  58 groups. A grey group has the symbols of its class followed by `1'` (short `mm21'`, full
+  `m m 2 1'`).
+- **Short symbols of the magnetic groups** (#137 B2): the default setting of a grey or
+  black-and-white group has the short symbol ITC Vol. D prints, its key (`32'`, `-3'm'`, `321'`,
+  `-3m1'`; Table 1.5.2.3 and the grey groups as in Table 1.2.6.12). The other settings keep the `1`
+  that fixes the orientation, as Vol. D does where it prints them (`31m'`, p. 140; `3121'`), and
+  the symbol derived by the rule for the default setting (`32'1`, `3211'`) still selects it
+  (`{ setting }`, `findPointGroup`). With rhombohedral axes the short symbol is again the key
+  (`32'`), so the default and the rhombohedral setting share it and are told apart by their full
+  symbols (`3 2' 1`, `3 2'`). A crystal class keeps ITA's symbol (`321`) in both entry points, so
+  that a setting symbol means the same setting in both.
 - **Short symbol** (`form: 'short'`, the default): the symbol of the setting, in ITC as in the
   headline of ITA Table 3.2.3.2, with the trailing or inner `1` that fixes the orientation (`321`,
   `31m`, `-3m1`). With hexagonal axes ITA keeps the `1` (`321`, `312`; Table 3.2.3.2, p. 754),
@@ -373,11 +384,13 @@ Everywhere else the two books agree: same frame, same symbols, same Schoenflies 
   directions [1-10], [01-1], [-101] of ITA Table 2.1.3.1).
 - **Full symbol** (`form: 'full'`): one entry per symmetry direction, separated by single spaces,
   `1` for a direction without symmetry: `-3 2/m 1`, `1 2 1`, `4/m -3 2/m`.
-- **Schoenflies** (`form: 'schoenflies'`): subscripts written inline (`C3v`, `D2d`, `Oh`); the same
-  A black-and-white group is `G(H)`, G the crystal class and H the subgroup of
-  the operations without time reversal (`D4h(D2d)`), as in ITC Vol. D Table 1.5.2.3; a grey group
-  is `GR` (`D4R`; ITC Vol. D Table 1.5.2.1). ITC Vol. D writes `S6` for `-3`; symcrys writes `C3i`
-  as for the class (`C3i(C3)`, `D3d(C3i)`, `C6h(C3i)`).
+- **Schoenflies** (`form: 'schoenflies'`): subscripts written inline (`C3v`, `D2d`, `Oh`). A
+  black-and-white group is `G(H)`, G the crystal class and H the subgroup of the operations without
+  time reversal (`D4h(D2d)`), as in ITC Vol. D Table 1.5.2.3; a grey group is `GR` (`D4R`; ITC
+  Vol. D Table 1.5.2.1). Each entry point follows the volume it is anchored in (#137 B3): the
+  crystallographic API writes `C3i` for `-3`, as ITA does (Tables 3.2.1.2, 3.2.3.2), the magnetic API
+  `S6` throughout, as ITC Vol. D does (`S6`, `S6(C3)`, `D3d(S6)`, `C6h(S6)`; Table 1.5.2.3), and so
+  `S6R` for the grey group.
 - **Shubnikov symbols** are not provided. `references/` holds them as printed (ITC Vol. D
   Table 1.5.2.3; Birss Tables 3 and 6).
 - Rendering (overbars, subscripts, LaTeX) is left to the applications.
