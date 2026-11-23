@@ -86,16 +86,32 @@ const single = (
   settings: [crystalSystem === 'trigonal' ? { ...one(1, key, full), axes: 'hexagonal' } : one(1, key, full)],
 });
 
-/** A monoclinic class: setting 1 unique axis b (the ITC default, ITA § 2.1.3.15), setting 2 unique axis c. */
-const monoclinic = (key: PointGroupKey, schoenflies: string, full: (inner: string) => string): ItcClass => ({
-  key,
-  crystalSystem: 'monoclinic',
-  schoenflies,
-  settings: [
-    { index: 1, short: key, full: full('b'), uniqueAxis: 'b', isDefault: true },
-    { index: 2, short: key, full: full('c'), uniqueAxis: 'c', isDefault: false },
-  ],
-});
+/**
+ * A monoclinic class: setting 1 unique axis b (the ITC default, ITA § 2.1.3.15), setting 2 unique
+ * axis c, both printed in ITA Table 3.2.3.2; setting 3 unique axis a, which ITA prints for the
+ * space groups (Table 1.5.4.4) and ITC Vol. D for the point groups (`references/itc/orientations.md`),
+ * from unique axis b by the setting bca of ITA 2016 Table 1.5.4.4 (a′ = b, b′ = c, c′ = a).
+ */
+const monoclinic = (key: PointGroupKey, schoenflies: string): ItcClass => {
+  const full = (position: number) => [0, 1, 2].map((i) => (i === position ? key : '1')).join(' ');
+  return {
+    key,
+    crystalSystem: 'monoclinic',
+    schoenflies,
+    settings: [
+      { index: 1, short: key, full: full(1), uniqueAxis: 'b', isDefault: true },
+      { index: 2, short: key, full: full(2), uniqueAxis: 'c', isDefault: false },
+      {
+        index: 3,
+        short: key,
+        full: full(0),
+        uniqueAxis: 'a',
+        isDefault: false,
+        from: { index: 1, basis: SETTING_BCA },
+      },
+    ],
+  };
+};
 
 /**
  * A class with two orientations: the ITC default first (docs/conventions.md, "Settings"), then the
@@ -124,9 +140,9 @@ const pair = (
 export const ITC_CLASSES: readonly ItcClass[] = [
   single('1', 'triclinic', 'C1'),
   single('-1', 'triclinic', 'Ci'),
-  monoclinic('2', 'C2', (axis) => (axis === 'c' ? '1 1 2' : '1 2 1')),
-  monoclinic('m', 'Cs', (axis) => (axis === 'c' ? '1 1 m' : '1 m 1')),
-  monoclinic('2/m', 'C2h', (axis) => (axis === 'c' ? '1 1 2/m' : '1 2/m 1')),
+  monoclinic('2', 'C2'),
+  monoclinic('m', 'Cs'),
+  monoclinic('2/m', 'C2h'),
   single('222', 'orthorhombic', 'D2', '2 2 2'),
   {
     key: 'mm2',

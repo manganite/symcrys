@@ -53,7 +53,7 @@ describe('the ITC data of the black-and-white groups', () => {
         expect(
           g.settings.map((s) => s.uniqueAxis),
           g.key,
-        ).toEqual(['b', 'c']);
+        ).toEqual(['b', 'c', 'a']);
     }
   });
 

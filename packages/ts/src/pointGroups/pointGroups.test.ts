@@ -122,7 +122,10 @@ describe('a setting by its symbol', () => {
   });
 
   it('refuses a symbol that names several settings, or none, naming the settings', () => {
-    expect(() => operations('2', { setting: '2' })).toThrow(/names 2 settings.*1: 2 \(1 2 1\), 2: 2 \(1 1 2\)/);
+    expect(() => operations('2', { setting: '2' })).toThrow(
+      /names 3 settings.*1: 2 \(1 2 1\), 2: 2 \(1 1 2\), 3: 2 \(2 1 1\)/,
+    );
+    expect(operations('2', { setting: '2 1 1' })).toBe(operations('2', { setting: 3 }));
     expect(() => operations('32', { setting: '32' })).toThrow(/has no setting "32" \(settings 1: 321/);
     expect(() => operations('32', { setting: [2] } as never)).toThrow(/must be an index or a symbol, not \[2\]/);
     expect(() => operations('32', { setting: true } as never)).toThrow(RangeError);
@@ -130,10 +133,10 @@ describe('a setting by its symbol', () => {
 });
 
 describe('the numbering of the settings (#137 A4)', () => {
-  it('the ITC default first, then monoclinic c, the other orientation, orthorhombic in the column order of ITA Table 1.5.4.4', () => {
+  it('the ITC default first, then monoclinic c and a, the other orientation, orthorhombic in the column order of ITA Table 1.5.4.4', () => {
     const symbols = (key: PointGroupKey) => settings(key).map((s) => s.symbol);
     for (const key of POINT_GROUP_KEYS) expect(settings(key)[0].isDefault).toBe(true);
-    expect(settings('2').map((s) => s.uniqueAxis)).toEqual(['b', 'c']);
+    expect(settings('2').map((s) => s.uniqueAxis)).toEqual(['b', 'c', 'a']);
     expect(symbols('mm2')).toEqual(['mm2', '2mm', 'm2m']);
     expect(symbols('-42m')).toEqual(['-42m', '-4m2']);
     expect(symbols('32')).toEqual(['321', '312']);

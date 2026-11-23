@@ -6,6 +6,13 @@ All notable changes to symcrys are recorded here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- **Monoclinic unique axis a** (#137 A5, #121 step 6c): the monoclinic classes and their grey and
+  black-and-white groups get a third setting, unique axis a (`2 1 1`, `m 1 1`, `2/m 1 1`,
+  `2' 1 1`, …), as ITC Vol. D prints it; its operations come from unique axis b by the setting bca
+  of ITA 2016 Table 1.5.4.4, its Wyckoff positions and crystal forms likewise.
+
 ### Changed
 
 - **The settings are numbered by ITC's rule** (#137 A4, #121 step 6b): the ITC default is setting 1;

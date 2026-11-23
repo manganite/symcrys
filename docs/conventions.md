@@ -168,7 +168,7 @@ ITA does not print is a printed one in another basis. A black-and-white group is
 symbol in each setting, from which its operations follow (`pointGroups/itcMagneticData.ts`).
 
 **Numbering** (#137 A4): the ITC default is setting 1; then, for the monoclinic classes, unique
-axis c; for the orthorhombic groups, the further orientations in the order of the columns of ITA
+axis c and unique axis a; for the orthorhombic groups, the further orientations in the order of the columns of ITA
 (2016) Table 1.5.4.4 (abc, ba-c, cab, -cba, bca, a-cb), each orientation once; otherwise the other
 orientation. A setting is chosen by its index or by its ITC symbol, short or full (`{ setting: '312' }`,
 `{ setting: '1 1 2' }`); a symbol that several settings share (`'2'` for unique axis b and c) is an
@@ -182,10 +182,13 @@ Classes with more than one setting (short symbol, full symbol in parentheses):
 | ------ | ------- | --------------------------------------------- |
 | `2`    | 1       | `2` (`1 2 1`), unique axis b, **default**     |
 |        | 2       | `2` (`1 1 2`), unique axis c                  |
+|        | 3       | `2` (`2 1 1`), unique axis a                  |
 | `m`    | 1       | `m` (`1 m 1`), unique axis b, **default**     |
 |        | 2       | `m` (`1 1 m`), unique axis c                  |
+|        | 3       | `m` (`m 1 1`), unique axis a                  |
 | `2/m`  | 1       | `2/m` (`1 2/m 1`), unique axis b, **default** |
 |        | 2       | `2/m` (`1 1 2/m`), unique axis c              |
+|        | 3       | `2/m` (`2/m 1 1`), unique axis a              |
 | `mm2`  | 1       | `mm2` (`m m 2`) **default**                   |
 |        | 2       | `2mm` (`2 m m`)                               |
 |        | 3       | `m2m` (`m 2 m`)                               |
@@ -200,7 +203,9 @@ Classes with more than one setting (short symbol, full symbol in parentheses):
 | `-6m2` | 1       | `-6m2` (`-6 m 2`) **default**                 |
 |        | 2       | `-62m` (`-6 2 m`)                             |
 
-ITA describes the monoclinic classes with unique axis b and c, `-42m` and `-6m2` in two
+ITA describes the monoclinic classes with unique axis b and c (unique axis a it prints for the
+space groups, Table 1.5.4.4; ITC Vol. D prints `211`, `m11`, `2/m11`, `references/itc/orientations.md`),
+`-42m` and `-6m2` in two
 orientations, and `32`, `3m`, `-3m` with hexagonal axes in two orientations, without naming one
 standard (§ 3.2.1.2.1 (a), (b), (d), p. 721; Table 3.2.3.2); `mm2` it gives in one setting only.
 The ITC defaults of symcrys:
@@ -213,7 +218,8 @@ The ITC defaults of symcrys:
 - `-6m2`: ITC Vol. D Table 1.5.2.3, and the first entry in ITA (#17);
 - `-42m`, `mm2`: the first or only entry in ITA.
 
-Frames: the monoclinic settings have the unique axis along y and z; `2mm` and `m2m` are `mm2` with
+Frames: the monoclinic settings have the unique axis along y, z and x (unique axis a: from b by
+the setting bca of ITA 2016 Table 1.5.4.4); `2mm` and `m2m` are `mm2` with
 the twofold axis along x and y (the settings cab and bca of ITA 2016 Table 1.5.4.4); the second
 setting of `-42m` is rotated by 45° about z, those of the trigonal and hexagonal classes by 30°.
 The classes `222` and `mmm` have one setting only: their three axes are equivalent.
@@ -227,7 +233,8 @@ reversal (CLAUDE.md, "Pure ITC").
 A **black-and-white group** has the orientations ITC prints (`references/itc/orientations.md`),
 numbered as above:
 
-- monoclinic (5 groups): unique axis b, then c, as the classes;
+- monoclinic (5 groups): unique axis b, c and a, as the classes (ITC Vol. D prints `2'11`, `m'11`,
+  `2'/m'11`, pp. 134, 140);
 - orthorhombic `2'2'2`, `m'm'2`, `mm'm'`, `mmm'`: three settings, the distinct orientations of the
   default in the column order of Table 1.5.4.4. The classes `222` and `mmm` need one setting, but
   time reversal singles out one axis. `m'm'm'` has one setting;

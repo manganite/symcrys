@@ -99,11 +99,11 @@ describe('ITA Table 3.2.3.2: general positions', () => {
     expect(new Set(ENTRIES.map((e) => `${e.short}|${e.axes}`)).size).toBe(40);
   });
 
-  it('covers every ITC setting of symcrys except 2mm and m2m, which ITA does not list', () => {
+  it('covers every ITC setting of symcrys except 2mm, m2m and unique axis a, which ITA does not list', () => {
     const covered = new Set(ENTRIES.flatMap((e) => settingOf(e).map((s) => `${s.key}#${s.index}`)));
     const all = POINT_GROUP_KEYS.flatMap((key) =>
       settings(key)
-        .filter((s) => s.symbol !== '2mm' && s.symbol !== 'm2m')
+        .filter((s) => s.symbol !== '2mm' && s.symbol !== 'm2m' && s.uniqueAxis !== 'a')
         .map((s) => `${key}#${s.index}`),
     );
     expect([...covered].sort()).toEqual(all.sort());

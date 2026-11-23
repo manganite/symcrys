@@ -57,7 +57,9 @@ function positions(lattice: string): number[][] {
     .filter((d): d is number[] => d !== undefined);
 }
 
-function monoclinicAxis(axis: 'b' | 'c'): number[] {
+function monoclinicAxis(axis: 'a' | 'b' | 'c'): number[] {
+  // Table 2.1.3.1 lists the monoclinic unique axes b and c; unique axis a is [100], by the same rule.
+  if (axis === 'a') return [1, 0, 0];
   const m = new RegExp(`(\\[[-\\d]+\\]) \\(unique axis ${axis}\\)`).exec(latticeRow('Monoclinic (a)')[1]);
   if (!m) throw new Error(`No unique axis ${axis} in Table 2.1.3.1`);
   return firstDirection(m[1])!;
@@ -76,7 +78,7 @@ const toCartesian = (basis: M, d: number[]): number[] =>
  */
 function directions(system: string, hm: string, uniqueAxis?: 'a' | 'b' | 'c'): number[][] {
   if (system === 'triclinic') return [[0, 0, 1]]; // only 1 or -1, which need no direction
-  if (system === 'monoclinic' && hmTokens(hm).length === 1) return [monoclinicAxis(uniqueAxis as 'b' | 'c')];
+  if (system === 'monoclinic' && hmTokens(hm).length === 1) return [monoclinicAxis(uniqueAxis!)];
   if (system === 'monoclinic' || system === 'orthorhombic') return positions('Orthorhombic');
   if (system === 'tetragonal') return positions('Tetragonal');
   if (system === 'trigonal' || system === 'hexagonal')

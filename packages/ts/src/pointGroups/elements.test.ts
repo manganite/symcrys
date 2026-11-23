@@ -85,7 +85,7 @@ describe('describeOperations', () => {
 
   it('rejects an unknown key or setting like operations()', () => {
     expect(() => describeOperations('5' as PointGroupKey)).toThrow(RangeError);
-    expect(() => describeOperations('2', { setting: 3 })).toThrow(RangeError);
+    expect(() => describeOperations('2', { setting: 4 })).toThrow(RangeError);
   });
 
   it('returns frozen results', () => {

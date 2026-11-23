@@ -55,10 +55,14 @@ const printed = (short: string, full: string = short, standard = true, standardS
 
 const B_UNIQUE = 'ITA (6th ed.) § 2.1.3.15, p. 171';
 const VOL_D_1_1_4 = 'ITC Vol. D § 1.1.4.10.4.4 (#6)';
-const D3H_DEFAULT = 'ITC Vol. D Table 1.5.2.3; birss-app (decision on #17)';
+const D3H_DEFAULT = 'ITC Vol. D Table 1.5.2.3 (#17)';
 const LAUE_OF_321 = 'consistency: Laue class of 321 and 3m1, same frame';
 
-function monoclinic(short: string, fullB: string, fullC: string): ItcSettingFixture[] {
+/**
+ * Unique axis b, c and a. The full symbol of unique axis a (`2 1 1`) is derived by the rule above;
+ * ITC Vol. D prints it (Table 1.2.3.1, p. 49; § 1.5.7.1, p. 134; references/itc/orientations.md).
+ */
+function monoclinic(short: string, fullB: string, fullC: string, fullA: string): ItcSettingFixture[] {
   return [
     {
       short,
@@ -70,15 +74,17 @@ function monoclinic(short: string, fullB: string, fullC: string): ItcSettingFixt
       standardSource: B_UNIQUE,
     },
     { short, full: fullC, uniqueAxis: 'c', standard: false, shortSource: A3232, fullSource: DERIVED },
+    // ITA Table 3.2.3.2 prints unique axes b and c only.
+    { short, full: fullA, uniqueAxis: 'a', standard: false, shortSource: DERIVED, fullSource: DERIVED },
   ];
 }
 
 export const ITC_SETTINGS: Record<string, ItcSettingFixture[]> = {
   '1': [printed('1')],
   '-1': [printed('-1')],
-  '2': monoclinic('2', '121', '112'),
-  m: monoclinic('m', '1m1', '11m'),
-  '2/m': monoclinic('2/m', '1 2/m 1', '1 1 2/m'),
+  '2': monoclinic('2', '121', '112', '211'),
+  m: monoclinic('m', '1m1', '11m', 'm11'),
+  '2/m': monoclinic('2/m', '1 2/m 1', '1 1 2/m', '2/m 1 1'),
   '222': [printed('222')],
   mm2: [
     printed('mm2'),

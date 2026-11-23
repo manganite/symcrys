@@ -46,7 +46,7 @@ export interface ItcBlackWhite {
 
 /**
  * A group with its settings, given by their ITC full symbols in the order of #137 A4: the ITC
- * default first; monoclinic unique axis b, then c; orthorhombic the orientations of the default in
+ * default first; monoclinic unique axis b, then c, then a; orthorhombic the orientations of the default in
  * the column order of ITA 2016 Table 1.5.4.4 (abc, ba-c, cab, -cba, bca, a-cb), each once; otherwise
  * the other orientation. The unique axis of a monoclinic setting is the position of its symbol
  * that is not `1`; a trigonal setting has hexagonal axes.
@@ -78,11 +78,11 @@ function bw(
 /** The 58 black-and-white groups in the order of `BLACK_WHITE_POINT_GROUP_KEYS`. */
 export const ITC_BLACK_WHITE: readonly ItcBlackWhite[] = [
   bw("-1'", '-1', 'Ci(C1)', ["-1'"]),
-  bw("2'", '2', 'C2(C1)', ["1 2' 1", "1 1 2'"]),
-  bw("m'", 'm', 'Cs(C1)', ["1 m' 1", "1 1 m'"]),
-  bw("2'/m'", '2/m', 'C2h(Ci)', ["1 2'/m' 1", "1 1 2'/m'"]),
-  bw("2/m'", '2/m', 'C2h(C2)', ["1 2/m' 1", "1 1 2/m'"]),
-  bw("2'/m", '2/m', 'C2h(Cs)', ["1 2'/m 1", "1 1 2'/m"]),
+  bw("2'", '2', 'C2(C1)', ["1 2' 1", "1 1 2'", "2' 1 1"]),
+  bw("m'", 'm', 'Cs(C1)', ["1 m' 1", "1 1 m'", "m' 1 1"]),
+  bw("2'/m'", '2/m', 'C2h(Ci)', ["1 2'/m' 1", "1 1 2'/m'", "2'/m' 1 1"]),
+  bw("2/m'", '2/m', 'C2h(C2)', ["1 2/m' 1", "1 1 2/m'", "2/m' 1 1"]),
+  bw("2'/m", '2/m', 'C2h(Cs)', ["1 2'/m 1", "1 1 2'/m", "2'/m 1 1"]),
   bw("2'2'2", '222', 'D2(C2)', ["2' 2' 2", "2 2' 2'", "2' 2 2'"]),
   bw("m'm'2", 'mm2', 'C2v(C2)', ["m' m' 2", "2 m' m'", "m' 2 m'"]),
   bw("2'm'm", 'mm2', 'C2v(Cs)', ["2' m' m", "m' 2' m", "m 2' m'", "m m' 2'", "m' m 2'", "2' m m'"]),
