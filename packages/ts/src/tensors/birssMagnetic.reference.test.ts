@@ -32,7 +32,7 @@ import {
   relationsLowRank,
   type Relation,
 } from '../testUtils/birssTensorTables.js';
-import { rotateComponents, tensorToBirssFrame, toBirssFrame } from '../testUtils/birssFrame.js';
+import { BIRSS_DIRECTIONS, rotateComponents, tensorToBirssFrame, toBirssFrame } from '../testUtils/birssFrame.js';
 import { groupOfSymbol } from '../testUtils/hermannMauguin.js';
 import { sameGroup, type M } from '../testUtils/independentGroups.js';
 import { matrixRank, satisfies } from '../testUtils/rank.js';
@@ -185,36 +185,6 @@ function holds(key: MagneticPointGroupKey, frame: M, c: (typeof COLUMNS)[number]
   });
 }
 
-/**
- * Birss's directions of the positions of a symbol: as ITC, except that in the hexagonal family
- * position 2 is y (Birss Table 4a, pp. 56–57: `32: 2//y`) and position 3 is x.
- */
-const BIRSS_DIRECTIONS: Record<string, number[][]> = {
-  triclinic: [[0, 0, 1]],
-  monoclinic: [[0, 0, 1]],
-  orthorhombic: IDENTITY,
-  tetragonal: [
-    [0, 0, 1],
-    [1, 0, 0],
-    [1, -1, 0],
-  ],
-  trigonal: [
-    [0, 0, 1],
-    [0, 1, 0],
-    [1, 0, 0],
-  ],
-  hexagonal: [
-    [0, 0, 1],
-    [0, 1, 0],
-    [1, 0, 0],
-  ],
-  cubic: [
-    [1, 0, 0],
-    [1, 1, 1],
-    [1, -1, 0],
-  ],
-};
-
 /** The group a symbol names, read along Birss's directions of a crystal system, as operations. */
 const birssGroup = (symbol: string, system: string) =>
   groupOfSymbol(symbol, BIRSS_DIRECTIONS[system]).map((op) => ({ matrix: op.m, timeReversal: op.t }));
@@ -298,8 +268,10 @@ describe("Birss Table 7: tensor forms of the magnetic point groups, ITC forms in
         const toRef = (list: { matrix: M; timeReversal: boolean }[]) =>
           list.map((o) => ({ m: o.matrix, t: o.timeReversal }));
         if (m[1] === undefined) {
-          // Printed without parentheses: the class in Birss's frame, as its symbol names it.
+          // Printed without parentheses: the class in Birss's frame, as its symbol names it, in the
+          // orientation of Table 4a.
           expect(sameGroup(toRef(birssGroup(m[2], system)), group), `${row.printed} ${name} [${cell}]`).toBe(true);
+          expect(sameGroup(toRef(standard), group), `${row.printed} ${name} [${cell}]: Table 4a`).toBe(true);
         } else if (CLASS_SYMBOL_IN_PARENTHESES.includes(`${row.printed} | ${name}`)) {
           // The symbol of the class: the group is the class in a rotated frame.
           expect(sameGroup(toRef(birssGroup(m[2], system)), group), `${row.printed} ${name}: rotated`).toBe(false);

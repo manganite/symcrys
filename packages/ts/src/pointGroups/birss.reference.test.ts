@@ -10,7 +10,7 @@
 
 import { describe, expect, it } from 'vitest';
 import { groupOfSymbol, hmTokens } from '../testUtils/hermannMauguin.js';
-import { toItcFrame } from '../testUtils/birssFrame.js';
+import { BIRSS_DIRECTIONS, toItcFrame } from '../testUtils/birssFrame.js';
 import { close, sameGroup, type M, type RefOp } from '../testUtils/independentGroups.js';
 import { expectHeader, readReference, section, tableRows } from '../testUtils/references.js';
 import {
@@ -102,24 +102,6 @@ const TABLE3: Table3Row[] = rows.slice(1).map((r) => {
   };
 });
 
-const X = [1, 0, 0];
-const Y = [0, 1, 0];
-const Z = [0, 0, 1];
-/**
- * Birss's directions of the positions of a symbol: as ITC, except that in the hexagonal family
- * position 2 is y (Birss Table 4a, printed pp. 56–57: `32: 2//y`, `3m: -2//y`, `-6m2: -2//y`) and
- * position 3 is x.
- */
-const BIRSS_DIRECTIONS: Record<string, number[][]> = {
-  triclinic: [Z],
-  monoclinic: [Z],
-  orthorhombic: [X, Y, Z],
-  tetragonal: [Z, X, [1, -1, 0]],
-  trigonal: [Z, Y, X],
-  hexagonal: [Z, Y, X],
-  cubic: [X, [1, 1, 1], [1, -1, 0]],
-};
-
 describe('Birss Table 3 (printed pp. 36–38) against symcrys, in the ITC frame', () => {
   it('lists the 32 crystal classes, each once, and the σ pool has ten matrices', () => {
     expect(TABLE3).toHaveLength(32);
@@ -141,7 +123,7 @@ describe('Birss Table 3 (printed pp. 36–38) against symcrys, in the ITC frame'
       });
 
       it('the printed symbol, read along Birss directions, generates the printed group', () => {
-        // Birss reads the unique axis of a monoclinic class along z (σ(4) of `2` is a rotation about z).
+        // Birss reads the unique axis of a monoclinic class along z (Table 4a, p. 56: `2//z`; σ(3) of `2` is a rotation about z).
         const printedGroup = close(row.generators).map((op) => ({ matrix: op.m, timeReversal: op.t }));
         expect(sameGroup(groupOfSymbol(row.printedSymbol, BIRSS_DIRECTIONS[row.system]), printedGroup)).toBe(true);
       });

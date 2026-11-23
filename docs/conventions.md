@@ -885,8 +885,9 @@ the index symmetry, is averaged over the group, and the averages are row-reduced
 snapped ("Numbers" above): for the 32 classes in all their settings every entry of every form is 0,
 ±1/2, ±1 or ±2, which then come out exact; other values, e.g. in a rotated frame, are kept.
 
-**Print anchors.** Birss convention: Birss's Tables 4a–4f (pp. 56–66) for ranks 0 to 4, polar and
-axial, in Birss's frame. ITC convention: ITA Table 3.2.2.1 (counts of three tensors and the direction
+**Print anchors.** Birss's Tables 4a–4f (pp. 56–66) for ranks 0 to 4, polar and axial, as a second
+print check: the forms of the ITC default setting carried into Birss's frame
+(`testUtils/birssFrame.ts`). ITC convention: ITA Table 3.2.2.1 (counts of three tensors and the direction
 of the pyroelectric vector, in the ITC default setting); ITC Vol. D § 1.1.4.10.7 (the full forms of
 axial tensors of rank 2, general and symmetric, in the ITC default setting and, for the monoclinic
 classes, also with the axis along z); ITC Vol. D § 1.1.4.10.6 (`'ij_kl'` and `'voigt'` tensors of
@@ -902,10 +903,10 @@ added to the form). The surface use case of #30 is checked against Yariv: an m-3
 the bulk, its (001), (110) and (111) surfaces have the forms of 4mm, mm2 and 3m with 3, 5 and 4
 independent components.
 
-Magnetic point groups, Birss convention: Birss's Table 7 (pp. 103–108) names for each of the 58
+Magnetic point groups, second print check: Birss's Table 7 (pp. 103–108) names for each of the 58
 black-and-white groups the symbol class of Tables 4b–4f for i- and c-tensors, polar and axial, of
-even and odd rank; all ranks 0 to 4 are compared in Birss's frame, a class in parentheses in a
-rotated setting (Birss p. 110). Two rows of the table, `(-6'2m')` and `-6m'2'`, lack parentheses;
+even and odd rank; all ranks 0 to 4 of the ITC forms are compared in Birss's frame, a class in
+parentheses in a frame rotated against it (Birss p. 110). Two rows of the table, `(-6'2m')` and `-6m'2'`, lack parentheses;
 both are recorded printing errors of the book (found in birss-app; errata with their reasons in
 `references/birss/table-7.md`), and the tests apply the corrections. ITC convention: ITC Vol. D Table 1.5.2.4 (the 31 ferromagnetic
 groups and the direction of M_s), Table 1.5.7.1 (the piezomagnetic matrix Λ_iα of 66 groups, with

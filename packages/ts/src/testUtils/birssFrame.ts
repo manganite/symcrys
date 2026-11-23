@@ -8,8 +8,9 @@
  * Both frames put x along a and z along c. They differ where the two print the same group in
  * another orientation, which their symbols show:
  *
- * - **monoclinic:** Birss takes the twofold axis or the mirror normal along z (Table 3, `2`: σ(4),
- *   a rotation about z), ITC's default has unique axis b, along y: R carries z to y;
+ * - **monoclinic:** Birss takes the twofold axis or the mirror normal along z (Table 4a, p. 56:
+ *   `2//z`; Table 3 generates `2` by σ(3), a rotation about z), ITC's default has unique axis b,
+ *   along y: R carries z to y;
  * - **the hexagonal family with two orientations** (`32`, `3m`, `-3m`, `-6m2` and the magnetic groups
  *   with these classes whose ITC default is the orientation with the lateral elements along a):
  *   Birss reads position 2 of the symbol along y (Table 4a, pp. 56–57: `32: 2//y`, `3m: -2//y`), ITC
@@ -18,8 +19,12 @@
  *   Vol. D prints `mm'm'` (Table 1.5.2.3), that mirror normal to x: R carries z to x.
  *
  * Everywhere else R is the identity. Which groups have which R is not assumed here: the tests
- * check, for every group, that R carries the closure of Birss's printed generators onto the ITC
- * operations.
+ * check, for every one of the 90 groups Birss prints (Tables 3 and 6; he prints no grey groups, so
+ * the fixture has none), that R carries the closure of Birss's printed generators onto the ITC
+ * operations. The quarter turns of the monoclinic and hexagonal groups cannot be told from their
+ * inverses there (the groups are invariant under a half turn about the axis); the direction of R,
+ * and so of Q = Rᵀ in `tensorToBirssFrame`, is fixed by `mm'm'` and by the rotated frames of
+ * Birss's Table 7.
  */
 
 import type { M } from './independentGroups.js';
@@ -48,8 +53,8 @@ const Z_TO_X: M = [
   [0, 1, 0],
 ];
 
-/** The monoclinic groups: the classes `2`, `m`, `2/m` with their grey and black-and-white groups. */
-const MONOCLINIC = new Set(['2', 'm', '2/m', "21'", "m1'", "2/m1'", "2'", "m'", "2'/m'", "2/m'", "2'/m"]);
+/** The monoclinic groups Birss prints: the classes `2`, `m`, `2/m` and their black-and-white groups. */
+const MONOCLINIC = new Set(['2', 'm', '2/m', "2'", "m'", "2'/m'", "2/m'", "2'/m"]);
 
 /** The groups of the hexagonal family whose ITC default turns the lateral elements from y to x. */
 const HEXAGONAL_TURNED = new Set([
@@ -57,10 +62,6 @@ const HEXAGONAL_TURNED = new Set([
   '3m',
   '-3m',
   '-6m2',
-  "321'",
-  "3m1'",
-  "-3m1'",
-  "-6m21'",
   "32'",
   "3m'",
   "-3m'",
@@ -74,7 +75,43 @@ const HEXAGONAL_TURNED = new Set([
   "6'/m'mm'",
 ]);
 
-/** R for a group (its symcrys key): W_ITC = R·W_Birss·Rᵀ. */
+/**
+ * Birss's directions of the positions of a symbol, by crystal system: as ITC, except that a
+ * monoclinic symbol has one position, along z (Table 4a, p. 56: `2//z`), and that in the hexagonal
+ * family position 2 is y (Table 4a, pp. 56–57: `32: 2//y`, `3m: -2//y`, `-6m2: -2//y`) and position
+ * 3 is x (not printed; checked by the tests against the printed generators).
+ */
+export const BIRSS_DIRECTIONS: Readonly<Record<string, number[][]>> = {
+  triclinic: [[0, 0, 1]],
+  monoclinic: [[0, 0, 1]],
+  orthorhombic: [
+    [1, 0, 0],
+    [0, 1, 0],
+    [0, 0, 1],
+  ],
+  tetragonal: [
+    [0, 0, 1],
+    [1, 0, 0],
+    [1, -1, 0],
+  ],
+  trigonal: [
+    [0, 0, 1],
+    [0, 1, 0],
+    [1, 0, 0],
+  ],
+  hexagonal: [
+    [0, 0, 1],
+    [0, 1, 0],
+    [1, 0, 0],
+  ],
+  cubic: [
+    [1, 0, 0],
+    [1, 1, 1],
+    [1, -1, 0],
+  ],
+};
+
+/** R for a group Birss prints (its symcrys key): W_ITC = R·W_Birss·Rᵀ. */
 export function birssToItc(key: string): M {
   if (MONOCLINIC.has(key)) return Z_TO_Y;
   if (HEXAGONAL_TURNED.has(key)) return Y_TO_X;

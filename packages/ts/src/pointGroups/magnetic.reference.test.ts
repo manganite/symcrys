@@ -28,7 +28,7 @@
 
 import { describe, expect, it } from 'vitest';
 import type { Mat3 } from '../linalg.js';
-import { toBirssFrame, toItcFrame } from '../testUtils/birssFrame.js';
+import { BIRSS_DIRECTIONS, toBirssFrame, toItcFrame } from '../testUtils/birssFrame.js';
 import { groupOfSymbol, hmTokens } from '../testUtils/hermannMauguin.js';
 import { close, sameGroup, type M, type RefOp } from '../testUtils/independentGroups.js';
 import { operationLabel, printedLabels } from '../testUtils/operatorLists.js';
@@ -196,41 +196,6 @@ const sigmas = (cell: string, t: boolean): RefOp[] =>
   });
 
 /**
- * Birss's directions of the positions of a symbol: as ITC, except that in the hexagonal family
- * position 2 is y (Birss Table 4a, printed pp. 56–57: `32: 2//y`) and position 3 is x; a monoclinic
- * symbol has one position, along z (σ(4), the twofold axis of `2`, is a rotation about z).
- */
-const BIRSS_SYMBOL_DIRECTIONS: Record<string, number[][]> = {
-  triclinic: [[0, 0, 1]],
-  monoclinic: [[0, 0, 1]],
-  orthorhombic: [
-    [1, 0, 0],
-    [0, 1, 0],
-    [0, 0, 1],
-  ],
-  tetragonal: [
-    [0, 0, 1],
-    [1, 0, 0],
-    [1, -1, 0],
-  ],
-  trigonal: [
-    [0, 0, 1],
-    [0, 1, 0],
-    [1, 0, 0],
-  ],
-  hexagonal: [
-    [0, 0, 1],
-    [0, 1, 0],
-    [1, 0, 0],
-  ],
-  cubic: [
-    [1, 0, 0],
-    [1, 1, 1],
-    [1, -1, 0],
-  ],
-};
-
-/**
  * Birss's Table 6, an independent second print check of the ITC output: the printed group, closed
  * from the printed generators in Birss's frame, is carried into the ITC frame (testUtils/birssFrame.ts)
  * and compared with the operations of the ITC default setting.
@@ -299,7 +264,7 @@ describe('Birss Table 6 (printed pp. 91–98) against symcrys, in the ITC frame'
 
       it('the printed symbol, read along Birss directions, generates the printed group', () => {
         const ops = group.map((op) => ({ matrix: op.m, timeReversal: op.t }));
-        expect(sameGroup(groupOfSymbol(printed, BIRSS_SYMBOL_DIRECTIONS[r[0].toLowerCase()]), ops)).toBe(true);
+        expect(sameGroup(groupOfSymbol(printed, BIRSS_DIRECTIONS[r[0].toLowerCase()]), ops)).toBe(true);
       });
     });
   }
