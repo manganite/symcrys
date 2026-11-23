@@ -16,7 +16,7 @@
 
 import { describe, expect, it } from 'vitest';
 import { I3, inverse, mirrorNormal, mul, neg, rotationAbout, sameM, type M } from '../testUtils/independentGroups.js';
-import { expectHeader, readReference, tableRows } from '../testUtils/references.js';
+import { expectHeader, readReference, tableRows, notRhombohedral } from '../testUtils/references.js';
 import { describeOperations } from './elements.js';
 import { findPointGroup, generators, operations, pointGroup, settings, type PointGroupKey } from './pointGroups.js';
 
@@ -64,9 +64,17 @@ interface Entry {
 const ENTRIES: Entry[] = (() => {
   const text = readReference('itc/vol-a-2006-symmetry-operations.md');
   const entries: Entry[] = [];
+  let skipping = false;
   for (const line of text.split('\n')) {
+    if (skipping && !line.startsWith('## ')) continue;
+    // The R groups with rhombohedral axes are taken up with the rhombohedral settings (#121, step 6c).
+    if (/^## \S+, rhombohedral axes — /.test(line)) {
+      skipping = true;
+      continue;
+    }
     const h = /^## (\S+)(?:, unique axis (b|c))? — No\. \d+, \S+, p\. \d+$/.exec(line);
     if (h) {
+      skipping = false;
       entries.push({
         cls: h[1],
         ...(h[2] ? { axis: h[2] as 'b' | 'c' } : {}),
@@ -169,7 +177,7 @@ function expected(p: PrintedOperation, b: M): Expected {
 // --- ITA Table 3.2.3.2 (6th ed.): general positions --------------------------------------------
 
 const GENERAL = (() => {
-  const rows = tableRows(readReference('itc/vol-a-table-3.2.3.2-general-positions.md'));
+  const rows = tableRows(readReference('itc/vol-a-table-3.2.3.2-general-positions.md')).filter(notRhombohedral);
   expectHeader(rows, ['Short', 'Axes', 'Page', 'Multiplicity', 'General position']);
   return rows.slice(1);
 })();

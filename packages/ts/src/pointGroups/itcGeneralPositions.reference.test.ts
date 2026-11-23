@@ -9,7 +9,7 @@
 
 import { describe, expect, it } from 'vitest';
 import { close, inverse, mul, sameGroup, sameM, type M, type RefOp } from '../testUtils/independentGroups.js';
-import { expectHeader, readReference, tableRows } from '../testUtils/references.js';
+import { expectHeader, readReference, tableRows, notRhombohedral } from '../testUtils/references.js';
 import { POINT_GROUP_KEYS, operations, settings, type PointGroupKey } from './pointGroups.js';
 
 /**
@@ -34,7 +34,7 @@ const HEXAGONAL: M = [
 const headlineRows = tableRows(readReference('itc/vol-a-table-3.2.3.2-headlines.md'));
 expectHeader(headlineRows, ['System', 'Short', 'Full', 'Schoenflies', 'Axes', 'Page']);
 
-const positionRows = tableRows(readReference('itc/vol-a-table-3.2.3.2-general-positions.md'));
+const positionRows = tableRows(readReference('itc/vol-a-table-3.2.3.2-general-positions.md')).filter(notRhombohedral);
 expectHeader(positionRows, ['Short', 'Axes', 'Page', 'Multiplicity', 'General position']);
 
 /** One coordinate, e.g. `-x+y`, as the row of W: the coefficients of x, y, z. */

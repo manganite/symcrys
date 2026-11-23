@@ -223,7 +223,9 @@ def test_itc_vol_d_1524_ferromagnetic_groups() -> None:
 
 FORMS_3213 = reference("itc/vol-a-table-3.2.1.3-crystal-forms.md")
 FORM_TYPES = table_rows(section(FORMS_3213, "## Forms"))
-FACE_FORMS = table_rows(reference("itc/vol-a-table-3.2.3.2-face-forms.md"))
+# The entries with rhombohedral axes are taken up with the rhombohedral settings (#121, step 6c).
+NOT_RHOMBOHEDRAL = "rhombohedral axes"
+FACE_FORMS = [r for r in table_rows(reference("itc/vol-a-table-3.2.3.2-face-forms.md")) if r[1] != NOT_RHOMBOHEDRAL]
 # The names Table 3.2.3.2 prints for a form that Table 3.2.1.3 names otherwise (as in the TypeScript test).
 NAME_VARIANTS = {
     "Sphenoid or dihedron": 3,
@@ -281,8 +283,8 @@ def test_ita_3232_face_forms(entry: tuple[str, str]) -> None:
 
 # --- ITA Table 3.2.3.2: operations in the lattice basis and orbits --------------------------------
 
-GENERAL = table_rows(reference("itc/vol-a-table-3.2.3.2-general-positions.md"))
-GENERAL_FACES = table_rows(reference("itc/vol-a-table-3.2.3.2-general-faces.md"))
+GENERAL = [r for r in table_rows(reference("itc/vol-a-table-3.2.3.2-general-positions.md")) if r[1] != NOT_RHOMBOHEDRAL]
+GENERAL_FACES = [r for r in table_rows(reference("itc/vol-a-table-3.2.3.2-general-faces.md")) if r[1] != NOT_RHOMBOHEDRAL]
 
 
 def _coefficients(expr: str) -> list[int]:

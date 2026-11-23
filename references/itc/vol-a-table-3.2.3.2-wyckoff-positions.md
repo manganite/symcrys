@@ -4,18 +4,21 @@ Source: _International Tables for Crystallography_, Vol. A, 6th edition (2016), 
 groups and crystal classes), Table 3.2.3.2, printed pp. 745–769. Transcribed 2026-11-19 from the
 chapter PDF provided by Thomas; every row checked against the rendered pages, overbars included.
 General positions of the same entries: `vol-a-table-3.2.3.2-general-positions.md`; headlines:
-`vol-a-table-3.2.3.2-headlines.md`.
+`vol-a-table-3.2.3.2-headlines.md`. The five entries with rhombohedral axes (3, -3, 32, 3m, -3m;
+pp. 753, 753, 755, 756, 759) were added 2026-11-23 from the page images of the chapter PDF (Zotero
+item `7NZ258UB`, attachment `Y6Z8P8NR`, PDF pages 34, 36, 37, 40; printed page = PDF page + 719),
+read at 300–500 dpi, the points checked a second time against the text layer of the same pages.
 
 One row per Wyckoff position, in the printed order (general position first): multiplicity,
 Wyckoff letter, oriented site-symmetry symbol (columns 1 to 3 of the print), the first coordinate
 triplet of column 4 (a representative point) and the Miller indices of the first face in the last
 column (a representative face of the first, characteristic face form). The point in the origin
-(letter o) has no face. The five entries with rhombohedral axes are not transcribed, as for the
-general positions. The face forms, point forms and further faces are not transcribed.
+(letter o) has no face. The face forms, point forms and further faces are not transcribed here.
 
 Transcription conventions: a leading minus sign is an overbar (`-x` for x̄, `-4..` for 4̄..); the
 components of a triplet and the Miller indices are separated by commas (`h,h,-2h,l` for
-(hh2̄hl)); Bravais–Miller indices (hkil) have four components, as printed for hexagonal axes.
+(hh2̄hl)); Bravais–Miller indices (hkil) have four components, as printed for hexagonal axes;
+Miller indices (hkl) for rhombohedral axes have three, as printed.
 
 Where the print offers two faces with "or" (e.g. `(010) or (01̄0)` for a pedion), the first is
 transcribed. As printed: the site symmetry of the origin of 6/mmm (letter o, p. 764) reads `6mmm`,
@@ -97,9 +100,14 @@ without the slash (sic; the full symbol of the group is 6/m 2/m 2/m).
 | 4/mmm |  | 752 | 1 | o | 4/mmm | 0,0,0 |  |
 | 3 | hexagonal axes | 752 | 3 | b | 1 | x,y,z | h,k,i,l |
 | 3 | hexagonal axes | 752 | 1 | a | 3.. | 0,0,z | 0,0,0,1 |
+| 3 | rhombohedral axes | 753 | 3 | b | 1 | x,y,z | h,k,l |
+| 3 | rhombohedral axes | 753 | 1 | a | 3. | x,x,x | 1,1,1 |
 | -3 | hexagonal axes | 753 | 6 | b | 1 | x,y,z | h,k,i,l |
 | -3 | hexagonal axes | 753 | 2 | a | 3.. | 0,0,z | 0,0,0,1 |
 | -3 | hexagonal axes | 753 | 1 | o | -3.. | 0,0,0 |  |
+| -3 | rhombohedral axes | 753 | 6 | b | 1 | x,y,z | h,k,l |
+| -3 | rhombohedral axes | 753 | 2 | a | 3. | x,x,x | 1,1,1 |
+| -3 | rhombohedral axes | 753 | 1 | o | -3. | 0,0,0 |  |
 | 312 | hexagonal axes | 754 | 6 | c | 1 | x,y,z | h,k,i,l |
 | 312 | hexagonal axes | 754 | 3 | b | ..2 | x,-x,0 | 1,0,-1,0 |
 | 312 | hexagonal axes | 754 | 2 | a | 3.. | 0,0,z | 0,0,0,1 |
@@ -108,12 +116,19 @@ without the slash (sic; the full symbol of the group is 6/m 2/m 2/m).
 | 321 | hexagonal axes | 754 | 3 | b | .2. | x,0,0 | 1,1,-2,0 |
 | 321 | hexagonal axes | 754 | 2 | a | 3.. | 0,0,z | 0,0,0,1 |
 | 321 | hexagonal axes | 754 | 1 | o | 32. | 0,0,0 |  |
+| 32 | rhombohedral axes | 755 | 6 | c | 1 | x,y,z | h,k,l |
+| 32 | rhombohedral axes | 755 | 3 | b | .2 | x,-x,0 | 0,1,-1 |
+| 32 | rhombohedral axes | 755 | 2 | a | 3. | x,x,x | 1,1,1 |
+| 32 | rhombohedral axes | 755 | 1 | o | 32 | 0,0,0 |  |
 | 3m1 | hexagonal axes | 755 | 6 | c | 1 | x,y,z | h,k,i,l |
 | 3m1 | hexagonal axes | 755 | 3 | b | .m. | x,-x,z | h,0,-h,l |
 | 3m1 | hexagonal axes | 755 | 1 | a | 3m. | 0,0,z | 0,0,0,1 |
 | 31m | hexagonal axes | 756 | 6 | c | 1 | x,y,z | h,k,i,l |
 | 31m | hexagonal axes | 756 | 3 | b | ..m | x,0,z | h,h,-2h,l |
 | 31m | hexagonal axes | 756 | 1 | a | 3.m | 0,0,z | 0,0,0,1 |
+| 3m | rhombohedral axes | 756 | 6 | c | 1 | x,y,z | h,k,l |
+| 3m | rhombohedral axes | 756 | 3 | b | .m | x,y,x | h,h,l |
+| 3m | rhombohedral axes | 756 | 1 | a | 3m | x,x,x | 1,1,1 |
 | -31m | hexagonal axes | 757 | 12 | d | 1 | x,y,z | h,k,i,l |
 | -31m | hexagonal axes | 757 | 6 | c | ..m | x,0,z | h,h,-2h,l |
 | -31m | hexagonal axes | 757 | 6 | b | ..2 | x,-x,0 | 1,0,-1,0 |
@@ -124,6 +139,11 @@ without the slash (sic; the full symbol of the group is 6/m 2/m 2/m).
 | -3m1 | hexagonal axes | 758 | 6 | b | .2. | x,0,0 | 1,1,-2,0 |
 | -3m1 | hexagonal axes | 758 | 2 | a | 3m. | 0,0,z | 0,0,0,1 |
 | -3m1 | hexagonal axes | 758 | 1 | o | -3m. | 0,0,0 |  |
+| -3m | rhombohedral axes | 759 | 12 | d | 1 | x,y,z | h,k,l |
+| -3m | rhombohedral axes | 759 | 6 | c | .m | x,y,x | h,h,l |
+| -3m | rhombohedral axes | 759 | 6 | b | .2 | x,-x,0 | 0,1,-1 |
+| -3m | rhombohedral axes | 759 | 2 | a | 3m | x,x,x | 1,1,1 |
+| -3m | rhombohedral axes | 759 | 1 | o | -3m | 0,0,0 |  |
 | 6 |  | 760 | 6 | b | 1 | x,y,z | h,k,i,l |
 | 6 |  | 760 | 1 | a | 6.. | 0,0,z | 0,0,0,1 |
 | -6 |  | 760 | 6 | c | 1 | x,y,z | h,k,i,l |

@@ -23,7 +23,7 @@ import {
   type RefOp,
 } from '../testUtils/independentGroups.js';
 import { groupOfSymbol } from '../testUtils/hermannMauguin.js';
-import { expectHeader, readReference, tableRows } from '../testUtils/references.js';
+import { expectHeader, readReference, tableRows, notRhombohedral } from '../testUtils/references.js';
 import { POINT_GROUP_KEYS, operations, settings, type PointGroupKey } from './pointGroups.js';
 import { wyckoffPositions } from './wyckoff.js';
 import { ITA_WYCKOFF } from './wyckoffData.js';
@@ -104,9 +104,9 @@ const transpose = (m: M): M => [0, 1, 2].map((i) => [0, 1, 2].map((j) => m[j][i]
 
 const headlineRows = tableRows(readReference('itc/vol-a-table-3.2.3.2-headlines.md'));
 expectHeader(headlineRows, ['System', 'Short', 'Full', 'Schoenflies', 'Axes', 'Page']);
-const generalRows = tableRows(readReference('itc/vol-a-table-3.2.3.2-general-positions.md'));
+const generalRows = tableRows(readReference('itc/vol-a-table-3.2.3.2-general-positions.md')).filter(notRhombohedral);
 expectHeader(generalRows, ['Short', 'Axes', 'Page', 'Multiplicity', 'General position']);
-const wyckoffRows = tableRows(readReference('itc/vol-a-table-3.2.3.2-wyckoff-positions.md'));
+const wyckoffRows = tableRows(readReference('itc/vol-a-table-3.2.3.2-wyckoff-positions.md')).filter(notRhombohedral);
 expectHeader(wyckoffRows, [
   'Short',
   'Axes',

@@ -51,3 +51,10 @@ export function expectHeader(rows: string[][], expected: string[]): void {
     );
   }
 }
+
+/**
+ * Keeps the rows of a table of ITA Table 3.2.3.2 that are not for rhombohedral axes (column 2,
+ * `Axes`). The rhombohedral entries are transcribed, but symcrys has no setting with rhombohedral
+ * axes yet; the tests take them up with those settings (#121, step 6c).
+ */
+export const notRhombohedral = (row: readonly string[]): boolean => row[1] !== 'rhombohedral axes';

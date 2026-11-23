@@ -142,6 +142,15 @@ option. The Birss mode, its data and its birss-app pins were removed in step 5 o
   2026-11-22, after a search of the volumes): so `mm2` keeps `2mm` and `m2m` (ITA 2016 § 1.6.4,
   p. 114, "the three point groups 2mm, m2m and mm2"; ITC Vol. D Tables 1.2.3.1, p. 49, and 1.5.7.1,
   p. 135), and `2'm'm` keeps all six orientations (ITC Vol. D pp. 111, 113, 135–136, 139–140).
+  The inventory of what ITC prints is `references/itc/orientations.md`. Its reading (Thomas,
+  2026-11-23, #121): a grey group has every setting of its class, since it is the class with time
+  reversal (ITC Vol. D eq. (1.5.2.1)), although ITC prints grey groups in their standard
+  orientation only; a symbol in a list of group types without a frame counts as printed in the
+  orientation its positions name (so `6'/mmm'` keeps `6'/mm'm`, Vol. D Table 1.2.6.12, p. 66);
+  orientations that ITC prints only as site symmetries in another lattice (`2.mm`, `mm2` turned
+  30° in a hexagonal cell) are not settings. Every trigonal group gets the rhombohedral setting of
+  its class, a black-and-white group where the hexagonal setting it comes from exists (Thomas,
+  2026-11-23).
 - **Tolerant input**, in every entry point, where it is a pure normalisation before the comparison
   and the input stays unambiguous (spaces, overbar spellings such as `-`, a combining overbar or
   `bar`, prime variants, Birss's printed forms such as `m3m`); an input that could match two groups
