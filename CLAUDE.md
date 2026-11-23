@@ -512,8 +512,9 @@ The conventions themselves are in `docs/conventions.md`; here, what was decided 
   Cartesian normal, since the apps work with face poles. "Lies on the element" uses an optional
   `tolerance`, default `EPSILON`, so that stereography can pass 10⁻⁴ for its rounded links while
   symcrys projects onto the fixed space. `mm2` settings 2 and 3, which ITA does not print, are
-  derived from setting 1 by rotation, with a test that reads the oriented symbol independently, as
-  for the symbols. `siteSymmetry` takes any list of operations, so that a consumer can use it for
+  derived from setting 1 by a permutation of the axes (settings cab and bca of ITA 2016 Table
+  1.5.4.4, #122), with a test that reads the oriented symbol independently, as for the symbols.
+  `siteSymmetry` takes any list of operations, so that a consumer can use it for
   the operations of a distorted crystal (stereography, `analyzeGroup`); whether stereography uses it
   so is decided when stereography moves (#24). The print anchor is ITA 6th ed. Table 3.2.3.2
   (`references/`); the 5th edition (Table 10.1.2.2, via stereography's form catalogue) is an

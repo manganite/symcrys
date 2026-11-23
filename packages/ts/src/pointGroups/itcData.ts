@@ -44,6 +44,8 @@ export interface ItcSetting {
 export interface ItcClass {
   readonly key: PointGroupKey;
   readonly crystalSystem: CrystalSystem;
+  /** The Schoenflies symbol, as ITA Table 3.2.3.2 prints it. */
+  readonly schoenflies: string;
   readonly settings: readonly ItcSetting[];
 }
 
@@ -66,16 +68,23 @@ const SETTING_BCA: IntMat3 = [
 const one = (index: number, short: string, full = short): ItcSetting => ({ index, short, full, isDefault: true });
 
 /** A class with one setting. */
-const single = (key: PointGroupKey, crystalSystem: CrystalSystem, full: string = key): ItcClass => ({
+const single = (
+  key: PointGroupKey,
+  crystalSystem: CrystalSystem,
+  schoenflies: string,
+  full: string = key,
+): ItcClass => ({
   key,
   crystalSystem,
+  schoenflies,
   settings: [one(1, key, full)],
 });
 
 /** A monoclinic class: setting 1 unique axis c, setting 2 unique axis b (the ITC default, ITA § 2.1.3.15). */
-const monoclinic = (key: PointGroupKey, full: (inner: string) => string): ItcClass => ({
+const monoclinic = (key: PointGroupKey, schoenflies: string, full: (inner: string) => string): ItcClass => ({
   key,
   crystalSystem: 'monoclinic',
+  schoenflies,
   settings: [
     { index: 1, short: key, full: full('c'), uniqueAxis: 'c', isDefault: false },
     { index: 2, short: key, full: full('b'), uniqueAxis: 'b', isDefault: true },
@@ -86,12 +95,14 @@ const monoclinic = (key: PointGroupKey, full: (inner: string) => string): ItcCla
 const pair = (
   key: PointGroupKey,
   crystalSystem: CrystalSystem,
+  schoenflies: string,
   first: [string, string],
   second: [string, string],
   defaultIndex: 1 | 2,
 ): ItcClass => ({
   key,
   crystalSystem,
+  schoenflies,
   settings: [
     { index: 1, short: first[0], full: first[1], isDefault: defaultIndex === 1 },
     { index: 2, short: second[0], full: second[1], isDefault: defaultIndex === 2 },
@@ -100,15 +111,16 @@ const pair = (
 
 /** The 32 classes in the order of `POINT_GROUP_KEYS`, with the ITC symbols of ITA Table 3.2.3.2 (headlines). */
 export const ITC_CLASSES: readonly ItcClass[] = [
-  single('1', 'triclinic'),
-  single('-1', 'triclinic'),
-  monoclinic('2', (axis) => (axis === 'c' ? '1 1 2' : '1 2 1')),
-  monoclinic('m', (axis) => (axis === 'c' ? '1 1 m' : '1 m 1')),
-  monoclinic('2/m', (axis) => (axis === 'c' ? '1 1 2/m' : '1 2/m 1')),
-  single('222', 'orthorhombic', '2 2 2'),
+  single('1', 'triclinic', 'C1'),
+  single('-1', 'triclinic', 'Ci'),
+  monoclinic('2', 'C2', (axis) => (axis === 'c' ? '1 1 2' : '1 2 1')),
+  monoclinic('m', 'Cs', (axis) => (axis === 'c' ? '1 1 m' : '1 m 1')),
+  monoclinic('2/m', 'C2h', (axis) => (axis === 'c' ? '1 1 2/m' : '1 2/m 1')),
+  single('222', 'orthorhombic', 'D2', '2 2 2'),
   {
     key: 'mm2',
     crystalSystem: 'orthorhombic',
+    schoenflies: 'C2v',
     settings: [
       { index: 1, short: 'mm2', full: 'm m 2', uniqueAxis: 'c', isDefault: true },
       {
@@ -129,31 +141,31 @@ export const ITC_CLASSES: readonly ItcClass[] = [
       },
     ],
   },
-  single('mmm', 'orthorhombic', '2/m 2/m 2/m'),
-  single('4', 'tetragonal'),
-  single('-4', 'tetragonal'),
-  single('4/m', 'tetragonal'),
-  single('422', 'tetragonal', '4 2 2'),
-  single('4mm', 'tetragonal', '4 m m'),
-  pair('-42m', 'tetragonal', ['-42m', '-4 2 m'], ['-4m2', '-4 m 2'], 1),
-  single('4/mmm', 'tetragonal', '4/m 2/m 2/m'),
-  single('3', 'trigonal'),
-  single('-3', 'trigonal'),
-  pair('32', 'trigonal', ['312', '3 1 2'], ['321', '3 2 1'], 2),
-  pair('3m', 'trigonal', ['31m', '3 1 m'], ['3m1', '3 m 1'], 2),
-  pair('-3m', 'trigonal', ['-31m', '-3 1 2/m'], ['-3m1', '-3 2/m 1'], 2),
-  single('6', 'hexagonal'),
-  single('-6', 'hexagonal'),
-  single('6/m', 'hexagonal'),
-  single('622', 'hexagonal', '6 2 2'),
-  single('6mm', 'hexagonal', '6 m m'),
-  pair('-6m2', 'hexagonal', ['-62m', '-6 2 m'], ['-6m2', '-6 m 2'], 2),
-  single('6/mmm', 'hexagonal', '6/m 2/m 2/m'),
-  single('23', 'cubic', '2 3'),
-  single('m-3', 'cubic', '2/m -3'),
-  single('432', 'cubic', '4 3 2'),
-  single('-43m', 'cubic', '-4 3 m'),
-  single('m-3m', 'cubic', '4/m -3 2/m'),
+  single('mmm', 'orthorhombic', 'D2h', '2/m 2/m 2/m'),
+  single('4', 'tetragonal', 'C4'),
+  single('-4', 'tetragonal', 'S4'),
+  single('4/m', 'tetragonal', 'C4h'),
+  single('422', 'tetragonal', 'D4', '4 2 2'),
+  single('4mm', 'tetragonal', 'C4v', '4 m m'),
+  pair('-42m', 'tetragonal', 'D2d', ['-42m', '-4 2 m'], ['-4m2', '-4 m 2'], 1),
+  single('4/mmm', 'tetragonal', 'D4h', '4/m 2/m 2/m'),
+  single('3', 'trigonal', 'C3'),
+  single('-3', 'trigonal', 'C3i'),
+  pair('32', 'trigonal', 'D3', ['312', '3 1 2'], ['321', '3 2 1'], 2),
+  pair('3m', 'trigonal', 'C3v', ['31m', '3 1 m'], ['3m1', '3 m 1'], 2),
+  pair('-3m', 'trigonal', 'D3d', ['-31m', '-3 1 2/m'], ['-3m1', '-3 2/m 1'], 2),
+  single('6', 'hexagonal', 'C6'),
+  single('-6', 'hexagonal', 'C3h'),
+  single('6/m', 'hexagonal', 'C6h'),
+  single('622', 'hexagonal', 'D6', '6 2 2'),
+  single('6mm', 'hexagonal', 'C6v', '6 m m'),
+  pair('-6m2', 'hexagonal', 'D3h', ['-62m', '-6 2 m'], ['-6m2', '-6 m 2'], 2),
+  single('6/mmm', 'hexagonal', 'D6h', '6/m 2/m 2/m'),
+  single('23', 'cubic', 'T', '2 3'),
+  single('m-3', 'cubic', 'Th', '2/m -3'),
+  single('432', 'cubic', 'O', '4 3 2'),
+  single('-43m', 'cubic', 'Td', '-4 3 m'),
+  single('m-3m', 'cubic', 'Oh', '4/m -3 2/m'),
 ];
 
 const BY_KEY = new Map(ITC_CLASSES.map((c) => [c.key, c]));

@@ -22,7 +22,11 @@ const SETTINGS = ITC_BLACK_WHITE.flatMap((g) =>
 describe('the ITC data of the black-and-white groups', () => {
   it('has the 58 groups in the order of BLACK_WHITE_POINT_GROUP_KEYS, one default each', () => {
     expect(ITC_BLACK_WHITE.map((g) => g.key)).toEqual([...BLACK_WHITE_POINT_GROUP_KEYS]);
-    for (const g of ITC_BLACK_WHITE) expect(g.settings.filter((s) => s.isDefault)).toHaveLength(1);
+    for (const g of ITC_BLACK_WHITE) {
+      expect(g.settings.filter((s) => s.isDefault)).toHaveLength(1);
+      expect(settings(g.key, 'itc')).toHaveLength(g.settings.length);
+      expect(settings(g.key, 'birss')).toHaveLength(g.settings.length);
+    }
   });
 
   it.each(SETTINGS)('%s: one group, half of its class with time reversal', (_, g, s) => {

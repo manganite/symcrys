@@ -10,7 +10,7 @@ import { ITA_FORMS, ITA_FORM_TYPES, type FormRow } from './crystalFormsData.js';
 import {
   REPRESENTATIVE_VALUES,
   faceBasis,
-  itcSetting,
+  tableSetting,
   normal,
   numericHkl,
   permutationFromSetting1,
@@ -105,7 +105,7 @@ const cache = new Map<string, readonly CrystalForm[]>();
  * which ITA does not print, the forms of setting 1 carried into their frame.
  */
 export function crystalForms(key: PointGroupKey, options?: SettingOptions): readonly CrystalForm[] {
-  const setting = itcSetting(key, options, 'Crystal forms');
+  const setting = tableSetting(key, options, 'Crystal forms');
   const cacheKey = `${key}#${setting}`;
   let result = cache.get(cacheKey);
   if (!result) {

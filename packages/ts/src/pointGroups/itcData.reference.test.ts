@@ -3,7 +3,7 @@
  * 3.2.3.2, pp. 745–769, re-parsed from references/itc/. For each of the 40 entries without
  * rhombohedral axes, the operations built from ITA's selected generators are the printed general
  * position, as integer matrices in the conventional basis and in the printed order; the symbols and
- * the crystal system are those of the headline.
+ * the crystal system and Schoenflies symbol are those of the headline.
  */
 
 import { describe, expect, it } from 'vitest';
@@ -59,11 +59,12 @@ describe('ITA Table 3.2.3.2 against the exact class data', () => {
       .slice(1)
       .filter((h) => !/rhombohedral/i.test(h[4]))
       .map((h) => [`${h[1]} ${h[4]}`.trim(), h] as const),
-  )('%s: symbols and crystal system of the headline', (_, h) => {
+  )('%s: symbols, crystal system and Schoenflies symbol of the headline', (_, h) => {
     const matches = settingOf(h[1], h[4]);
     expect(matches).toHaveLength(1);
     const [{ c, s }] = matches;
     expect(c.crystalSystem).toBe(h[0].toLowerCase());
+    expect(c.schoenflies).toBe(h[3]);
     // The table prints a full symbol only where it differs from the short one, and none for the monoclinic classes.
     if (h[2]) expect(s.full).toBe(h[2]);
     else if (c.crystalSystem !== 'monoclinic') expect(s.full.replace(/ /g, '')).toBe(s.short);

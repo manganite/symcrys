@@ -392,8 +392,9 @@ of the symmorphic P group in Part 7) and takes the next generator as soon as a p
 one lies in the group generated so far (§ 8.3.5, p. 737). Starting from the identity, each generator
 g therefore extends the group H generated so far by the cosets gH, g²H, … until a power of g lies in
 H. For the two settings ITA does not list, `mm2` settings 2 (`2mm`) and 3 (`m2m`), the order is that
-of setting 1, carried into their frame. In the Birss convention the order is birss-app's ("Birss
-convention and birss-app"). `describeOperations` follows the order of `operations`.
+of setting 1, carried into their frame by the change of basis of the settings cab and bca of ITA
+(2016) Table 1.5.4.4. In the Birss convention the order is birss-app's ("Birss convention and
+birss-app"). `describeOperations` follows the order of `operations`.
 
 **Magnetic groups, ITC convention** (maintainer, 2026-11-19). ITC Vol. D prints no order of the
 individual operations: Table 1.5.2.3 lists them grouped (`±4_z`, `3(2_⊥)`, `4(±3)`). symcrys keeps
@@ -406,17 +407,17 @@ lists the operations of its class, then the same sequence combined with time rev
 
 In the ITC convention `generators` returns ITA's selected generators of the setting ("Generators
 selected" of the symmorphic P group, 5th ed., Part 7), in printed order and without the identity;
-for `mm2` settings 2 and 3, which ITA does not list, those of setting 1 carried into their frame. In
-the ITC convention a magnetic group has the generators of its class in the same frame, each with
-the time reversal it has in the group (they generate the group, because dropping time reversal maps
-a black-and-white group one to one onto its class), a grey group those of its class followed by
-time reversal `1'`; ITC Vol. D prints no generators. In
-the Birss convention it returns birss-app's generators (for `1` the identity, as in birss-app),
-which are the generators stored in `packages/ts/src/pointGroups/data.ts` carried into the frame of the setting
-("Birss convention and birss-app"). Neither are Birss's printed generating matrices (Birss Table 3,
-pp. 36–38, σ(N) of eq. (2.17), pp. 48–49), which differ for some classes in choice and order (e.g.
-`222`: birss-app 2_z, 2_x; Birss σ(2), σ(3) = 2_y, 2_z); Birss's tests check only the group they
-generate.
+for `mm2` settings 2 and 3, which ITA does not list, those of setting 1 carried into their frame
+(the settings cab and bca of ITA (2016) Table 1.5.4.4). In the ITC convention a magnetic group has
+the generators of its class in the same frame, each with the time reversal it has in the group (they
+generate the group, because dropping time reversal maps a black-and-white group one to one onto its
+class), a grey group those of its class followed by time reversal `1'`; ITC Vol. D prints no
+generators. In the Birss convention it returns birss-app's generators (for `1` the identity, as in
+birss-app), which are the generators stored in `packages/ts/src/pointGroups/data.ts` carried into
+the frame of the setting ("Birss convention and birss-app"). Neither are Birss's printed generating
+matrices (Birss Table 3, pp. 36–38, σ(N) of eq. (2.17), pp. 48–49), which differ for some classes in
+choice and order (e.g. `222`: birss-app 2_z, 2_x; Birss σ(2), σ(3) = 2_y, 2_z); Birss's tests check
+only the group they generate.
 
 ## Birss convention and birss-app
 
@@ -561,10 +562,11 @@ prints them for that setting (ITA 6th ed., Table 3.2.3.2, pp. 745–769):
   unique axis; for any other face it is the normal for orthogonal axes, not the true pole for
   β ≠ 90°, but it gives the correct site symmetry, which does not depend on the cell angles.
 - **Settings ITA does not print** (`mm2` settings 2 and 3, `2mm` and `m2m`): the positions of
-  setting 1 carried into their frame, a permutation of the axes (maintainer decision, 2026-11-18,
-  #24): same letters and multiplicities, the positions of the oriented symbol permuted, the
-  coordinates and Miller indices permuted and their letters renamed after their new position (`m..`,
-  `0,y,z`, `0,k,l` in `mm2` become `.m.`, `x,0,z`, `h,0,l` in `2mm`).
+  setting 1 carried into their frame, a permutation of the axes (the settings cab and bca of ITA
+  (2016) Table 1.5.4.4; maintainer decision, 2026-11-18, #24): same letters and multiplicities, the
+  positions of the oriented symbol permuted, the coordinates and Miller indices permuted and their
+  letters renamed after their new position (`m..`, `0,y,z`, `0,k,l` in `mm2` become `.m.`, `x,0,z`,
+  `h,0,l` in `2mm`).
 
 `wyckoffPositionOf(key, direction, { setting, tolerance })` gives the Wyckoff position of any
 direction: the one whose representative has a site symmetry conjugate to that of the direction.
