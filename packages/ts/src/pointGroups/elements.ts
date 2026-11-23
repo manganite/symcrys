@@ -7,7 +7,7 @@
 
 import { det, trace, type Mat3, type Vec3 } from '../linalg.js';
 import { crystalFamily } from '../lattice.js';
-import type { Operation } from '../operations.js';
+import type { CartesianOperation } from '../operations.js';
 import type { Uvw } from '../symmetryDirections.js';
 import { itcBasis, itcSymmetryDirections } from './itcData.js';
 import {
@@ -144,9 +144,9 @@ function findAxis(axes: readonly Axis[], u: Vec3, what: string): Axis {
   return a;
 }
 
-function describe(op: Operation, axes: readonly Axis[], what: string): OperationDescription {
-  const proper = det(op.matrix) > 0;
-  const { r, n } = rotationPart(op.matrix);
+function describe(op: CartesianOperation, axes: readonly Axis[], what: string): OperationDescription {
+  const proper = det(op.cartesian) > 0;
+  const { r, n } = rotationPart(op.cartesian);
   const timeReversal = op.timeReversal;
   if (n === 1) return Object.freeze({ kind: proper ? 'identity' : 'inversion', order: 1, timeReversal });
   const axis = findAxis(axes, rotationAxis(r, n), what);

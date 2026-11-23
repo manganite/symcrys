@@ -13,7 +13,7 @@
 
 import type { CrystalSystem } from './lattice.js';
 import type { Mat3, Vec3 } from './linalg.js';
-import type { Operation as MagneticOperation } from './operations.js';
+import type { CartesianOperation as MagneticOperation, Operation as MagneticRecord } from './operations.js';
 import * as elements from './pointGroups/elements.js';
 import * as groups from './pointGroups/pointGroups.js';
 import type { PointGroupKey, Setting, SettingOptions, SymbolOptions } from './pointGroups/pointGroups.js';
@@ -34,10 +34,18 @@ import type { IntrinsicSymmetry, TensorForm, TensorParity, TensorRank } from './
 const USE_MAGNETIC =
   "the crystallographic API has no time reversal; use the magnetic API ('symcrys/magnetic', in Python symcrys.magnetic)";
 
-/** A point operation: an orthogonal Cartesian matrix (rotation, rotoinversion, mirror, inversion). */
+/**
+ * A point operation of a crystal class in a setting: ITA's matrix W in the lattice basis of the
+ * setting (`matrix`, integer, acting on the coordinates of a lattice direction [uvw]; the coordinate
+ * triplets of ITA's general position are its rows) and the same operation as an orthogonal Cartesian
+ * matrix (`cartesian`: rotation, rotoinversion, mirror, inversion; R = B·W·B⁻¹ with the basis B of
+ * the setting). docs/conventions.md, "Operations".
+ */
 export interface Operation {
-  /** The orthogonal Cartesian 3×3 matrix, rows first. */
+  /** ITA's matrix W in the lattice basis of the setting, integer, rows first. */
   readonly matrix: Mat3;
+  /** The orthogonal Cartesian 3×3 matrix, rows first. */
+  readonly cartesian: Mat3;
 }
 
 /**
@@ -83,11 +91,21 @@ export interface TensorSpec {
 }
 
 /**
- * An operation as a caller may pass it: its matrix. `timeReversal: false` is accepted, so that an
- * operation of the magnetic API without time reversal can be handed on from plain JavaScript; with
- * `timeReversal: true` it is refused, at compile time and at run time.
+ * An operation as a caller may pass it to a function that computes with Cartesian matrices: its
+ * Cartesian matrix (`cartesian`; other fields, such as `matrix`, are not read), so that the
+ * operations of `operations` can be passed as they are. `timeReversal: false` is accepted, so that
+ * an operation of the magnetic API without time reversal can be handed on from plain JavaScript;
+ * with `timeReversal: true` it is refused, at compile time and at run time.
  */
-type OperationArgument = Operation & {
+type OperationArgument = {
+  /** The orthogonal Cartesian 3×3 matrix, rows first. */
+  readonly cartesian: Mat3;
+  /** Accepted if false; an operation with time reversal belongs to the magnetic API. */
+  readonly timeReversal?: false;
+};
+
+/** An operation as a caller may pass it to `residualOperations`: its matrix W in the lattice basis. */
+type CellOperationArgument = cell.CellOperation & {
   /** Accepted if false; an operation with time reversal belongs to the magnetic API. */
   readonly timeReversal?: false;
 };
@@ -173,7 +191,7 @@ function timeEven(specOrName: TensorSpecArgument | TensorPropertyName): tensors.
 }
 
 /** Checks a list of operations of a caller: an operation with time reversal is an error. */
-function checkUnitary(operations: readonly OperationArgument[]): void {
+function checkUnitary(operations: readonly { readonly timeReversal?: false }[]): void {
   operations.forEach((op, i) => {
     const timeReversal = (op as { readonly timeReversal?: unknown }).timeReversal;
     if (timeReversal === true) {
@@ -188,18 +206,20 @@ function checkUnitary(operations: readonly OperationArgument[]): void {
 /** A list of operations as the shared modules take it. */
 function unitary(operations: readonly OperationArgument[]): MagneticOperation[] {
   checkUnitary(operations);
-  return operations.map((op) => ({ matrix: op.matrix, timeReversal: false }));
+  // The other fields are kept for the checks of the shared modules (a record with `matrix` only
+  // is refused there with a hint).
+  return operations.map((op) => ({ ...op, timeReversal: false }));
 }
 
 // --- what goes back --------------------------------------------------------------------------------
 
-const withoutTimeCache = new WeakMap<readonly MagneticOperation[], readonly Operation[]>();
+const withoutTimeCache = new WeakMap<readonly MagneticRecord[], readonly Operation[]>();
 
-/** The operations as their matrices; the shared modules return the same frozen list for the same call. */
-function matricesOnly(ops: readonly MagneticOperation[]): readonly Operation[] {
+/** The operations without time reversal; the shared modules return the same frozen list for the same call. */
+function withoutTime(ops: readonly MagneticRecord[]): readonly Operation[] {
   let result = withoutTimeCache.get(ops);
   if (!result) {
-    result = Object.freeze(ops.map((op) => Object.freeze({ matrix: op.matrix })));
+    result = Object.freeze(ops.map((op) => Object.freeze({ matrix: op.matrix, cartesian: op.cartesian })));
     withoutTimeCache.set(ops, result);
   }
   return result;
@@ -256,10 +276,12 @@ export function settings(key: PointGroupKey): readonly Setting[] {
 /**
  * All operations of the crystal class in the requested setting (default: the ITC default setting),
  * in ITA's order: identity first, then as ITA numbers the general position (docs/conventions.md,
- * "Order of the operations"). The matrices are Cartesian (docs/conventions.md, "Cartesian frame").
+ * "Order of the operations"). Each operation is ITA's matrix W in the lattice basis of the setting
+ * (`matrix`) with the same operation as a Cartesian matrix (`cartesian`; docs/conventions.md,
+ * "Operations").
  */
 export function operations(key: PointGroupKey, options?: SettingOptions): readonly Operation[] {
-  return matricesOnly(groups.operations(classKey(key), options));
+  return withoutTime(groups.operations(classKey(key), options));
 }
 
 /**
@@ -269,7 +291,7 @@ export function operations(key: PointGroupKey, options?: SettingOptions): readon
  * carried into their frame.
  */
 export function generators(key: PointGroupKey, options?: SettingOptions): readonly Operation[] {
-  return matricesOnly(groups.generators(classKey(key), options));
+  return withoutTime(groups.generators(classKey(key), options));
 }
 
 /** A symbol of the crystal class in the requested setting. */
@@ -397,8 +419,8 @@ export function symmetryDirections(
  * fixing the direction within the tolerance are closed under the products found in the list and
  * the direction is set onto their fixed space, repeated until stable, so that for a group the
  * result is a subgroup and the set direction lies exactly on its elements. For a list that is not a
- * group, `multiplicity` may not be an integer. The matrices must be Cartesian and orthogonal (not
- * those of `latticeOperations`). Throws a RangeError for a matrix that is not orthogonal (within
+ * group, `multiplicity` may not be an integer. Each operation is read by its Cartesian matrix
+ * (`cartesian`), which must be orthogonal; a record without it is refused. Throws a RangeError for a matrix that is not orthogonal (within
  * `tolerance`, at least `EPSILON`), for a zero vector, and if the closed operations fix no common
  * direction or do not settle into a group (a tolerance far too large, e.g. 0.5).
  */
@@ -437,35 +459,18 @@ export function wyckoffPositionOf(
 
 /**
  * The operations of a list that keep the metric of a cell: W with WᵀGW = G, G the metric tensor
- * of `basis`. The operations are integer matrices on lattice coordinates, as `latticeOperations`
- * gives them; the list is taken as it is and the kept operations are the ones of the list, in its
+ * of `basis`. The operations are read by `matrix`, the integer matrix W on lattice coordinates, as
+ * `operations` gives them; the list is taken as it is and the kept operations are the ones of the list, in its
  * order. The deviation counts relative to the largest entry of G (`tolerance`, default
  * `EPSILON`). An operation combined with time reversal belongs to the magnetic API.
  */
-export function residualOperations<T extends OperationArgument>(
+export function residualOperations<T extends CellOperationArgument>(
   operations: readonly T[],
   basis: Mat3,
   options?: cell.ResidualOperationsOptions,
 ): T[] {
   checkUnitary(operations);
   return cell.residualOperations(operations, basis, options);
-}
-
-/**
- * The operations of the crystal class in the conventional lattice basis (a, b, c; for the trigonal
- * classes the hexagonal or the rhombohedral axes of the setting), in the order of `operations` for
- * the same setting: integer matrices W acting on the coordinates of a lattice direction [uvw],
- * W = B⁻¹·R·B with the basis B of the setting (columns a, b, c, as `latticeBasis` gives them; for
- * rhombohedral axes the obverse a_R, b_R, c_R in that hexagonal cell) and the Cartesian matrix R of
- * `operations`. They do not depend on the
- * cell angles, so they exist for every family; for the monoclinic and triclinic families a, b, c
- * are taken along x, y, z, as for the Wyckoff positions. They are the matrices of ITA's general
- * position (6th ed., Table 3.2.3.2). Not orthogonal in general: pass
- * them to no function that takes Cartesian operations (docs/conventions.md, "Lattice basis and
- * orbits").
- */
-export function latticeOperations(key: PointGroupKey, options?: SettingOptions): readonly Operation[] {
-  return matricesOnly(orbits.latticeOperations(classKey(key), options));
 }
 
 /**

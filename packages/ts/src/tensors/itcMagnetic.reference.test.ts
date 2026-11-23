@@ -205,7 +205,7 @@ describe('ITC Vol. D Table 1.5.8.1: linear magnetoelectric effect', () => {
     // reversal); of the remaining 69, the 11 named ones are left out: 58 remain.
     const centre = (k: MagneticPointGroupKey) =>
       operations(k).some(
-        (op) => !op.timeReversal && op.matrix.every((r, i) => r.every((x, j) => x === (i === j ? -1 : 0))),
+        (op) => !op.timeReversal && op.cartesian.every((r, i) => r.every((x, j) => x === (i === j ? -1 : 0))),
       );
     expect(GROUPS.filter(centre)).toHaveLength(21);
     expect(GROUPS.filter((k) => centre(k) && allowsProperty(k, 'magnetoelectric'))).toEqual([]);
@@ -262,12 +262,12 @@ describe('ITC Vol. D Table 1.5.2.4: ferromagnetism', () => {
     const axes: number[][] = [];
     for (const op of ops) {
       const d = Math.round(
-        op.matrix[0][0] * (op.matrix[1][1] * op.matrix[2][2] - op.matrix[1][2] * op.matrix[2][1]) -
-          op.matrix[0][1] * (op.matrix[1][0] * op.matrix[2][2] - op.matrix[1][2] * op.matrix[2][0]) +
-          op.matrix[0][2] * (op.matrix[1][0] * op.matrix[2][1] - op.matrix[1][1] * op.matrix[2][0]),
+        op.cartesian[0][0] * (op.cartesian[1][1] * op.cartesian[2][2] - op.cartesian[1][2] * op.cartesian[2][1]) -
+          op.cartesian[0][1] * (op.cartesian[1][0] * op.cartesian[2][2] - op.cartesian[1][2] * op.cartesian[2][0]) +
+          op.cartesian[0][2] * (op.cartesian[1][0] * op.cartesian[2][1] - op.cartesian[1][1] * op.cartesian[2][0]),
       );
       if (d < 0 !== improper || op.timeReversal !== (m[3] !== '')) continue;
-      const r = op.matrix.map((row) => row.map((x) => d * x)); // the rotation part
+      const r = op.cartesian.map((row) => row.map((x) => d * x)); // the rotation part
       const trace = r[0][0] + r[1][1] + r[2][2];
       if (Math.abs(trace - (1 + 2 * Math.cos((2 * Math.PI) / order))) > 1e-9) continue;
       // The axis spans the symmetric part of r minus its trace part: r + rᵀ − (trace − 1)·1 = 2(1 − cos)·n nᵀ.

@@ -188,7 +188,7 @@ function holds(key: MagneticPointGroupKey, frame: M, c: (typeof COLUMNS)[number]
 
 /** The group a symbol names, read along Birss's directions of a crystal system, as operations. */
 const birssGroup = (symbol: string, system: string) =>
-  groupOfSymbol(symbol, BIRSS_DIRECTIONS[system]).map((op) => ({ matrix: op.m, timeReversal: op.t }));
+  groupOfSymbol(symbol, BIRSS_DIRECTIONS[system]).map((op) => ({ cartesian: op.m, timeReversal: op.t }));
 
 describe('Birss Table 7: the transcription as read', () => {
   it('lists the 32 classes and the 58 groups with operations combined with time reversal, each once', () => {
@@ -244,12 +244,12 @@ describe("Birss Table 7: tensor forms of the magnetic point groups, ITC forms in
     };
     for (const row of ROWS.filter((r) => pointGroup(r.key).type === 'III')) {
       // The operations of the ITC default setting in Birss's frame.
-      const ops = operations(row.key).map((op) => ({ m: toBirssFrame(row.key, op.matrix), t: op.timeReversal }));
+      const ops = operations(row.key).map((op) => ({ m: toBirssFrame(row.key, op.cartesian), t: op.timeReversal }));
       const built = {
         // A, eq. (3.24): operations without time reversal, and those with time reversal times the inversion.
-        A: ops.map((op) => ({ matrix: scaled(op.m, op.t ? -1 : 1), timeReversal: false })),
+        A: ops.map((op) => ({ cartesian: scaled(op.m, op.t ? -1 : 1), timeReversal: false })),
         // B: the rotation part of the former, and the rotation part times the inversion of the latter.
-        B: ops.map((op) => ({ matrix: scaled(op.m, (op.t ? -1 : 1) * det3(op.m)), timeReversal: false })),
+        B: ops.map((op) => ({ cartesian: scaled(op.m, (op.t ? -1 : 1) * det3(op.m)), timeReversal: false })),
       };
       (['A', 'B'] as const).forEach((name, i) => {
         const cell = row.cells[2 + i];
@@ -263,11 +263,12 @@ describe("Birss Table 7: tensor forms of the magnetic point groups, ITC forms in
         // Without duplicates: an operation with time reversal and its product with the inversion can coincide.
         const group = built[name].filter(
           (op, k, list) =>
-            list.findIndex((o) => o.matrix.every((r, x) => r.every((v, y) => Math.abs(v - op.matrix[x][y]) < 1e-9))) ===
-            k,
+            list.findIndex((o) =>
+              o.cartesian.every((r, x) => r.every((v, y) => Math.abs(v - op.cartesian[x][y]) < 1e-9)),
+            ) === k,
         );
-        const toRef = (list: { matrix: M; timeReversal: boolean }[]) =>
-          list.map((o) => ({ m: o.matrix, t: o.timeReversal }));
+        const toRef = (list: { cartesian: M; timeReversal: boolean }[]) =>
+          list.map((o) => ({ m: o.cartesian, t: o.timeReversal }));
         if (m[1] === undefined) {
           // Printed without parentheses: the class in Birss's frame, as its symbol names it, in the
           // orientation of Table 4a.
@@ -318,7 +319,7 @@ describe('Birss Table 7: parentheses of column 2, and time-even forms', () => {
     for (const { key } of magnetic) {
       for (const s of settings(key)) {
         const ops = operations(key, { setting: s.index });
-        const classical = ops.map((op) => ({ matrix: op.matrix, timeReversal: false }));
+        const classical = ops.map((op) => ({ cartesian: op.cartesian, timeReversal: false }));
         for (const spec of specs) {
           expect(tensorForm(key, spec, { setting: s.index }), `${key} setting ${s.index}`).toEqual(
             tensorFormOf(classical, spec),

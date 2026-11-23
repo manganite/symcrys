@@ -8,15 +8,15 @@
 
 import type { CrystalSystem } from '../lattice.js';
 import { INVERSION, det, matricesEqual } from '../linalg.js';
-import { checkOrthogonal, checkTimeReversal, closeGroup, type Operation } from '../operations.js';
+import { checkCartesianOperations, checkTimeReversal, closeGroup, type CartesianOperation } from '../operations.js';
 import type { PointGroupKey } from './keys.js';
 
 /**
  * What every function for a list of operations asks of the list: Cartesian (orthogonal) matrices,
  * and of every operation whether it is combined with time reversal, as `tensorFormOf` does.
  */
-function check(operations: readonly Operation[]): void {
-  operations.forEach((op, i) => checkOrthogonal(op.matrix, `Operation ${i}`));
+function check(operations: readonly CartesianOperation[]): void {
+  checkCartesianOperations(operations);
   checkTimeReversal(operations);
 }
 
@@ -27,9 +27,9 @@ function check(operations: readonly Operation[]): void {
  * RangeError for a matrix that is not orthogonal and for an operation that does not say whether it
  * is combined with time reversal.
  */
-export function isCentrosymmetricOf(operations: readonly Operation[]): boolean {
+export function isCentrosymmetricOf(operations: readonly CartesianOperation[]): boolean {
   check(operations);
-  return closeGroup(operations).some((op) => !op.timeReversal && matricesEqual(op.matrix, INVERSION));
+  return closeGroup(operations).some((op) => !op.timeReversal && matricesEqual(op.cartesian, INVERSION));
 }
 
 /**
@@ -39,9 +39,9 @@ export function isCentrosymmetricOf(operations: readonly Operation[]): boolean {
  * is not orthogonal and for an operation that does not say whether it is combined with time
  * reversal.
  */
-export function isChiralOf(operations: readonly Operation[]): boolean {
+export function isChiralOf(operations: readonly CartesianOperation[]): boolean {
   check(operations);
-  return operations.every((op) => det(op.matrix) > 0);
+  return operations.every((op) => det(op.cartesian) > 0);
 }
 
 const HOLOHEDRY: Readonly<Record<CrystalSystem, PointGroupKey>> = Object.freeze({

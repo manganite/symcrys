@@ -1,40 +1,37 @@
 import { describe, expect, it } from 'vitest';
 import { apply, det, inverse, matricesEqual, multiply, transpose, type Mat3, type Vec3 } from '../linalg.js';
 import { latticeBasis } from '../lattice.js';
-import { latticeOperations, orbit, orbitOf } from './orbits.js';
-import { MAGNETIC_POINT_GROUP_KEYS, POINT_GROUP_KEYS, operations, settings } from './pointGroups.js';
+import { orbit, orbitOf } from './orbits.js';
+import { MAGNETIC_POINT_GROUP_KEYS, POINT_GROUP_KEYS, generators, operations, settings } from './pointGroups.js';
 import { wyckoffPositions } from './wyckoff.js';
 
 const ALL_SETTINGS = POINT_GROUP_KEYS.flatMap((key) => settings(key).map((s) => ({ key, s })));
 
-describe('latticeOperations', () => {
+describe('the matrix W of an operation (field matrix)', () => {
   for (const key of MAGNETIC_POINT_GROUP_KEYS) {
-    it(`are integer matrices, index for index the operations of the same call: ${key}`, () => {
+    it(`is an integer matrix of determinant ±1 with the determinant of the Cartesian one, for operations and generators: ${key}`, () => {
       for (const s of settings(key)) {
-        const ops = operations(key, { setting: s.index });
-        const lattice = latticeOperations(key, { setting: s.index });
-        expect(lattice).toHaveLength(ops.length);
-        lattice.forEach((w, i) => {
-          expect(w.matrix.flat().every((x) => Number.isInteger(x))).toBe(true);
-          expect(Math.abs(det(w.matrix))).toBe(1);
-          expect(w.timeReversal).toBe(ops[i].timeReversal);
-        });
+        for (const op of [...operations(key, { setting: s.index }), ...generators(key, { setting: s.index })]) {
+          expect(op.matrix.flat().every((x) => Number.isInteger(x))).toBe(true);
+          expect(det(op.matrix)).toBe(Math.round(det(op.cartesian)));
+          expect(Math.abs(det(op.matrix))).toBe(1);
+        }
       }
     });
   }
 
-  it('are the Cartesian operations in the lattice basis: R·B = B·W', () => {
+  it('is the Cartesian operation in the lattice basis: R·B = B·W', () => {
     const b = latticeBasis('hexagonal');
-    const ops = operations('6/mmm');
-    latticeOperations('6/mmm').forEach((w, i) => {
-      expect(matricesEqual(multiply(ops[i].matrix, b), multiply(b, w.matrix))).toBe(true);
-    });
+    for (const op of operations('6/mmm')) {
+      expect(matricesEqual(multiply(op.cartesian, b), multiply(b, op.matrix))).toBe(true);
+    }
   });
 
-  it('are frozen and cached', () => {
-    const w = latticeOperations('432');
-    expect(latticeOperations('432')).toBe(w);
-    expect(Object.isFrozen(w) && Object.isFrozen(w[1]) && Object.isFrozen(w[1].matrix[0])).toBe(true);
+  it('is frozen, and the list is cached', () => {
+    const ops = operations('432');
+    expect(operations('432')).toBe(ops);
+    expect(Object.isFrozen(ops) && Object.isFrozen(ops[1]) && Object.isFrozen(ops[1].matrix[0])).toBe(true);
+    expect(Object.isFrozen(ops[1].cartesian[0])).toBe(true);
   });
 });
 
@@ -63,7 +60,7 @@ describe('orbit', () => {
     };
     const ops = operations('-6m2');
     for (const f of orbit('-6m2', { hkl: [3, 2, 1] })) {
-      const image = apply(ops[f.operations[0]].matrix, normal([3, 2, 1]));
+      const image = apply(ops[f.operations[0]].cartesian, normal([3, 2, 1]));
       const n = normal(f.hkl);
       expect(Math.hypot(image[0] - n[0], image[1] - n[1], image[2] - n[2])).toBeLessThan(1e-12);
     }
@@ -139,9 +136,13 @@ describe('orbitOf', () => {
     expect(orbitOf(ops, [3, 2, 1]).map((p) => p.operations)).toEqual([[0], [1]]);
   });
 
-  it('refuses a zero vector and a matrix that is not orthogonal', () => {
+  it('refuses a zero vector, a matrix that is not orthogonal, and an operation without its Cartesian matrix', () => {
     expect(() => orbitOf(operations('4mm'), [0, 0, 0])).toThrow(RangeError);
-    const lattice = latticeOperations('3').map((w) => ({ matrix: w.matrix as Mat3 }));
+    const lattice = operations('3').map((op) => ({ cartesian: op.matrix as Mat3 }));
     expect(() => orbitOf(lattice, [1, 0, 0])).toThrow(/orthogonal/);
+    const withoutCartesian = operations('3').map((op) => ({ matrix: op.matrix }));
+    expect(() => orbitOf(withoutCartesian as never, [1, 0, 0])).toThrow(
+      /Operation 0 has no Cartesian matrix.*field matrix is the matrix W in the lattice basis/,
+    );
   });
 });

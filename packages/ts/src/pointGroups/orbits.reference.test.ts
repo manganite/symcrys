@@ -14,8 +14,8 @@
 
 import { describe, expect, it } from 'vitest';
 import { expectHeader, readReference, tableRows, sameAxes } from '../testUtils/references.js';
-import { latticeOperations, orbit } from './orbits.js';
-import { POINT_GROUP_KEYS, settings, type PointGroupKey } from './pointGroups.js';
+import { orbit } from './orbits.js';
+import { POINT_GROUP_KEYS, operations, settings, type PointGroupKey } from './pointGroups.js';
 
 const generalRows = tableRows(readReference('itc/vol-a-table-3.2.3.2-general-positions.md'));
 expectHeader(generalRows, ['Short', 'Axes', 'Page', 'Multiplicity', 'General position']);
@@ -58,7 +58,7 @@ describe('ITA Table 3.2.3.2: operations in the lattice basis', () => {
 
     it(`${label}: the lattice operations are the printed general position, in order`, () => {
       const { key, setting } = settingOf(short, axes);
-      expect(latticeOperations(key, { setting }).map((op) => op.matrix)).toEqual(printed);
+      expect(operations(key, { setting }).map((op) => op.matrix)).toEqual(printed);
     });
 
     it(`${label}: the orbit of [321] is the printed general position at x, y, z = 3, 2, 1`, () => {

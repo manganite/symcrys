@@ -5,7 +5,7 @@
  */
 
 import { det, multiply, trace, type Mat3, type Vec3 } from '../linalg.js';
-import { checkOrthogonalWithin, checkTimeReversal, type Operation } from '../operations.js';
+import { checkCartesianOperations, checkTimeReversal, type CartesianOperation } from '../operations.js';
 import { EPSILON } from '../tolerances.js';
 import { axialVector, rotationAxis, type OperationKind } from './elements.js';
 import {
@@ -77,13 +77,13 @@ function toleranceOf(options?: PointGroupOfOptions): number {
  */
 const traceTolerance = (tolerance: number): number => 3 * Math.max(tolerance, EPSILON);
 
-const same = (a: Operation, b: Operation, tolerance: number): boolean =>
+const same = (a: CartesianOperation, b: CartesianOperation, tolerance: number): boolean =>
   a.timeReversal === b.timeReversal &&
-  a.matrix.every((row, i) => row.every((v, j) => Math.abs(v - b.matrix[i][j]) < tolerance));
+  a.cartesian.every((row, i) => row.every((v, j) => Math.abs(v - b.cartesian[i][j]) < tolerance));
 
 /** The kind of an operation (rounded trace, sign of the determinant, time reversal): equal operations have the same. */
-const kindOf = (op: Operation): string =>
-  `${Math.round(trace(op.matrix))}${det(op.matrix) > 0 ? '+' : '-'}${op.timeReversal ? "'" : ''}`;
+const kindOf = (op: CartesianOperation): string =>
+  `${Math.round(trace(op.cartesian))}${det(op.cartesian) > 0 ? '+' : '-'}${op.timeReversal ? "'" : ''}`;
 
 /**
  * The group the operations generate, or undefined if it is larger than any point group. The
@@ -91,19 +91,19 @@ const kindOf = (op: Operation): string =>
  * grown by multiplying each element by each generator until nothing new appears; a new operation
  * is compared only with the operations of its kind.
  */
-function close(ops: readonly Operation[], tolerance: number): Operation[] | undefined {
-  const identity: Operation = {
-    matrix: [
+function close(ops: readonly CartesianOperation[], tolerance: number): CartesianOperation[] | undefined {
+  const identity: CartesianOperation = {
+    cartesian: [
       [1, 0, 0],
       [0, 1, 0],
       [0, 0, 1],
     ],
     timeReversal: false,
   };
-  const group: Operation[] = [];
-  const byKind = new Map<string, Operation[]>();
-  const has = (op: Operation): boolean => (byKind.get(kindOf(op)) ?? []).some((g) => same(g, op, tolerance));
-  const push = (op: Operation): void => {
+  const group: CartesianOperation[] = [];
+  const byKind = new Map<string, CartesianOperation[]>();
+  const has = (op: CartesianOperation): boolean => (byKind.get(kindOf(op)) ?? []).some((g) => same(g, op, tolerance));
+  const push = (op: CartesianOperation): void => {
     group.push(op);
     const k = kindOf(op);
     const list = byKind.get(k);
@@ -111,14 +111,14 @@ function close(ops: readonly Operation[], tolerance: number): Operation[] | unde
     else byKind.set(k, [op]);
   };
   push(identity);
-  const generators: Operation[] = [];
+  const generators: CartesianOperation[] = [];
   for (const s of ops) {
     if (has(s)) continue;
     generators.push(s);
     for (let i = 0; i < group.length; i++) {
       for (const t of generators) {
-        const product: Operation = {
-          matrix: multiply(group[i].matrix, t.matrix),
+        const product: CartesianOperation = {
+          cartesian: multiply(group[i].cartesian, t.cartesian),
           timeReversal: group[i].timeReversal !== t.timeReversal,
         };
         if (has(product)) continue;
@@ -136,13 +136,13 @@ function close(ops: readonly Operation[], tolerance: number): Operation[] | unde
  * all point groups up to orientation, the counts identify the point group of any finite group of
  * crystallographic operations.
  */
-const signature = (ops: readonly Operation[], tolerance = EPSILON): string =>
+const signature = (ops: readonly CartesianOperation[], tolerance = EPSILON): string =>
   ops
     .map((op) => {
-      const t = trace(op.matrix);
+      const t = trace(op.cartesian);
       const rounded = Math.round(t);
       if (Math.abs(t - rounded) > traceTolerance(tolerance)) return 'x'; // not a crystallographic operation
-      return `${Math.round(det(op.matrix))}:${rounded}${op.timeReversal ? "'" : ''}`;
+      return `${Math.round(det(op.cartesian))}:${rounded}${op.timeReversal ? "'" : ''}`;
     })
     .sort()
     .join(' ');
@@ -170,12 +170,12 @@ function keyOfSignature(s: string): MagneticPointGroupKey | undefined {
  * setting 1.
  */
 export function pointGroupOf(
-  operations: readonly Operation[],
+  operations: readonly CartesianOperation[],
   options?: PointGroupOfOptions,
 ): IdentifiedPointGroup | undefined {
   const tolerance = toleranceOf(options);
   checkTimeReversal(operations);
-  operations.forEach((op, i) => checkOrthogonalWithin(op.matrix, `Operation ${i}`, tolerance));
+  checkCartesianOperations(operations, tolerance);
   const group = close(operations, tolerance);
   if (!group) return undefined;
   const key = keyOfSignature(signature(group, tolerance));
@@ -200,17 +200,16 @@ function signed(v: Vec3, tolerance: number): { axis: Vec3; flip: boolean } {
 
 const dot = (a: Vec3, b: Vec3): number => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 
-function describe(op: Operation, i: number, tolerance: number): CartesianOperationDescription {
-  checkOrthogonalWithin(op.matrix, `Operation ${i}`, tolerance);
+function describe(op: CartesianOperation, i: number, tolerance: number): CartesianOperationDescription {
   const notCrystallographic = `Operation ${i} is not a crystallographic point operation`;
   // The trace of the rotation part is an integer exactly for the angles 360°/n, n = 1, 2, 3, 4, 6.
-  const t = det(op.matrix) > 0 ? trace(op.matrix) : -trace(op.matrix);
+  const t = det(op.cartesian) > 0 ? trace(op.cartesian) : -trace(op.cartesian);
   if (Math.abs(t - Math.round(t)) > traceTolerance(tolerance)) throw new RangeError(notCrystallographic);
   // The order from the trace of the rotation part, 1 + 2 cos(360°/n): 3, −1, 0, 1, 2 for n = 1, 2, 3, 4, 6.
   const n = ({ 3: 1, [-1]: 2, 0: 3, 1: 4, 2: 6 } as Record<number, number>)[Math.round(t)];
   if (n === undefined) throw new RangeError(notCrystallographic);
-  const r = (det(op.matrix) > 0 ? op.matrix : op.matrix.map((row) => row.map((v) => -v))) as Mat3;
-  const proper = det(op.matrix) > 0;
+  const r = (det(op.cartesian) > 0 ? op.cartesian : op.cartesian.map((row) => row.map((v) => -v))) as Mat3;
+  const proper = det(op.cartesian) > 0;
   const timeReversal = op.timeReversal;
   if (n === 1) return Object.freeze({ kind: proper ? 'identity' : 'inversion', order: 1, timeReversal });
   const { axis } = signed(rotationAxis(r, n), tolerance);
@@ -232,10 +231,11 @@ function describe(op: Operation, i: number, tolerance: number): CartesianOperati
  * does not say whether it is combined with time reversal.
  */
 export function describeOperationsOf(
-  operations: readonly Operation[],
+  operations: readonly CartesianOperation[],
   options?: PointGroupOfOptions,
 ): readonly CartesianOperationDescription[] {
   const tolerance = toleranceOf(options);
+  checkCartesianOperations(operations, tolerance);
   checkTimeReversal(operations);
   return Object.freeze(operations.map((op, i) => describe(op, i, tolerance)));
 }

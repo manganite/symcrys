@@ -116,7 +116,7 @@ describe('Birss Table 3 (printed pp. 36–38) against symcrys, in the ITC frame'
 
       it('the printed symbol, read along Birss directions, generates the printed group', () => {
         // Birss reads the unique axis of a monoclinic class along z (Table 4a, p. 56: `2//z`; σ(3) of `2` is a rotation about z).
-        const printedGroup = close(row.generators).map((op) => ({ matrix: op.m, timeReversal: op.t }));
+        const printedGroup = close(row.generators).map((op) => ({ cartesian: op.m, timeReversal: op.t }));
         expect(sameGroup(groupOfSymbol(row.printedSymbol, BIRSS_DIRECTIONS[row.system]), printedGroup)).toBe(true);
       });
 

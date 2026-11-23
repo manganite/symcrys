@@ -16,7 +16,7 @@
  * Internal.
  */
 
-import { operation, type Operation } from '../operations.js';
+import { operation, type CartesianOperation } from '../operations.js';
 import type { BlackWhitePointGroupKey, PointGroupKey } from './keys.js';
 import { itcCartesianOperations, itcClass, itcLatticeGenerators, itcTimeReversal } from './itcData.js';
 import { primedSymbols } from './magneticSymbols.js';
@@ -169,14 +169,14 @@ export function itcBlackWhiteClassSetting(key: BlackWhitePointGroupKey, index: n
   return matches[0].index;
 }
 
-const operationCache = new Map<string, readonly Operation[]>();
+const operationCache = new Map<string, readonly CartesianOperation[]>();
 
 /**
  * The operations of a setting: those of the class setting it lies in, in ITA's order, each with
  * its time reversal. Throws unless exactly one assignment of time reversal to ITA's generators of
  * the class gives a group whose primed full symbol is the stored one.
  */
-export function itcBlackWhiteOperations(key: BlackWhitePointGroupKey, index: number): readonly Operation[] {
+export function itcBlackWhiteOperations(key: BlackWhitePointGroupKey, index: number): readonly CartesianOperation[] {
   const cacheKey = `${key}#${index}`;
   let result = operationCache.get(cacheKey);
   if (!result) {
@@ -187,7 +187,7 @@ export function itcBlackWhiteOperations(key: BlackWhitePointGroupKey, index: num
     const classSetting = cls.settings.find((s) => s.index === classIndex)!;
     const matrices = itcCartesianOperations(g.crystalClass, classIndex);
     const n = itcLatticeGenerators(g.crystalClass, classIndex).length;
-    const found: Operation[][] = [];
+    const found: CartesianOperation[][] = [];
     // Every assignment of time reversal to the generators but the one without any.
     for (let bits = 1; bits < 1 << n; bits++) {
       const flags = Array.from({ length: n }, (_, k) => (bits & (1 << k)) !== 0);

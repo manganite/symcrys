@@ -4,10 +4,20 @@
  * operations, generators and symbols, as ITC gives them (CLAUDE.md, "Pure ITC").
  */
 
-import { INVERSION, det, matricesEqual } from '../linalg.js';
+import { INVERSION, det, inverse, matricesEqual, multiply, type Mat3 } from '../linalg.js';
 import { EPSILON } from '../tolerances.js';
-import { compose, operation, operationsEqual, type Operation } from '../operations.js';
-import { ITC_CLASSES, itcCartesianGenerators, itcCartesianOperations, itcClass, itcSetting } from './itcData.js';
+import { compose, operation, operationsEqual, type CartesianOperation, type Operation } from '../operations.js';
+import {
+  ITC_CLASSES,
+  itcBasis,
+  itcCartesianGenerators,
+  itcCartesianOperations,
+  itcClass,
+  itcLatticeGenerators,
+  itcLatticeOperations,
+  itcSetting,
+} from './itcData.js';
+import type { IntMat3 } from './itaOrder.js';
 import {
   ITC_BLACK_WHITE,
   itcBlackWhiteClassSetting,
@@ -261,19 +271,19 @@ export function settingIndexOf(key: MagneticPointGroupKey, options?: SettingOpti
   return settingIndex(data(key), options);
 }
 
-function freezeOperation(op: Operation): Operation {
-  const [r0, r1, r2] = op.matrix;
+function freezeOperation(op: CartesianOperation): CartesianOperation {
+  const [r0, r1, r2] = op.cartesian;
   return Object.freeze({
-    matrix: Object.freeze([Object.freeze([...r0]), Object.freeze([...r1]), Object.freeze([...r2])] as const),
+    cartesian: Object.freeze([Object.freeze([...r0]), Object.freeze([...r1]), Object.freeze([...r2])] as const),
     timeReversal: op.timeReversal,
-  }) as Operation;
+  }) as CartesianOperation;
 }
 
-const operationCache = new Map<string, readonly Operation[]>();
+const operationCache = new Map<string, readonly CartesianOperation[]>();
 
 /** The operation of `ops` with the matrix of `op`, whatever its time reversal. */
-function withMatrix(ops: readonly Operation[], op: Operation): Operation {
-  const found = ops.find((x) => matricesEqual(x.matrix, op.matrix));
+function withMatrix(ops: readonly CartesianOperation[], op: CartesianOperation): CartesianOperation {
+  const found = ops.find((x) => matricesEqual(x.cartesian, op.cartesian));
   if (!found) throw new Error('Operation of the crystal class missing in the magnetic group');
   return found;
 }
@@ -310,18 +320,18 @@ export function classSettingOf(
   return { key: d.crystalClass.key as PointGroupKey, index: classSetting(d, settingIndex(d, options)) };
 }
 
-const itaGeneratorCache = new Map<string, readonly Operation[]>();
+const itaGeneratorCache = new Map<string, readonly CartesianOperation[]>();
 
 /**
  * ITA's generators of a setting (see `generators`); for a class from the ITC class data. For a
  * magnetic group: ITA's generators of its class in the same frame, each with the time reversal it
  * has in the group; for a grey group followed by time reversal 1'.
  */
-function settingItaGenerators(d: GroupData, index: number): readonly Operation[] {
+function settingItaGenerators(d: GroupData, index: number): readonly CartesianOperation[] {
   const cacheKey = `${d.key}#${index}`;
   let result = itaGeneratorCache.get(cacheKey);
   if (!result) {
-    let gens: Operation[];
+    let gens: CartesianOperation[];
     if (d.type === 'I') {
       gens = itcCartesianGenerators(d.key as PointGroupKey, index).map((m) => operation(m));
     } else {
@@ -344,11 +354,11 @@ function settingItaGenerators(d: GroupData, index: number): readonly Operation[]
  * that order, each with the time reversal its symbol gives (itcMagneticData.ts). A grey group: the
  * operations of its class, then the same sequence combined with time reversal.
  */
-function settingOperations(d: GroupData, index: number): readonly Operation[] {
+function settingOperations(d: GroupData, index: number): readonly CartesianOperation[] {
   const cacheKey = `${d.key}#${index}`;
   let result = operationCache.get(cacheKey);
   if (!result) {
-    let ordered: Operation[];
+    let ordered: CartesianOperation[];
     if (d.type === 'I') {
       ordered = itcCartesianOperations(d.key as PointGroupKey, index).map((m) => operation(m));
     } else if (d.type === 'II') {
@@ -392,19 +402,19 @@ function settingSymbols(d: GroupData, index: number): { readonly short: string; 
 // --- properties fixed by the operations (setting 1; a class and its Laue class share its frame) ----
 
 /** Contains the inversion, not combined with time reversal. */
-function hasInversion(ops: readonly Operation[]): boolean {
-  return ops.some((op) => !op.timeReversal && matricesEqual(op.matrix, INVERSION));
+function hasInversion(ops: readonly CartesianOperation[]): boolean {
+  return ops.some((op) => !op.timeReversal && matricesEqual(op.cartesian, INVERSION));
 }
 
 /**
  * Some direction is left unchanged by every operation: the group average of the matrices, which
  * projects onto the invariant vectors, is not zero.
  */
-function hasFixedDirection(ops: readonly Operation[]): boolean {
+function hasFixedDirection(ops: readonly CartesianOperation[]): boolean {
   for (let i = 0; i < 3; i++) {
     for (let j = 0; j < 3; j++) {
       let sum = 0;
-      for (const op of ops) sum += op.matrix[i][j];
+      for (const op of ops) sum += op.cartesian[i][j];
       if (Math.abs(sum / ops.length) > EPSILON) return true;
     }
   }
@@ -418,13 +428,13 @@ function laueClassOf(crystalClass: GroupData): PointGroupKey {
   const cached = laueCache.get(crystalClass.key);
   if (cached) return cached;
   const ops = settingOperations(crystalClass, 1);
-  const inversion: Operation = { matrix: INVERSION, timeReversal: false };
+  const inversion: CartesianOperation = { cartesian: INVERSION, timeReversal: false };
   const withInversion = [...ops];
   for (const op of ops) {
     const product = compose(inversion, op);
     if (!withInversion.some((x) => operationsEqual(x, product))) withInversion.push(product);
   }
-  const sameSet = (other: readonly Operation[]): boolean =>
+  const sameSet = (other: readonly CartesianOperation[]): boolean =>
     other.length === withInversion.length && other.every((x) => withInversion.some((y) => operationsEqual(x, y)));
   const laue = POINT_GROUP_KEYS.find((key) => sameSet(settingOperations(data(key), 1)));
   if (!laue) throw new Error(`No centrosymmetric class matches ${crystalClass.key} with the inversion`);
@@ -451,7 +461,7 @@ export function pointGroup<K extends MagneticPointGroupKey>(key: K): PointGroup<
       order: ops.length,
       centrosymmetric: hasInversion(ops),
       polar: hasFixedDirection(ops),
-      chiral: ops.every((op) => det(op.matrix) > 0),
+      chiral: ops.every((op) => det(op.cartesian) > 0),
       laueClass: laueClassOf(d.crystalClass),
     });
     groupCache.set(d.key, g);
@@ -503,16 +513,68 @@ export function settings(key: MagneticPointGroupKey): readonly Setting[] {
   });
 }
 
+const frozenMatrix = (m: Mat3 | IntMat3): Mat3 =>
+  Object.freeze(m.map((row) => Object.freeze(row.map((v) => v + 0)))) as unknown as Mat3;
+
+/** An integer matrix from one that should be one; throws if it is not (a data error). */
+function integer(m: Mat3, what: string): Mat3 {
+  const r = m.map((row) => row.map((v) => Math.round(v) + 0)) as unknown as Mat3;
+  if (!m.every((row, i) => row.every((v, j) => Math.abs(v - r[i][j]) < 1e-9))) {
+    throw new Error(`${what} is not an integer matrix in the lattice basis: ${JSON.stringify(m)}`);
+  }
+  return r;
+}
+
+/**
+ * The records of the API for Cartesian operations of a setting: each with its matrix W in the
+ * lattice basis of the setting. A crystal class takes W from the exact ITC class data (`exact`, in
+ * the same order); a magnetic group computes W = B⁻¹·R·B in the basis B of the setting of its class
+ * (itcData.ts, `itcBasis`), which is exact after rounding, since W is an integer matrix.
+ */
+function records(
+  d: GroupData,
+  index: number,
+  ops: readonly CartesianOperation[],
+  exact: readonly IntMat3[] | undefined,
+): readonly Operation[] {
+  const classKey = d.crystalClass.key as PointGroupKey;
+  const b = itcBasis(classKey, classSetting(d, index));
+  const bInv = inverse(b);
+  return Object.freeze(
+    ops.map((op, i) =>
+      Object.freeze({
+        matrix: frozenMatrix(
+          exact ? exact[i] : integer(multiply(multiply(bInv, op.cartesian), b), `Operation ${i} of ${d.key}`),
+        ),
+        cartesian: op.cartesian,
+        timeReversal: op.timeReversal,
+      }),
+    ),
+  );
+}
+
+const recordCache = new Map<string, readonly Operation[]>();
+
 /**
  * All operations of the point group in the requested setting (default: the ITC default setting),
  * in ITA's order: identity first, then as ITA numbers the general position of the crystal class; an
  * operation of a magnetic group has the number it has in the class, and a grey group lists the
  * class first, then the same sequence with time reversal (docs/conventions.md, "Order of the
- * operations"). The matrices are Cartesian (docs/conventions.md, "Cartesian frame").
+ * operations"). Each operation is ITA's matrix W in the lattice basis of the setting (`matrix`) with
+ * the same operation as a Cartesian matrix (`cartesian`) and its time reversal (docs/conventions.md,
+ * "Operations").
  */
 export function operations(key: MagneticPointGroupKey, options?: SettingOptions): readonly Operation[] {
   const d = data(key);
-  return settingOperations(d, settingIndex(d, options));
+  const index = settingIndex(d, options);
+  const cacheKey = `${d.key}#${index}`;
+  let result = recordCache.get(cacheKey);
+  if (!result) {
+    const exact = d.type === 'I' ? itcLatticeOperations(d.key as PointGroupKey, index) : undefined;
+    result = records(d, index, settingOperations(d, index), exact);
+    recordCache.set(cacheKey, result);
+  }
+  return result;
 }
 
 /**
@@ -524,7 +586,15 @@ export function operations(key: MagneticPointGroupKey, options?: SettingOptions)
  */
 export function generators(key: MagneticPointGroupKey, options?: SettingOptions): readonly Operation[] {
   const d = data(key);
-  return settingItaGenerators(d, settingIndex(d, options));
+  const index = settingIndex(d, options);
+  const cacheKey = `${d.key}#${index}#generators`;
+  let result = recordCache.get(cacheKey);
+  if (!result) {
+    const exact = d.type === 'I' ? itcLatticeGenerators(d.key as PointGroupKey, index) : undefined;
+    result = records(d, index, settingItaGenerators(d, index), exact);
+    recordCache.set(cacheKey, result);
+  }
+  return result;
 }
 
 /** A symbol of the point group in the requested setting. */

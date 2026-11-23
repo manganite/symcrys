@@ -60,7 +60,7 @@ describe('wyckoffPositionOf', () => {
       const ops = operations(key, { setting: s.index });
       for (const w of wyckoffPositions(key, { setting: s.index })) {
         for (const g of ops) {
-          const image = apply(g.matrix, w.representative.cartesian);
+          const image = apply(g.cartesian, w.representative.cartesian);
           expect(wyckoffPositionOf(key, image, { setting: s.index }).letter, `${key} #${s.index} ${w.letter}`).toBe(
             w.letter,
           );
@@ -84,7 +84,7 @@ describe('wyckoffPositionOf', () => {
       const ops = operations(key, { setting: s.index });
       for (const w of wyckoffPositions(key, { setting: s.index })) {
         for (const g of ops) {
-          const image = apply(g.matrix, w.representative.cartesian);
+          const image = apply(g.cartesian, w.representative.cartesian);
           for (const delta of [tolerance / 4, tolerance, 2 * tolerance]) {
             const near: Vec3 = [image[0] + rnd() * delta, image[1] + rnd() * delta, image[2] + rnd() * delta];
             const site = siteSymmetry(ops, near, { tolerance });
@@ -92,12 +92,12 @@ describe('wyckoffPositionOf', () => {
             expect(Number.isInteger(site.multiplicity), label).toBe(true);
             // A subgroup: closed under products; and each of its operations fixes the set direction.
             for (const i of site.operations) {
-              const moved = apply(ops[i].matrix, site.direction);
+              const moved = apply(ops[i].cartesian, site.direction);
               expect(Math.hypot(...moved.map((x, k) => x - site.direction[k])), label).toBeLessThan(1e-9);
               for (const j of site.operations) {
-                const product = multiply(ops[i].matrix, ops[j].matrix);
+                const product = multiply(ops[i].cartesian, ops[j].cartesian);
                 expect(
-                  site.operations.some((k) => matricesEqual(ops[k].matrix, product)),
+                  site.operations.some((k) => matricesEqual(ops[k].cartesian, product)),
                   label,
                 ).toBe(true);
               }
@@ -151,12 +151,12 @@ describe('siteSymmetry', () => {
   });
 
   it('works on any list of operations, ignoring time reversal', () => {
-    const primed = ops.map((o) => ({ matrix: o.matrix, timeReversal: true }));
+    const primed = ops.map((o) => ({ cartesian: o.cartesian, timeReversal: true }));
     expect(siteSymmetry(primed, [0, 0, 1]).operations).toHaveLength(8);
   });
 
   it('is not general if a non-identity operation alone fixes the direction', () => {
-    const mirrorOnly = operations('m', { setting: 2 }).filter((o) => o.matrix[2][2] === -1);
+    const mirrorOnly = operations('m', { setting: 2 }).filter((o) => o.cartesian[2][2] === -1);
     expect(mirrorOnly).toHaveLength(1);
     expect(siteSymmetry(mirrorOnly, [1, 2, 0]).general).toBe(false);
     expect(siteSymmetry(mirrorOnly, [1, 2, 3]).general).toBe(true);

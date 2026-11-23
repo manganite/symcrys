@@ -75,7 +75,7 @@ describe('the ITC data of the black-and-white groups', () => {
     const data = itcBlackWhiteOperations(g.key, s.index);
     expect(ops).toHaveLength(data.length);
     ops.forEach((o, i) => {
-      expect(matricesEqual(o.matrix, data[i].matrix)).toBe(true);
+      expect(matricesEqual(o.cartesian, data[i].cartesian)).toBe(true);
       expect(o.timeReversal).toBe(data[i].timeReversal);
     });
   });

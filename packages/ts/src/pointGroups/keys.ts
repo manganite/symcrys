@@ -5,7 +5,7 @@
  */
 
 import { IDENTITY } from '../linalg.js';
-import type { Operation } from '../operations.js';
+import type { CartesianOperation } from '../operations.js';
 
 /** Keys of the 32 crystal classes: the ITC short symbol of the class (docs/conventions.md, "Keys"). */
 export const POINT_GROUP_KEYS = Object.freeze([
@@ -138,7 +138,7 @@ export const MAGNETIC_POINT_GROUP_KEYS: readonly MagneticPointGroupKey[] = Objec
 ]);
 
 /** Time reversal alone: the identity combined with time reversal (1'). */
-export const TIME_REVERSAL: Operation = Object.freeze({ matrix: IDENTITY, timeReversal: true });
+export const TIME_REVERSAL: CartesianOperation = Object.freeze({ cartesian: IDENTITY, timeReversal: true });
 
 /** Schoenflies symbol of a grey group: that of its class with the subscript R (ITC Vol. D, Table 1.5.2.1). */
 export const greySchoenflies = (classSymbol: string): string => `${classSymbol}R`;

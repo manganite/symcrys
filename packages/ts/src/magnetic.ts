@@ -12,7 +12,7 @@
 export { VERSION } from './version.js';
 
 export type { Mat3, Vec3 } from './linalg.js';
-export type { Operation } from './operations.js';
+export type { CartesianOperation, Operation } from './operations.js';
 export {
   crystalFamily,
   latticeBasis,
@@ -102,7 +102,6 @@ export {
   type PointGroupOfOptions,
 } from './pointGroups/identify.js';
 export {
-  latticeOperations,
   orbit,
   orbitOf,
   type DirectionOrbitEntry,

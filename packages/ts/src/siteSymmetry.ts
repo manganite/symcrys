@@ -4,7 +4,7 @@
  */
 
 import { apply, matricesEqual, multiply, type Vec3 } from './linalg.js';
-import { checkOrthogonalWithin, type Operation } from './operations.js';
+import { checkCartesianOperations, type CartesianOperation } from './operations.js';
 import { EPSILON } from './tolerances.js';
 
 /** Options of `siteSymmetry` and `wyckoffPositionOf`. */
@@ -42,13 +42,13 @@ function unit(v: Vec3): Vec3 {
   return [v[0] / n, v[1] / n, v[2] / n];
 }
 
-function fixes(op: Operation, v: Vec3, tolerance: number): boolean {
-  const w = apply(op.matrix, v);
+function fixes(op: CartesianOperation, v: Vec3, tolerance: number): boolean {
+  const w = apply(op.cartesian, v);
   return Math.hypot(w[0] - v[0], w[1] - v[1], w[2] - v[2]) < tolerance;
 }
 
-function isIdentity(op: Operation): boolean {
-  return op.matrix.every((row, i) => row.every((v, j) => Math.abs(v - (i === j ? 1 : 0)) < EPSILON));
+function isIdentity(op: CartesianOperation): boolean {
+  return op.cartesian.every((row, i) => row.every((v, j) => Math.abs(v - (i === j ? 1 : 0)) < EPSILON));
 }
 
 /**
@@ -56,14 +56,14 @@ function isIdentity(op: Operation): boolean {
  * the list, or -1. Made per call, not kept between calls: a caller may change its list in place
  * (#90).
  */
-function productLookup(operations: readonly Operation[]): (i: number, j: number) => number {
+function productLookup(operations: readonly CartesianOperation[]): (i: number, j: number) => number {
   const table = new Map<number, number>();
   return (i, j) => {
     const key = i * operations.length + j;
     let k = table.get(key);
     if (k === undefined) {
-      const product = multiply(operations[i].matrix, operations[j].matrix);
-      k = operations.findIndex((op) => matricesEqual(op.matrix, product));
+      const product = multiply(operations[i].cartesian, operations[j].cartesian);
+      k = operations.findIndex((op) => matricesEqual(op.cartesian, product));
       table.set(key, k);
     }
     return k;
@@ -89,11 +89,11 @@ function closeWithin(product: (i: number, j: number) => number, indices: readonl
 }
 
 /** The normalised mean of the images of v under the operations at `indices`; undefined if it vanishes. */
-function meanImage(operations: readonly Operation[], indices: readonly number[], v: Vec3): Vec3 | undefined {
+function meanImage(operations: readonly CartesianOperation[], indices: readonly number[], v: Vec3): Vec3 | undefined {
   if (indices.length === 0) return v;
   const sum: [number, number, number] = [0, 0, 0];
   for (const i of indices) {
-    const w = apply(operations[i].matrix, v);
+    const w = apply(operations[i].cartesian, v);
     sum[0] += w[0];
     sum[1] += w[1];
     sum[2] += w[2];
@@ -119,18 +119,18 @@ export function siteTolerance(options?: SiteSymmetryOptions): number {
  * within the tolerance are closed under the products found in the list and the direction is set onto
  * their fixed space, repeated until stable, so that for a group the result is a subgroup and the
  * set direction lies exactly on its elements. For a list that is not a group, `multiplicity` may
- * not be an integer. The matrices must be Cartesian and orthogonal (not those of
- * `latticeOperations`). Throws a RangeError for a matrix that is not orthogonal (within
+ * not be an integer. Each operation is read by its Cartesian matrix
+ * (`cartesian`), which must be orthogonal; a record without it is refused. Throws a RangeError for a matrix that is not orthogonal (within
  * `tolerance`, at least `EPSILON`), for a zero vector, and if the closed operations fix no common
  * direction or do not settle into a group (a tolerance far too large, e.g. 0.5).
  */
 export function siteSymmetry(
-  operations: readonly Operation[],
+  operations: readonly CartesianOperation[],
   direction: Vec3,
   options?: SiteSymmetryOptions,
 ): SiteSymmetry {
   const tolerance = siteTolerance(options);
-  operations.forEach((op, i) => checkOrthogonalWithin(op.matrix, `Operation ${i}`, tolerance));
+  checkCartesianOperations(operations, tolerance);
   const v = unit(direction);
   const fixing = (w: Vec3): number[] => {
     const out: number[] = [];

@@ -199,7 +199,7 @@ describe('ITA Table 2.1.1.1: holohedries (Laue groups in full boxes)', () => {
       /** True if every operation, written in the lattice basis, is a matrix of integers of determinant ±1. */
       const keepsLattice = (key: PointGroupKey) =>
         operations(key).every((op) => {
-          const w = multiply(multiply(toLattice, op.matrix), basis);
+          const w = multiply(multiply(toLattice, op.cartesian), basis);
           return w.flat().every((x) => Math.abs(x - Math.round(x)) < 1e-9) && Math.abs(Math.abs(det(w)) - 1) < 1e-9;
         });
       const h = holohedry(family);

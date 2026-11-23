@@ -231,7 +231,7 @@ describe('describeOperations against the symmetry operations printed in ITA', ()
       // line (n) is the n-th triplet of the general position (W in lattice coordinates)
       expect(sameM(x.matrix, mul(mul(b, general[i]), inverse(b)))).toBe(true);
       // and exactly one operation of the setting, the n-th: operations() keeps ITA's numbering
-      const hits = ops.map((o, k) => (sameM(x.matrix, o.matrix) ? k : -1)).filter((k) => k >= 0);
+      const hits = ops.map((o, k) => (sameM(x.matrix, o.cartesian) ? k : -1)).filter((k) => k >= 0);
       expect(hits).toEqual([i]);
       expect(used.has(hits[0])).toBe(false);
       used.add(hits[0]);
@@ -247,6 +247,6 @@ describe('describeOperations against the symmetry operations printed in ITA', ()
     // generators() gives ITA's selected generators, line (n) of each printed n, in printed order
     const g = generators(key, { setting });
     expect(g).toHaveLength(e.generators.length);
-    e.generators.forEach((n, j) => expect(sameM(mul(mul(b, general[n - 1]), inverse(b)), g[j].matrix)).toBe(true));
+    e.generators.forEach((n, j) => expect(sameM(mul(mul(b, general[n - 1]), inverse(b)), g[j].cartesian)).toBe(true));
   });
 });

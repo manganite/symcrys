@@ -7,7 +7,7 @@
 
 import { describe, expect, it } from 'vitest';
 import { det, type Mat3, type Vec3 } from '../linalg.js';
-import { operation, type Operation } from '../operations.js';
+import { operation, type CartesianOperation } from '../operations.js';
 import { POINT_GROUP_KEYS, generators, operations, settings, type PointGroupKey } from '../pointGroups/pointGroups.js';
 import { siteSymmetry } from '../siteSymmetry.js';
 import { matrixRank, satisfies } from '../testUtils/rank.js';
@@ -78,8 +78,8 @@ describe('a tensor form', () => {
         for (const sp of SPECS) {
           tensorForm(key, sp, { setting: s.index }).basis.forEach((b, k) => {
             for (const op of ops) {
-              const sign = sp.parity === 'axial' ? Math.sign(det(op.matrix)) : 1;
-              if (!close(transform(b, op.matrix, sp.rank, sign), b))
+              const sign = sp.parity === 'axial' ? Math.sign(det(op.cartesian)) : 1;
+              if (!close(transform(b, op.cartesian, sp.rank, sign), b))
                 failures.push(`setting ${s.index} rank ${sp.rank} ${sp.parity} row ${k}`);
             }
           });
@@ -185,13 +185,13 @@ describe('a tensor form', () => {
 
   it('time reversal: a primed operation changes the sign of a c-tensor', () => {
     // 1' (grey group of 1): every c-tensor vanishes, every i-tensor is free.
-    const greyOne: Operation[] = [
+    const greyOne: CartesianOperation[] = [
       {
-        matrix: operation([
+        cartesian: operation([
           [1, 0, 0],
           [0, 1, 0],
           [0, 0, 1],
-        ]).matrix,
+        ]).cartesian,
         timeReversal: true,
       },
     ];
@@ -257,8 +257,8 @@ describe('rotateTensor', () => {
     for (const key of ['3m', '-42m', 'm-3', '6/m'] as const) {
       for (const sp of SPECS) {
         const rotatedOps = operations(key).map((op) => ({
-          matrix: product(
-            product(R1, op.matrix),
+          cartesian: product(
+            product(R1, op.cartesian),
             [0, 1, 2].map((i) => [0, 1, 2].map((j) => R1[j][i])) as unknown as Mat3,
           ),
           timeReversal: op.timeReversal,
@@ -285,8 +285,8 @@ describe('tensorFormOf', () => {
     // Noise below the orthogonality check leaves entries in the basis that are too small to be a
     // pivot; before #88 the parameters were read as the first non-zero entry of each row, and
     // 4mm with a noise of 1e-9 gave the parameters xxx, zxx, zzz instead of xxz, zxx, zzz.
-    const noisy = (ops: readonly Operation[], eps: number): Operation[] =>
-      ops.map((op) => ({ ...op, matrix: op.matrix.map((row) => row.map((x) => x + eps)) as unknown as Mat3 }));
+    const noisy = (ops: readonly CartesianOperation[], eps: number): CartesianOperation[] =>
+      ops.map((op) => ({ ...op, cartesian: op.cartesian.map((row) => row.map((x) => x + eps)) as unknown as Mat3 }));
     for (const key of POINT_GROUP_KEYS) {
       for (const sp of SPECS) {
         const form = tensorFormOf(noisy(operations(key), 1e-9), sp);
@@ -331,7 +331,7 @@ describe('input checks', () => {
       ),
     ).toThrow(RangeError);
     // Not Cartesian: a threefold axis in the lattice basis, a stretch.
-    const threefold: Operation = operation([
+    const threefold: CartesianOperation = operation([
       [0, -1, 0],
       [1, -1, 0],
       [0, 0, 1],

@@ -106,7 +106,7 @@ describe('keys', () => {
 });
 
 describe('the crystallographic API returns nothing about time reversal', () => {
-  it('operations and generators are matrices, those of the white group, in its order', () => {
+  it('operations and generators are the matrices W and the Cartesian matrices of the white group, in its order', () => {
     for (const key of classes.POINT_GROUP_KEYS) {
       for (const { index: setting } of classes.settings(key)) {
         const options = { setting };
@@ -116,8 +116,9 @@ describe('the crystallographic API returns nothing about time reversal', () => {
           const what = `${list} of ${key}, setting ${setting}`;
           expect(ops, what).toHaveLength(white.length);
           ops.forEach((op, i) => {
-            expect(Object.keys(op), what).toEqual(['matrix']);
+            expect(Object.keys(op), what).toEqual(['matrix', 'cartesian']);
             expect(op.matrix, what).toBe(white[i].matrix);
+            expect(op.cartesian, what).toBe(white[i].cartesian);
             expect(white[i].timeReversal, what).toBe(false);
             expect(Object.isFrozen(op), what).toBe(true);
           });
@@ -219,7 +220,6 @@ describe('the crystallographic API refuses what involves time reversal', () => {
       classes.wyckoffPositions,
       (key) => classes.wyckoffPositionOf(key, [0, 0, 1]),
       classes.crystalForms,
-      classes.latticeOperations,
       (key) => classes.orbit(key, { hkl: [1, 0, 0] }),
       (key) => classes.tensorForm(key, 'piezoelectric'),
       (key) => classes.allowsProperty(key, 'piezoelectric'),
@@ -245,7 +245,7 @@ describe('the crystallographic API refuses what involves time reversal', () => {
         () => classes.allowsPropertyOf(ops, odd),
         () => classes.tensorForm('3', odd),
         () => classes.tensorFormOf(ops, odd),
-        () => classes.rotateTensor([0, 0, 1], classes.operations('3')[1].matrix, odd),
+        () => classes.rotateTensor([0, 0, 1], classes.operations('3')[1].cartesian, odd),
       ];
       for (const call of calls) {
         expect(call, name).toThrow(RangeError);
@@ -267,7 +267,7 @@ describe('the crystallographic API refuses what involves time reversal', () => {
     const even = { ...vector, timeParity: 'i' } as classes.TensorSpec;
     expect(() => classes.tensorForm('3', odd)).toThrow(MAGNETIC_API);
     expect(() => classes.tensorFormOf(classes.operations('3'), odd)).toThrow(MAGNETIC_API);
-    expect(() => classes.rotateTensor([0, 0, 1], classes.operations('3')[1].matrix, odd)).toThrow(MAGNETIC_API);
+    expect(() => classes.rotateTensor([0, 0, 1], classes.operations('3')[1].cartesian, odd)).toThrow(MAGNETIC_API);
     expect(classes.tensorForm('3', even)).toBe(classes.tensorForm('3', vector));
     expect(() => classes.tensorForm('3', { ...vector, timeParity: 'x' } as classes.TensorSpec)).toThrow(
       /Unknown time parity: "x"/,
@@ -289,7 +289,7 @@ describe('the crystallographic API refuses what involves time reversal', () => {
       (ops: readonly classes.Operation[]) => classes.isCentrosymmetricOf(ops),
       (ops: readonly classes.Operation[]) => classes.isChiralOf(ops),
     ];
-    const marked = (timeReversal: unknown) => [{ matrix: white[0].matrix, timeReversal } as classes.Operation];
+    const marked = (timeReversal: unknown) => [{ ...white[0], timeReversal } as classes.Operation];
     for (const call of calls) {
       expect(() => call(grey)).toThrow(RangeError);
       expect(() => call(grey)).toThrow(/Operation 6 is combined with time reversal/);
@@ -309,7 +309,7 @@ describe('every function for a list of Cartesian operations refuses a matrix tha
   // A stretch is no point operation; a function that took it would give a result that looks valid
   // and is wrong (siteSymmetry did so up to 0.8.0).
   const stretch = {
-    matrix: [
+    cartesian: [
       [2, 0, 0],
       [0, 1, 0],
       [0, 0, 1],
@@ -338,7 +338,7 @@ describe('every function for a list of Cartesian operations refuses a matrix tha
     // 6/mmm (order 24): [001] has site symmetry 6mm (order 12), [100] mm2 (order 4); ITA 6th ed.
     // Table 3.2.3.2, multiplicities 2 and 6.
     const rounded = classes.operations('6/mmm').map((op) => ({
-      matrix: op.matrix.map((row) => row.map((x) => Math.round(x * 1e4) / 1e4)),
+      cartesian: op.cartesian.map((row) => row.map((x) => Math.round(x * 1e4) / 1e4)),
     })) as unknown as readonly classes.Operation[];
     expect(() => classes.siteSymmetry(rounded, [0, 0, 1])).toThrow(/not an orthogonal/);
     expect(classes.siteSymmetry(rounded, [0, 0, 1], { tolerance: 1e-4 }).multiplicity).toBe(2);
@@ -363,6 +363,57 @@ describe('every function for a list of Cartesian operations refuses a matrix tha
       expect(call).toThrow(RangeError);
       expect(call).toThrow(notOrthogonal);
     }
+  });
+});
+
+describe('every function for a list of Cartesian operations reads cartesian, and refuses a record without it (#94)', () => {
+  // The lattice matrix W of 6/mmm passed as the only matrix of an operation: refused with a hint,
+  // never read as a Cartesian matrix.
+  const latticeOnly = /Operation 0 has no Cartesian matrix.*field matrix is the matrix W in the lattice basis/;
+  it('in the crystallographic API', () => {
+    const ops = classes
+      .operations('6/mmm')
+      .map((op) => ({ matrix: op.matrix })) as unknown as readonly classes.Operation[];
+    for (const call of [
+      () => classes.siteSymmetry(ops, [1, 0, 0]),
+      () => classes.orbitOf(ops, [1, 2, 3]),
+      () => classes.pointGroupOf(ops),
+      () => classes.describeOperationsOf(ops),
+      () => classes.tensorFormOf(ops, 'piezoelectric'),
+      () => classes.allowsPropertyOf(ops, 'piezoelectric'),
+      () => classes.allowedPropertiesOf(ops),
+      () => classes.isCentrosymmetricOf(ops),
+      () => classes.isChiralOf(ops),
+    ]) {
+      expect(call).toThrow(RangeError);
+      expect(call).toThrow(latticeOnly);
+    }
+    // A record as operations() gives it passes as it is.
+    expect(classes.pointGroupOf(classes.operations('-6m2', { setting: 2 }))).toEqual({ key: '-6m2', setting: 2 });
+  });
+  it('in the magnetic API', () => {
+    const ops = magnetic
+      .operations("6/m'mm")
+      .map((op) => ({ matrix: op.matrix, timeReversal: op.timeReversal })) as unknown as readonly magnetic.Operation[];
+    for (const call of [
+      () => magnetic.siteSymmetry(ops, [1, 0, 0]),
+      () => magnetic.orbitOf(ops, [1, 2, 3]),
+      () => magnetic.pointGroupOf(ops),
+      () => magnetic.describeOperationsOf(ops),
+      () => magnetic.tensorFormOf(ops, 'pyroelectric'),
+      () => magnetic.allowsPropertyOf(ops, 'pyroelectric'),
+      () => magnetic.allowedPropertiesOf(ops),
+      () => magnetic.isCentrosymmetricOf(ops),
+      () => magnetic.isChiralOf(ops),
+    ]) {
+      expect(call).toThrow(RangeError);
+      expect(call).toThrow(latticeOnly);
+    }
+    // A record with cartesian and timeReversal only is enough.
+    const cartesianOnly = magnetic
+      .operations("6/m'mm")
+      .map((op) => ({ cartesian: op.cartesian, timeReversal: op.timeReversal }));
+    expect(magnetic.pointGroupOf(cartesianOnly)).toEqual({ key: "6/m'mm", setting: 1 });
   });
 });
 
@@ -391,19 +442,23 @@ describe('the magnetic API asks every operation whether it is combined with time
         }
       }
     }
-    const inversion = classes.generators('-1')[0].matrix;
+    const inversion = classes.generators('-1')[0].cartesian;
     for (const value of [1, 'false', null]) {
-      expect(() => calls[0](asMagnetic([{ matrix: inversion, timeReversal: value }]))).toThrow(
+      expect(() => calls[0](asMagnetic([{ cartesian: inversion, timeReversal: value }]))).toThrow(
         /timeReversal must be true or false/,
       );
     }
   });
 
   it('with the answer given, the form is that of the group: inversion forbids a polar vector, 1̄′ does not', () => {
-    const inversion = classes.generators('-1')[0].matrix;
-    expect(magnetic.tensorFormOf([{ matrix: inversion, timeReversal: false }], 'pyroelectric').basis).toHaveLength(0);
-    expect(magnetic.tensorFormOf([{ matrix: inversion, timeReversal: true }], 'pyroelectric').basis).toHaveLength(0);
-    expect(magnetic.tensorFormOf([{ matrix: inversion, timeReversal: true }], 'magnetoelectric').basis).toHaveLength(9);
+    const inversion = classes.generators('-1')[0].cartesian;
+    expect(magnetic.tensorFormOf([{ cartesian: inversion, timeReversal: false }], 'pyroelectric').basis).toHaveLength(
+      0,
+    );
+    expect(magnetic.tensorFormOf([{ cartesian: inversion, timeReversal: true }], 'pyroelectric').basis).toHaveLength(0);
+    expect(magnetic.tensorFormOf([{ cartesian: inversion, timeReversal: true }], 'magnetoelectric').basis).toHaveLength(
+      9,
+    );
     expect(magnetic.tensorFormOf(magnetic.generators('-1'), 'pyroelectric')).toEqual(
       magnetic.tensorForm('-1', 'pyroelectric'),
     );
@@ -454,7 +509,7 @@ describe('the types keep the two entry points apart', () => {
     // Accepted: time parity 'i' and no time reversal, stated.
     attempt(() => classes.tensorForm('32', { rank: 1, parity: 'polar', timeParity: 'i', intrinsic: 'none' }));
     attempt(() =>
-      classes.tensorFormOf([{ matrix: classes.operations('1')[0].matrix, timeReversal: false }], 'pyroelectric'),
+      classes.tensorFormOf([{ cartesian: classes.operations('1')[0].cartesian, timeReversal: false }], 'pyroelectric'),
     );
   });
 
@@ -528,11 +583,9 @@ describe('a time-even question has one answer: class, white group and grey group
     expect(magnetic.pointGroupOf(magnetic.operations("321'"))).toEqual({ key: "321'", setting: 1 });
   });
 
-  it('lattice operations and orbits agree; the magnetic ones carry time reversal', () => {
+  it('orbits agree', () => {
     for (const key of classes.POINT_GROUP_KEYS) {
       for (const { index: setting } of classes.settings(key)) {
-        const lattice = magnetic.latticeOperations(key, { setting });
-        expect(classes.latticeOperations(key, { setting })).toEqual(lattice.map((w) => ({ matrix: w.matrix })));
         expect(classes.orbit(key, { hkl: [3, 2, 1] }, { setting })).toEqual(
           magnetic.orbit(key, { hkl: [3, 2, 1] }, { setting }),
         );
@@ -542,9 +595,6 @@ describe('a time-even question has one answer: class, white group and grey group
         );
       }
     }
-    expect(magnetic.latticeOperations("4'mm'").map((w) => w.timeReversal)).toEqual(
-      magnetic.operations("4'mm'").map((op) => op.timeReversal),
-    );
   });
 
   it('site symmetry does not depend on time reversal', () => {

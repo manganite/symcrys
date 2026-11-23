@@ -55,6 +55,6 @@ describe('ITC Vol. D Table 1.5.2.3 against the ITC data of the black-and-white g
     expect(itcClass(g.crystalClass).crystalSystem).toBe(r[0].toLowerCase());
     const ops = itcBlackWhiteOperations(g.key, s.index);
     expect(ops.filter((o) => o.timeReversal)).toHaveLength(primedCount(r[5]));
-    expect(ops.filter((o) => o.timeReversal && det(o.matrix) > 0)).toHaveLength(primedProperCount(r[5]));
+    expect(ops.filter((o) => o.timeReversal && det(o.cartesian) > 0)).toHaveLength(primedProperCount(r[5]));
   });
 });

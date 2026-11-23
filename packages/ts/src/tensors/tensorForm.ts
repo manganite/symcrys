@@ -11,7 +11,13 @@
  */
 
 import { det, type Mat3 } from '../linalg.js';
-import { checkOrthogonal, checkTimeReversal, closeGroup, type Operation } from '../operations.js';
+import {
+  checkCartesianOperations,
+  checkOrthogonal,
+  checkTimeReversal,
+  closeGroup,
+  type CartesianOperation,
+} from '../operations.js';
 import {
   operations,
   settingIndexOf,
@@ -153,14 +159,15 @@ function freezeRows(rows: readonly (readonly number[])[]): readonly (readonly nu
  * (a unit tensor on one orbit of the intrinsic symmetry) projects it onto the invariant subspace;
  * the projections span it, and the reduced row echelon form makes the basis minimal and canonical.
  */
-function project(group: readonly Operation[], spec: TensorSpec, perms: number[][]): TensorForm {
+function project(group: readonly CartesianOperation[], spec: TensorSpec, perms: number[][]): TensorForm {
   const { rank } = spec;
   const dim = 3 ** rank;
   const d = digits(rank);
   const ops = group.map((op) => ({
-    m: op.matrix.flat(),
+    m: op.cartesian.flat(),
     sign:
-      (spec.parity === 'axial' ? Math.sign(det(op.matrix)) : 1) * (spec.timeParity === 'c' && op.timeReversal ? -1 : 1),
+      (spec.parity === 'axial' ? Math.sign(det(op.cartesian)) : 1) *
+      (spec.timeParity === 'c' && op.timeReversal ? -1 : 1),
   }));
 
   const spanning: number[][] = [];
@@ -255,10 +262,13 @@ export function tensorForm(
  * RangeError for a matrix that is not orthogonal and for an operation that does not say whether it
  * is combined with time reversal.
  */
-export function tensorFormOf(operations: readonly Operation[], spec: TensorSpec | TensorPropertyName): TensorForm {
+export function tensorFormOf(
+  operations: readonly CartesianOperation[],
+  spec: TensorSpec | TensorPropertyName,
+): TensorForm {
   const resolved = specOf(spec);
   const perms = checkSpec(resolved);
-  operations.forEach((op, i) => checkOrthogonal(op.matrix, `Operation ${i}`));
+  checkCartesianOperations(operations);
   checkTimeReversal(operations);
   return project(closeGroup(operations), resolved, perms);
 }

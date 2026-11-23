@@ -84,11 +84,11 @@ export function close(gens: RefOp[]): RefOp[] {
 /** Set equality of a reference group and any list of operations with a matrix and a time-reversal flag. */
 export function sameGroup(
   ref: RefOp[],
-  ops: readonly { readonly matrix: readonly (readonly number[])[]; readonly timeReversal: boolean }[],
+  ops: readonly { readonly cartesian: readonly (readonly number[])[]; readonly timeReversal: boolean }[],
 ): boolean {
   if (ref.length !== ops.length) return false;
   return (
-    ref.every((r) => ops.some((o) => o.timeReversal === r.t && sameM(r.m, o.matrix))) &&
-    ops.every((o) => ref.some((r) => o.timeReversal === r.t && sameM(r.m, o.matrix)))
+    ref.every((r) => ops.some((o) => o.timeReversal === r.t && sameM(r.m, o.cartesian))) &&
+    ops.every((o) => ref.some((r) => o.timeReversal === r.t && sameM(r.m, o.cartesian)))
   );
 }
