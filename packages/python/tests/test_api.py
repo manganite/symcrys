@@ -392,5 +392,7 @@ def test_site_symmetry_of_a_key_and_of_a_list() -> None:
     assert magnetic.site_symmetry("2'", [1, 0, 0])["multiplicity"] == 2
     assert magnetic.site_symmetry("2'", [1, 0, 0], unique_axis="a")["multiplicity"] == 1
     assert symcrys.wyckoff_position("4mm", [0, 0, 1])["letter"] == "a"
+    # The coordinates of a Wyckoff position are the printed triplets, a list of strings (#137 C4).
+    assert symcrys.wyckoff_positions("mm2")[1]["coordinates"] == ["0,y,z", "0,-y,z"]
     assert plane.symmetry_elements("p4")["rotation_points"][0]["n"] == 4
     assert [d["n"] for d in plane.describe_operations("p4")] == [1, 2, 4, 4]

@@ -187,6 +187,12 @@ const oldDescriptions = (list: readonly { readonly kind: string; readonly n: num
   }));
 
 /** A point group in the shape of the pins (before #121 step 7c): `chiral` for `enantiomorphic`. */
+/** A Wyckoff position of a class with its first printed point only, as `coordinates` was up to #121 step 7d. */
+const oldWyckoff = <W extends { readonly coordinates: readonly string[] }>({ coordinates, ...rest }: W) => ({
+  ...rest,
+  coordinates: coordinates[0],
+});
+
 const oldPointGroup = ({ enantiomorphic, ...rest }: { readonly enantiomorphic: boolean }) => ({
   ...rest,
   chiral: enantiomorphic,
@@ -272,14 +278,14 @@ function pointGroupPins(add: (id: string, f: () => unknown) => void, key: Magnet
       add(id('classes.operations'), () => classOps.map((op) => ({ matrix: op.cartesian })));
       add(id('classes.generators'), () => classes.generators(key, options).map((op) => ({ matrix: op.cartesian })));
       add(id('classes.describeOperations'), () => oldDescriptions(classes.describeOperations(key, options)));
-      add(id('classes.wyckoffPositions'), () => classes.wyckoffPositions(key, options));
+      add(id('classes.wyckoffPositions'), () => classes.wyckoffPositions(key, options).map(oldWyckoff));
       add(id('classes.crystalForms'), () => classes.crystalForms(key, options));
       for (const d of DIRECTIONS) {
-        add(id(`classes.wyckoffPositionOf [${d}]`), () => classes.wyckoffPosition(key, d, options));
+        add(id(`classes.wyckoffPositionOf [${d}]`), () => oldWyckoff(classes.wyckoffPosition(key, d, options)));
       }
       for (const d of NEAR_DIRECTIONS) {
         add(id(`classes.wyckoffPositionOf [${d}] tolerance 1e-4`), () =>
-          classes.wyckoffPosition(key, d, { ...options, tolerance: 1e-4 }),
+          oldWyckoff(classes.wyckoffPosition(key, d, { ...options, tolerance: 1e-4 })),
         );
       }
     }

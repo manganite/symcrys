@@ -599,7 +599,7 @@ prints them for that setting (ITA 6th ed., Table 3.2.3.2, pp. 745–769):
 | `letter`                 | ITA's Wyckoff letter                                                                                                                                       |
 | `multiplicity`           | number of equivalent directions (faces of the form)                                                                                                        |
 | `siteSymmetry`           | oriented site-symmetry symbol as printed, e.g. `..m`, `4m.m`; the positions are those of the symmetry directions of ITA Table 2.1.3.1                      |
-| `coordinates`            | the first printed coordinate triplet, e.g. `x,x,z` (a representative point)                                                                                |
+| `coordinates`            | the printed coordinate triplets in printed order, one per equivalent direction, e.g. `['x,x,z', '-x,-x,z', …]`; the first is a representative point        |
 | `millerIndices`          | the first printed face, e.g. `h,h,l`, Bravais–Miller indices for hexagonal axes, e.g. `h,h,-2h,l`                                                          |
 | `representative`         | that face with h = 3, k = 2, l = 1 (rhombohedral axes: h = 5, below): `hkl` (three indices, without i) and its Cartesian unit normal h a\* + k b\* + l c\* |
 | `siteSymmetryOperations` | indices into `operations` (same setting) of the operations fixing the representative                                                                       |
@@ -630,7 +630,11 @@ prints them for that setting (ITA 6th ed., Table 3.2.3.2, pp. 745–769):
   (2016) Table 1.5.4.4; maintainer decision, 2026-11-18, #24): same letters and multiplicities, the
   positions of the oriented symbol permuted, the coordinates and Miller indices permuted and their
   letters renamed after their new position (`m..`, `0,y,z`, `0,k,l` in `mm2` become `.m.`, `x,0,z`,
-  `h,0,l` in `2mm`).
+  `h,0,l` in `2mm`), every triplet of a position in the order printed for setting 1.
+- The **coordinates** are ITA's in full (#137 C4, #121 step 7d): the triplets of a position are the
+  images of its first under the general position, in the order of the general position, which a
+  test checks for all 45 printed entries against the transcription of both
+  (`wyckoff.reference.test.ts`).
 
 `wyckoffPosition(key, direction, { setting, tolerance })` gives the Wyckoff position of any
 direction: the one whose representative has a site symmetry conjugate to that of the direction.

@@ -155,6 +155,8 @@ interface Entry {
   page: number;
   /** The printed general position, as Cartesian operations. */
   group: RefOp[];
+  /** The printed general position, as matrices on the lattice coordinates, in printed order. */
+  lattice: M[];
   basis: M;
   rows: string[][];
 }
@@ -172,13 +174,15 @@ const ENTRIES: Entry[] = generalRows.slice(1).map((g) => {
         ? HEXAGONAL
         : ORTHONORMAL;
   const bInv = inverse(basis);
-  const group = g[4].split(/\s+/).map((t) => ({ m: mul(mul(basis, t.split(',').map(coefficients)), bInv), t: false }));
+  const lattice = g[4].split(/\s+/).map((t) => t.split(',').map(coefficients));
+  const group = lattice.map((w) => ({ m: mul(mul(basis, w), bInv), t: false }));
   return {
     short: g[0],
     axes: g[1],
     family,
     page: Number(g[2]),
     group,
+    lattice,
     basis,
     rows: wyckoffRows.slice(1).filter((r) => r[0] === g[0] && r[1] === g[1]),
   };
@@ -203,6 +207,17 @@ function hklOf(miller: string, axes = ''): number[] {
 
 /** Face normal of (hkl): the reciprocal basis B⁻ᵀ applied to hkl. */
 const faceNormal = (basis: M, hkl: number[]): number[] => unit(apply(transpose(inverse(basis)), hkl));
+/** A printed triplet (`x,-x+y,z`) as the matrix of its coefficients of x, y, z, one row per coordinate. */
+const triplet = (coords: string): M => coords.split(',').map(coefficients);
+/** The images W·t of a triplet t under the operations, the first of each distinct image, in order. */
+function distinctImages(operations: readonly M[], t: M): M[] {
+  const out: M[] = [];
+  for (const w of operations) {
+    const image = mul(w, t);
+    if (!out.some((u) => sameM(u, image))) out.push(image);
+  }
+  return out;
+}
 /** Point of a coordinate pattern with x = 3, y = 2, z = 1 (lattice basis), Cartesian. */
 const point = (basis: M, coords: string): number[] =>
   unit(apply(basis, apply(coords.split(',').map(coefficients), [3, 2, 1])));
@@ -324,7 +339,7 @@ describe('ITA Table 3.2.3.2: Wyckoff positions', () => {
         String(r[1]),
         r[0],
         r[2],
-        r[3],
+        r[3].join(' '),
         r[4],
       ]),
     );
@@ -376,13 +391,19 @@ describe('ITA Table 3.2.3.2: Wyckoff positions', () => {
           `site symmetry ${r[5]} read along ITA Table 2.1.3.1`,
         ).toBe(true);
         // The representative point has a conjugate site symmetry (same Wyckoff position).
-        const p = point(e.basis, r[6]);
+        const p = point(e.basis, r[6].split(' ')[0]);
         const conj = e.group.some((g) => {
           const q = apply(g.m, p);
           const s = stabilizerOf(e.group, q);
           return s.length === stab.length && s.every((x) => stab.some((y) => sameM(x.m, y.m)));
         });
         expect(conj, `point ${r[6]} in the same position`).toBe(true);
+      });
+
+      it(`${label}, ${r[3]}${r[4]}: the printed points are the images of the first under the general position, in its order`, () => {
+        const printed = r[6].split(' ').map(triplet);
+        expect(printed, 'one point per equivalent direction').toHaveLength(Number(r[3]));
+        expect(printed).toEqual(distinctImages(e.lattice, printed[0]));
       });
     }
 
@@ -408,7 +429,7 @@ describe('ITA Table 3.2.3.2: Wyckoff positions', () => {
       const ops = operations(key, { setting: index });
       const faces = e.rows.filter((x) => x[4] !== 'o');
       expect(
-        lib.map((w) => [w.letter, String(w.multiplicity), w.siteSymmetry, w.coordinates, w.millerIndices]),
+        lib.map((w) => [w.letter, String(w.multiplicity), w.siteSymmetry, w.coordinates.join(' '), w.millerIndices]),
       ).toEqual(faces.map((x) => [x[4], x[3], x[5], x[6], x[7]]));
       lib.forEach((w, i) => {
         const n = faceNormal(e.basis, hklOf(faces[i][7], e.axes));
@@ -445,7 +466,16 @@ describe('Settings ITA does not print: mm2 as 2mm and m2m', () => {
             ),
           ),
         ).toBe(true);
-        const p = point(ORTHONORMAL, w.coordinates);
+        const p = point(ORTHONORMAL, w.coordinates[0]);
+        // The carried points are the images of the first under the group read from the symbol.
+        const images = distinctImages(
+          group.map((g) => g.m),
+          triplet(w.coordinates[0]),
+        );
+        expect(w.coordinates).toHaveLength(w.multiplicity);
+        expect(new Set(w.coordinates.map((c) => JSON.stringify(triplet(c))))).toEqual(
+          new Set(images.map((m) => JSON.stringify(m))),
+        );
         const conj = group.some((g) => {
           const s2 = stabilizerOf(group, apply(g.m, p));
           return s2.length === stab.length && s2.every((x) => stab.some((y) => sameM(x.m, y.m)));
@@ -478,7 +508,16 @@ describe('Settings ITA does not print: monoclinic unique axis a', () => {
             ),
           ),
         ).toBe(true);
-        const p = point(ORTHONORMAL, w.coordinates);
+        const p = point(ORTHONORMAL, w.coordinates[0]);
+        // The carried points are the images of the first under the group read from the symbol.
+        const images = distinctImages(
+          group.map((g) => g.m),
+          triplet(w.coordinates[0]),
+        );
+        expect(w.coordinates).toHaveLength(w.multiplicity);
+        expect(new Set(w.coordinates.map((c) => JSON.stringify(triplet(c))))).toEqual(
+          new Set(images.map((m) => JSON.stringify(m))),
+        );
         const conj = group.some((g) => {
           const s2 = stabilizerOf(group, apply(g.m, p));
           return s2.length === stab.length && s2.every((x) => stab.some((y) => sameM(x.m, y.m)));

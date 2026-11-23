@@ -470,8 +470,8 @@ operations }`; `undefined`, never `null` (`zoneAxis`); every result frozen and `
   over every function of the three entry points; `residualOperations` freezes its list, not the
   caller's operations); parameter names `direction1`, `direction2`, `plane1`, `plane2`, `symbol`; the
   origin of a plane group with its positions spaced as printed (`at 2 1 g`; read again from the
-  page images). The Wyckoff `coordinates` of the point groups become the printed list too (Thomas,
-  2026-11-23: transcribed in full from ITA Table 3.2.3.2), in a step of its own.
+  page images). The Wyckoff `coordinates` of the point groups are the printed list too (Thomas,
+  2026-11-23: transcribed in full from ITA Table 3.2.3.2; the second part of step 7d).
 - **Names of ITA** (#137 C1, C2, decided by Thomas on 2026-11-22; #121 step 7c): the suffix `…Of`
   means "of a list of operations" and only that: `siteSymmetryOf(operations, direction)` beside
   `siteSymmetry(key, direction, options)`, and `wyckoffPosition(key, x)` (was `wyckoffPositionOf`,

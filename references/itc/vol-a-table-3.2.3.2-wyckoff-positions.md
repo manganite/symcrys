@@ -8,15 +8,21 @@ General positions of the same entries: `vol-a-table-3.2.3.2-general-positions.md
 pp. 753, 753, 755, 756, 759) were added 2026-11-23 from the page images of the chapter PDF (Zotero
 item `7NZ258UB`, attachment `Y6Z8P8NR`, PDF pages 34, 36, 37, 40; printed page = PDF page + 719),
 read at 300–500 dpi, the points checked a second time against the text layer of the same pages.
+All coordinate triplets of column 4 (not only the first) were added 2026-11-23 from the text layer
+of the same pages (#121 step 7d), in which an overbar is a glyph of its own over the letter and the
+minus and plus signs are glyphs of a symbol font. On each of the 25 pages the triplets read so
+equal, one by one and in printed order, the first triplet of each row carried by the general
+position of `vol-a-table-3.2.3.2-general-positions.md` in its printed order; pages 764 (6/mmm),
+759 (-3m, rhombohedral axes) and 769 (m-3m) were also compared with their images.
 
 One row per Wyckoff position, in the printed order (general position first): multiplicity,
-Wyckoff letter, oriented site-symmetry symbol (columns 1 to 3 of the print), the first coordinate
-triplet of column 4 (a representative point) and the Miller indices of the first face in the last
-column (a representative face of the first, characteristic face form). The point in the origin
-(letter o) has no face. The face forms, point forms and further faces are not transcribed here.
+Wyckoff letter, oriented site-symmetry symbol (columns 1 to 3 of the print), the coordinate
+triplets of column 4 in printed order, separated by spaces (the first is a representative point),
+and the Miller indices of the first face in the last column (a representative face of the first,
+characteristic face form). The point in the origin (letter o) has no face. The face forms, point forms and further faces are not transcribed here.
 
-Transcription conventions: a leading minus sign is an overbar (`-x` for x̄, `-4..` for 4̄..); the
-components of a triplet and the Miller indices are separated by commas (`h,h,-2h,l` for
+Transcription conventions: a leading minus sign is an overbar (`-x` for x̄, `-2x` for 2x̄, `-4..`
+for 4̄..), and `x-y` is x − y; the components of a triplet and the Miller indices are separated by commas (`h,h,-2h,l` for
 (hh2̄hl)); Bravais–Miller indices (hkil) have four components, as printed for hexagonal axes;
 Miller indices (hkl) for rhombohedral axes have three, as printed.
 
@@ -27,185 +33,185 @@ without the slash (sic; the full symbol of the group is 6/m 2/m 2/m).
 | Short | Axes | Page | Multiplicity | Letter | Site symmetry | Coordinates | Miller indices |
 |---|---|---|---|---|---|---|---|
 | 1 |  | 745 | 1 | a | 1 | x,y,z | h,k,l |
-| -1 |  | 745 | 2 | a | 1 | x,y,z | h,k,l |
+| -1 |  | 745 | 2 | a | 1 | x,y,z -x,-y,-z | h,k,l |
 | -1 |  | 745 | 1 | o | -1 | 0,0,0 |  |
-| 2 | unique axis b | 745 | 2 | b | 1 | x,y,z | h,k,l |
+| 2 | unique axis b | 745 | 2 | b | 1 | x,y,z -x,y,-z | h,k,l |
 | 2 | unique axis b | 745 | 1 | a | 2 | 0,y,0 | 0,1,0 |
-| 2 | unique axis c | 745 | 2 | b | 1 | x,y,z | h,k,l |
+| 2 | unique axis c | 745 | 2 | b | 1 | x,y,z -x,-y,z | h,k,l |
 | 2 | unique axis c | 745 | 1 | a | 2 | 0,0,z | 0,0,1 |
-| m | unique axis b | 746 | 2 | b | 1 | x,y,z | h,k,l |
+| m | unique axis b | 746 | 2 | b | 1 | x,y,z x,-y,z | h,k,l |
 | m | unique axis b | 746 | 1 | a | m | x,0,z | h,0,l |
-| m | unique axis c | 746 | 2 | b | 1 | x,y,z | h,k,l |
+| m | unique axis c | 746 | 2 | b | 1 | x,y,z x,y,-z | h,k,l |
 | m | unique axis c | 746 | 1 | a | m | x,y,0 | h,k,0 |
-| 2/m | unique axis b | 746 | 4 | c | 1 | x,y,z | h,k,l |
-| 2/m | unique axis b | 746 | 2 | b | m | x,0,z | h,0,l |
-| 2/m | unique axis b | 746 | 2 | a | 2 | 0,y,0 | 0,1,0 |
+| 2/m | unique axis b | 746 | 4 | c | 1 | x,y,z -x,y,-z -x,-y,-z x,-y,z | h,k,l |
+| 2/m | unique axis b | 746 | 2 | b | m | x,0,z -x,0,-z | h,0,l |
+| 2/m | unique axis b | 746 | 2 | a | 2 | 0,y,0 0,-y,0 | 0,1,0 |
 | 2/m | unique axis b | 746 | 1 | o | 2/m | 0,0,0 |  |
-| 2/m | unique axis c | 747 | 4 | c | 1 | x,y,z | h,k,l |
-| 2/m | unique axis c | 747 | 2 | b | m | x,y,0 | h,k,0 |
-| 2/m | unique axis c | 747 | 2 | a | 2 | 0,0,z | 0,0,1 |
+| 2/m | unique axis c | 747 | 4 | c | 1 | x,y,z -x,-y,z -x,-y,-z x,y,-z | h,k,l |
+| 2/m | unique axis c | 747 | 2 | b | m | x,y,0 -x,-y,0 | h,k,0 |
+| 2/m | unique axis c | 747 | 2 | a | 2 | 0,0,z 0,0,-z | 0,0,1 |
 | 2/m | unique axis c | 747 | 1 | o | 2/m | 0,0,0 |  |
-| 222 |  | 747 | 4 | d | 1 | x,y,z | h,k,l |
-| 222 |  | 747 | 2 | c | ..2 | 0,0,z | 0,0,1 |
-| 222 |  | 747 | 2 | b | .2. | 0,y,0 | 0,1,0 |
-| 222 |  | 747 | 2 | a | 2.. | x,0,0 | 1,0,0 |
+| 222 |  | 747 | 4 | d | 1 | x,y,z -x,-y,z -x,y,-z x,-y,-z | h,k,l |
+| 222 |  | 747 | 2 | c | ..2 | 0,0,z 0,0,-z | 0,0,1 |
+| 222 |  | 747 | 2 | b | .2. | 0,y,0 0,-y,0 | 0,1,0 |
+| 222 |  | 747 | 2 | a | 2.. | x,0,0 -x,0,0 | 1,0,0 |
 | 222 |  | 747 | 1 | o | 222 | 0,0,0 |  |
-| mm2 |  | 748 | 4 | d | 1 | x,y,z | h,k,l |
-| mm2 |  | 748 | 2 | c | m.. | 0,y,z | 0,k,l |
-| mm2 |  | 748 | 2 | b | .m. | x,0,z | h,0,l |
+| mm2 |  | 748 | 4 | d | 1 | x,y,z -x,-y,z x,-y,z -x,y,z | h,k,l |
+| mm2 |  | 748 | 2 | c | m.. | 0,y,z 0,-y,z | 0,k,l |
+| mm2 |  | 748 | 2 | b | .m. | x,0,z -x,0,z | h,0,l |
 | mm2 |  | 748 | 1 | a | mm2 | 0,0,z | 0,0,1 |
-| mmm |  | 748 | 8 | g | 1 | x,y,z | h,k,l |
-| mmm |  | 748 | 4 | f | ..m | x,y,0 | h,k,0 |
-| mmm |  | 748 | 4 | e | .m. | x,0,z | h,0,l |
-| mmm |  | 748 | 4 | d | m.. | 0,y,z | 0,k,l |
-| mmm |  | 748 | 2 | c | mm2 | 0,0,z | 0,0,1 |
-| mmm |  | 748 | 2 | b | m2m | 0,y,0 | 0,1,0 |
-| mmm |  | 748 | 2 | a | 2mm | x,0,0 | 1,0,0 |
+| mmm |  | 748 | 8 | g | 1 | x,y,z -x,-y,z -x,y,-z x,-y,-z -x,-y,-z x,y,-z x,-y,z -x,y,z | h,k,l |
+| mmm |  | 748 | 4 | f | ..m | x,y,0 -x,-y,0 -x,y,0 x,-y,0 | h,k,0 |
+| mmm |  | 748 | 4 | e | .m. | x,0,z -x,0,z -x,0,-z x,0,-z | h,0,l |
+| mmm |  | 748 | 4 | d | m.. | 0,y,z 0,-y,z 0,y,-z 0,-y,-z | 0,k,l |
+| mmm |  | 748 | 2 | c | mm2 | 0,0,z 0,0,-z | 0,0,1 |
+| mmm |  | 748 | 2 | b | m2m | 0,y,0 0,-y,0 | 0,1,0 |
+| mmm |  | 748 | 2 | a | 2mm | x,0,0 -x,0,0 | 1,0,0 |
 | mmm |  | 748 | 1 | o | mmm | 0,0,0 |  |
-| 4 |  | 749 | 4 | b | 1 | x,y,z | h,k,l |
+| 4 |  | 749 | 4 | b | 1 | x,y,z -x,-y,z -y,x,z y,-x,z | h,k,l |
 | 4 |  | 749 | 1 | a | 4.. | 0,0,z | 0,0,1 |
-| -4 |  | 749 | 4 | b | 1 | x,y,z | h,k,l |
-| -4 |  | 749 | 2 | a | 2.. | 0,0,z | 0,0,1 |
+| -4 |  | 749 | 4 | b | 1 | x,y,z -x,-y,z y,-x,-z -y,x,-z | h,k,l |
+| -4 |  | 749 | 2 | a | 2.. | 0,0,z 0,0,-z | 0,0,1 |
 | -4 |  | 749 | 1 | o | -4.. | 0,0,0 |  |
-| 4/m |  | 749 | 8 | c | 1 | x,y,z | h,k,l |
-| 4/m |  | 749 | 4 | b | m.. | x,y,0 | h,k,0 |
-| 4/m |  | 749 | 2 | a | 4.. | 0,0,z | 0,0,1 |
+| 4/m |  | 749 | 8 | c | 1 | x,y,z -x,-y,z -y,x,z y,-x,z -x,-y,-z x,y,-z y,-x,-z -y,x,-z | h,k,l |
+| 4/m |  | 749 | 4 | b | m.. | x,y,0 -x,-y,0 -y,x,0 y,-x,0 | h,k,0 |
+| 4/m |  | 749 | 2 | a | 4.. | 0,0,z 0,0,-z | 0,0,1 |
 | 4/m |  | 749 | 1 | o | 4/m.. | 0,0,0 |  |
-| 422 |  | 750 | 8 | d | 1 | x,y,z | h,k,l |
-| 422 |  | 750 | 4 | c | .2. | x,0,0 | 1,0,0 |
-| 422 |  | 750 | 4 | b | ..2 | x,x,0 | 1,1,0 |
-| 422 |  | 750 | 2 | a | 4.. | 0,0,z | 0,0,1 |
+| 422 |  | 750 | 8 | d | 1 | x,y,z -x,-y,z -y,x,z y,-x,z -x,y,-z x,-y,-z y,x,-z -y,-x,-z | h,k,l |
+| 422 |  | 750 | 4 | c | .2. | x,0,0 -x,0,0 0,x,0 0,-x,0 | 1,0,0 |
+| 422 |  | 750 | 4 | b | ..2 | x,x,0 -x,-x,0 -x,x,0 x,-x,0 | 1,1,0 |
+| 422 |  | 750 | 2 | a | 4.. | 0,0,z 0,0,-z | 0,0,1 |
 | 422 |  | 750 | 1 | o | 422 | 0,0,0 |  |
-| 4mm |  | 750 | 8 | d | 1 | x,y,z | h,k,l |
-| 4mm |  | 750 | 4 | c | .m. | x,0,z | h,0,l |
-| 4mm |  | 750 | 4 | b | ..m | x,x,z | h,h,l |
+| 4mm |  | 750 | 8 | d | 1 | x,y,z -x,-y,z -y,x,z y,-x,z x,-y,z -x,y,z -y,-x,z y,x,z | h,k,l |
+| 4mm |  | 750 | 4 | c | .m. | x,0,z -x,0,z 0,x,z 0,-x,z | h,0,l |
+| 4mm |  | 750 | 4 | b | ..m | x,x,z -x,-x,z -x,x,z x,-x,z | h,h,l |
 | 4mm |  | 750 | 1 | a | 4mm | 0,0,z | 0,0,1 |
-| -42m |  | 751 | 8 | d | 1 | x,y,z | h,k,l |
-| -42m |  | 751 | 4 | c | ..m | x,x,z | h,h,l |
-| -42m |  | 751 | 4 | b | .2. | x,0,0 | 1,0,0 |
-| -42m |  | 751 | 2 | a | 2.mm | 0,0,z | 0,0,1 |
+| -42m |  | 751 | 8 | d | 1 | x,y,z -x,-y,z y,-x,-z -y,x,-z -x,y,-z x,-y,-z -y,-x,z y,x,z | h,k,l |
+| -42m |  | 751 | 4 | c | ..m | x,x,z -x,-x,z x,-x,-z -x,x,-z | h,h,l |
+| -42m |  | 751 | 4 | b | .2. | x,0,0 -x,0,0 0,-x,0 0,x,0 | 1,0,0 |
+| -42m |  | 751 | 2 | a | 2.mm | 0,0,z 0,0,-z | 0,0,1 |
 | -42m |  | 751 | 1 | o | -42m | 0,0,0 |  |
-| -4m2 |  | 751 | 8 | d | 1 | x,y,z | h,k,l |
-| -4m2 |  | 751 | 4 | c | .m. | x,0,z | h,0,l |
-| -4m2 |  | 751 | 4 | b | ..2 | x,x,0 | 1,1,0 |
-| -4m2 |  | 751 | 2 | a | 2mm. | 0,0,z | 0,0,1 |
+| -4m2 |  | 751 | 8 | d | 1 | x,y,z -x,-y,z y,-x,-z -y,x,-z x,-y,z -x,y,z y,x,-z -y,-x,-z | h,k,l |
+| -4m2 |  | 751 | 4 | c | .m. | x,0,z -x,0,z 0,-x,-z 0,x,-z | h,0,l |
+| -4m2 |  | 751 | 4 | b | ..2 | x,x,0 -x,-x,0 x,-x,0 -x,x,0 | 1,1,0 |
+| -4m2 |  | 751 | 2 | a | 2mm. | 0,0,z 0,0,-z | 0,0,1 |
 | -4m2 |  | 751 | 1 | o | -4m2 | 0,0,0 |  |
-| 4/mmm |  | 752 | 16 | g | 1 | x,y,z | h,k,l |
-| 4/mmm |  | 752 | 8 | f | .m. | x,0,z | h,0,l |
-| 4/mmm |  | 752 | 8 | e | ..m | x,x,z | h,h,l |
-| 4/mmm |  | 752 | 8 | d | m.. | x,y,0 | h,k,0 |
-| 4/mmm |  | 752 | 4 | c | m2m. | x,0,0 | 1,0,0 |
-| 4/mmm |  | 752 | 4 | b | m.m2 | x,x,0 | 1,1,0 |
-| 4/mmm |  | 752 | 2 | a | 4mm | 0,0,z | 0,0,1 |
+| 4/mmm |  | 752 | 16 | g | 1 | x,y,z -x,-y,z -y,x,z y,-x,z -x,y,-z x,-y,-z y,x,-z -y,-x,-z -x,-y,-z x,y,-z y,-x,-z -y,x,-z x,-y,z -x,y,z -y,-x,z y,x,z | h,k,l |
+| 4/mmm |  | 752 | 8 | f | .m. | x,0,z -x,0,z 0,x,z 0,-x,z -x,0,-z x,0,-z 0,x,-z 0,-x,-z | h,0,l |
+| 4/mmm |  | 752 | 8 | e | ..m | x,x,z -x,-x,z -x,x,z x,-x,z -x,x,-z x,-x,-z x,x,-z -x,-x,-z | h,h,l |
+| 4/mmm |  | 752 | 8 | d | m.. | x,y,0 -x,-y,0 -y,x,0 y,-x,0 -x,y,0 x,-y,0 y,x,0 -y,-x,0 | h,k,0 |
+| 4/mmm |  | 752 | 4 | c | m2m. | x,0,0 -x,0,0 0,x,0 0,-x,0 | 1,0,0 |
+| 4/mmm |  | 752 | 4 | b | m.m2 | x,x,0 -x,-x,0 -x,x,0 x,-x,0 | 1,1,0 |
+| 4/mmm |  | 752 | 2 | a | 4mm | 0,0,z 0,0,-z | 0,0,1 |
 | 4/mmm |  | 752 | 1 | o | 4/mmm | 0,0,0 |  |
-| 3 | hexagonal axes | 752 | 3 | b | 1 | x,y,z | h,k,i,l |
+| 3 | hexagonal axes | 752 | 3 | b | 1 | x,y,z -y,x-y,z -x+y,-x,z | h,k,i,l |
 | 3 | hexagonal axes | 752 | 1 | a | 3.. | 0,0,z | 0,0,0,1 |
-| 3 | rhombohedral axes | 753 | 3 | b | 1 | x,y,z | h,k,l |
+| 3 | rhombohedral axes | 753 | 3 | b | 1 | x,y,z z,x,y y,z,x | h,k,l |
 | 3 | rhombohedral axes | 753 | 1 | a | 3. | x,x,x | 1,1,1 |
-| -3 | hexagonal axes | 753 | 6 | b | 1 | x,y,z | h,k,i,l |
-| -3 | hexagonal axes | 753 | 2 | a | 3.. | 0,0,z | 0,0,0,1 |
+| -3 | hexagonal axes | 753 | 6 | b | 1 | x,y,z -y,x-y,z -x+y,-x,z -x,-y,-z y,-x+y,-z x-y,x,-z | h,k,i,l |
+| -3 | hexagonal axes | 753 | 2 | a | 3.. | 0,0,z 0,0,-z | 0,0,0,1 |
 | -3 | hexagonal axes | 753 | 1 | o | -3.. | 0,0,0 |  |
-| -3 | rhombohedral axes | 753 | 6 | b | 1 | x,y,z | h,k,l |
-| -3 | rhombohedral axes | 753 | 2 | a | 3. | x,x,x | 1,1,1 |
+| -3 | rhombohedral axes | 753 | 6 | b | 1 | x,y,z z,x,y y,z,x -x,-y,-z -z,-x,-y -y,-z,-x | h,k,l |
+| -3 | rhombohedral axes | 753 | 2 | a | 3. | x,x,x -x,-x,-x | 1,1,1 |
 | -3 | rhombohedral axes | 753 | 1 | o | -3. | 0,0,0 |  |
-| 312 | hexagonal axes | 754 | 6 | c | 1 | x,y,z | h,k,i,l |
-| 312 | hexagonal axes | 754 | 3 | b | ..2 | x,-x,0 | 1,0,-1,0 |
-| 312 | hexagonal axes | 754 | 2 | a | 3.. | 0,0,z | 0,0,0,1 |
+| 312 | hexagonal axes | 754 | 6 | c | 1 | x,y,z -y,x-y,z -x+y,-x,z -y,-x,-z -x+y,y,-z x,x-y,-z | h,k,i,l |
+| 312 | hexagonal axes | 754 | 3 | b | ..2 | x,-x,0 x,2x,0 -2x,-x,0 | 1,0,-1,0 |
+| 312 | hexagonal axes | 754 | 2 | a | 3.. | 0,0,z 0,0,-z | 0,0,0,1 |
 | 312 | hexagonal axes | 754 | 1 | o | 3.2 | 0,0,0 |  |
-| 321 | hexagonal axes | 754 | 6 | c | 1 | x,y,z | h,k,i,l |
-| 321 | hexagonal axes | 754 | 3 | b | .2. | x,0,0 | 1,1,-2,0 |
-| 321 | hexagonal axes | 754 | 2 | a | 3.. | 0,0,z | 0,0,0,1 |
+| 321 | hexagonal axes | 754 | 6 | c | 1 | x,y,z -y,x-y,z -x+y,-x,z y,x,-z x-y,-y,-z -x,-x+y,-z | h,k,i,l |
+| 321 | hexagonal axes | 754 | 3 | b | .2. | x,0,0 0,x,0 -x,-x,0 | 1,1,-2,0 |
+| 321 | hexagonal axes | 754 | 2 | a | 3.. | 0,0,z 0,0,-z | 0,0,0,1 |
 | 321 | hexagonal axes | 754 | 1 | o | 32. | 0,0,0 |  |
-| 32 | rhombohedral axes | 755 | 6 | c | 1 | x,y,z | h,k,l |
-| 32 | rhombohedral axes | 755 | 3 | b | .2 | x,-x,0 | 0,1,-1 |
-| 32 | rhombohedral axes | 755 | 2 | a | 3. | x,x,x | 1,1,1 |
+| 32 | rhombohedral axes | 755 | 6 | c | 1 | x,y,z z,x,y y,z,x -z,-y,-x -y,-x,-z -x,-z,-y | h,k,l |
+| 32 | rhombohedral axes | 755 | 3 | b | .2 | x,-x,0 0,x,-x -x,0,x | 0,1,-1 |
+| 32 | rhombohedral axes | 755 | 2 | a | 3. | x,x,x -x,-x,-x | 1,1,1 |
 | 32 | rhombohedral axes | 755 | 1 | o | 32 | 0,0,0 |  |
-| 3m1 | hexagonal axes | 755 | 6 | c | 1 | x,y,z | h,k,i,l |
-| 3m1 | hexagonal axes | 755 | 3 | b | .m. | x,-x,z | h,0,-h,l |
+| 3m1 | hexagonal axes | 755 | 6 | c | 1 | x,y,z -y,x-y,z -x+y,-x,z -y,-x,z -x+y,y,z x,x-y,z | h,k,i,l |
+| 3m1 | hexagonal axes | 755 | 3 | b | .m. | x,-x,z x,2x,z -2x,-x,z | h,0,-h,l |
 | 3m1 | hexagonal axes | 755 | 1 | a | 3m. | 0,0,z | 0,0,0,1 |
-| 31m | hexagonal axes | 756 | 6 | c | 1 | x,y,z | h,k,i,l |
-| 31m | hexagonal axes | 756 | 3 | b | ..m | x,0,z | h,h,-2h,l |
+| 31m | hexagonal axes | 756 | 6 | c | 1 | x,y,z -y,x-y,z -x+y,-x,z y,x,z x-y,-y,z -x,-x+y,z | h,k,i,l |
+| 31m | hexagonal axes | 756 | 3 | b | ..m | x,0,z 0,x,z -x,-x,z | h,h,-2h,l |
 | 31m | hexagonal axes | 756 | 1 | a | 3.m | 0,0,z | 0,0,0,1 |
-| 3m | rhombohedral axes | 756 | 6 | c | 1 | x,y,z | h,k,l |
-| 3m | rhombohedral axes | 756 | 3 | b | .m | x,y,x | h,h,l |
+| 3m | rhombohedral axes | 756 | 6 | c | 1 | x,y,z z,x,y y,z,x z,y,x y,x,z x,z,y | h,k,l |
+| 3m | rhombohedral axes | 756 | 3 | b | .m | x,y,x x,x,y y,x,x | h,h,l |
 | 3m | rhombohedral axes | 756 | 1 | a | 3m | x,x,x | 1,1,1 |
-| -31m | hexagonal axes | 757 | 12 | d | 1 | x,y,z | h,k,i,l |
-| -31m | hexagonal axes | 757 | 6 | c | ..m | x,0,z | h,h,-2h,l |
-| -31m | hexagonal axes | 757 | 6 | b | ..2 | x,-x,0 | 1,0,-1,0 |
-| -31m | hexagonal axes | 757 | 2 | a | 3.m | 0,0,z | 0,0,0,1 |
+| -31m | hexagonal axes | 757 | 12 | d | 1 | x,y,z -y,x-y,z -x+y,-x,z -y,-x,-z -x+y,y,-z x,x-y,-z -x,-y,-z y,-x+y,-z x-y,x,-z y,x,z x-y,-y,z -x,-x+y,z | h,k,i,l |
+| -31m | hexagonal axes | 757 | 6 | c | ..m | x,0,z 0,x,z -x,-x,z 0,-x,-z -x,0,-z x,x,-z | h,h,-2h,l |
+| -31m | hexagonal axes | 757 | 6 | b | ..2 | x,-x,0 x,2x,0 -2x,-x,0 -x,x,0 -x,-2x,0 2x,x,0 | 1,0,-1,0 |
+| -31m | hexagonal axes | 757 | 2 | a | 3.m | 0,0,z 0,0,-z | 0,0,0,1 |
 | -31m | hexagonal axes | 757 | 1 | o | -3.m | 0,0,0 |  |
-| -3m1 | hexagonal axes | 758 | 12 | d | 1 | x,y,z | h,k,i,l |
-| -3m1 | hexagonal axes | 758 | 6 | c | .m. | x,-x,z | h,0,-h,l |
-| -3m1 | hexagonal axes | 758 | 6 | b | .2. | x,0,0 | 1,1,-2,0 |
-| -3m1 | hexagonal axes | 758 | 2 | a | 3m. | 0,0,z | 0,0,0,1 |
+| -3m1 | hexagonal axes | 758 | 12 | d | 1 | x,y,z -y,x-y,z -x+y,-x,z y,x,-z x-y,-y,-z -x,-x+y,-z -x,-y,-z y,-x+y,-z x-y,x,-z -y,-x,z -x+y,y,z x,x-y,z | h,k,i,l |
+| -3m1 | hexagonal axes | 758 | 6 | c | .m. | x,-x,z x,2x,z -2x,-x,z -x,x,-z 2x,x,-z -x,-2x,-z | h,0,-h,l |
+| -3m1 | hexagonal axes | 758 | 6 | b | .2. | x,0,0 0,x,0 -x,-x,0 -x,0,0 0,-x,0 x,x,0 | 1,1,-2,0 |
+| -3m1 | hexagonal axes | 758 | 2 | a | 3m. | 0,0,z 0,0,-z | 0,0,0,1 |
 | -3m1 | hexagonal axes | 758 | 1 | o | -3m. | 0,0,0 |  |
-| -3m | rhombohedral axes | 759 | 12 | d | 1 | x,y,z | h,k,l |
-| -3m | rhombohedral axes | 759 | 6 | c | .m | x,y,x | h,h,l |
-| -3m | rhombohedral axes | 759 | 6 | b | .2 | x,-x,0 | 0,1,-1 |
-| -3m | rhombohedral axes | 759 | 2 | a | 3m | x,x,x | 1,1,1 |
+| -3m | rhombohedral axes | 759 | 12 | d | 1 | x,y,z z,x,y y,z,x -z,-y,-x -y,-x,-z -x,-z,-y -x,-y,-z -z,-x,-y -y,-z,-x z,y,x y,x,z x,z,y | h,k,l |
+| -3m | rhombohedral axes | 759 | 6 | c | .m | x,y,x x,x,y y,x,x -x,-y,-x -y,-x,-x -x,-x,-y | h,h,l |
+| -3m | rhombohedral axes | 759 | 6 | b | .2 | x,-x,0 0,x,-x -x,0,x -x,x,0 0,-x,x x,0,-x | 0,1,-1 |
+| -3m | rhombohedral axes | 759 | 2 | a | 3m | x,x,x -x,-x,-x | 1,1,1 |
 | -3m | rhombohedral axes | 759 | 1 | o | -3m | 0,0,0 |  |
-| 6 |  | 760 | 6 | b | 1 | x,y,z | h,k,i,l |
+| 6 |  | 760 | 6 | b | 1 | x,y,z -y,x-y,z -x+y,-x,z -x,-y,z y,-x+y,z x-y,x,z | h,k,i,l |
 | 6 |  | 760 | 1 | a | 6.. | 0,0,z | 0,0,0,1 |
-| -6 |  | 760 | 6 | c | 1 | x,y,z | h,k,i,l |
-| -6 |  | 760 | 3 | b | m.. | x,y,0 | h,k,i,0 |
-| -6 |  | 760 | 2 | a | 3.. | 0,0,z | 0,0,0,1 |
+| -6 |  | 760 | 6 | c | 1 | x,y,z -y,x-y,z -x+y,-x,z x,y,-z -y,x-y,-z -x+y,-x,-z | h,k,i,l |
+| -6 |  | 760 | 3 | b | m.. | x,y,0 -y,x-y,0 -x+y,-x,0 | h,k,i,0 |
+| -6 |  | 760 | 2 | a | 3.. | 0,0,z 0,0,-z | 0,0,0,1 |
 | -6 |  | 760 | 1 | o | -6.. | 0,0,0 |  |
-| 6/m |  | 760 | 12 | c | 1 | x,y,z | h,k,i,l |
-| 6/m |  | 760 | 6 | b | m.. | x,y,0 | h,k,i,0 |
-| 6/m |  | 760 | 2 | a | 6.. | 0,0,z | 0,0,0,1 |
+| 6/m |  | 760 | 12 | c | 1 | x,y,z -y,x-y,z -x+y,-x,z -x,-y,z y,-x+y,z x-y,x,z -x,-y,-z y,-x+y,-z x-y,x,-z x,y,-z -y,x-y,-z -x+y,-x,-z | h,k,i,l |
+| 6/m |  | 760 | 6 | b | m.. | x,y,0 -y,x-y,0 -x+y,-x,0 -x,-y,0 y,-x+y,0 x-y,x,0 | h,k,i,0 |
+| 6/m |  | 760 | 2 | a | 6.. | 0,0,z 0,0,-z | 0,0,0,1 |
 | 6/m |  | 760 | 1 | o | 6/m.. | 0,0,0 |  |
-| 622 |  | 761 | 12 | d | 1 | x,y,z | h,k,i,l |
-| 622 |  | 761 | 6 | c | ..2 | x,-x,0 | 1,0,-1,0 |
-| 622 |  | 761 | 6 | b | .2. | x,0,0 | 1,1,-2,0 |
-| 622 |  | 761 | 2 | a | 6.. | 0,0,z | 0,0,0,1 |
+| 622 |  | 761 | 12 | d | 1 | x,y,z -y,x-y,z -x+y,-x,z -x,-y,z y,-x+y,z x-y,x,z y,x,-z x-y,-y,-z -x,-x+y,-z -y,-x,-z -x+y,y,-z x,x-y,-z | h,k,i,l |
+| 622 |  | 761 | 6 | c | ..2 | x,-x,0 x,2x,0 -2x,-x,0 -x,x,0 -x,-2x,0 2x,x,0 | 1,0,-1,0 |
+| 622 |  | 761 | 6 | b | .2. | x,0,0 0,x,0 -x,-x,0 -x,0,0 0,-x,0 x,x,0 | 1,1,-2,0 |
+| 622 |  | 761 | 2 | a | 6.. | 0,0,z 0,0,-z | 0,0,0,1 |
 | 622 |  | 761 | 1 | o | 622 | 0,0,0 |  |
-| 6mm |  | 762 | 12 | d | 1 | x,y,z | h,k,i,l |
-| 6mm |  | 762 | 6 | c | .m. | x,-x,z | h,0,-h,l |
-| 6mm |  | 762 | 6 | b | ..m | x,0,z | h,h,-2h,l |
+| 6mm |  | 762 | 12 | d | 1 | x,y,z -y,x-y,z -x+y,-x,z -x,-y,z y,-x+y,z x-y,x,z -y,-x,z -x+y,y,z x,x-y,z y,x,z x-y,-y,z -x,-x+y,z | h,k,i,l |
+| 6mm |  | 762 | 6 | c | .m. | x,-x,z x,2x,z -2x,-x,z -x,x,z -x,-2x,z 2x,x,z | h,0,-h,l |
+| 6mm |  | 762 | 6 | b | ..m | x,0,z 0,x,z -x,-x,z -x,0,z 0,-x,z x,x,z | h,h,-2h,l |
 | 6mm |  | 762 | 1 | a | 6mm | 0,0,z | 0,0,0,1 |
-| -6m2 |  | 762 | 12 | e | 1 | x,y,z | h,k,i,l |
-| -6m2 |  | 762 | 6 | d | m.. | x,y,0 | h,k,i,0 |
-| -6m2 |  | 762 | 6 | c | .m. | x,-x,z | h,0,-h,l |
-| -6m2 |  | 762 | 3 | b | mm2 | x,-x,0 | 1,0,-1,0 |
-| -6m2 |  | 762 | 2 | a | 3m. | 0,0,z | 0,0,0,1 |
+| -6m2 |  | 762 | 12 | e | 1 | x,y,z -y,x-y,z -x+y,-x,z x,y,-z -y,x-y,-z -x+y,-x,-z -y,-x,z -x+y,y,z x,x-y,z -y,-x,-z -x+y,y,-z x,x-y,-z | h,k,i,l |
+| -6m2 |  | 762 | 6 | d | m.. | x,y,0 -y,x-y,0 -x+y,-x,0 -y,-x,0 -x+y,y,0 x,x-y,0 | h,k,i,0 |
+| -6m2 |  | 762 | 6 | c | .m. | x,-x,z x,2x,z -2x,-x,z x,-x,-z x,2x,-z -2x,-x,-z | h,0,-h,l |
+| -6m2 |  | 762 | 3 | b | mm2 | x,-x,0 x,2x,0 -2x,-x,0 | 1,0,-1,0 |
+| -6m2 |  | 762 | 2 | a | 3m. | 0,0,z 0,0,-z | 0,0,0,1 |
 | -6m2 |  | 762 | 1 | o | -6m2 | 0,0,0 |  |
-| -62m |  | 763 | 12 | e | 1 | x,y,z | h,k,i,l |
-| -62m |  | 763 | 6 | d | m.. | x,y,0 | h,k,i,0 |
-| -62m |  | 763 | 6 | c | ..m | x,0,z | h,h,-2h,l |
-| -62m |  | 763 | 3 | b | m2m | x,0,0 | 1,1,-2,0 |
-| -62m |  | 763 | 2 | a | 3.m | 0,0,z | 0,0,0,1 |
+| -62m |  | 763 | 12 | e | 1 | x,y,z -y,x-y,z -x+y,-x,z x,y,-z -y,x-y,-z -x+y,-x,-z y,x,-z x-y,-y,-z -x,-x+y,-z y,x,z x-y,-y,z -x,-x+y,z | h,k,i,l |
+| -62m |  | 763 | 6 | d | m.. | x,y,0 -y,x-y,0 -x+y,-x,0 y,x,0 x-y,-y,0 -x,-x+y,0 | h,k,i,0 |
+| -62m |  | 763 | 6 | c | ..m | x,0,z 0,x,z -x,-x,z x,0,-z 0,x,-z -x,-x,-z | h,h,-2h,l |
+| -62m |  | 763 | 3 | b | m2m | x,0,0 0,x,0 -x,-x,0 | 1,1,-2,0 |
+| -62m |  | 763 | 2 | a | 3.m | 0,0,z 0,0,-z | 0,0,0,1 |
 | -62m |  | 763 | 1 | o | -62m | 0,0,0 |  |
-| 6/mmm |  | 764 | 24 | g | 1 | x,y,z | h,k,i,l |
-| 6/mmm |  | 764 | 12 | f | m.. | x,y,0 | h,k,i,0 |
-| 6/mmm |  | 764 | 12 | e | .m. | x,2x,z | h,0,-h,l |
-| 6/mmm |  | 764 | 12 | d | ..m | x,0,z | h,h,-2h,l |
-| 6/mmm |  | 764 | 6 | c | mm2 | x,2x,0 | 1,0,-1,0 |
-| 6/mmm |  | 764 | 6 | b | m2m | x,0,0 | 1,1,-2,0 |
-| 6/mmm |  | 764 | 2 | a | 6mm | 0,0,z | 0,0,0,1 |
+| 6/mmm |  | 764 | 24 | g | 1 | x,y,z -y,x-y,z -x+y,-x,z -x,-y,z y,-x+y,z x-y,x,z y,x,-z x-y,-y,-z -x,-x+y,-z -y,-x,-z -x+y,y,-z x,x-y,-z -x,-y,-z y,-x+y,-z x-y,x,-z x,y,-z -y,x-y,-z -x+y,-x,-z -y,-x,z -x+y,y,z x,x-y,z y,x,z x-y,-y,z -x,-x+y,z | h,k,i,l |
+| 6/mmm |  | 764 | 12 | f | m.. | x,y,0 -y,x-y,0 -x+y,-x,0 -x,-y,0 y,-x+y,0 x-y,x,0 y,x,0 x-y,-y,0 -x,-x+y,0 -y,-x,0 -x+y,y,0 x,x-y,0 | h,k,i,0 |
+| 6/mmm |  | 764 | 12 | e | .m. | x,2x,z -2x,-x,z x,-x,z -x,-2x,z 2x,x,z -x,x,z 2x,x,-z -x,-2x,-z -x,x,-z -2x,-x,-z x,2x,-z x,-x,-z | h,0,-h,l |
+| 6/mmm |  | 764 | 12 | d | ..m | x,0,z 0,x,z -x,-x,z -x,0,z 0,-x,z x,x,z 0,x,-z x,0,-z -x,-x,-z 0,-x,-z -x,0,-z x,x,-z | h,h,-2h,l |
+| 6/mmm |  | 764 | 6 | c | mm2 | x,2x,0 -2x,-x,0 x,-x,0 -x,-2x,0 2x,x,0 -x,x,0 | 1,0,-1,0 |
+| 6/mmm |  | 764 | 6 | b | m2m | x,0,0 0,x,0 -x,-x,0 -x,0,0 0,-x,0 x,x,0 | 1,1,-2,0 |
+| 6/mmm |  | 764 | 2 | a | 6mm | 0,0,z 0,0,-z | 0,0,0,1 |
 | 6/mmm |  | 764 | 1 | o | 6mmm | 0,0,0 |  |
-| 23 |  | 765 | 12 | c | 1 | x,y,z | h,k,l |
-| 23 |  | 765 | 6 | b | 2.. | x,0,0 | 1,0,0 |
-| 23 |  | 765 | 4 | a | .3. | x,x,x | 1,1,1 |
+| 23 |  | 765 | 12 | c | 1 | x,y,z -x,-y,z -x,y,-z x,-y,-z z,x,y z,-x,-y -z,-x,y -z,x,-y y,z,x -y,z,-x y,-z,-x -y,-z,x | h,k,l |
+| 23 |  | 765 | 6 | b | 2.. | x,0,0 -x,0,0 0,x,0 0,-x,0 0,0,x 0,0,-x | 1,0,0 |
+| 23 |  | 765 | 4 | a | .3. | x,x,x -x,-x,x -x,x,-x x,-x,-x | 1,1,1 |
 | 23 |  | 765 | 1 | o | 23. | 0,0,0 |  |
-| m-3 |  | 766 | 24 | d | 1 | x,y,z | h,k,l |
-| m-3 |  | 766 | 12 | c | m.. | 0,y,z | 0,k,l |
-| m-3 |  | 766 | 8 | b | .3. | x,x,x | 1,1,1 |
-| m-3 |  | 766 | 6 | a | 2mm.. | x,0,0 | 1,0,0 |
+| m-3 |  | 766 | 24 | d | 1 | x,y,z -x,-y,z -x,y,-z x,-y,-z z,x,y z,-x,-y -z,-x,y -z,x,-y y,z,x -y,z,-x y,-z,-x -y,-z,x -x,-y,-z x,y,-z x,-y,z -x,y,z -z,-x,-y -z,x,y z,x,-y z,-x,y -y,-z,-x y,-z,x -y,z,x y,z,-x | h,k,l |
+| m-3 |  | 766 | 12 | c | m.. | 0,y,z 0,-y,z 0,y,-z 0,-y,-z z,0,y z,0,-y -z,0,y -z,0,-y y,z,0 -y,z,0 y,-z,0 -y,-z,0 | 0,k,l |
+| m-3 |  | 766 | 8 | b | .3. | x,x,x -x,-x,x -x,x,-x x,-x,-x -x,-x,-x x,x,-x x,-x,x -x,x,x | 1,1,1 |
+| m-3 |  | 766 | 6 | a | 2mm.. | x,0,0 -x,0,0 0,x,0 0,-x,0 0,0,x 0,0,-x | 1,0,0 |
 | m-3 |  | 766 | 1 | o | m-3. | 0,0,0 |  |
-| 432 |  | 767 | 24 | d | 1 | x,y,z | h,k,l |
-| 432 |  | 767 | 12 | c | ..2 | 0,y,y | 0,1,1 |
-| 432 |  | 767 | 8 | b | .3. | x,x,x | 1,1,1 |
-| 432 |  | 767 | 6 | a | 4.. | x,0,0 | 1,0,0 |
+| 432 |  | 767 | 24 | d | 1 | x,y,z -x,-y,z -x,y,-z x,-y,-z z,x,y z,-x,-y -z,-x,y -z,x,-y y,z,x -y,z,-x y,-z,-x -y,-z,x y,x,-z -y,-x,-z y,-x,z -y,x,z x,z,-y -x,z,y -x,-z,-y x,-z,y z,y,-x z,-y,x -z,y,x -z,-y,-x | h,k,l |
+| 432 |  | 767 | 12 | c | ..2 | 0,y,y 0,-y,y 0,y,-y 0,-y,-y y,0,y y,0,-y -y,0,y -y,0,-y y,y,0 -y,y,0 y,-y,0 -y,-y,0 | 0,1,1 |
+| 432 |  | 767 | 8 | b | .3. | x,x,x -x,-x,x -x,x,-x x,-x,-x x,x,-x -x,-x,-x x,-x,x -x,x,x | 1,1,1 |
+| 432 |  | 767 | 6 | a | 4.. | x,0,0 -x,0,0 0,x,0 0,-x,0 0,0,x 0,0,-x | 1,0,0 |
 | 432 |  | 767 | 1 | o | 432 | 0,0,0 |  |
-| -43m |  | 768 | 24 | d | 1 | x,y,z | h,k,l |
-| -43m |  | 768 | 12 | c | ..m | x,x,z | h,h,l |
-| -43m |  | 768 | 6 | b | 2.mm | x,0,0 | 1,0,0 |
-| -43m |  | 768 | 4 | a | .3m | x,x,x | 1,1,1 |
+| -43m |  | 768 | 24 | d | 1 | x,y,z -x,-y,z -x,y,-z x,-y,-z z,x,y z,-x,-y -z,-x,y -z,x,-y y,z,x -y,z,-x y,-z,-x -y,-z,x y,x,z -y,-x,z y,-x,-z -y,x,-z x,z,y -x,z,-y -x,-z,y x,-z,-y z,y,x z,-y,-x -z,y,-x -z,-y,x | h,k,l |
+| -43m |  | 768 | 12 | c | ..m | x,x,z -x,-x,z -x,x,-z x,-x,-z z,x,x z,-x,-x -z,-x,x -z,x,-x x,z,x -x,z,-x x,-z,-x -x,-z,x | h,h,l |
+| -43m |  | 768 | 6 | b | 2.mm | x,0,0 -x,0,0 0,x,0 0,-x,0 0,0,x 0,0,-x | 1,0,0 |
+| -43m |  | 768 | 4 | a | .3m | x,x,x -x,-x,x -x,x,-x x,-x,-x | 1,1,1 |
 | -43m |  | 768 | 1 | o | -43m | 0,0,0 |  |
-| m-3m |  | 769 | 48 | f | 1 | x,y,z | h,k,l |
-| m-3m |  | 769 | 24 | e | ..m | x,x,z | h,h,l |
-| m-3m |  | 769 | 24 | d | m.. | 0,y,z | 0,k,l |
-| m-3m |  | 769 | 12 | c | m.m2 | 0,y,y | 0,1,1 |
-| m-3m |  | 769 | 8 | b | .3m | x,x,x | 1,1,1 |
-| m-3m |  | 769 | 6 | a | 4m.m | x,0,0 | 1,0,0 |
+| m-3m |  | 769 | 48 | f | 1 | x,y,z -x,-y,z -x,y,-z x,-y,-z z,x,y z,-x,-y -z,-x,y -z,x,-y y,z,x -y,z,-x y,-z,-x -y,-z,x y,x,-z -y,-x,-z y,-x,z -y,x,z x,z,-y -x,z,y -x,-z,-y x,-z,y z,y,-x z,-y,x -z,y,x -z,-y,-x -x,-y,-z x,y,-z x,-y,z -x,y,z -z,-x,-y -z,x,y z,x,-y z,-x,y -y,-z,-x y,-z,x -y,z,x y,z,-x -y,-x,z y,x,z -y,x,-z y,-x,-z -x,-z,y x,-z,-y x,z,y -x,z,-y -z,-y,x -z,y,-x z,-y,-x z,y,x | h,k,l |
+| m-3m |  | 769 | 24 | e | ..m | x,x,z -x,-x,z -x,x,-z x,-x,-z z,x,x z,-x,-x -z,-x,x -z,x,-x x,z,x -x,z,-x x,-z,-x -x,-z,x x,x,-z -x,-x,-z x,-x,z -x,x,z x,z,-x -x,z,x -x,-z,-x x,-z,x z,x,-x z,-x,x -z,x,x -z,-x,-x | h,h,l |
+| m-3m |  | 769 | 24 | d | m.. | 0,y,z 0,-y,z 0,y,-z 0,-y,-z z,0,y z,0,-y -z,0,y -z,0,-y y,z,0 -y,z,0 y,-z,0 -y,-z,0 y,0,-z -y,0,-z y,0,z -y,0,z 0,z,-y 0,z,y 0,-z,-y 0,-z,y z,y,0 z,-y,0 -z,y,0 -z,-y,0 | 0,k,l |
+| m-3m |  | 769 | 12 | c | m.m2 | 0,y,y 0,-y,y 0,y,-y 0,-y,-y y,0,y y,0,-y -y,0,y -y,0,-y y,y,0 -y,y,0 y,-y,0 -y,-y,0 | 0,1,1 |
+| m-3m |  | 769 | 8 | b | .3m | x,x,x -x,-x,x -x,x,-x x,-x,-x x,x,-x -x,-x,-x x,-x,x -x,x,x | 1,1,1 |
+| m-3m |  | 769 | 6 | a | 4m.m | x,0,0 -x,0,0 0,x,0 0,-x,0 0,0,x 0,0,-x | 1,0,0 |
 | m-3m |  | 769 | 1 | o | m-3m | 0,0,0 |  |
