@@ -44,7 +44,7 @@ f["representative"]["hkl"], f["representative"]["cartesian"]
 ## Orbits and the lattice basis
 
 The faces of a form are the orbit of one face. `orbit` computes it exactly, in integers, from the
-operations in the lattice basis (`latticeOperations`); `orbitOf` computes it for a Cartesian
+matrices W of the operations in the lattice basis (`matrix` of each operation); `orbitOf` computes it for a Cartesian
 direction under any list of operations, for instance those left after distorting a crystal. In
 hexagonal axes a face transforms otherwise than a lattice direction
 ([Conventions](conventions.md), "Lattice basis and orbits").
@@ -58,7 +58,7 @@ hexagonal axes a face transforms otherwise than a lattice direction
 ```
 
 ```{code-cell} ipython3
-symcrys.lattice_operations("3")[1]["matrix"]  # integers, as a float64 array
+symcrys.operations("3")[1]["matrix"]  # W in the lattice basis: integers, as a float64 array
 ```
 
 ## A distorted crystal
@@ -74,7 +74,7 @@ Cartesian axes ([Conventions](conventions.md), "Point group of a list of operati
 ```{code-cell} ipython3
 import numpy as np
 
-kept = [op for op in symcrys.operations("m-3m") if np.allclose(op["matrix"] @ [1, 1, 1], [1, 1, 1])
-        or np.allclose(op["matrix"] @ [1, 1, 1], [-1, -1, -1])]
+kept = [op for op in symcrys.operations("m-3m") if np.allclose(op["cartesian"] @ [1, 1, 1], [1, 1, 1])
+        or np.allclose(op["cartesian"] @ [1, 1, 1], [-1, -1, -1])]
 symcrys.point_group_of(kept)
 ```

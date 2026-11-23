@@ -304,7 +304,7 @@ def test_ita_3232_lattice_operations_and_orbit(row: list[str]) -> None:
     assert GENERAL[0] == ["Short", "Axes", "Page", "Multiplicity", "General position"]
     key, setting = _setting(row[0], row[1])
     printed = [[_coefficients(c) for c in t.split(",")] for t in row[4].split()]
-    ops = symcrys.lattice_operations(key, setting=setting)
+    ops = symcrys.operations(key, setting=setting)
     assert [op["matrix"].tolist() for op in ops] == printed
     uvw = [e["uvw"].tolist() for e in symcrys.orbit(key, {"uvw": [3, 2, 1]}, setting=setting)]
     assert uvw == [(np.array(w) @ [3, 2, 1]).tolist() for w in printed]

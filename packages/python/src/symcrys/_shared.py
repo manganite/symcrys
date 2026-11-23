@@ -40,7 +40,7 @@ def options(**kwargs: Any) -> dict[str, Any]:
     return result
 
 
-def operation_list(operations: Any, keys: tuple[str, ...] = ("matrix",)) -> list[Any]:
+def operation_list(operations: Any, keys: tuple[str, ...] = ("cartesian",)) -> list[Any]:
     """A list of operations as the library takes it, checked: a sequence of mappings with ``keys``.
 
     Without the check, an array of matrices reached the library and failed there with "cannot read
@@ -56,9 +56,21 @@ def operation_list(operations: Any, keys: tuple[str, ...] = ("matrix",)) -> list
         )
     ops = list(operations)
     for i, op in enumerate(ops):
-        if not isinstance(op, Mapping) or not all(k in op for k in keys):
+        if not isinstance(op, Mapping):
             raise _engine.SymcrysError(
                 f"operation {i} must be a mapping {shape}, as operations() returns it, not {type(op).__name__}",
+                "RangeError",
+            )
+        missing = [k for k in keys if k not in op]
+        if missing:
+            hint = (
+                "; its 'matrix' is the matrix W in the lattice basis since symcrys 0.11.0"
+                if "cartesian" in missing and "matrix" in op
+                else ""
+            )
+            raise _engine.SymcrysError(
+                f"operation {i} has no key {', '.join(repr(k) for k in missing)}: it must be a mapping {shape}, "
+                f"as operations() returns it{hint}",
                 "RangeError",
             )
     # Plain dicts, which the conversion to JSON takes (a Mapping such as MappingProxyType it does not).

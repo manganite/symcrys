@@ -95,7 +95,7 @@ function names (maintainer, 2026-11-20, #47). The import decides which reading a
 | `symcrys` (crystallographic API)                                | the 32 crystal classes        | the crystal class; quartz                                   |
 | `symcrys/magnetic` (magnetic API; in Python `symcrys.magnetic`) | the 122 magnetic point groups | the white group: a magnetically ordered crystal, not quartz |
 
-**The crystallographic API has no time reversal.** An operation is its matrix (`{ matrix }`), the
+**The crystallographic API has no time reversal.** An operation is `{ matrix, cartesian }` ("Operations"), the
 description of an operation has no `timeReversal`, a point group has no `type`, a tensor
 specification has no time parity, and `TENSOR_PROPERTIES` holds the properties of time-even
 tensors (`'pyroelectric'`, `'ferroaxial'`, `'piezoelectric'`, `'gyrotropic'`). A question that involves time
@@ -165,6 +165,36 @@ crystal's own cell is given by `latticeFromParameters`.
 The hexagonal frame puts the secondary symmetry directions of the trigonal classes (the a axes) on
 x, as ITC Vol. D does in its tensor tables (§ 1.1.4.10.4.4: group 32 with the twofold axis
 parallel to Ox₁, group 3m with the mirror perpendicular to Ox₁). This was decided on #6.
+
+## Operations
+
+An operation of a point group in a setting is one record with both of its matrices (#137 A2,
+maintainer 2026-11-22; #94):
+
+| Field          | Meaning                                                                                                                                                                              |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `matrix`       | ITA's matrix W in the lattice basis of the setting: integers, acting on the coordinates of a lattice direction [uvw]; the coordinate triplets of ITA's general position are its rows |
+| `cartesian`    | the same operation as an orthogonal Cartesian matrix R = B·W·B⁻¹, B the basis of the setting ("Cartesian frame")                                                                     |
+| `timeReversal` | magnetic API: whether the operation is combined with time reversal                                                                                                                   |
+
+`matrix` means W in every entry point: in `symcrys/plane` an operation is `{ matrix, translation }`
+with the same W ("Plane groups"). `operations` and `generators` give these records; there is no
+separate list of lattice operations (`latticeOperations` up to 0.10).
+
+**Operations from a caller.** The functions that compute with Cartesian matrices (`pointGroupOf`,
+`describeOperationsOf`, `siteSymmetry`, `orbitOf`, `isCentrosymmetricOf`, `isChiralOf`,
+`tensorFormOf`, `allowsPropertyOf`, `allowedPropertiesOf`) read `cartesian`, and in the magnetic API
+`timeReversal`; other fields are not read, so a record of `operations` passes as it is, and so does
+`{ cartesian }` (`{ cartesian, timeReversal }`) built by a caller, for instance for the operations
+of a distorted crystal. A record without `cartesian` is a RangeError, with a hint if it has
+`matrix`: W is not orthogonal in general, and reading it as Cartesian would give a wrong answer
+without notice. `residualOperations` reads `matrix` ("Cell, metric and indices"); `orbit` uses the
+W of the group itself. Inside the library the calculations work on the Cartesian matrix and the
+time reversal alone (`CartesianOperation`).
+
+For the monoclinic and triclinic families, whose basis a point group does not fix, a, b, c are
+taken along x, y, z, so W and R are equal; for the other families W and R differ only where the
+basis is not orthonormal (hexagonal and rhombohedral axes).
 
 ## Settings
 
@@ -355,8 +385,8 @@ Everywhere else the two books agree: same frame, same symbols, same Schoenflies 
 
 Matrices hold floating-point numbers. During group closure every entry within 10⁻⁹ of an exact
 value (0, ±1, ±1/2, ±√3/2, and ±√2/2 for the 45° setting frame) is set to that value, so products do not drift; two matrices are
-equal when all entries agree within 10⁻⁶. Exact integer matrices in the lattice basis are given by
-`latticeOperations` ("Lattice basis and orbits").
+equal when all entries agree within 10⁻⁶. The matrix W of an operation in the lattice basis
+(`matrix`, "Operations") is exact: integers.
 
 ## Properties
 
@@ -648,17 +678,13 @@ not orthogonal, or whose rotation part does not turn by 360°/n with n = 1, 2, 3
 
 ## Lattice basis and orbits
 
-**Operations in the lattice basis.** `latticeOperations(key, { setting })` gives the
-operations of a point group as integer matrices W in the conventional basis a, b, c (hexagonal or
-rhombohedral axes, as the setting has them, for the trigonal classes): W = B⁻¹·R·B, with B the basis
-of `latticeBasis` (columns a, b, c; for rhombohedral axes a_R, b_R, c_R, "Cartesian frame") and R
-the Cartesian matrix of `operations`. W acts on the coordinates of a lattice direction [uvw]. The
-list has the shape of `operations` (`{ matrix }`, in the magnetic API with `timeReversal`) and its
-order, index for index, so that a caller can switch between the two. The matrices are not
-orthogonal in general (hexagonal axes) and must not be passed to a function that takes Cartesian
-operations; `tensorFormOf`, `isChiralOf`, `orbitOf` and `siteSymmetry`, among others, refuse them.
+**Operations in the lattice basis.** The matrix W of each operation (`matrix`, "Operations") is
+the operation in the conventional basis a, b, c (hexagonal or rhombohedral axes, as the setting has
+them, for the trigonal classes): W = B⁻¹·R·B, with B the basis of `latticeBasis` (columns a, b, c;
+for rhombohedral axes a_R, b_R, c_R, "Cartesian frame") and R the Cartesian matrix (`cartesian`).
+W acts on the coordinates of a lattice direction [uvw].
 
-They do not depend on the cell angles: a point operation maps the lattice onto itself, and its
+The matrices W do not depend on the cell angles: a point operation maps the lattice onto itself, and its
 matrix in the lattice basis is the same for every metric the point group allows (2 along b is
 diag(−1, 1, −1) for every β). So they exist for every family, the monoclinic and triclinic ones
 included, where a, b, c are taken along x, y, z as for the Wyckoff positions (maintainer,
@@ -713,7 +739,9 @@ the optional `minVolumeRatio`, default 0: the library accepts what is mathematic
 application that wants to avoid nearly flat cells passes its own limit (stereography 0.1).
 
 **Residual operations.** `residualOperations(operations, basis, { tolerance })` keeps the operations
-W (integer matrices in the lattice basis, as `latticeOperations` gives them) with WᵀGW = G. The
+whose matrix W in the lattice basis (`matrix`, as `operations` gives it) has WᵀGW = G; a matrix that
+is not integer is refused, so that a Cartesian matrix passed as `matrix` gives an error, not a wrong
+answer (#94). The
 deviation is relative to the largest entry of G, so the unit of the lengths does not matter; the
 default is `EPSILON`.
 

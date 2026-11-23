@@ -54,7 +54,30 @@ All notable changes to symcrys are recorded here. The format follows
   went for `mm2` and the orthorhombic magnetic groups, where a setting is identified by its symbol),
   and `axes` (`'hexagonal'` or `'rhombohedral'`) for the trigonal settings.
 
+- **An operation is `{ matrix, cartesian }`** (#137 A2, #94, #121 step 6d): `operations` and
+  `generators` give each operation as ITA's matrix W in the lattice basis of the setting (`matrix`,
+  integer; the coordinate triplets of ITA's general position are its rows) together with the
+  orthogonal Cartesian matrix (`cartesian`), in the magnetic API with `timeReversal`. `matrix` so
+  means W in every entry point, as in `symcrys/plane`. Up to 0.10 `matrix` was the Cartesian matrix.
+  The functions that take operations from a caller and compute with Cartesian matrices
+  (`pointGroupOf`, `describeOperationsOf`, `siteSymmetry`, `orbitOf`, `isCentrosymmetricOf`,
+  `isChiralOf`, `tensorFormOf`, `allowsPropertyOf`, `allowedPropertiesOf`) read `cartesian` and
+  refuse a record without it, with a hint if it has `matrix`; a record of `operations` passes as it
+  is. `residualOperations` reads `matrix` and refuses a matrix that is not integer, which before gave
+  a wrong answer without an error for a Cartesian matrix (#94). The values themselves are unchanged.
+
+  | Up to 0.10                                                      | From 0.11                                                        |
+  | --------------------------------------------------------------- | ---------------------------------------------------------------- |
+  | `operations(key)[i].matrix` (Cartesian)                         | `operations(key)[i].cartesian`                                   |
+  | `latticeOperations(key)[i].matrix`                              | `operations(key)[i].matrix`                                      |
+  | `tensorFormOf([{ matrix: R }], spec)`, also for the other `…Of` | `tensorFormOf([{ cartesian: R }], spec)`                         |
+  | `residualOperations(latticeOperations(key), basis)`             | `residualOperations(operations(key), basis)`                     |
+  | Python: `op["matrix"]`, `symcrys.lattice_operations(key)`       | `op["cartesian"]`, `symcrys.operations(key)` with `op["matrix"]` |
+
 ### Removed
+
+- **`latticeOperations`** (Python `lattice_operations`), in both entry points (#121 step 6d): its
+  matrices are the `matrix` of `operations`, index for index.
 
 - **The Birss convention** (#110, #121 step 5): symcrys follows ITC only. The option `convention`
   goes from every function (`operations`, `generators`, `symbol`, `describeOperations`,
