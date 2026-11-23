@@ -275,3 +275,29 @@ export function itcCartesianGenerators(key: PointGroupKey, index: number): reado
   const system = itcClass(key).crystalSystem;
   return itcLatticeGenerators(key, index).map((w) => cartesianOf(w, system));
 }
+
+/**
+ * The time reversal of each operation of a setting (in ITA's order) when ITA's generators carry
+ * the time reversal `flags` (one per generator, in printed order), or undefined if no such group
+ * exists: time reversal is then a homomorphism onto {1, 1'}, and the flags fix it, if they are
+ * consistent. Exact, on the integer matrices.
+ */
+export function itcTimeReversal(key: PointGroupKey, index: number, flags: readonly boolean[]): boolean[] | undefined {
+  const ops = itcLatticeOperations(key, index);
+  const gens = itcLatticeGenerators(key, index);
+  if (flags.length !== gens.length) throw new RangeError(`${key} setting ${index} has ${gens.length} generators`);
+  const indexOf = (w: IntMat3) => ops.findIndex((x) => iequal(x, w));
+  const parity: (boolean | undefined)[] = ops.map((_, i) => (i === 0 ? false : undefined));
+  for (let queue = [0]; queue.length > 0;) {
+    const i = queue.shift()!;
+    for (const [k, g] of gens.entries()) {
+      const j = indexOf(imul(g, ops[i]));
+      const p = parity[i] !== flags[k];
+      if (parity[j] === undefined) {
+        parity[j] = p;
+        queue.push(j);
+      } else if (parity[j] !== p) return undefined;
+    }
+  }
+  return parity as boolean[];
+}

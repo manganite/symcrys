@@ -176,9 +176,11 @@ decides which one is the default.
 
 The data are stored in **setting 1**, which is Birss's frame. Every other setting is a rotation s
 of it: its operations are s·W·sᵀ for the stored operations W. The ITC settings are among these
-frames. The ITC operations, generators, symbols and lattice operations of the classes come from
-ITA's selected generators instead (`pointGroups/itcData.ts`); the stored data serve the Birss
-convention and the magnetic groups, and must give the same sets.
+frames. In the ITC convention the operations, generators, symbols and lattice operations of the
+classes come from ITA's selected generators instead (`pointGroups/itcData.ts`), and a
+black-and-white group is given by its ITC symbol in each setting, from which its operations follow
+(`pointGroups/itcMagneticData.ts`); the stored data serve the Birss convention and must give the
+same sets.
 
 Classes with more than one setting (short symbol, full symbol in parentheses):
 
@@ -270,7 +272,8 @@ most three settings per group); it takes the other three over when it moves onto
 
 A setting of a black-and-white group is a frame of its crystal class, but not always the one with
 the same index: setting 1 of `-6'2m'` (Birss's frame: twofold axes along y) is the frame of setting
-2 of `-6m2`. The functions find the frame of the class from the operations.
+2 of `-6m2`. In the ITC convention the setting of the class is the one whose symbol is the group's
+without primes.
 
 **Defaults.** Birss: setting 1. ITC: the frame in which the key, read along ITA's symmetry
 directions (Table 2.1.3.1), describes the group. For the triclinic to tetragonal systems this is
