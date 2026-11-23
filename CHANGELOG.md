@@ -76,6 +76,17 @@ All notable changes to symcrys are recorded here. The format follows
   | `residualOperations(latticeOperations(key), basis)`             | `residualOperations(operations(key), basis)`                     |
   | Python: `op["matrix"]`, `symcrys.lattice_operations(key)`       | `op["cartesian"]`, `symcrys.operations(key)` with `op["matrix"]` |
 
+- **Symbols of the magnetic API as ITC Vol. D prints them** (#137 B2, B3, #121 step 7a):
+  - the default setting of a grey or black-and-white group has its key as short symbol (for a
+    black-and-white group as Vol. D Table 1.5.2.3 prints it): `symbol("32'")` is `32'`, not `32'1`;
+    `symbol("321'")` is `321'`, not `3211'`. Eight groups change: `321'`, `3m1'`, `-3m1'`, `32'`,
+    `3m'`, `-3m'`, `-3'm'`, `-3'm`, and their `settings`. The other settings keep their symbols, and
+    the old ones still select the default setting. Their rhombohedral setting has the same short
+    symbol, so `{ setting: "32'" }` names two settings (an error that lists them); the full symbol
+    selects it, `{ setting: "3 2'" }`, since a full symbol is compared with its spaces first;
+  - Schoenflies symbols in `S6` instead of `C3i` (`S6(C3)`, `D3d(S6)`, `C6h(S6)`, `S6R`), as Vol. D
+    writes them; the crystallographic API keeps ITA's `C3i`.
+
 ### Removed
 
 - **`latticeOperations`** (Python `lattice_operations`), in both entry points (#121 step 6d): its

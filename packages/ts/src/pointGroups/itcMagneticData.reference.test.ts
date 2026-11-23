@@ -16,9 +16,6 @@ import { ITC_BLACK_WHITE, itcBlackWhiteOperations } from './itcMagneticData.js';
 const rows = tableRows(readReference('itc/vol-d-table-1.5.2.3.md'));
 expectHeader(rows, ['System', 'Schoenflies', 'Shubnikov', 'Short', 'Full', 'Symmetry operators']);
 
-/** ITC Vol. D writes S6 for the class -3; symcrys writes C3i, as ITA does (docs/conventions.md, "Symbols"). */
-const schoenfliesOfPrint = (s: string) => s.replace(/S6/g, 'C3i');
-
 /** The number of printed operators with a prime: `n(op')` counts n, `±op'` counts 2. */
 function primedCount(operators: string): number {
   return operators.split(', ').reduce((sum, op) => {
@@ -51,7 +48,7 @@ describe('ITC Vol. D Table 1.5.2.3 against the ITC data of the black-and-white g
     const g = ITC_BLACK_WHITE.find((x) => x.key === key)!;
     const s = g.settings.find((x) => x.isDefault)!;
     expect(s.full).toBe(r[4]);
-    expect(g.schoenflies).toBe(schoenfliesOfPrint(r[1]));
+    expect(g.schoenflies).toBe(r[1]); // stored as printed, S6 included (#137 B3)
     expect(itcClass(g.crystalClass).crystalSystem).toBe(r[0].toLowerCase());
     const ops = itcBlackWhiteOperations(g.key, s.index);
     expect(ops.filter((o) => o.timeReversal)).toHaveLength(primedCount(r[5]));

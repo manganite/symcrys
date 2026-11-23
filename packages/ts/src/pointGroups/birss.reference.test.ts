@@ -13,7 +13,8 @@ import { groupOfSymbol } from '../testUtils/hermannMauguin.js';
 import { BIRSS_DIRECTIONS, toItcFrame } from '../testUtils/birssFrame.js';
 import { close, sameGroup, type M, type RefOp } from '../testUtils/independentGroups.js';
 import { expectHeader, readReference, section, tableRows } from '../testUtils/references.js';
-import { isPointGroupKey, operations, pointGroup, symbol, type PointGroupKey } from './pointGroups.js';
+import { symbol as itaSymbol } from '../crystalClasses.js';
+import { isPointGroupKey, operations, pointGroup, type PointGroupKey } from './pointGroups.js';
 
 // --- σ(0)–σ(9) ---------------------------------------------------------------------------------
 
@@ -123,7 +124,8 @@ describe('Birss Table 3 (printed pp. 36–38) against symcrys, in the ITC frame'
       it('order, crystal system and Schoenflies symbol as printed', () => {
         expect(pointGroup(row.key).order).toBe(row.order);
         expect(pointGroup(row.key).crystalSystem).toBe(row.system);
-        expect(symbol(row.key, { form: 'schoenflies' })).toBe(row.schoenflies);
+        // Birss writes C3i, as ITA does and the crystallographic API (#137 B3).
+        expect(itaSymbol(row.key, { form: 'schoenflies' })).toBe(row.schoenflies);
       });
     });
   }

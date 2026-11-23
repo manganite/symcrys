@@ -14,8 +14,9 @@ import { describe, expect, it } from 'vitest';
 import { hmTokens, groupOfSymbol } from '../testUtils/hermannMauguin.js';
 import { mul, sameGroup, type M } from '../testUtils/independentGroups.js';
 import { expectHeader, readReference, tableRows } from '../testUtils/references.js';
+import { symbol as itaSymbol } from '../crystalClasses.js';
 import { ITC_SETTINGS, type ItcSettingFixture } from './itcSettings.fixtures.js';
-import { POINT_GROUP_KEYS, findPointGroup, operations, settings, symbol, type PointGroupKey } from './pointGroups.js';
+import { POINT_GROUP_KEYS, findPointGroup, operations, settings, type PointGroupKey } from './pointGroups.js';
 
 // --- Lattice bases (the #6 decision, typed independently of src/lattice.ts) -------------------------
 
@@ -193,7 +194,8 @@ describe('ITC settings fixture against print', () => {
   it('Schoenflies symbols as printed in Table 3.2.3.2', () => {
     for (const [key, f] of FIXTURE) {
       const h = headlineOf(f);
-      if (h) expect(symbol(key, { form: 'schoenflies' }), key).toBe(h.schoenflies);
+      // The crystallographic API writes ITA's Schoenflies symbols (#137 B3).
+      if (h) expect(itaSymbol(key, { form: 'schoenflies' }), key).toBe(h.schoenflies);
     }
   });
 

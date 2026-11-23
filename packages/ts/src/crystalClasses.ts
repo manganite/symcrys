@@ -296,9 +296,14 @@ export function generators(key: PointGroupKey, options?: SettingOptions): readon
   return withoutTime(groups.generators(classKey(key), options));
 }
 
-/** A symbol of the crystal class in the requested setting. */
+/**
+ * A symbol of the crystal class in the requested setting, as ITA writes it (Tables 3.2.1.2 and
+ * 3.2.3.2: `321`, `C3i`; docs/conventions.md, "Symbols").
+ */
 export function symbol(key: PointGroupKey, options?: SymbolOptions): string {
-  return groups.symbol(classKey(key), options);
+  const result = groups.symbol(classKey(key), options);
+  // The Schoenflies symbol as ITA writes it (`C3i`); the magnetic API follows ITC Vol. D (`S6`).
+  return options?.form === 'schoenflies' ? groups.itaSchoenflies(key) : result;
 }
 
 // --- properties that follow from operations ---------------------------------------------------------

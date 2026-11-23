@@ -73,12 +73,6 @@ function magneticKey(s: string, what: string): MagneticPointGroupKey {
 const itcRows = tableRows(readReference('itc/vol-d-table-1.5.2.3.md'));
 expectHeader(itcRows, ['System', 'Schoenflies', 'Shubnikov', 'Short', 'Full', 'Symmetry operators']);
 
-/**
- * ITC Vol. D writes S6 for the class -3 and its magnetic groups; symcrys writes C3i in both
- * conventions, as ITA and Birss do (docs/conventions.md, "Symbols").
- */
-const schoenfliesOfPrint = (s: string) => s.replace(/S6/g, 'C3i');
-
 describe('ITC Vol. D Table 1.5.2.3 (printed pp. 111–112) against symcrys, ITC convention', () => {
   const rows = itcRows.slice(1);
 
@@ -106,12 +100,13 @@ describe('ITC Vol. D Table 1.5.2.3 (printed pp. 111–112) against symcrys, ITC 
     describe(short, () => {
       it('crystal system, Schoenflies symbol and full symbol as printed', () => {
         expect(pointGroup(key).crystalSystem).toBe(system.toLowerCase());
-        expect(symbol(key, { form: 'schoenflies' })).toBe(schoenfliesOfPrint(schoenflies));
+        expect(symbol(key, { form: 'schoenflies' })).toBe(schoenflies);
         expect(symbol(key, { form: 'full' })).toBe(full);
+        // The short symbol as printed for a black-and-white group (#137 B2); a crystal class keeps
+        // ITA's symbol (`321` where the table prints `32`; CLAUDE.md, "Symbols per volume").
+        if (pointGroup(key).type === 'III') expect(symbol(key)).toBe(short);
         // The Schoenflies symbol G(H) names the crystal class G.
-        expect(symbol(crystalClassOf(key), { form: 'schoenflies' })).toBe(
-          schoenfliesOfPrint(schoenflies).replace(/\(.+\)$/, ''),
-        );
+        expect(symbol(crystalClassOf(key), { form: 'schoenflies' })).toBe(schoenflies.replace(/\(.+\)$/, ''));
       });
 
       it('operations of the ITC default setting = the printed symmetry operators', () => {
@@ -477,7 +472,11 @@ describe('the 122 magnetic point groups', () => {
       expect(greySettings.map((s) => [s.index, s.isDefault, s.uniqueAxis])).toEqual(
         classSettings.map((s) => [s.index, s.isDefault, s.uniqueAxis]),
       );
-      expect(greySettings.map((s) => s.symbol)).toEqual(classSettings.map((s) => `${s.symbol}1'`));
+      // The class symbol followed by 1'; the default setting has the key, as ITC Vol. D writes the
+      // grey groups (#137 B2: `321'`, not `3211'`).
+      expect(greySettings.map((s) => s.symbol)).toEqual(
+        classSettings.map((s) => (s.isDefault ? key : `${s.symbol}1'`)),
+      );
       for (const s of classSettings) {
         const classOps = operations(classKey, { setting: s.index });
         const ops = operations(key, { setting: s.index });
@@ -603,8 +602,11 @@ describe('the 122 magnetic point groups', () => {
       // The key gives the default setting, also where it is the symbol of another setting (`32`).
       expect(findMagneticPointGroup(key), key).toEqual({ key, setting: def });
     }
-    // Settings that share a short symbol: the monoclinic ones (unique axis b, c and a), and the
-    // hexagonal and rhombohedral axes of 3, -3 and their magnetic groups.
+    // Settings that share a short symbol: the monoclinic ones (unique axis b, c and a); the
+    // hexagonal and rhombohedral axes of 3, -3 and their magnetic groups; and, since the default
+    // setting of a grey or black-and-white group has its key as short symbol (#137 B2), the default
+    // and the rhombohedral setting of the magnetic groups of 32, 3m and -3m (`32'`: `3 2' 1` and
+    // `3 2'`), which their full symbols tell apart.
     const sharing = MAGNETIC_POINT_GROUP_KEYS.filter((key) => {
       const symbols = settings(key).map((s) => s.symbol);
       return new Set(symbols).size < symbols.length;
@@ -615,8 +617,38 @@ describe('the 122 magnetic point groups', () => {
       '-3',
       "31'",
       "-31'",
+      "321'",
+      "3m1'",
+      "-3m1'",
       "-3'",
+      "32'",
+      "3m'",
+      "-3m'",
+      "-3'm'",
+      "-3'm",
     ]);
+    // Every setting is selected by its full symbol as listed, unless another setting has the same
+    // full symbol (`3`, `-3'` with hexagonal and rhombohedral axes: only the index tells them apart).
+    for (const key of MAGNETIC_POINT_GROUP_KEYS) {
+      for (const s of settings(key)) {
+        const sameFull = settings(key).filter((t) => t.fullSymbol === s.fullSymbol);
+        if (sameFull.length === 1) {
+          expect(operations(key, { setting: s.fullSymbol }), `${key} ${s.fullSymbol}`).toBe(
+            operations(key, { setting: s.index }),
+          );
+        } else {
+          expect(() => operations(key, { setting: s.fullSymbol }), `${key} ${s.fullSymbol}`).toThrow(/give the index/);
+        }
+      }
+    }
+    expect(operations("32'", { setting: "3 2'" })).toBe(operations("32'", { setting: 3 }));
+    expect(operations("32'", { setting: "32'1" })).toBe(operations("32'", { setting: 1 }));
+    expect(() => operations("32'", { setting: "32'" })).toThrow(/names 2 settings; give the full symbol or the index/);
+    for (const key of ["321'", "32'", "-3'm"] as const) {
+      const s = settings(key);
+      expect(s[0].symbol, key).toBe(s[s.length - 1].symbol);
+      expect(s[0].fullSymbol, key).not.toBe(s[s.length - 1].fullSymbol);
+    }
   });
 
   it('a key finds the default setting', () => {

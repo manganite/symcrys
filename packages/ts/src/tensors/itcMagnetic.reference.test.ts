@@ -37,8 +37,20 @@ interface Orientation {
 /** Groups without time reversal as an element of its own: the 90 groups of ITC Vol. D Chapter 1.5. */
 const GROUPS = MAGNETIC_POINT_GROUP_KEYS.filter((k) => pointGroup(k).type !== 'II');
 const compact = (s: string) => s.replace(/\s+/g, '');
-/** The tables of Chapter 1.5 print S6 where symcrys has C3i, the symbol of ITA. */
-const schoenflies = (key: MagneticPointGroupKey) => symbol(key, { form: 'schoenflies' }).replace('C3i', 'S6');
+/** The magnetic API writes Schoenflies symbols as ITC Vol. D does (`S6`, #137 B3). */
+const schoenflies = (key: MagneticPointGroupKey) => symbol(key, { form: 'schoenflies' });
+
+/**
+ * The short symbol with all three positions, read from the full symbol by ITA's rule (the first
+ * position as it stands, every other one by its element after the `/`): `-3 2'/m' 1` → `-3m'1`. The
+ * tables print it beside the key (`-3m' (= -3m'1)`), and since #137 B2 the default setting of a
+ * magnetic group has the key as its short symbol.
+ */
+const threePositions = (full: string) =>
+  full
+    .split(' ')
+    .map((t, i) => (i > 0 && t.includes('/') ? t.split('/')[1] : t))
+    .join('');
 
 const BY_SYMBOL = new Map<string, Orientation[]>();
 const DEFAULT = new Map<string, Orientation>();
@@ -46,7 +58,9 @@ for (const key of GROUPS) {
   // A setting with rhombohedral axes has the Cartesian operations, so the tensor forms, of setting 1;
   // its symbol (`32`) is the key, which the tables of Chapter 1.5 use for the default setting.
   for (const s of settings(key).filter((x) => x.axes !== 'rhombohedral')) {
-    for (const name of new Set([s.symbol, compact(s.fullSymbol)])) {
+    const trigonal = pointGroup(key).crystalSystem === 'trigonal';
+    const names = [s.symbol, compact(s.fullSymbol), ...(trigonal ? [threePositions(s.fullSymbol)] : [])];
+    for (const name of new Set(names)) {
       BY_SYMBOL.set(name, [...(BY_SYMBOL.get(name) ?? []), { key, setting: s.index }]);
     }
     if (s.isDefault) DEFAULT.set(key, { key, setting: s.index });
