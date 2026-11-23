@@ -614,10 +614,8 @@ The conventions themselves are in `docs/conventions.md`; here, what was decided 
   per group, by the axis that carries the unique element) does not cover the one group whose three
   elements all differ; it has six orientations, and print uses all of them (Birss, four tables of
   ITC Vol. D, Paufler), so a reader who takes a symbol from print must be able to select it.
-  Settings 1 to 3 keep birss-app's frames and indices, so its pins hold unchanged; 4 to 6 are added
-  after them. This goes beyond birss-app with Thomas' agreement to the proposal (the rule above); #19 records it for
-  birss-app. Not changed: the monoclinic groups keep two settings (unique axis b and c; a is not a
-  standard setting, as in birss-app).
+  Since #121 step 6b the six are numbered by the column order of ITA 2016 Table 1.5.4.4 (#137 A4;
+  `docs/conventions.md`, "Settings"), and unique axis a comes with step 6c (#137 A5).
 - **Magnetic point groups: data** _(Storage in the Birss frame replaced by "Pure ITC" above; the reason
   given for the type names is corrected in #109. Since #122 PR 2c the ITC full symbols of the
   black-and-white groups are stored, one per setting, and the rule runs the other way: the time

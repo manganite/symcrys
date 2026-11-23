@@ -124,6 +124,8 @@ describe('a setting by its symbol', () => {
   it('refuses a symbol that names several settings, or none, naming the settings', () => {
     expect(() => operations('2', { setting: '2' })).toThrow(/names 2 settings.*1: 2 \(1 2 1\), 2: 2 \(1 1 2\)/);
     expect(() => operations('32', { setting: '32' })).toThrow(/has no setting "32" \(settings 1: 321/);
+    expect(() => operations('32', { setting: [2] } as never)).toThrow(/must be an index or a symbol, not \[2\]/);
+    expect(() => operations('32', { setting: true } as never)).toThrow(RangeError);
   });
 });
 

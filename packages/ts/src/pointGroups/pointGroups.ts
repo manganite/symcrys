@@ -233,6 +233,9 @@ function settingOfSymbol(d: GroupData, text: string): number {
 function settingIndex(d: GroupData, options?: SettingOptions): number {
   rejectConvention(options);
   const requested = options?.setting;
+  if (requested !== undefined && requested !== null && typeof requested !== 'number' && typeof requested !== 'string') {
+    throw new RangeError(`The setting must be an index or a symbol, not ${JSON.stringify(requested)}`);
+  }
   const index = typeof requested === 'string' ? settingOfSymbol(d, requested) : (requested ?? d.itcDefault);
   const count = d.settingCount;
   if (!Number.isInteger(index) || index < 1 || index > count) {

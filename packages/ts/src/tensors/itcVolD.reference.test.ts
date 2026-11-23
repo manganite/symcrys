@@ -4,7 +4,7 @@
  *
  * - § 1.1.4.10.7: the full forms (cells, links, signs) of axial tensors of rank 2, general and
  *   symmetric, in the frame ITC draws them: in the ITC default setting, and for the monoclinic
- *   classes also with the axis parallel to Ox3 (unique axis c, setting 1);
+ *   classes also with the axis parallel to Ox3 (unique axis c, setting 2);
  * - § 1.1.4.10.6: fourth-rank tensors with both index pairs symmetric (`'ij_kl'`: p, π, Q) and with
  *   the pairs also interchangeable (`'voigt'`: c, s): the numbers of independent components, and
  *   the full forms (cells, links, signs and factors of the 6 × 6 matrices) of the 29 diagrams for
