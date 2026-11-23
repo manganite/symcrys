@@ -124,13 +124,22 @@ function permuteSymbol(symbolText: string, r: Mat3): string {
 /**
  * The permutation r that carries setting 1 of a class into `setting` (new axis i = r[i][j] × old
  * axis j), for the settings ITA does not print (`mm2` settings 2 and 3): the transpose of the change
- * of basis P of the ITC class data ((a′, b′, c′) = (a, b, c)·P, itcData.ts). Throws for a setting
- * that is not carried from setting 1.
+ * of basis P of the ITC class data ((a′, b′, c′) = (a, b, c)·P, itcData.ts). Coordinates (P⁻¹·x)
+ * and Miller indices (h·P) are carried by the same r only because P is a signed permutation
+ * (P⁻¹ = Pᵀ); throws for a setting that is not carried from setting 1 by one.
  */
 export function permutationFromSetting1(key: PointGroupKey, setting: number): Mat3 {
   const from = itcClassSetting(key, setting).from;
   if (from?.index !== 1) throw new Error(`Point group ${key}, setting ${setting}: not carried from setting 1`);
   const p = from.basis;
+  const signedPermutation = [0, 1, 2].every(
+    (i) =>
+      p[i].filter((v) => v !== 0).length === 1 &&
+      p[i].every((v) => v === 0 || Math.abs(v) === 1) &&
+      p.filter((row) => row[i] !== 0).length === 1,
+  );
+  if (!signedPermutation)
+    throw new Error(`Point group ${key}, setting ${setting}: not a signed permutation of setting 1`);
   return [0, 1, 2].map((i) => [0, 1, 2].map((j) => p[j][i])) as unknown as Mat3;
 }
 

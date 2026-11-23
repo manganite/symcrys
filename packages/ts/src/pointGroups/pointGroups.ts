@@ -15,9 +15,9 @@ import {
   transformOperation,
   type Operation,
 } from '../operations.js';
-import { itcCartesianGenerators, itcCartesianOperations, itcClass, itcSetting } from './itcData.js';
+import { ITC_CLASSES, itcCartesianGenerators, itcCartesianOperations, itcClass, itcSetting } from './itcData.js';
 import {
-  itcBlackWhite,
+  ITC_BLACK_WHITE,
   itcBlackWhiteClassSetting,
   itcBlackWhiteOperations,
   itcBlackWhiteSetting,
@@ -131,6 +131,8 @@ interface GroupData {
   readonly generators: readonly Operation[];
   readonly settings: readonly { readonly frame: SettingData['frame']; readonly uniqueAxis?: 'a' | 'b' | 'c' }[];
   readonly itcDefault: number;
+  /** The number of ITC settings (itcData.ts, itcMagneticData.ts); the Birss ones are `settings`. */
+  readonly itcSettingCount: number;
   /** Type I only: the stored symbols of each setting (the Birss ones are used; ITC: itcData.ts). */
   readonly symbols?: readonly SettingData[];
 }
@@ -140,50 +142,58 @@ function itcDefaultOf(key: PointGroupKey): number {
   return itcClass(key).settings.find((s) => s.isDefault)!.index;
 }
 
+// Built from the ITC data, in their order (that of POINT_GROUP_KEYS and
+// BLACK_WHITE_POINT_GROUP_KEYS); the Birss data (data.ts, magneticData.ts) add the generators and
+// frames of the Birss convention and of the cross-check in `settingOperations`.
 const BY_KEY = new Map<string, GroupData>();
-for (const d of POINT_GROUP_DATA) {
+for (const c of ITC_CLASSES) {
+  const birss = POINT_GROUP_DATA.find((x) => x.key === c.key)!;
   const self: GroupData = {
-    key: d.key,
+    key: c.key,
     type: 'I',
     get crystalClass() {
       return self;
     },
-    crystalSystem: d.crystalSystem,
-    schoenflies: d.schoenflies,
-    generators: d.generators,
-    settings: d.settings,
-    itcDefault: itcDefaultOf(d.key),
-    symbols: d.settings,
+    crystalSystem: c.crystalSystem,
+    schoenflies: c.schoenflies,
+    generators: birss.generators,
+    settings: birss.settings,
+    itcDefault: itcDefaultOf(c.key),
+    itcSettingCount: c.settings.length,
+    symbols: birss.settings,
   };
-  BY_KEY.set(d.key, self);
+  BY_KEY.set(c.key, self);
 }
 // Grey groups: the class and time reversal (ITC Vol. D, eq. (1.5.2.1)). birss-app generates them
 // from the generators of the class followed by 1', without the identity generator of class 1.
-for (const d of POINT_GROUP_DATA) {
-  const crystalClass = BY_KEY.get(d.key)!;
-  const key: MagneticPointGroupKey = `${d.key}1'`;
+for (const c of ITC_CLASSES) {
+  const crystalClass = BY_KEY.get(c.key)!;
+  const key: MagneticPointGroupKey = `${c.key}1'`;
   BY_KEY.set(key, {
     key,
     type: 'II',
     crystalClass,
-    crystalSystem: d.crystalSystem,
-    schoenflies: greySchoenflies(d.schoenflies),
-    generators: [...(d.key === '1' ? [] : d.generators), TIME_REVERSAL],
-    settings: d.settings,
+    crystalSystem: c.crystalSystem,
+    schoenflies: greySchoenflies(c.schoenflies),
+    generators: [...(c.key === '1' ? [] : crystalClass.generators), TIME_REVERSAL],
+    settings: crystalClass.settings,
     itcDefault: crystalClass.itcDefault,
+    itcSettingCount: crystalClass.itcSettingCount,
   });
 }
-for (const d of BLACK_WHITE_DATA) {
-  const crystalClass = BY_KEY.get(d.crystalClass)!;
-  BY_KEY.set(d.key, {
-    key: d.key,
+for (const g of ITC_BLACK_WHITE) {
+  const birss = BLACK_WHITE_DATA.find((x) => x.key === g.key)!;
+  const crystalClass = BY_KEY.get(g.crystalClass)!;
+  BY_KEY.set(g.key, {
+    key: g.key,
     type: 'III',
     crystalClass,
     crystalSystem: crystalClass.crystalSystem,
-    schoenflies: d.schoenflies,
-    generators: d.generators,
-    settings: d.settings,
-    itcDefault: itcBlackWhite(d.key).settings.find((s) => s.isDefault)!.index,
+    schoenflies: g.schoenflies,
+    generators: birss.generators,
+    settings: birss.settings,
+    itcDefault: g.settings.find((s) => s.isDefault)!.index,
+    itcSettingCount: g.settings.length,
   });
 }
 
@@ -213,12 +223,18 @@ function defaultSetting(d: GroupData, c: Convention): number {
   return c === 'itc' ? d.itcDefault : 1;
 }
 
+/** The number of settings in a convention: from the ITC data, or the Birss frames. */
+function settingCount(d: GroupData, c: Convention): number {
+  return c === 'itc' ? d.itcSettingCount : d.settings.length;
+}
+
 /** The requested setting index, checked; the convention's default if none is given. */
 function settingIndex(d: GroupData, options?: SettingOptions): number {
   const c = convention(options);
   const index = options?.setting ?? defaultSetting(d, c);
-  if (!Number.isInteger(index) || index < 1 || index > d.settings.length) {
-    throw new RangeError(`Point group ${d.key} has no setting ${String(index)} (settings 1 to ${d.settings.length})`);
+  const count = settingCount(d, c);
+  if (!Number.isInteger(index) || index < 1 || index > count) {
+    throw new RangeError(`Point group ${d.key} has no setting ${String(index)} (settings 1 to ${count})`);
   }
   return index;
 }
@@ -494,12 +510,11 @@ export function settings(key: MagneticPointGroupKey, conventionName: Convention 
   const d = data(key);
   const c = convention({ convention: conventionName });
   const def = defaultSetting(d, c);
-  return d.settings.map((s, i) => {
+  return Array.from({ length: settingCount(d, c) }, (_, i) => {
     const symbols = settingSymbols(d, i + 1, c);
-    // A class in the ITC convention: the unique axis of the ITC class data.
     const uniqueAxis =
       c === 'birss'
-        ? s.uniqueAxis
+        ? d.settings[i].uniqueAxis
         : d.type === 'III'
           ? itcBlackWhiteSetting(d.key as BlackWhitePointGroupKey, i + 1).uniqueAxis
           : itcSetting(d.crystalClass.key as PointGroupKey, i + 1).uniqueAxis;
@@ -573,7 +588,9 @@ function find(
   const candidates = [...BY_KEY.values()].filter((d) => !classesOnly || d.type === 'I');
   /** The settings of `d` whose symbol of this form is the target. */
   const named = (d: GroupData, form: 'short' | 'full'): number[] =>
-    d.settings.map((_, j) => j + 1).filter((i) => compact(settingSymbols(d, i, c)[form]) === target);
+    Array.from({ length: settingCount(d, c) }, (_, j) => j + 1).filter(
+      (i) => compact(settingSymbols(d, i, c)[form]) === target,
+    );
   /** One setting named: that one. Several (a monoclinic short symbol) or none (a key): the default. */
   const pick = (d: GroupData, settingsNamed: number[]): PointGroupInSetting<MagneticPointGroupKey> => ({
     key: d.key,
