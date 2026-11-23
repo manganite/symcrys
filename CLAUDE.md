@@ -462,6 +462,16 @@ The conventions themselves are in `docs/conventions.md`; here, what was decided 
   birss-app rests; adding them is additive, and the first real consumer tests the API early. **Magnetic groups and group properties in three PRs** (maintainer, 2026-11-19, #13, #41):
   data, symbols and operations; then the `'c'`-tensors and the named tensor properties; then the
   fixed properties of a class as fields of `pointGroup()`; released together as one MINOR.
+- **One name for the axis, and smaller uniformity** (#137 C3, C4, decided by Thomas on 2026-11-22;
+  #121 step 7d): the axis of an operation is `axis` in every entry point, for a reflection its normal,
+  so the plane groups give `axis` for what was `normal` (descriptions and the lines of
+  `symmetryElements`); `isDefault` also in `symcrys/plane`; the plane `orbit` gives `{ point,
+operations }`; `undefined`, never `null` (`zoneAxis`); every result frozen and `readonly` (tested
+  over every function of the three entry points; `residualOperations` freezes its list, not the
+  caller's operations); parameter names `direction1`, `direction2`, `plane1`, `plane2`, `symbol`; the
+  origin of a plane group with its positions spaced as printed (`at 2 1 g`; read again from the
+  page images). The Wyckoff `coordinates` of the point groups become the printed list too (Thomas,
+  2026-11-23: transcribed in full from ITA Table 3.2.3.2), in a step of its own.
 - **Names of ITA** (#137 C1, C2, decided by Thomas on 2026-11-22; #121 step 7c): the suffix `…Of`
   means "of a list of operations" and only that: `siteSymmetryOf(operations, direction)` beside
   `siteSymmetry(key, direction, options)`, and `wyckoffPosition(key, x)` (was `wyckoffPositionOf`,
@@ -936,12 +946,12 @@ while implementing gets its own note here.
   although `direction` is a float key of the fixed rule, which means a Cartesian vector there); a
   Wyckoff position gives all printed coordinates of its (0,0)+ set (`coordinates`, a list), since ITA
   prints them all for the plane groups; fields and functions as in `symcrys` where the notion is the
-  same (`crystalSystem`, `settings(key)` as a list of settings with `index`, `symbol`, `default`,
+  same (`crystalSystem`, `settings(key)` as a list of settings with `index`, `symbol`, `default` _(`isDefault` since #121 step 7d)_,
   `wyckoffPositionOf` giving the same record as `wyckoffPositions`; review of PR #82). Asked in a third round (Thomas,
   2026-11-22, #84, #85; recommendations taken): **`describeOperationsOf(operations)`** describes any
   list of operations of the plane, the name of the other entry points for the same notion; a
   translation is read as a fraction with a denominator of at most 12, within 10⁻⁹ (chosen while
-  implementing, as proposed in the question). **`normal`** _(sign: #107, #114)_ of a mirror or glide line, its symmetry
+  implementing, as proposed in the question). **`normal`** _(sign: #107, #114; named `axis` since #121 step 7d, #137 C3)_ of a mirror or glide line, its symmetry
   direction in the lattice basis (ITA Table 2.1.3.1), in the descriptions and in each line of
   `symmetryElements`, so that an application can assign a line to a position of the symbol without a
   metric. **Snapping** onto the nearest Wyckoff position by the distance to the position, the most

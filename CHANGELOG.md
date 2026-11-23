@@ -116,6 +116,20 @@ All notable changes to symcrys are recorded here. The format follows
   values are unchanged. Python follows by its fixed rules: `site_symmetry_of`, `site_symmetry`,
   `wyckoff_position`, `is_enantiomorphic_of`, the keys `enantiomorphic`, `n`, `rotation_points`.
 
+- **One name for the axis, and smaller uniformity** (#137 C3, C4, #121 step 7d):
+  - `symcrys/plane`: a reflection or glide reflection gives its axis, the normal of its line, as
+    `axis` (was `normal`), in the descriptions and in the lines of `symmetryElements`, as the axis
+    of an operation is named in the point groups; settings have `isDefault` (was `default`);
+    `orbit` gives `{ point, operations }` per image (was the bare points); the `origin` of a plane
+    group has its positions spaced as printed: `'at 2 1 g'` (was `'at 21g'`), `'at 2 m m'`, …;
+  - `zoneAxis` gives `undefined` for parallel planes (was `null`);
+  - every result is frozen, nested values included, and typed `readonly`: up to 0.10 the lists of
+    `pointGroups`, `settings`, `allowedProperties`, `allowedPropertiesOf`, `residualOperations`, the
+    results of `findPointGroup`, `rotateTensor`, the cell and the index functions could be changed
+    by a caller;
+  - parameter names: `angleBetweenDirections(basis, direction1, direction2)`,
+    `angleBetweenPlanes(basis, plane1, plane2)`, `findPointGroup(symbol)`, also in Python.
+
 ### Removed
 
 - **`latticeOperations`** (Python `lattice_operations`), in both entry points (#121 step 6d): its

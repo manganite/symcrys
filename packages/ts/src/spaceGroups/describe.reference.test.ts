@@ -135,7 +135,7 @@ describe('describePlaneOperation', () => {
       n: 2,
       location: [rational(0), rational(0)],
       direction: [0, 1],
-      normal: [1, 0],
+      axis: [1, 0],
       glide: [rational(0), rational(1)],
     });
   });
@@ -147,7 +147,7 @@ describe('describePlaneOperation', () => {
       n: 2,
       location: [rational(1, 4), rational(0)],
       direction: [0, 1],
-      normal: [1, 0],
+      axis: [1, 0],
     });
     // a x,1/4 of p2gg: line y = 1/4 along a, parallel to y = 0, so its point is on x = 0.
     expect(describePlaneOperation(parseOperation('x+1/2,-y+1/2'))).toEqual({
@@ -155,7 +155,7 @@ describe('describePlaneOperation', () => {
       n: 2,
       location: [rational(0), rational(1, 4)],
       direction: [1, 0],
-      normal: [0, 1],
+      axis: [0, 1],
       glide: [rational(1, 2), rational(0)],
     });
   });
@@ -210,7 +210,7 @@ describe('normals of mirror and glide lines against ITA Table 2.1.3.1 and the fu
     for (const op of planeGroupOperations(key)) {
       const d = describePlaneOperation(op);
       if (d.kind === 'reflection' || d.kind === 'glide-reflection') {
-        const n = d.normal ?? [0, 0];
+        const n = d.axis ?? [0, 0];
         fromOperations.add(n.join(','));
         // Independent of the rule that computes it: W maps the normal onto its negative and the direction onto itself.
         const w = op.matrix;
@@ -220,7 +220,7 @@ describe('normals of mirror and glide lines against ITA Table 2.1.3.1 and the fu
       }
     }
     expect([...fromOperations].sort()).toEqual([...expected].sort());
-    const fromCell = new Set(planeCellElements(key).lines.map((l) => l.normal.join(',')));
+    const fromCell = new Set(planeCellElements(key).lines.map((l) => l.axis.join(',')));
     expect([...fromCell].sort()).toEqual([...expected].sort());
   });
 });

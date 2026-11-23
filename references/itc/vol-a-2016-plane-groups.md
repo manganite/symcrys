@@ -18,7 +18,10 @@ group records the heading that the print sets over the column of coordinates.
 
 Transcription conventions: a leading minus sign is an overbar (`-x` for x̄, `-2x` for 2̄x); `n+` and
 `n-` are the superscripts of n⁺ and n⁻; `<=` is ≤; the spaces the print sets between the characters
-of an oriented site-symmetry symbol (`. m .`) are left out (`.m.`). "Generators selected" leaves out
+of an oriented site-symmetry symbol (`. m .`) are left out (`.m.`), and so are the thin spaces the
+print sets between the characters of every Hermann–Mauguin symbol, except in "Origin", where they
+are kept as spaces between the positions (`at 2 1 g`, so that `21g` is not read as a screw axis;
+read again from the page images on 2026-11-23, #137 C4). "Generators selected" leaves out
 the identity (1) and the integer translations t(1,0), t(0,1) that begin every line in print; a
 centring translation is kept.
 
@@ -106,7 +109,7 @@ Full symbol: p2mm
 Point group: 2mm  
 System: Rectangular  
 Patterson symmetry: p2mm  
-Origin: at 2mm  
+Origin: at 2 m m  
 Asymmetric unit: 0 <= x <= 1/2; 0 <= y <= 1/2  
 Symmetry operations: (1) 1; (2) 2 0,0; (3) m 0,y; (4) m x,0  
 Generators selected: (2); (3)
@@ -128,7 +131,7 @@ Full symbol: p2mg
 Point group: 2mm  
 System: Rectangular  
 Patterson symmetry: p2mm  
-Origin: at 21g  
+Origin: at 2 1 g  
 Asymmetric unit: 0 <= x <= 1/4; 0 <= y <= 1  
 Symmetry operations: (1) 1; (2) 2 0,0; (3) m 1/4,y; (4) a x,0  
 Generators selected: (2); (3)
@@ -161,7 +164,7 @@ Full symbol: c2mm
 Point group: 2mm  
 System: Rectangular  
 Patterson symmetry: c2mm  
-Origin: at 2mm  
+Origin: at 2 m m  
 Asymmetric unit: 0 <= x <= 1/4; 0 <= y <= 1/2  
 Symmetry operations for (0,0)+ set: (1) 1; (2) 2 0,0; (3) m 0,y; (4) m x,0  
 Symmetry operations for (1/2,1/2)+ set: (1) t(1/2,1/2); (2) 2 1/4,1/4; (3) b 1/4,y; (4) a x,1/4  
@@ -199,7 +202,7 @@ Full symbol: p4mm
 Point group: 4mm  
 System: Square  
 Patterson symmetry: p4mm  
-Origin: at 4mm  
+Origin: at 4 m m  
 Asymmetric unit: 0 <= x <= 1/2; 0 <= y <= 1/2; x <= y  
 Symmetry operations: (1) 1; (2) 2 0,0; (3) 4+ 0,0; (4) 4- 0,0; (5) m 0,y; (6) m x,0; (7) m x,x; (8) m x,-x  
 Generators selected: (2); (3); (5)
@@ -219,7 +222,7 @@ Full symbol: p4gm
 Point group: 4mm  
 System: Square  
 Patterson symmetry: p4mm  
-Origin: at 41g  
+Origin: at 4 1 g  
 Asymmetric unit: 0 <= x <= 1/2; 0 <= y <= 1/2; y <= 1/2 - x  
 Symmetry operations: (1) 1; (2) 2 0,0; (3) 4+ 0,0; (4) 4- 0,0; (5) b 1/4,y; (6) a x,1/4; (7) g(1/2,1/2) x,x; (8) m x+1/2,-x  
 Generators selected: (2); (3); (5)
@@ -254,7 +257,7 @@ Full symbol: p3m1
 Point group: 3m  
 System: Hexagonal  
 Patterson symmetry: p6mm  
-Origin: at 3m1  
+Origin: at 3 m 1  
 Asymmetric unit: 0 <= x <= 2/3; 0 <= y <= 2/3; x <= 2y; y <= min(1 - x, 2x)  
 Vertices: 0,0; 2/3,1/3; 1/3,2/3  
 Symmetry operations: (1) 1; (2) 3+ 0,0; (3) 3- 0,0; (4) m x,-x; (5) m x,2x; (6) m 2x,x  
@@ -273,7 +276,7 @@ Full symbol: p31m
 Point group: 3m  
 System: Hexagonal  
 Patterson symmetry: p6mm  
-Origin: at 31m  
+Origin: at 3 1 m  
 Asymmetric unit: 0 <= x <= 2/3; 0 <= y <= 1/2; x <= (1 + y)/2; y <= min(1 - x, x)  
 Vertices: 0,0; 1/2,0; 2/3,1/3; 1/2,1/2  
 Symmetry operations: (1) 1; (2) 3+ 0,0; (3) 3- 0,0; (4) m x,x; (5) m x,0; (6) m 0,y  
@@ -309,7 +312,7 @@ Full symbol: p6mm
 Point group: 6mm  
 System: Hexagonal  
 Patterson symmetry: p6mm  
-Origin: at 6mm  
+Origin: at 6 m m  
 Asymmetric unit: 0 <= x <= 2/3; 0 <= y <= 1/3; x <= (1 + y)/2; y <= x/2  
 Vertices: 0,0; 1/2,0; 2/3,1/3  
 Symmetry operations: (1) 1; (2) 3+ 0,0; (3) 3- 0,0; (4) 2 0,0; (5) 6- 0,0; (6) 6+ 0,0; (7) m x,-x; (8) m x,2x; (9) m 2x,x; (10) m x,x; (11) m x,0; (12) m 0,y  

@@ -146,7 +146,7 @@ def is_point_group_key(key: str) -> bool:
 
 
 def find_point_group(
-    hm: str,
+    symbol: str,
     *,
     axes: Optional[Literal["hexagonal", "rhombohedral"]] = None,
     unique_axis: Optional[Literal["a", "b", "c"]] = None,
@@ -177,7 +177,7 @@ def find_point_group(
         The unique axis of a monoclinic group, as ITA's headlines name it (``'b'``, the standard,
         ``'c'``, ``'a'``). A SymcrysError for another system.
     """
-    result = _call("findPointGroup", hm, _shared.options(axes=axes, unique_axis=unique_axis))
+    result = _call("findPointGroup", symbol, _shared.options(axes=axes, unique_axis=unique_axis))
     return None if result is None else dict(result)
 
 
@@ -394,19 +394,19 @@ def reciprocal_basis(basis: ArrayLike) -> NDArray[np.float64]:
     return np.asarray(_call("reciprocalBasis", np.asarray(basis, dtype=np.float64), floats=True), dtype=np.float64)
 
 
-def angle_between_directions(basis: ArrayLike, u: ArrayLike, v: ArrayLike) -> float:
+def angle_between_directions(basis: ArrayLike, direction1: ArrayLike, direction2: ArrayLike) -> float:
     """The angle in degrees between two lattice directions [uvw] (coordinates in the basis, columns
     a, b, c), 0° to 180°. Raises SymcrysError for a zero vector.
     """
-    return float(_call("angleBetweenDirections", np.asarray(basis, dtype=np.float64), np.asarray(u), np.asarray(v)))
+    return float(_call("angleBetweenDirections", np.asarray(basis, dtype=np.float64), np.asarray(direction1), np.asarray(direction2)))
 
 
-def angle_between_planes(basis: ArrayLike, h: ArrayLike, k: ArrayLike) -> float:
+def angle_between_planes(basis: ArrayLike, plane1: ArrayLike, plane2: ArrayLike) -> float:
     """The angle in degrees between the normals of two planes (hkl), 0° to 180°: the angle between
     the reciprocal vectors h·a* + k·b* + l·c*. For two faces this is 180° minus the interior
     dihedral angle. Raises SymcrysError for a zero vector.
     """
-    return float(_call("angleBetweenPlanes", np.asarray(basis, dtype=np.float64), np.asarray(h), np.asarray(k)))
+    return float(_call("angleBetweenPlanes", np.asarray(basis, dtype=np.float64), np.asarray(plane1), np.asarray(plane2)))
 
 
 def residual_operations(

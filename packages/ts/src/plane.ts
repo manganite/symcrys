@@ -106,7 +106,7 @@ export interface PlaneGroup {
   readonly crystalSystem: PlaneSystem;
   /** The centring translations besides (0, 0): `[[0.5, 0.5]]` for `cm` and `c2mm`, otherwise none. */
   readonly centring: readonly (readonly number[])[];
-  /** The block "Origin" as ITA prints it, e.g. `'at 2mm'`. */
+  /** The block "Origin" as ITA prints it, its positions spaced as printed, e.g. `'at 2 m m'`, `'at 2 1 g'`. */
   readonly origin: string;
 }
 
@@ -127,7 +127,7 @@ export interface Setting {
   /** Its symbol: `'3m1'` or `'31m'` for `3m`, otherwise the key. */
   readonly symbol: string;
   /** True for the default setting (setting 1). */
-  readonly default: boolean;
+  readonly isDefault: boolean;
 }
 
 /** What an operation is, geometrically, as ITA describes it under "Symmetry operations". */
@@ -151,12 +151,13 @@ export interface OperationDescription {
   /** For a mirror or glide: the direction of its line, the shortest integer vector, first non-zero component positive. */
   readonly direction?: readonly number[];
   /**
-   * For a mirror or glide: the normal of its line in the lattice basis, its symmetry direction as in
-   * ITA Table 2.1.3.1: the shortest integer vector along the columns of W − I, first non-zero
+   * For a reflection or glide reflection: its axis, the normal of its line in the lattice basis (as
+   * the `axis` of a reflection of the point groups is the normal of its plane, #137 C3), its symmetry
+   * direction as in ITA Table 2.1.3.1: the shortest integer vector along the columns of W − I, first non-zero
    * component positive. Without a metric it is not the perpendicular of `direction`: in a hexagonal
    * basis the normal of a line along [1,0] is [1,2].
    */
-  readonly normal?: readonly number[];
+  readonly axis?: readonly number[];
   /** For a glide: the glide vector (w + W·w)/2, not reduced modulo the lattice. */
   readonly glide?: readonly number[];
 }
@@ -213,8 +214,8 @@ export interface SymmetryLine {
   readonly kind: 'mirror' | 'glide';
   /** The direction of the line, the shortest integer vector, first non-zero component positive. */
   readonly direction: readonly number[];
-  /** The normal of the line in the lattice basis, as in `describeOperations`. */
-  readonly normal: readonly number[];
+  /** The normal of the line in the lattice basis, its symmetry direction, as `axis` in `describeOperations`. */
+  readonly axis: readonly number[];
   /** For a glide line its glide vector s·direction, 0 < s < 1; for a mirror line (0, 0). */
   readonly glide: readonly number[];
   /** The two ends of the segment of the line in the cell [0, 1]², in the order of `direction`. */
@@ -296,7 +297,7 @@ function describe(op: ExactOperation): OperationDescription {
     ...(d.translation ? { translation: Object.freeze(numbers(d.translation)) } : {}),
     ...(d.location ? { location: Object.freeze(numbers(d.location)) } : {}),
     ...(d.direction ? { direction: Object.freeze([...d.direction]) } : {}),
-    ...(d.normal ? { normal: Object.freeze([...d.normal]) } : {}),
+    ...(d.axis ? { axis: Object.freeze([...d.axis]) } : {}),
     ...(d.glide ? { glide: Object.freeze(numbers(d.glide)) } : {}),
   });
 }
@@ -379,7 +380,7 @@ export function settings(key: PointGroupKey): readonly Setting[] {
   const k = pointKey(key, 'settings');
   return Object.freeze(
     Array.from({ length: planePointGroupSettingCount(k) }, (_, i) =>
-      Object.freeze({ index: i + 1, symbol: planePointGroupSymbol(k, i + 1), default: i === 0 }),
+      Object.freeze({ index: i + 1, symbol: planePointGroupSymbol(k, i + 1), isDefault: i === 0 }),
     ),
   );
 }
@@ -507,17 +508,31 @@ export function snapToWyckoffPosition(
   return Object.freeze({ ...position, point: Object.freeze([...snapped.point]) });
 }
 
+/** One point of the orbit of a point. */
+export interface PointOrbitEntry {
+  /** The image, in the lattice basis, in [0, 1). */
+  readonly point: readonly number[];
+  /** Indices into `operations` of the operations that map the given point here (modulo the lattice), ascending. */
+  readonly operations: readonly number[];
+}
+
 /**
- * The orbit of a point (lattice basis) under a plane group: its distinct images in the
- * conventional cell, each in [0, 1), in the order of the operations that first give them; images
- * that coincide within the tolerance are merged. Throws a RangeError as `siteSymmetry`.
+ * The orbit of a point (lattice basis) under a plane group: the images of the point set onto its
+ * site symmetry (as `siteSymmetry` sets it), each in [0, 1), in the order of the operations that
+ * first give them, each with the indices of the operations that map the point there (as the
+ * entries of the orbits of the point groups): one entry per coset of the site symmetry, so the
+ * first entry holds the operations of `siteSymmetry`. Throws a RangeError as `siteSymmetry`.
  */
 export function orbit(
   key: PlaneGroupKey,
   point: readonly number[],
   options?: PointOptions,
-): readonly (readonly number[])[] {
-  return Object.freeze(planeOrbit(groupKey(key, 'orbit'), point, options).map((p) => Object.freeze(p)));
+): readonly PointOrbitEntry[] {
+  return Object.freeze(
+    planeOrbit(groupKey(key, 'orbit'), point, options).map((e) =>
+      Object.freeze({ point: Object.freeze(e.point), operations: Object.freeze(e.operations) }),
+    ),
+  );
 }
 
 /**
@@ -548,7 +563,7 @@ export function symmetryElements(key: PlaneGroupKey): SymmetryElements {
         Object.freeze({
           kind: l.kind,
           direction: Object.freeze([...l.direction]),
-          normal: Object.freeze([...l.normal]),
+          axis: Object.freeze([...l.axis]),
           glide: Object.freeze(numbers(l.glide)),
           segment: Object.freeze(l.segment.map((p) => Object.freeze(numbers(p)))),
         }),

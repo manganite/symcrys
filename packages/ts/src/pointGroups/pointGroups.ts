@@ -36,6 +36,7 @@ import {
   type PointGroupKey,
 } from './keys.js';
 import { primedSymbols } from './magneticSymbols.js';
+import { deepFreeze } from '../freeze.js';
 
 export { MAGNETIC_POINT_GROUP_KEYS, POINT_GROUP_KEYS, type MagneticPointGroupKey, type PointGroupKey } from './keys.js';
 
@@ -130,7 +131,7 @@ export interface SettingOptions extends AxesOptions {
 
 /**
  * The second argument of `findPointGroup`: the criteria, checked. A string is the convention that
- * up to 0.10 came here (`findPointGroup(hm, 'birss')`), a RangeError that names the change.
+ * up to 0.10 came here (`findPointGroup(symbol, 'birss')`), a RangeError that names the change.
  */
 function criteriaArgument(arg: unknown): AxesOptions | undefined {
   if (arg === undefined) return undefined;
@@ -619,7 +620,7 @@ export function pointGroup<K extends MagneticPointGroupKey>(key: K): PointGroup<
 
 /** All 32 crystal classes, in the order of `POINT_GROUP_KEYS` (by crystal system, as in ITA). */
 export function pointGroups(): readonly PointGroup[] {
-  return POINT_GROUP_KEYS.map((key) => pointGroup(key));
+  return deepFreeze(POINT_GROUP_KEYS.map((key) => pointGroup(key)));
 }
 
 /**
@@ -628,7 +629,7 @@ export function pointGroups(): readonly PointGroup[] {
  * groups (type III) in the order of ITC Vol. D Table 1.5.2.3.
  */
 export function magneticPointGroups(): readonly PointGroup<MagneticPointGroupKey>[] {
-  return MAGNETIC_POINT_GROUP_KEYS.map((key) => pointGroup(key));
+  return deepFreeze(MAGNETIC_POINT_GROUP_KEYS.map((key) => pointGroup(key)));
 }
 
 /**
@@ -644,21 +645,23 @@ export function crystalClassOf(key: MagneticPointGroupKey): PointGroupKey {
 export function settings(key: MagneticPointGroupKey): readonly Setting[] {
   rejectConventionArgument(arguments.length);
   const d = data(key);
-  return Array.from({ length: d.settingCount }, (_, i) => {
-    const symbols = settingSymbols(d, i + 1);
-    const data =
-      d.type === 'III'
-        ? itcBlackWhiteSetting(d.key as BlackWhitePointGroupKey, i + 1)
-        : itcSetting(d.crystalClass.key as PointGroupKey, i + 1);
-    return Object.freeze({
-      index: i + 1,
-      symbol: symbols.short,
-      fullSymbol: symbols.full,
-      ...(data.uniqueAxis ? { uniqueAxis: data.uniqueAxis } : {}),
-      ...(data.axes ? { axes: data.axes } : {}),
-      isDefault: i + 1 === d.itcDefault,
-    });
-  });
+  return deepFreeze(
+    Array.from({ length: d.settingCount }, (_, i) => {
+      const symbols = settingSymbols(d, i + 1);
+      const data =
+        d.type === 'III'
+          ? itcBlackWhiteSetting(d.key as BlackWhitePointGroupKey, i + 1)
+          : itcSetting(d.crystalClass.key as PointGroupKey, i + 1);
+      return Object.freeze({
+        index: i + 1,
+        symbol: symbols.short,
+        fullSymbol: symbols.full,
+        ...(data.uniqueAxis ? { uniqueAxis: data.uniqueAxis } : {}),
+        ...(data.axes ? { axes: data.axes } : {}),
+        isDefault: i + 1 === d.itcDefault,
+      });
+    }),
+  );
 }
 
 const frozenMatrix = (m: Mat3 | IntMat3): Mat3 =>
@@ -786,17 +789,17 @@ export interface PointGroupInSetting<K extends MagneticPointGroupKey = PointGrou
 const compact = compactSymbol;
 
 function find(
-  hm: string,
+  symbol: string,
   classesOnly: boolean,
   options: AxesOptions | undefined,
 ): PointGroupInSetting<MagneticPointGroupKey> | undefined {
-  if (typeof hm !== 'string') return undefined;
-  const target = compact(hm);
+  if (typeof symbol !== 'string') return undefined;
+  const target = compact(symbol);
   const candidates = [...BY_KEY.values()].filter((d) => !classesOnly || d.type === 'I');
   // The key, a short or full symbol of a setting (spaces ignored), Birss's cubic form; then a
   // Schoenflies symbol, ITA's `C3i` or ITC Vol. D's `S6` alike, which names the group and not an
   // orientation (Thomas, 2026-11-23, #96). A symbol of several groups is an error.
-  let found = candidates.map((d) => ({ d, named: settingsNamed(d, hm) })).filter((m) => m.named.length > 0);
+  let found = candidates.map((d) => ({ d, named: settingsNamed(d, symbol) })).filter((m) => m.named.length > 0);
   if (found.length === 0) {
     const inVolD = volDSchoenflies(target);
     found = candidates
@@ -805,13 +808,13 @@ function find(
   }
   if (found.length > 1) {
     throw new RangeError(
-      `The symbol ${JSON.stringify(hm)} names several point groups: ${found.map((m) => m.d.key).join(', ')}`,
+      `The symbol ${JSON.stringify(symbol)} names several point groups: ${found.map((m) => m.d.key).join(', ')}`,
     );
   }
   if (found.length === 0) return undefined;
   const { d, named } = found[0]!;
   // A name that several settings share gives the standard, unless axes or uniqueAxis chooses another.
-  return { key: d.key, setting: choose(d, named, criteriaOf(d, options), JSON.stringify(hm)) };
+  return { key: d.key, setting: choose(d, named, criteriaOf(d, options), JSON.stringify(symbol)) };
 }
 
 /**
@@ -840,9 +843,9 @@ function birssCubic(compactTarget: string): string | undefined {
  * also for a value that is not a string and for the symbol of a magnetic group with time reversal
  * (`findMagneticPointGroup`); a symbol that names several groups is a RangeError that lists them.
  */
-export function findPointGroup(hm: string, options?: AxesOptions): PointGroupInSetting | undefined {
+export function findPointGroup(symbol: string, options?: AxesOptions): PointGroupInSetting | undefined {
   if (arguments.length > 2) rejectConventionArgument(arguments.length);
-  return find(hm, true, criteriaArgument(options)) as PointGroupInSetting | undefined;
+  return deepFreeze(find(symbol, true, criteriaArgument(options)) as PointGroupInSetting | undefined);
 }
 
 /**
@@ -862,9 +865,9 @@ export function findPointGroup(hm: string, options?: AxesOptions): PointGroupInS
  * several groups is a RangeError that lists them.
  */
 export function findMagneticPointGroup(
-  hm: string,
+  symbol: string,
   options?: AxesOptions,
 ): PointGroupInSetting<MagneticPointGroupKey> | undefined {
   if (arguments.length > 2) rejectConventionArgument(arguments.length);
-  return find(hm, false, criteriaArgument(options));
+  return deepFreeze(find(symbol, false, criteriaArgument(options)));
 }

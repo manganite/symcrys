@@ -137,11 +137,11 @@
     },
     "describe_operations": {
       "type": "list of dict",
-      "doc": "``translation``, ``location`` and ``glide`` (where present) are float64 arrays of shape (2,), ``direction`` and ``normal`` int64 arrays of shape (2,)."
+      "doc": "``translation``, ``location`` and ``glide`` (where present) are float64 arrays of shape (2,), ``direction`` and ``axis`` int64 arrays of shape (2,)."
     },
     "describe_operations_of": {
       "type": "list of dict",
-      "doc": "As ``describe_operations``: ``translation``, ``location`` and ``glide`` (where present) float64 arrays of shape (2,), ``direction`` and ``normal`` int64 arrays of shape (2,)."
+      "doc": "As ``describe_operations``: ``translation``, ``location`` and ``glide`` (where present) float64 arrays of shape (2,), ``direction`` and ``axis`` int64 arrays of shape (2,)."
     },
     "site_symmetry": {
       "type": "dict",
@@ -152,8 +152,8 @@
       "doc": "``letter``, ``multiplicity``, ``site_symmetry``, ``coordinates`` as in ``wyckoff_positions``, and ``point`` a float64 array of shape (2,)."
     },
     "orbit": {
-      "type": "numpy.ndarray",
-      "doc": "A float64 array of shape (n, 2), the images as rows."
+      "type": "list of dict",
+      "doc": "In each, ``point`` is a float64 array of shape (2,) and ``operations`` an int64 array of shape (n,)."
     },
     "asymmetric_unit": {
       "type": "dict",
@@ -161,7 +161,7 @@
     },
     "symmetry_elements": {
       "type": "dict",
-      "doc": "``rotation_points``: dicts ``{\"n\", \"point\"}``, point a float64 array of shape (2,); ``lines``: dicts ``{\"kind\", \"direction\", \"normal\", \"glide\", \"segment\"}``, direction and normal int64 of shape (2,), glide float64 of shape (2,), segment float64 of shape (2, 2), the two ends as rows."
+      "doc": "``rotation_points``: dicts ``{\"n\", \"point\"}``, point a float64 array of shape (2,); ``lines``: dicts ``{\"kind\", \"direction\", \"axis\", \"glide\", \"segment\"}``, direction and axis int64 of shape (2,), glide float64 of shape (2,), segment float64 of shape (2, 2), the two ends as rows."
     }
   }
 }

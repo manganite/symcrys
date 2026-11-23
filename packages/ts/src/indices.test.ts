@@ -90,8 +90,8 @@ describe('zoneAxis: the zone law hu + kv + lw = 0', () => {
   });
 
   it('parallel planes have no zone axis', () => {
-    expect(zoneAxis([1, 1, 0], [2, 2, 0])).toBeNull();
-    expect(zoneAxis([1, 1, 0], [-1, -1, 0])).toBeNull();
+    expect(zoneAxis([1, 1, 0], [2, 2, 0])).toBeUndefined();
+    expect(zoneAxis([1, 1, 0], [-1, -1, 0])).toBeUndefined();
   });
 });
 

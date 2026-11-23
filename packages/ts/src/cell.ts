@@ -7,6 +7,7 @@
 import { apply, inverse, isSingular, multiply, transpose, type Mat3, type Vec3 } from './linalg.js';
 import { checkTimeReversal, type CartesianOperation as MagneticOperation } from './operations.js';
 import { EPSILON } from './tolerances.js';
+import { deepFreeze } from './freeze.js';
 
 /** The lattice parameters of a cell: edge lengths and angles in degrees (α between b and c, β between a and c, γ between a and b). */
 export interface LatticeParameters {
@@ -127,11 +128,11 @@ export function latticeFromParameters(p: LatticeParameters): Mat3 {
   // columns: a = (a, 0, 0), b = (b cos γ, b sin γ, 0), c = (c cos β, c (cos α − cos β cos γ)/sin γ, c V/(abc sin γ))
   const cy = (p.c * (ca - cb * cg)) / sg;
   const cz = (p.c * volumeRatio) / sg;
-  return [
+  return deepFreeze([
     [p.a + 0, p.b * cg + 0, p.c * cb + 0],
     [0, p.b * sg + 0, cy + 0],
     [0, 0, cz + 0],
-  ];
+  ]);
 }
 
 function columns(basis: Mat3): [Vec3, Vec3, Vec3] {
@@ -164,13 +165,13 @@ export function latticeParameters(basis: Mat3): LatticeParameters {
     const cross: Vec3 = [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]];
     return Math.atan2(norm(cross), dot(u, v)) / DEG + 0;
   };
-  return { a: norm(a), b: norm(b), c: norm(c), alpha: angle(b, c), beta: angle(a, c), gamma: angle(a, b) };
+  return deepFreeze({ a: norm(a), b: norm(b), c: norm(c), alpha: angle(b, c), beta: angle(a, c), gamma: angle(a, b) });
 }
 
 /** The metric tensor G = AᵀA of a basis A (columns a, b, c): g_ij = a_i · a_j, in the unit of the edge lengths squared. */
 export function metricTensor(basis: Mat3): Mat3 {
   checkBasis(basis, 'metricTensor');
-  return multiply(transpose(basis), basis);
+  return deepFreeze(multiply(transpose(basis), basis));
 }
 
 /**
@@ -179,7 +180,7 @@ export function metricTensor(basis: Mat3): Mat3 {
  */
 export function reciprocalBasis(basis: Mat3): Mat3 {
   checkBasis(basis, 'reciprocalBasis');
-  return transpose(inverse(basis));
+  return deepFreeze(transpose(inverse(basis)));
 }
 
 function vector(v: Vec3, name: string): Vec3 {
@@ -196,9 +197,9 @@ function angleOf(u: Vec3, v: Vec3): number {
 }
 
 /** The angle in degrees between two lattice directions [uvw] (coordinates in the basis, columns a, b, c), 0° to 180°. Throws a RangeError for a zero vector. */
-export function angleBetweenDirections(basis: Mat3, u: Vec3, v: Vec3): number {
+export function angleBetweenDirections(basis: Mat3, direction1: Vec3, direction2: Vec3): number {
   checkBasis(basis, 'angleBetweenDirections');
-  return angleOf(apply(basis, vector(u, 'u')), apply(basis, vector(v, 'v')));
+  return angleOf(apply(basis, vector(direction1, 'direction1')), apply(basis, vector(direction2, 'direction2')));
 }
 
 /**
@@ -206,10 +207,10 @@ export function angleBetweenDirections(basis: Mat3, u: Vec3, v: Vec3): number {
  * reciprocal vectors h·a* + k·b* + l·c*. For two faces this is 180° minus the interior dihedral
  * angle. Throws a RangeError for a zero vector.
  */
-export function angleBetweenPlanes(basis: Mat3, h: Vec3, k: Vec3): number {
+export function angleBetweenPlanes(basis: Mat3, plane1: Vec3, plane2: Vec3): number {
   checkBasis(basis, 'angleBetweenPlanes');
   const b = reciprocalBasis(basis);
-  return angleOf(apply(b, vector(h, 'h')), apply(b, vector(k, 'k')));
+  return angleOf(apply(b, vector(plane1, 'plane1')), apply(b, vector(plane2, 'plane2')));
 }
 
 /**
@@ -224,7 +225,7 @@ export function residualOperations<T extends CellOperation>(
   operations: readonly T[],
   basis: Mat3,
   options?: ResidualOperationsOptions,
-): T[] {
+): readonly T[] {
   const g = metricTensor(basis);
   const tolerance = options?.tolerance ?? EPSILON;
   if (typeof tolerance !== 'number' || !Number.isFinite(tolerance) || tolerance < 0) {
@@ -248,10 +249,13 @@ export function residualOperations<T extends CellOperation>(
     }
   });
   const scale = Math.max(...g.flat().map(Math.abs));
-  return operations.filter((op) => {
-    const m = multiply(multiply(transpose(op.matrix), g), op.matrix);
-    return m.every((row, i) => row.every((x, j) => Math.abs(x - g[i][j]) <= tolerance * scale));
-  });
+  // The list is frozen, not the operations in it, which are the caller's.
+  return Object.freeze(
+    operations.filter((op) => {
+      const m = multiply(multiply(transpose(op.matrix), g), op.matrix);
+      return m.every((row, i) => row.every((x, j) => Math.abs(x - g[i][j]) <= tolerance * scale));
+    }),
+  );
 }
 
 /** An operation of the magnetic API passed to `residualOperations`: its matrix and whether it is combined with time reversal. */
@@ -272,7 +276,7 @@ export function residualMagneticOperations<T extends MagneticCellOperation>(
   operations: readonly T[],
   basis: Mat3,
   options?: ResidualOperationsOptions,
-): T[] {
+): readonly T[] {
   if (Array.isArray(operations)) checkTimeReversal(operations as unknown as readonly MagneticOperation[]);
   return residualOperations(operations, basis, options);
 }

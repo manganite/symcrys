@@ -33,12 +33,13 @@ export interface PlaneOperationDescription {
   /** For a mirror or glide: the direction of its line, the shortest integer vector, first non-zero component positive. */
   readonly direction?: readonly [number, number];
   /**
-   * For a mirror or glide: the normal of its line in the lattice basis, its symmetry direction in
-   * the sense of ITA Table 2.1.3.1: the shortest integer vector along the columns of W − I, first
+   * For a reflection or glide reflection: its axis, the normal of its line in the lattice basis (as
+   * the `axis` of a reflection of the point groups is the normal of its plane, #137 C3), its symmetry
+   * direction in the sense of ITA Table 2.1.3.1: the shortest integer vector along the columns of W − I, first
    * non-zero component positive. Without a metric it is not the perpendicular of `direction`: in a
    * hexagonal basis the normal of a line along [1,0] is [1,2].
    */
-  readonly normal?: readonly [number, number];
+  readonly axis?: readonly [number, number];
   /**
    * For a glide: the glide vector (w + W·w)/2, not reduced modulo the lattice. An operation whose
    * glide vector is a non-zero lattice vector is a glide, as it is geometrically, although the
@@ -139,7 +140,7 @@ export function describePlaneOperation(op: ExactOperation): PlaneOperationDescri
     n: 2,
     location: Object.freeze(location),
     direction: Object.freeze(direction),
-    normal: Object.freeze(normal),
+    axis: Object.freeze(normal),
   };
   return Object.freeze(
     glide.some((v) => v[0] !== 0)
