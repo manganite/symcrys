@@ -107,8 +107,8 @@ export interface SettingOptions {
 export interface SymbolOptions extends SettingOptions {
   /**
    * `'short'` (default): short symbol of the setting, e.g. `321` for class `32` (ITA Table
-   * 3.2.3.2); in the magnetic API the default setting of a grey or black-and-white group has the
-   * symbol ITC Vol. D prints (Table 1.5.2.3), its key (`32'`, `321'`).
+   * 3.2.3.2); in the magnetic API the default setting of a grey or black-and-white group has its
+   * key as short symbol (`32'` as ITC Vol. D Table 1.5.2.3 prints it; `321'`, the class key and `1'`).
    * `'full'`: full symbol, positions separated by spaces, e.g. `-3 2/m 1`.
    * `'schoenflies'`: Schoenflies symbol, subscripts written inline (`C3v`, `D2d`, `Oh`); `C3i` for
    * the class -3 in the crystallographic API (ITA), `S6` in the magnetic API (ITC Vol. D: `S6(C3)`,
@@ -224,10 +224,20 @@ export function rejectConventionArgument(argumentCount: number): void {
   }
 }
 
-/** The setting a symbol names: the one whose short or full symbol it is, spaces ignored. */
+/** A symbol with its spaces normalized: trimmed, every run of spaces one space. */
+const spaced = (s: string): string => s.trim().replace(/\s+/g, ' ');
+
+/**
+ * The setting a symbol names: the one whose full symbol it is, written with its spaces (`3 2'`, the
+ * rhombohedral setting of `32'`); otherwise the one whose short or full symbol it is with the spaces
+ * ignored. Without spaces the full symbol `3 2'` is the short symbol `32'` of the default setting
+ * too (#137 B2), so the full symbol is compared with its spaces first.
+ */
 function settingOfSymbol(d: GroupData, text: string): number {
-  const target = compact(text);
   const all = Array.from({ length: d.settingCount }, (_, i) => i + 1);
+  const byFull = all.filter((i) => spaced(settingSymbols(d, i).full) === spaced(text));
+  if (byFull.length === 1) return byFull[0]!;
+  const target = compact(text);
   const named = all.filter((i) => {
     const s = settingSymbols(d, i);
     return compact(s.short) === target || compact(derivedSymbols(d, i).short) === target || compact(s.full) === target;
@@ -243,7 +253,7 @@ function settingOfSymbol(d: GroupData, text: string): number {
   if (named.length > 1) {
     // The full symbols tell the settings apart unless they too are the same (`3` with hexagonal and
     // rhombohedral axes); then only the index does.
-    const fulls = new Set(named.map((i) => compact(settingSymbols(d, i).full)));
+    const fulls = new Set(named.map((i) => spaced(settingSymbols(d, i).full)));
     const advice = fulls.size === named.length ? 'give the full symbol or the index' : 'give the index';
     throw new RangeError(
       `Point group ${d.key}: the symbol ${JSON.stringify(text)} names ${named.length} settings; ${advice} (${list(named)})`,
@@ -381,8 +391,9 @@ const symbolCache = new Map<string, { readonly short: string; readonly full: str
 
 /**
  * Short and full symbol of a setting as symcrys gives them (#137 B2): those of `derivedSymbols`,
- * except that the default setting of a grey or black-and-white group has the short symbol ITC Vol. D
- * prints in Table 1.5.2.3, its key (`32'`, not `32'1`; `321'`, not `3211'`). A crystal class keeps
+ * except that the default setting of a grey or black-and-white group has its key as short symbol:
+ * that of ITC Vol. D Table 1.5.2.3 for a black-and-white group (`32'`, not `32'1`), the class key
+ * followed by `1'` for a grey group (`321'`, not `3211'`). A crystal class keeps
  * ITA's symbol (`321`) in both entry points.
  */
 function settingSymbols(d: GroupData, index: number): { readonly short: string; readonly full: string } {
@@ -614,9 +625,10 @@ export function generators(key: MagneticPointGroupKey, options?: SettingOptions)
 }
 
 /**
- * A Schoenflies symbol as ITC Vol. D writes it (#137 B3): `S6` for the class -3 and in the symbols
- * of its magnetic groups and supergroups (`S6(C3)`, `D3d(S6)`, `C6h(S6)`, Table 1.5.2.3), where ITA
- * writes `C3i` (Table 3.2.1.2), as the crystallographic API does.
+ * A Schoenflies symbol as ITC Vol. D writes it (#137 B3): `S6` for the class -3, where ITA writes
+ * `C3i` (Table 3.2.1.2), as the crystallographic API does, and so `S6R` for its grey group. The
+ * black-and-white groups store their symbols as Vol. D prints them (`S6(C3)`, `D3d(S6)`,
+ * `C6h(S6)`; itcMagneticData.ts).
  */
 const volDSchoenflies = (s: string): string => s.replace(/C3i/g, 'S6');
 
@@ -626,9 +638,10 @@ export function itaSchoenflies(key: PointGroupKey): string {
 }
 
 /**
- * A symbol of the point group in the requested setting, as ITC Vol. D writes it (Table 1.5.2.3):
- * the default setting of a grey or black-and-white group has its key as short symbol (`32'`), and
- * the Schoenflies symbol of -3 is `S6` (docs/conventions.md, "Symbols").
+ * A symbol of the point group in the requested setting. The default setting of a grey or
+ * black-and-white group has its key as short symbol (`32'`, as ITC Vol. D Table 1.5.2.3 prints it;
+ * `321'`), a crystal class ITA's symbol (`321`), and the Schoenflies symbols follow ITC Vol. D
+ * (`S6`, `D3d(S6)`; docs/conventions.md, "Symbols").
  */
 export function symbol(key: MagneticPointGroupKey, options?: SymbolOptions): string {
   const d = data(key);

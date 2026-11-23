@@ -236,12 +236,12 @@ def symbol(
         c and a) is an error that names them. Default: the ITC default setting.
     form : keyword-only, optional
         ``'short'`` (default): short symbol of the setting, e.g. ``321`` for class ``32`` (ITA Table
-        3.2.3.2); in the magnetic API the default setting of a grey or black-and-white group has the
-        symbol ITC Vol. D prints (Table 1.5.2.3), its key (``32'``, ``321'``). ``'full'``: full
-        symbol, positions separated by spaces, e.g. ``-3 2/m 1``. ``'schoenflies'``: Schoenflies
-        symbol, subscripts written inline (``C3v``, ``D2d``, ``Oh``); ``C3i`` for the class -3 in
-        the crystallographic API (ITA), ``S6`` in the magnetic API (ITC Vol. D: ``S6(C3)``,
-        ``D3d(S6)``).
+        3.2.3.2); in the magnetic API the default setting of a grey or black-and-white group has its
+        key as short symbol (``32'`` as ITC Vol. D Table 1.5.2.3 prints it; ``321'``, the class key
+        and ``1'``). ``'full'``: full symbol, positions separated by spaces, e.g. ``-3 2/m 1``.
+        ``'schoenflies'``: Schoenflies symbol, subscripts written inline (``C3v``, ``D2d``, ``Oh``);
+        ``C3i`` for the class -3 in the crystallographic API (ITA), ``S6`` in the magnetic API (ITC
+        Vol. D: ``S6(C3)``, ``D3d(S6)``).
     """
     return str(_call("symbol", key, _shared.options(setting=setting, form=form)))
 

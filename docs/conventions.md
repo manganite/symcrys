@@ -80,7 +80,7 @@ apart by its two entry points ("Two entry points", below).
 
 The **crystal class** of a magnetic group is the class it becomes when time reversal is dropped
 from every operation. The numbers I, II, III are those of ITC Vol. D Table 1.2.6.12 (p. 66,
-"Magnetic point groups": type I the 32 classes, type II the grey groups `11'`, `21'`, …, type III
+"Magnetic point groups": type I the 32 classes, type II the grey groups, printed `1'`, `21'`, …, type III
 the black-and-white groups; #137 B5). ITC Vol. D Ch. 1.5 numbers differently: its first type are the grey groups (§ 1.5.2.1, eq. (1.5.2.1)), its
 second type the crystal classes, its third type the black-and-white groups; its Table 1.5.2.3,
 "The 90 magnetic point groups of types 2 and 3", therefore lists the 32 classes and the 58
@@ -368,13 +368,17 @@ writes; ITC Vol. D and the magnetic API write `S6`).
   58 groups. A grey group has the symbols of its class followed by `1'` (short `mm21'`, full
   `m m 2 1'`).
 - **Short symbols of the magnetic groups** (#137 B2): the default setting of a grey or
-  black-and-white group has the short symbol ITC Vol. D prints, its key (`32'`, `-3'm'`, `321'`,
-  `-3m1'`; Table 1.5.2.3 and the grey groups as in Table 1.2.6.12). The other settings keep the `1`
-  that fixes the orientation, as Vol. D does where it prints them (`31m'`, p. 140; `3121'`), and
-  the symbol derived by the rule for the default setting (`32'1`, `3211'`) still selects it
-  (`{ setting }`, `findPointGroup`). With rhombohedral axes the short symbol is again the key
+  black-and-white group has its key as short symbol: for a black-and-white group the short symbol
+  of ITC Vol. D Table 1.5.2.3 (`32'`, `-3'm'`), for a grey group the key of its class followed by
+  `1'` (`321'`, `-3m1'`). Table 1.2.6.12 prints some grey groups otherwise (`1'`, `21'/m`, `2mm1'`,
+  where the keys are `11'`, `2/m1'`, `mm21'`). The other settings keep the `1` that fixes the
+  orientation (`31m'`; for a grey group `3121'`, by the rule). Vol. D itself writes the default
+  orientation with the `1` where it sets it against the other one (§ 1.5.8.1, p. 140: `3m'1`,
+  `31m'`); symcrys gives the symbol of Table 1.5.2.3. The symbol derived by the rule for the default
+  setting (`32'1`, `3211'`) still selects it (`{ setting }`, `findPointGroup`). With rhombohedral axes the short symbol is again the key
   (`32'`), so the default and the rhombohedral setting share it and are told apart by their full
-  symbols (`3 2' 1`, `3 2'`). A crystal class keeps ITA's symbol (`321`) in both entry points, so
+  symbols (`3 2' 1`, `3 2'`): a full symbol is compared with its spaces first, since without them
+  `3 2'` is `32'`. A crystal class keeps ITA's symbol (`321`) in both entry points, so
   that a setting symbol means the same setting in both.
 - **Short symbol** (`form: 'short'`, the default): the symbol of the setting, in ITC as in the
   headline of ITA Table 3.2.3.2, with the trailing or inner `1` that fixes the orientation (`321`,

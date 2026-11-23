@@ -647,13 +647,16 @@ The conventions themselves are in `docs/conventions.md`; here, what was decided 
   `docs/conventions.md`, "Settings"), and monoclinic unique axis a is setting 3 (#121 step 6c, #137 A5).
 - **Symbols per volume** (#137 B2, B3, B5, decided by Thomas on 2026-11-22; #121 step 7a): each
   entry point writes the symbols of the volume it is anchored in. The magnetic API: the default
-  setting of a grey or black-and-white group has its key as short symbol, as ITC Vol. D Table
-  1.5.2.3 prints it (`32'`, `321'`), and Schoenflies symbols in `S6`; the crystallographic API:
+  setting of a grey or black-and-white group has its key as short symbol (`32'` as ITC Vol. D Table
+  1.5.2.3 prints it; `321'`, the class key and `1'`), and Schoenflies symbols in `S6`; the
+  crystallographic API:
   ITA's `321` and `C3i`. The types `'I'`, `'II'`, `'III'` are those of ITC Vol. D Table 1.2.6.12
   (p. 66). Chosen while implementing: a crystal class keeps ITA's short symbol (`321`) in the
-  magnetic API too, so that `settings` and `{ setting: '32' }` mean the same in both entry points
-  (with Vol. D's `32` the default and the rhombohedral setting of the white group would share it);
-  the symbol derived by the rule (`32'1`) still selects the default setting.
+  magnetic API too, so that a class has the same `settings` in both entry points and
+  `{ setting: '32' }` selects the same setting (the rhombohedral one) in both; the symbol derived by
+  the rule (`32'1`) still selects the default setting; a full symbol is compared with its spaces
+  first, so that `3 2'` selects the rhombohedral setting of `32'` (_open question to Thomas in the
+  PR of step 7a_).
 - **Magnetic point groups: data** _(Storage in the Birss frame replaced by "Pure ITC" above; the reason
   given for the type names is corrected in #109. Since #122 PR 2c the ITC full symbols of the
   black-and-white groups are stored, one per setting, and the rule runs the other way: the time
