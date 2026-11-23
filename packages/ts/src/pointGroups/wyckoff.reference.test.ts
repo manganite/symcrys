@@ -276,7 +276,7 @@ function symbolGroups(
 function settingOf(e: Entry): { key: PointGroupKey; index: number } {
   const axis = /^unique axis (b|c)$/.exec(e.axes)?.[1];
   const found = POINT_GROUP_KEYS.flatMap((key) =>
-    settings(key, 'itc')
+    settings(key)
       .filter((s) => s.symbol === e.short && (axis === undefined || s.uniqueAxis === axis))
       .map((s) => ({ key, index: s.index })),
   );
@@ -400,7 +400,7 @@ describe('ITA Table 3.2.3.2: Wyckoff positions', () => {
 });
 
 describe('Settings ITA does not print: mm2 as 2mm and m2m', () => {
-  for (const s of settings('mm2', 'itc').filter((x) => x.symbol === '2mm' || x.symbol === 'm2m')) {
+  for (const s of settings('mm2').filter((x) => x.symbol === '2mm' || x.symbol === 'm2m')) {
     it(`${s.symbol}: every position read along x, y, z gives the site symmetry of its representative`, () => {
       const group = groupOfSymbol(s.symbol, ORTHONORMAL);
       const lib = wyckoffPositions('mm2', { setting: s.index });

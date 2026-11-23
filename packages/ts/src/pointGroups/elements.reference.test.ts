@@ -226,8 +226,7 @@ describe('describeOperations against the symmetry operations printed in ITA', ()
     });
     expect(used.size).toBe(ops.length);
 
-    // generators() in the ITC convention gives ITA's selected generators, line (n) of each printed
-    // n, in printed order (the Birss convention gives birss-app's: birssApp.pins.test.ts)
+    // generators() gives ITA's selected generators, line (n) of each printed n, in printed order
     const g = generators(key, { setting });
     expect(g).toHaveLength(e.generators.length);
     e.generators.forEach((n, j) => expect(sameM(mul(mul(b, general[n - 1]), inverse(b)), g[j].matrix)).toBe(true));

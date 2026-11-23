@@ -182,8 +182,8 @@ export function pointGroupOf(
   if (!key) return undefined;
   // The operations passed in generate the group; if each is an operation of a setting of the same
   // order, the group is that setting. Products are not compared, since their errors add up.
-  const setting = settings(key, 'itc').find((s) => {
-    const ops = groupOperations(key, { convention: 'itc', setting: s.index });
+  const setting = settings(key).find((s) => {
+    const ops = groupOperations(key, { setting: s.index });
     return ops.length === group.length && operations.every((g) => ops.some((op) => same(g, op, tolerance)));
   });
   return Object.freeze(setting ? { key, setting: setting.index } : { key });

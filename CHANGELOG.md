@@ -6,6 +6,29 @@ All notable changes to symcrys are recorded here. The format follows
 
 ## [Unreleased]
 
+### Removed
+
+- **The Birss convention** (#110, #121 step 5): symcrys follows ITC only. The option `convention`
+  goes from every function (`operations`, `generators`, `symbol`, `describeOperations`,
+  `symmetryDirections`, `latticeOperations`, `orbit`, `tensorForm`, `wyckoffPositions`,
+  `wyckoffPositionOf`, `crystalForms`), and so do the second argument of `settings` and
+  `findPointGroup` and the type `Convention`; in Python the keyword and argument `convention`. In
+  TypeScript and JavaScript an options object that still has `convention`, or a second argument of
+  `settings` or `findPointGroup`, throws a RangeError that names this change, so that a caller
+  asking for Birss's presentation is not answered in ITC's without notice; in Python the removed
+  keyword raises a `TypeError`. Results in the ITC convention are unchanged. The behavioural pins of
+  the Birss convention against birss-app last exist in 0.10.1 (`birssApp.pins.json`), for birss-app
+  to take over (#125).
+
+  | Up to 0.10                                                                                                                             | From 0.11                                                                                                                                            |
+  | -------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+  | `operations(key, { convention: 'itc' })`, also for the other functions                                                                 | `operations(key)`: drop the option                                                                                                                   |
+  | `settings(key, 'itc')`, `findPointGroup(hm, 'itc')`                                                                                    | `settings(key)`, `findPointGroup(hm)`                                                                                                                |
+  | `import type { Convention } from 'symcrys'`                                                                                            | drop the import                                                                                                                                      |
+  | Python: `symcrys.operations(key, convention="itc")`, `symcrys.settings(key, "itc")`                                                    | `symcrys.operations(key)`, `symcrys.settings(key)`                                                                                                   |
+  | `convention: 'birss'` (Python `convention="birss"`): Birss's default setting, symbols, order of the operations, generators, axis signs | gone; Birss's presentation is the application's (birss-app, #125). The frames of the two books: docs/conventions.md, "Birss as a second print check" |
+  | `findPointGroup("m'm'm", 'birss')` and the reading of `mm'm'`, `6'/mmm'` as Birss symbols (#46)                                        | gone: a key gives the ITC default setting                                                                                                            |
+
 ## [0.10.1] - 2026-11-22
 
 ### Fixed

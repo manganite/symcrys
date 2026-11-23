@@ -1,20 +1,12 @@
 /**
  * Public API for the point groups: the 32 crystallographic point groups (crystal classes) and the
  * 90 magnetic point groups with time reversal (32 grey, 58 black-and-white). Lookup, settings,
- * operations, generators and symbols, in the ITC convention (default) or the Birss convention.
+ * operations, generators and symbols, as ITC gives them (CLAUDE.md, "Pure ITC").
  */
 
 import { INVERSION, det, matricesEqual } from '../linalg.js';
 import { EPSILON } from '../tolerances.js';
-import {
-  MAX_GROUP_ORDER,
-  closeGroup,
-  compose,
-  operation,
-  operationsEqual,
-  transformOperation,
-  type Operation,
-} from '../operations.js';
+import { compose, operation, operationsEqual, type Operation } from '../operations.js';
 import { ITC_CLASSES, itcCartesianGenerators, itcCartesianOperations, itcClass, itcSetting } from './itcData.js';
 import {
   ITC_BLACK_WHITE,
@@ -23,22 +15,18 @@ import {
   itcBlackWhiteSetting,
 } from './itcMagneticData.js';
 import type { CrystalSystem } from '../lattice.js';
-import { POINT_GROUP_DATA, POINT_GROUP_KEYS, type PointGroupKey, type SettingData } from './data.js';
 import {
-  BLACK_WHITE_DATA,
   MAGNETIC_POINT_GROUP_KEYS,
+  POINT_GROUP_KEYS,
   TIME_REVERSAL,
   greySchoenflies,
   type BlackWhitePointGroupKey,
   type MagneticPointGroupKey,
-} from './magneticData.js';
+  type PointGroupKey,
+} from './keys.js';
 import { primedSymbols } from './magneticSymbols.js';
 
-export { POINT_GROUP_KEYS, type PointGroupKey } from './data.js';
-export { MAGNETIC_POINT_GROUP_KEYS, type MagneticPointGroupKey } from './magneticData.js';
-
-/** `'itc'`: International Tables for Crystallography (default). `'birss'`: Birss, Symmetry and Magnetism (1966). */
-export type Convention = 'itc' | 'birss';
+export { MAGNETIC_POINT_GROUP_KEYS, POINT_GROUP_KEYS, type MagneticPointGroupKey, type PointGroupKey } from './keys.js';
 
 /**
  * Type of a magnetic point group. `'I'`: a crystallographic point group, no operation with time
@@ -50,7 +38,7 @@ export type PointGroupType = 'I' | 'II' | 'III';
 
 /**
  * A point group with the properties that are fixed by its operations. None of them depends on the
- * setting or the convention (docs/conventions.md, "Properties").
+ * setting (docs/conventions.md, "Properties").
  */
 export interface PointGroup<K extends MagneticPointGroupKey = PointGroupKey> {
   /** The key (docs/conventions.md, "Keys"). */
@@ -81,9 +69,9 @@ export interface PointGroup<K extends MagneticPointGroupKey = PointGroupKey> {
 
 /** A setting of a point group: an orientation of its symmetry directions in the Cartesian frame (docs/conventions.md, "Settings"). */
 export interface Setting {
-  /** 1-based; the same physical frame in both conventions. */
+  /** 1-based. */
   readonly index: number;
-  /** Short symbol of the setting in the requested convention. */
+  /** Short symbol of the setting. */
   readonly symbol: string;
   /** Full symbol, symmetry directions separated by single spaces. */
   readonly fullSymbol: string;
@@ -94,19 +82,17 @@ export interface Setting {
    * reversal (there the axis does not identify a setting).
    */
   readonly uniqueAxis?: 'a' | 'b' | 'c';
-  /** True for the default setting of the requested convention. */
+  /** True for the ITC default setting. */
   readonly isDefault: boolean;
 }
 
-/** Which convention and which setting a function answers in. */
+/** Which setting a function answers in. */
 export interface SettingOptions {
-  /** Default `'itc'`. */
-  readonly convention?: Convention;
-  /** 1-based setting index; default: the default setting of the convention. */
+  /** 1-based setting index; default: the ITC default setting. */
   readonly setting?: number;
 }
 
-/** Convention, setting and form of a symbol. */
+/** Setting and form of a symbol. */
 export interface SymbolOptions extends SettingOptions {
   /**
    * `'short'` (default): short symbol of the setting, e.g. `321` (ITC) for class `32`.
@@ -127,14 +113,10 @@ interface GroupData {
   readonly crystalClass: GroupData;
   readonly crystalSystem: CrystalSystem;
   readonly schoenflies: string;
-  /** Generators in the stored (Birss) frame, which is setting 1. */
-  readonly generators: readonly Operation[];
-  readonly settings: readonly { readonly frame: SettingData['frame']; readonly uniqueAxis?: 'a' | 'b' | 'c' }[];
+  /** The ITC default setting (itcData.ts, itcMagneticData.ts). */
   readonly itcDefault: number;
-  /** The number of ITC settings (itcData.ts, itcMagneticData.ts); the Birss ones are `settings`. */
-  readonly itcSettingCount: number;
-  /** Type I only: the stored symbols of each setting (the Birss ones are used; ITC: itcData.ts). */
-  readonly symbols?: readonly SettingData[];
+  /** The number of settings. */
+  readonly settingCount: number;
 }
 
 /** The ITC default setting of a class, from the ITC class data (itcData.ts). */
@@ -143,11 +125,9 @@ function itcDefaultOf(key: PointGroupKey): number {
 }
 
 // Built from the ITC data, in their order (that of POINT_GROUP_KEYS and
-// BLACK_WHITE_POINT_GROUP_KEYS); the Birss data (data.ts, magneticData.ts) add the generators and
-// frames of the Birss convention and of the cross-check in `settingOperations`.
+// BLACK_WHITE_POINT_GROUP_KEYS).
 const BY_KEY = new Map<string, GroupData>();
 for (const c of ITC_CLASSES) {
-  const birss = POINT_GROUP_DATA.find((x) => x.key === c.key)!;
   const self: GroupData = {
     key: c.key,
     type: 'I',
@@ -156,16 +136,12 @@ for (const c of ITC_CLASSES) {
     },
     crystalSystem: c.crystalSystem,
     schoenflies: c.schoenflies,
-    generators: birss.generators,
-    settings: birss.settings,
     itcDefault: itcDefaultOf(c.key),
-    itcSettingCount: c.settings.length,
-    symbols: birss.settings,
+    settingCount: c.settings.length,
   };
   BY_KEY.set(c.key, self);
 }
-// Grey groups: the class and time reversal (ITC Vol. D, eq. (1.5.2.1)). birss-app generates them
-// from the generators of the class followed by 1', without the identity generator of class 1.
+// Grey groups: the class and time reversal (ITC Vol. D, eq. (1.5.2.1)).
 for (const c of ITC_CLASSES) {
   const crystalClass = BY_KEY.get(c.key)!;
   const key: MagneticPointGroupKey = `${c.key}1'`;
@@ -175,14 +151,11 @@ for (const c of ITC_CLASSES) {
     crystalClass,
     crystalSystem: c.crystalSystem,
     schoenflies: greySchoenflies(c.schoenflies),
-    generators: [...(c.key === '1' ? [] : crystalClass.generators), TIME_REVERSAL],
-    settings: crystalClass.settings,
     itcDefault: crystalClass.itcDefault,
-    itcSettingCount: crystalClass.itcSettingCount,
+    settingCount: crystalClass.settingCount,
   });
 }
 for (const g of ITC_BLACK_WHITE) {
-  const birss = BLACK_WHITE_DATA.find((x) => x.key === g.key)!;
   const crystalClass = BY_KEY.get(g.crystalClass)!;
   BY_KEY.set(g.key, {
     key: g.key,
@@ -190,10 +163,8 @@ for (const g of ITC_BLACK_WHITE) {
     crystalClass,
     crystalSystem: crystalClass.crystalSystem,
     schoenflies: g.schoenflies,
-    generators: birss.generators,
-    settings: birss.settings,
     itcDefault: g.settings.find((s) => s.isDefault)!.index,
-    itcSettingCount: g.settings.length,
+    settingCount: g.settings.length,
   });
 }
 
@@ -213,26 +184,36 @@ function data(key: string): GroupData {
   return d;
 }
 
-function convention(options?: SettingOptions): Convention {
-  const c = options?.convention ?? 'itc';
-  if (c !== 'itc' && c !== 'birss') throw new RangeError(`Unknown convention: ${JSON.stringify(c)}`);
-  return c;
+/**
+ * Throws for the option `convention`, removed in 0.11.0 with the Birss convention, so that a caller
+ * that still asks for Birss's presentation is not answered in ITC's without notice.
+ */
+function rejectConvention(options: object | undefined): void {
+  if (options !== undefined && options !== null && 'convention' in options) {
+    throw new RangeError(
+      'The option convention was removed in symcrys 0.11.0: symcrys follows ITC only (CHANGELOG.md, 0.11.0)',
+    );
+  }
 }
 
-function defaultSetting(d: GroupData, c: Convention): number {
-  return c === 'itc' ? d.itcDefault : 1;
+/**
+ * Throws for a second argument of `settings` or `findPointGroup`, which took a convention up to
+ * 0.10 (`settings('32', 'birss')`): TypeScript refuses it, plain JavaScript would ignore it and
+ * answer for the ITC frame. Internal.
+ */
+export function rejectConventionArgument(argumentCount: number): void {
+  if (argumentCount > 1) {
+    throw new RangeError(
+      'The convention argument was removed in symcrys 0.11.0: symcrys follows ITC only (CHANGELOG.md, 0.11.0)',
+    );
+  }
 }
 
-/** The number of settings in a convention: from the ITC data, or the Birss frames. */
-function settingCount(d: GroupData, c: Convention): number {
-  return c === 'itc' ? d.itcSettingCount : d.settings.length;
-}
-
-/** The requested setting index, checked; the convention's default if none is given. */
+/** The requested setting index, checked; the ITC default if none is given. */
 function settingIndex(d: GroupData, options?: SettingOptions): number {
-  const c = convention(options);
-  const index = options?.setting ?? defaultSetting(d, c);
-  const count = settingCount(d, c);
+  rejectConvention(options);
+  const index = options?.setting ?? d.itcDefault;
+  const count = d.settingCount;
   if (!Number.isInteger(index) || index < 1 || index > count) {
     throw new RangeError(`Point group ${d.key} has no setting ${String(index)} (settings 1 to ${count})`);
   }
@@ -247,20 +228,7 @@ function freezeOperation(op: Operation): Operation {
   }) as Operation;
 }
 
-const generatorCache = new Map<string, readonly Operation[]>();
 const operationCache = new Map<string, readonly Operation[]>();
-
-/** The stored generators carried into the frame of a setting: the generators of the Birss convention. */
-function settingGenerators(d: GroupData, index: number): readonly Operation[] {
-  const cacheKey = `${d.key}#${index}`;
-  let result = generatorCache.get(cacheKey);
-  if (!result) {
-    const frame = d.settings[index - 1].frame;
-    result = Object.freeze(d.generators.map((g) => freezeOperation(transformOperation(g, frame))));
-    generatorCache.set(cacheKey, result);
-  }
-  return result;
-}
 
 /** The operation of `ops` with the matrix of `op`, whatever its time reversal. */
 function withMatrix(ops: readonly Operation[], op: Operation): Operation {
@@ -308,56 +276,17 @@ function settingItaGenerators(d: GroupData, index: number): readonly Operation[]
   return result;
 }
 
-const birssOperationCache = new Map<string, readonly Operation[]>();
-
-/**
- * The operations of a setting in the Birss convention, in birss-app's order (docs/conventions.md,
- * "Birss convention and birss-app"): the generators of the setting first, then repeated passes
- * that append every new product g·h of two operations found before the pass, in the order of g,
- * then h, until a pass adds nothing.
- */
-function birssOperations(d: GroupData, index: number): readonly Operation[] {
-  const cacheKey = `${d.key}#${index}`;
-  let result = birssOperationCache.get(cacheKey);
-  if (!result) {
-    const group = [...settingGenerators(d, index)];
-    for (let changed = true; changed;) {
-      changed = false;
-      const size = group.length;
-      for (let i = 0; i < size; i++) {
-        for (let j = 0; j < size; j++) {
-          const product = compose(group[i], group[j]);
-          if (!group.some((g) => operationsEqual(g, product))) {
-            if (group.length >= MAX_GROUP_ORDER) throw new Error(`Point group ${d.key}: closure does not terminate`);
-            group.push(product);
-            changed = true;
-          }
-        }
-      }
-    }
-    if (!sameSet(group, settingOperations(d, index))) {
-      throw new Error(`Point group ${d.key}, setting ${index}: Birss operations differ from the closure`);
-    }
-    result = Object.freeze(group.map(freezeOperation));
-    birssOperationCache.set(cacheKey, result);
-  }
-  return result;
-}
-
 /**
  * The operations of a setting in ITA's order (docs/conventions.md, "Order of the operations"). A
  * crystal class: from the ITC class data (itcData.ts), built coset by coset from ITA's generators.
  * A black-and-white group: the operations of its class in the setting its ITC symbol names, in
  * that order, each with the time reversal its symbol gives (itcMagneticData.ts). A grey group: the
- * operations of its class, then the same sequence combined with time reversal. Throws if the result
- * differs as a set from the closure of the stored (Birss) generators, a cross-check of the two data
- * sets while the Birss convention exists (#121).
+ * operations of its class, then the same sequence combined with time reversal.
  */
 function settingOperations(d: GroupData, index: number): readonly Operation[] {
   const cacheKey = `${d.key}#${index}`;
   let result = operationCache.get(cacheKey);
   if (!result) {
-    const closed = closeGroup(settingGenerators(d, index));
     let ordered: Operation[];
     if (d.type === 'I') {
       ordered = itcCartesianOperations(d.key as PointGroupKey, index).map((m) => operation(m));
@@ -367,45 +296,32 @@ function settingOperations(d: GroupData, index: number): readonly Operation[] {
     } else {
       ordered = [...itcBlackWhiteOperations(d.key as BlackWhitePointGroupKey, index)];
     }
-    if (!sameSet(ordered, closed)) {
-      throw new Error(`Point group ${d.key}, setting ${index}: ordered operations differ from the closure`);
-    }
     result = Object.freeze(ordered.map(freezeOperation));
     operationCache.set(cacheKey, result);
   }
   return result;
 }
 
-/** True if `a` is `b` in some order: equal length, no operation twice in `a`, every one of `a` in `b`. */
-function sameSet(a: readonly Operation[], b: readonly Operation[]): boolean {
-  return (
-    a.length === b.length &&
-    a.every((op, i) => b.some((x) => operationsEqual(x, op)) && !a.slice(0, i).some((x) => operationsEqual(x, op)))
-  );
-}
-
 const symbolCache = new Map<string, { readonly short: string; readonly full: string }>();
 
 /**
- * Short and full symbol of a setting in a convention. A crystal class: the ITC symbols from the ITC
- * class data (itcData.ts), the Birss ones as stored (data.ts). A grey group:
- * the symbols of its class followed by `1'`. A black-and-white group: the symbols of its class in
- * the same frame, with the primes of its operations (magneticSymbols.ts).
+ * Short and full symbol of a setting. A crystal class: from the ITC class data (itcData.ts). A grey
+ * group: the symbols of its class followed by `1'`. A black-and-white group: the symbols of its
+ * class in the same frame, with the primes of its operations (magneticSymbols.ts).
  */
-function settingSymbols(d: GroupData, index: number, c: Convention): { readonly short: string; readonly full: string } {
+function settingSymbols(d: GroupData, index: number): { readonly short: string; readonly full: string } {
   if (d.type === 'I') {
-    if (c === 'birss') return d.symbols![index - 1].birss;
     const s = itcSetting(d.key as PointGroupKey, index);
     return Object.freeze({ short: s.short, full: s.full });
   }
-  const cacheKey = `${d.key}#${index}#${c}`;
+  const cacheKey = `${d.key}#${index}`;
   let result = symbolCache.get(cacheKey);
   if (!result) {
-    const classSymbols = settingSymbols(d.crystalClass, classSetting(d, index), c);
+    const classSymbols = settingSymbols(d.crystalClass, classSetting(d, index));
     result = Object.freeze(
       d.type === 'II'
         ? { short: `${classSymbols.short}1'`, full: `${classSymbols.full} 1'` }
-        : primedSymbols(classSymbols, d.crystalSystem, c, settingOperations(d, index)),
+        : primedSymbols(classSymbols, d.crystalSystem, settingOperations(d, index)),
     );
     symbolCache.set(cacheKey, result);
   }
@@ -505,62 +421,55 @@ export function crystalClassOf(key: MagneticPointGroupKey): PointGroupKey {
   return data(key).crystalClass.key as PointGroupKey;
 }
 
-/** The settings of a point group, with symbols and the default of the given convention (default `'itc'`). */
-export function settings(key: MagneticPointGroupKey, conventionName: Convention = 'itc'): readonly Setting[] {
+/** The settings of a point group, with their symbols and the ITC default. */
+export function settings(key: MagneticPointGroupKey): readonly Setting[] {
+  rejectConventionArgument(arguments.length);
   const d = data(key);
-  const c = convention({ convention: conventionName });
-  const def = defaultSetting(d, c);
-  return Array.from({ length: settingCount(d, c) }, (_, i) => {
-    const symbols = settingSymbols(d, i + 1, c);
+  return Array.from({ length: d.settingCount }, (_, i) => {
+    const symbols = settingSymbols(d, i + 1);
     const uniqueAxis =
-      c === 'birss'
-        ? d.settings[i].uniqueAxis
-        : d.type === 'III'
-          ? itcBlackWhiteSetting(d.key as BlackWhitePointGroupKey, i + 1).uniqueAxis
-          : itcSetting(d.crystalClass.key as PointGroupKey, i + 1).uniqueAxis;
+      d.type === 'III'
+        ? itcBlackWhiteSetting(d.key as BlackWhitePointGroupKey, i + 1).uniqueAxis
+        : itcSetting(d.crystalClass.key as PointGroupKey, i + 1).uniqueAxis;
     return Object.freeze({
       index: i + 1,
       symbol: symbols.short,
       fullSymbol: symbols.full,
       ...(uniqueAxis ? { uniqueAxis } : {}),
-      isDefault: i + 1 === def,
+      isDefault: i + 1 === d.itcDefault,
     });
   });
 }
 
 /**
- * All operations of the point group in the requested setting (default: the convention's default
- * setting). ITC convention: in ITA's order, identity first, then as ITA numbers the general
- * position of the crystal class; an operation of a magnetic group has the number it has in the
- * class, and a grey group lists the class first, then the same sequence with time reversal. Birss
- * convention: in birss-app's order (docs/conventions.md, "Order of the operations"). The matrices
- * are Cartesian (docs/conventions.md, "Cartesian frame").
+ * All operations of the point group in the requested setting (default: the ITC default setting),
+ * in ITA's order: identity first, then as ITA numbers the general position of the crystal class; an
+ * operation of a magnetic group has the number it has in the class, and a grey group lists the
+ * class first, then the same sequence with time reversal (docs/conventions.md, "Order of the
+ * operations"). The matrices are Cartesian (docs/conventions.md, "Cartesian frame").
  */
 export function operations(key: MagneticPointGroupKey, options?: SettingOptions): readonly Operation[] {
   const d = data(key);
-  const index = settingIndex(d, options);
-  return convention(options) === 'birss' ? birssOperations(d, index) : settingOperations(d, index);
+  return settingOperations(d, settingIndex(d, options));
 }
 
 /**
- * Generators of the point group in the requested setting (docs/conventions.md, "Generators"). ITC
- * convention: ITA's selected generators in printed order, without the identity and ITA's lattice
- * translations, so the list is empty for `1`; for `mm2` settings 2 and 3, which ITA does not list,
- * those of setting 1 carried into their frame; for a magnetic group, those of its class with the
- * time reversal they have in the group, for a grey group followed by `1'`. Birss convention:
- * birss-app's generators (for `1` the identity, as in birss-app).
+ * Generators of the point group in the requested setting (docs/conventions.md, "Generators"): ITA's
+ * selected generators in printed order, without the identity and ITA's lattice translations, so
+ * the list is empty for `1`; for `mm2` settings 2 and 3, which ITA does not list, those of setting 1
+ * carried into their frame; for a magnetic group, those of its class with the time reversal they
+ * have in the group, for a grey group followed by `1'`.
  */
 export function generators(key: MagneticPointGroupKey, options?: SettingOptions): readonly Operation[] {
   const d = data(key);
-  const index = settingIndex(d, options);
-  return convention(options) === 'birss' ? settingGenerators(d, index) : settingItaGenerators(d, index);
+  return settingItaGenerators(d, settingIndex(d, options));
 }
 
-/** A symbol of the point group in the requested convention and setting. */
+/** A symbol of the point group in the requested setting. */
 export function symbol(key: MagneticPointGroupKey, options?: SymbolOptions): string {
   const d = data(key);
   const form = options?.form ?? 'short';
-  const s = settingSymbols(d, settingIndex(d, options), convention(options));
+  const s = settingSymbols(d, settingIndex(d, options));
   if (form === 'schoenflies') return d.schoenflies;
   if (form === 'short') return s.short;
   if (form === 'full') return s.full;
@@ -577,24 +486,19 @@ export interface PointGroupInSetting<K extends MagneticPointGroupKey = PointGrou
 
 const compact = (s: string): string => s.replace(/\s+/g, '');
 
-function find(
-  hm: string,
-  conventionName: Convention,
-  classesOnly: boolean,
-): PointGroupInSetting<MagneticPointGroupKey> | undefined {
-  const c = convention({ convention: conventionName });
+function find(hm: string, classesOnly: boolean): PointGroupInSetting<MagneticPointGroupKey> | undefined {
   if (typeof hm !== 'string') return undefined;
   const target = compact(hm);
   const candidates = [...BY_KEY.values()].filter((d) => !classesOnly || d.type === 'I');
   /** The settings of `d` whose symbol of this form is the target. */
   const named = (d: GroupData, form: 'short' | 'full'): number[] =>
-    Array.from({ length: settingCount(d, c) }, (_, j) => j + 1).filter(
-      (i) => compact(settingSymbols(d, i, c)[form]) === target,
+    Array.from({ length: d.settingCount }, (_, j) => j + 1).filter(
+      (i) => compact(settingSymbols(d, i)[form]) === target,
     );
   /** One setting named: that one. Several (a monoclinic short symbol) or none (a key): the default. */
   const pick = (d: GroupData, settingsNamed: number[]): PointGroupInSetting<MagneticPointGroupKey> => ({
     key: d.key,
-    setting: settingsNamed.length === 1 ? settingsNamed[0]! : defaultSetting(d, c),
+    setting: settingsNamed.length === 1 ? settingsNamed[0]! : d.itcDefault,
   });
   const byKey = candidates.find((d) => d.key === target);
   if (byKey) return pick(byKey, named(byKey, 'short'));
@@ -608,35 +512,27 @@ function find(
 }
 
 /**
- * Finds a crystal class by a Hermann–Mauguin symbol in the given convention (default `'itc'`): the
- * short symbol of a setting, a full symbol, or the key (spaces are ignored). A symbol that names
- * one setting gives that setting; the key, and a short symbol that several settings share (the
- * monoclinic ones: `2` for unique axis b and c), give the default setting of the convention.
- * Returns undefined if nothing matches, also for a value that is not a string and for the
- * symbol of a magnetic group with time reversal (`findMagneticPointGroup`). Symbols are written as
- * in this library: `-` for the overbar, also in the Birss convention (`m-3m`, where Birss prints
- * `m3m`; docs/conventions.md, "Where ITC and Birss differ").
+ * Finds a crystal class by a Hermann–Mauguin symbol: the short symbol of a setting, a full symbol,
+ * or the key (spaces are ignored). A symbol that names one setting gives that setting; the key, and
+ * a short symbol that several settings share (the monoclinic ones: `2` for unique axis b and c),
+ * give the ITC default setting. Returns undefined if nothing matches, also for a value that is not a
+ * string and for the symbol of a magnetic group with time reversal (`findMagneticPointGroup`).
+ * Symbols are written as in this library, with `-` for the overbar (`m-3m`).
  */
-export function findPointGroup(hm: string, conventionName: Convention = 'itc'): PointGroupInSetting | undefined {
-  return find(hm, conventionName, true) as PointGroupInSetting | undefined;
+export function findPointGroup(hm: string): PointGroupInSetting | undefined {
+  rejectConventionArgument(arguments.length);
+  return find(hm, true) as PointGroupInSetting | undefined;
 }
 
 /**
- * Finds one of the 122 magnetic point groups (the 32 crystal classes included) by a symbol in the
- * given convention (default `'itc'`): the short symbol of a setting, a full symbol, or the key
- * (spaces are ignored). A prime `'` marks time reversal: `4'/mmm'`, `2221'`. A symbol that names
- * one setting gives that setting; the key, and a short symbol that several settings share (the
- * monoclinic ones: `2'` for unique axis b and c), give the default setting of the convention. In
- * the Birss convention two keys are the Birss symbol of a setting that is not the default
- * (`mm'm'` and `6'/mmm'`, setting 2; Birss prints `m'm'm` and `6'/mm'm` for these groups) and give
- * that setting, like any symbol. Returns undefined if nothing matches, also for a value that is
- * not a string. Symbols are written as in this library: `-` for the overbar, also in the Birss
- * convention (`m'-3'm`, where Birss prints `m'3m`; docs/conventions.md, "Where ITC and Birss
- * differ").
+ * Finds one of the 122 magnetic point groups (the 32 crystal classes included) by a symbol: the
+ * short symbol of a setting, a full symbol, or the key (spaces are ignored). A prime `'` marks time
+ * reversal: `4'/mmm'`, `2221'`. A symbol that names one setting gives that setting; the key, and a
+ * short symbol that several settings share (the monoclinic ones: `2'` for unique axis b and c),
+ * give the ITC default setting. Returns undefined if nothing matches, also for a value that is not
+ * a string. Symbols are written as in this library, with `-` for the overbar (`m'-3'm`).
  */
-export function findMagneticPointGroup(
-  hm: string,
-  conventionName: Convention = 'itc',
-): PointGroupInSetting<MagneticPointGroupKey> | undefined {
-  return find(hm, conventionName, false);
+export function findMagneticPointGroup(hm: string): PointGroupInSetting<MagneticPointGroupKey> | undefined {
+  rejectConventionArgument(arguments.length);
+  return find(hm, false);
 }

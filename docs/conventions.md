@@ -1,13 +1,13 @@
 # Conventions
 
-How symcrys represents the crystallographic point groups, and where the two supported conventions,
-ITC and Birss, differ. The print sources behind each statement are listed in "Sources" at the end;
+How symcrys represents the crystallographic point groups, as the _International Tables for
+Crystallography_ (ITC) give them. The print sources behind each statement are listed in "Sources" at the end;
 the tests named there re-check them against the transcriptions in `references/`.
 
 symcrys holds the 122 magnetic point groups: the 32 crystallographic point groups (crystal classes,
 type I) and the 90 groups with time reversal (32 grey groups, type II; 58 black-and-white groups,
-type III). For all of them: settings, symbols, operations, generators and symmetry elements in both
-conventions, operations in the lattice basis and orbits of faces and directions, and the forms of
+type III). For all of them: settings, symbols, operations, generators and symmetry elements,
+operations in the lattice basis and orbits of faces and directions, and the forms of
 property tensors of rank 0 to 4. For the crystal classes also the Wyckoff positions of directions
 and the crystal forms.
 
@@ -17,19 +17,15 @@ all 122 groups ("Two entry points"). A third, `symcrys/plane`, holds the 17 plan
 plane point groups ("Plane groups"). Where a section below speaks of time reversal, of the types or of a magnetic group, it
 describes the magnetic API.
 
-## Conventions
+## ITC
 
-| Name      | Source                                                                                                                                                | Role     |
-| --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
-| `'itc'`   | _International Tables for Crystallography_: Vol. A (6th ed., 2016) for the 32 classes, Vol. D (2nd ed., 2013), Ch. 1.5, for the magnetic point groups | default  |
-| `'birss'` | R. R. Birss, _Symmetry and Magnetism_ (North-Holland, Amsterdam, 1966)                                                                                | optional |
-
-A convention decides which setting a class takes by default and the Hermann–Mauguin symbols of its
-settings, and it decides how the operations of a setting are presented: their order, the generators
-and the sign of the axes in `describeOperations`. The ITC convention follows ITA; the Birss
-convention gives what birss-app gives ("Birss convention and birss-app"). A convention does not
-change the set of operations of a given setting. Functions that take a convention default to
-`'itc'`.
+symcrys follows ITC: Vol. A (6th ed., 2016) for the 32 crystal classes, Vol. D (2nd ed., 2013),
+Ch. 1.5, for the magnetic point groups (the reference edition and its exception: CLAUDE.md, "Pure
+ITC"). Up to 0.10 a second convention, after R. R. Birss, _Symmetry and Magnetism_ (North-Holland,
+Amsterdam, 1966), was an option (`convention: 'birss'`); it was removed in 0.11.0, and a function
+given the option `convention` throws a RangeError, so that a caller who still asks for Birss's
+presentation is not answered in ITC's without notice. Birss's tables stay an independent second
+print check of the ITC output ("Birss as a second print check").
 
 ## Keys
 
@@ -39,32 +35,25 @@ classes with several settings, `symbol()` gives the symbol of a setting (`321`, 
 
 For D3h the key is `-6m2`, as in ITC Vol. D Table 1.5.2.3. ITA lists both orientations, `-6m2`
 first (§ 3.2.1.2.1 (b), p. 721; Table 3.2.3.2, pp. 762–763), but its tables of classes print `-62m`
-(Tables 2.1.1.1, 3.2.1.2, 3.2.2.1). symcrys keeps `-6m2`, as birss-app does (decision on #17).
+(Tables 2.1.1.1, 3.2.1.2, 3.2.2.1). symcrys keeps `-6m2`, the symbol of the magnetic table (#17,
+#137 B1).
 
 The 32 class keys are the `POINT_GROUP_KEYS` of the crystallographic API. The `POINT_GROUP_KEYS` of
 the magnetic API are all 122 keys: the 32 classes, the 32 grey groups in the same order, and the 58
 black-and-white groups in the order of ITC Vol. D Table 1.5.2.3.
 
 - **Black-and-white groups:** the short Hermann–Mauguin symbol printed in ITC Vol. D Table 1.5.2.3,
-  with a prime `'` for time reversal: `4'/mmm'`, `-6'2m'`, `m'-3'm`. These are birss-app's keys (the
-  Birss short symbols) except for two groups, whose Birss and ITC short symbols differ:
+  with a prime `'` for time reversal: `4'/mmm'`, `-6'2m'`, `m'-3'm`. Birss prints the same short
+  symbols except for two groups:
 
-  | Group    | Key (ITC) | Birss symbol, birss-app's key | Why                                                                                                          |
-  | -------- | --------- | ----------------------------- | ------------------------------------------------------------------------------------------------------------ |
-  | D2h(C2h) | `mm'm'`   | `m'm'm`                       | the two books put the twofold axis without time reversal along different axes: x in ITC, z in Birss          |
-  | D6h(D3h) | `6'/mmm'` | `6'/mm'm`                     | the same frame in both books; the strings differ because position 2 is read along x in ITC, along y in Birss |
-
-  In the Birss convention each of these two keys is, as a string, the Birss symbol of setting 2 of
-  its group (the Birss symbol of the default setting 1 is the one in the third column). A key
-  passed to `operations`, `symbol` and the other functions is always the key and gives the default
-  setting; `findPointGroup` of the magnetic API, which reads its argument as a symbol, gives the
-  setting the symbol names, so `findPointGroup("mm'm'", 'birss')` is setting 2 and
-  `findPointGroup("m'm'm", 'birss')` setting 1. For every other key, and for all keys in the ITC convention, `findPointGroup(key)` is
-  the default setting.
+  | Group    | Key (ITC) | Birss's symbol | Why                                                                                                          |
+  | -------- | --------- | -------------- | ------------------------------------------------------------------------------------------------------------ |
+  | D2h(C2h) | `mm'm'`   | `m'm'm`        | the two books put the twofold axis without time reversal along different axes: x in ITC, z in Birss          |
+  | D6h(D3h) | `6'/mmm'` | `6'/mm'm`      | the same frame in both books; the strings differ because position 2 is read along x in ITC, along y in Birss |
 
 - **Grey groups:** the key of the crystal class followed by `1'`: `2221'`, `m-3m1'`, and `321'`,
   `3m1'`, `-3m1'` for the classes `32`, `3m`, `-3m`. ITC Vol. D writes the grey groups this way
-  (Table 1.5.2.1: `4221'`); so does birss-app.
+  (Table 1.5.2.1: `4221'`).
 
 ## Types
 
@@ -171,40 +160,36 @@ parallel to Ox₁, group 3m with the mirror perpendicular to Ox₁). This was de
 ## Settings
 
 A class may be placed in the Cartesian frame in more than one way: a **setting**. Settings are
-numbered from 1; an index means the same physical frame in both conventions, and the convention
-decides which one is the default.
+numbered from 1, and one of them is the ITC default.
 
-The data are stored in **setting 1**, which is Birss's frame. Every other setting is a rotation s
-of it: its operations are s·W·sᵀ for the stored operations W. The ITC settings are among these
-frames. In the ITC convention the operations, generators, symbols and lattice operations of the
-classes come from ITA's selected generators instead (`pointGroups/itcData.ts`), and a
-black-and-white group is given by its ITC symbol in each setting, from which its operations follow
-(`pointGroups/itcMagneticData.ts`); the stored data serve the Birss convention and must give the
-same sets.
+The operations, generators, symbols and lattice operations of the classes come from ITA's selected
+generators, exact integer matrices in the conventional basis (`pointGroups/itcData.ts`); a setting
+ITA does not print is a printed one in another basis. A black-and-white group is given by its ITC
+symbol in each setting, from which its operations follow (`pointGroups/itcMagneticData.ts`).
 
 Classes with more than one setting (short symbol, full symbol in parentheses):
 
-| Class  | Setting | Axis | ITC                             | Birss                          |
-| ------ | ------- | ---- | ------------------------------- | ------------------------------ |
-| `2`    | 1       | c    | `2` (`1 1 2`)                   | `2` (`1 1 2`) **default**      |
-|        | 2       | b    | `2` (`1 2 1`) **default**       | `2` (`1 2 1`)                  |
-| `m`    | 1       | c    | `m` (`1 1 m`)                   | `m` (`1 1 m`) **default**      |
-|        | 2       | b    | `m` (`1 m 1`) **default**       | `m` (`1 m 1`)                  |
-| `2/m`  | 1       | c    | `2/m` (`1 1 2/m`)               | `2/m` (`1 1 2/m`) **default**  |
-|        | 2       | b    | `2/m` (`1 2/m 1`) **default**   | `2/m` (`1 2/m 1`)              |
-| `mm2`  | 1       | c    | `mm2` (`m m 2`) **default**     | `mm2` (`m m 2`) **default**    |
-|        | 2       | a    | `2mm` (`2 m m`)                 | `2mm` (`2 m m`)                |
-|        | 3       | b    | `m2m` (`m 2 m`)                 | `m2m` (`m 2 m`)                |
-| `-42m` | 1       |      | `-42m` (`-4 2 m`) **default**   | `-42m` (`-4 2 m`) **default**  |
-|        | 2       |      | `-4m2` (`-4 m 2`)               | `-4m2` (`-4 m 2`)              |
-| `32`   | 1       |      | `312` (`3 1 2`)                 | `32` (`3 2 1`) **default**     |
-|        | 2       |      | `321` (`3 2 1`) **default**     | `312` (`3 1 2`)                |
-| `3m`   | 1       |      | `31m` (`3 1 m`)                 | `3m` (`3 m 1`) **default**     |
-|        | 2       |      | `3m1` (`3 m 1`) **default**     | `31m` (`3 1 m`)                |
-| `-3m`  | 1       |      | `-31m` (`-3 1 2/m`)             | `-3m` (`-3 2/m 1`) **default** |
-|        | 2       |      | `-3m1` (`-3 2/m 1`) **default** | `-31m` (`-3 1 2/m`)            |
-| `-6m2` | 1       |      | `-62m` (`-6 2 m`)               | `-6m2` (`-6 m 2`) **default**  |
-|        | 2       |      | `-6m2` (`-6 m 2`) **default**   | `-62m` (`-6 2 m`)              |
+| Class  | Setting | Axis | ITC                             |
+| ------ | ------- | ---- | ------------------------------- |
+| `2`    | 1       | c    | `2` (`1 1 2`)                   |
+|        | 2       | b    | `2` (`1 2 1`) **default**       |
+| `m`    | 1       | c    | `m` (`1 1 m`)                   |
+|        | 2       | b    | `m` (`1 m 1`) **default**       |
+| `2/m`  | 1       | c    | `2/m` (`1 1 2/m`)               |
+|        | 2       | b    | `2/m` (`1 2/m 1`) **default**   |
+| `mm2`  | 1       | c    | `mm2` (`m m 2`) **default**     |
+|        | 2       | a    | `2mm` (`2 m m`)                 |
+|        | 3       | b    | `m2m` (`m 2 m`)                 |
+| `-42m` | 1       |      | `-42m` (`-4 2 m`) **default**   |
+|        | 2       |      | `-4m2` (`-4 m 2`)               |
+| `32`   | 1       |      | `312` (`3 1 2`)                 |
+|        | 2       |      | `321` (`3 2 1`) **default**     |
+| `3m`   | 1       |      | `31m` (`3 1 m`)                 |
+|        | 2       |      | `3m1` (`3 m 1`) **default**     |
+| `-3m`  | 1       |      | `-31m` (`-3 1 2/m`)             |
+|        | 2       |      | `-3m1` (`-3 2/m 1`) **default** |
+| `-6m2` | 1       |      | `-62m` (`-6 2 m`)               |
+|        | 2       |      | `-6m2` (`-6 m 2`) **default**   |
 
 ITA describes the monoclinic classes with unique axis b and c, `-42m` and `-6m2` in two
 orientations, and `32`, `3m`, `-3m` with hexagonal axes in two orientations, without naming one
@@ -216,7 +201,7 @@ The ITC defaults of symcrys:
 - `321` and `3m1`: the frame of the tensor tables of ITC Vol. D (§ 1.1.4.10.4.4, #6);
 - `-3m1`: their Laue class in the same frame (a consistency choice; ITC Vol. D Table 1.5.2.3 prints
   its full symbol `-3 2/m 1`);
-- `-6m2`: ITC Vol. D Table 1.5.2.3, the first entry in ITA, and birss-app (decision on #17);
+- `-6m2`: ITC Vol. D Table 1.5.2.3, and the first entry in ITA (#17);
 - `-42m`, `mm2`: the first or only entry in ITA.
 
 Frames relative to setting 1: monoclinic setting 2 maps z to y (rotation by 180° about [011]);
@@ -230,8 +215,9 @@ The classes `222` and `mmm` have one setting only: their three axes are equivale
 
 A **grey group** has the settings of its class, with the same indices, frames and defaults.
 
-A **black-and-white group** has the settings birss-app gives it (#17), setting 1 being Birss's frame,
-and `2'm'm` three more:
+A **black-and-white group** has the settings it has had since symcrys took them over from birss-app
+(#17), and `2'm'm` three more; which of them stay, because ITC prints them, is decided in step 6 of
+#121:
 
 - monoclinic (5 groups): setting 1 with unique axis c, setting 2 with unique axis b, as the classes;
 - orthorhombic `2'2'2`, `m'm'2`, `mm'm'`, `mmm'`: three settings, the cyclic permutations of the axes
@@ -266,52 +252,44 @@ each axis, so for this group it does not identify a setting: the symbol or the i
 Birss (Table 6) and Paufler (Table A 6) print the operations with the symbol; for the other rows
 the operations are those the symbol names, each position read along x, y, z.
 
-Setting 1 is the default in both conventions; the symbols are the same in both, an orthorhombic
-symbol being read along x, y, z in each. birss-app has settings 1 to 3 (its standing decision of at
-most three settings per group); it takes the other three over when it moves onto symcrys (#19).
+Setting 1 is the default.
 
 A setting of a black-and-white group is a frame of its crystal class, but not always the one with
-the same index: setting 1 of `-6'2m'` (Birss's frame: twofold axes along y) is the frame of setting
-2 of `-6m2`. In the ITC convention the setting of the class is the one whose symbol is the group's
-without primes.
+the same index: setting 1 of `-6'2m'` (twofold axes along y) is the frame of setting 2 of `-6m2`.
+The setting of the class is the one whose symbol is the group's without primes.
 
-**Defaults.** Birss: setting 1. ITC: the frame in which the key, read along ITA's symmetry
+**Defaults.** The frame in which the key, read along ITA's symmetry
 directions (Table 2.1.3.1), describes the group. For the triclinic to tetragonal systems this is
 the frame of the operators printed in ITC Vol. D Table 1.5.2.3 (monoclinic `2'_y`; `mm'm'` with
 `2_x`, `2'_y`, `2'_z`; tetragonal with their x, y and diagonal axes); for the trigonal and hexagonal
 groups, whose lateral operators the table prints without axes (`3(2'_⊥)`), it follows from the
 symbol alone. So the ITC default is setting 2 for the monoclinic groups, for `mm'm'`, and for the
-trigonal and hexagonal groups with two settings except `6'/mmm'`, and setting 1 otherwise. birss-app's
-ITC mode takes the same frames (pinned).
+trigonal and hexagonal groups with two settings except `6'/mmm'`, and setting 1 otherwise.
 
-## Where ITC and Birss differ
+## Birss as a second print check
 
-1. **Position 2 in trigonal and hexagonal symbols.** ITC reads the second position of a
-   Hermann–Mauguin symbol along the a axes (x), Birss along y, which is a tertiary direction
-   (90° from a). So the same symbol names two frames 30° apart, and for `32`, `3m`, `-3m` and
-   `-6m2` each frame carries, in Birss, the ITC symbol of the other frame (table above). Both
-   conventions take as default the frame their own short symbol of the class describes, so the
-   defaults are 30° apart, and so are the Cartesian tensor components that survive.
-2. **Monoclinic unique axis.** ITC's standard is unique axis b (y; ITA § 2.1.3.15, p. 171), Birss's
-   is c (z). The short
-   symbols agree; the full symbols (`1 2 1`, `1 1 2`) tell the settings apart.
-3. **Cubic symbols.** Birss prints `m3` and `m3m`; symcrys writes `m-3` and `m-3m` in both
-   conventions (pure spelling). `findPointGroup` therefore does not accept Birss's printed `m3`
-   and `m3m`. The same holds for the magnetic groups (`m'-3'm'` for Birss's `m'3m'`).
-4. **Magnetic groups with other frames or symbols.** Points 1 and 2 hold for the magnetic groups of
-   these classes as well. In addition D2h(C2h) has different default frames (ITC `mm'm'`, the
-   twofold axis without time reversal along x; Birss `m'm'm`, along z), and D6h(D3h) has the same
-   default frame under two symbols (ITC `6'/mmm'`, Birss `6'/mm'm`); see "Keys".
+Birss's Tables 3, 4a–4f, 6 and 7 print the same groups and tensor forms in his own frame. The tests
+compare them with the ITC output in one frame (`testUtils/birssFrame.ts`): both frames put x along a
+and z along c; they differ where the two print the same group in another orientation, which their
+symbols show:
 
-Everywhere else the two conventions agree: same default setting, same symbols, same Schoenflies
-symbols (`-3` is `C3i` in both Birss Table 3 and ITA Tables 3.2.1.2 and 3.2.3.2).
+- **monoclinic:** Birss takes the unique axis along z (Table 4a, p. 56: `2//z`), ITC's default
+  along b, y;
+- **the hexagonal family:** Birss reads position 2 of a symbol along y and position 3 along x (Table
+  4a, pp. 56–57: `32: 2//y`, `3m: -2//y`), ITC along a = x and the tertiary directions; so for `32`,
+  `3m`, `-3m` and `-6m2` and their magnetic groups the defaults of the two books are 30° apart;
+- **`mm'm'`:** Birss prints `m'm'm`, the mirror without time reversal normal to z; ITC prints
+  `mm'm'`, that mirror normal to x;
+- **cubic symbols:** Birss prints `m3` and `m3m`, ITC `m-3` and `m-3m`.
+
+Everywhere else the two books agree: same frame, same symbols, same Schoenflies symbols (`-3` is
+`C3i` in both Birss Table 3 and ITA Tables 3.2.1.2 and 3.2.3.2).
 
 ## Symbols
 
 - Plain strings: a leading `-` is the overbar (`-3m`, `m-3m`); a prime `'` after an element means
   that it is combined with time reversal (`4'`, `-3'`, `2'/m`, `m'`).
-- **Symbols of the magnetic groups.** A black-and-white group has, in every frame and convention,
-  the symbol of its crystal class in that frame, each element with a prime if the operation it
+- **Symbols of the magnetic groups.** A black-and-white group has, in every frame, the symbol of its crystal class in that frame, each element with a prime if the operation it
   names is combined with time reversal (ITC Vol. D § 1.5.2.1, Table 1.5.2.3): `4/m 2/m 2/m` becomes
   `4'/m 2/m 2'/m'`, short `4'/mmm'`. symcrys derives these symbols from the symbols of the class
   and the operations; the ITC full symbols of the default settings equal the printed ones for all
@@ -320,21 +298,13 @@ symbols (`-3` is `C3i` in both Birss Table 3 and ITA Tables 3.2.1.2 and 3.2.3.2)
   of its class followed by `1'` (short `mm21'`, full `m m 2 1'`).
 - **Short symbol** (`form: 'short'`, the default): the symbol of the setting, in ITC as in the
   headline of ITA Table 3.2.3.2, with the trailing or inner `1` that fixes the orientation (`321`,
-  `31m`, `-3m1`); in Birss the printed class symbol for the default setting (`32`). Difference
-  from birss-app, agreed with Thomas (2026-11-09): birss-app labels the ITC default frames of `32`,
-  `3m`, `-3m` as `32`, `3m`, `-3m`. With hexagonal axes ITA keeps the `1` (`321`, `312`; Table
-  3.2.3.2, p. 754), because without it the two orientations cannot be told apart; `32` there is the
-  description with rhombohedral axes (p. 755). For birss-app, when it moves onto symcrys: #19.
+  `31m`, `-3m1`). With hexagonal axes ITA keeps the `1` (`321`, `312`; Table 3.2.3.2, p. 754),
+  because without it the two orientations cannot be told apart; `32` there is the description with
+  rhombohedral axes (p. 755).
 - **Full symbol** (`form: 'full'`): one entry per symmetry direction, separated by single spaces,
   `1` for a direction without symmetry: `-3 2/m 1`, `1 2 1`, `4/m -3 2/m`.
-- **Birss symbols other than the printed short symbol of the default setting are derived.** Birss
-  prints short symbols for the default orientation only, and full symbols only for the six
-  centrosymmetric classes with more than one symmetry direction (`mmm`, `4/mmm`, `-3m`, `6/mmm`,
-  `m3`, `m3m`; Table 3, pp. 36–38). symcrys reads the positions along Birss's directions: as
-  in ITC, except that in the hexagonal family position 2 is y (Birss Table 4a) and position 3 is x
-  (the reading of birss-app; #17).
 - **Schoenflies** (`form: 'schoenflies'`): subscripts written inline (`C3v`, `D2d`, `Oh`); the same
-  in both conventions. A black-and-white group is `G(H)`, G the crystal class and H the subgroup of
+  A black-and-white group is `G(H)`, G the crystal class and H the subgroup of
   the operations without time reversal (`D4h(D2d)`), as in ITC Vol. D Table 1.5.2.3; a grey group
   is `GR` (`D4R`; ITC Vol. D Table 1.5.2.1). ITC Vol. D writes `S6` for `-3`; symcrys writes `C3i`
   as for the class (`C3i(C3)`, `D3d(C3i)`, `C6h(C3i)`).
@@ -354,7 +324,7 @@ equal when all entries agree within 10⁻⁶. Exact integer matrices in the latt
 What is fixed once the group is named is a field of `pointGroup(key)`: `crystalSystem`, `order`,
 `centrosymmetric`, `polar`, `chiral`, `laueClass`, and in the magnetic API also `type` and
 `crystalClass` (maintainer, 2026-11-20, #41). They follow from the operations alone; none depends
-on setting or convention. For a magnetic point group, as in birss-app:
+on the setting. For a magnetic point group:
 
 - `centrosymmetric`: the group contains the inversion without time reversal. `m'm'm'`, which
   contains only the inversion combined with time reversal, is not centrosymmetric in this sense;
@@ -384,7 +354,7 @@ ferromagnetic, …) are named tensor properties: `allowsProperty(key, 'piezoelec
 
 ## Order of the operations
 
-In the ITC convention `operations` lists the operations of a setting in ITA's order: for every
+`operations` lists the operations of a setting in ITA's order: for every
 setting that ITA lists, as ITA numbers its general position (ITA Table 3.2.3.2; the symmetry
 operations (1) … (n) of the space-group tables carry the same numbers). ITA bases this sequence on
 its selected generators (`generators`, below; 5th ed., § 2.2.11 (iv), p. 27; "Generators selected"
@@ -393,10 +363,9 @@ one lies in the group generated so far (§ 8.3.5, p. 737). Starting from the ide
 g therefore extends the group H generated so far by the cosets gH, g²H, … until a power of g lies in
 H. For the two settings ITA does not list, `mm2` settings 2 (`2mm`) and 3 (`m2m`), the order is that
 of setting 1, carried into their frame by the change of basis of the settings cab and bca of ITA
-(2016) Table 1.5.4.4. In the Birss convention the order is birss-app's ("Birss convention and
-birss-app"). `describeOperations` follows the order of `operations`.
+(2016) Table 1.5.4.4. `describeOperations` follows the order of `operations`.
 
-**Magnetic groups, ITC convention** (maintainer, 2026-11-19). ITC Vol. D prints no order of the
+**Magnetic groups** (maintainer, 2026-11-19). ITC Vol. D prints no order of the
 individual operations: Table 1.5.2.3 lists them grouped (`±4_z`, `3(2_⊥)`, `4(±3)`). symcrys keeps
 ITA's numbers of the crystal class: operation k of a black-and-white group is operation k of its
 class in the same frame, with or without time reversal, so that numbers, poles and descriptions
@@ -405,61 +374,16 @@ lists the operations of its class, then the same sequence combined with time rev
 
 ## Generators
 
-In the ITC convention `generators` returns ITA's selected generators of the setting ("Generators
+`generators` returns ITA's selected generators of the setting ("Generators
 selected" of the symmorphic P group, 5th ed., Part 7), in printed order and without the identity;
 for `mm2` settings 2 and 3, which ITA does not list, those of setting 1 carried into their frame
-(the settings cab and bca of ITA (2016) Table 1.5.4.4). In the ITC convention a magnetic group has
+(the settings cab and bca of ITA (2016) Table 1.5.4.4). A magnetic group has
 the generators of its class in the same frame, each with the time reversal it has in the group (they
 generate the group, because dropping time reversal maps a black-and-white group one to one onto its
 class), a grey group those of its class followed by time reversal `1'`; ITC Vol. D prints no
-generators. In the Birss convention it returns birss-app's generators (for `1` the identity, as in
-birss-app), which are the generators stored in `packages/ts/src/pointGroups/data.ts` carried into
-the frame of the setting ("Birss convention and birss-app"). Neither are Birss's printed generating
-matrices (Birss Table 3, pp. 36–38, σ(N) of eq. (2.17), pp. 48–49), which differ for some classes in
-choice and order (e.g. `222`: birss-app 2_z, 2_x; Birss σ(2), σ(3) = 2_y, 2_z); Birss's tests check
-only the group they generate.
-
-## Birss convention and birss-app
-
-In the Birss convention symcrys gives what birss-app gives (maintainer, 2026-11-18): birss-app is
-the Birss application symcrys serves, and it must show the same once it moves onto symcrys. Beyond
-the default settings and symbols (checked against Birss's print and birss-app), this fixes three
-choices that Birss's print leaves open:
-
-- **Generators:** birss-app's, per class and setting (`generators`).
-- **Order of the operations:** birss-app's group closure: the generators of the setting first,
-  then repeated passes that append every new product g·h of two operations found before the pass,
-  in the order of g, then h, until a pass adds nothing. The identity is not necessarily first.
-- **Sign of an axis** in `describeOperations`: as birss-app signs it, with the first non-zero
-  Cartesian component (in the order x, y, z) positive; the sense refers to that sign. The axis is
-  still a symmetry direction of ITA Table 2.1.3.1, possibly reversed; `symmetryDirections` keeps
-  the sign of the table, so in this convention an axis is matched to a direction by |dot| = 1, not
-  by identity.
-- **Free parameters of a tensor form** ("Tensors"): the components birss-app names as free
-  parameters, in its order. Here symcrys's rule (the pivots of the reduced row echelon form) gives
-  birss-app's choice in every setting, so the Birss convention needs nothing of its own.
-
-`birssApp.pins.test.ts` checks this against behavioural pins captured from birss-app
-(`audit/birss-app`, fixture class (c); the revision is the `revision` of
-`packages/ts/src/pointGroups/birssApp.pins.json`, at present 2be5fe3, and the test requires this text to name
-it): for all 122 groups and all settings birss-app has the generators and the operations in order with their
-time reversal, the symbols, the type, the crystal class, the default setting (also that of
-birss-app's ITC mode), the property flags, and the operation symbols birss-app writes, rebuilt from
-`describeOperations` with birss-app's labelling rules. The pins carry birss-app's keys; the test
-names the two groups whose symcrys key differs ("Keys"). `packages/ts/src/tensors/birssApp.pins.test.ts` checks
-the tensor forms the same way, against `packages/ts/src/tensors/birssApp.pins.json` from the same revision: for
-all classes, settings and 26 kinds of tensor, the basis and the free parameters of the time-even
-forms, and for the 58 black-and-white groups those of the time-odd forms. For these choices birss-app is the specification (maintainer decision), so here its
-pins are the reference, not only a regression detector. The strings themselves (`2_z`, `3_[111]⁺`,
-`m_60°`) and the order birss-app sorts them into for display stay in birss-app.
-
-**Settings birss-app does not have.** Settings 4 to 6 of `2'm'm` exist in symcrys only ("Settings
-of the magnetic groups"), so for them there is no birss-app output to give and no pin. They follow
-the same rules: the stored generators carried into the frame, and birss-app's closure for the order;
-this makes them settings 1 to 3 with two axes exchanged, generators and order included, which a test
-checks. When birss-app takes the three settings over (#19), with the same frames and indices, the
-pins are captured again and the list of settings beyond birss-app's (`SETTINGS_BEYOND_BIRSS_APP` in
-`packages/ts/src/testUtils/birssAppPins.ts`) becomes empty.
+generators. Birss's printed generating matrices (Birss Table 3, pp. 36–38, σ(N) of eq. (2.17),
+pp. 48–49) differ from ITA's for some classes in choice and order; Birss's tests check only the
+group they generate.
 
 ## Symmetry directions and elements
 
@@ -472,8 +396,7 @@ the orthorhombic positions; the triclinic family has none.
 `symmetryDirections(key, options)` lists, for a setting, every position of the family with the
 symbol at that position (if the full symbol has it) and, for each direction, the elements along
 it: the highest rotation n, the highest rotoinversion n̄ (n = 3, 4, 6) and whether a mirror is
-perpendicular. In the Birss convention the hexagonal positions 2 and 3 are read along y (a tertiary
-direction) and x (a secondary one), as for the symbols ("Where ITC and Birss differ").
+perpendicular.
 
 `describeOperations(key, options)` describes each operation, in the order of `operations`:
 
@@ -486,8 +409,8 @@ direction) and x (a secondary one), as for the symbols ("Where ITC and Birss dif
 | `timeReversal` | magnetic API: as in the operation                                                                        |
 
 - **Axis.** Every axis and mirror normal of a crystal class lies along one of its symmetry
-  directions; the axis is that direction, as [uvw] with the sign of Table 2.1.3.1 (Birss
-  convention: signed as birss-app signs it, above) and as a Cartesian unit vector in the frame of
+  directions; the axis is that direction, as [uvw] with the sign of Table 2.1.3.1 and as a
+  Cartesian unit vector in the frame of
   the setting. For the monoclinic family, which has no fixed
   basis, a, b, c are taken along x, y, z; this is exact for the unique axis, the only direction
   that carries an element.
@@ -521,14 +444,10 @@ common direction (only with a tolerance far too large), it throws. The result is
 which removes rounding errors within the tolerance; the multiplicity is the number of operations
 divided by its order. For a list that is not a group, the closure keeps only products in the list,
 and the multiplicity may not be an integer. Time reversal is ignored, since it does not change a
-direction. Site symmetry is plain computation and works in both conventions.
+direction.
 
 **Wyckoff positions** are ITA's: a Wyckoff position is the set of directions whose site
-symmetries are conjugate in the point group (ITA, 6th ed., § 3.2.1.2.2, "Definition", p. 722). They are
-defined in the **ITC convention only**: neither Birss (1966) nor birss-app has them, so there is no
-Birss output to follow (maintainer decision, 2026-11-18, #24); in the Birss convention
-`wyckoffPositions` and `wyckoffPositionOf` throw. The setting index still names the same frame, so
-a Birss caller reaches a frame through its index with `'itc'`.
+symmetries are conjugate in the point group (ITA, 6th ed., § 3.2.1.2.2, "Definition", p. 722).
 
 They are given for the **32 crystal classes only**: ITA tabulates them for these, and
 `wyckoffPositions` and `wyckoffPositionOf` throw for a magnetic point group with time reversal. For
@@ -545,7 +464,7 @@ prints them for that setting (ITA 6th ed., Table 3.2.3.2, pp. 745–769):
 | `coordinates`            | the first printed coordinate triplet, e.g. `x,x,z` (a representative point)                                                           |
 | `millerIndices`          | the first printed face, e.g. `h,h,l`, Bravais–Miller indices for hexagonal axes, e.g. `h,h,-2h,l`                                     |
 | `representative`         | that face with h = 3, k = 2, l = 1: `hkl` (three indices, without i) and its Cartesian unit normal h a\* + k b\* + l c\*              |
-| `siteSymmetryOperations` | indices into `operations` (same setting, ITC convention) of the operations fixing the representative                                  |
+| `siteSymmetryOperations` | indices into `operations` (same setting) of the operations fixing the representative                                                  |
 
 - The **point at the origin** (letter o, site symmetry the whole group), which ITA 2016 prints for
   every group except the ten polar ones (1, 2, m, mm2, 4, 4mm, 3, 3m, 6, 6mm), is not a direction
@@ -617,8 +536,7 @@ tetragonal dipyramids of 422, (h0l) and (hhl)).
   -43m and m-3m both are basic forms of the position, elsewhere both are limiting forms. The
   representative takes h = 3, k = 2, l = 1 as for the Wyckoff positions, and h = 1, l = 3 where the
   condition is |h| < |l|: (331) and (113).
-- **Convention and groups.** As the Wyckoff positions: ITC convention only, the 32 crystal classes
-  only (a RangeError otherwise), and the settings ITA does not print (`mm2` settings 2 and 3) are
+- **Groups.** As the Wyckoff positions: the 32 crystal classes only (a RangeError otherwise), and the settings ITA does not print (`mm2` settings 2 and 3) are
   setting 1 carried into their frame.
 - **Monoclinic and triclinic:** the Cartesian normal of the representative takes a, b, c along x, y,
   z, as for the Wyckoff positions; the form and its number do not depend on the cell angles.
@@ -674,15 +592,14 @@ the 122 groups (a list of white operations is the white group, as everywhere in 
 `describeOperationsOf(operations, { tolerance })` describes each operation of any list as `describeOperations`
 does for a key (kind, n, sense), but with the axis as a Cartesian unit vector only, because the
 list need not belong to a setting whose lattice directions could name it. The axis is signed so
-that its first non-zero component, in the order x, y, z, is positive, as in the Birss convention of
-`describeOperations`, and the sense refers to that sign; a component smaller than the tolerance
+that its first non-zero component, in the order x, y, z, is positive, and the sense refers to that sign; a component smaller than the tolerance
 counts as zero, so that a matrix with rounding errors keeps the sign of its axis. A matrix that is
 not orthogonal, or whose rotation part does not turn by 360°/n with n = 1, 2, 3, 4, 6 (its trace
 1 + 2 cos θ not an integer), is a RangeError, both within `tolerance` as for `pointGroupOf`.
 
 ## Lattice basis and orbits
 
-**Operations in the lattice basis.** `latticeOperations(key, { setting, convention })` gives the
+**Operations in the lattice basis.** `latticeOperations(key, { setting })` gives the
 operations of a point group as integer matrices W in the conventional basis a, b, c (hexagonal axes
 for the trigonal classes): W = B⁻¹·R·B, with B the basis of `latticeBasis` (columns a, b, c) and R
 the Cartesian matrix of `operations`. W acts on the coordinates of a lattice direction [uvw]. The
@@ -695,7 +612,7 @@ They do not depend on the cell angles: a point operation maps the lattice onto i
 matrix in the lattice basis is the same for every metric the point group allows (2 along b is
 diag(−1, 1, −1) for every β). So they exist for every family, the monoclinic and triclinic ones
 included, where a, b, c are taken along x, y, z as for the Wyckoff positions (maintainer,
-2026-11-21, #24). In the ITC convention they are, in order, the matrices of ITA's general position
+2026-11-21, #24). They are, in order, the matrices of ITA's general position
 (6th ed., Table 3.2.3.2): its coordinate triplets are the rows of W. Cartesian matrices of a real
 monoclinic or triclinic cell need the cell parameters and belong to the geometry of a crystal
 (#24 item 4).
@@ -706,7 +623,7 @@ operations reach them, each with the indices of the operations that map the give
 direction transforms with W, a face with the inverse transpose, h′ = W⁻ᵀ·h (Miller indices are
 coordinates in the reciprocal basis). The two differ in the hexagonal family: under the threefold
 rotation of class 3, [100] goes to [010], (100) to (1̄10). Indices for hexagonal axes are three,
-without i = −(h + k). The number of entries is the multiplicity, and in the ITC convention the
+without i = −(h + k). The number of entries is the multiplicity, and the
 first entry is the given face with its site symmetry. For the general face (321) the orbit is
 ITA's general form in the order of the general position; ITA prints the faces in that order for 14
 of the 16 entries with hexagonal axes, and for 6/m and 6mm with the third and fourth rows
@@ -790,8 +707,7 @@ order). For rank 3, xyz is 0·9 + 1·3 + 2 = 5.
   Every allowed tensor is Σₖ pₖ·basis[k], pₖ the value of component `parameters[k]`. The form is
   unique for the span, so it does not depend on how the span was found.
 - `parameters`: the free parameters as index lists (`[0, 1, 1]` for xyy), one per basis row: each is
-  the lowest component that is independent of those before it (the pivot). birss-app names its free
-  parameters by the same rule (its "Q0" reduction), so they agree in name and order.
+  the lowest component that is independent of those before it (the pivot).
 - `relations`: one row r per component that is not a parameter, with r·t = 0 for every allowed
   tensor t: t_c − Σₖ basis[k][c]·t_{parameters[k]} = 0. A row with a single 1 says the component
   vanishes.
@@ -799,11 +715,8 @@ order). For rank 3, xyz is 0·9 + 1·3 + 2 = 5.
 Relation strings (`\chi_{xxx} = -\chi_{xyy}`), Voigt matrices, Nye diagrams and LaTeX are
 presentation and stay in the applications; they follow from these numbers.
 
-**Settings and conventions.** A tensor form is Cartesian, so it depends on the setting, and the same
-setting index gives the same form in both conventions; the convention only picks the default setting
-(above, "Settings"). The ITC and Birss defaults differ for `2`, `m`, `2/m`, `32`, `3m`, `-3m` and
-`-6m2`, and so do the components that survive: for `2` the polar vector lies along y in the ITC
-default (unique axis b) and along z in the Birss default.
+**Settings.** A tensor form is Cartesian, so it depends on the setting (above, "Settings"): for `2`
+the polar vector lies along y in the default setting (unique axis b) and along z in setting 1.
 
 **Time reversal** (magnetic API). An operation with time reversal changes the sign of a `'c'`-tensor.
 The 32 white groups have none, so their `'c'`-forms equal their `'i'`-forms. A grey group contains time reversal
@@ -842,8 +755,8 @@ tensor relates (`description`) and the print source of the definition (`source`)
 
 `allowsProperty(key, name)` is true if the form is not zero, `allowedProperties(key)` lists the
 names a group allows, in the order of the table; `allowsPropertyOf(operations, name)` and
-`allowedPropertiesOf(operations)` do the same for any list of operations. None depends on setting
-or convention. `tensorForm(key, 'piezoelectric')` is the form of the tensor the name stands for.
+`allowedPropertiesOf(operations)` do the same for any list of operations. None depends on the
+setting. `tensorForm(key, 'piezoelectric')` is the form of the tensor the name stands for.
 The crystallographic API has the four time-even names, the magnetic API all seven ("Two entry
 points"). In the magnetic API a key of type `'I'` is the white group, the symmetry of a
 magnetically ordered crystal ("Types"): `'432'` is magnetoelectric. **A crystal without magnetic
@@ -992,7 +905,6 @@ the determination of the plane group of a pattern (a later MINOR, #31).
 | What                                                                                                                                         | Print source                                                                                                                                                                                                                                                                                                      | Test                                                                                                    |
 | -------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
 | Crystal classes, second print check: operations in the ITC frame (`testUtils/birssFrame.ts`), Birss's symbols, Schoenflies, orders           | Birss Table 3 (pp. 36–38), generating matrices eq. (2.17) (pp. 48–49): `references/birss/`                                                                                                                                                                                                                        | `birss.reference.test.ts`                                                                               |
-| Birss symbols of other settings, full symbols                                                                                                | derived along Birss's directions (position 2 from Birss Table 4a, pp. 56–57)                                                                                                                                                                                                                                      | `birss.reference.test.ts`                                                                               |
 | ITC symbols of the settings                                                                                                                  | ITA Table 3.2.3.2 (headlines, pp. 745–769); ITC Vol. D Table 1.5.2.3 for monoclinic full symbols; the symbol rule (positions: ITA § 2.1.3.4, p. 151; `1` for a direction without symmetry: 5th ed. § 2.2.4.1 (iv), p. 18; monoclinic full symbols: § 2.1.3.15, p. 171) for `2mm`, `m2m` and unique axis c         | `itc.reference.test.ts`                                                                                 |
 | ITC operations of every setting                                                                                                              | the general positions of ITA Table 3.2.3.2 (pp. 745–769), in the frame of #6; `2mm`, `m2m`, which ITA does not list: their ITC symbol along the symmetry directions of ITA Table 2.1.3.1 (p. 151)                                                                                                                 | `itcGeneralPositions.reference.test.ts`, `itc.reference.test.ts`                                        |
 | ITC default settings                                                                                                                         | see "Settings" above                                                                                                                                                                                                                                                                                              | `itcSettings.fixtures.ts`                                                                               |
@@ -1001,8 +913,7 @@ the determination of the plane group of a pattern (a later MINOR, #31).
 | ITC: order of the operations, generators                                                                                                     | ITA's selected generators, ITA 5th ed. (2006), Part 7 (pages in `references/itc/vol-a-2006-symmetry-operations.md`), § 2.2.11 (iv) p. 27, § 8.3.5 p. 737, giving the numbering of Table 3.2.3.2                                                                                                                   | `elements.reference.test.ts`                                                                            |
 | Magnetic groups, ITC: keys, crystal system, Schoenflies and full symbols, operators of the default setting                                   | ITC Vol. D (2013) Table 1.5.2.3 (pp. 111–112): `references/itc/vol-d-table-1.5.2.3.md`; grey groups: eq. (1.5.2.1), p. 110                                                                                                                                                                                        | `magnetic.reference.test.ts`                                                                            |
 | Magnetic groups, second print check: operations of the ITC default setting in the ITC frame, classical subgroup, Birss's symbols             | Birss Table 6 (pp. 91–98) with the generating matrices of eq. (2.17) (pp. 48–49): `references/birss/table-6.md`                                                                                                                                                                                                   | `magnetic.reference.test.ts`                                                                            |
-| Magnetic groups: symbols of all settings in both conventions, grey groups, axes of trigonal, hexagonal and cubic operations                  | derived: each symbol read along the symmetry directions of its convention, a prime meaning time reversal                                                                                                                                                                                                          | `magnetic.reference.test.ts`                                                                            |
-| Birss: order of the operations, generators, axis signs                                                                                       | none: birss-app 2be5fe3, behavioural pins (class (c)) captured by `audit/birss-app`                                                                                                                                                                                                                               | `birssApp.pins.test.ts`                                                                                 |
+| Magnetic groups: symbols of all settings, grey groups, axes of trigonal, hexagonal and cubic operations                                      | derived: each symbol read along the symmetry directions of ITA Table 2.1.3.1, a prime meaning time reversal                                                                                                                                                                                                       | `magnetic.reference.test.ts`                                                                            |
 | operations described (kind, n, axis, sense)                                                                                                  | the symmetry operations of the symmorphic P space groups, ITA 5th ed. (2006), Part 7, one per ITC setting (pages in `references/itc/vol-a-2006-symmetry-operations.md`); symbols as defined in § 11.1.2, pp. 810–811; numbering checked against the general positions of Table 3.2.3.2                            | `elements.reference.test.ts`, `elements.test.ts`                                                        |
 | Wyckoff positions (letter, multiplicity, oriented site symmetry, representative point and face)                                              | ITA Table 3.2.3.2 (pp. 745–769): `references/itc/vol-a-table-3.2.3.2-wyckoff-positions.md`; the oriented symbols read along ITA Table 2.1.3.1 (p. 151); `2mm`, `m2m`: derived (above); additional check against the 5th ed. (2006), Table 10.1.2.2, by `audit/wyckoff-2006`                                       | `wyckoff.reference.test.ts`                                                                             |
 | crystal forms: the forms of each Wyckoff position, basic and limiting; the 47 forms with number of faces and eigensymmetry                   | ITA Table 3.2.3.2 (pp. 745–769): `references/itc/vol-a-table-3.2.3.2-face-forms.md`; ITA Table 3.2.1.3 (pp. 724–726): `references/itc/vol-a-table-3.2.1.3-crystal-forms.md`, the two checked against each other; additional check against the 5th ed. (2006), Tables 10.1.2.2 and 10.1.2.3, by `audit/forms-2006` | `crystalForms.reference.test.ts`                                                                        |
@@ -1020,7 +931,6 @@ the determination of the plane group of a pattern (a later MINOR, #31).
 | the three types of magnetic point groups; which describes a non-magnetic crystal                                                             | Birss (1966) pp. 84, 102; Litvin, _Acta Cryst._ A**64**, 419 (2008), p. 419; Paufler, _Physikalische Kristallographie_ (Akademie-Verlag, Berlin, 1986), pp. 60–62                                                                                                                                                 | `tensors/birssMagnetic.reference.test.ts` (classes: c-forms equal i-forms; grey groups: c-forms vanish) |
 | the two entry points: a time-even question has one answer for a class, its white group and its grey group                                    | none needed: the same operations (Birss pp. 84, 102, as the row above); checked by comparing the two entry points                                                                                                                                                                                                 | `entryPoints.test.ts`                                                                                   |
 | named tensor properties: the kind of tensor behind each name                                                                                 | ITC Vol. D (2013) §§ 1.1.4.4.2, 1.1.4.4.3 (p. 12), 1.1.4.10.7.2 (p. 30), 1.5.2.1 (p. 113), 1.5.7.1 (p. 134), 1.5.8.1 (pp. 139–140); the `source` of each entry of `TENSOR_PROPERTIES`                                                                                                                             | `tensors/tensorProperties.test.ts`                                                                      |
-| Birss: free parameters of the tensor forms                                                                                                   | none: birss-app 2be5fe3, behavioural pins (class (c)) captured by `audit/birss-app`: time-even forms of the 32 classes, time-odd forms of the 58 black-and-white groups                                                                                                                                           | `tensors/birssApp.pins.test.ts`                                                                         |
 | plane groups: general position, generators, centring, origin, asymmetric unit, Wyckoff positions                                             | ITA 6th ed. (2016), Chapter 2.2 (pp. 176–192): `references/itc/vol-a-2016-plane-groups.md`; additional check against the 5th ed. (2006), Part 6 (pp. 92–109), by `audit/plane-groups-2006`                                                                                                                        | `spaceGroups/planeGroups.reference.test.ts`                                                             |
 | plane groups: description of the operations                                                                                                  | the block "Symmetry operations" of the same pages, both sets of the centred groups; symbols as in ITA § 2.1.3.9 (pp. 160–161); normals: ITA Table 2.1.3.1 (p. 151), `references/itc/vol-a-table-2.1.3.1-plane.md`, with the full symbols                                                                          | `spaceGroups/describe.reference.test.ts`                                                                |
 | plane groups: site symmetry, orbit and Wyckoff position of a point                                                                           | the Wyckoff positions of the same pages: every printed point of every position                                                                                                                                                                                                                                    | `spaceGroups/positions.reference.test.ts`                                                               |

@@ -112,10 +112,10 @@ application adapts to symcrys, not the other way round (this sharpens "ITC stand
 consumer" below). This section is binding for all new work.
 The sections below that it replaces describe the code as it still is; the ITC migration (#121,
 #126) changes code, `docs/conventions.md` and those sections together and rewrites them to the new
-state (#127). Until then (Thomas, 2026-11-22): existing behaviour, the Birss mode and its birss-app
-pins included, keeps working and is fixed where broken, since it is the safety net of the
-migration (#121); nothing new is added to the Birss mode, and new exports take no `convention`
-option.
+state (#127). Until then (Thomas, 2026-11-22): existing behaviour keeps working and is fixed where
+broken, since it is the safety net of the migration (#121), and new exports take no `convention`
+option. The Birss mode, its data and its birss-app pins were removed in step 5 of #121 (#121,
+2026-11-23); passages below that describe them are history until #127 rewrites them.
 
 - **One convention, ITC.** The option `convention` and the Birss output mode go; so do birss-app's
   order of the operations, its generators and its axis signs as API behaviour, the special reading
@@ -466,9 +466,7 @@ The conventions themselves are in `docs/conventions.md`; here, what was decided 
   by coset from ITA's selected generators (`docs/conventions.md`, "Order of the operations").
   Consumers draw and list operations in this order (stereography: poles, faces, face lists), so it
   should mean something and stay stable; the closure order had no meaning of its own. For the classes
-  the set comes from ITA's selected generators (`pointGroups/itcData.ts`, #122); while the Birss
-  convention exists it must equal the closure of the stored generators, or `operations` throws.
-  In the Birss convention the order is birss-app's (above).
+  the set comes from ITA's selected generators (`pointGroups/itcData.ts`, #122).
 - **Generators per convention** _(Birss part replaced by "Pure ITC" above; describes the code until the ITC migration.)_
   (maintainer, 2026-11-18, #25, #27): `generators` returns ITA's
   selected generators in the ITC convention and birss-app's (the stored ones) in the Birss
@@ -663,8 +661,8 @@ The conventions are in `docs/conventions.md` ("Tensors"); here, what was decided
   passes its specifications unchanged; in the crystallographic API without `timeParity` (#47).
 - **Free parameters are the pivots of the reduced row echelon form** _(Birss part replaced by "Pure ITC" above; describes the code until the ITC migration.)_: the lowest component
   independent of those before it. This is birss-app's rule since its Q0 reduction, so in the Birss
-  convention the parameters agree with birss-app by name and order without a rule of their own
-  (behavioural pins, `packages/ts/src/tensors/birssApp.pins.json`), and in the ITC convention the same rule
+  convention the parameters agreed with birss-app by name and order without a rule of their own
+  (behavioural pins, removed with the Birss mode), and in the ITC convention the same rule
   applies to the ITC setting.
 - **An index symmetry that does not apply at the rank is an error** (2026-11-19): birss-app ignores
   `'voigt'` at rank 3 and the like; a library call with it is a mistake of the caller, and silently

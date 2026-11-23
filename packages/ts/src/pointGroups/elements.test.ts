@@ -10,14 +10,7 @@ import { mirrorNormal, mul, neg, rotationAbout, sameM, I3, type M } from '../tes
 import { hmTokens } from '../testUtils/hermannMauguin.js';
 import { describeOperations, symmetryDirections, type OperationDescription } from './elements.js';
 import { LATTICE_SYMMETRY_DIRECTIONS } from '../symmetryDirections.js';
-import {
-  POINT_GROUP_KEYS,
-  operations,
-  pointGroup,
-  settings,
-  type Convention,
-  type PointGroupKey,
-} from './pointGroups.js';
+import { POINT_GROUP_KEYS, operations, pointGroup, settings, type PointGroupKey } from './pointGroups.js';
 
 /** Columns a, b, c of the #6 frame, typed here independently of src/lattice.ts. */
 const HEXAGONAL: M = [
@@ -56,19 +49,17 @@ function rebuild(d: OperationDescription): M {
   return d.kind === 'rotation' ? r : neg(r);
 }
 
-const CASES: [PointGroupKey, number, Convention][] = POINT_GROUP_KEYS.flatMap((key) =>
-  settings(key).flatMap((s) =>
-    (['itc', 'birss'] as const).map((c): [PointGroupKey, number, Convention] => [key, s.index, c]),
-  ),
+const CASES: [PointGroupKey, number][] = POINT_GROUP_KEYS.flatMap((key) =>
+  settings(key).map((s): [PointGroupKey, number] => [key, s.index]),
 );
 
 const inGroup = (ops: readonly { matrix: readonly (readonly number[])[] }[], m: M) =>
   ops.some((o) => sameM(m, o.matrix));
 
 describe('describeOperations', () => {
-  it.each(CASES)('%s, setting %i (%s): each description rebuilds its operation', (key, setting, convention) => {
-    const ops = operations(key, { setting, convention });
-    const descriptions = describeOperations(key, { setting, convention });
+  it.each(CASES)('%s, setting %i: each description rebuilds its operation', (key, setting) => {
+    const ops = operations(key, { setting });
+    const descriptions = describeOperations(key, { setting });
     expect(descriptions).toHaveLength(ops.length);
     descriptions.forEach((d, i) => {
       expect(sameM(rebuild(d), ops[i].matrix)).toBe(true);
@@ -81,17 +72,8 @@ describe('describeOperations', () => {
         expect(c.every((x, k) => Math.abs(x - d.axis!.cartesian[k]) < 1e-9)).toBe(true);
         expect(d.axis!.lattice.every(Number.isInteger)).toBe(true);
         const table = LATTICE_SYMMETRY_DIRECTIONS[familyOf(key)].flat().map((u) => [...u]);
-        if (convention === 'itc') {
-          // the sign of ITA Table 2.1.3.1, also for twofold axes and mirror normals
-          expect(table).toContainEqual([...d.axis!.lattice]);
-        } else {
-          // a direction of ITA Table 2.1.3.1, signed as birss-app: first non-zero Cartesian component positive
-          const lattice = [...d.axis!.lattice];
-          expect(table.some((u) => u.every((x, k) => x === lattice[k]) || u.every((x, k) => x === -lattice[k]))).toBe(
-            true,
-          );
-          expect(d.axis!.cartesian.find((x) => Math.abs(x) > 1e-9)! > 0).toBe(true);
-        }
+        // the sign of ITA Table 2.1.3.1, also for twofold axes and mirror normals
+        expect(table).toContainEqual([...d.axis!.lattice]);
       }
       expect(d.sense !== undefined).toBe(d.order >= 3);
     });
@@ -114,9 +96,9 @@ describe('describeOperations', () => {
 });
 
 describe('symmetryDirections', () => {
-  it.each(CASES)('%s, setting %i (%s): the elements along each direction', (key, setting, convention) => {
-    const ops = operations(key, { setting, convention });
-    const positions = symmetryDirections(key, { setting, convention });
+  it.each(CASES)('%s, setting %i: the elements along each direction', (key, setting) => {
+    const ops = operations(key, { setting });
+    const positions = symmetryDirections(key, { setting });
     let elements = 0;
     for (const p of positions) {
       for (const d of p.directions) {
@@ -143,8 +125,8 @@ describe('symmetryDirections', () => {
     expect(elements).toBe(ops.length - trivial);
   });
 
-  it.each(CASES)('%s, setting %i (%s): the symbol at each position names its elements', (key, setting, convention) => {
-    for (const p of symmetryDirections(key, { setting, convention })) {
+  it.each(CASES)('%s, setting %i: the symbol at each position names its elements', (key, setting) => {
+    for (const p of symmetryDirections(key, { setting })) {
       if (p.symbol === undefined) continue;
       const [token] = hmTokens(p.symbol);
       const m = /^(-?)([1-6])(\/m)?$|^m$/.exec(token);
@@ -174,14 +156,8 @@ describe('symmetryDirections', () => {
     expect(four[1].directions.every((d) => d.rotation === 1 && d.rotoinversion === 0 && !d.mirror)).toBe(true);
   });
 
-  it('Birss reads position 2 of the hexagonal family along y, position 3 along x', () => {
-    // docs/conventions.md, "Where ITC and Birss differ", item 1
-    const birss = symmetryDirections('32', { convention: 'birss' });
-    expect(birss[0].symbol).toBe('3');
-    expect(birss[1].directions.map((d) => [...d.lattice])).toContainEqual([1, 2, 0]);
-    expect(birss[1].symbol).toBe('2');
-    expect(birss[1].directions.every((d) => d.rotation === 2)).toBe(true);
-    const itc = symmetryDirections('32', { convention: 'itc', setting: 1 });
+  it('reads position 2 of the hexagonal family along a, position 3 along the tertiary directions', () => {
+    const itc = symmetryDirections('32', { setting: 1 });
     expect(itc.map((p) => p.symbol)).toEqual(['3', '1', '2']);
   });
 });

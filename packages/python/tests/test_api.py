@@ -132,9 +132,9 @@ def test_matrices_are_float_arrays_and_indices_int_arrays() -> None:
     assert axis["lattice"].dtype == np.int64 and axis["cartesian"].dtype == np.float64
 
 
-def test_crystal_forms_in_the_itc_convention_only() -> None:
-    with pytest.raises(symcrys.SymcrysError, match="ITC convention only"):
-        symcrys.crystal_forms("mmm", convention="birss")
+def test_crystal_forms_and_the_removed_convention() -> None:
+    with pytest.raises(TypeError):
+        symcrys.crystal_forms("mmm", convention="birss")  # type: ignore[call-arg]
     assert symcrys.crystal_forms("2")[-1]["miller_indices"] == "0,1,0"
     assert symcrys.crystal_forms("2", setting=1)[-1]["miller_indices"] == "0,0,1"
     assert "condition" not in symcrys.crystal_forms("4mm")[0]
@@ -299,8 +299,9 @@ def test_calls_from_several_threads() -> None:
 
 
 def test_boundary_is_one_function() -> None:
-    answer = _engine.call("symbol", '["32", {"convention": "birss"}]')
-    assert re.fullmatch(r'\{"result":"32"\}', answer)
+    answer = _engine.call("symbol", '["32", {"setting": 1}]')
+    assert re.fullmatch(r'\{"result":"312"\}', answer)
+    assert "option convention was removed" in _engine.call("symbol", '["32", {"convention": "birss"}]')
     answer = _engine.call("magnetic.symbol", '["4\'/mmm\'", {"form": "schoenflies"}]')
     assert re.fullmatch(r'\{"result":"D4h\(D2h\)"\}', answer)
     assert '"error"' in _engine.call("other.symbol", '["32"]') and '"error"' in _engine.call("magnetic.wyckoffPositions", '["32"]')

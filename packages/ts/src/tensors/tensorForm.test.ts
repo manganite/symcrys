@@ -1,6 +1,6 @@
 /**
  * The tensor API: what a form is (invariance, index symmetry, row echelon form, relations), how it
- * behaves under rotation and with settings and conventions, arbitrary operations, input checks, and
+ * behaves under rotation and with settings, arbitrary operations, input checks, and
  * the use case of #30: the form of the SHG tensor at a surface, from the site symmetry of the
  * surface normal, compared with Yariv's Table 16.1 (print) for the site-symmetry groups.
  */
@@ -169,19 +169,11 @@ describe('a tensor form', () => {
     }
   });
 
-  it('is the same for a setting index in both conventions; the convention picks only the default', () => {
-    for (const key of POINT_GROUP_KEYS) {
-      for (const s of settings(key)) {
-        for (const sp of SPECS) {
-          expect(tensorForm(key, sp, { setting: s.index, convention: 'itc' })).toEqual(
-            tensorForm(key, sp, { setting: s.index, convention: 'birss' }),
-          );
-        }
-      }
-    }
-    // Class 2: ITC default unique axis b, Birss unique axis c (docs/conventions.md, "Settings").
+  it('is that of the requested setting, the ITC default without one', () => {
+    // Class 2: ITC default unique axis b (setting 2), setting 1 unique axis c (docs/conventions.md, "Settings").
     expect(tensorForm('2', spec(1)).parameters).toEqual([[1]]);
-    expect(tensorForm('2', spec(1), { convention: 'birss' }).parameters).toEqual([[2]]);
+    expect(tensorForm('2', spec(1), { setting: 1 }).parameters).toEqual([[2]]);
+    expect(() => tensorForm('2', spec(1), { convention: 'birss' } as never)).toThrow(/option convention was removed/);
   });
 
   it('c-tensors equal i-tensors for the 32 classes, which have no time reversal', () => {
@@ -410,9 +402,7 @@ describe('magnetic point groups', () => {
   it('tensorForm takes magnetic keys and agrees with tensorFormOf of their operations', () => {
     const spec = { rank: 1, parity: 'axial', timeParity: 'c', intrinsic: 'none' } as const;
     for (const key of ["m'm'2", "2221'", "-6'2m'"] as const) {
-      for (const convention of ['itc', 'birss'] as const) {
-        expect(tensorForm(key, spec, { convention })).toEqual(tensorFormOf(operations(key, { convention }), spec));
-      }
+      expect(tensorForm(key, spec)).toEqual(tensorFormOf(operations(key), spec));
     }
     expect(tensorForm("m'm'2", spec).basis).toHaveLength(1);
     expect(tensorForm("2221'", spec).basis).toHaveLength(0);

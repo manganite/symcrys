@@ -38,7 +38,7 @@ function coefficients(expr: string): number[] {
 function settingOf(short: string, axes: string): { key: PointGroupKey; setting: number } {
   const axis = /^unique axis (b|c)$/.exec(axes)?.[1];
   const found = POINT_GROUP_KEYS.flatMap((key) =>
-    settings(key, 'itc')
+    settings(key)
       .filter((s) => s.symbol === short && (axis === undefined || s.uniqueAxis === axis))
       .map((s) => ({ key, setting: s.index })),
   );

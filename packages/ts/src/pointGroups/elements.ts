@@ -9,14 +9,7 @@ import { det, trace, type Mat3, type Vec3 } from '../linalg.js';
 import { crystalFamily, latticeBasis, type CrystalFamily } from '../lattice.js';
 import type { Operation } from '../operations.js';
 import { LATTICE_SYMMETRY_DIRECTIONS, type Uvw } from '../symmetryDirections.js';
-import {
-  operations,
-  pointGroup,
-  symbol,
-  type Convention,
-  type MagneticPointGroupKey,
-  type SettingOptions,
-} from './pointGroups.js';
+import { operations, pointGroup, symbol, type MagneticPointGroupKey, type SettingOptions } from './pointGroups.js';
 
 /** What a point operation is; a rotoinversion n̄ is the inversion times the rotation n (n = 3, 4, 6). */
 export type OperationKind = 'identity' | 'inversion' | 'rotation' | 'rotoinversion' | 'mirror';
@@ -24,8 +17,7 @@ export type OperationKind = 'identity' | 'inversion' | 'rotation' | 'rotoinversi
 /** A symmetry direction: as a lattice direction [uvw] and as a Cartesian unit vector. */
 export interface Axis {
   /**
-   * Integer coordinates in the conventional basis. ITC convention: sign as in ITA Table 2.1.3.1;
-   * Birss convention, in `describeOperations`: first non-zero Cartesian component positive.
+   * Integer coordinates in the conventional basis, with the sign of ITA Table 2.1.3.1.
    */
   readonly lattice: Uvw;
   /**
@@ -116,16 +108,6 @@ function axisOf(family: CrystalFamily, uvw: Uvw): Axis {
   return Object.freeze({ lattice: uvw, cartesian: Object.freeze(normalize(v)) as unknown as Vec3 });
 }
 
-/**
- * The symmetry directions of a family, per position of the full symbol, in the reading of a
- * convention. Birss reads position 2 of the hexagonal family along y, a tertiary direction, and
- * position 3 along x, a secondary one (docs/conventions.md, "Where ITC and Birss differ").
- */
-function positionsOf(family: CrystalFamily, c: Convention): readonly (readonly Uvw[])[] {
-  const p = LATTICE_SYMMETRY_DIRECTIONS[family];
-  return c === 'birss' && family === 'hexagonal' ? [p[0], p[2], p[1]] : p;
-}
-
 /** The proper rotation part of a matrix and its order n (1 for the identity). */
 function rotationPart(m: Mat3): { r: Mat3; n: number } {
   const r = det(m) > 0 ? m : (m.map((row) => row.map((v) => -v)) as unknown as Mat3);
@@ -188,15 +170,14 @@ interface Analysis {
 const cache = new Map<string, Analysis>();
 
 function analysis(key: MagneticPointGroupKey, options?: SettingOptions): Analysis {
-  const ops = operations(key, options); // checks key, convention and setting
-  const c = options?.convention ?? 'itc';
+  const ops = operations(key, options); // checks key and setting
   const setting = options?.setting ?? 0;
-  const cacheKey = `${key}#${setting}#${c}`;
+  const cacheKey = `${key}#${setting}`;
   const hit = cache.get(cacheKey);
   if (hit) return hit;
 
   const family = crystalFamily(pointGroup(key).crystalSystem);
-  const positions = positionsOf(family, c).map((dirs) => dirs.map((d) => axisOf(family, d)));
+  const positions = LATTICE_SYMMETRY_DIRECTIONS[family].map((dirs) => dirs.map((d) => axisOf(family, d)));
   const all = positions.flat();
   const what = `Point group ${key}`;
   const descriptions = Object.freeze(ops.map((op) => describe(op, all, what)));
@@ -228,44 +209,15 @@ function analysis(key: MagneticPointGroupKey, options?: SettingOptions): Analysi
       return Object.freeze(position);
     }),
   );
-  const result = {
-    descriptions: c === 'birss' ? Object.freeze(descriptions.map(birssSigned)) : descriptions,
-    directions,
-  };
+  const result = { descriptions, directions };
   cache.set(cacheKey, result);
   return result;
 }
 
-const flipped = new Map<Axis, Axis>();
-
-/**
- * The description with the axis signed as in birss-app (docs/conventions.md, "Birss convention and
- * birss-app"): its first non-zero Cartesian component, in the order x, y, z, is positive. If the
- * axis of ITA Table 2.1.3.1 points the other way, axis and sense are reversed; the rotation stays
- * the same.
- */
-function birssSigned(d: OperationDescription): OperationDescription {
-  const a = d.axis;
-  if (!a) return d;
-  const first = a.cartesian.find((x) => Math.abs(x) > 1e-9) ?? 0;
-  if (first > 0) return d;
-  let axis = flipped.get(a);
-  if (!axis) {
-    axis = Object.freeze({
-      lattice: Object.freeze(a.lattice.map((x) => (x === 0 ? 0 : -x))) as unknown as Uvw,
-      cartesian: Object.freeze(a.cartesian.map((x) => (x === 0 ? 0 : -x))) as unknown as Vec3,
-    });
-    flipped.set(a, axis);
-  }
-  const sense = d.sense === '+' ? '-' : d.sense === '-' ? '+' : undefined;
-  return Object.freeze({ ...d, axis, ...(sense ? { sense } : {}) });
-}
-
 /**
  * Each operation of the point group described geometrically, in the order of `operations` for
- * the same key and options. Axes are named by the symmetry direction they lie along: in the ITC
- * convention with the sign of ITA Table 2.1.3.1, in the Birss convention signed as birss-app signs
- * them (first non-zero Cartesian component positive); the sign fixes what the sense refers to.
+ * the same key and options. Axes are named by the symmetry direction they lie along, with the sign
+ * of ITA Table 2.1.3.1; the sign fixes what the sense refers to.
  */
 export function describeOperations(
   key: MagneticPointGroupKey,
@@ -275,12 +227,11 @@ export function describeOperations(
 }
 
 /**
- * The positions of the full Hermann–Mauguin symbol in the requested convention and setting, each
- * with its symmetry directions (ITA Table 2.1.3.1) and the symmetry elements along them. All
- * positions of the crystal family are listed, also those the symbol of the class leaves out (then
- * without `symbol`); the triclinic family has none. The directions keep the sign of Table 2.1.3.1
- * in both conventions; in the Birss convention an axis of `describeOperations` may be reversed, so
- * match it to a direction whose dot product with it is ±1, not by identity.
+ * The positions of the full Hermann–Mauguin symbol in the requested setting, each with its
+ * symmetry directions (ITA Table 2.1.3.1) and the symmetry elements along them. All positions of the
+ * crystal family are listed, also those the symbol of the class leaves out (then without `symbol`);
+ * the triclinic family has none. A direction carries the same `lattice` and `cartesian` vectors as
+ * the axis of `describeOperations` along it, so match the two by value.
  */
 export function symmetryDirections(key: MagneticPointGroupKey, options?: SettingOptions): readonly SymmetryDirection[] {
   return analysis(key, options).directions;

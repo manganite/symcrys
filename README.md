@@ -34,8 +34,8 @@ set of operations, from birss-app; results are numbers (coefficient matrices). R
 SVG, relation strings, view models) and translated display names stay in the applications that use
 symcrys.
 
-**Conventions.** Point groups follow the _International Tables for Crystallography_ by default;
-the convention of Birss, _Symmetry and Magnetism_ (1966), is an option. **Two entry points:**
+**Conventions.** Point groups follow the _International Tables for Crystallography_ (ITC);
+Birss, _Symmetry and Magnetism_ (1966), is a second print check. **Two entry points:**
 `symcrys` for the 32 crystal classes, `symcrys/magnetic` for the 122 magnetic point groups, under the
 same function names; the import decides how a key such as `'32'` is read. A third, `symcrys/plane`,
 holds the plane groups and plane point groups.
@@ -118,9 +118,7 @@ Audits under `audit/` compare the code bases symcrys draws on. They are run by h
 `npm run audit:point-groups` writes `audit/point-groups/report.md`; `npm run audit:wyckoff-2006`,
 `audit:forms-2006` and `audit:plane-groups-2006` compare with the 5th edition of ITA as transcribed
 in stereography and in [plane-groups](https://github.com/manganite/plane-groups) (checked out next to
-this repository as well); and `npm run audit:birss-app`
-captures the pins of the Birss convention as JSON (`packages/ts/src/pointGroups/birssApp.pins.json`
-for the operations of all 122 magnetic point groups, `packages/ts/src/tensors/birssApp.pins.json` for the tensor forms).
+this repository as well).
 
 CI runs these seven gates on every pull request, on Node 22 and 24, the gate `python` (bundle,
 build sdist and wheel, install the wheel, `mypy`, `pytest`) on Python 3.10 and the newest, and the

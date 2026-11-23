@@ -10,7 +10,6 @@ from numpy.typing import NDArray
 from . import _engine
 from ._convert import from_js, to_js
 
-Convention = Literal["itc", "birss"]
 TensorParity = Literal["polar", "axial"]
 IntrinsicSymmetry = Literal["none", "ij", "jk", "ij_kl", "voigt"]
 

@@ -1,7 +1,7 @@
 # symcrys for Python
 
 Crystallographic symmetry calculations: the 32 crystal classes and the 122 magnetic point groups
-with their settings (ITC and Birss conventions), symbols, symmetry elements, site symmetry and the
+with their settings as ITC gives them, symbols, symmetry elements, site symmetry and the
 forms of property tensors of rank 0 to 4 they allow, and for the crystal classes Wyckoff positions
 and crystal forms; the 17 plane groups with their operations, Wyckoff positions, asymmetric unit
 and symmetry elements; checked against print (ITC, Birss, Yariv).

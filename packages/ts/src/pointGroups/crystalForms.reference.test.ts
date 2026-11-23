@@ -349,7 +349,7 @@ describe('ITA Table 3.2.3.2: face forms', () => {
       if (exact.length) return exact;
       const key = POINT_GROUP_KEYS.find((k) => k === cls);
       if (!key) throw new Error(`Unknown class ${cls}`);
-      const symbols = settings(key, 'itc').map((s) => s.symbol);
+      const symbols = settings(key).map((s) => s.symbol);
       return ENTRIES.filter((e) => symbols.includes(e.short));
     };
     const dotless = (s: string): string => s.replace(/\./g, '');
@@ -458,7 +458,7 @@ describe('ITA Table 3.2.3.2: face forms', () => {
     it(`${label}: the library gives the printed forms`, () => {
       const axis = /^unique axis (b|c)$/.exec(e.axes)?.[1];
       const found = POINT_GROUP_KEYS.flatMap((key: PointGroupKey) =>
-        settings(key, 'itc')
+        settings(key)
           .filter((s) => s.symbol === e.short && (axis === undefined || s.uniqueAxis === axis))
           .map((s) => ({ key, index: s.index })),
       );

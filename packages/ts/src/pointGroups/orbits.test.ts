@@ -5,22 +5,20 @@ import { latticeOperations, orbit, orbitOf } from './orbits.js';
 import { MAGNETIC_POINT_GROUP_KEYS, POINT_GROUP_KEYS, operations, settings } from './pointGroups.js';
 import { wyckoffPositions } from './wyckoff.js';
 
-const ALL_SETTINGS = POINT_GROUP_KEYS.flatMap((key) => settings(key, 'itc').map((s) => ({ key, s })));
+const ALL_SETTINGS = POINT_GROUP_KEYS.flatMap((key) => settings(key).map((s) => ({ key, s })));
 
 describe('latticeOperations', () => {
   for (const key of MAGNETIC_POINT_GROUP_KEYS) {
     it(`are integer matrices, index for index the operations of the same call: ${key}`, () => {
-      for (const s of settings(key, 'itc')) {
-        for (const convention of ['itc', 'birss'] as const) {
-          const ops = operations(key, { convention, setting: s.index });
-          const lattice = latticeOperations(key, { convention, setting: s.index });
-          expect(lattice).toHaveLength(ops.length);
-          lattice.forEach((w, i) => {
-            expect(w.matrix.flat().every((x) => Number.isInteger(x))).toBe(true);
-            expect(Math.abs(det(w.matrix))).toBe(1);
-            expect(w.timeReversal).toBe(ops[i].timeReversal);
-          });
-        }
+      for (const s of settings(key)) {
+        const ops = operations(key, { setting: s.index });
+        const lattice = latticeOperations(key, { setting: s.index });
+        expect(lattice).toHaveLength(ops.length);
+        lattice.forEach((w, i) => {
+          expect(w.matrix.flat().every((x) => Number.isInteger(x))).toBe(true);
+          expect(Math.abs(det(w.matrix))).toBe(1);
+          expect(w.timeReversal).toBe(ops[i].timeReversal);
+        });
       }
     });
   }
@@ -31,12 +29,6 @@ describe('latticeOperations', () => {
     latticeOperations('6/mmm').forEach((w, i) => {
       expect(matricesEqual(multiply(ops[i].matrix, b), multiply(b, w.matrix))).toBe(true);
     });
-  });
-
-  it('are the same set in both conventions, in the order of operations', () => {
-    const itc = latticeOperations('-3m', { convention: 'itc', setting: 1 }).map((w) => JSON.stringify(w.matrix));
-    const birss = latticeOperations('-3m', { convention: 'birss', setting: 1 }).map((w) => JSON.stringify(w.matrix));
-    expect([...birss].sort()).toEqual([...itc].sort());
   });
 
   it('are frozen and cached', () => {

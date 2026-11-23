@@ -17,7 +17,7 @@
 
 import { crystalFamily, latticeBasis, type CrystalSystem } from '../lattice.js';
 import { inverse, multiply, snap, type Mat3 } from '../linalg.js';
-import type { PointGroupKey } from './data.js';
+import type { PointGroupKey } from './keys.js';
 import { ITA_GENERATORS, type IntMat3 } from './itaOrder.js';
 
 /** One ITC setting of a class. */

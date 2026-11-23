@@ -58,7 +58,7 @@ symcrys.point_group("32")
 ```
 
 ```{code-cell} ipython3
-symcrys.symbol("32"), symcrys.symbol("32", convention="birss"), symcrys.symbol("32", form="schoenflies")
+symcrys.symbol("32"), symcrys.symbol("32", setting=1), symcrys.symbol("32", form="schoenflies")
 ```
 
 ```{code-cell} ipython3
@@ -108,7 +108,7 @@ once, then compute with NumPy.
 
 - Which key to use for a material, crystal class or magnetic group:
   [Two readings of a key](readings.md).
-- Which setting and which convention, and why the components of a tensor depend on them:
+- Which setting, and why the components of a tensor depend on it:
   [Conventions](conventions.md), in particular "Settings" and "Cartesian frame".
 - How a tensor form is given (basis, parameters, relations): [Tensors](tensors.md).
 - The crystal forms of a class, basic and limiting, and orbits of faces:

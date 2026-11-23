@@ -9,7 +9,7 @@
 import type { CrystalSystem } from '../lattice.js';
 import { INVERSION, det, matricesEqual } from '../linalg.js';
 import { checkOrthogonal, checkTimeReversal, closeGroup, type Operation } from '../operations.js';
-import type { PointGroupKey } from './data.js';
+import type { PointGroupKey } from './keys.js';
 
 /**
  * What every function for a list of operations asks of the list: Cartesian (orthogonal) matrices,

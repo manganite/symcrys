@@ -56,7 +56,7 @@ napoleon_use_rtype = False
 nitpicky = True
 nitpick_ignore_regex = [
     (r"py:.*", r"(numpy|np|NDArray|ArrayLike|Any|Optional|Literal|Mapping|Sequence|TypedDict).*"),
-    (r"py:.*", r"(symcrys\.)?(magnetic\.|plane\.)?(_shared\.)?(Convention|TensorParity|IntrinsicSymmetry|TimeParity|TensorPropertyName|SiteSymmetry|TensorForm|TensorSpec|Operation)"),
+    (r"py:.*", r"(symcrys\.)?(magnetic\.|plane\.)?(_shared\.)?(TensorParity|IntrinsicSymmetry|TimeParity|TensorPropertyName|SiteSymmetry|TensorForm|TensorSpec|Operation)"),
     (r"py:.*", r"(str|int|float|bool|dict|list|tuple)"),
     # The type column of the generated Parameters sections (scripts/python-docstrings.mjs).
     (r"py:.*", r"(keyword-only|optional)"),
@@ -92,7 +92,7 @@ symcrys_page_descriptions = {
     "symbols, operations and the form of a property tensor.",
     "readings": "One key, two readings: 32 is a crystal class in symcrys and a white magnetic point "
     "group in symcrys/magnetic. Which entry point to use, and why.",
-    "conventions": "The conventions of symcrys for point and plane groups: ITC and Birss, axis frames, "
+    "conventions": "The conventions of symcrys for point and plane groups after ITC, axis frames, "
     "settings, symbols, Wyckoff positions, crystal forms and tensors, with print sources.",
     "tensors": "Tensor forms allowed by a point group, rank 0 to 4, and named properties such as "
     "piezoelectric, pyroelectric, gyrotropic, ferroaxial and magnetoelectric.",

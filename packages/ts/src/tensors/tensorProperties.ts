@@ -25,7 +25,7 @@ function named(name: TensorPropertyName): TensorPropertyName {
 
 /**
  * True if the point group allows the named property, e.g. `allowsProperty('-6m2', 'piezoelectric')`.
- * It does not depend on setting or convention. Throws a RangeError for an unknown key or name.
+ * It does not depend on the setting. Throws a RangeError for an unknown key or name.
  */
 export function allowsProperty(key: MagneticPointGroupKey, name: TensorPropertyName): boolean {
   return tensorForm(key, named(name), { setting: 1 }).basis.length > 0;

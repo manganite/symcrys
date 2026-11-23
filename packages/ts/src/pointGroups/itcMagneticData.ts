@@ -18,9 +18,8 @@
  */
 
 import { operation, type Operation } from '../operations.js';
-import type { PointGroupKey } from './data.js';
+import type { BlackWhitePointGroupKey, PointGroupKey } from './keys.js';
 import { itcCartesianOperations, itcClass, itcLatticeGenerators, itcTimeReversal } from './itcData.js';
-import type { BlackWhitePointGroupKey } from './magneticData.js';
 import { primedSymbols } from './magneticSymbols.js';
 
 /** One ITC setting of a black-and-white group. */
@@ -255,7 +254,7 @@ export function itcBlackWhiteOperations(key: BlackWhitePointGroupKey, index: num
       const parity = itcTimeReversal(g.crystalClass, classIndex, flags);
       if (!parity) continue;
       const ops = matrices.map((m, i) => ({ ...operation(m), timeReversal: parity[i] }));
-      const symbols = primedSymbols(classSetting, cls.crystalSystem, 'itc', ops);
+      const symbols = primedSymbols(classSetting, cls.crystalSystem, ops);
       if (symbols.full === full) found.push(ops);
     }
     if (found.length !== 1) throw new Error(`${key} setting ${index}: ${found.length} groups have the symbol ${full}`);

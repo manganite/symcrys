@@ -32,21 +32,21 @@ describe('the API gives the exact ITC class data', () => {
         ...(s.uniqueAxis ? { uniqueAxis: s.uniqueAxis } : {}),
         isDefault: s.isDefault,
       })),
-    ).toEqual(settings(key, 'itc'));
+    ).toEqual(settings(key));
   });
 
   it.each(SETTINGS)('%s: the same operations, in the same order', (_, c, s) => {
-    const current = operations(c.key, { convention: 'itc', setting: s.index }).map((o) => o.matrix);
+    const current = operations(c.key, { setting: s.index }).map((o) => o.matrix);
     expect(sameMatrices(itcCartesianOperations(c.key, s.index), current)).toBe(true);
   });
 
   it.each(SETTINGS)('%s: the same generators', (_, c, s) => {
-    const current = generators(c.key, { convention: 'itc', setting: s.index }).map((o) => o.matrix);
+    const current = generators(c.key, { setting: s.index }).map((o) => o.matrix);
     expect(sameMatrices(itcCartesianGenerators(c.key, s.index), current)).toBe(true);
   });
 
   it.each(SETTINGS)('%s: the same lattice operations', (_, c, s) => {
-    const current = latticeOperations(c.key, { convention: 'itc', setting: s.index }).map((o) => o.matrix);
+    const current = latticeOperations(c.key, { setting: s.index }).map((o) => o.matrix);
     expect(itcLatticeOperations(c.key, s.index).map((w) => w.map((row) => [...row]))).toEqual(
       current.map((m) => m.map((row) => row.map((x) => x + 0))),
     );

@@ -148,17 +148,11 @@ describe('allowsProperty and allowedProperties', () => {
   });
 
   it('do not depend on the setting, and agree with the functions for operations', () => {
-    // A setting holds the same operations in both conventions (docs/conventions.md, "Settings"), so
-    // the settings of one convention are all frames there are.
     for (const key of MAGNETIC_POINT_GROUP_KEYS) {
       const allowed = allowedProperties(key);
       for (const s of settings(key)) {
         const ops = operations(key, { setting: s.index });
         expect(allowedPropertiesOf(ops), `${key} setting ${s.index}`).toEqual(allowed);
-      }
-      const birss = operations(key, { convention: 'birss' });
-      for (const name of ['ferromagnetic', 'magnetoelectric'] as const) {
-        expect(allowsPropertyOf(birss, name), `${key} ${name}`).toBe(allowed.includes(name));
       }
     }
   }, 30_000); // closes and projects about 180 groups without the cache
@@ -191,11 +185,9 @@ describe('tensorForm and tensorFormOf with the name of a property', () => {
   it('give the form of the tensor the table names', () => {
     for (const name of TENSOR_PROPERTY_NAMES) {
       for (const key of ['1', '-6m2', "4'/mmm'", "2221'"] as const) {
-        for (const convention of ['itc', 'birss'] as const) {
-          const byName = tensorForm(key, name, { convention });
-          expect(byName, `${key} ${name}`).toEqual(tensorForm(key, TENSOR_PROPERTIES[name].spec, { convention }));
-          expect(tensorFormOf(operations(key, { convention }), name)).toEqual(byName);
-        }
+        const byName = tensorForm(key, name);
+        expect(byName, `${key} ${name}`).toEqual(tensorForm(key, TENSOR_PROPERTIES[name].spec));
+        expect(tensorFormOf(operations(key), name)).toEqual(byName);
       }
     }
   });

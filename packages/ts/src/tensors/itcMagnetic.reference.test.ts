@@ -43,7 +43,7 @@ const schoenflies = (key: MagneticPointGroupKey) => symbol(key, { form: 'schoenf
 const BY_SYMBOL = new Map<string, Orientation[]>();
 const DEFAULT = new Map<string, Orientation>();
 for (const key of GROUPS) {
-  for (const s of settings(key, 'itc')) {
+  for (const s of settings(key)) {
     for (const name of new Set([s.symbol, compact(s.fullSymbol)])) {
       BY_SYMBOL.set(name, [...(BY_SYMBOL.get(name) ?? []), { key, setting: s.index }]);
     }
