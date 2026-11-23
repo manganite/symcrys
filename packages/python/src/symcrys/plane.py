@@ -178,7 +178,7 @@ def describe_operations(key: str, *, setting: Optional[int] = None) -> list[dict
     -------
     list of dict
         ``translation``, ``location`` and ``glide`` (where present) are float64 arrays of shape
-        (2,), ``direction`` and ``normal`` int64 arrays of shape (2,).
+        (2,), ``direction`` and ``axis`` int64 arrays of shape (2,).
     """
     return [_description(d) for d in _call("describeOperations", key, _shared.options(setting=setting))]
 
@@ -197,7 +197,7 @@ def describe_operations_of(operations: Sequence[Mapping[str, Any]]) -> list[dict
     -------
     list of dict
         As ``describe_operations``: ``translation``, ``location`` and ``glide`` (where present)
-        float64 arrays of shape (2,), ``direction`` and ``normal`` int64 arrays of shape (2,).
+        float64 arrays of shape (2,), ``direction`` and ``axis`` int64 arrays of shape (2,).
     """
     checked = _shared.operation_list(operations, ("matrix", "translation"))
     return [_description(d) for d in _call("describeOperationsOf", checked)]
@@ -208,7 +208,7 @@ def _description(d: dict[str, Any]) -> dict[str, Any]:
     for k in ("translation", "location", "glide"):
         if k in d:
             d[k] = _floats(d[k], 2)
-    for k in ("direction", "normal"):
+    for k in ("direction", "axis"):
         if k in d:
             d[k] = _ints(d[k])
     return d
@@ -291,10 +291,12 @@ def snap_to_wyckoff_position(key: str, point: ArrayLike, *, tolerance: Optional[
     return result
 
 
-def orbit(key: str, point: ArrayLike, *, tolerance: Optional[float] = None) -> NDArray[np.float64]:
+def orbit(key: str, point: ArrayLike, *, tolerance: Optional[float] = None) -> list[dict[str, Any]]:
     """The orbit of a point (lattice basis) under a plane group: its distinct images in the
-    conventional cell, each in [0, 1), in the order of the operations that first give them; images
-    that coincide within the tolerance are merged. Raises SymcrysError as ``site_symmetry``.
+    conventional cell, each in [0, 1), in the order of the operations that first give them, each
+    with the indices of the operations that map the point there (as the entries of the orbits of the
+    point groups); images that coincide within the tolerance are merged. Raises SymcrysError as
+    ``site_symmetry``.
 
     Parameters
     ----------
@@ -304,10 +306,14 @@ def orbit(key: str, point: ArrayLike, *, tolerance: Optional[float] = None) -> N
 
     Returns
     -------
-    numpy.ndarray
-        A float64 array of shape (n, 2), the images as rows.
+    list of dict
+        In each, ``point`` is a float64 array of shape (2,) and ``operations`` an int64 array of
+        shape (n,).
     """
-    return _floats(_call("orbit", key, _point(point), _shared.options(tolerance=tolerance)), -1, 2)
+    return [
+        {"point": _floats(e["point"], 2), "operations": _ints(e["operations"])}
+        for e in _call("orbit", key, _point(point), _shared.options(tolerance=tolerance))
+    ]
 
 
 # --- the cell -----------------------------------------------------------------------------------
@@ -336,9 +342,9 @@ def symmetry_elements(key: str) -> dict[str, Any]:
     -------
     dict
         ``rotation_points``: dicts ``{"n", "point"}``, point a float64 array of shape (2,);
-        ``lines``: dicts ``{"kind", "direction", "normal", "glide", "segment"}``, direction and
-        normal int64 of shape (2,), glide float64 of shape (2,), segment float64 of shape (2, 2),
-        the two ends as rows.
+        ``lines``: dicts ``{"kind", "direction", "axis", "glide", "segment"}``, direction and axis
+        int64 of shape (2,), glide float64 of shape (2,), segment float64 of shape (2, 2), the two
+        ends as rows.
     """
     result = dict(_call("symmetryElements", key))
     return {
@@ -347,7 +353,7 @@ def symmetry_elements(key: str) -> dict[str, Any]:
             {
                 "kind": line["kind"],
                 "direction": _ints(line["direction"]),
-                "normal": _ints(line["normal"]),
+                "axis": _ints(line["axis"]),
                 "glide": _floats(line["glide"], 2),
                 "segment": _floats(line["segment"], 2, 2),
             }

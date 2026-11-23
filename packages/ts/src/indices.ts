@@ -74,7 +74,7 @@ export function directionFromFourIndices(uvtw: FourIndices): Vec3 {
 
 /**
  * The zone axis [uvw] of two planes (hkl), which must not be zero vectors: the solution of the zone law hu + kv + lw = 0, the
- * cross product h₁ × h₂ reduced (so its sign follows the order of the planes), or undefined for parallel planes.
+ * cross product h₁ × h₂ reduced (so its sign follows the order of the planes), or `undefined` for parallel planes.
  */
 export function zoneAxis(h1: Vec3, h2: Vec3): Vec3 | undefined {
   integers(h1, 'zoneAxis', 3);

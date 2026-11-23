@@ -438,6 +438,14 @@ normalisation before the comparison (#96; decided by Thomas on 2026-11-22 and 20
 
 `symcrys/plane` has no lookup by symbol yet (#97).
 
+## Results
+
+Every result of the API is frozen, nested arrays and objects included, and typed `readonly`; a
+caller who wants to change one copies it (#137 C4; `entryPoints.test.ts` calls every function of
+the three entry points). `residualOperations` freezes its list, not the operations in it, which are
+the caller's. "Not found" is `undefined`, never `null` (`findPointGroup`, `pointGroupOf`,
+`zoneAxis`; in Python `None`).
+
 ## Numbers
 
 Matrices hold floating-point numbers. During group closure every entry within 10⁻⁹ of an exact
@@ -808,7 +816,7 @@ default is `EPSILON`.
 **Indices.** (hkl) ↔ (hkil) with i = −(h + k); [uvw] → [UVTW] with U = (2u − v)/3, V = (2v − u)/3,
 T = −(U + V), W = w, scaled to the smallest integers, and back with u = U − T, v = V − T, w = W,
 reduced. `zoneAxis(h1, h2)` is the reduced cross product h₁ × h₂ (zone law hu + kv + lw = 0), so its
-sign follows the order of the planes; parallel planes give `null`.
+sign follows the order of the planes; parallel planes give `undefined` (never `null`, #137 C4).
 
 **Change of axes.** For (a′, b′, c′) = (a, b, c)·P (columns of P: the new vectors in the old basis,
 det P > 0), `changeOfAxes(P)` gives Q = P⁻¹ for the coordinates of a direction and Pᵀ for the indices
@@ -1003,8 +1011,10 @@ symmorphic (`pg`, `cm`, `p4gm`, …).
 operations": its kind (`'identity'`, `'translation'`, `'rotation'`, `'reflection'` or
 `'glide-reflection'`, as ITA names the operations in Table 2.1.2.1, p. 145), the n and sense of a rotation, the centre of a rotation, the direction of a line and one point of
 it (on y = 0, or on x = 0 for a line along a), and the glide vector (w + W·w)/2. An operation whose
-glide vector is a non-zero lattice vector is a glide, as it is geometrically. A mirror or glide line
-also carries its `normal`, its symmetry direction in the sense of ITA Table 2.1.3.1 (p. 151): the
+glide vector is a non-zero lattice vector is a glide, as it is geometrically. A reflection or glide
+reflection also carries its `axis`, the normal of its line, its symmetry direction in the sense of
+ITA Table 2.1.3.1 (p. 151), under the name the axis of an operation has in the point groups (#137 C3,
+where the `axis` of a reflection is the normal of its plane): the
 shortest integer vector along W − I, first non-zero component positive. Without a metric it is not
 the perpendicular of the direction: in a hexagonal basis the line along [10] has the normal [12]. The
 normals of a group are the printed symmetry directions at the positions where its full symbol has
@@ -1016,7 +1026,8 @@ a fraction with a denominator of at most 12 (within 10⁻⁹) and refuses a matr
 part of a plane point group (maintainer, 2026-11-22, #84).
 
 **Points.** `siteSymmetry`, `wyckoffPosition` and `orbit` take the key of a plane group and a point
-in the lattice basis, with an optional `tolerance` measured per coordinate modulo the lattice
+in the lattice basis (`orbit` gives each image as `{ point, operations }`, with the indices of the
+operations that map the point there, as the orbits of the point groups do; #137 C4), with an optional `tolerance` measured per coordinate modulo the lattice
 (default 10⁻⁶, below 1/2). The operations that fix the point within the tolerance are closed into a
 group and the point set onto their fixed space, so a rounded point gives the exact site symmetry.
 The Wyckoff position is the printed row of the point's multiplicity whose printed coordinates, with
