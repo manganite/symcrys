@@ -23,7 +23,7 @@ symcrys holds calculations, not presentation. It has:
 
 1. Point groups: the 32 crystallographic and the 122 magnetic point groups as data (generators),
    group generation, settings, Hermann–Mauguin and Schoenflies symbols, derived properties
-   (centrosymmetric, polar, chiral, the named tensor properties), site symmetry, Wyckoff positions,
+   (centrosymmetric, polar, enantiomorphic, the named tensor properties), site symmetry, Wyckoff positions,
    crystal forms, orbits, and the point group of any list of operations.
 2. Plane groups and plane point groups (`symcrys/plane`).
 

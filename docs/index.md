@@ -29,7 +29,7 @@ Where to start:
   crystal class, as ITA lists them, the orbits of faces and directions, and the point group of a
   list of operations.
 - [Cells, metric, angles and indices](cells.md): the cell from lattice parameters, metric tensor,
-  angles between directions and faces, the operations a distortion leaves, Miller–Bravais indices,
+  angles between directions and faces, the operations a distortion leaves, Bravais–Miller indices,
   the zone law and the change of axes.
 - [Tensors and named properties](tensors.md): forms of property tensors, and the named properties
   such as piezoelectric or ferromagnetic.

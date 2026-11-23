@@ -462,6 +462,18 @@ The conventions themselves are in `docs/conventions.md`; here, what was decided 
   birss-app rests; adding them is additive, and the first real consumer tests the API early. **Magnetic groups and group properties in three PRs** (maintainer, 2026-11-19, #13, #41):
   data, symbols and operations; then the `'c'`-tensors and the named tensor properties; then the
   fixed properties of a class as fields of `pointGroup()`; released together as one MINOR.
+- **Names of ITA** (#137 C1, C2, decided by Thomas on 2026-11-22; #121 step 7c): the suffix `…Of`
+  means "of a list of operations" and only that: `siteSymmetryOf(operations, direction)` beside
+  `siteSymmetry(key, direction, options)`, and `wyckoffPosition(key, x)` (was `wyckoffPositionOf`,
+  also in `symcrys/plane`); ITA's terms: in operation descriptions `n` (was `order`, ITA § 1.2.1)
+  and the kinds `'reflection'`, `'glide-reflection'` (were `'mirror'`, `'glide'`; ITA Table
+  2.1.2.1 names the operations so, and the elements mirror and glide line, which `symmetryElements`
+  keeps), `enantiomorphic` and `isEnantiomorphicOf` (were `chiral`, `isChiralOf`; ITA § 3.2.2.1.3,
+  p. 738), in `symcrys/plane` `rotationPoints` (was `rotations`) and no `planeGroup(key).order`.
+  Chosen while implementing: a rotation point carries `n` too, as the operation that it is the
+  element of; `siteSymmetry(key, …)` is in both point-group entry points, with the options of
+  `wyckoffPosition` (`setting`, `axes`, `uniqueAxis`, `tolerance`). The entries below keep the
+  names of their time.
 - **Fixed properties are fields of `pointGroup()`** (maintainer, 2026-11-20, #41; decided on the
   call sites of stereography and birss-app, listed in #41): what is fixed once the group is named
   (`crystalSystem`, `order`, `centrosymmetric`, `polar`, `chiral`, `laueClass`; in the magnetic API

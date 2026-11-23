@@ -121,18 +121,18 @@ matrices in the same order, generators, symmetry elements, site symmetries, and 
 tensors. The crystallographic API is computed by the same code and returns the answer of the white
 group with time reversal left out. The grey group of the class has other symbols (`321'`, `3121'`) and
 twice the operations, but the same settings, the same properties of the operations
-(centrosymmetric, polar, chiral, Laue class), the same multiplicity of a direction, the same forms
+(centrosymmetric, polar, enantiomorphic, Laue class), the same multiplicity of a direction, the same forms
 of time-even tensors and so the same time-even properties. `entryPoints.test.ts` checks both for
 all 32 classes.
 
 **Operations passed in.** Where a function takes a list of operations (`tensorFormOf`,
-`allowsPropertyOf`, `allowedPropertiesOf`, `isCentrosymmetricOf`, `isChiralOf`, `pointGroupOf`,
-`describeOperationsOf`, `siteSymmetry`, `orbitOf`), the matrices must be orthogonal (Cartesian;
+`allowsPropertyOf`, `allowedPropertiesOf`, `isCentrosymmetricOf`, `isEnantiomorphicOf`, `pointGroupOf`,
+`describeOperationsOf`, `siteSymmetryOf`, `orbitOf`), the matrices must be orthogonal (Cartesian;
 within the `tolerance` of a function that has one, at least `EPSILON`), and the magnetic API asks
 every operation whether it is combined with time reversal: `timeReversal` must be `true` or `false`. Operations of the
 crystallographic API, which do not say, are refused there and not read as a white group; a caller
 who means the white group adds `timeReversal: false`, one who means a crystal without magnetic
-order builds the grey group. `siteSymmetry` and `orbitOf` do not depend on time reversal and take
+order builds the grey group. `siteSymmetryOf` and `orbitOf` do not depend on time reversal and take
 either in the magnetic API.
 
 **A third entry point, `symcrys/plane`,** holds the plane groups and the plane point groups ("Plane
@@ -185,7 +185,7 @@ with the same W ("Plane groups"). `operations` and `generators` give these recor
 separate list of lattice operations (`latticeOperations` up to 0.10).
 
 **Operations from a caller.** The functions that compute with Cartesian matrices (`pointGroupOf`,
-`describeOperationsOf`, `siteSymmetry`, `orbitOf`, `isCentrosymmetricOf`, `isChiralOf`,
+`describeOperationsOf`, `siteSymmetryOf`, `orbitOf`, `isCentrosymmetricOf`, `isEnantiomorphicOf`,
 `tensorFormOf`, `allowsPropertyOf`, `allowedPropertiesOf`) read `cartesian`, and in the magnetic API
 `timeReversal`; other fields are not read, so a record of `operations` passes as it is, and so does
 `{ cartesian }` (`{ cartesian, timeReversal }`) built by a caller, for instance for the operations
@@ -448,16 +448,17 @@ equal when all entries agree within 10⁻⁶. The matrix W of an operation in th
 ## Properties
 
 What is fixed once the group is named is a field of `pointGroup(key)`: `crystalSystem`, `order`,
-`centrosymmetric`, `polar`, `chiral`, `laueClass`, and in the magnetic API also `type` and
+`centrosymmetric`, `polar`, `enantiomorphic`, `laueClass`, and in the magnetic API also `type` and
 `crystalClass` (maintainer, 2026-11-20, #41). They follow from the operations alone; none depends
 on the setting. For a magnetic point group:
 
 - `centrosymmetric`: the group contains the inversion without time reversal. `m'm'm'`, which
   contains only the inversion combined with time reversal, is not centrosymmetric in this sense;
   its crystal class `mmm` is.
-- `polar`, `chiral`, `laueClass`: those of the crystal class (`crystalClass`). Time reversal
+- `polar`, `enantiomorphic`, `laueClass`: those of the crystal class (`crystalClass`). Time reversal
   changes neither a polar vector nor handedness. `polar`: a direction is fixed by every operation;
-  `chiral`: proper rotations only; `laueClass`: the class with the inversion added.
+  `enantiomorphic`: proper rotations only (ITA § 3.2.2.1.3, p. 738: enantiomorphism and chirality
+  are the same restriction, the absence of improper rotations); `laueClass`: the class with the inversion added.
 
 **For a list of operations** (a site symmetry, the operations of a distorted crystal):
 `isCentrosymmetricOf(operations)` and `isChiralOf(operations)`, for the group the operations
@@ -527,13 +528,13 @@ perpendicular.
 
 `describeOperations(key, options)` describes each operation, in the order of `operations`:
 
-| Field          | Meaning                                                                                                  |
-| -------------- | -------------------------------------------------------------------------------------------------------- |
-| `kind`         | `identity`, `inversion`, `rotation`, `rotoinversion` (n̄ = inversion × rotation n, n = 3, 4, 6), `mirror` |
-| `order`        | the n of n or n̄; 1 for the identity and the inversion, 2 for a mirror (m = 2̄)                            |
-| `axis`         | rotation or rotoinversion axis, or mirror normal: `lattice` [uvw] and `cartesian` unit vector            |
-| `sense`        | for n ≥ 3: `+` or `-`                                                                                    |
-| `timeReversal` | magnetic API: as in the operation                                                                        |
+| Field          | Meaning                                                                                                                                                   |
+| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `kind`         | `identity`, `inversion`, `rotation`, `rotoinversion` (n̄ = inversion × rotation n, n = 3, 4, 6), `reflection`, as ITA names the operations (Table 2.1.2.1) |
+| `n`            | the n of n or n̄ (ITA § 1.2.1: an n-fold rotation); 1 for the identity and the inversion, 2 for a reflection (m = 2̄)                                       |
+| `axis`         | rotation or rotoinversion axis, or the normal of the mirror plane: `lattice` [uvw] and `cartesian` unit vector                                            |
+| `sense`        | for n ≥ 3: `+` or `-`                                                                                                                                     |
+| `timeReversal` | magnetic API: as in the operation                                                                                                                         |
 
 - **Axis.** Every axis and mirror normal of a crystal class lies along one of its symmetry
   directions; the axis is that direction, as [uvw] with the sign of Table 2.1.3.1 and as a
@@ -559,7 +560,7 @@ perpendicular.
 These functions treat **directions**: face normals (poles) and lattice directions, the vectors a
 point group acts on. A direction is a non-zero Cartesian vector; its length does not matter.
 
-**Site symmetry.** `siteSymmetry(operations, direction, { tolerance })` returns the operations of
+**Site symmetry.** `siteSymmetryOf(operations, direction, { tolerance })` returns the operations of
 any list (a point group, or for example the operations left after distorting a crystal) that fix
 the direction: those that move its unit vector by less than `tolerance` (default `EPSILON`,
 10⁻⁶). Near an element, the operations fixing a direction within the tolerance need not form a
@@ -571,14 +572,16 @@ common direction (only with a tolerance far too large), it throws. The result is
 which removes rounding errors within the tolerance; the multiplicity is the number of operations
 divided by its order. For a list that is not a group, the closure keeps only products in the list,
 and the multiplicity may not be an integer. Time reversal is ignored, since it does not change a
-direction.
+direction. `siteSymmetry(key, direction, { setting, axes, uniqueAxis, tolerance })` is the same for
+the operations of a point group in a setting, `siteSymmetryOf(operations(key, options), …)`; the
+suffix `…Of` marks the functions of a list of operations (#137 C1).
 
 **Wyckoff positions** are ITA's: a Wyckoff position is the set of directions whose site
 symmetries are conjugate in the point group (ITA, 6th ed., § 3.2.1.2.2, "Definition", p. 722).
 
 They are given for the **32 crystal classes only**: ITA tabulates them for these, and
-`wyckoffPositions` and `wyckoffPositionOf` throw for a magnetic point group with time reversal. For
-such a group, use the key of its crystal class or `siteSymmetry` with its operations.
+`wyckoffPositions` and `wyckoffPosition` throw for a magnetic point group with time reversal. For
+such a group, use the key of its crystal class or `siteSymmetry` with its key.
 
 `wyckoffPositions(key, { setting })` lists them in ITA's order, general position first, as ITA
 prints them for that setting (ITA 6th ed., Table 3.2.3.2, pp. 745–769):
@@ -621,7 +624,7 @@ prints them for that setting (ITA 6th ed., Table 3.2.3.2, pp. 745–769):
   letters renamed after their new position (`m..`, `0,y,z`, `0,k,l` in `mm2` become `.m.`, `x,0,z`,
   `h,0,l` in `2mm`).
 
-`wyckoffPositionOf(key, direction, { setting, tolerance })` gives the Wyckoff position of any
+`wyckoffPosition(key, direction, { setting, tolerance })` gives the Wyckoff position of any
 direction: the one whose representative has a site symmetry conjugate to that of the direction.
 
 **ITA 2006 and 2016.** The 5th edition prints these data as Table 10.1.2.2, without coordinates
@@ -766,7 +769,7 @@ by one (`references/itc/vol-a-table-3.2.3.2-general-faces.md`).
 `orbitOf(operations, direction, { tolerance })` does the same for a Cartesian direction (a face
 normal, a pole) under any list of Cartesian operations, for instance those left after distorting a
 crystal: the images of its unit vector, coinciding images merged when closer than `tolerance`
-(default `EPSILON`, as for `siteSymmetry`; maintainer, 2026-11-21), each with the operations that
+(default `EPSILON`, as for `siteSymmetryOf`; maintainer, 2026-11-21), each with the operations that
 lead there. The list is not closed into a group. For a group and a face of a crystal form, `orbit`
 and `orbitOf` give the same entries with the same operations.
 
@@ -913,7 +916,7 @@ sign under time reversal, e.g. a net rotation of structural units about an axis 
 `-3`). The tensor is that of `'ferromagnetic'` with the other time parity, so the 13 classes are
 the white groups among the 31 ferromagnetic groups: `1`, `-1`, `2`, `m`, `2/m`, `4`, `-4`, `4/m`,
 `3`, `-3`, `6`, `-6`, `6/m`, the classes whose short Hermann–Mauguin symbol (the key) has a single position; the
-vector lies along that symmetry direction (any direction in `1` and `-1`). Seven of them are neither polar nor chiral (`-1`,
+vector lies along that symmetry direction (any direction in `1` and `-1`). Seven of them are neither polar nor enantiomorphic (`-1`,
 `2/m`, `-4`, `4/m`, `-3`, `-6`, `6/m`). Over the 122 groups: 43 (13 classes, their 13 grey groups,
 17 black-and-white groups). The name is that of Hlinka, Privratska, Ondrejkovic & Janovec, _Phys.
 Rev. Lett._ **116**, 177602 (2016); ITC Vol. D does not tabulate the property, so the print anchor
@@ -997,8 +1000,8 @@ is the set of its linear parts; this is checked for all 17 plane groups, also fo
 symmorphic (`pg`, `cm`, `p4gm`, …).
 
 **Descriptions.** `describeOperations` describes each operation as ITA does under "Symmetry
-operations": its kind (`'identity'`, `'translation'`, `'rotation'`, `'mirror'` or `'glide'`), the
-order and sense of a rotation, the centre of a rotation, the direction of a line and one point of
+operations": its kind (`'identity'`, `'translation'`, `'rotation'`, `'reflection'` or
+`'glide-reflection'`, as ITA names the operations in Table 2.1.2.1), the n and sense of a rotation, the centre of a rotation, the direction of a line and one point of
 it (on y = 0, or on x = 0 for a line along a), and the glide vector (w + W·w)/2. An operation whose
 glide vector is a non-zero lattice vector is a glide, as it is geometrically. A mirror or glide line
 also carries its `normal`, its symmetry direction in the sense of ITA Table 2.1.3.1 (p. 151): the
@@ -1012,7 +1015,7 @@ shifted by a lattice translation or the operations of a site symmetry; it reads 
 a fraction with a denominator of at most 12 (within 10⁻⁹) and refuses a matrix that is not the linear
 part of a plane point group (maintainer, 2026-11-22, #84).
 
-**Points.** `siteSymmetry`, `wyckoffPositionOf` and `orbit` take the key of a plane group and a point
+**Points.** `siteSymmetry`, `wyckoffPosition` and `orbit` take the key of a plane group and a point
 in the lattice basis, with an optional `tolerance` measured per coordinate modulo the lattice
 (default 10⁻⁶, below 1/2). The operations that fix the point within the tolerance are closed into a
 group and the point set onto their fixed space, so a rounded point gives the exact site symmetry.
@@ -1029,8 +1032,9 @@ where the mean of the images lies.
 
 **The cell.** `asymmetricUnit` is the polygon of ITA's printed block "Asymmetric unit": its
 vertices, counter-clockwise from the lowest, and per edge the printed inequality a·x + b·y ≤ c that
-holds it (bounds that hold no edge are left out). `symmetryElements` gives every rotation centre in
-[0, 1]², boundary included, with the highest order of a rotation about it, and every mirror and glide
+holds it (bounds that hold no edge are left out). `symmetryElements` gives every rotation point in
+[0, 1]², boundary included, with the highest n of a rotation about it (`rotationPoints`, ITA Table
+2.1.2.1: the rotation point is the symmetry element of a rotation in the plane), and every mirror and glide
 line that crosses the cell, with its segment there; a glide line carries its glide vector
 s·direction with 0 < s < 1 (in a plane group s = 1/2). Drawing them is left to the application.
 
@@ -1045,7 +1049,7 @@ the determination of the plane group of a pattern (a later MINOR, #31).
 | ITC symbols of the settings                                                                                                                  | ITA Table 3.2.3.2 (headlines, pp. 745–769); ITC Vol. D Table 1.5.2.3 for monoclinic full symbols; the symbol rule (positions: ITA § 2.1.3.4, p. 151; `1` for a direction without symmetry: 5th ed. § 2.2.4.1 (iv), p. 18; monoclinic full symbols: § 2.1.3.15, p. 171) for `2mm`, `m2m` and unique axis c         | `itc.reference.test.ts`                                                                                 |
 | ITC operations of every setting                                                                                                              | the general positions of ITA Table 3.2.3.2 (pp. 745–769), in the frame of #6; `2mm`, `m2m`, which ITA does not list: their ITC symbol along the symmetry directions of ITA Table 2.1.3.1 (p. 151)                                                                                                                 | `itcGeneralPositions.reference.test.ts`, `itc.reference.test.ts`                                        |
 | ITC default settings                                                                                                                         | see "Settings" above                                                                                                                                                                                                                                                                                              | `itcSettings.fixtures.ts`                                                                               |
-| centrosymmetric, polar, chiral, Laue class, holohedry, Schoenflies                                                                           | ITA Table 2.1.1.1 (p. 143, Laue groups and holohedries), Table 3.2.2.1 (p. 738), Table 3.2.3.2                                                                                                                                                                                                                    | `properties.reference.test.ts`, `itc.reference.test.ts`                                                 |
+| centrosymmetric, polar, enantiomorphic, Laue class, holohedry, Schoenflies                                                                   | ITA Table 2.1.1.1 (p. 143, Laue groups and holohedries), Table 3.2.2.1 (p. 738), Table 3.2.3.2                                                                                                                                                                                                                    | `properties.reference.test.ts`, `itc.reference.test.ts`                                                 |
 | symmetry directions                                                                                                                          | ITA Table 2.1.3.1 (p. 151)                                                                                                                                                                                                                                                                                        | `symmetryDirections.reference.test.ts`                                                                  |
 | ITC: order of the operations, generators                                                                                                     | ITA's selected generators, ITA 5th ed. (2006), Part 7 (pages in `references/itc/vol-a-2006-symmetry-operations.md`), § 2.2.11 (iv) p. 27, § 8.3.5 p. 737, giving the numbering of Table 3.2.3.2                                                                                                                   | `elements.reference.test.ts`                                                                            |
 | Magnetic groups, ITC: keys, crystal system, Schoenflies and full symbols, operators of the default setting                                   | ITC Vol. D (2013) Table 1.5.2.3 (pp. 111–112): `references/itc/vol-d-table-1.5.2.3.md`; grey groups: eq. (1.5.2.1), p. 110                                                                                                                                                                                        | `magnetic.reference.test.ts`                                                                            |

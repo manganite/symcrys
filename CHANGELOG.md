@@ -101,6 +101,21 @@ All notable changes to symcrys are recorded here. The format follows
   ITA's headlines name the settings, are taken by every function with the option `setting` and by
   `findPointGroup` (Python `axes=`, `unique_axis=`). Spaces in a symbol carry no meaning.
 
+- **Names of ITA** (#137 C1, C2, #121 step 7c):
+
+  | Up to 0.10                                                          | From 0.11                                                                |
+  | ------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+  | `siteSymmetry(operations, direction)` (Python `site_symmetry`)      | `siteSymmetryOf(operations, direction)` (`site_symmetry_of`)             |
+  | (none)                                                              | `siteSymmetry(key, direction, { setting, axes, uniqueAxis, tolerance })` |
+  | `wyckoffPositionOf(key, x)`, also in `symcrys/plane`                | `wyckoffPosition(key, x)`                                                |
+  | description `order`, kind `'mirror'`, plane kind `'glide'`          | `n`, `'reflection'`, `'glide-reflection'` (ITA Table 2.1.2.1)            |
+  | `pointGroup(key).chiral`, `isChiralOf`                              | `enantiomorphic`, `isEnantiomorphicOf` (ITA § 3.2.2.1.3)                 |
+  | plane `symmetryElements(key).rotations`, entries `{ order, point }` | `rotationPoints`, entries `{ n, point }`                                 |
+  | plane `planeGroup(key).order`                                       | removed: `operations(key).length`                                        |
+
+  The lines of `symmetryElements` keep `kind: 'mirror' | 'glide'`, the names of the elements. The
+  values are unchanged.
+
 ### Removed
 
 - **`latticeOperations`** (Python `lattice_operations`), in both entry points (#121 step 6d): its

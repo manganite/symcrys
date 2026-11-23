@@ -45,7 +45,7 @@ __all__ = [
     "snap_to_wyckoff_position",
     "symbol",
     "symmetry_elements",
-    "wyckoff_position_of",
+    "wyckoff_position",
     "wyckoff_positions",
 ]
 
@@ -249,7 +249,7 @@ def site_symmetry(key: str, point: ArrayLike, *, tolerance: Optional[float] = No
     return result
 
 
-def wyckoff_position_of(key: str, point: ArrayLike, *, tolerance: Optional[float] = None) -> dict[str, Any]:
+def wyckoff_position(key: str, point: ArrayLike, *, tolerance: Optional[float] = None) -> dict[str, Any]:
     """The Wyckoff position of a point (lattice basis) under a plane group, as ``wyckoff_positions``
     gives it: the printed position of the point's multiplicity whose coordinates, with the centring,
     reach the point set onto its site symmetry. Raises SymcrysError as ``site_symmetry``.
@@ -260,7 +260,7 @@ def wyckoff_position_of(key: str, point: ArrayLike, *, tolerance: Optional[float
         Two points count as the same, modulo the lattice, if each coordinate (lattice basis) differs
         by less than this from an integer. Default 10⁻⁶; must be below 1/2.
     """
-    return dict(_call("wyckoffPositionOf", key, _point(point), _shared.options(tolerance=tolerance)))
+    return dict(_call("wyckoffPosition", key, _point(point), _shared.options(tolerance=tolerance)))
 
 
 def snap_to_wyckoff_position(key: str, point: ArrayLike, *, tolerance: Optional[float] = None) -> dict[str, Any]:
@@ -269,10 +269,10 @@ def snap_to_wyckoff_position(key: str, point: ArrayLike, *, tolerance: Optional[
     a free parameter (a point) before one with one (a line), before the general position, which
     always holds the point; among positions of the same kind the nearest. Returns the position, as
     ``wyckoff_positions`` gives it, and the nearest point on it, in [0, 1). Unlike
-    ``wyckoff_position_of``, which asks whether the images of the point lie within the tolerance of
-    it, this asks whether the point lies within the tolerance of the position: an application that
-    drags a point and lets it snap passes a tolerance such as 10⁻². The point on a line is found by
-    least squares in the lattice coordinates. Raises SymcrysError as ``site_symmetry``.
+    ``wyckoff_position``, which asks whether the images of the point lie within the tolerance of it,
+    this asks whether the point lies within the tolerance of the position: an application that drags
+    a point and lets it snap passes a tolerance such as 10⁻². The point on a line is found by least
+    squares in the lattice coordinates. Raises SymcrysError as ``site_symmetry``.
 
     Parameters
     ----------
@@ -329,20 +329,20 @@ def asymmetric_unit(key: str) -> dict[str, Any]:
 
 def symmetry_elements(key: str) -> dict[str, Any]:
     """The symmetry elements of a plane group in its conventional cell [0, 1]², boundary included:
-    every rotation centre with the highest order of a rotation about it, and every mirror and glide
-    line that crosses the cell, with the segment inside it. Raises SymcrysError for an unknown key.
+    every rotation point with the highest n of a rotation about it, and every mirror and glide line
+    that crosses the cell, with the segment inside it. Raises SymcrysError for an unknown key.
 
     Returns
     -------
     dict
-        ``rotations``: dicts ``{"order", "point"}``, point a float64 array of shape (2,); ``lines``:
-        dicts ``{"kind", "direction", "normal", "glide", "segment"}``, direction and normal int64 of
-        shape (2,), glide float64 of shape (2,), segment float64 of shape (2, 2), the two ends as
-        rows.
+        ``rotation_points``: dicts ``{"n", "point"}``, point a float64 array of shape (2,);
+        ``lines``: dicts ``{"kind", "direction", "normal", "glide", "segment"}``, direction and
+        normal int64 of shape (2,), glide float64 of shape (2,), segment float64 of shape (2, 2),
+        the two ends as rows.
     """
     result = dict(_call("symmetryElements", key))
     return {
-        "rotations": [{"order": int(r["order"]), "point": _floats(r["point"], 2)} for r in result["rotations"]],
+        "rotation_points": [{"n": int(r["n"]), "point": _floats(r["point"], 2)} for r in result["rotation_points"]],
         "lines": [
             {
                 "kind": line["kind"],

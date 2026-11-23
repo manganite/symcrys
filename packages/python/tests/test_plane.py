@@ -47,12 +47,12 @@ def test_numpy_types() -> None:
         for a, b in zip(described, plane.describe_operations("p6mm"))
     )
     mirror = plane.describe_operations_of([{"matrix": np.array([[1, -1], [0, -1]]), "translation": (0, 0)}])[0]
-    assert mirror["kind"] == "mirror" and mirror["normal"].tolist() == [1, 2] and mirror["direction"].tolist() == [1, 0]
+    assert mirror["kind"] == "reflection" and mirror["normal"].tolist() == [1, 2] and mirror["direction"].tolist() == [1, 0]
     unit = plane.asymmetric_unit("p6mm")
     assert unit["vertices"].shape == (3, 2) and unit["inequalities"].dtype == np.int64
     elements = plane.symmetry_elements("p4mm")
     assert elements["lines"][0]["segment"].shape == (2, 2)
-    assert elements["rotations"][0]["point"].dtype == np.float64
+    assert elements["rotation_points"][0]["point"].dtype == np.float64
     assert elements["lines"][0]["normal"].dtype == np.int64
     site = plane.site_symmetry("p2mm", np.array([0.5, 0.2]))
     assert site["operations"].dtype == np.int64 and site["multiplicity"] == 2
@@ -92,7 +92,7 @@ def test_print(text: str) -> None:
         if "x" in first or "y" in first:
             continue
         point = [frac(c) for c in first.split(",")]
-        assert plane.wyckoff_position_of(symbol, point) == {
+        assert plane.wyckoff_position(symbol, point) == {
             "letter": letter, "multiplicity": int(m), "site_symmetry": site, "coordinates": coords.split("; ")
         }  # fmt: skip
     vertices = re.search(r"^Vertices: (.+?)\s*$", text, re.M)
