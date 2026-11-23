@@ -14,15 +14,13 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { det, type Mat3 } from '../linalg.js';
-import type { Operation } from '../operations.js';
 import {
   MAGNETIC_POINT_GROUP_KEYS,
   POINT_GROUP_KEYS,
+  findPointGroup,
   operations,
   pointGroup,
   settings,
-  symbol,
   type MagneticPointGroupKey,
   type PointGroupKey,
 } from '../pointGroups/pointGroups.js';
@@ -34,7 +32,9 @@ import {
   relationsLowRank,
   type Relation,
 } from '../testUtils/birssTensorTables.js';
-import { birssAppSettings } from '../testUtils/birssAppPins.js';
+import { rotateComponents, tensorToBirssFrame, toBirssFrame } from '../testUtils/birssFrame.js';
+import { groupOfSymbol } from '../testUtils/hermannMauguin.js';
+import { sameGroup, type M } from '../testUtils/independentGroups.js';
 import { matrixRank, satisfies } from '../testUtils/rank.js';
 import { expectHeader, readReference, tableRows } from '../testUtils/references.js';
 import { tensorForm, tensorFormOf, type TensorParity, type TensorRank, type TimeParity } from './tensorForm.js';
@@ -80,9 +80,14 @@ const CUBIC: Record<string, string> = {
   "m'3m": "m'-3'm",
 };
 
-const BIRSS = { convention: 'birss' } as const;
+/**
+ * From Birss's printed symbol (column 2, without parentheses) to the symcrys key: the cubic groups
+ * with the overbar; for D2h(C2h) and D6h(D3h) Birss's symbol differs from ITC's, which is the key
+ * (docs/conventions.md, "Keys"). The A/B test below identifies each row independently.
+ */
+const KEY_OF_PRINTED: Record<string, string> = { ...CUBIC, "m'm'm": "mm'm'", "6'/mm'm": "6'/mmm'" };
+
 const GROUPS = MAGNETIC_POINT_GROUP_KEYS.filter((k) => pointGroup(k).type !== 'II');
-const BY_BIRSS_SYMBOL = new Map(GROUPS.map((k) => [symbol(k, BIRSS), k]));
 
 interface Row {
   /** Column 2 as printed, with its parentheses if it has them. */
@@ -93,9 +98,13 @@ interface Row {
 
 const ROWS: Row[] = rows.slice(1).map((r) => {
   const name = r[1].replace(/^\((.*)\)$/, '$1');
-  const key = BY_BIRSS_SYMBOL.get(CUBIC[name] ?? name);
-  if (!key) throw new Error(`Table 7: no group for ${r[1]}`);
-  return { printed: r[1], key, cells: r.map((cell, column) => ERRATA[`${r[1]} | ${column}`] ?? cell) };
+  const key = KEY_OF_PRINTED[name] ?? name;
+  if (!(GROUPS as readonly string[]).includes(key)) throw new Error(`Table 7: no group for ${r[1]}`);
+  return {
+    printed: r[1],
+    key: key as MagneticPointGroupKey,
+    cells: r.map((cell, column) => ERRATA[`${r[1]} | ${column}`] ?? cell),
+  };
 });
 
 const RANKS: TensorRank[] = [0, 1, 2, 3, 4];
@@ -119,11 +128,56 @@ function printedRelations(rank: TensorRank, letter: string): Relation[] {
   return relationsLowRank(rank, letter);
 }
 
-/** True if, in the given setting, the tensors of all ranks of the column have the printed form. */
-function holds(key: MagneticPointGroupKey, setting: number, c: (typeof COLUMNS)[number], letter: string | null) {
+const IDENTITY: M = [
+  [1, 0, 0],
+  [0, 1, 0],
+  [0, 0, 1],
+];
+
+/**
+ * The rotated frames Birss's parentheses can mean (p. 110: axes rotated against those of the class
+ * in Table 4a), relative to Birss's frame, rows the new axes: orthorhombic, the two cyclic
+ * permutations of the axes; tetragonal, 45° about z; trigonal and hexagonal, 30° about z.
+ */
+function rotatedFrames(system: string): M[] {
+  if (system === 'orthorhombic') {
+    return [
+      [
+        [0, 1, 0],
+        [0, 0, 1],
+        [1, 0, 0],
+      ],
+      [
+        [0, 0, 1],
+        [1, 0, 0],
+        [0, 1, 0],
+      ],
+    ];
+  }
+  const turn = (degrees: number): M => {
+    const [c, s] = [Math.cos((degrees * Math.PI) / 180), Math.sin((degrees * Math.PI) / 180)];
+    return [
+      [c, s, 0],
+      [-s, c, 0],
+      [0, 0, 1],
+    ];
+  };
+  if (system === 'tetragonal') return [turn(45)];
+  if (system === 'trigonal' || system === 'hexagonal') return [turn(30)];
+  return [];
+}
+
+/**
+ * True if, in the frame `frame` relative to Birss's (rows the new axes), the tensors of all ranks of
+ * the column have the printed form. The forms are those of the ITC default setting, carried into
+ * Birss's frame (testUtils/birssFrame.ts) and then into `frame`.
+ */
+function holds(key: MagneticPointGroupKey, frame: M, c: (typeof COLUMNS)[number], letter: string | null) {
   return RANKS.filter((rank) => (rank % 2 === 0) === c.even).every((rank) => {
     const spec = { rank, parity: c.parity, timeParity: c.timeParity, intrinsic: 'none' } as const;
-    const basis = tensorForm(key, spec, { ...BIRSS, setting }).basis;
+    const basis = tensorForm(key, spec).basis.map((b) =>
+      rotateComponents(tensorToBirssFrame(key, b, rank), rank, frame),
+    );
     if (letter === null) return basis.length === 0;
     const dim = 3 ** rank;
     const relations = relationRows(printedRelations(rank, letter), dim);
@@ -131,28 +185,39 @@ function holds(key: MagneticPointGroupKey, setting: number, c: (typeof COLUMNS)[
   });
 }
 
-const signature = (ops: readonly { matrix: readonly (readonly number[])[] }[]): string =>
-  [
-    ...new Set(
-      ops.map((op) =>
-        op.matrix
-          .flat()
-          .map((x) => (Math.round(x * 1e6) / 1e6 + 0).toFixed(6))
-          .join(','),
-      ),
-    ),
-  ]
-    .sort()
-    .join(';');
+/**
+ * Birss's directions of the positions of a symbol: as ITC, except that in the hexagonal family
+ * position 2 is y (Birss Table 4a, pp. 56–57: `32: 2//y`) and position 3 is x.
+ */
+const BIRSS_DIRECTIONS: Record<string, number[][]> = {
+  triclinic: [[0, 0, 1]],
+  monoclinic: [[0, 0, 1]],
+  orthorhombic: IDENTITY,
+  tetragonal: [
+    [0, 0, 1],
+    [1, 0, 0],
+    [1, -1, 0],
+  ],
+  trigonal: [
+    [0, 0, 1],
+    [0, 1, 0],
+    [1, 0, 0],
+  ],
+  hexagonal: [
+    [0, 0, 1],
+    [0, 1, 0],
+    [1, 0, 0],
+  ],
+  cubic: [
+    [1, 0, 0],
+    [1, 1, 1],
+    [1, -1, 0],
+  ],
+};
 
-/** Signature of the operations → class and setting, for the 32 classes in the Birss convention. */
-const CLASS_BY_OPERATIONS = new Map(
-  POINT_GROUP_KEYS.flatMap((k) =>
-    settings(k, 'birss').map(
-      (s) => [signature(operations(k, { ...BIRSS, setting: s.index })), { key: k, setting: s.index }] as const,
-    ),
-  ),
-);
+/** The group a symbol names, read along Birss's directions of a crystal system, as operations. */
+const birssGroup = (symbol: string, system: string) =>
+  groupOfSymbol(symbol, BIRSS_DIRECTIONS[system]).map((op) => ({ matrix: op.m, timeReversal: op.t }));
 
 describe('Birss Table 7: the transcription as read', () => {
   it('lists the 32 classes and the 58 groups with operations combined with time reversal, each once', () => {
@@ -174,55 +239,85 @@ describe('Birss Table 7: the transcription as read', () => {
   });
 });
 
-describe('Birss Table 7: tensor forms of the magnetic point groups in the Birss frame', () => {
+describe("Birss Table 7: tensor forms of the magnetic point groups, ITC forms in Birss's frame", () => {
   for (const row of ROWS.filter((r) => pointGroup(r.key).type === 'III')) {
     it(`${row.printed}: i- and c-tensors of ranks 0–4, polar and axial`, () => {
-      // The rotated settings Birss's parentheses can mean are birss-app's: a cyclic permutation of
-      // the axes, or 45° or 30° about z. The three further settings of 2'm'm are left out.
-      const others = birssAppSettings(
-        row.key,
-        settings(row.key, 'birss').map((s) => s.index),
-      ).filter((i) => i !== 1);
+      const others = rotatedFrames(pointGroup(row.key).crystalSystem);
       for (const c of COLUMNS) {
         const cell = row.cells[c.column];
         const m = /^(\()?([A-U])_[mn]\)?$/.exec(cell);
         if (cell !== '-' && !m) throw new Error(`Table 7: unreadable cell ${cell}`);
         const what = `${row.printed} ${c.timeParity} ${c.parity} ${c.even ? 'even' : 'odd'} [${cell}]`;
         if (m?.[1]) {
-          expect(holds(row.key, 1, c, m[2]), `${what}: in parentheses, so not in setting 1`).toBe(false);
+          expect(holds(row.key, IDENTITY, c, m[2]), `${what}: in parentheses, so not in Birss's frame`).toBe(false);
           expect(
-            others.some((s) => holds(row.key, s, c, m[2])),
-            `${what}: in a rotated setting`,
+            others.some((frame) => holds(row.key, frame, c, m[2])),
+            `${what}: in a rotated frame`,
           ).toBe(true);
         } else {
-          expect(holds(row.key, 1, c, m?.[2] ?? null), `${what}: in setting 1`).toBe(true);
+          expect(holds(row.key, IDENTITY, c, m?.[2] ?? null), `${what}: in Birss's frame`).toBe(true);
         }
       }
     });
   }
 
   it('associated classical groups A and B are those built from the operations', () => {
-    const scaled = (op: Operation, factor: number) => ({ matrix: op.matrix.map((r) => r.map((x) => factor * x)) });
+    const scaled = (m: M, factor: number): M => m.map((r) => r.map((x) => factor * x + 0));
+    const det3 = (m: M) =>
+      m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1]) -
+      m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0]) +
+      m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0]);
+    const conjugate = (q: M, m: M): M => {
+      const qm = q.map((r) => [0, 1, 2].map((j) => r[0] * m[0][j] + r[1] * m[1][j] + r[2] * m[2][j]));
+      return qm.map((r) => [0, 1, 2].map((j) => r[0] * q[j][0] + r[1] * q[j][1] + r[2] * q[j][2]));
+    };
     for (const row of ROWS.filter((r) => pointGroup(r.key).type === 'III')) {
-      const ops = operations(row.key, { ...BIRSS, setting: 1 });
+      // The operations of the ITC default setting in Birss's frame.
+      const ops = operations(row.key).map((op) => ({ m: toBirssFrame(row.key, op.matrix), t: op.timeReversal }));
       const built = {
         // A, eq. (3.24): operations without time reversal, and those with time reversal times the inversion.
-        A: ops.map((op) => scaled(op, op.timeReversal ? -1 : 1)),
+        A: ops.map((op) => ({ matrix: scaled(op.m, op.t ? -1 : 1), timeReversal: false })),
         // B: the rotation part of the former, and the rotation part times the inversion of the latter.
-        B: ops.map((op) => scaled(op, (op.timeReversal ? -1 : 1) * det(op.matrix as Mat3))),
+        B: ops.map((op) => ({ matrix: scaled(op.m, (op.t ? -1 : 1) * det3(op.m)), timeReversal: false })),
       };
       (['A', 'B'] as const).forEach((name, i) => {
         const cell = row.cells[2 + i];
-        const found = CLASS_BY_OPERATIONS.get(signature(built[name]));
-        expect(found, `${row.printed} ${name}: a crystal class in one of its settings`).toBeDefined();
         const m = /^(\()?([^()]+)\)?$/.exec(cell)!;
-        const rotated = m[1] !== undefined;
-        // Printed without parentheses: the class in Birss's frame. With parentheses: in a rotated
-        // setting, under the symbol of that setting, `(-4m2)`; in one row Birss prints the symbol
-        // of the class instead.
-        expect(found!.setting === 1, `${row.printed} ${name} [${cell}]: setting`).toBe(!rotated);
-        const setting = CLASS_SYMBOL_IN_PARENTHESES.includes(`${row.printed} | ${name}`) ? 1 : found!.setting;
-        expect(symbol(found!.key, { ...BIRSS, setting }), `${row.printed} ${name}`).toBe(CUBIC[m[2]] ?? m[2]);
+        const printedSymbol = CUBIC[m[2]] ?? m[2];
+        const crystalClass = findPointGroup(printedSymbol)?.key;
+        expect(crystalClass, `${row.printed} ${name} [${cell}]: a crystal class`).toBeDefined();
+        const system = pointGroup(crystalClass!).crystalSystem;
+        // The class in the orientation of Table 4a: Birss prints it under its key (Table 3).
+        const standard = birssGroup(crystalClass!, system);
+        // Without duplicates: an operation with time reversal and its product with the inversion can coincide.
+        const group = built[name].filter(
+          (op, k, list) =>
+            list.findIndex((o) => o.matrix.every((r, x) => r.every((v, y) => Math.abs(v - op.matrix[x][y]) < 1e-9))) ===
+            k,
+        );
+        const toRef = (list: { matrix: M; timeReversal: boolean }[]) =>
+          list.map((o) => ({ m: o.matrix, t: o.timeReversal }));
+        if (m[1] === undefined) {
+          // Printed without parentheses: the class in Birss's frame, as its symbol names it.
+          expect(sameGroup(toRef(birssGroup(m[2], system)), group), `${row.printed} ${name} [${cell}]`).toBe(true);
+        } else if (CLASS_SYMBOL_IN_PARENTHESES.includes(`${row.printed} | ${name}`)) {
+          // The symbol of the class: the group is the class in a rotated frame.
+          expect(sameGroup(toRef(birssGroup(m[2], system)), group), `${row.printed} ${name}: rotated`).toBe(false);
+          expect(
+            rotatedFrames(system).some((q) =>
+              sameGroup(
+                toRef(birssGroup(m[2], system)).map((o) => ({ ...o, m: conjugate(q, o.m) })),
+                group,
+              ),
+            ),
+            `${row.printed} ${name} [${cell}]`,
+          ).toBe(true);
+        } else {
+          // In parentheses: the symbol of the rotated setting, which names the group in Birss's
+          // frame, and not the orientation of the class in Table 4a.
+          expect(sameGroup(toRef(birssGroup(m[2], system)), group), `${row.printed} ${name} [${cell}]`).toBe(true);
+          expect(sameGroup(toRef(standard), group), `${row.printed} ${name} [${cell}]: rotated`).toBe(false);
+        }
       });
     }
   });
@@ -248,11 +343,11 @@ describe('Birss Table 7: parentheses of column 2, and time-even forms', () => {
       { rank: 4, parity: 'polar', timeParity: 'i', intrinsic: 'voigt' },
     ] as const;
     for (const { key } of magnetic) {
-      for (const s of settings(key, 'birss')) {
-        const ops = operations(key, { ...BIRSS, setting: s.index });
+      for (const s of settings(key)) {
+        const ops = operations(key, { setting: s.index });
         const classical = ops.map((op) => ({ matrix: op.matrix, timeReversal: false }));
         for (const spec of specs) {
-          expect(tensorForm(key, spec, { ...BIRSS, setting: s.index }), `${key} setting ${s.index}`).toEqual(
+          expect(tensorForm(key, spec, { setting: s.index }), `${key} setting ${s.index}`).toEqual(
             tensorFormOf(classical, spec),
           );
         }
@@ -270,11 +365,9 @@ describe('Groups with time reversal itself (Birss p. 102)', () => {
       for (const rank of RANKS) {
         for (const parity of ['polar', 'axial'] as const) {
           const spec = { rank, parity, intrinsic: 'none' } as const;
-          expect(tensorForm(key, { ...spec, timeParity: 'c' }, BIRSS).basis, `${key} rank ${rank} ${parity}`).toEqual(
-            [],
-          );
-          expect(tensorForm(key, { ...spec, timeParity: 'i' }, BIRSS)).toEqual(
-            tensorForm(crystalClass, { ...spec, timeParity: 'i' }, BIRSS),
+          expect(tensorForm(key, { ...spec, timeParity: 'c' }).basis, `${key} rank ${rank} ${parity}`).toEqual([]);
+          expect(tensorForm(key, { ...spec, timeParity: 'i' })).toEqual(
+            tensorForm(crystalClass, { ...spec, timeParity: 'i' }),
           );
         }
       }

@@ -1,13 +1,16 @@
 /**
- * Birss convention against its print source (fixture class (a)): Birss Table 3 (printed pp. 36–38)
- * and the generating matrices σ(N) of equation (2.17) (printed pp. 48–49), re-parsed from references/.
- * For every crystal class, the printed generators, closed with the independent algebra of
- * testUtils, must give exactly the operations of symcrys in the Birss default setting; the short
- * symbol, Schoenflies symbol, crystal system and order must match the print.
+ * The crystal classes against Birss's print (fixture class (a)), an independent second print check
+ * of the ITC output: Birss Table 3 (printed pp. 36–38) and the generating matrices σ(N) of equation
+ * (2.17) (printed pp. 48–49), re-parsed from references/. For every crystal class, the printed
+ * generators, closed with the independent algebra of testUtils and carried from Birss's frame into
+ * the ITC frame (testUtils/birssFrame.ts), must give exactly the operations of symcrys in the ITC
+ * default setting; Birss's printed symbol, read along Birss's directions, must generate the printed
+ * group; Schoenflies symbol, crystal system and order must match the print.
  */
 
 import { describe, expect, it } from 'vitest';
 import { groupOfSymbol, hmTokens } from '../testUtils/hermannMauguin.js';
+import { toItcFrame } from '../testUtils/birssFrame.js';
 import { close, sameGroup, type M, type RefOp } from '../testUtils/independentGroups.js';
 import { expectHeader, readReference, section, tableRows } from '../testUtils/references.js';
 import {
@@ -99,7 +102,25 @@ const TABLE3: Table3Row[] = rows.slice(1).map((r) => {
   };
 });
 
-describe('Birss Table 3 (printed pp. 36–38) against symcrys, Birss convention', () => {
+const X = [1, 0, 0];
+const Y = [0, 1, 0];
+const Z = [0, 0, 1];
+/**
+ * Birss's directions of the positions of a symbol: as ITC, except that in the hexagonal family
+ * position 2 is y (Birss Table 4a, printed pp. 56–57: `32: 2//y`, `3m: -2//y`, `-6m2: -2//y`) and
+ * position 3 is x.
+ */
+const BIRSS_DIRECTIONS: Record<string, number[][]> = {
+  triclinic: [Z],
+  monoclinic: [Z],
+  orthorhombic: [X, Y, Z],
+  tetragonal: [Z, X, [1, -1, 0]],
+  trigonal: [Z, Y, X],
+  hexagonal: [Z, Y, X],
+  cubic: [X, [1, 1, 1], [1, -1, 0]],
+};
+
+describe('Birss Table 3 (printed pp. 36–38) against symcrys, in the ITC frame', () => {
   it('lists the 32 crystal classes, each once, and the σ pool has ten matrices', () => {
     expect(TABLE3).toHaveLength(32);
     expect(new Set(TABLE3.map((r) => r.key)).size).toBe(32);
@@ -112,21 +133,23 @@ describe('Birss Table 3 (printed pp. 36–38) against symcrys, Birss convention'
 
   for (const row of TABLE3) {
     describe(row.key, () => {
-      it('operations of the Birss default setting = closure of the printed σ generators', () => {
+      it('operations of the ITC default setting = closure of the printed σ generators, in the ITC frame', () => {
         const ref = close(row.generators);
         expect(ref).toHaveLength(row.order);
-        expect(sameGroup(ref, operations(row.key, { convention: 'birss' }))).toBe(true);
+        const inItcFrame = ref.map((op) => ({ ...op, m: toItcFrame(row.key, op.m) }));
+        expect(sameGroup(inItcFrame, operations(row.key))).toBe(true);
       });
 
-      it('the Birss default is setting 1, the stored frame', () => {
-        expect(settings(row.key, 'birss').find((s) => s.isDefault)?.index).toBe(1);
+      it('the printed symbol, read along Birss directions, generates the printed group', () => {
+        // Birss reads the unique axis of a monoclinic class along z (σ(4) of `2` is a rotation about z).
+        const printedGroup = close(row.generators).map((op) => ({ matrix: op.m, timeReversal: op.t }));
+        expect(sameGroup(groupOfSymbol(row.printedSymbol, BIRSS_DIRECTIONS[row.system]), printedGroup)).toBe(true);
       });
 
-      it('order, crystal system, Schoenflies and short symbol as printed', () => {
+      it('order, crystal system and Schoenflies symbol as printed', () => {
         expect(pointGroup(row.key).order).toBe(row.order);
         expect(pointGroup(row.key).crystalSystem).toBe(row.system);
         expect(symbol(row.key, { form: 'schoenflies' })).toBe(row.schoenflies);
-        expect(symbol(row.key, { convention: 'birss' })).toBe(row.key);
       });
     });
   }
