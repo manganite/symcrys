@@ -89,7 +89,7 @@ describe('plane groups: points of every printed Wyckoff position', () => {
             expect(image[1]).toBeCloseTo(site.point[1], 12);
           }
         }
-        const orbit = planeOrbit(symbol, row.points[0]);
+        const orbit = planeOrbit(symbol, row.points[0]).map((e) => e.point);
         expect(orbit).toHaveLength(row.multiplicity);
         for (const p of row.points) expect(orbit.some((q) => close(p, q))).toBe(true);
       });

@@ -118,14 +118,20 @@ const plainOperations = (key: string): readonly PlainOperation[] => groupData(ke
  * [0, 1), in the order of the operations that first produce them. Coinciding images (within the
  * tolerance) are merged.
  */
-export function planeOrbit(key: string, point: readonly number[], options?: PointOptions): number[][] {
+export function planeOrbit(
+  key: string,
+  point: readonly number[],
+  options?: PointOptions,
+): { point: number[]; operations: number[] }[] {
   checkPoint(point);
   const tol = tolerance(options);
-  const out: number[][] = [];
-  for (const op of plainOperations(key)) {
+  const out: { point: number[]; operations: number[] }[] = [];
+  plainOperations(key).forEach((op, i) => {
     const q = image(op, point).map(mod1);
-    if (!out.some((r) => sameModLattice(r, q, tol))) out.push(q);
-  }
+    const entry = out.find((r) => sameModLattice(r.point, q, tol));
+    if (entry) entry.operations.push(i);
+    else out.push({ point: q, operations: [i] });
+  });
   return out;
 }
 

@@ -27,6 +27,7 @@ import {
 import { specOf, type TensorPropertyName } from './propertyTable.js';
 import { EPSILON, SNAP_EPSILON } from '../tolerances.js';
 import { rowEchelonWithPivots } from './rowEchelon.js';
+import { deepFreeze } from '../freeze.js';
 
 /** Rank of a tensor: 0 (scalar) to 4. */
 export type TensorRank = 0 | 1 | 2 | 3 | 4;
@@ -283,7 +284,7 @@ export function rotateTensor(
   tensor: readonly number[],
   rotation: Mat3,
   specOrName: TensorSpec | TensorPropertyName,
-): number[] {
+): readonly number[] {
   const spec = specOf(specOrName);
   checkSpec(spec);
   checkOrthogonal(rotation, 'The rotation');
@@ -305,5 +306,5 @@ export function rotateTensor(
     }
     out[o] = f * acc;
   }
-  return out;
+  return deepFreeze(out);
 }

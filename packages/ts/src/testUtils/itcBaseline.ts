@@ -177,11 +177,13 @@ function errorPins(add: (id: string, f: () => unknown) => void): void {
  * Descriptions in the shape of the pins (captured before #121 step 7c, #137 C2): `order` for `n`,
  * `'mirror'` for `'reflection'`, `'glide'` for `'glide-reflection'`.
  */
-const oldDescriptions = (list: readonly { readonly kind: string; readonly n: number }[]) =>
-  list.map(({ kind, n, ...rest }) => ({
+const oldDescriptions = (list: readonly { readonly kind: string; readonly n: number; readonly axis?: unknown }[]) =>
+  list.map(({ kind, n, axis, ...rest }) => ({
     kind: kind === 'reflection' ? 'mirror' : kind === 'glide-reflection' ? 'glide' : kind,
     order: n,
     ...rest,
+    // The plane groups gave the axis of a reflection as `normal` (before #121 step 7d, #137 C3).
+    ...(axis === undefined ? {} : Array.isArray(axis) ? { normal: axis } : { axis }),
   }));
 
 /** A point group in the shape of the pins (before #121 step 7c): `chiral` for `enantiomorphic`. */
@@ -193,7 +195,7 @@ const oldPointGroup = ({ enantiomorphic, ...rest }: { readonly enantiomorphic: b
 /** Symmetry elements in the shape of the pins (before #121 step 7c): `rotations` with `order`. */
 const oldElements = ({ rotationPoints, lines }: plane.SymmetryElements) => ({
   rotations: rotationPoints.map(({ n, point }) => ({ order: n, point })),
-  lines,
+  lines: lines.map(({ axis, ...rest }) => ({ ...rest, normal: axis })),
 });
 
 /** Operations in the shape of the pins of `operations` (captured before #121 step 6d): the Cartesian matrices. */
@@ -396,7 +398,8 @@ function planeGroupPins(add: (id: string, f: () => unknown) => void, key: plane.
   for (const p of POINTS) {
     add(`${key}: siteSymmetry (${p})`, () => plane.siteSymmetry(key, p));
     add(`${key}: wyckoffPositionOf (${p})`, () => plane.wyckoffPosition(key, p));
-    add(`${key}: orbit (${p})`, () => plane.orbit(key, p));
+    // Bare points before #121 step 7d (#137 C4).
+    add(`${key}: orbit (${p})`, () => plane.orbit(key, p).map((e) => e.point));
   }
   for (const p of NEAR_POINTS) {
     for (const tolerance of [0.005, 0.02]) {
@@ -414,7 +417,8 @@ function planeGroupPins(add: (id: string, f: () => unknown) => void, key: plane.
 /** The pins of one plane point group in every setting. */
 function planePointGroupPins(add: (id: string, f: () => unknown) => void, key: plane.PointGroupKey): void {
   add(`${key}: pointGroup`, () => plane.pointGroup(key));
-  add(`${key}: settings`, () => plane.settings(key));
+  // `default` before #121 step 7d (#137 C4).
+  add(`${key}: settings`, () => plane.settings(key).map(({ isDefault, ...rest }) => ({ ...rest, default: isDefault })));
   for (const s of plane.settings(key)) {
     const id = (what: string) => `${key} | ${s.symbol}: ${what}`;
     add(id('symbol'), () => plane.symbol(key, { setting: s.index }));

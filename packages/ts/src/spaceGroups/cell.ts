@@ -50,8 +50,8 @@ export interface SymmetryLine {
   readonly kind: 'mirror' | 'glide';
   /** The direction of the line, the shortest integer vector, first non-zero component positive. */
   readonly direction: readonly [number, number];
-  /** The normal of the line in the lattice basis, as `PlaneOperationDescription.normal`. */
-  readonly normal: readonly [number, number];
+  /** The normal of the line in the lattice basis, as `PlaneOperationDescription.axis`. */
+  readonly axis: readonly [number, number];
   /** For a glide line: its glide vector s·direction with 0 < s < 1; for a mirror line (0, 0). */
   readonly glide: readonly Rational[];
   /** The ends of the segment of the line in the cell [0, 1]², in the order of `direction`. */
@@ -304,7 +304,7 @@ export function planeCellElements(key: string | number): CellElements {
   const lines: {
     kind: 'mirror' | 'glide';
     direction: [number, number];
-    normal: readonly [number, number];
+    axis: readonly [number, number];
     s: Rational;
     c: Rational;
     segment: [readonly Rational[], readonly Rational[]];
@@ -346,7 +346,7 @@ export function planeCellElements(key: string | number): CellElements {
         lines.push({
           kind: s[0] === 0 ? 'mirror' : 'glide',
           direction: [dir[0], dir[1]],
-          normal: d.normal ?? [0, 0],
+          axis: d.axis ?? [0, 0],
           s,
           c,
           segment,
@@ -370,7 +370,7 @@ export function planeCellElements(key: string | number): CellElements {
         Object.freeze({
           kind: l.kind,
           direction: Object.freeze(l.direction) as readonly [number, number],
-          normal: Object.freeze([...l.normal]) as readonly [number, number],
+          axis: Object.freeze([...l.axis]) as readonly [number, number],
           glide: Object.freeze([scale(l.direction[0], l.s), scale(l.direction[1], l.s)]),
           segment: Object.freeze(l.segment.map((p) => Object.freeze([...p]))) as unknown as SymmetryLine['segment'],
         }),

@@ -46,10 +46,10 @@ describe('plane point groups', () => {
     expect(plane.pointGroup('3m')).toEqual({ key: '3m', crystalSystem: 'hexagonal', order: 6 });
     expect(plane.pointGroup('4mm')).toEqual({ key: '4mm', crystalSystem: 'square', order: 8 });
     expect(plane.settings('3m')).toEqual([
-      { index: 1, symbol: '3m1', default: true },
-      { index: 2, symbol: '31m', default: false },
+      { index: 1, symbol: '3m1', isDefault: true },
+      { index: 2, symbol: '31m', isDefault: false },
     ]);
-    expect(plane.settings('m')).toEqual([{ index: 1, symbol: 'm', default: true }]);
+    expect(plane.settings('m')).toEqual([{ index: 1, symbol: 'm', isDefault: true }]);
     expect(() => plane.settings('p2' as plane.PointGroupKey)).toThrow(/plane group \(planeGroup\)/);
     expect(plane.planeGroup('p31m').pointGroupSetting).toBe(2);
     expect(plane.planeGroup('p3m1').pointGroupSetting).toBe(1);
@@ -98,7 +98,7 @@ describe('plain numbers at the API', () => {
       pointGroupSetting: 1,
       crystalSystem: 'rectangular',
       centring: [[0.5, 0.5]],
-      origin: 'at 2mm',
+      origin: 'at 2 m m',
     });
     const ops = plane.operations('p3');
     expect(ops[1]).toEqual({
@@ -126,14 +126,14 @@ describe('plain numbers at the API', () => {
         expect(d.location).toEqual(exact[i].location?.map(toNumber));
         expect(d.glide).toEqual(exact[i].glide?.map(toNumber));
         expect(d.direction).toEqual(exact[i].direction);
-        expect(d.normal).toEqual(exact[i].normal);
+        expect(d.axis).toEqual(exact[i].axis);
       });
       expect(plane.asymmetricUnit(k).vertices).toEqual(planeAsymmetricUnit(k).vertices.map((v) => v.map(toNumber)));
       const e = planeCellElements(k);
       expect(plane.symmetryElements(k).lines.map((l) => l.segment)).toEqual(
         e.lines.map((l) => l.segment.map((p) => p.map(toNumber))),
       );
-      expect(plane.symmetryElements(k).lines.map((l) => l.normal)).toEqual(e.lines.map((l) => l.normal));
+      expect(plane.symmetryElements(k).lines.map((l) => l.axis)).toEqual(e.lines.map((l) => l.axis));
       expect(plane.symmetryElements(k).rotationPoints.map((r) => r.n)).toEqual(e.rotationPoints.map((r) => r.n));
     }
     expect(plane.describeOperations('p4gm')[4]).toEqual({
@@ -141,9 +141,17 @@ describe('plain numbers at the API', () => {
       n: 2,
       location: [0.25, 0],
       direction: [0, 1],
-      normal: [1, 0],
+      axis: [1, 0],
       glide: [0, 0.5],
     });
+  });
+
+  it('the orbit of a point gives each image with the operations that map the point there (#137 C4)', () => {
+    const orbit = plane.orbit('p4', [0.1, 0.2]);
+    expect(orbit).toHaveLength(4);
+    expect(orbit.flatMap((e) => e.operations).sort((a, b) => a - b)).toEqual([0, 1, 2, 3]);
+    expect(plane.orbit('p4', [0, 0])).toEqual([{ point: [0, 0], operations: [0, 1, 2, 3] }]);
+    expect(Object.isFrozen(orbit[0].operations)).toBe(true);
   });
 
   it('points', () => {
@@ -214,7 +222,7 @@ describe('describeOperationsOf', () => {
         expect(d.location).toEqual(e.location?.map(toNumber));
         expect(d.glide).toEqual(e.glide?.map(toNumber));
         expect(d.translation).toEqual(e.translation?.map(toNumber));
-        expect(d.normal).toEqual(e.normal);
+        expect(d.axis).toEqual(e.axis);
       });
     }
   });

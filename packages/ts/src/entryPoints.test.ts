@@ -11,6 +11,7 @@ import { describe, expect, it } from 'vitest';
 import pkg from '../package.json' with { type: 'json' };
 import * as classes from './index.js';
 import * as magnetic from './magnetic.js';
+import * as plane from './plane.js';
 import * as wyckoff from './pointGroups/wyckoff.js';
 
 const MAGNETIC_API = /symcrys\/magnetic/;
@@ -646,5 +647,111 @@ describe('siteSymmetry of a key (#137 C1)', () => {
     expect(classes.siteSymmetry('4mm', [1, 1.00004, 3], { tolerance: 1e-4 }).multiplicity).toBe(4);
     expect(() => classes.siteSymmetry("4'mm'" as never, [0, 0, 1])).toThrow(/magnetic API/);
     expect(() => classes.siteSymmetry('4mm', [0, 0, 0])).toThrow(RangeError);
+  });
+});
+
+describe('every result is frozen, nested values included (#137 C4)', () => {
+  /** The paths of the values in `x` that are not frozen. */
+  const unfrozen = (x: unknown, path = '.'): string[] => {
+    if (x === null || typeof x !== 'object') return [];
+    return [
+      ...(Object.isFrozen(x) ? [] : [path]),
+      ...Object.entries(x).flatMap(([k, v]) => unfrozen(v, `${path}${k}.`)),
+    ];
+  };
+  const basis = classes.latticeFromParameters({ a: 3, b: 3, c: 5, alpha: 90, beta: 90, gamma: 120 });
+  const ops = classes.operations('32');
+  const point: Record<string, unknown[]> = {
+    pointGroup: ['32'],
+    pointGroups: [],
+    findPointGroup: ['32'],
+    settings: ['32'],
+    operations: ['32'],
+    generators: ['32'],
+    describeOperations: ['32'],
+    symmetryDirections: ['32'],
+    siteSymmetry: ['32', [0, 0, 1]],
+    siteSymmetryOf: [ops, [0, 0, 1]],
+    orbit: ['32', { hkl: [1, 0, 0] }],
+    orbitOf: [ops, [1, 0, 0]],
+    pointGroupOf: [ops],
+    describeOperationsOf: [ops],
+    tensorForm: ['32', 'piezoelectric'],
+    rotateTensor: [[1, 0, 0], ops[1].cartesian, 'pyroelectric'],
+    allowedProperties: ['32'],
+    latticeBasis: ['hexagonal'],
+    latticeFromParameters: [{ a: 3, b: 3, c: 5, alpha: 90, beta: 90, gamma: 120 }],
+    latticeParameters: [basis],
+    metricTensor: [basis],
+    reciprocalBasis: [basis],
+    residualOperations: [classes.operations('6/mmm'), basis],
+    changeOfAxes: [
+      [
+        [1, 0, 0],
+        [0, 1, 0],
+        [0, 0, 1],
+      ],
+    ],
+    directionFromFourIndices: [[2, -1, -1, 0]],
+    directionToFourIndices: [[1, 0, 0]],
+    planeFromFourIndices: [[1, 0, -1, 0]],
+    planeToFourIndices: [[1, 0, 0]],
+    reduceIndices: [[2, 4, 6]],
+    zoneAxis: [
+      [1, 0, 0],
+      [0, 1, 0],
+    ],
+  };
+  const classOnly: Record<string, unknown[]> = {
+    wyckoffPositions: ['32'],
+    wyckoffPosition: ['32', [0, 0, 1]],
+    crystalForms: ['32'],
+    tensorFormOf: [ops, 'piezoelectric'],
+    allowedPropertiesOf: [ops],
+  };
+  const planeCalls: Record<string, unknown[]> = {
+    planeGroup: ['p4'],
+    pointGroup: ['4mm'],
+    settings: ['3m'],
+    operations: ['p4'],
+    generators: ['p4'],
+    describeOperations: ['p4gm'],
+    describeOperationsOf: [plane.operations('p4')],
+    wyckoffPositions: ['p4'],
+    siteSymmetry: ['p4', [0, 0]],
+    wyckoffPosition: ['p4', [0, 0]],
+    snapToWyckoffPosition: ['p4', [0.01, 0]],
+    orbit: ['p4', [0.1, 0.2]],
+    asymmetricUnit: ['p4'],
+    symmetryElements: ['p4gm'],
+  };
+  const call = (module: Record<string, unknown>, name: string, args: unknown[]) =>
+    (module[name] as (...a: unknown[]) => unknown)(...args);
+  it('in the crystallographic API', () => {
+    for (const [name, args] of Object.entries({ ...point, ...classOnly })) {
+      expect(unfrozen(call(classes, name, args)), name).toEqual([]);
+    }
+  });
+  it('in the magnetic API', () => {
+    const magneticOps = magnetic.operations('32');
+    for (const [name, args] of Object.entries(point)) {
+      const a =
+        name === 'residualOperations'
+          ? [magnetic.operations('6/mmm'), basis]
+          : args.map((x) => (x === ops ? magneticOps : x));
+      expect(unfrozen(call(magnetic, name, a)), name).toEqual([]);
+    }
+  });
+  it('in symcrys/plane', () => {
+    for (const [name, args] of Object.entries(planeCalls)) expect(unfrozen(call(plane, name, args)), name).toEqual([]);
+  });
+  it('residualOperations freezes the list, not the operations of the caller', () => {
+    const mine = classes.operations('6/mmm').map((op) => ({ matrix: op.matrix }));
+    const kept = classes.residualOperations(mine, basis);
+    expect(Object.isFrozen(kept)).toBe(true);
+    expect(Object.isFrozen(mine[0])).toBe(false);
+  });
+  it('zoneAxis gives undefined for parallel planes, never null', () => {
+    expect(classes.zoneAxis([1, 1, 0], [2, 2, 0])).toBeUndefined();
   });
 });

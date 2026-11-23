@@ -27,7 +27,7 @@ export interface PlaneGroupEntry {
   readonly system: PlaneSystem;
   /** Printed page. */
   readonly page: number;
-  /** The block "Origin" as printed, e.g. `at 21g`. */
+  /** The block "Origin" as printed, its positions spaced, e.g. `at 2 1 g`. */
   readonly origin: string;
   /** The block "Asymmetric unit" as printed. */
   readonly asymmetricUnit: string;
@@ -135,7 +135,7 @@ export const PLANE_GROUP_DATA: readonly PlaneGroupEntry[] = [
     pointGroup: '2mm',
     system: 'rectangular',
     page: 181,
-    origin: 'at 2mm',
+    origin: 'at 2 m m',
     asymmetricUnit: '0 <= x <= 1/2; 0 <= y <= 1/2',
     centring: [],
     generalPosition: ['x,y', '-x,-y', '-x,y', 'x,-y'],
@@ -159,7 +159,7 @@ export const PLANE_GROUP_DATA: readonly PlaneGroupEntry[] = [
     pointGroup: '2mm',
     system: 'rectangular',
     page: 182,
-    origin: 'at 21g',
+    origin: 'at 2 1 g',
     asymmetricUnit: '0 <= x <= 1/4; 0 <= y <= 1',
     centring: [],
     generalPosition: ['x,y', '-x,-y', '-x+1/2,y', 'x+1/2,-y'],
@@ -196,7 +196,7 @@ export const PLANE_GROUP_DATA: readonly PlaneGroupEntry[] = [
     pointGroup: '2mm',
     system: 'rectangular',
     page: 184,
-    origin: 'at 2mm',
+    origin: 'at 2 m m',
     asymmetricUnit: '0 <= x <= 1/4; 0 <= y <= 1/2',
     centring: ['1/2,1/2'],
     generalPosition: ['x,y', '-x,-y', '-x,y', 'x,-y'],
@@ -236,7 +236,7 @@ export const PLANE_GROUP_DATA: readonly PlaneGroupEntry[] = [
     pointGroup: '4mm',
     system: 'square',
     page: 186,
-    origin: 'at 4mm',
+    origin: 'at 4 m m',
     asymmetricUnit: '0 <= x <= 1/2; 0 <= y <= 1/2; x <= y',
     centring: [],
     generalPosition: ['x,y', '-x,-y', '-y,x', 'y,-x', '-x,y', 'x,-y', 'y,x', '-y,-x'],
@@ -258,7 +258,7 @@ export const PLANE_GROUP_DATA: readonly PlaneGroupEntry[] = [
     pointGroup: '4mm',
     system: 'square',
     page: 187,
-    origin: 'at 41g',
+    origin: 'at 4 1 g',
     asymmetricUnit: '0 <= x <= 1/2; 0 <= y <= 1/2; y <= 1/2 - x',
     centring: [],
     generalPosition: ['x,y', '-x,-y', '-y,x', 'y,-x', '-x+1/2,y+1/2', 'x+1/2,-y+1/2', 'y+1/2,x+1/2', '-y+1/2,-x+1/2'],
@@ -297,7 +297,7 @@ export const PLANE_GROUP_DATA: readonly PlaneGroupEntry[] = [
     pointGroup: '3m',
     system: 'hexagonal',
     page: 189,
-    origin: 'at 3m1',
+    origin: 'at 3 m 1',
     asymmetricUnit: '0 <= x <= 2/3; 0 <= y <= 2/3; x <= 2y; y <= min(1 - x, 2x)',
     vertices: ['0,0', '2/3,1/3', '1/3,2/3'],
     centring: [],
@@ -318,7 +318,7 @@ export const PLANE_GROUP_DATA: readonly PlaneGroupEntry[] = [
     pointGroup: '3m',
     system: 'hexagonal',
     page: 190,
-    origin: 'at 31m',
+    origin: 'at 3 1 m',
     asymmetricUnit: '0 <= x <= 2/3; 0 <= y <= 1/2; x <= (1 + y)/2; y <= min(1 - x, x)',
     vertices: ['0,0', '1/2,0', '2/3,1/3', '1/2,1/2'],
     centring: [],
@@ -358,7 +358,7 @@ export const PLANE_GROUP_DATA: readonly PlaneGroupEntry[] = [
     pointGroup: '6mm',
     system: 'hexagonal',
     page: 192,
-    origin: 'at 6mm',
+    origin: 'at 6 m m',
     asymmetricUnit: '0 <= x <= 2/3; 0 <= y <= 1/3; x <= (1 + y)/2; y <= x/2',
     vertices: ['0,0', '1/2,0', '2/3,1/3'],
     centring: [],
