@@ -33,7 +33,7 @@ describe('reduceIndices', () => {
   });
 });
 
-describe('four indices (Miller–Bravais)', () => {
+describe('four indices (Bravais–Miller)', () => {
   it('planes: (hkl) ↔ (hkil) with i = −(h + k)', () => {
     expect(planeToFourIndices([1, 0, 0])).toEqual([1, 0, -1, 0]);
     expect(planeToFourIndices([1, 1, 2])).toEqual([1, 1, -2, 2]);

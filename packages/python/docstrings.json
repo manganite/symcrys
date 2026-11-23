@@ -30,10 +30,6 @@
       "type": "list of dict",
       "doc": "In each, ``representative`` has ``hkl`` (int64, shape (3,)) and ``cartesian`` (float64, shape (3,)), ``site_symmetry_operations`` is an int64 array of shape (n,)."
     },
-    "wyckoff_position_of": {
-      "type": "dict",
-      "doc": "``representative`` has ``hkl`` (int64, shape (3,)) and ``cartesian`` (float64, shape (3,)), ``site_symmetry_operations`` is an int64 array of shape (n,)."
-    },
     "crystal_forms": {
       "type": "list of dict",
       "doc": "In each, ``representative`` has ``hkl`` (int64, shape (3,)) and ``cartesian`` (float64, shape (3,))."
@@ -61,6 +57,14 @@
     "describe_operations_of": {
       "type": "list of dict",
       "doc": "In each, ``axis`` (if present) has ``cartesian`` (float64, shape (3,))."
+    },
+    "wyckoff_position": {
+      "type": "dict",
+      "doc": "``representative`` has ``hkl`` (int64, shape (3,)) and ``cartesian`` (float64, shape (3,)), ``site_symmetry_operations`` is an int64 array of shape (n,)."
+    },
+    "site_symmetry_of": {
+      "type": "dict",
+      "doc": "``operations`` int64 array of shape (n,), ``direction`` float64 array of shape (3,), ``multiplicity``, ``general``."
     }
   },
   "symcrys.magnetic": {
@@ -112,6 +116,10 @@
     "describe_operations_of": {
       "type": "list of dict",
       "doc": "In each, ``axis`` (if present) has ``cartesian`` (float64, shape (3,))."
+    },
+    "site_symmetry_of": {
+      "type": "dict",
+      "doc": "``operations`` int64 array of shape (n,), ``direction`` float64 array of shape (3,), ``multiplicity``, ``general``."
     }
   },
   "symcrys.plane": {
@@ -153,7 +161,7 @@
     },
     "symmetry_elements": {
       "type": "dict",
-      "doc": "``rotations``: dicts ``{\"order\", \"point\"}``, point a float64 array of shape (2,); ``lines``: dicts ``{\"kind\", \"direction\", \"normal\", \"glide\", \"segment\"}``, direction and normal int64 of shape (2,), glide float64 of shape (2,), segment float64 of shape (2, 2), the two ends as rows."
+      "doc": "``rotation_points``: dicts ``{\"n\", \"point\"}``, point a float64 array of shape (2,); ``lines``: dicts ``{\"kind\", \"direction\", \"normal\", \"glide\", \"segment\"}``, direction and normal int64 of shape (2,), glide float64 of shape (2,), segment float64 of shape (2, 2), the two ends as rows."
     }
   }
 }

@@ -65,8 +65,8 @@ function rebuild(d: OperationDescription): M {
   if (d.kind === 'identity') return I3;
   if (d.kind === 'inversion') return neg(I3);
   const u = [...d.axis!.cartesian];
-  if (d.kind === 'mirror') return mirrorNormal(u);
-  const turns = (d.sense === '-' ? -1 : 1) / d.order;
+  if (d.kind === 'reflection') return mirrorNormal(u);
+  const turns = (d.sense === '-' ? -1 : 1) / d.n;
   const r = rotationAbout(u, turns);
   return d.kind === 'rotation' ? r : neg(r);
 }
@@ -88,7 +88,7 @@ describe('describeOperations', () => {
       expect(d.timeReversal).toBe(ops[i].timeReversal);
       if (d.kind === 'identity' || d.kind === 'inversion') {
         expect(d.axis).toBeUndefined();
-        expect(d.order).toBe(1);
+        expect(d.n).toBe(1);
       } else {
         const c = cartesianOf(key, setting, d.axis!.lattice);
         expect(c.every((x, k) => Math.abs(x - d.axis!.cartesian[k]) < 1e-9)).toBe(true);
@@ -99,7 +99,7 @@ describe('describeOperations', () => {
         // the sign of ITA Table 2.1.3.1, also for twofold axes and mirror normals
         expect(table).toContainEqual([...d.axis!.lattice]);
       }
-      expect(d.sense !== undefined).toBe(d.order >= 3);
+      expect(d.sense !== undefined).toBe(d.n >= 3);
     });
   });
 

@@ -47,7 +47,7 @@ def test_every_function_has_its_docstring_from_the_tsdoc() -> None:
 
 
 def test_the_two_modules_have_the_same_names() -> None:
-    only_classes = {"magnetic", "plane", "CRYSTAL_FORM_TYPES", "crystal_forms", "wyckoff_position_of", "wyckoff_positions"}
+    only_classes = {"magnetic", "plane", "CRYSTAL_FORM_TYPES", "crystal_forms", "wyckoff_position", "wyckoff_positions"}
     assert set(symcrys.__all__) - only_classes == set(magnetic.__all__)
     assert symcrys.magnetic is magnetic and magnetic.VERSION == symcrys.VERSION == symcrys.__version__
 
@@ -57,7 +57,7 @@ def test_crystal_classes_here_magnetic_point_groups_there() -> None:
     assert magnetic.POINT_GROUP_KEYS[:32] == symcrys.POINT_GROUP_KEYS
     assert [g["key"] for g in symcrys.point_groups()] == list(symcrys.POINT_GROUP_KEYS)
     assert [g["key"] for g in magnetic.point_groups()] == list(magnetic.POINT_GROUP_KEYS)
-    fixed = {"centrosymmetric": False, "polar": False, "chiral": True, "laue_class": "-3m"}
+    fixed = {"centrosymmetric": False, "polar": False, "enantiomorphic": True, "laue_class": "-3m"}
     assert symcrys.point_group("32") == {"key": "32", "crystal_system": "trigonal", "order": 6, **fixed}
     assert magnetic.point_group("32") == {
         "key": "32", "type": "I", "crystal_class": "32", "crystal_system": "trigonal", "order": 6, **fixed
@@ -78,11 +78,11 @@ def test_the_magnetic_api_asks_every_operation_for_its_time_reversal() -> None:
             magnetic.allowed_properties_of(ops)
         with pytest.raises(symcrys.SymcrysError, match="timeReversal must be true or false"):
             magnetic.tensor_form_of(ops, "pyroelectric")
-        for call in (magnetic.is_centrosymmetric_of, magnetic.is_chiral_of):
+        for call in (magnetic.is_centrosymmetric_of, magnetic.is_enantiomorphic_of):
             with pytest.raises(symcrys.SymcrysError, match="timeReversal must be true or false, not undefined"):
                 call(ops)
     with pytest.raises(symcrys.SymcrysError, match="not an orthogonal"):
-        symcrys.is_chiral_of([{"cartesian": np.diag([2.0, 1.0, 1.0])}])
+        symcrys.is_enantiomorphic_of([{"cartesian": np.diag([2.0, 1.0, 1.0])}])
     with pytest.raises(symcrys.SymcrysError, match="timeReversal must be true or false, not 1"):
         magnetic.tensor_form_of([{"cartesian": np.eye(3), "time_reversal": 1}], "ferromagnetic")
     inversion = [{"cartesian": -np.eye(3), "time_reversal": False}]
@@ -127,7 +127,7 @@ def test_matrices_are_float_arrays_and_indices_int_arrays() -> None:
     assert op["matrix"].dtype == np.float64 and op["matrix"].shape == (3, 3)
     assert op["cartesian"].dtype == np.float64 and op["cartesian"].shape == (3, 3)
     assert isinstance(magnetic.operations("4")[1]["time_reversal"], bool)
-    site = symcrys.site_symmetry(symcrys.operations("4mm"), [0, 0, 1])
+    site = symcrys.site_symmetry_of(symcrys.operations("4mm"), [0, 0, 1])
     assert site["operations"].dtype == np.int64
     axis = symcrys.describe_operations("4")[1]["axis"]
     assert axis["lattice"].dtype == np.int64 and axis["cartesian"].dtype == np.float64
@@ -223,19 +223,19 @@ def test_named_tensor_properties() -> None:
 def test_fixed_properties_are_fields_of_the_point_group() -> None:
     assert symcrys.point_group("-3") == {
         "key": "-3", "crystal_system": "trigonal", "order": 6,
-        "centrosymmetric": True, "polar": False, "chiral": False, "laue_class": "-3",
+        "centrosymmetric": True, "polar": False, "enantiomorphic": False, "laue_class": "-3",
     }  # fmt: skip
     assert magnetic.point_group("-3'") == {
         "key": "-3'", "type": "III", "crystal_class": "-3", "crystal_system": "trigonal", "order": 6,
-        "centrosymmetric": False, "polar": False, "chiral": False, "laue_class": "-3",
+        "centrosymmetric": False, "polar": False, "enantiomorphic": False, "laue_class": "-3",
     }  # fmt: skip
     for module in (symcrys, magnetic):
-        assert not any(hasattr(module, name) for name in ("is_centrosymmetric", "is_polar", "is_chiral", "laue_class"))
+        assert not any(hasattr(module, name) for name in ("is_centrosymmetric", "is_polar", "is_chiral", "is_chiral_of", "laue_class"))
         assert module.holohedry("trigonal") == "-3m"
         assert module.holohedry(module.crystal_family("trigonal")) == "6/mmm"
         ops = module.generators("2/m")
-        assert module.is_centrosymmetric_of(ops) is True and module.is_chiral_of(ops) is False
-        assert module.is_chiral_of(module.operations("32")) is True
+        assert module.is_centrosymmetric_of(ops) is True and module.is_enantiomorphic_of(ops) is False
+        assert module.is_enantiomorphic_of(module.operations("32")) is True
     assert magnetic.is_centrosymmetric_of(magnetic.operations("-1'")) is False
     with pytest.raises(symcrys.SymcrysError, match="symcrys/magnetic|magnetic"):
         symcrys.is_centrosymmetric_of(magnetic.operations("-1'"))
@@ -265,7 +265,7 @@ def test_nan_and_wrong_shapes_give_readable_errors() -> None:
     ops = symcrys.operations("4mm")
     for bad in ([np.nan, 0, 1], [np.inf, 0, 1]):
         with pytest.raises(symcrys.SymcrysError, match="must be finite") as e:
-            symcrys.site_symmetry(ops, bad)
+            symcrys.site_symmetry_of(ops, bad)
         assert e.value.js_name == "RangeError"
     with pytest.raises(symcrys.SymcrysError, match="must be finite"):
         plane.orbit("p4", [np.nan, 0.0])
@@ -347,9 +347,9 @@ def test_cell_metric_and_indices() -> None:
 def test_site_symmetry_refuses_a_matrix_that_is_not_orthogonal() -> None:
     stretch = [[2, 0, 0], [0, 1, 0], [0, 0, 1]]
     with pytest.raises(symcrys.SymcrysError, match="not an orthogonal"):
-        symcrys.site_symmetry([{"cartesian": stretch}], [1, 0, 0])
+        symcrys.site_symmetry_of([{"cartesian": stretch}], [1, 0, 0])
     with pytest.raises(symcrys.SymcrysError, match="not an orthogonal"):
-        magnetic.site_symmetry([{"cartesian": stretch, "time_reversal": False}], [1, 0, 0])
+        magnetic.site_symmetry_of([{"cartesian": stretch, "time_reversal": False}], [1, 0, 0])
 
 
 def test_residual_operations_in_both_apis() -> None:
@@ -381,3 +381,16 @@ def test_find_point_group_reads_symbols_tolerantly() -> None:
     with pytest.raises(symcrys.SymcrysError, match="uniqueAxis applies to the monoclinic groups"):
         symcrys.operations("mm2", unique_axis="c")
     assert symcrys.find_point_group("D4R") is None
+
+
+def test_site_symmetry_of_a_key_and_of_a_list() -> None:
+    # #137 C1: site_symmetry takes a key, site_symmetry_of a list of operations.
+    by_key = symcrys.site_symmetry("4mm", [1, 1, 0], setting=1)
+    by_list = symcrys.site_symmetry_of(symcrys.operations("4mm"), [1, 1, 0])
+    assert by_key["operations"].tolist() == by_list["operations"].tolist() and by_key["multiplicity"] == 4
+    # [100] lies on the twofold axis of unique axis a only.
+    assert magnetic.site_symmetry("2'", [1, 0, 0])["multiplicity"] == 2
+    assert magnetic.site_symmetry("2'", [1, 0, 0], unique_axis="a")["multiplicity"] == 1
+    assert symcrys.wyckoff_position("4mm", [0, 0, 1])["letter"] == "a"
+    assert plane.symmetry_elements("p4")["rotation_points"][0]["n"] == 4
+    assert [d["n"] for d in plane.describe_operations("p4")] == [1, 2, 4, 4]

@@ -95,7 +95,7 @@ def printed_cells(row: list[str]) -> list[str]:
 def test_shg_at_m3m_surfaces_is_yarivs_form(normal: list[int], x: list[int], panel: str) -> None:
     assert symcrys.tensor_form("m-3m", SHG)["basis"].shape[0] == 0
     ops = symcrys.operations("m-3m")
-    site = symcrys.site_symmetry(ops, normal)
+    site = symcrys.site_symmetry_of(ops, normal)
     form = symcrys.tensor_form_of([ops[i] for i in site["operations"]], SHG)
     z = np.array(normal, float) / np.linalg.norm(normal)
     xa = np.array(x, float) / np.linalg.norm(x)

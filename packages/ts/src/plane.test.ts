@@ -33,7 +33,7 @@ describe('plane point groups', () => {
       expect(new Set(point.map((op) => key(op.matrix))), k).toEqual(linear);
       expect(point.every((op) => op.translation.every((t) => t === 0))).toBe(true);
       expect(plane.pointGroup(g.pointGroup).order * g.centring.length + plane.pointGroup(g.pointGroup).order).toBe(
-        g.order,
+        plane.operations(k).length,
       );
     }
   });
@@ -99,7 +99,6 @@ describe('plain numbers at the API', () => {
       crystalSystem: 'rectangular',
       centring: [[0.5, 0.5]],
       origin: 'at 2mm',
-      order: 8,
     });
     const ops = plane.operations('p3');
     expect(ops[1]).toEqual({
@@ -135,11 +134,11 @@ describe('plain numbers at the API', () => {
         e.lines.map((l) => l.segment.map((p) => p.map(toNumber))),
       );
       expect(plane.symmetryElements(k).lines.map((l) => l.normal)).toEqual(e.lines.map((l) => l.normal));
-      expect(plane.symmetryElements(k).rotations.map((r) => r.order)).toEqual(e.rotations.map((r) => r.order));
+      expect(plane.symmetryElements(k).rotationPoints.map((r) => r.n)).toEqual(e.rotationPoints.map((r) => r.n));
     }
     expect(plane.describeOperations('p4gm')[4]).toEqual({
-      kind: 'glide',
-      order: 2,
+      kind: 'glide-reflection',
+      n: 2,
       location: [0.25, 0],
       direction: [0, 1],
       normal: [1, 0],
@@ -148,13 +147,13 @@ describe('plain numbers at the API', () => {
   });
 
   it('points', () => {
-    expect(plane.wyckoffPositionOf('p6mm', [1 / 3, 2 / 3])).toEqual({
+    expect(plane.wyckoffPosition('p6mm', [1 / 3, 2 / 3])).toEqual({
       letter: 'b',
       multiplicity: 2,
       siteSymmetry: '3m.',
       coordinates: ['1/3,2/3', '2/3,1/3'],
     });
-    expect(plane.wyckoffPositionOf('cm', [0.2, 0.3])).toEqual(plane.wyckoffPositions('cm')[0]);
+    expect(plane.wyckoffPosition('cm', [0.2, 0.3])).toEqual(plane.wyckoffPositions('cm')[0]);
     const site = plane.siteSymmetry('p2mm', [0.5, 0.2]);
     expect(site.multiplicity).toBe(2);
     expect(site.general).toBe(false);
@@ -168,7 +167,7 @@ describe('plain numbers at the API', () => {
 
   it('results are frozen', () => {
     expect(Object.isFrozen(plane.operations('p2')[0].matrix[0])).toBe(true);
-    expect(Object.isFrozen(plane.symmetryElements('p2').rotations[0].point)).toBe(true);
+    expect(Object.isFrozen(plane.symmetryElements('p2').rotationPoints[0].point)).toBe(true);
     expect(Object.isFrozen(plane.PLANE_GROUP_KEYS)).toBe(true);
   });
 });
@@ -210,7 +209,7 @@ describe('describeOperationsOf', () => {
       plane.describeOperationsOf(plain).forEach((d, i) => {
         const e = describePlaneOperation(others[i]);
         expect(d.kind).toBe(e.kind);
-        expect(d.order).toBe(e.order);
+        expect(d.n).toBe(e.n);
         expect(d.sense).toBe(e.sense);
         expect(d.location).toEqual(e.location?.map(toNumber));
         expect(d.glide).toEqual(e.glide?.map(toNumber));
@@ -230,7 +229,7 @@ describe('describeOperationsOf', () => {
         translation: [1 / 3 + 1e-12, 2 / 3],
       },
     ]);
-    expect(d).toMatchObject({ kind: 'rotation', order: 3, sense: '+' });
+    expect(d).toMatchObject({ kind: 'rotation', n: 3, sense: '+' });
     expect(
       plane.describeOperationsOf([
         {

@@ -81,7 +81,7 @@ export {
   type SettingOptions,
   type SymbolOptions,
 } from './pointGroups/pointGroups.js';
-export { holohedry, isCentrosymmetricOf, isChiralOf } from './pointGroups/properties.js';
+export { holohedry, isCentrosymmetricOf, isEnantiomorphicOf } from './pointGroups/properties.js';
 export { LATTICE_SYMMETRY_DIRECTIONS, type Uvw } from './symmetryDirections.js';
 export {
   describeOperations,
@@ -93,7 +93,8 @@ export {
   type SymmetryDirection,
 } from './pointGroups/elements.js';
 export { residualMagneticOperations as residualOperations, type MagneticCellOperation } from './cell.js';
-export { siteSymmetry, type SiteSymmetry, type SiteSymmetryOptions } from './siteSymmetry.js';
+export { siteSymmetryOf, type SiteSymmetry, type SiteSymmetryOptions } from './siteSymmetry.js';
+export { siteSymmetry, type WyckoffOptions } from './pointGroups/wyckoff.js';
 export {
   describeOperationsOf,
   pointGroupOf,

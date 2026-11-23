@@ -2,7 +2,7 @@
  * Points of a plane group: their orbit, site symmetry and Wyckoff position (CLAUDE.md, "Plane
  * groups (and later space groups)"). Points come from callers as floating-point coordinates in the
  * lattice basis; whether an operation fixes a point is decided within a tolerance, as for the
- * point groups (`siteSymmetry`). Internal for now.
+ * point groups (`siteSymmetryOf`). Internal for now.
  */
 
 import { compose, equalModLattice, parseOperation, toPlain, type PlainOperation } from './affine.js';
@@ -160,7 +160,7 @@ function fixingOperations(ops: readonly PlainOperation[], indices: readonly numb
 /**
  * The site symmetry of a point under a plane group. The operations that fix the point modulo the
  * lattice within the tolerance are closed under products and the point is set onto the fixed space
- * of the closure (the mean of its images), repeated until stable, as `siteSymmetry` does for the point
+ * of the closure (the mean of its images), repeated until stable, as `siteSymmetryOf` does for the point
  * groups; so the result is always a subgroup and the set point lies exactly on its elements. Throws a
  * RangeError if that does not settle (a tolerance far too large).
  */

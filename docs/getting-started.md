@@ -89,7 +89,7 @@ The plane API is the module `symcrys.plane`:
 ```{code-cell} ipython3
 from symcrys import plane
 
-plane.wyckoff_position_of("p6mm", [1 / 3, 2 / 3]), plane.asymmetric_unit("p6mm")["vertices"]
+plane.wyckoff_position("p6mm", [1 / 3, 2 / 3]), plane.asymmetric_unit("p6mm")["vertices"]
 ```
 
 An error of the library raises `symcrys.SymcrysError`, a subclass of `ValueError`:

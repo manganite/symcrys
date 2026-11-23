@@ -123,9 +123,9 @@ function errorPins(add: (id: string, f: () => unknown) => void): void {
     classes.tensorForm('4mm', { rank: 3, parity: 'polar', intrinsic: 'voigt' }),
   );
   add('error: classes.allowsProperty time-odd name', () => classes.allowsProperty('4mm', 'ferromagnetic' as never));
-  add('error: classes.siteSymmetry zero vector', () => classes.siteSymmetry(classes.operations('4mm'), [0, 0, 0]));
+  add('error: classes.siteSymmetry zero vector', () => classes.siteSymmetryOf(classes.operations('4mm'), [0, 0, 0]));
   add('error: classes.siteSymmetry tolerance 0', () =>
-    classes.siteSymmetry(classes.operations('4mm'), [0, 0, 1], { tolerance: 0 }),
+    classes.siteSymmetryOf(classes.operations('4mm'), [0, 0, 1], { tolerance: 0 }),
   );
   add('error: classes.tensorFormOf not orthogonal', () =>
     classes.tensorFormOf(
@@ -173,6 +173,29 @@ function errorPins(add: (id: string, f: () => unknown) => void): void {
   );
 }
 
+/**
+ * Descriptions in the shape of the pins (captured before #121 step 7c, #137 C2): `order` for `n`,
+ * `'mirror'` for `'reflection'`, `'glide'` for `'glide-reflection'`.
+ */
+const oldDescriptions = (list: readonly { readonly kind: string; readonly n: number }[]) =>
+  list.map(({ kind, n, ...rest }) => ({
+    kind: kind === 'reflection' ? 'mirror' : kind === 'glide-reflection' ? 'glide' : kind,
+    order: n,
+    ...rest,
+  }));
+
+/** A point group in the shape of the pins (before #121 step 7c): `chiral` for `enantiomorphic`. */
+const oldPointGroup = ({ enantiomorphic, ...rest }: { readonly enantiomorphic: boolean }) => ({
+  ...rest,
+  chiral: enantiomorphic,
+});
+
+/** Symmetry elements in the shape of the pins (before #121 step 7c): `rotations` with `order`. */
+const oldElements = ({ rotationPoints, lines }: plane.SymmetryElements) => ({
+  rotations: rotationPoints.map(({ n, point }) => ({ order: n, point })),
+  lines,
+});
+
 /** Operations in the shape of the pins of `operations` (captured before #121 step 6d): the Cartesian matrices. */
 const cartesianPins = (ops: readonly magnetic.Operation[]) =>
   ops.map((op) => ({ matrix: op.cartesian, timeReversal: op.timeReversal }));
@@ -191,11 +214,11 @@ const settingName = (s: { readonly fullSymbol: string; readonly axes?: string })
 /** The point-group pins of one key of the magnetic API (all 122), and of the crystallographic API for the 32 classes. */
 function pointGroupPins(add: (id: string, f: () => unknown) => void, key: MagneticPointGroupKey): void {
   const isClass = classes.isPointGroupKey(key);
-  add(`${key}: magnetic.pointGroup`, () => magnetic.pointGroup(key));
+  add(`${key}: magnetic.pointGroup`, () => oldPointGroup(magnetic.pointGroup(key)));
   add(`${key}: magnetic.allowedProperties`, () => magnetic.allowedProperties(key));
   add(`${key}: magnetic.settings`, () => magnetic.settings(key));
   if (isClass) {
-    add(`${key}: classes.pointGroup`, () => classes.pointGroup(key));
+    add(`${key}: classes.pointGroup`, () => oldPointGroup(classes.pointGroup(key)));
     add(`${key}: classes.allowedProperties`, () => classes.allowedProperties(key));
     add(`${key}: classes.settings`, () => classes.settings(key));
   }
@@ -220,21 +243,23 @@ function pointGroupPins(add: (id: string, f: () => unknown) => void, key: Magnet
     add(id('magnetic.operations'), () => cartesianPins(ops));
     add(id('magnetic.generators'), () => cartesianPins(magnetic.generators(key, options)));
     add(id('magnetic.latticeOperations'), () => latticePins(ops));
-    add(id('magnetic.describeOperations'), () => magnetic.describeOperations(key, options));
+    add(id('magnetic.describeOperations'), () => oldDescriptions(magnetic.describeOperations(key, options)));
     add(id('magnetic.symmetryDirections'), () => magnetic.symmetryDirections(key, options));
     add(id('magnetic.pointGroupOf(operations)'), () => magnetic.pointGroupOf(ops));
-    add(id('magnetic.describeOperationsOf(operations)'), () => magnetic.describeOperationsOf(ops));
+    add(id('magnetic.describeOperationsOf(operations)'), () => oldDescriptions(magnetic.describeOperationsOf(ops)));
     add(id('magnetic.isCentrosymmetricOf, isChiralOf'), () => [
       magnetic.isCentrosymmetricOf(ops),
-      magnetic.isChiralOf(ops),
+      magnetic.isEnantiomorphicOf(ops),
     ]);
     add(id('magnetic.allowedPropertiesOf(operations)'), () => magnetic.allowedPropertiesOf(ops));
     for (const d of DIRECTIONS) {
-      add(id(`magnetic.siteSymmetry [${d}]`), () => magnetic.siteSymmetry(ops, d));
+      add(id(`magnetic.siteSymmetry [${d}]`), () => magnetic.siteSymmetryOf(ops, d));
       add(id(`magnetic.orbitOf [${d}]`), () => magnetic.orbitOf(ops, d));
     }
     for (const d of NEAR_DIRECTIONS) {
-      add(id(`magnetic.siteSymmetry [${d}] tolerance 1e-4`), () => magnetic.siteSymmetry(ops, d, { tolerance: 1e-4 }));
+      add(id(`magnetic.siteSymmetry [${d}] tolerance 1e-4`), () =>
+        magnetic.siteSymmetryOf(ops, d, { tolerance: 1e-4 }),
+      );
       add(id(`magnetic.orbitOf [${d}] tolerance 1e-4`), () => magnetic.orbitOf(ops, d, { tolerance: 1e-4 }));
     }
     for (const hkl of FACES) add(id(`magnetic.orbit (${hkl})`), () => magnetic.orbit(key, { hkl }, options));
@@ -244,15 +269,15 @@ function pointGroupPins(add: (id: string, f: () => unknown) => void, key: Magnet
       const classOps = classes.operations(key, options);
       add(id('classes.operations'), () => classOps.map((op) => ({ matrix: op.cartesian })));
       add(id('classes.generators'), () => classes.generators(key, options).map((op) => ({ matrix: op.cartesian })));
-      add(id('classes.describeOperations'), () => classes.describeOperations(key, options));
+      add(id('classes.describeOperations'), () => oldDescriptions(classes.describeOperations(key, options)));
       add(id('classes.wyckoffPositions'), () => classes.wyckoffPositions(key, options));
       add(id('classes.crystalForms'), () => classes.crystalForms(key, options));
       for (const d of DIRECTIONS) {
-        add(id(`classes.wyckoffPositionOf [${d}]`), () => classes.wyckoffPositionOf(key, d, options));
+        add(id(`classes.wyckoffPositionOf [${d}]`), () => classes.wyckoffPosition(key, d, options));
       }
       for (const d of NEAR_DIRECTIONS) {
         add(id(`classes.wyckoffPositionOf [${d}] tolerance 1e-4`), () =>
-          classes.wyckoffPositionOf(key, d, { ...options, tolerance: 1e-4 }),
+          classes.wyckoffPosition(key, d, { ...options, tolerance: 1e-4 }),
         );
       }
     }
@@ -360,24 +385,24 @@ const NEAR_POINTS: readonly (readonly [number, number])[] = [
 /** The pins of one plane group. */
 function planeGroupPins(add: (id: string, f: () => unknown) => void, key: plane.PlaneGroupKey): void {
   const ops = plane.operations(key);
-  add(`${key}: planeGroup`, () => plane.planeGroup(key));
+  add(`${key}: planeGroup`, () => ({ ...plane.planeGroup(key), order: plane.operations(key).length }));
   add(`${key}: operations`, () => ops);
   add(`${key}: generators`, () => plane.generators(key));
-  add(`${key}: describeOperations`, () => plane.describeOperations(key));
-  add(`${key}: describeOperationsOf(operations)`, () => plane.describeOperationsOf(ops));
+  add(`${key}: describeOperations`, () => oldDescriptions(plane.describeOperations(key)));
+  add(`${key}: describeOperationsOf(operations)`, () => oldDescriptions(plane.describeOperationsOf(ops)));
   add(`${key}: wyckoffPositions`, () => plane.wyckoffPositions(key));
   add(`${key}: asymmetricUnit`, () => plane.asymmetricUnit(key));
-  add(`${key}: symmetryElements`, () => plane.symmetryElements(key));
+  add(`${key}: symmetryElements`, () => oldElements(plane.symmetryElements(key)));
   for (const p of POINTS) {
     add(`${key}: siteSymmetry (${p})`, () => plane.siteSymmetry(key, p));
-    add(`${key}: wyckoffPositionOf (${p})`, () => plane.wyckoffPositionOf(key, p));
+    add(`${key}: wyckoffPositionOf (${p})`, () => plane.wyckoffPosition(key, p));
     add(`${key}: orbit (${p})`, () => plane.orbit(key, p));
   }
   for (const p of NEAR_POINTS) {
     for (const tolerance of [0.005, 0.02]) {
       add(`${key}: siteSymmetry (${p}) tolerance ${tolerance}`, () => plane.siteSymmetry(key, p, { tolerance }));
       add(`${key}: wyckoffPositionOf (${p}) tolerance ${tolerance}`, () =>
-        plane.wyckoffPositionOf(key, p, { tolerance }),
+        plane.wyckoffPosition(key, p, { tolerance }),
       );
       add(`${key}: snapToWyckoffPosition (${p}) tolerance ${tolerance}`, () =>
         plane.snapToWyckoffPosition(key, p, { tolerance }),
@@ -395,7 +420,7 @@ function planePointGroupPins(add: (id: string, f: () => unknown) => void, key: p
     add(id('symbol'), () => plane.symbol(key, { setting: s.index }));
     add(id('operations'), () => plane.operations(key, { setting: s.index }));
     add(id('generators'), () => plane.generators(key, { setting: s.index }));
-    add(id('describeOperations'), () => plane.describeOperations(key, { setting: s.index }));
+    add(id('describeOperations'), () => oldDescriptions(plane.describeOperations(key, { setting: s.index })));
   }
 }
 
@@ -413,8 +438,8 @@ const CELLS = [
 function generalPins(add: (id: string, f: () => unknown) => void): void {
   add('classes.POINT_GROUP_KEYS', () => classes.POINT_GROUP_KEYS);
   add('magnetic.POINT_GROUP_KEYS', () => magnetic.POINT_GROUP_KEYS);
-  add('classes.pointGroups', () => classes.pointGroups());
-  add('magnetic.pointGroups', () => magnetic.pointGroups());
+  add('classes.pointGroups', () => classes.pointGroups().map(oldPointGroup));
+  add('magnetic.pointGroups', () => magnetic.pointGroups().map(oldPointGroup));
   add('classes.isPointGroupKey', () => ['32', "321'", '-62m', 'x'].map((k) => classes.isPointGroupKey(k)));
   add('magnetic.isPointGroupKey', () => ['32', "321'", '-62m', 'x'].map((k) => magnetic.isPointGroupKey(k)));
   add('CRYSTAL_FORM_TYPES', () => classes.CRYSTAL_FORM_TYPES);

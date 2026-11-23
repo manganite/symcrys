@@ -31,10 +31,10 @@ allowedProperties("m'm'2"); // six of the seven names, 'ferromagnetic' among the
 The 17 plane groups and the 10 plane point groups are in `symcrys/plane`, in the lattice basis:
 
 ```ts
-import { symmetryElements, wyckoffPositionOf } from 'symcrys/plane';
+import { symmetryElements, wyckoffPosition } from 'symcrys/plane';
 
-wyckoffPositionOf('p6mm', [1 / 3, 2 / 3]).letter; // 'b'
-symmetryElements('p4gm').rotations; // the 4- and 2-fold centres in the cell
+wyckoffPosition('p6mm', [1 / 3, 2 / 3]).letter; // 'b'
+symmetryElements('p4gm').rotationPoints; // the 4- and 2-fold rotation points in the cell
 ```
 
 Documentation (getting started, conventions, tensors, examples, reference):

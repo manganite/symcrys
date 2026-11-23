@@ -178,11 +178,7 @@ describe('describeOperationsOf', () => {
         const plain = describeOperationsOf(operations(key, { setting: s.index }));
         plain.forEach((d, i) => {
           const n = named[i];
-          expect([d.kind, d.order, d.timeReversal], `${key} #${s.index} ${i}`).toEqual([
-            n.kind,
-            n.order,
-            n.timeReversal,
-          ]);
+          expect([d.kind, d.n, d.timeReversal], `${key} #${s.index} ${i}`).toEqual([n.kind, n.n, n.timeReversal]);
           if (!n.axis || !d.axis) {
             expect(d.axis).toBe(n.axis);
             return;

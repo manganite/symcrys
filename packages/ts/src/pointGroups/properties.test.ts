@@ -9,7 +9,7 @@ import { det } from '../linalg.js';
 import type { CartesianOperation } from '../operations.js';
 import { tensorFormOf } from '../tensors/tensorForm.js';
 import { MAGNETIC_POINT_GROUP_KEYS, generators, operations, pointGroup } from './pointGroups.js';
-import { isCentrosymmetricOf, isChiralOf } from './properties.js';
+import { isCentrosymmetricOf, isEnantiomorphicOf } from './properties.js';
 
 describe('centrosymmetric and chiral for a list of operations', () => {
   // Exhaustive (122 groups, closure of the generators): about 1 s alone, more under the load of the full suite, so it
@@ -19,7 +19,7 @@ describe('centrosymmetric and chiral for a list of operations', () => {
       const g = pointGroup(key);
       for (const list of [operations(key), generators(key)]) {
         expect(isCentrosymmetricOf(list), key).toBe(g.centrosymmetric);
-        expect(isChiralOf(list), key).toBe(g.chiral);
+        expect(isEnantiomorphicOf(list), key).toBe(g.enantiomorphic);
       }
     }
   });
@@ -33,22 +33,22 @@ describe('centrosymmetric and chiral for a list of operations', () => {
     const [, two, , mirror] = operations('2/m', { setting: 1 });
     expect(isCentrosymmetricOf([two])).toBe(false);
     expect(isCentrosymmetricOf([two, mirror])).toBe(true);
-    expect(isChiralOf([two])).toBe(true);
-    expect(isChiralOf([two, mirror])).toBe(false);
+    expect(isEnantiomorphicOf([two])).toBe(true);
+    expect(isEnantiomorphicOf([two, mirror])).toBe(false);
   });
 
   it('an empty list is the group 1; a list need not be closed', () => {
     expect(isCentrosymmetricOf([])).toBe(false);
-    expect(isChiralOf([])).toBe(true);
+    expect(isEnantiomorphicOf([])).toBe(true);
     const fourBar = operations('-4').find((op) => det(op.cartesian) < 0)!;
-    expect(isChiralOf([fourBar])).toBe(false);
+    expect(isEnantiomorphicOf([fourBar])).toBe(false);
     expect(isCentrosymmetricOf([fourBar])).toBe(false);
   });
 
   it('an operation that does not say whether it has time reversal is refused by both', () => {
     const inversion = { cartesian: operations('-1')[1].cartesian } as unknown as CartesianOperation;
     expect(() => isCentrosymmetricOf([inversion])).toThrow(/Operation 0: timeReversal must be true or false/);
-    expect(() => isChiralOf([inversion])).toThrow(/Operation 0: timeReversal must be true or false/);
+    expect(() => isEnantiomorphicOf([inversion])).toThrow(/Operation 0: timeReversal must be true or false/);
   });
 
   it('a matrix that is not orthogonal is refused by both, as by tensorFormOf', () => {
@@ -58,7 +58,7 @@ describe('centrosymmetric and chiral for a list of operations', () => {
     for (const op of [stretched, nearly, nan]) {
       const list = [operations('2')[1], op];
       expect(() => isCentrosymmetricOf(list)).toThrow(/Operation 1 is not an orthogonal \(Cartesian\) matrix/);
-      expect(() => isChiralOf(list)).toThrow(/Operation 1 is not an orthogonal \(Cartesian\) matrix/);
+      expect(() => isEnantiomorphicOf(list)).toThrow(/Operation 1 is not an orthogonal \(Cartesian\) matrix/);
       expect(() => tensorFormOf(list, 'pyroelectric')).toThrow(/Operation 1 is not an orthogonal \(Cartesian\) matrix/);
     }
   });

@@ -1,7 +1,7 @@
 /**
  * The asymmetric unit of a plane group and its symmetry elements in the conventional cell, as numbers
  * (CLAUDE.md, "The API of `symcrys/plane`"): the asymmetric unit as inequalities with its vertices,
- * the elements as rotation centres with their order and as mirror and glide lines with the segment
+ * the elements as rotation points with their n and as mirror and glide lines with the segment
  * that lies in the cell [0, 1]². Exact, in the lattice basis; drawing them stays with the
  * applications. Internal for now.
  */
@@ -36,10 +36,10 @@ export interface AsymmetricUnit {
   readonly inequalities: readonly Inequality[];
 }
 
-/** A rotation centre in the cell. */
-export interface RotationCentre {
-  /** The highest order of a rotation about it. */
-  readonly order: number;
+/** A rotation point in the cell (ITA 2016 Table 2.1.2.1, p. 145: the symmetry element of a rotation in the plane). */
+export interface RotationPoint {
+  /** The highest n of an n-fold rotation about it. */
+  readonly n: number;
   /** Its position in [0, 1]². */
   readonly point: readonly Rational[];
 }
@@ -60,8 +60,8 @@ export interface SymmetryLine {
 
 /** The symmetry elements of a plane group in the cell [0, 1]². */
 export interface CellElements {
-  /** The rotation centres, by descending order, then by y and x. */
-  readonly rotations: readonly RotationCentre[];
+  /** The rotation points, by descending n, then by y and x. */
+  readonly rotationPoints: readonly RotationPoint[];
   /** The mirror and glide lines with a segment of non-zero length in the cell, by direction, then by the start of the segment (y, then x). */
   readonly lines: readonly SymmetryLine[];
 }
@@ -292,7 +292,7 @@ const elementCache = new Map<string, CellElements>();
 
 /**
  * The symmetry elements of a plane group in its conventional cell [0, 1]², boundary included: every
- * rotation centre with the highest order of a rotation about it, and every mirror and glide line
+ * rotation point with the highest n of a rotation about it, and every mirror and glide line
  * that crosses the cell, with the segment inside it. A line that carries a glide is a glide line
  * with its shortest glide vector along the line (between 0 and the lattice vector). Frozen.
  */
@@ -300,7 +300,7 @@ export function planeCellElements(key: string | number): CellElements {
   const entry = planeGroupEntry(key);
   const cached = elementCache.get(entry.symbol);
   if (cached) return cached;
-  const rotations: { order: number; point: Rational[] }[] = [];
+  const rotationPoints: { n: number; point: Rational[] }[] = [];
   const lines: {
     kind: 'mirror' | 'glide';
     direction: [number, number];
@@ -319,10 +319,10 @@ export function planeCellElements(key: string | number): CellElements {
       if (d.kind === 'rotation') {
         const p = [...(d.location ?? [])];
         if (!inCell(p)) continue;
-        const known = rotations.find((x) => samePoint(x.point, p));
-        if (!known) rotations.push({ order: d.order, point: p });
-        else known.order = Math.max(known.order, d.order);
-      } else if (d.kind === 'mirror' || d.kind === 'glide') {
+        const known = rotationPoints.find((x) => samePoint(x.point, p));
+        if (!known) rotationPoints.push({ n: d.n, point: p });
+        else known.n = Math.max(known.n, d.n);
+      } else if (d.kind === 'reflection' || d.kind === 'glide-reflection') {
         const dir = d.direction ?? [0, 0];
         const p = d.location ?? [];
         // The glide vector is s·dir; s modulo 1, since a lattice translation along the line changes nothing.
@@ -355,7 +355,7 @@ export function planeCellElements(key: string | number): CellElements {
     }
   }
   const num = (v: Rational) => toNumber(v);
-  rotations.sort((a, b) => b.order - a.order || num(a.point[1]) - num(b.point[1]) || num(a.point[0]) - num(b.point[0]));
+  rotationPoints.sort((a, b) => b.n - a.n || num(a.point[1]) - num(b.point[1]) || num(a.point[0]) - num(b.point[0]));
   lines.sort(
     (a, b) =>
       a.direction[0] - b.direction[0] ||
@@ -364,7 +364,7 @@ export function planeCellElements(key: string | number): CellElements {
       num(a.segment[0][0]) - num(b.segment[0][0]),
   );
   const result: CellElements = Object.freeze({
-    rotations: Object.freeze(rotations.map((x) => Object.freeze({ order: x.order, point: Object.freeze(x.point) }))),
+    rotationPoints: Object.freeze(rotationPoints.map((x) => Object.freeze({ n: x.n, point: Object.freeze(x.point) }))),
     lines: Object.freeze(
       lines.map((l) =>
         Object.freeze({

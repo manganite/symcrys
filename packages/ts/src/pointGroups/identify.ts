@@ -47,11 +47,11 @@ export interface CartesianOperationDescription {
   /** What the operation is, without time reversal. */
   readonly kind: OperationKind;
   /**
-   * The n of the symbol n or n̄: 1 for the identity and the inversion, 2 for a mirror (m = 2̄),
-   * otherwise the order of the rotation part.
+   * The n of the symbol n or n̄ (ITA 2016 § 1.2.1, p. 12: an n-fold rotation): 1 for the identity and the
+   * inversion, 2 for a reflection (m = 2̄), otherwise the order of the rotation part.
    */
-  readonly order: number;
-  /** Rotation axis, rotoinversion axis or mirror normal; absent for the identity and the inversion. */
+  readonly n: number;
+  /** Rotation axis, rotoinversion axis or the normal of the mirror plane; absent for the identity and the inversion. */
   readonly axis?: CartesianAxis;
   /**
    * For n ≥ 3: `'+'` if the rotation part turns by +360°/n about `axis` (counter-clockwise seen
@@ -211,13 +211,13 @@ function describe(op: CartesianOperation, i: number, tolerance: number): Cartesi
   const r = (det(op.cartesian) > 0 ? op.cartesian : op.cartesian.map((row) => row.map((v) => -v))) as Mat3;
   const proper = det(op.cartesian) > 0;
   const timeReversal = op.timeReversal;
-  if (n === 1) return Object.freeze({ kind: proper ? 'identity' : 'inversion', order: 1, timeReversal });
+  if (n === 1) return Object.freeze({ kind: proper ? 'identity' : 'inversion', n: 1, timeReversal });
   const { axis } = signed(rotationAxis(r, n), tolerance);
   const frozenAxis = Object.freeze({ cartesian: Object.freeze(axis) as unknown as Vec3 });
-  const kind: OperationKind = proper ? 'rotation' : n === 2 ? 'mirror' : 'rotoinversion';
-  if (n === 2) return Object.freeze({ kind, order: 2, axis: frozenAxis, timeReversal });
+  const kind: OperationKind = proper ? 'rotation' : n === 2 ? 'reflection' : 'rotoinversion';
+  if (n === 2) return Object.freeze({ kind, n: 2, axis: frozenAxis, timeReversal });
   const sense = dot(axialVector(r), axis) > 0 ? '+' : '-';
-  return Object.freeze({ kind, order: n, axis: frozenAxis, sense, timeReversal });
+  return Object.freeze({ kind, n, axis: frozenAxis, sense, timeReversal });
 }
 
 /**

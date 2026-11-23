@@ -1,11 +1,11 @@
 /**
- * Miller and Miller–Bravais indices, the zone law and the change of axes
+ * Miller and Bravais–Miller indices, the zone law and the change of axes
  * (docs/conventions.md, "Cell, metric and indices"). Plain integers and matrices in and out.
  */
 
 import { det, inverse, isSingular, transpose, type Mat3, type Vec3 } from './linalg.js';
 
-/** A direction [UVTW] or a plane (hkil) in four indices (Miller–Bravais). */
+/** A direction [UVTW] or a plane (hkil) in four indices (Bravais–Miller). */
 export type FourIndices = readonly [number, number, number, number];
 
 function gcd(a: number, b: number): number {

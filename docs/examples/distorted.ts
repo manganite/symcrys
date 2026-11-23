@@ -8,6 +8,6 @@ const along111 = (m: readonly (readonly number[])[]) => {
 };
 const kept = operations('m-3m').filter((op) => along111(op.cartesian));
 console.log(kept.length, 'operations:', pointGroupOf(kept));
-for (const d of describeOperationsOf(kept).filter((x) => x.order === 3)) {
-  console.log(d.kind, d.order, d.sense, d.axis?.cartesian.map((x) => x.toFixed(3)).join(' '));
+for (const d of describeOperationsOf(kept).filter((x) => x.n === 3)) {
+  console.log(d.kind, d.n, d.sense, d.axis?.cartesian.map((x) => x.toFixed(3)).join(' '));
 }

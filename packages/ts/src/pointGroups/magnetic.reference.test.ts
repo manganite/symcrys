@@ -57,7 +57,7 @@ import {
 
 /** The fixed properties of a group, read from its record. */
 const isCentrosymmetric = (key: MagneticPointGroupKey) => pointGroup(key).centrosymmetric;
-const isChiral = (key: MagneticPointGroupKey) => pointGroup(key).chiral;
+const isChiral = (key: MagneticPointGroupKey) => pointGroup(key).enantiomorphic;
 const isPolar = (key: MagneticPointGroupKey) => pointGroup(key).polar;
 const laueClass = (key: MagneticPointGroupKey) => pointGroup(key).laueClass;
 

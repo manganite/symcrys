@@ -9,7 +9,7 @@ import { describe, expect, it } from 'vitest';
 import { det, type Mat3, type Vec3 } from '../linalg.js';
 import { operation, type CartesianOperation } from '../operations.js';
 import { POINT_GROUP_KEYS, generators, operations, settings, type PointGroupKey } from '../pointGroups/pointGroups.js';
-import { siteSymmetry } from '../siteSymmetry.js';
+import { siteSymmetryOf } from '../siteSymmetry.js';
 import { matrixRank, satisfies } from '../testUtils/rank.js';
 import { YARIV_PANELS, basisScheme, printedScheme } from '../testUtils/yariv.js';
 import {
@@ -383,7 +383,7 @@ describe('use case of #30: SHG at the surfaces of an m-3m crystal, against Yariv
   for (const c of cases) {
     it(`${c.surface}: the form at the surface is Yariv's ${c.panel.replace('class-', '')}`, () => {
       const ops = operations('m-3m');
-      const site = siteSymmetry(ops, c.normal).operations.map((i) => ops[i]);
+      const site = siteSymmetryOf(ops, c.normal).operations.map((i) => ops[i]);
       expect(site).toHaveLength(c.order);
       const z = unit(c.normal);
       const x = unit(c.x);
