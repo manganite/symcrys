@@ -130,6 +130,12 @@ All notable changes to symcrys are recorded here. The format follows
   - parameter names: `angleBetweenDirections(basis, direction1, direction2)`,
     `angleBetweenPlanes(basis, plane1, plane2)`, `findPointGroup(symbol)`, also in Python.
 
+- **Wyckoff coordinates as printed in full** (#137 C4, #121 step 7d): `coordinates` of a Wyckoff
+  position of a crystal class (`wyckoffPositions`, `wyckoffPosition`) is the list of all coordinate
+  triplets ITA prints for the position (Table 3.2.3.2), in printed order, as in `symcrys/plane`; up
+  to 0.10 it was the first triplet as a string, which is now `coordinates[0]`. In Python a list of
+  strings.
+
 ### Removed
 
 - **`latticeOperations`** (Python `lattice_operations`), in both entry points (#121 step 6d): its

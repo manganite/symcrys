@@ -31,8 +31,12 @@ export interface WyckoffPosition {
   readonly multiplicity: number;
   /** Oriented site-symmetry symbol as ITA prints it, e.g. `..m`, `4m.m`, `1`. */
   readonly siteSymmetry: string;
-  /** ITA's representative point as printed, e.g. `x,x,z` (a leading `-` is an overbar). */
-  readonly coordinates: string;
+  /**
+   * ITA's coordinate triplets of the position as printed, in printed order, the first being the
+   * representative point, e.g. `['x,x,z', '-x,-x,z', …]` (a leading `-` is an overbar); one per
+   * equivalent direction, as in `symcrys/plane`.
+   */
+  readonly coordinates: readonly string[];
   /**
    * ITA's representative face as printed, components separated by commas, e.g. `h,h,l`, or
    * `h,h,-2h,l` (Bravais–Miller indices) for hexagonal axes.
@@ -200,7 +204,7 @@ function printedRows(key: PointGroupKey, setting: number): readonly WyckoffRow[]
     letter,
     mult,
     oriented ? permuteSymbol(site, r) : site,
-    permutePattern(coords, r, XYZ),
+    coords.map((c) => permutePattern(c, r, XYZ)),
     miller === '' ? '' : permutePattern(miller, r, HKL),
   ]);
 }
@@ -262,7 +266,7 @@ export function wyckoffPositions(key: PointGroupKey, options?: SettingOptions): 
             letter,
             multiplicity,
             siteSymmetry: site,
-            coordinates,
+            coordinates: Object.freeze([...coordinates]),
             millerIndices,
             representative: Object.freeze({
               hkl: Object.freeze(hkl) as Hkl,
