@@ -230,7 +230,8 @@ export function describeOperations(
  * The positions of the full Hermann–Mauguin symbol in the requested setting, each with its
  * symmetry directions (ITA Table 2.1.3.1) and the symmetry elements along them. All positions of the
  * crystal family are listed, also those the symbol of the class leaves out (then without `symbol`);
- * the triclinic family has none. The axes of `describeOperations` are the same objects.
+ * the triclinic family has none. A direction carries the same `lattice` and `cartesian` vectors as
+ * the axis of `describeOperations` along it, so match the two by value.
  */
 export function symmetryDirections(key: MagneticPointGroupKey, options?: SettingOptions): readonly SymmetryDirection[] {
   return analysis(key, options).directions;

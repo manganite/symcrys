@@ -25,7 +25,7 @@ export interface Relation {
 const classLetter = (cell: string): string | null => cell.match(/^([A-U])_[mn]$/)?.[1] ?? null;
 
 export interface ClassRow {
-  /** Key of the class; Birss prints `m3`, `m3m` (docs/conventions.md, "Where ITC and Birss differ"). */
+  /** Key of the class; Birss prints `m3`, `m3m` (docs/conventions.md, "Birss as a second print check"). */
   readonly key: string;
   readonly polarEven: string | null;
   readonly axialEven: string | null;

@@ -196,6 +196,19 @@ function rejectConvention(options: object | undefined): void {
   }
 }
 
+/**
+ * Throws for a second argument of `settings` or `findPointGroup`, which took a convention up to
+ * 0.10 (`settings('32', 'birss')`): TypeScript refuses it, plain JavaScript would ignore it and
+ * answer for the ITC frame. Internal.
+ */
+export function rejectConventionArgument(argumentCount: number): void {
+  if (argumentCount > 1) {
+    throw new RangeError(
+      'The convention argument was removed in symcrys 0.11.0: symcrys follows ITC only (CHANGELOG.md, 0.11.0)',
+    );
+  }
+}
+
 /** The requested setting index, checked; the ITC default if none is given. */
 function settingIndex(d: GroupData, options?: SettingOptions): number {
   rejectConvention(options);
@@ -410,6 +423,7 @@ export function crystalClassOf(key: MagneticPointGroupKey): PointGroupKey {
 
 /** The settings of a point group, with their symbols and the ITC default. */
 export function settings(key: MagneticPointGroupKey): readonly Setting[] {
+  rejectConventionArgument(arguments.length);
   const d = data(key);
   return Array.from({ length: d.settingCount }, (_, i) => {
     const symbols = settingSymbols(d, i + 1);
@@ -506,6 +520,7 @@ function find(hm: string, classesOnly: boolean): PointGroupInSetting<MagneticPoi
  * Symbols are written as in this library, with `-` for the overbar (`m-3m`).
  */
 export function findPointGroup(hm: string): PointGroupInSetting | undefined {
+  rejectConventionArgument(arguments.length);
   return find(hm, true) as PointGroupInSetting | undefined;
 }
 
@@ -518,5 +533,6 @@ export function findPointGroup(hm: string): PointGroupInSetting | undefined {
  * a string. Symbols are written as in this library, with `-` for the overbar (`m'-3'm`).
  */
 export function findMagneticPointGroup(hm: string): PointGroupInSetting<MagneticPointGroupKey> | undefined {
+  rejectConventionArgument(arguments.length);
   return find(hm, false);
 }

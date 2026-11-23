@@ -42,7 +42,7 @@ export interface Operation {
 
 /**
  * A crystal class with the properties that are fixed by its operations. None of them depends on
- * the setting or the convention (docs/conventions.md, "Properties").
+ * the setting (docs/conventions.md, "Properties").
  */
 export interface PointGroup {
   /** The key (docs/conventions.md, "Keys"). */
@@ -243,11 +243,13 @@ export function pointGroups(): readonly PointGroup[] {
  * library, with `-` for the overbar (`m-3m`).
  */
 export function findPointGroup(hm: string): PointGroupInSetting | undefined {
+  groups.rejectConventionArgument(arguments.length);
   return groups.findPointGroup(hm);
 }
 
 /** The settings of a crystal class, with their symbols and the ITC default. */
 export function settings(key: PointGroupKey): readonly Setting[] {
+  groups.rejectConventionArgument(arguments.length);
   return groups.settings(classKey(key));
 }
 
@@ -377,7 +379,8 @@ export function describeOperations(key: PointGroupKey, options?: SettingOptions)
  * The positions of the full Hermann–Mauguin symbol in the requested setting, each with its
  * symmetry directions (ITA Table 2.1.3.1) and the symmetry elements along them. All positions of the
  * crystal family are listed, also those the symbol of the class leaves out (then without `symbol`);
- * the triclinic family has none. The axes of `describeOperations` are the same objects.
+ * the triclinic family has none. A direction carries the same `lattice` and `cartesian` vectors as
+ * the axis of `describeOperations` along it, so match the two by value.
  */
 export function symmetryDirections(
   key: PointGroupKey,

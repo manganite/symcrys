@@ -175,8 +175,7 @@ function corrected(group: string, column: string, cell: string): string {
 /**
  * From Birss's printed symbol to the symcrys key. Birss prints the cubic groups without the overbar
  * on the 3. For D2h(C2h) and D6h(D3h) the Birss short symbol differs from the ITC short symbol,
- * which is the key (docs/conventions.md, "Keys"); `symbol(key, { convention: 'birss' })` must give
- * Birss's symbol back (tested below).
+ * which is the key (docs/conventions.md, "Keys").
  */
 const KEY_OF_PRINTED: Record<string, string> = {
   m3: 'm-3',

@@ -36,6 +36,10 @@ describe('lookup', () => {
       /option convention was removed in symcrys 0\.11\.0/,
     );
     expect(() => symbol('32', { convention: 'birss' } as never)).toThrow(RangeError);
+    expect(() => (settings as (...args: unknown[]) => unknown)('32', 'birss')).toThrow(
+      /convention argument was removed/,
+    );
+    expect(() => (findPointGroup as (...args: unknown[]) => unknown)('312', 'birss')).toThrow(RangeError);
     expect(() => symbol('32', { form: 'schoenflies', setting: 9 })).toThrow(RangeError);
     expect(() => symbol('32', { form: 'long' as 'full' })).toThrow(RangeError);
   });

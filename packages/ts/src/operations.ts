@@ -3,7 +3,7 @@
  * a set of generators into a group.
  */
 
-import { IDENTITY, conjugate, matricesEqual, multiply, snap, type Mat3 } from './linalg.js';
+import { IDENTITY, matricesEqual, multiply, snap, type Mat3 } from './linalg.js';
 import { EPSILON } from './tolerances.js';
 
 /**
@@ -18,9 +18,9 @@ export interface Operation {
 }
 
 /** No point group has more than 48 operations (96 with time reversal); a closure beyond this is a data error. */
-export const MAX_GROUP_ORDER = 200;
+const MAX_GROUP_ORDER = 200;
 
-export const IDENTITY_OPERATION: Operation = { matrix: IDENTITY, timeReversal: false };
+const IDENTITY_OPERATION: Operation = { matrix: IDENTITY, timeReversal: false };
 
 /** A unitary operation (no time reversal). */
 export function operation(matrix: Mat3): Operation {
@@ -82,11 +82,6 @@ export function compose(a: Operation, b: Operation): Operation {
 
 export function operationsEqual(a: Operation, b: Operation): boolean {
   return a.timeReversal === b.timeReversal && matricesEqual(a.matrix, b.matrix);
-}
-
-/** The operation expressed in a frame rotated by `s` (orthogonal): s·W·sᵀ. */
-export function transformOperation(op: Operation, s: Mat3): Operation {
-  return { matrix: snap(conjugate(op.matrix, s)), timeReversal: op.timeReversal };
 }
 
 /**

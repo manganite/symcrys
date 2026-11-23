@@ -71,7 +71,7 @@ const ERRATA: Record<string, string> = {
  */
 const CLASS_SYMBOL_IN_PARENTHESES = ["-42'm' | A"];
 
-/** Birss prints the cubic groups without the overbar (docs/conventions.md, "Where ITC and Birss differ"). */
+/** Birss prints the cubic groups without the overbar (docs/conventions.md, "Birss as a second print check"). */
 const CUBIC: Record<string, string> = {
   m3: 'm-3',
   "m'3": "m'-3'",
