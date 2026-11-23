@@ -67,9 +67,9 @@ orientation is not listed.
 | 2 | 2 (2 ∥ x3) | 1 1 2 | ITC D Table 1.6.6.1 | 174 | beside 2 (2 ∥ x2) |
 | 2 | 2 (2 ∥ x3) | 1 1 2 | ITC D Table 1.6.5.1 | 172 | text layer |
 | 2 | C2 (2) (twofold axis parallel to z) | 1 1 2 | ITC D Tables 1.7.2.2, 1.7.2.3 | 185–186 | the only monoclinic orientation there; text layer |
-| 2 | 211 | 2 1 1 | ITC D § 1.5.7.1, list (3) | 134 | "unique axis x"; symcrys has no such setting |
-| 2 | 211 | 2 1 1 | ITC D § 1.5.8.1, list (3) | 140 | "unique axis x"; no symcrys setting |
-| 2 | 211 | 2 1 1 | ITC D Table 1.2.6.11 (f) | 65 | orthorhombic I, k = (α ½ ½); no symcrys setting |
+| 2 | 211 | 2 1 1 | ITC D § 1.5.7.1, list (3) | 134 | "unique axis x" |
+| 2 | 211 | 2 1 1 | ITC D § 1.5.8.1, list (3) | 140 | "unique axis x" |
+| 2 | 211 | 2 1 1 | ITC D Table 1.2.6.11 (f) | 65 | orthorhombic I, k = (α ½ ½) |
 | m | m (unique axis c) | 1 1 m | ITA Table 3.2.3.2 | 746 | headline "unique axis c" |
 | m | 11m | 1 1 m | ITC D § 1.5.7.1, list (1) | 134 | "unique axis z" |
 | m | 11m | 1 1 m | ITC D § 1.5.8.1, list (2) | 140 | "unique axis z" |
@@ -79,20 +79,20 @@ orientation is not listed.
 | m | m (m ⊥ x3) | 1 1 m | ITC D Table 1.6.6.1 | 174 | beside m (m ⊥ x2) |
 | m | m (m ⊥ x3) | 1 1 m | ITC D Table 1.6.5.1 | 172 | text layer |
 | m | Cs (m) (twofold axis parallel to z) | 1 1 m | ITC D Tables 1.7.2.4, 1.7.2.5 | 187–188 | text layer |
-| m | m11 | m 1 1 | ITC D § 1.5.7.1, list (3) | 134 | "unique axis x"; no symcrys setting |
-| m | m11 | m 1 1 | ITC D § 1.5.8.1, list (4) | 140 | "unique axis x"; no symcrys setting |
-| m | m11 | m 1 1 | ITC D Table 1.2.3.1 | 49 | elements E, m_x; no symcrys setting |
-| m | m11 | m 1 1 | ITC D Table 1.2.3.2 | 49 | strata of Pmm2/Pmmm; no symcrys setting |
-| m | m11 | m 1 1 | ITC D Table 1.2.6.11 (d)–(h) | 65 | little cogroups; no symcrys setting |
+| m | m11 | m 1 1 | ITC D § 1.5.7.1, list (3) | 134 | "unique axis x" |
+| m | m11 | m 1 1 | ITC D § 1.5.8.1, list (4) | 140 | "unique axis x" |
+| m | m11 | m 1 1 | ITC D Table 1.2.3.1 | 49 | elements E, m_x |
+| m | m11 | m 1 1 | ITC D Table 1.2.3.2 | 49 | strata of Pmm2/Pmmm |
+| m | m11 | m 1 1 | ITC D Table 1.2.6.11 (d)–(h) | 65 | little cogroups |
 | 2/m | 2/m (unique axis c) | 1 1 2/m | ITA Table 3.2.3.2 | 747 | headline "unique axis c" |
 | 2/m | 11 2/m | 1 1 2/m | ITC D § 1.5.7.1, list (1) | 134 | "unique axis z" |
 | 2/m | 112/m | 1 1 2/m | ITC D Table 1.2.6.11 (f) | 65 | orthorhombic I |
 | 2/m | 2/m | 1 1 2/m | ITC D Table 1.2.6.5 (b) | 58 | α = C_2z, β = σ_z |
 | 2/m | C2h 2/m (twofold axis parallel to z) | 1 1 2/m | ITC D Tables 1.7.2.4, 1.7.2.5 | 187–188 | text layer |
-| 2/m | 2/m11 | 2/m 1 1 | ITC D § 1.5.7.1, list (3) | 134 | "unique axis x"; no symcrys setting |
-| 2/m | 2/m11 | 2/m 1 1 | ITC D Table 1.2.6.11 (f) | 65 | orthorhombic I; no symcrys setting |
-| 2/m | C2h = 2/m | 2/m 1 1 | ITC D Table 1.5.3.4 | 120 | moments along x (F) and y (A3); twofold axis U_2^1 = 2_x (Table 1.5.3.2, p. 120); no symcrys setting |
-| 2/m | C2h = 2/m | 2/m 1 1 | ITC D Table 1.5.3.6 | 123 | "by definition, the twofold axis is aligned along the x axis" (p. 124); no symcrys setting |
+| 2/m | 2/m11 | 2/m 1 1 | ITC D § 1.5.7.1, list (3) | 134 | "unique axis x" |
+| 2/m | 2/m11 | 2/m 1 1 | ITC D Table 1.2.6.11 (f) | 65 | orthorhombic I |
+| 2/m | C2h = 2/m | 2/m 1 1 | ITC D Table 1.5.3.4 | 120 | moments along x (F) and y (A3); twofold axis U_2^1 = 2_x (Table 1.5.3.2, p. 120) |
+| 2/m | C2h = 2/m | 2/m 1 1 | ITC D Table 1.5.3.6 | 123 | "by definition, the twofold axis is aligned along the x axis" (p. 124) |
 | mm2 | 2mm | 2 m m | ITA § 1.6.4 | 114 | "the three point groups 2mm, m2m and mm2" |
 | mm2 | 2mm | 2 m m | ITA § 1.6.5, text and Table 1.6.5.1 | 126 | column heads mmm, 2mm, m2m, mm2, 222 |
 | mm2 | 2mm | 2 m m | ITA Table 3.2.3.2 | 748 | site symmetry of 2a (x,0,0) in mmm |
@@ -139,25 +139,25 @@ orientation is not listed.
 | -6m21' | -62m1' | -6 2 m 1' | ITC D Table 1.2.6.6 (b) | 60 | text layer; see note (a) |
 | 2' | 112' | 1 1 2' | ITC D § 1.5.7.1, list (2) | 134 | "unique axis z" |
 | 2' | 112' | 1 1 2' | ITC D § 1.5.8.1, list (2) | 140 | "unique axis z" |
-| 2' | 2'11 | 2' 1 1 | ITC D § 1.5.7.1, list (4) | 134 | "unique axis x"; no symcrys setting |
-| 2' | 2'11 | 2' 1 1 | ITC D § 1.5.8.1, list (4) | 140 | "unique axis x"; no symcrys setting |
+| 2' | 2'11 | 2' 1 1 | ITC D § 1.5.7.1, list (4) | 134 | "unique axis x" |
+| 2' | 2'11 | 2' 1 1 | ITC D § 1.5.8.1, list (4) | 140 | "unique axis x" |
 | m' | 11m' | 1 1 m' | ITC D § 1.5.7.1, list (2) | 134 | "unique axis z" |
 | m' | 11m' | 1 1 m' | ITC D § 1.5.8.1, list (1) | 140 | "unique axis z" |
-| m' | m'11 | m' 1 1 | ITC D § 1.5.7.1, list (4) | 134 | "unique axis x"; no symcrys setting |
-| m' | m'11 | m' 1 1 | ITC D § 1.5.8.1, list (3) | 140 | "unique axis x"; no symcrys setting |
+| m' | m'11 | m' 1 1 | ITC D § 1.5.7.1, list (4) | 134 | "unique axis x" |
+| m' | m'11 | m' 1 1 | ITC D § 1.5.8.1, list (3) | 140 | "unique axis x" |
 | 2'/m' | 11 2'/m' | 1 1 2'/m' | ITC D § 1.5.7.1, list (2) | 134 | "unique axis z" |
-| 2'/m' | 2'/m'11 | 2'/m' 1 1 | ITC D § 1.5.7.1, list (4) | 134 | "unique axis x"; no symcrys setting |
-| 2'/m' | C2h(Ci) = 2'/m' | 2'/m' 1 1 | ITC D Table 1.5.3.4 | 120 | moments along x (A3) and y (F); axis x as for 2/m above; no symcrys setting |
-| 2'/m' | C2h(Ci) = 2'/m' | 2'/m' 1 1 | ITC D Table 1.5.3.6 | 123 | axis x by definition (p. 124); no symcrys setting |
+| 2'/m' | 2'/m'11 | 2'/m' 1 1 | ITC D § 1.5.7.1, list (4) | 134 | "unique axis x" |
+| 2'/m' | C2h(Ci) = 2'/m' | 2'/m' 1 1 | ITC D Table 1.5.3.4 | 120 | moments along x (A3) and y (F); axis x as for 2/m above |
+| 2'/m' | C2h(Ci) = 2'/m' | 2'/m' 1 1 | ITC D Table 1.5.3.6 | 123 | axis x by definition (p. 124) |
 | 2/m' | 11 2/m' | 1 1 2/m' | ITC D § 1.5.8.1, list (1) | 140 | "unique axis z" |
-| 2/m' | 2/m'11 | 2/m' 1 1 | ITC D § 1.5.8.1, list (3) | 140 | "unique axis x"; no symcrys setting |
-| 2/m' | C2h(C2) = 2/m' | 2/m' 1 1 | ITC D Table 1.5.3.4 | 120 | moments along x (A1) and y (A2); axis x; no symcrys setting |
-| 2/m' | C2h(C2) = 2/m' | 2/m' 1 1 | ITC D Table 1.5.3.6 | 123 | axis x by definition; no symcrys setting |
+| 2/m' | 2/m'11 | 2/m' 1 1 | ITC D § 1.5.8.1, list (3) | 140 | "unique axis x" |
+| 2/m' | C2h(C2) = 2/m' | 2/m' 1 1 | ITC D Table 1.5.3.4 | 120 | moments along x (A1) and y (A2); axis x |
+| 2/m' | C2h(C2) = 2/m' | 2/m' 1 1 | ITC D Table 1.5.3.6 | 123 | axis x by definition |
 | 2'/m | 11 2'/m | 1 1 2'/m | ITC D § 1.5.8.1, list (2) | 140 | "unique axis z" |
 | 2'/m | 112'/m | 1 1 2'/m | ITC D § 1.5.8.1, text | 141 | spin-flop phase of Cr2O3, "C2h(Cs) = 112'/m" |
-| 2'/m | 2'/m11 | 2'/m 1 1 | ITC D § 1.5.8.1, list (4) | 140 | "unique axis x"; no symcrys setting |
-| 2'/m | C2h(Cs) = 2'/m | 2'/m 1 1 | ITC D Table 1.5.3.4 | 120 | moments along x (A2) and y (A1); axis x; no symcrys setting |
-| 2'/m | C2h(Cs) = 2'/m | 2'/m 1 1 | ITC D Table 1.5.3.6 | 123 | axis x by definition; no symcrys setting |
+| 2'/m | 2'/m11 | 2'/m 1 1 | ITC D § 1.5.8.1, list (4) | 140 | "unique axis x" |
+| 2'/m | C2h(Cs) = 2'/m | 2'/m 1 1 | ITC D Table 1.5.3.4 | 120 | moments along x (A2) and y (A1); axis x |
+| 2'/m | C2h(Cs) = 2'/m | 2'/m 1 1 | ITC D Table 1.5.3.6 | 123 | axis x by definition |
 | 2'2'2 | 22'2' | 2 2' 2' | ITC D Table 1.5.2.4 (c) | 113 | |
 | 2'2'2 | 22'2' | 2 2' 2' | ITC D Table 1.5.5.2 | 131 | |
 | 2'2'2 | 22'2' | 2 2' 2' | ITC D § 1.5.7.1, list (5) | 136 | |
@@ -274,11 +274,11 @@ p. 752), `mm2` (-6m2, p. 762; 6/mmm, p. 764), `m2m` (-62m, p. 763; 6/mmm, p. 764
 p. 766), `m.m2` (m-3m, p. 769); Table 3.2.1.3 (pp. 724–727) lists the same symbols as the site
 symmetries of the point forms. They are point groups of type mm2 in the frame of a tetragonal,
 hexagonal or cubic lattice. `2.mm` (mirrors ⊥ [110] and [1-10]) and the hexagonal `mm2` (twofold
-axis along a tertiary direction such as [1-10], 30° from x) are orientations of mm2 that symcrys does
-not have as a setting; `2mm.` is mm2 in its standard orientation and `m2m.` and the hexagonal `m2m`
+axis along a tertiary direction such as [1-10], 30° from x) are orientations of mm2 other than
+those with its elements along x, y, z; `2mm.` is mm2 in its standard orientation and `m2m.` and the hexagonal `m2m`
 at x,0,0 are 2mm (twofold axis along x). Not inventoried further.
 
-## Symbols printed that symcrys does not have as a setting
+## Unique axis a and rhombohedral axes
 
 - Unique axis x (a) of the monoclinic groups: `211`, `m11`, `2/m11` (ITC D pp. 49, 65, 120, 123,
   134, 140), `2'11`, `m'11`, `2'/m'11` (p. 134), `2/m'11`, `2'/m11` (p. 140), `2'/m'`, `2/m'`,
@@ -287,32 +287,17 @@ at x,0,0 are 2mm (twofold axis along x). Not inventoried further.
   space groups only (Table 1.5.4.4, p. 97: P211, Pm11, P2/m11 and their cell choices; § 2.1.3.15,
   p. 170).
 - Rhombohedral axes: 3, -3 (ITA p. 753), 32 (p. 755), 3m (p. 756), -3m (p. 759) and their polar and
-  nonpolar directions in Table 3.2.2.2 (p. 739); a basis rather than a Cartesian orientation (#111).
-- The mm2-type site symmetries named in the section above (`2.mm`, hexagonal `mm2`).
+  nonpolar directions in Table 3.2.2.2 (p. 739); a basis rather than a Cartesian orientation.
 
 ITA Table 1.5.4.4 (pp. 97–106) prints space-group symbols only; the point-group orientations they
 imply (e.g. Pmm2, P2mm, Pm2m for No. 25, p. 98; P211, Pm11, P2/m11, p. 97) are those of the rows
 for `mm2` and of unique axis a above, and are not separate rows.
 
-## Settings of symcrys not found in print
-
-Non-default settings of symcrys (list of 2026-11-23) without a row above:
-
-| Group | Setting | Full symbol |
-|---|---|---|
-| 21' | 21' | 1 1 2 1' |
-| m1' | m1' | 1 1 m 1' |
-| 2/m1' | 2/m1' | 1 1 2/m 1' |
-| mm21' | m2m1' | m 2 m 1' |
-| -42m1' | -4m21' | -4 m 2 1' |
-| 321' | 3121' | 3 1 2 1' |
-| 3m1' | 31m1' | 3 1 m 1' |
-| -3m1' | -31m1' | -3 1 2/m 1' |
+## Grey groups
 
 ITC prints the grey groups with their standard symbol only (ITC D Tables 1.2.6.6, 1.2.6.12,
-1.5.8.3; text pp. 119, 128, 142–146); the two grey settings found (`2mm1'`, `-62m1'`) come only
-from Chapter 1.2, see note (a). Of the black-and-white settings, `6'/mm'm` was found only in
-Table 1.2.6.12, see note (a).
+1.5.8.3; text pp. 119, 128, 142–146); the two grey groups found in another orientation (`2mm1'`,
+`-62m1'`) come only from Chapter 1.2, see note (a).
 
 ## Occurrences in ITC Vol. D Part 3, not inventoried
 

@@ -203,7 +203,9 @@ Carried over from birss-app, where the calculations come from.
 - Files in `references/` change only by transcription from print or by correction against it
   (maintainer, 2026-11-18). The one exception is the note on provenance in a file's head (where a
   transcription came from, what was reported where): it follows the current state of the source it
-  names (maintainer, 2026-11-20). Prettier and ESLint leave these files alone.
+  names (maintainer, 2026-11-20). Notes on the state of symcrys do not belong there (which settings
+  it has); they are in `docs/conventions.md` (maintainer, 2026-11-23, removed from
+  `references/itc/orientations.md`). Prettier and ESLint leave these files alone.
 
 ## Tests
 
@@ -560,6 +562,20 @@ The conventions themselves are in `docs/conventions.md`; here, what was decided 
   `describeOperationsOf` signs its Cartesian axes as the Birss convention of `describeOperations`
   does (first non-zero component positive), since no lattice names them _(to be redefined with the
   Seitz anchor, #114, #127)_.
+- **Rhombohedral axes** (#111, #121 step 6c; the setting itself decided by Thomas on 2026-11-23,
+  "Pure ITC" above): the obverse axes in the hexagonal cell of setting 1 (ITA 2016 Table 1.5.1.1,
+  p. 78), so the Cartesian operations are those of setting 1. Chosen while implementing, recorded on
+  Thomas' OK (2026-11-23, PR #148): **`pointGroupOf`** names such operations setting 1, since the
+  two settings hold the same Cartesian operations and a list of them cannot say which basis is
+  meant; **a key is the key** in `findPointGroup`, also where it is the symbol of another setting
+  (`32` gives setting 1, not the rhombohedral setting 3; before, no key was such a symbol), while a
+  full symbol finds the setting it names (`-3 2/m` gives setting 3, `3 2` without spaces is the key
+  and gives setting 1): the split is left to #96, which decides how an input that can mean two
+  settings is treated; the **representative face** with rhombohedral axes takes h = 5, k = 2, l = 1,
+  since (321) lies there on the limiting form (h,k,2k−h) and h = 4 would give printed faces with a
+  common factor ((4,2,−6), (4,2,0)). The symbols of the magnetic groups in the rhombohedral setting
+  follow the rule for all black-and-white symbols (the symbol of the class in that frame with the
+  primes of the operations).
 - **`latticeBasis` only for families with fixed cell angles** (2026-11-09, #14): for monoclinic
   and triclinic a Cartesian basis would need the cell angles, which a point group does not fix.
 - **Two entry points, `symcrys` and `symcrys/magnetic`** (maintainer, 2026-11-20, #47): the
