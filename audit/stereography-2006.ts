@@ -25,7 +25,10 @@ export function stereographyFile(path: string): string {
 /** A module of stereography at the fixed revision (it must have no imports of its own). */
 export async function stereographyModule(path: string): Promise<Record<string, unknown>> {
   const text = stereographyFile(path);
-  if (/^\s*import\s/m.test(text)) throw new Error(`${path} at ${REVISION} imports other modules`);
+  // A static import or re-export (JSDoc `@import` in a comment is not one).
+  if (/^\s*(import\b(?!\.meta)|export\b[^\n]*\bfrom\b)/m.test(text)) {
+    throw new Error(`${path} at ${REVISION} imports other modules`);
+  }
   return import(/* @vite-ignore */ `data:text/javascript;base64,${Buffer.from(text).toString('base64')}`);
 }
 

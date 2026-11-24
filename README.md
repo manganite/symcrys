@@ -118,7 +118,8 @@ Audits under `audit/` compare the code bases symcrys draws on. They are run by h
 `npm run audit:point-groups` writes `audit/point-groups/report.md`; `npm run audit:wyckoff-2006`,
 `audit:forms-2006` and `audit:plane-groups-2006` compare with the 5th edition of ITA as transcribed
 in stereography and in [plane-groups](https://github.com/manganite/plane-groups) (checked out next to
-this repository as well).
+this repository as well). stereography now takes these data from symcrys, so the two audits read
+its own transcription at a fixed revision (`audit/stereography-2006.ts`); a full clone is needed.
 
 CI runs these seven gates on every pull request, on Node 22 and 24, the gate `python` (bundle,
 build sdist and wheel, install the wheel, `mypy`, `pytest`) on Python 3.10 and the newest, and the
