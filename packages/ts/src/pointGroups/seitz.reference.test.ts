@@ -62,6 +62,9 @@ const TABLES = {
 /** The erratum of Table 1.4.2.1, No. 32 (in the head of the transcription). */
 const seitzSymbol = (table: string, row: string[]) => (table === 'cubic' && row[0] === '32' ? '-3^+_{-1-11}' : row[4]);
 
+/** The dimension of a table. */
+const w = (name: string) => (name === 'square' || name === 'hexagonalPlane' ? 2 : 3);
+
 /** The Cartesian basis of each table: a, b, c as columns. */
 const OBVERSE = [
   [2 / 3, -1 / 3, -1 / 3],
@@ -113,6 +116,23 @@ describe('ITA Tables 1.4.2.1–1.4.2.5: the printed Seitz symbols agree with the
       }
     });
   }
+  it('the Type column names the R of the Seitz symbol, the Orientation of a rotation its direction', () => {
+    for (const [name, rows] of Object.entries(TABLES)) {
+      for (const row of rows) {
+        // R without the subscript (`2_{001}` → `2`, `-3^+_{111}` → `-3^+`), the erratum of No. 32 read.
+        expect(seitzSymbol(name, row).replace(/_\{.*\}$/, ''), `${name} ${row.join(' ')}`).toBe(row[2]);
+        const s = seitzOf(seitzSymbol(name, row));
+        if (!s.direction || s.improper || row[3] === '') continue;
+        // A rotation's Orientation is its axis as a line (x,x,0; -x,0,x; 0,0,z): its coefficients.
+        const coefficients = row[3]
+          .split(',')
+          .map((c) => (c === '0' ? 0 : c.startsWith('-') ? -1 : 1) * (/2/.test(c) ? 2 : 1));
+        const parallel = (a: number[], b: number[]) => a.every((x, i) => x === b[i]) || a.every((x, i) => x === -b[i]);
+        if (w(name) === 3) expect(parallel(coefficients, s.direction), `${name} ${row.join(' ')}`).toBe(true);
+      }
+    }
+  });
+
   it('the data of the library are the transcription', () => {
     for (const name of ['cubic', 'hexagonal', 'rhombohedral'] as SeitzTable[]) {
       const lib = seitzRows(name).map(([t, axis, sense]) => [t, axis ? [...axis] : null, sense]);

@@ -159,9 +159,9 @@ code to this state; the decisions below follow it.
   Seitz symbol (ITA 6th ed., Tables 1.4.2.1/1.4.2.2), in every entry point; Table 2.1.3.1 stays the
   anchor of the lattice symmetry directions (#114; for the plane groups, #107). Chosen while
   implementing (#121, the last step): the axis takes the direction of the Seitz symbol of its matrix
-  W, transcribed from ITA 2016 Tables 1.4.2.1–1.4.2.3 (`pointGroups/seitzData.ts`), since the
-  printed directions follow no rule that could replace the table (`2₋₁₀₁` and `m₋₁₀₁` in the cubic
-  table, `2₁₁₀` in the hexagonal one); in the plane the shortest normal with its first non-zero
+  W, transcribed from ITA 2016 Tables 1.4.2.1–1.4.2.3 (`pointGroups/seitzData.ts`), since neither
+  rule at hand gives the printed directions: "first non-zero component positive" fails on `2₋₁₀₁`
+  and `m₋₁₀₁` of the cubic table, the sign of Table 2.1.3.1 on `2₁₁₀` of the hexagonal one; in the plane the shortest normal with its first non-zero
   component positive is the Seitz direction of Tables 1.4.2.4 and 1.4.2.5 for every operation, so
   the plane groups keep that rule (tested against the tables).
 - **Reference edition:** ITA 6th ed. (2016). Exception, until there is another solution: what comes

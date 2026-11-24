@@ -438,8 +438,9 @@ export function describeOperations(key: PointGroupKey, options?: SettingOptions)
  * The positions of the full Hermann–Mauguin symbol in the requested setting, each with its
  * symmetry directions (ITA Table 2.1.3.1) and the symmetry elements along them. All positions of the
  * crystal family are listed (for rhombohedral axes the two of that row of the table), also those the
- * symbol of the class leaves out (then without `symbol`); the triclinic family has none. A direction carries the same `lattice` and `cartesian` vectors as
- * the axis of `describeOperations` along it, so match the two by value.
+ * symbol of the class leaves out (then without `symbol`); the triclinic family has none. A direction
+ * has the sign of ITA Table 2.1.3.1, the axis of an operation along it that of its Seitz symbol, so
+ * the two are parallel and may be opposite: match them by direction, up to sign.
  */
 export function symmetryDirections(
   key: PointGroupKey,

@@ -99,7 +99,7 @@ describe('describeOperations', () => {
         // along a direction of ITA Table 2.1.3.1, with the sign of the Seitz symbol (#114), which may
         // be the opposite one (seitz.reference.test.ts checks the sign against print)
         const u = [...d.axis!.lattice];
-        expect(table.some((t) => t.every((x, k) => x === u[k] || x === -u[k]) && t.some((x) => x !== 0))).toBe(true);
+        expect(table.some((t) => t.every((x, k) => x === u[k]) || t.every((x, k) => x === -u[k]))).toBe(true);
       }
       expect(d.sense !== undefined).toBe(d.n >= 3);
     });
