@@ -2,7 +2,8 @@
  * The magnetic tensor properties in the ITC convention against ITC Vol. D, Chapter 1.5 (fixture
  * class (a)), re-parsed from references/itc/: Table 1.5.2.4 (ferromagnetism: 31 groups and the
  * direction of M_s), Table 1.5.7.1 (piezomagnetism: 66 groups, the form of Λ_iα) and Table 1.5.8.1
- * (linear magnetoelectric effect: 58 groups, the form of α_ij, and the 11 groups the text names).
+ * (linear magnetoelectric effect: 58 groups, the form of α_ij, and the 11 groups the text names),
+ * with footnote 3 of § 1.5.8.1 (the 31 groups with a non-symmetric α_ij admit a toroidal moment).
  *
  * A printed form belongs to the orientation its Hermann–Mauguin symbol names (§ 1.5.7.1, p. 134),
  * so each printed symbol, the alternatives in square brackets included, is looked up among the ITC
@@ -224,6 +225,23 @@ describe('ITC Vol. D Table 1.5.8.1: linear magnetoelectric effect', () => {
     expect(GROUPS.filter(centre)).toHaveLength(21);
     expect(GROUPS.filter((k) => centre(k) && allowsProperty(k, 'magnetoelectric'))).toEqual([]);
     expect([...named].sort()).toEqual(GROUPS.filter((k) => !centre(k) && !allowsProperty(k, 'magnetoelectric')).sort());
+  });
+});
+
+describe('ITC Vol. D § 1.5.8.1, footnote 3: the toroidal moment', () => {
+  it('is allowed in exactly the 31 groups whose printed magnetoelectric tensor need not be symmetric', () => {
+    // The print anchor of 'ferrotoroidic' (#137 E4): "Table 1.5.8.1 shows that the tensor α_ij ...
+    // does not need to be symmetric for 31 of the 58 point groups. ... These 31 groups coincide with
+    // those that admit a spontaneous toroidal moment" (p. 140). A printed matrix is symmetric if
+    // every cell is printed as its mirror cell (a12 and a12; not a12 and a21, nor a12 and -a12).
+    const content = readReference('itc/vol-d-table-1.5.8.1.md');
+    const matrices = printedMatrices(content);
+    const symmetric = (m: string[][]) => m.every((row, i) => row.every((cell, j) => cell === m[j][i]));
+    const nonSymmetric = printedGroups(content)
+      .filter((g) => !symmetric(matrices.get(g.block)!))
+      .map((g) => orientation(g.symbols[0])!.key);
+    expect(nonSymmetric).toHaveLength(31);
+    expect([...nonSymmetric].sort()).toEqual(GROUPS.filter((k) => allowsProperty(k, 'ferrotoroidic')).sort());
   });
 });
 

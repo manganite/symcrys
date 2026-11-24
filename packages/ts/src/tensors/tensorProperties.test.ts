@@ -30,13 +30,14 @@ const count = (name: TensorPropertyName, type: 'I' | 'II' | 'III') =>
   MAGNETIC_POINT_GROUP_KEYS.filter((k) => pointGroup(k).type === type && allowsProperty(k, name)).length;
 
 describe('TENSOR_PROPERTIES', () => {
-  it('names seven properties, each with a specification, a description and a print source', () => {
+  it('names eight properties, each with a specification, a description and a print source', () => {
     expect(TENSOR_PROPERTY_NAMES).toEqual([
       'pyroelectric',
       'ferroaxial',
       'piezoelectric',
       'gyrotropic',
       'ferromagnetic',
+      'ferrotoroidic',
       'magnetoelectric',
       'piezomagnetic',
     ]);
@@ -44,10 +45,11 @@ describe('TENSOR_PROPERTIES', () => {
       const p = TENSOR_PROPERTIES[name];
       expect(Object.keys(p.spec).sort(), name).toEqual(['intrinsic', 'kind', 'rank', 'timeParity']);
       expect(p.description.length, name).toBeGreaterThan(20);
-      // Ferroaxial order is not in ITC Vol. D; its classes follow from Birss's tables of tensor forms.
+      // Ferroaxial order is not in ITC (#137 E4), and its source says so; its classes follow from
+      // Birss's tables of tensor forms.
       expect(p.source, name).toMatch(
         name === 'ferroaxial'
-          ? /Phys\. Rev\. Lett\. 116, 177602 \(2016\); classes: Birss \(1966\), Tables 4a and 4c, pp\. 56–58/
+          ? /^Not in ITC: .*Phys\. Rev\. Lett\. 116, 177602 \(2016\).*classes: Birss \(1966\), Tables 4a and 4c, pp\. 56–58/
           : /ITC Vol\. D \(2013\), § 1\.\d.*p+\. \d+/,
       );
     }
@@ -56,7 +58,7 @@ describe('TENSOR_PROPERTIES', () => {
   it('is frozen, and no two names share a tensor', () => {
     expect(Object.isFrozen(TENSOR_PROPERTIES)).toBe(true);
     expect(Object.isFrozen(TENSOR_PROPERTIES.piezoelectric.spec)).toBe(true);
-    expect(new Set(TENSOR_PROPERTY_NAMES.map((n) => JSON.stringify(TENSOR_PROPERTIES[n].spec))).size).toBe(7);
+    expect(new Set(TENSOR_PROPERTY_NAMES.map((n) => JSON.stringify(TENSOR_PROPERTIES[n].spec))).size).toBe(8);
   });
 });
 
@@ -66,9 +68,10 @@ describe('allowsProperty and allowedProperties', () => {
     expect(count('pyroelectric', 'I')).toBe(10);
     expect(count('piezoelectric', 'I')).toBe(20);
     expect(count('gyrotropic', 'I')).toBe(15);
-    for (const name of ['ferromagnetic', 'magnetoelectric', 'piezomagnetic'] as const)
+    for (const name of ['ferromagnetic', 'ferrotoroidic', 'magnetoelectric', 'piezomagnetic'] as const)
       expect(count(name, 'II')).toBe(0);
     expect(count('ferromagnetic', 'I') + count('ferromagnetic', 'III')).toBe(31);
+    expect(count('ferrotoroidic', 'I') + count('ferrotoroidic', 'III')).toBe(31);
     expect(count('magnetoelectric', 'I') + count('magnetoelectric', 'III')).toBe(58);
     expect(count('piezomagnetic', 'I') + count('piezomagnetic', 'III')).toBe(66);
     // The time-even properties of a magnetic group are those of its class: 11, 26 and 17 of the 58
@@ -144,8 +147,13 @@ describe('allowsProperty and allowedProperties', () => {
     expect(allowedProperties('m-3m')).toEqual([]);
     expect(allowedProperties('432')).toEqual(['gyrotropic', 'magnetoelectric']);
     expect(allowedProperties("2'")).toEqual(TENSOR_PROPERTY_NAMES);
-    expect(allowedProperties("m'm'2")).toEqual(TENSOR_PROPERTY_NAMES.filter((name) => name !== 'ferroaxial'));
-    expect(allowedProperties("-1'")).toEqual(['ferroaxial', 'magnetoelectric']);
+    // m'm'2: a time-odd polar vector T is reversed by the 2 (T_x, T_y) or by m' (T_z: the mirror keeps
+    // it, time reversal changes its sign), so neither ferroaxial nor ferrotoroidic order.
+    expect(allowedProperties("m'm'2")).toEqual(
+      TENSOR_PROPERTY_NAMES.filter((name) => name !== 'ferroaxial' && name !== 'ferrotoroidic'),
+    );
+    // -1': the inversion reverses a polar vector and time reversal reverses it back: T is allowed.
+    expect(allowedProperties("-1'")).toEqual(['ferroaxial', 'ferrotoroidic', 'magnetoelectric']);
     expect(allowedProperties("mm21'")).toEqual(['pyroelectric', 'piezoelectric', 'gyrotropic']);
   });
 
@@ -164,7 +172,14 @@ describe('allowsProperty and allowedProperties', () => {
     const site = siteSymmetryOf(ops, [1, 1, 1]).operations.map((i) => ops[i]);
     // The site symmetry is 3m.
     expect(allowedPropertiesOf(site)).toEqual(allowedProperties('3m'));
-    expect(allowedPropertiesOf(site)).toEqual(['pyroelectric', 'piezoelectric', 'magnetoelectric', 'piezomagnetic']);
+    // Without time reversal a time-odd polar vector has the form of a polar one: T along the threefold axis.
+    expect(allowedPropertiesOf(site)).toEqual([
+      'pyroelectric',
+      'piezoelectric',
+      'ferrotoroidic',
+      'magnetoelectric',
+      'piezomagnetic',
+    ]);
     expect(allowsProperty('m-3m', 'pyroelectric')).toBe(false);
     expect(allowsPropertyOf(site, 'pyroelectric')).toBe(true);
     // Generators are enough: the list is closed first.

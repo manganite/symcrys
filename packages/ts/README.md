@@ -25,7 +25,7 @@ white group, and a crystal without magnetic order has the grey group of its clas
 import { allowedProperties } from 'symcrys/magnetic';
 
 allowedProperties("321'"); // ['piezoelectric', 'gyrotropic']: quartz
-allowedProperties("m'm'2"); // six of the seven names, 'ferromagnetic' among them
+allowedProperties("m'm'2"); // six of the eight names, 'ferromagnetic' among them
 ```
 
 The 17 plane groups and the 10 plane point groups are in `symcrys/plane`, in the lattice basis:

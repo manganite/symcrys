@@ -23,7 +23,7 @@ SHG = {"rank": 3, "kind": "polar", "intrinsic": "symmetric-last-pair"}
 symcrys.tensor_form("mm2", SHG)["parameters"]   # the free components: xxz, yyz, zxx, zyy, zzz
 symcrys.allowed_properties("32")               # ['piezoelectric', 'gyrotropic']: quartz
 magnetic.allowed_properties("321'")            # the same: quartz is the grey group in the magnetic API
-magnetic.allowed_properties("m'm'2")           # six of the seven names, 'ferromagnetic' among them
+magnetic.allowed_properties("m'm'2")           # six of the eight names, 'ferromagnetic' among them
 ```
 
 `symcrys` is the crystallographic API (the 32 crystal classes, without time reversal),

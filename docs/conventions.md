@@ -108,7 +108,7 @@ reversal can be passed on from JavaScript and Python; the TypeScript types take 
 parity may be `'odd'` or whose `timeReversal` may be `true` only after it is narrowed.
 
 **The magnetic API** takes all 122 keys; operations carry `timeReversal`, a tensor specification
-its `timeParity`, and `TENSOR_PROPERTIES` holds all seven properties. For a crystal without magnetic
+its `timeParity`, and `TENSOR_PROPERTIES` holds all eight properties. For a crystal without magnetic
 order ask the grey group of its class: `allowedProperties("321'")` gives the properties of quartz,
 `allowedProperties('32')` those of a magnetically ordered crystal with the white group `32`, which
 may be magnetoelectric and piezomagnetic. It has every function of the crystallographic API except
@@ -922,13 +922,20 @@ order). For rank 3, xyz is 0·9 + 1·3 + 2 = 5.
   Every allowed tensor is Σₖ pₖ·basis[k], pₖ the value of component `parameters[k]`. The form is
   unique for the span, so it does not depend on how the span was found.
 - `parameters`: the free parameters as index lists (`[0, 1, 1]` for xyy), one per basis row: each is
-  the lowest component that is independent of those before it (the pivot).
+  the lowest component that is independent of those before it (the pivot). This is symcrys's rule,
+  not ITC's choice (#137 E3): the tables of ITC Vol. D name the components of a form by other
+  criteria, sometimes others for the same span (e.g. Λ₂₂ where symcrys gives xxy); the span, and so
+  the number of parameters and every relation between components, is the same. A rule rather than
+  a table per group and tensor keeps every form reproducible.
 - `relations`: one row r per component that is not a parameter, with r·t = 0 for every allowed
   tensor t: t_c − Σₖ basis[k][c]·t_{parameters[k]} = 0. A row with a single 1 says the component
   vanishes.
 
 Relation strings (`\chi_{xxx} = -\chi_{xyy}`), Voigt matrices, Nye diagrams and LaTeX are
-presentation and stay in the applications; they follow from these numbers.
+presentation and stay in the applications; they follow from these numbers. Numeric conversions to
+and from the abbreviated (Voigt) notation, `toVoigt` and `fromVoigt`, are planned for 0.12 (#137
+E3), with ITC's factors (ITC Vol. D eq. (1.5.7.4) and § 1.1.4.10, which halve or double some
+components), not with the unity factors that Gallego et al. (2019, p. 440) take throughout.
 
 **Settings.** A tensor form is Cartesian, so it depends on the setting (above, "Settings"): for `2`
 the polar vector lies along y in the default setting (unique axis b) and along z in setting 2 (unique axis c).
@@ -965,6 +972,7 @@ tensor relates (`description`) and the print source of the definition (`source`)
 | `'piezoelectric'`   | rank 3, polar, even, symmetric in j, k | P_i = d_ijk T_jk                                     |
 | `'gyrotropic'`      | rank 2, axial, even, symmetric         | optical activity: the gyration tensor g_ij           |
 | `'ferromagnetic'`   | rank 1, axial, odd                     | spontaneous magnetization (also ferri-, weak ferro-) |
+| `'ferrotoroidic'`   | rank 1, polar, odd                     | spontaneous toroidal moment                          |
 | `'magnetoelectric'` | rank 2, axial, odd                     | linear magnetoelectric effect, P_i = α_ij H_j        |
 | `'piezomagnetic'`   | rank 3, axial, odd, symmetric in j, k  | M_i = Λ_ijk T_jk                                     |
 
@@ -972,10 +980,10 @@ tensor relates (`description`) and the print source of the definition (`source`)
 names a group allows, in the order of the table; `allowsPropertyOf(operations, name)` and
 `allowedPropertiesOf(operations)` do the same for any list of operations. None depends on the
 setting. `tensorForm(key, 'piezoelectric')` is the form of the tensor the name stands for.
-The crystallographic API has the four time-even names, the magnetic API all seven ("Two entry
+The crystallographic API has the four time-even names, the magnetic API all eight ("Two entry
 points"). In the magnetic API a key of type `'I'` is the white group, the symmetry of a
 magnetically ordered crystal ("Types"): `'432'` is magnetoelectric. **A crystal without magnetic
-order has the grey group of its class** (`"4321'"`; quartz `"321'"`), which allows none of the three time-odd
+order has the grey group of its class** (`"4321'"`; quartz `"321'"`), which allows none of the four time-odd
 properties; for the four time-even ones a class, its grey group and the black-and-white groups of
 the class agree. `rotateTensor` takes a name as well.
 Each kind of tensor has one name: second-harmonic generation has the tensor of
@@ -983,10 +991,26 @@ Each kind of tensor has one name: second-harmonic generation has the tensor of
 property: `'ferromagnetic'` says that a spontaneous magnetization is compatible with the group, not
 that the crystal is a ferromagnet. Counted over the 122 groups: pyroelectric 31, piezoelectric 66,
 gyrotropic 47 (each twice the 10, 20 and 15 classes of ITA Table 3.2.2.1, plus 11, 26 and 17
-black-and-white groups); ferromagnetic 31, magnetoelectric 58, piezomagnetic 66, none of them a grey
-group (ITC Vol. D Tables 1.5.2.4, 1.5.8.1, 1.5.7.1).
+black-and-white groups); ferromagnetic 31, ferrotoroidic 31, magnetoelectric 58, piezomagnetic 66,
+none of them a grey group (ITC Vol. D Tables 1.5.2.4, 1.5.8.1 with footnote 3 on p. 140, 1.5.7.1).
 
-**Ferroaxial.** A crystal is ferroaxial if its symmetry allows an axial vector that does not change
+The names follow the terms of the print sources: ITC Vol. D for the time-odd properties and for
+`'gyrotropic'` (§ 1.1.4.10.7.2, the gyration tensor; ITA Table 3.2.2.1, p. 738, titles the same 15
+classes "optical activity"), ITA and ITC Vol. D for `'pyroelectric'` and `'piezoelectric'`. The
+four ferroic vectors are those Gallego et al. list (_Acta Cryst._ A75, 438 (2019), p. 440): P of
+type V (`'pyroelectric'`), M of type aeV (`'ferromagnetic'`), the polar toroidal moment T of type aV
+(`'ferrotoroidic'`) and the axial toroidal moment A of type eV (`'ferroaxial'`).
+
+**Ferrotoroidic.** A spontaneous toroidal moment is a polar vector that changes sign under time
+reversal; ITC Vol. D uses the word for its domains ("ferrotoroidic domains", § 1.5.4.3, p. 128).
+ITC Vol. D does not tabulate it, but footnote 3 of § 1.5.8.1 (p. 140) names its groups:
+the magnetoelectric tensor "does not need to be symmetric for 31 of the 58 point groups" of Table
+1.5.8.1, and "these 31 groups coincide with those that admit a spontaneous toroidal moment". Its
+antisymmetric part is the dual of a time-odd polar vector, so the two agree by construction; the
+print anchor is the table: the 31 groups whose printed matrix is not symmetric
+(`itcMagnetic.reference.test.ts`). In the magnetic API only.
+
+**Ferroaxial** (not a term of ITC; #137 E4). A crystal is ferroaxial if its symmetry allows an axial vector that does not change
 sign under time reversal, e.g. a net rotation of structural units about an axis (NiTiO₃, class
 `-3`). The tensor is that of `'ferromagnetic'` with the other time parity, so the 13 classes are
 the white groups among the 31 ferromagnetic groups: `1`, `-1`, `2`, `m`, `2/m`, `4`, `-4`, `4/m`,
@@ -994,11 +1018,12 @@ the white groups among the 31 ferromagnetic groups: `1`, `-1`, `2`, `m`, `2/m`, 
 vector lies along that symmetry direction (any direction in `1` and `-1`). Seven of them are neither polar nor enantiomorphic (`-1`,
 `2/m`, `-4`, `4/m`, `-3`, `-6`, `6/m`). Over the 122 groups: 43 (13 classes, their 13 grey groups,
 17 black-and-white groups). The name is that of Hlinka, Privratska, Ondrejkovic & Janovec, _Phys.
-Rev. Lett._ **116**, 177602 (2016); ITC Vol. D does not tabulate the property, so the print anchor
+Rev. Lett._ **116**, 177602 (2016); Gallego et al. (2019, p. 440) call the vector the axial toroidal
+moment. ITC Vol. D does not tabulate the property, so the print anchor
 of the classes is Birss: Table 4a (pp. 56–57) gives each class its form of an axial tensor of odd
 rank, Table 4c (p. 58) that form at rank 1. The name is `'ferroaxial'` and not "axial" (maintainer,
 2026-11-20): "axial" already names the kind of a tensor (`kind: 'axial'`), and five of the
-seven properties have an axial tensor.
+eight properties have an axial tensor.
 
 **Rotation.** `rotateTensor(tensor, R, spec)` gives the components in a frame rotated by the
 orthogonal matrix R (rows: the new axes in the old frame), with the factor det(R) for an axial

@@ -194,7 +194,7 @@ def test_camel_case_keys_are_accepted_in_a_spec() -> None:
 def test_named_tensor_properties() -> None:
     assert list(symcrys.TENSOR_PROPERTIES) == ["pyroelectric", "ferroaxial", "piezoelectric", "gyrotropic"]
     assert list(magnetic.TENSOR_PROPERTIES) == [
-        "pyroelectric", "ferroaxial", "piezoelectric", "gyrotropic", "ferromagnetic", "magnetoelectric", "piezomagnetic"
+        "pyroelectric", "ferroaxial", "piezoelectric", "gyrotropic", "ferromagnetic", "ferrotoroidic", "magnetoelectric", "piezomagnetic"
     ]
     assert symcrys.allowed_properties("-3") == ["ferroaxial"]
     assert symcrys.tensor_form("-3", "ferroaxial")["parameters"].tolist() == [[2]]

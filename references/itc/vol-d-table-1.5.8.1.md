@@ -22,6 +22,12 @@ What the print fixes (§§ 1.5.8 and 1.5.8.1):
   the remaining 69 there are 11 more for which it is forbidden, named in the text (second table
   below); the remaining 58 are those of the table. (The 32 groups with time reversal as an element
   of its own are not among these 90.)
+- Footnote 3 (p. 140), transcribed from the page image on 2026-11-24: "Table 1.5.8.1 shows that the
+  tensor α_ij describing the magnetoelectric effect does not need to be symmetric for 31 of the 58
+  point groups. Its trace α11 + α22 + α33 is a relativistic pseudoscalar (Hehl et al., 2009). These
+  31 groups coincide with those that admit a spontaneous toroidal moment (Gorbatsevich & Kopaev,
+  1994); they were first determined by Ascher (1966) as the magnetic point groups admitting
+  spontaneous currents. For recent developments see Schmid (2008) and Spaldin et al. (2008)."
 
 Transcription conventions: a leading minus sign for the overbar, an apostrophe for the prime. The
 Schoenflies column is as printed, subscripts on the line; where the print puts several groups on a
