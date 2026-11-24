@@ -34,8 +34,8 @@ classes with several settings, `symbol()` gives the symbol of a setting (`321`, 
 
 For D3h the key is `-6m2`, as in ITC Vol. D Table 1.5.2.3. ITA lists both orientations, `-6m2`
 first (§ 3.2.1.2.1 (b), p. 721; Table 3.2.3.2, pp. 762–763), but its tables of classes print `-62m`
-(Tables 2.1.1.1, 3.2.1.2, 3.2.2.1). symcrys keeps `-6m2`, the symbol of the magnetic table (#17,
-#137 B1).
+(Tables 2.1.1.1, 3.2.1.2, 3.2.2.1). symcrys keeps `-6m2`, the symbol of the magnetic table (#137
+B1).
 
 The 32 class keys are the `POINT_GROUP_KEYS` of the crystallographic API. The `POINT_GROUP_KEYS` of
 the magnetic API are all 122 keys: the 32 classes, the 32 grey groups in the same order, and the 58
@@ -271,7 +271,7 @@ The ITC defaults of symcrys:
 - `321` and `3m1`: the frame of the tensor tables of ITC Vol. D (§ 1.1.4.10.4.4, #6);
 - `-3m1`: their Laue class in the same frame (a consistency choice; ITC Vol. D Table 1.5.2.3 prints
   its full symbol `-3 2/m 1`);
-- `-6m2`: ITC Vol. D Table 1.5.2.3, and the first entry in ITA (#17);
+- `-6m2`: ITC Vol. D Table 1.5.2.3, and the first entry in ITA (#137 B1);
 - `-42m`, `mm2`: the first or only entry in ITA.
 
 Frames: the monoclinic settings have the unique axis along y, z and x (unique axis a: from b by
