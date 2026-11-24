@@ -9,7 +9,7 @@ line is an int64 array of shape (2,) (docs/conventions.md, "Plane groups").
 
 from __future__ import annotations
 
-from typing import Any, Mapping, Optional, Sequence, TypedDict
+from typing import Any, Literal, Mapping, Optional, Sequence, TypedDict
 
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
@@ -115,12 +115,14 @@ def settings(key: str) -> list[dict[str, Any]]:
     return [dict(s) for s in _call("settings", key)]
 
 
-def symbol(key: str, *, setting: Optional[int] = None, form: Optional[str] = None) -> str:
-    """The symbol of a plane group or a plane point group (#137 F4). A plane group: its short symbol
-    (the key, ``'p2mg'``) or with ``form: 'full'`` the full symbol as ITA prints it (``'p2mg'``,
-    ``'p1m1'`` for ``pm``); it has setting 1 only. A plane point group in a setting: ``'3m1'`` or
-    ``'31m'`` for ``3m``, otherwise the key, in both forms, since ITA prints one symbol for each.
-    Raises SymcrysError for an unknown key, setting or form.
+def symbol(key: str, *, setting: Optional[int] = None, form: Optional[Literal["short", "full"]] = None) -> str:
+    """The symbol of a plane group or a plane point group (#137 F4). In the short form (the default)
+    the Hermann–Mauguin symbol as one word: for a plane group the key (``'p2mg'``, ``'pm'``), for a
+    plane point group in a setting ``'3m1'`` or ``'31m'`` for ``3m``, otherwise the key. In the form
+    ``'full'`` the full symbol with its positions separated by spaces, as in the other entry points:
+    ``'p 1 m 1'`` for ``pm`` (ITA prints ``p1m1``), ``'p 2 m g'``, ``'3 m 1'``; ITA prints no other
+    full symbol for a plane point group (Ch. 3.2, p. 721, and Table 3.2.3.1). A plane group has
+    setting 1 only. Raises SymcrysError for an unknown key, setting or form.
 
     Parameters
     ----------
@@ -128,8 +130,8 @@ def symbol(key: str, *, setting: Optional[int] = None, form: Optional[str] = Non
         1-based setting: for the point group ``3m`` 1 is ``3m1`` (default) and 2 is ``31m``; the
         other point groups have one, and a plane group takes only 1.
     form : keyword-only, optional
-        ``'short'`` (default): the short symbol, the key; ``'full'``: the full symbol as ITA prints
-        it (``'p1m1'`` for ``pm``).
+        ``'short'`` (default): the symbol as one word, the key; ``'full'``: the full symbol,
+        positions separated by spaces (``'p 1 m 1'`` for ``pm``).
     """
     return str(_call("symbol", key, _shared.options(setting=setting, form=form)))
 

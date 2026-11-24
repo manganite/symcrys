@@ -458,10 +458,11 @@ const NEAR_POINTS: readonly (readonly [number, number])[] = [
 /** The pins of one plane group. */
 function planeGroupPins(add: (id: string, f: () => unknown) => void, key: plane.PlaneGroupKey): void {
   const ops = plane.operations(key);
-  // The pins carry the field fullSymbol, removed in #121 step 10c (#137 F4): now symbol(key, { form: 'full' }).
+  // The pins carry the field fullSymbol, removed in #121 step 10c (#137 F4): now symbol(key, { form: 'full' }),
+  // with spaces between the positions.
   add(`${key}: planeGroup`, () => ({
     ...plane.planeGroup(key),
-    fullSymbol: plane.symbol(key, { form: 'full' }),
+    fullSymbol: plane.symbol(key, { form: 'full' }).replace(/ /g, ''),
     order: plane.operations(key).length,
   }));
   add(`${key}: operations`, () => ops);

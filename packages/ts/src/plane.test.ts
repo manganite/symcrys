@@ -45,10 +45,12 @@ describe('plane point groups', () => {
     expect(plane.symbol('m')).toBe('m');
     // Plane groups too (#137 F4): the short symbol is the key, the full one as ITA prints it.
     expect(plane.symbol('pm')).toBe('pm');
-    expect(plane.symbol('pm', { form: 'full' })).toBe('p1m1');
-    expect(plane.symbol('cm', { form: 'full' })).toBe('c1m1');
-    expect(plane.symbol('p2mg', { form: 'full' })).toBe('p2mg');
-    expect(plane.symbol('3m', { setting: 2, form: 'full' })).toBe('31m');
+    expect(plane.symbol('pm', { form: 'full' })).toBe('p 1 m 1');
+    expect(plane.symbol('cm', { form: 'full' })).toBe('c 1 m 1');
+    expect(plane.symbol('p2mg', { form: 'full' })).toBe('p 2 m g');
+    expect(plane.symbol('3m', { setting: 2, form: 'full' })).toBe('3 1 m');
+    expect(plane.symbol('m', { form: 'full' })).toBe('m');
+    expect(() => plane.symbol('p7' as plane.PlaneGroupKey)).toThrow(/Unknown plane group or plane point group/);
     expect(() => plane.symbol('pm', { setting: 2 })).toThrow(RangeError);
     expect(() => plane.symbol('pm', { form: 'long' as never })).toThrow(RangeError);
     expect(plane.pointGroup('3m')).toEqual({ key: '3m', crystalSystem: 'hexagonal', order: 6 });

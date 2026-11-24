@@ -83,7 +83,7 @@ export interface SettingOptions {
 
 /** Options of `symbol`: the setting, and the form of a plane group's symbol. */
 export interface SymbolOptions extends SettingOptions {
-  /** `'short'` (default): the short symbol, the key; `'full'`: the full symbol as ITA prints it (`'p1m1'` for `pm`). */
+  /** `'short'` (default): the symbol as one word, the key; `'full'`: the full symbol, positions separated by spaces (`'p 1 m 1'` for `pm`). */
   readonly form?: 'short' | 'full';
 }
 
@@ -425,26 +425,31 @@ export function settings(key: PointGroupKey): readonly Setting[] {
 }
 
 /**
- * The symbol of a plane group or a plane point group (#137 F4). A plane group: its short symbol
- * (the key, `'p2mg'`) or with `form: 'full'` the full symbol as ITA prints it (`'p2mg'`,
- * `'p1m1'` for `pm`); it has setting 1 only. A plane point group in a setting: `'3m1'` or `'31m'`
- * for `3m`, otherwise the key, in both forms, since ITA prints one symbol for each. Throws a
+ * The symbol of a plane group or a plane point group (#137 F4). In the short form (the default) the
+ * Hermann–Mauguin symbol as one word: for a plane group the key (`'p2mg'`, `'pm'`), for a plane
+ * point group in a setting `'3m1'` or `'31m'` for `3m`, otherwise the key. In the form `'full'`
+ * the full symbol with its positions separated by spaces, as in the other entry points: `'p 1 m 1'`
+ * for `pm` (ITA prints `p1m1`), `'p 2 m g'`, `'3 m 1'`; ITA prints no other full symbol for a plane
+ * point group (Ch. 3.2, p. 721, and Table 3.2.3.1). A plane group has setting 1 only. Throws a
  * RangeError for an unknown key, setting or form.
  */
 export function symbol(key: PlaneGroupKey | PointGroupKey, options?: SymbolOptions): string {
   checkOptions(options, ['setting', 'form'], 'symbol');
   const form = options?.form ?? 'short';
   if (form !== 'short' && form !== 'full') {
-    throw new RangeError(`The form of a plane symbol is 'short' or 'full', not ${shown(form)}`);
+    throw new RangeError(`Unknown symbol form: ${shown(form)} (short or full)`);
   }
+  // Every position of a plane symbol is one character, the lattice letter included.
+  const spaced = (text: string) => (form === 'full' ? [...text].join(' ') : text);
   if (isPlaneGroupKey(key)) {
     const setting = settingOf(options);
     if (setting !== undefined && setting !== 1) {
       throw new RangeError(`The plane group ${key} has no setting ${shown(setting)}`);
     }
-    return form === 'full' ? planeGroupEntry(key).fullSymbol : key;
+    return spaced(form === 'full' ? planeGroupEntry(key).fullSymbol : key);
   }
-  return planePointGroupSymbol(pointKey(key, 'symbol'), settingOf(options));
+  if (!isPlanePointGroupKey(key)) return unknownKey(key);
+  return spaced(planePointGroupSymbol(key, settingOf(options)));
 }
 
 /**
