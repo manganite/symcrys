@@ -62,6 +62,14 @@ All notable changes to symcrys are recorded here. The format follows
 
 ### Changed
 
+- **The axis of an operation has the sign of its Seitz symbol** (#114, #107, #121): in
+  `describeOperations` of `symcrys` and `symcrys/magnetic` the axis takes the direction of the
+  operation's Seitz symbol (ITA 2016 Tables 1.4.2.1–1.4.2.3), as ITA names the operations. This
+  changes the hexagonal family: the twofold axes and mirror normals 2₁₁₀, m₁₁₀ and 2₂₁₀, m₂₁₀ are
+  [1, 1, 0] and [2, 1, 0] (were [−1, −1, 0] and [−2, −1, 0], the representatives of ITA Table
+  2.1.3.1), with their Cartesian vectors. `symmetryDirections` keeps Table 2.1.3.1, so an axis and
+  its direction may be opposite. The plane groups already had the Seitz signs; now tested.
+
 - **Python: keyword arguments and tensor shapes** (#137 H2, #98, #121 step 12c): an object parameter
   is now its fields as arguments: `lattice_from_parameters(a, b, c, alpha, beta, gamma)`,
   `is_valid_cell(alpha, beta, gamma, *, min_volume_ratio=None)`, `orbit(key, *, hkl=None, uvw=None,

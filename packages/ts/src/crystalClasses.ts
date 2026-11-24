@@ -415,8 +415,10 @@ export function describeOperationsOf(
 
 /**
  * Each operation of the crystal class described geometrically, in the order of `operations` for
- * the same key and options. Axes are named by the symmetry direction they lie along, with the sign
- * of ITA Table 2.1.3.1; the sign fixes what the sense refers to.
+ * the same key and options. An axis lies along a symmetry direction and has the sign of the
+ * operation's Seitz symbol (ITA 6th ed., Tables 1.4.2.1–1.4.2.3, p. 52), e.g. [1, 1, 0] for 2₁₁₀ in
+ * the hexagonal family, where ITA Table 2.1.3.1 lists [1̄, 1̄, 0]; for n ≥ 3 the sign fixes what the
+ * sense refers to.
  */
 export function describeOperations(key: PointGroupKey, options?: SettingOptions): readonly OperationDescription[] {
   const described = elements.describeOperations(classKey(key), options);

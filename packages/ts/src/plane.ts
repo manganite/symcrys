@@ -156,8 +156,9 @@ export interface OperationDescription {
   /**
    * For a reflection or glide reflection: its axis, the normal of its line in the lattice basis (as
    * the `axis` of a reflection of the point groups is the normal of its plane, #137 C3), its symmetry
-   * direction as in ITA Table 2.1.3.1: the shortest integer vector along the columns of W − I, first non-zero
-   * component positive. Without a metric it is not the perpendicular of `direction`: in a hexagonal
+   * direction with the sign of its Seitz symbol (ITA 2016 Tables 1.4.2.4, 1.4.2.5, p. 53: `m₁₀`, `m₁₂`,
+   * #107, #114): the shortest integer vector along the columns of W − I, first non-zero component
+   * positive, which is the Seitz direction for every plane group (tested). Without a metric it is not the perpendicular of `direction`: in a hexagonal
    * basis the normal of a line along [1,0] is [1,2].
    */
   readonly axis?: readonly number[];

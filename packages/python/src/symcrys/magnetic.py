@@ -221,7 +221,10 @@ class Axis(TypedDict):
     """A symmetry direction: as a lattice direction [uvw] and as a Cartesian unit vector."""
 
     lattice: NDArray[np.int64]
-    """Integer coordinates in the conventional basis, with the sign of ITA Table 2.1.3.1."""
+    """Integer coordinates in the conventional basis: for the axis of an operation with the sign of its
+    Seitz symbol (ITA Tables 1.4.2.1–1.4.2.3), for a symmetry direction with the sign of ITA Table
+    2.1.3.1.
+    """
     cartesian: NDArray[np.float64]
     """Unit vector in the Cartesian frame of symcrys. Monoclinic: a, b, c taken along x, y, z, exact for
     the unique axis only (docs/conventions.md, "Symmetry directions and elements").
@@ -255,7 +258,10 @@ class DirectionElements(TypedDict):
     """The symmetry elements along one symmetry direction."""
 
     lattice: NDArray[np.int64]
-    """Integer coordinates in the conventional basis, with the sign of ITA Table 2.1.3.1."""
+    """Integer coordinates in the conventional basis: for the axis of an operation with the sign of its
+    Seitz symbol (ITA Tables 1.4.2.1–1.4.2.3), for a symmetry direction with the sign of ITA Table
+    2.1.3.1.
+    """
     cartesian: NDArray[np.float64]
     """Unit vector in the Cartesian frame of symcrys. Monoclinic: a, b, c taken along x, y, z, exact for
     the unique axis only (docs/conventions.md, "Symmetry directions and elements").
@@ -1096,8 +1102,10 @@ def describe_operations(
     setting: Optional[Union[int, str]] = None,
 ) -> list[OperationDescription]:
     """Each operation of the point group described geometrically, in the order of ``operations`` for
-    the same key and options. Axes are named by the symmetry direction they lie along, with the sign
-    of ITA Table 2.1.3.1; the sign fixes what the sense refers to.
+    the same key and options. An axis lies along a symmetry direction and has the sign of the
+    operation's Seitz symbol (ITA 6th ed., Tables 1.4.2.1–1.4.2.3, p. 52), e.g. [1, 1, 0] for 2₁₁₀
+    in the hexagonal family, where ITA Table 2.1.3.1 lists [1̄, 1̄, 0]; for n ≥ 3 the sign fixes
+    what the sense refers to.
 
     Parameters
     ----------
@@ -1142,8 +1150,9 @@ def symmetry_directions(
     symmetry directions (ITA Table 2.1.3.1) and the symmetry elements along them. All positions of
     the crystal family are listed (for rhombohedral axes the two of that row of the table), also
     those the symbol of the class leaves out (then without ``symbol``); the triclinic family has
-    none. A direction carries the same ``lattice`` and ``cartesian`` vectors as the axis of
-    ``describe_operations`` along it, so match the two by value.
+    none. A direction has the sign of ITA Table 2.1.3.1, the axis of an operation along it that of
+    its Seitz symbol, so the two are parallel and may be opposite: match them by direction, up to
+    sign.
 
     Parameters
     ----------
