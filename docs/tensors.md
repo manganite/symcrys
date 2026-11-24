@@ -22,17 +22,26 @@ A tensor is given by its specification:
 | `timeParity` | `'even'`, `'odd'` (magnetic API only) | a time-odd tensor changes sign under time reversal                    |
 | `intrinsic`  | see below                             | the index symmetry                                                    |
 
-The index symmetries, with their symbols in Jahn's nomenclature (Jahn 1949, as ITC Vol. D § 1.9.2, p. 232, names it, where the totally symmetric case is [bᴺ]):
+A specification is a Jahn symbol in words. Gallego et al. (_Acta Cryst._ A75, 438 (2019), pp.
+439–440) write the kind of tensor after Jahn (1949) as a prefix e (axial) and a (magnetic, i.e.
+time-odd) before the index part, square brackets for symmetric and curly brackets for antisymmetric
+indices: the magnetoelectric tensor is aeV², the piezomagnetic tensor aeV[V²], the elastic tensor
+[[V²][V²]]. `kind: 'axial'` is the e, `timeParity: 'odd'` the a, and `intrinsic` the index part
+(ITC Vol. D § 1.9.2, p. 232, names Jahn's nomenclature as well):
 
 | `intrinsic`                      | Ranks | Jahn symbol | Index symmetry                                               |
 | -------------------------------- | ----- | ----------- | ------------------------------------------------------------ |
 | `'none'`                         | 0–4   | Vⁿ          | none                                                         |
 | `'symmetric-first-pair'`         | 2–4   | [V²]V…      | the first two indices interchangeable                        |
 | `'symmetric-last-pair'`          | 2–4   | V…[V²]      | the last two interchangeable (piezoelectric effect, SHG)     |
-| `'symmetric-pairs'`              | 4     | [V²]²       | each pair symmetric (photoelasticity, quadrupole SHG)        |
-| `'symmetric-pairs-exchangeable'` | 4     | [[V²]²]     | each pair symmetric and the pairs interchangeable (elastic)  |
+| `'symmetric-pairs'`              | 4     | [V²][V²]    | each pair symmetric (photoelasticity, quadrupole SHG)        |
+| `'symmetric-pairs-exchangeable'` | 4     | [[V²][V²]]  | each pair symmetric and the pairs interchangeable (elastic)  |
 | `'antisymmetric'`                | 2     | {V²}        | t<sub>ij</sub> = −t<sub>ji</sub>                             |
 | `'totally-symmetric'`            | 2–4   | [Vⁿ]        | every index interchangeable (SHG under Kleinman's condition) |
+
+Jahn (1949) writes [V²]² and [[V²]²] for the two rank-4 symmetries. The symbols for transport and
+optical tensors with a star ([V²]\*), whose behaviour under time reversal follows from Onsager's
+theorem rather than from a time parity, are not in symcrys.
 
 Up to 0.10 the fields were `parity` and `'i'`/`'c'`, and the index symmetries `'ij'`, `'jk'`,
 `'ij_kl'`, `'voigt'`; a specification with these names is an error that names the new ones.

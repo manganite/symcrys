@@ -900,7 +900,8 @@ vector is odd, so the field is not named `parity`); in the magnetic API `timePar
 time reversal), while a specification of the crystallographic API has no time parity and means a
 time-even tensor ("Two entry points"); and `intrinsic`, the symmetry of the tensor under
 permutation of its own indices, independent of the crystal, named descriptively with its symbol in
-Jahn's nomenclature (Jahn 1949, as ITC Vol. D § 1.9.2, p. 232, names it, where the totally symmetric case is [bᴺ]) in the TSDoc of `IntrinsicSymmetry`: `'none'`,
+Jahn symbol as Gallego et al. (_Acta Cryst._ A75, 438 (2019), pp. 439–440) write it after Jahn
+(1949) in the TSDoc of `IntrinsicSymmetry`: `'none'`,
 `'symmetric-first-pair'`, `'symmetric-last-pair'` (the index symmetry of SHG and of the
 piezoelectric tensor; at rank 2 both mean a symmetric tensor), at rank 4 `'symmetric-pairs'` (both
 pairs symmetric, not interchangeable: electric-quadrupole SHG, photoelasticity) and

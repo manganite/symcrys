@@ -35,28 +35,30 @@ export type TensorRank = 0 | 1 | 2 | 3 | 4;
 
 /**
  * How the tensor behaves under an improper operation: `'polar'` transforms with R, `'axial'` with
- * det(R)·R (a pseudotensor). ITC calls the behaviour under inversion "parity", under which a polar
+ * det(R)·R (a pseudotensor; the prefix e of its Jahn symbol, e.g. eV for an axial vector). ITC calls the behaviour under inversion "parity", under which a polar
  * vector is odd, so the field is named `kind`.
  */
 export type TensorKind = 'polar' | 'axial';
 
 /**
  * How the tensor behaves under time reversal (ITC Vol. D: time-even, time-odd or
- * time-antisymmetric): `'even'` unchanged, `'odd'` changes sign.
+ * time-antisymmetric): `'even'` unchanged, `'odd'` changes sign (the prefix a, "magnetic", of its
+ * Jahn symbol, e.g. aeV for the magnetization; Gallego et al. (2019), p. 439).
  */
 export type TimeParity = 'even' | 'odd';
 
 /**
  * Symmetry of the tensor under permutation of its own indices, independent of the crystal, with its
- * symbol in Jahn's nomenclature (Jahn 1949, as ITC Vol. D § 1.9.2, p. 232, names it, where the totally symmetric case is [bᴺ]):
+ * Jahn symbol as Gallego et al. write them (_Acta Cryst._ A75, 438 (2019), pp. 439–440, after Jahn
+ * (1949): square brackets for a symmetric, curly brackets for an antisymmetric set of indices):
  * - `'none'`: no index symmetry, Vⁿ;
  * - `'symmetric-first-pair'` (rank 2 and above): the first two indices are interchangeable, [V²]V…;
  * - `'symmetric-last-pair'` (rank 2 and above): the last two, V…[V²] (at rank 3 second-harmonic
  *   generation and the piezoelectric effect); at rank 2 both mean a symmetric tensor, [V²];
  * - `'symmetric-pairs'` (rank 4): each of the two pairs symmetric, the pairs not interchangeable,
- *   [V²]² (e.g. electric-quadrupole SHG, photoelasticity);
- * - `'symmetric-pairs-exchangeable'` (rank 4): in addition the pairs interchangeable, [[V²]²]
- *   (elastic stiffness, the symmetry Voigt's notation uses);
+ *   [V²][V²] (e.g. electric-quadrupole SHG, photoelasticity; Jahn 1949 writes [V²]²);
+ * - `'symmetric-pairs-exchangeable'` (rank 4): in addition the pairs interchangeable, [[V²][V²]]
+ *   (elastic stiffness, the symmetry Voigt's notation uses; Jahn 1949 writes [[V²]²]);
  * - `'antisymmetric'` (rank 2): t_ij = −t_ji, {V²};
  * - `'totally-symmetric'` (rank 2 and above): every index interchangeable, [Vⁿ] (e.g. second-harmonic
  *   generation under Kleinman's condition).

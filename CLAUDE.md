@@ -745,11 +745,19 @@ The conventions are in `docs/conventions.md` ("Tensors"); here, what was decided
   `{ rank, kind, timeParity, intrinsic }` with `kind` `'polar'`/`'axial'` (ITC's "parity" is the
   behaviour under inversion, under which a polar vector is odd) and `timeParity` `'even'`/`'odd'`
   (ITC Vol. D's terms, replacing Birss's `'i'`/`'c'`); `intrinsic` descriptive, each value with its
-  symbol in Jahn's nomenclature in the TSDoc (Jahn 1949, as ITC Vol. D § 1.9.2, p. 232, names it): `'symmetric-first-pair'`, `'symmetric-last-pair'`, `'symmetric-pairs'`,
+  Jahn symbol in the TSDoc as Gallego et al. write them (_Acta Cryst._ A75, 438 (2019), pp. 439–440,
+  after Jahn 1949; Zotero `UP3I7WGX`, `Y7PSZEWG`): `'symmetric-first-pair'`, `'symmetric-last-pair'`, `'symmetric-pairs'`,
   `'symmetric-pairs-exchangeable'` (were `'ij'`, `'jk'`, `'ij_kl'`, `'voigt'`), and new
   `'antisymmetric'` (rank 2) and `'totally-symmetric'`. Chosen while implementing: a specification
   with the names of 0.10 is a RangeError that names the new ones; `'totally-symmetric'` from rank 2;
   an antisymmetric index symmetry is computed with signed orbits of the index permutations.
+- **Gallego et al. (2019) as the model of the tensor notation** (Thomas, 2026-11-24): the extended
+  Jahn symbols of Gallego et al. (MTENSOR of the Bilbao Crystallographic Server; prefix e axial,
+  a time-odd, square and curly brackets for symmetric and antisymmetric indices) are the model for
+  how symcrys names kinds of tensors, as an efficient notation; symcrys does not rebuild their
+  software (its lists of properties, its abbreviated notation with unity factors, the starred
+  Onsager symbols of transport and optical tensors). Their ferroic vectors (p. 440: P of type V, M
+  aeV, polar toroidal T aV, axial toroidal A eV) are a source of the named properties.
 - **Results as numbers, not text** (maintainer, 2026-11-19, #30; asked before implementation):
   `tensorForm` and `tensorFormOf` return the basis in reduced row echelon form, the free parameters
   as index lists and the relations as coefficient rows. Relation strings
