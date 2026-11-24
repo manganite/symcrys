@@ -164,8 +164,15 @@ describe('the crystallographic API returns nothing about time reversal', () => {
     }
   });
 
-  it('the holohedry of a crystal system is the same function in both', () => {
+  it('the holohedry of a lattice system is the same function in both; the lattice systems agree', () => {
     expect(classes.holohedry).toBe(magnetic.holohedry);
+    for (const key of classes.POINT_GROUP_KEYS)
+      expect(magnetic.latticeSystems(key)).toEqual(classes.latticeSystems(key));
+    // A magnetic group has the lattice systems of its crystal class.
+    for (const key of magnetic.POINT_GROUP_KEYS) {
+      expect(magnetic.latticeSystems(key)).toEqual(classes.latticeSystems(magnetic.pointGroup(key).crystalClass));
+    }
+    expect(() => classes.latticeSystems("32'" as classes.PointGroupKey)).toThrow(RangeError);
   });
 
   it('Wyckoff positions and site symmetry take their options', () => {
@@ -679,6 +686,7 @@ describe('every result is frozen, nested values included (#137 C4)', () => {
     tensorForm: ['32', 'piezoelectric'],
     rotateTensor: [[1, 0, 0], ops[1].cartesian, 'pyroelectric'],
     allowedProperties: ['32'],
+    latticeSystems: ['32'],
     latticeBasis: ['hexagonal'],
     latticeFromParameters: [{ a: 3, b: 3, c: 5, alpha: 90, beta: 90, gamma: 120 }],
     latticeParameters: [basis],

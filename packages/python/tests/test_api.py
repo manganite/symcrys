@@ -231,8 +231,11 @@ def test_fixed_properties_are_fields_of_the_point_group() -> None:
     }  # fmt: skip
     for module in (symcrys, magnetic):
         assert not any(hasattr(module, name) for name in ("is_centrosymmetric", "is_polar", "is_chiral", "is_chiral_of", "laue_class"))
-        assert module.holohedry("trigonal") == "-3m"
-        assert module.holohedry(module.crystal_family("trigonal")) == "6/mmm"
+        assert module.holohedry("rhombohedral") == "-3m" and module.holohedry("hexagonal") == "6/mmm"
+        assert module.lattice_systems("32") == ["hexagonal", "rhombohedral"]
+        assert module.lattice_systems("6/mmm") == ["hexagonal"]
+        with pytest.raises(symcrys.SymcrysError, match="hexagonal' or 'rhombohedral"):
+            module.holohedry("trigonal")
         ops = module.generators("2/m")
         assert module.is_centrosymmetric_of(ops) is True and module.is_enantiomorphic_of(ops) is False
         assert module.is_enantiomorphic_of(module.operations("32")) is True

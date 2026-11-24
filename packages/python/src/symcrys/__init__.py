@@ -68,6 +68,7 @@ __all__ = [
     "find_point_group",
     "generators",
     "holohedry",
+    "lattice_systems",
     "is_centrosymmetric_of",
     "is_enantiomorphic_of",
     "is_point_group_key",
@@ -321,15 +322,24 @@ def crystal_family(system: str) -> str:
     return str(_call("crystalFamily", system))
 
 
-def holohedry(system: str) -> str:
-    """The holohedry of a crystal system: the crystal class that is the point symmetry of a lattice
-    of the system (ITA Table 2.1.1.1, the Laue groups in full boxes). For the trigonal system it is
-    ``-3m``, the symmetry of the rhombohedral lattice. The trigonal classes also occur with the
-    hexagonal lattice, whose symmetry is ``6/mmm``: the holohedry of the crystal family is
-    ``holohedry(crystal_family(system))``, which is what the lattice basis of this library
-    (``lattice_basis``, hexagonal axes for both systems) has.
+def holohedry(lattice_system: str) -> str:
+    """The holohedry of a lattice system, the point symmetry of its lattices (ITA Table 1.3.4.1, p.
+    39), e.g. ``6/mmm`` for the hexagonal and ``-3m`` for the rhombohedral lattice system. A
+    trigonal crystal belongs to either lattice system, so ``lattice_systems(key)`` gives two for a
+    trigonal class. Raises SymcrysError for anything that is not one of the seven lattice systems, a
+    crystal system ``'trigonal'`` included.
     """
-    return str(_call("holohedry", system))
+    return str(_call("holohedry", lattice_system))
+
+
+def lattice_systems(key: str) -> list[str]:
+    """The lattice systems of a crystal class: those whose lattices it can act on (ITA § 1.3.4.4.2
+    and Table 1.3.4.1, p. 39). One for every class but the trigonal ones, which belong to the
+    hexagonal (hP) or the rhombohedral (hR) lattice system depending on the basis, so they give
+    both, ``['hexagonal', 'rhombohedral']``. The holohedry of each is ``holohedry(lattice_system)``.
+    Raises SymcrysError for an unknown key.
+    """
+    return list(_call("latticeSystems", key))
 
 
 def lattice_basis(family: str) -> NDArray[np.float64]:

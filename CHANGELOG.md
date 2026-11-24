@@ -8,6 +8,11 @@ All notable changes to symcrys are recorded here. The format follows
 
 ### Added
 
+- **Lattice systems** (#137 G1, #113, #121 step 11a): the type `LatticeSystem` with ITA's seven
+  lattice systems (ITA 2016 Table 1.3.4.1, p. 39) and `latticeSystems(key)`, the lattice systems a
+  class acts on: `['hexagonal', 'rhombohedral']` for a trigonal class, one otherwise; in both entry
+  points and in Python (`lattice_systems`).
+
 - `wyckoffDistances(key, point, { basis })` in `symcrys/plane` (Python `plane.wyckoff_distances`)
   (#137 F1, #108): the distance of a point to every Wyckoff position of a plane group, with the
   nearest point of each.
@@ -49,6 +54,12 @@ All notable changes to symcrys are recorded here. The format follows
   Gallego et al. (2019) as well; its `description` names the vector the axial toroidal moment.
 
 ### Changed
+
+- **`holohedry` takes a lattice system** (#137 G1, #113, #121 step 11a), not a crystal system, as
+  ITA defines the holohedry: `holohedry('hexagonal')` is `6/mmm`, `holohedry('rhombohedral')` is
+  `-3m`, and `holohedry('trigonal')` is an error. Before, `holohedry('trigonal')` gave `-3m` and the
+  symmetry of the hexagonal lattice was read as `holohedry(crystalFamily('trigonal'))`, a crystal
+  family passed as a crystal system.
 
 - **The settings are numbered by ITC's rule** (#137 A4, #121 step 6b): the ITC default is setting 1;
   then, for the monoclinic groups, unique axis c; for the orthorhombic groups the further

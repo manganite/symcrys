@@ -518,11 +518,21 @@ operations }`; `undefined`, never `null` (`zoneAxis`); every result frozen and `
   `isCentrosymmetricOf(operations)` and `isChiralOf(operations)`, named like `tensorFormOf` and
   asking of the list what it asks (orthogonal matrices; in the magnetic API `timeReversal`); polar
   is there `allowsPropertyOf(operations, 'pyroelectric')`, and a Laue class needs the group
-  identified first. _(Under review, #113.)_ **`holohedry(system)` is a function of the crystal system**, not a field:
+  identified first. _(Under review, #113.)_ **`holohedry(system)` is a function of the crystal system** _(replaced
+  in #121 step 11a, #137 G1: "Holohedry by lattice system" below)_, not a field:
   the holohedry depends on the group only through its system, and both readings for the trigonal
   classes have a consumer (birss-app shows `-3m`, the holohedry of the trigonal system;
   stereography needs `6/mmm`, the lattice symmetry in hexagonal axes:
   `holohedry(crystalFamily(system))`); a field would have had to pick one.
+- **Holohedry by lattice system** (#137 G1, decided by Thomas on 2026-11-22; #113; #121 step 11a):
+  the holohedry belongs to the lattice system, as ITA defines it (ITA 2016 § 1.3.4.4.2 and Table
+  1.3.4.1, p. 39): a type `LatticeSystem` with ITA's seven names, `holohedry(latticeSystem)` and
+  `latticeSystems(key)`, which gives `hexagonal` and `rhombohedral` for a trigonal class, since
+  lattice systems classify lattices, not point groups. `holohedry(system)` and its reading through
+  the crystal family are gone; an application names the lattice system it means (stereography
+  `'hexagonal'`, birss-app `'rhombohedral'`). Chosen while implementing: `latticeSystems` is a
+  function, as G1 (a) names it, in both entry points (a magnetic group has the lattice systems of
+  its class); `holohedry('trigonal')` is an error that names the two lattice systems.
 - **Symmetry elements as structured data** _(Axis signs and Birss part replaced by "Pure ITC" above:
   Seitz anchor, #114.)_ (maintainer, 2026-11-18, #16): symcrys describes each
   operation (`describeOperations`: kind, n, axis, sense, and in the magnetic API time reversal) and the elements along each

@@ -1,13 +1,13 @@
 /**
  * Properties that follow from operations, for a list of operations of a caller, and the holohedry
- * of a crystal system. The properties of a point group given by its key are fields of
+ * of a lattice system. The properties of a point group given by its key are fields of
  * `pointGroup(key)` (pointGroups.ts). Properties that are the question whether a tensor is allowed
  * (polar, piezoelectric, ferroaxial, ferromagnetic, …) are named tensor properties
  * (tensors/tensorProperties.ts).
  */
 
 import { checkOptions, shown, TOLERANCE_KEYS } from '../checks.js';
-import type { CrystalSystem } from '../lattice.js';
+import type { LatticeSystem } from '../lattice.js';
 import { INVERSION, det } from '../linalg.js';
 import { checkCartesianOperations, checkTimeReversal, type CartesianOperation } from '../operations.js';
 import { closedGroup, sameWithin } from '../closure.js';
@@ -44,25 +44,29 @@ export function isEnantiomorphicOf(operations: readonly CartesianOperation[], op
   return operations.every((op) => det(op.cartesian) > 0);
 }
 
-const HOLOHEDRY: Readonly<Record<CrystalSystem, PointGroupKey>> = Object.freeze({
+const HOLOHEDRY: Readonly<Record<LatticeSystem, PointGroupKey>> = Object.freeze({
   triclinic: '-1',
   monoclinic: '2/m',
   orthorhombic: 'mmm',
   tetragonal: '4/mmm',
-  trigonal: '-3m',
   hexagonal: '6/mmm',
+  rhombohedral: '-3m',
   cubic: 'm-3m',
 });
 
 /**
- * The holohedry of a crystal system: the crystal class that is the point symmetry of a lattice of
- * the system (ITA Table 2.1.1.1, the Laue groups in full boxes). For the trigonal system it is
- * `-3m`, the symmetry of the rhombohedral lattice. The trigonal classes also occur with the
- * hexagonal lattice, whose symmetry is `6/mmm`: the holohedry of the crystal family is
- * `holohedry(crystalFamily(system))`, which is what the lattice basis of this library
- * (`latticeBasis`, hexagonal axes for both systems) has.
+ * The holohedry of a lattice system, the point symmetry of its lattices (ITA Table 1.3.4.1, p. 39),
+ * e.g. `6/mmm` for the hexagonal and `-3m` for the rhombohedral lattice system. A trigonal crystal belongs to
+ * either lattice system, so `latticeSystems(key)` gives two for a trigonal class. Throws a RangeError
+ * for anything that is not one of the seven lattice systems, a crystal system `'trigonal'` included.
  */
-export function holohedry(system: CrystalSystem): PointGroupKey {
-  if (!Object.hasOwn(HOLOHEDRY, system)) throw new RangeError(`Unknown crystal system: ${shown(system)}`);
-  return HOLOHEDRY[system];
+export function holohedry(latticeSystem: LatticeSystem): PointGroupKey {
+  if (!Object.hasOwn(HOLOHEDRY, latticeSystem)) {
+    const hint =
+      latticeSystem === ('trigonal' as unknown)
+        ? "; a trigonal crystal has the lattice system 'hexagonal' or 'rhombohedral' (latticeSystems)"
+        : '';
+    throw new RangeError(`Unknown lattice system: ${shown(latticeSystem)}${hint}`);
+  }
+  return HOLOHEDRY[latticeSystem];
 }

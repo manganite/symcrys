@@ -1,16 +1,17 @@
 /**
  * Operation-based properties against print (fixture class (a)): ITA Table 2.1.1.1 (Laue groups
- * and holohedries marked by boxes) and ITA Table 3.2.2.1 (Laue class, pyroelectricity, enantiomorphism of the 21
+ * and holohedries marked by boxes), ITA Table 1.3.4.1 (lattice systems and their holohedries) and ITA Table 3.2.2.1 (Laue class, pyroelectricity, enantiomorphism of the 21
  * noncentrosymmetric classes), re-parsed from references/itc/.
  */
 
 import { describe, expect, it } from 'vitest';
-import { crystalFamily, latticeBasis, type CrystalSystem, type FixedAngleFamily } from '../lattice.js';
-import { det, inverse, multiply } from '../linalg.js';
+import { latticeBasis, latticeSystemsOfSystem, type LatticeSystem } from '../lattice.js';
+import { det, inverse, multiply, type Mat3 } from '../linalg.js';
 import { expectHeader, readReference, tableRows } from '../testUtils/references.js';
 import {
   POINT_GROUP_KEYS,
   isPointGroupKey,
+  latticeSystems,
   operations,
   pointGroup,
   symbol,
@@ -151,50 +152,84 @@ describe('ITA Table 3.2.2.1: full symbols of the Laue classes', () => {
   }
 });
 
-describe('ITA Table 2.1.1.1: holohedries (Laue groups in full boxes)', () => {
-  /** Crystal system → the class the table marks with a full box in the row of the system. */
-  const printed = new Map<string, PointGroupKey>();
-  for (const r of rows2111.slice(1)) {
-    const marked = r[3]
-      .split(',')
-      .map((s) => s.trim())
-      .filter((s) => /\(H\)$/.test(s));
-    if (marked.length === 0) continue;
-    if (marked.length > 1 || !r[2]) throw new Error(`Table 2.1.1.1: unexpected row ${r.join(' | ')}`);
-    printed.set(r[2].toLowerCase(), keyOf(marked[0].replace(/\s*\(H\)$/, '')));
-  }
-  const SYSTEMS = [...new Set(POINT_GROUP_KEYS.map((key) => pointGroup(key).crystalSystem))];
+/** Crystal system → the class the table marks with a full box in the row of the system. */
+const printed = new Map<string, PointGroupKey>();
+for (const r of rows2111.slice(1)) {
+  const marked = r[3]
+    .split(',')
+    .map((s) => s.trim())
+    .filter((s) => /\(H\)$/.test(s));
+  if (marked.length === 0) continue;
+  if (marked.length > 1 || !r[2]) throw new Error(`Table 2.1.1.1: unexpected row ${r.join(' | ')}`);
+  printed.set(r[2].toLowerCase(), keyOf(marked[0].replace(/\s*\(H\)$/, '')));
+}
+const SYSTEMS = [...new Set(POINT_GROUP_KEYS.map((key) => pointGroup(key).crystalSystem))];
 
+describe('ITA Table 2.1.1.1: holohedries (Laue groups in full boxes)', () => {
   it('seven crystal systems, each with one holohedry', () => {
     expect([...printed.keys()]).toEqual(SYSTEMS);
     expect(SYSTEMS).toHaveLength(7);
   });
 
   for (const system of SYSTEMS) {
-    it(`${system}: ${printed.get(system)}`, () => {
-      const h = holohedry(system);
-      expect(h).toBe(printed.get(system));
-      // Independent of the table: the holohedry is the centrosymmetric class of highest order of its system.
-      const g = pointGroup(h);
+    it(`${system}: ${printed.get(system)}, the centrosymmetric class of highest order of the system`, () => {
+      // Independent of the table.
+      const g = pointGroup(printed.get(system)!);
       expect(g.crystalSystem).toBe(system);
       expect(g.centrosymmetric).toBe(true);
       const inSystem = POINT_GROUP_KEYS.filter((key) => pointGroup(key).crystalSystem === system);
       expect(g.order).toBe(Math.max(...inSystem.map((key) => pointGroup(key).order)));
     });
   }
+});
 
-  it('the trigonal system has -3m, its family, with hexagonal axes, the lattice symmetry 6/mmm', () => {
-    expect(holohedry('trigonal')).toBe('-3m');
-    expect(holohedry(crystalFamily('trigonal'))).toBe('6/mmm');
-    for (const system of SYSTEMS) {
-      if (system !== 'trigonal') expect(holohedry(crystalFamily(system))).toBe(holohedry(system));
-    }
-    expect(() => holohedry('rhombohedral' as CrystalSystem)).toThrow(/Unknown crystal system: "rhombohedral"/);
+describe('ITA Table 1.3.4.1: lattice systems and their holohedries (#137 G1)', () => {
+  const rows = tableRows(readReference('itc/vol-a-table-1.3.4.1.md'));
+  expectHeader(rows, ['Lattice system', 'Bravais types of lattices', 'Holohedry']);
+  /** The printed name, lower case and without "(anorthic)", and the printed holohedry. */
+  const PRINTED = rows.slice(1).map((r) => [r[0].replace(/\s*\(anorthic\)$/, '').toLowerCase(), r[2]] as const);
+
+  it('seven lattice systems, each with the printed holohedry', () => {
+    expect(PRINTED).toHaveLength(7);
+    for (const [system, printed] of PRINTED) expect(holohedry(system as LatticeSystem), system).toBe(keyOf(printed));
   });
 
-  it('the holohedry of the family maps its lattice onto itself, as does every class of the family', () => {
-    for (const family of ['orthorhombic', 'tetragonal', 'hexagonal', 'cubic'] as FixedAngleFamily[]) {
-      const basis = latticeBasis(family);
+  it('agrees with Table 2.1.1.1: the full boxes of each crystal system are the holohedries of its lattice systems', () => {
+    // Table 2.1.1.1 marks one holohedry per crystal system, -3m for the trigonal one (its hR lattice);
+    // the trigonal classes act on the hP lattice of 6/mmm too (§ 1.3.4.4.2).
+    for (const system of SYSTEMS) {
+      const ofSystem = latticeSystemsOfSystem(system).map((l) => holohedry(l));
+      expect(ofSystem, system).toContain(printed.get(system));
+    }
+  });
+
+  it('the trigonal classes belong to the hexagonal and the rhombohedral lattice system, the others to one', () => {
+    for (const key of POINT_GROUP_KEYS) {
+      const system = pointGroup(key).crystalSystem;
+      expect(latticeSystems(key), key).toEqual(system === 'trigonal' ? ['hexagonal', 'rhombohedral'] : [system]);
+    }
+    expect(() => holohedry('trigonal' as LatticeSystem)).toThrow(/'hexagonal' or 'rhombohedral'/);
+    expect(() => holohedry('anorthic' as LatticeSystem)).toThrow(/Unknown lattice system: "anorthic"/);
+  });
+
+  it('each holohedry keeps its lattice, as does every class of the lattice system, and none has more operations', () => {
+    // Independent of the table. The hexagonal (hP) lattice: the basis of the hexagonal family. The
+    // rhombohedral (hR) lattice: the rhombohedral axes in the frame of the hexagonal ones (ITA 2016
+    // Table 1.5.1.1, p. 78: a_R = (2a + b + c)/3, b_R = (−a + b + c)/3, c_R = (−a − 2b + c)/3).
+    const hex = latticeBasis('hexagonal');
+    const obverse = [
+      [2 / 3, -1 / 3, -1 / 3],
+      [1 / 3, 1 / 3, -2 / 3],
+      [1 / 3, 1 / 3, 1 / 3],
+    ];
+    const bases: Record<string, Mat3> = {
+      orthorhombic: latticeBasis('orthorhombic'),
+      tetragonal: latticeBasis('tetragonal'),
+      hexagonal: hex,
+      rhombohedral: multiply(hex, obverse as unknown as Mat3),
+      cubic: latticeBasis('cubic'),
+    };
+    for (const [system, basis] of Object.entries(bases)) {
       const toLattice = inverse(basis);
       /** True if every operation, written in the lattice basis, is a matrix of integers of determinant ±1. */
       const keepsLattice = (key: PointGroupKey) =>
@@ -202,14 +237,17 @@ describe('ITA Table 2.1.1.1: holohedries (Laue groups in full boxes)', () => {
           const w = multiply(multiply(toLattice, op.cartesian), basis);
           return w.flat().every((x) => Math.abs(x - Math.round(x)) < 1e-9) && Math.abs(Math.abs(det(w)) - 1) < 1e-9;
         });
-      const h = holohedry(family);
-      expect(keepsLattice(h), family).toBe(true);
-      // Every class of the family keeps the lattice (for the trigonal classes: the hexagonal one), and
-      // none has more operations than the holohedry of the family.
-      for (const key of POINT_GROUP_KEYS.filter((k) => crystalFamily(pointGroup(k).crystalSystem) === family)) {
-        expect(keepsLattice(key), key).toBe(true);
+      const h = holohedry(system as LatticeSystem);
+      expect(keepsLattice(h), system).toBe(true);
+      for (const key of POINT_GROUP_KEYS.filter((k) => latticeSystems(k).includes(system as LatticeSystem))) {
+        expect(keepsLattice(key), `${key} on ${system}`).toBe(true);
         expect(pointGroup(key).order, key).toBeLessThanOrEqual(pointGroup(h).order);
       }
     }
+    // 6/mmm does not keep the rhombohedral lattice: the two lattice systems are distinct.
+    const toR = inverse(bases.rhombohedral);
+    const sixfold = operations('6').find((op) => Math.abs(op.cartesian[0][0] - 0.5) < 1e-9);
+    const w = multiply(multiply(toR, sixfold!.cartesian), bases.rhombohedral);
+    expect(w.flat().every((x) => Math.abs(x - Math.round(x)) < 1e-9)).toBe(false);
   });
 });

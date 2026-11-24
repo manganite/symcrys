@@ -26,7 +26,7 @@ import {
   itcBlackWhiteOperations,
   itcBlackWhiteSetting,
 } from './itcMagneticData.js';
-import { crystalFamily, type CrystalSystem } from '../lattice.js';
+import { crystalFamily, latticeSystemsOfSystem, type CrystalSystem, type LatticeSystem } from '../lattice.js';
 import {
   MAGNETIC_POINT_GROUP_KEYS,
   POINT_GROUP_KEYS,
@@ -620,6 +620,17 @@ export function magneticPointGroups(): readonly PointGroup<MagneticPointGroupKey
  */
 export function crystalClassOf(key: MagneticPointGroupKey): PointGroupKey {
   return data(key).crystalClass.key as PointGroupKey;
+}
+
+/**
+ * The lattice systems of a point group: those whose lattices its crystal class can act on (ITA
+ * § 1.3.4.4.2 and Table 1.3.4.1, p. 39). One for every class but the trigonal ones, which belong to
+ * the hexagonal (hP) or the rhombohedral (hR) lattice system depending on the basis, so they give
+ * both, `['hexagonal', 'rhombohedral']`. The holohedry of each is `holohedry(latticeSystem)`. Throws a
+ * RangeError for an unknown key.
+ */
+export function latticeSystems(key: MagneticPointGroupKey): readonly LatticeSystem[] {
+  return latticeSystemsOfSystem(pointGroup(key).crystalSystem);
 }
 
 /** The settings of a point group, with their symbols and the ITC default. */
