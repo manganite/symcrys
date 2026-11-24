@@ -115,3 +115,82 @@ export function changeOfAxes(P: Mat3): AxisChange {
   const clean = (m: Mat3): Mat3 => m.map((r) => r.map((x) => x + 0)) as unknown as Mat3; // no −0
   return deepFreeze({ direction: clean(inverse(P)), plane: clean(transpose(P)) });
 }
+
+/** The values of h, k, l substituted into printed Miller indices. */
+export interface MillerValues {
+  /** The value of h, an integer. */
+  readonly h?: number;
+  /** The value of k, an integer. */
+  readonly k?: number;
+  /** The value of l, an integer. */
+  readonly l?: number;
+}
+
+/**
+ * One printed index as a number: a term (`h`, `-2h`, `0`, `1`) or a sum of terms (`-h-k`, `2k-h`, as
+ * printed for rhombohedral axes); `i` is −(h + k). `fail` makes the error: a RangeError for a
+ * caller's string, a plain Error for the transcribed data.
+ */
+function printedIndex(component: string, values: MillerValues, fail: (message: string) => Error): number {
+  // A term is a signed number, or a signed letter with an optional factor; terms after the first
+  // begin with their sign, so that run-together terms (`hk`, `h2`) are unreadable.
+  if (!/^-?(\d+|\d*[hkil])([+-](\d+|\d*[hkil]))*$/.test(component)) throw fail(`Unreadable Miller index: ${component}`);
+  const terms = component.match(/[+-]?\d*[hkil]?/g)!.filter((t) => t !== '');
+  const value = (letter: 'h' | 'k' | 'l'): number => {
+    const v = values[letter];
+    if (v === undefined) throw fail(`The Miller index ${component} needs a value of ${letter}`);
+    return v;
+  };
+  return terms.reduce((sum, term) => {
+    const m = /^([+-]?)(\d*)([hkil]?)$/.exec(term)!;
+    const sign = m[1] === '-' ? -1 : 1;
+    const factor = m[2] === '' ? 1 : Number(m[2]);
+    if (m[3] === '') return sum + sign * factor;
+    if (m[3] === 'i') return sum + sign * factor * -(value('h') + value('k'));
+    return sum + sign * factor * value(m[3] as 'h' | 'k' | 'l');
+  }, 0);
+}
+
+/**
+ * Printed Miller indices, three or four (Bravais–Miller, hexagonal axes) separated by commas, as
+ * three numbers (hkl) with the given values of h, k, l; four lose i, which must be −(h + k). Internal:
+ * `fail` makes the error.
+ */
+export function substituteMillerIndices(printed: string, values: MillerValues, fail: (message: string) => Error): Vec3 {
+  const parts = printed.split(',').map((c) => printedIndex(c.trim(), values, fail) + 0);
+  if (parts.length === 3) return [parts[0], parts[1], parts[2]];
+  if (parts.length === 4 && parts[2] === -(parts[0] + parts[1])) return [parts[0], parts[1], parts[3]];
+  throw fail(`Unreadable Miller indices: ${printed}`);
+}
+
+/**
+ * The face (hkl) of printed Miller indices with the caller's values of h, k, l substituted (#137 G3):
+ * the printed `h,h,-2h,l` with h = 3 and l = 1 gives (3, 3, 1). The printed strings are those of
+ * `wyckoffPositions` and `crystalForms` (`millerIndices`), as ITA prints them: three indices, or four
+ * for hexagonal axes, of which i = −(h + k) is dropped, so that the face can be passed to `orbit`
+ * (`planeToFourIndices` gives the four). Each value is an integer; only the letters the string uses
+ * are needed. The face is not reduced, and whether the values keep it in its position (a general
+ * face (hkl) with h = k lies on a special one) is the caller's choice. Throws a RangeError for an
+ * unreadable string, a missing or non-integer value, an unknown key and the face (000).
+ */
+export function millerIndices(printed: string, values: MillerValues): Vec3 {
+  if (typeof printed !== 'string')
+    throw new RangeError(`millerIndices: printed Miller indices expected, not ${shown(printed)}`);
+  if (values === null || typeof values !== 'object' || Array.isArray(values)) {
+    throw new RangeError(`millerIndices: values { h, k, l } expected, not ${shown(values)}`);
+  }
+  for (const [key, v] of Object.entries(values)) {
+    if (!['h', 'k', 'l'].includes(key)) throw new RangeError(`millerIndices: unknown value ${shown(key)} (h, k or l)`);
+    if (v !== undefined && !Number.isSafeInteger(v)) {
+      throw new RangeError(`millerIndices: ${key} must be an integer, not ${shown(v)}`);
+    }
+  }
+  const hkl = substituteMillerIndices(
+    printed.replace(/\s+/g, ''),
+    values,
+    (m) => new RangeError(`millerIndices: ${m}`),
+  );
+  if (hkl.every((x) => x === 0))
+    throw new RangeError(`millerIndices: ${printed} gives the face (000) with ${shown(values)}`);
+  return deepFreeze(hkl);
+}

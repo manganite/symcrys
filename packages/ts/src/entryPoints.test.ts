@@ -7,6 +7,7 @@
  * group and its grey group.
  */
 
+import { representativeFace } from './pointGroups/wyckoff.js';
 import { describe, expect, it } from 'vitest';
 import pkg from '../package.json' with { type: 'json' };
 import * as classes from './index.js';
@@ -181,7 +182,8 @@ describe('the crystallographic API returns nothing about time reversal', () => {
         const positions = classes.wyckoffPositions(key, { setting });
         expect(positions, `${key}, setting ${setting}`).toBe(wyckoff.wyckoffPositions(key, { setting }));
         const special = positions[positions.length - 1];
-        expect(classes.wyckoffPosition(key, special.representative.cartesian, { setting }).letter).toBe(special.letter);
+        const direction = representativeFace(key, setting, special.millerIndices).cartesian;
+        expect(classes.wyckoffPosition(key, direction, { setting }).letter).toBe(special.letter);
       }
     }
     // 32: the twofold axes lie along other directions in the two settings.
@@ -687,6 +689,8 @@ describe('every result is frozen, nested values included (#137 C4)', () => {
     rotateTensor: [[1, 0, 0], ops[1].cartesian, 'pyroelectric'],
     allowedProperties: ['32'],
     latticeSystems: ['32'],
+    millerIndices: ['h,h,-2h,l', { h: 3, l: 1 }],
+    faceNormal: [basis, [1, 0, 0]],
     latticeBasis: ['hexagonal'],
     latticeFromParameters: [{ a: 3, b: 3, c: 5, alpha: 90, beta: 90, gamma: 120 }],
     latticeParameters: [basis],

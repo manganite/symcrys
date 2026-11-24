@@ -220,6 +220,19 @@ export function angleBetweenPlanes(basis: Mat3, plane1: Vec3, plane2: Vec3): num
 }
 
 /**
+ * The unit normal of a plane (hkl) in a cell, a Cartesian vector: h·a* + k·b* + l·c* normalised, the
+ * pole of the face (#137 G4). With `latticeBasis(family)` for a family with fixed cell angles, or
+ * `latticeFromParameters` for a real cell; Miller indices of hexagonal axes are three, without i.
+ * Throws a RangeError for a basis that is not a regular 3 × 3 matrix and for a zero vector.
+ */
+export function faceNormal(basis: Mat3, hkl: Vec3): Vec3 {
+  checkBasis(basis, 'faceNormal');
+  const v = apply(reciprocalBasis(basis), vector(hkl, 'hkl'));
+  const n = norm(v);
+  return Object.freeze(v.map((x) => x / n + 0)) as unknown as Vec3;
+}
+
+/**
  * The operations that leave the metric of a cell unchanged: those W (`matrix`, the integer matrices
  * on the coordinates of a lattice direction, as `operations` gives them) with WᵀGW = G, G the metric
  * tensor of `basis`. It is the point symmetry of a distorted lattice among the operations of a group;

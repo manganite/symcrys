@@ -20,6 +20,8 @@
  * library's data file must equal the transcriptions, and its crystal forms must agree with them.
  */
 
+import { millerIndices } from '../indices.js';
+import { representativeFace } from './wyckoff.js';
 import { describe, expect, it } from 'vitest';
 import { close, inverse, mul, sameM, type M, type RefOp } from '../testUtils/independentGroups.js';
 import {
@@ -515,7 +517,11 @@ describe('ITA Table 3.2.3.2: face forms', () => {
         const position = e.positions.find((p) => p[4] === r[3]);
         expect([f.multiplicity, f.siteSymmetry]).toEqual([Number(position?.[3]), position?.[5]]);
         expect(f.condition ?? '').toBe(r[7].replace(/abs\((\w)\)/g, '|$1|'));
-        expect(sameV(f.representative.cartesian, faceNormal(e.basis, hklOf(r[6], valuesFor(r[7], e.axes))))).toBe(true);
+        const printed = hklOf(r[6], valuesFor(r[7], e.axes));
+        // The public millerIndices gives the face the test reads from print (#137 G3).
+        expect(millerIndices(f.millerIndices, valuesFor(r[7], e.axes))).toEqual(printed);
+        const face = representativeFace(found[0].key, found[0].index, f.millerIndices, f.condition);
+        expect(sameV(face.cartesian, faceNormal(e.basis, printed))).toBe(true);
       });
     });
   }

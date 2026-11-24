@@ -8,6 +8,11 @@ All notable changes to symcrys are recorded here. The format follows
 
 ### Added
 
+- **Faces with numbers** (#137 G3, G4, #110, #115, #121 step 11b): `millerIndices(printed,
+{ h, k, l })` substitutes values into the Miller indices ITA prints (`'h,h,-2h,l'` with h = 3,
+  l = 1 gives (3, 3, 1); i dropped for hexagonal axes), and `faceNormal(basis, hkl)` gives the unit
+  normal of a face in a cell; in both entry points and in Python (`miller_indices`, `face_normal`).
+
 - **Lattice systems** (#137 G1, #113, #121 step 11a): the type `LatticeSystem` with ITA's seven
   lattice systems (ITA 2016 Table 1.3.4.1, p. 39) and `latticeSystems(key)`, the lattice systems a
   class acts on: `['hexagonal', 'rhombohedral']` for a trigonal class, one otherwise; in both entry
@@ -243,6 +248,12 @@ All notable changes to symcrys are recorded here. The format follows
   `plane.symbol(key, form=…)`.
 
 ### Removed
+
+- The field `representative` of `wyckoffPositions`, `wyckoffPosition` and `crystalForms` (#137 G3,
+  G4, #121 step 11b): the face with h, k, l = 3, 2, 1 (rhombohedral axes 5, 2, 1) and its Cartesian
+  normal. Its normal was that of a, b, c along x, y, z for the monoclinic and triclinic classes,
+  not the pole of any real cell with free angles. Now `faceNormal(basis, millerIndices(printed,
+{ h: 3, k: 2, l: 1 }))` with the caller's cell.
 
 - The field `fullSymbol` of `planeGroup` (`symcrys/plane`; Python `plane_group(key)["full_symbol"]`)
   (#137 F4, #121 step 10c): the full symbol is `symbol(key, { form: 'full' })`, with spaces.

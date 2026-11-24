@@ -5,21 +5,9 @@
  */
 
 import { SETTING_KEYS, checkOptions } from '../checks.js';
-import type { Vec3 } from '../linalg.js';
 import type { PointGroupKey, SettingOptions } from './pointGroups.js';
 import { ITA_FORMS, ITA_FORM_TYPES, type FormRow } from './crystalFormsData.js';
-import {
-  representativeValues,
-  faceBasis,
-  tableSetting,
-  normal,
-  numericHkl,
-  permutationFromSetting1,
-  permutePattern,
-  printedEntry,
-  wyckoffPositions,
-  type Hkl,
-} from './wyckoff.js';
+import { tableSetting, permutationFromSetting1, permutePattern, printedEntry, wyckoffPositions } from './wyckoff.js';
 
 /** One of the 47 crystal forms of ITA Table 3.2.1.3. */
 export interface CrystalFormType {
@@ -59,28 +47,12 @@ export interface CrystalForm {
   readonly millerIndices: string;
   /** The condition ITA prints with the form, `|h|<|l|` or `|h|>|l|` (cubic forms (hhl)); absent otherwise. */
   readonly condition?: string;
-  /**
-   * A face of the form with numbers: `millerIndices` with h = 3, k = 2, l = 1 (rhombohedral axes:
-   * h = 5), and with h = 1, l = 3 where the condition is `|h|<|l|`.
-   */
-  readonly representative: {
-    /** The Miller indices (hkl) of the face. */
-    readonly hkl: Hkl;
-    /**
-     * Its face normal, a Cartesian unit vector. Monoclinic and triclinic: the normal for a, b, c along
-     * x, y, z (no cell angles), exact for the unique axis only.
-     */
-    readonly cartesian: Vec3;
-  };
 }
 
 /** The 47 crystal forms of ITA Table 3.2.1.3, in ITA's order: `CRYSTAL_FORM_TYPES[n - 1]` is form n. */
 export const CRYSTAL_FORM_TYPES: readonly CrystalFormType[] = Object.freeze(
   ITA_FORM_TYPES.map(([number, name, faces, eigensymmetry]) => Object.freeze({ number, name, faces, eigensymmetry })),
 );
-
-/** h, k, l of the representative for the condition |h| < |l|. */
-const SMALL_H = Object.freeze({ h: 1, k: 2, l: 3 });
 
 const HKL = 'hkl';
 
@@ -112,7 +84,6 @@ export function crystalForms(key: PointGroupKey, options?: SettingOptions): read
   let result = cache.get(cacheKey);
   if (!result) {
     const positions = wyckoffPositions(key, { setting });
-    const basis = faceBasis(key, setting);
     result = Object.freeze(
       printedRows(key, setting).map(([letter, basic, formType, millerIndices, condition]) => {
         const position = positions.find((p) => p.letter === letter);
@@ -122,8 +93,6 @@ export function crystalForms(key: PointGroupKey, options?: SettingOptions): read
             `Point group ${key}, setting ${setting}: form ${formType} does not have the multiplicity of position ${letter}`,
           );
         }
-        const values = condition === '|h|<|l|' ? SMALL_H : representativeValues(key, setting);
-        const hkl = numericHkl(millerIndices, values);
         return Object.freeze({
           letter,
           multiplicity: position.multiplicity,
@@ -132,10 +101,6 @@ export function crystalForms(key: PointGroupKey, options?: SettingOptions): read
           formType,
           millerIndices,
           ...(condition === undefined ? {} : { condition }),
-          representative: Object.freeze({
-            hkl: Object.freeze(hkl) as Hkl,
-            cartesian: Object.freeze(normal(basis, hkl)) as Vec3,
-          }),
         });
       }),
     );

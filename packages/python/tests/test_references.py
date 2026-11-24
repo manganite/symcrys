@@ -276,8 +276,7 @@ def test_ita_3232_face_forms(entry: tuple[str, str]) -> None:
         printed
     )
     for f in forms:
-        assert f["representative"]["hkl"].dtype == np.int64 and f["representative"]["hkl"].shape == (3,)
-        assert f["representative"]["cartesian"].dtype == np.float64
+        assert "representative" not in f
         faces = symcrys.CRYSTAL_FORM_TYPES[f["form_type"] - 1]["faces"]
         assert f["multiplicity"] == faces
 

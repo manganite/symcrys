@@ -16,7 +16,8 @@
 import * as classes from '../index.js';
 import * as magnetic from '../magnetic.js';
 import * as plane from '../plane.js';
-import type { MagneticPointGroupKey } from '../pointGroups/pointGroups.js';
+import type { MagneticPointGroupKey, PointGroupKey } from '../pointGroups/pointGroups.js';
+import { representativeFace } from '../pointGroups/wyckoff.js';
 import type { TensorSpec } from '../tensors/tensorForm.js';
 
 /** One pin: what was asked (`id`) and what symcrys answered. */
@@ -192,6 +193,18 @@ const oldWyckoff = <W extends { readonly coordinates: readonly string[] }>({ coo
   coordinates: coordinates[0],
 });
 
+/**
+ * A Wyckoff position or crystal form with the field `representative` of the pins (removed in #121
+ * step 11b, #137 G3, G4): the face with h, k, l = 3, 2, 1 (as before) and its normal in the basis of
+ * the setting, from the internal function that gave them.
+ */
+const withRepresentative =
+  (key: string, setting: number) =>
+  <R extends { readonly millerIndices: string; readonly condition?: string }>(record: R) => ({
+    ...record,
+    representative: representativeFace(key as PointGroupKey, setting, record.millerIndices, record.condition),
+  });
+
 /** A point group in the shape of the pins (before #121 step 7c): `chiral` for `enantiomorphic`. */
 const oldPointGroup = ({ enantiomorphic, ...rest }: { readonly enantiomorphic: boolean }) => ({
   ...rest,
@@ -316,14 +329,15 @@ function pointGroupPins(add: (id: string, f: () => unknown) => void, key: Magnet
       add(id('classes.operations'), () => classOps.map((op) => ({ matrix: op.cartesian })));
       add(id('classes.generators'), () => classes.generators(key, options).map((op) => ({ matrix: op.cartesian })));
       add(id('classes.describeOperations'), () => oldDescriptions(classes.describeOperations(key, options)));
-      add(id('classes.wyckoffPositions'), () => classes.wyckoffPositions(key, options).map(oldWyckoff));
-      add(id('classes.crystalForms'), () => classes.crystalForms(key, options));
+      const old = withRepresentative(key, options.setting);
+      add(id('classes.wyckoffPositions'), () => classes.wyckoffPositions(key, options).map((w) => old(oldWyckoff(w))));
+      add(id('classes.crystalForms'), () => classes.crystalForms(key, options).map(old));
       for (const d of DIRECTIONS) {
-        add(id(`classes.wyckoffPositionOf [${d}]`), () => oldWyckoff(classes.wyckoffPosition(key, d, options)));
+        add(id(`classes.wyckoffPositionOf [${d}]`), () => old(oldWyckoff(classes.wyckoffPosition(key, d, options))));
       }
       for (const d of NEAR_DIRECTIONS) {
         add(id(`classes.wyckoffPositionOf [${d}] tolerance 1e-4`), () =>
-          oldWyckoff(classes.wyckoffPosition(key, d, { ...options, tolerance: 1e-4 })),
+          old(oldWyckoff(classes.wyckoffPosition(key, d, { ...options, tolerance: 1e-4 }))),
         );
       }
     }

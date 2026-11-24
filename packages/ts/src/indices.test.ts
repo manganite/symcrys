@@ -7,6 +7,7 @@
 
 import { describe, expect, it } from 'vitest';
 import {
+  millerIndices,
   changeOfAxes,
   directionFromFourIndices,
   directionToFourIndices,
@@ -207,5 +208,34 @@ describe('edge cases', () => {
     const h = [2, 1, 3];
     const out = [0, 1, 2].map((i) => plane[i][0] * h[0] + plane[i][1] * h[1] + plane[i][2] * h[2]);
     expect(out).toEqual([1, -2, 6]);
+  });
+});
+
+describe('millerIndices (#137 G3)', () => {
+  it('substitutes the values into printed indices, ITA Table 3.2.3.2 style', () => {
+    expect(millerIndices('h,k,l', { h: 3, k: 2, l: 1 })).toEqual([3, 2, 1]);
+    expect(millerIndices('h,-h,0', { h: 2 })).toEqual([2, -2, 0]);
+    // Four indices (hexagonal axes): i = −(h + k) is dropped, so h,h,-2h,l is (h h l).
+    expect(millerIndices('h,h,-2h,l', { h: 3, l: 1 })).toEqual([3, 3, 1]);
+    expect(millerIndices('h,k,i,l', { h: 3, k: 2, l: 1 })).toEqual([3, 2, 1]);
+    expect(millerIndices('1,0,-1,0', {})).toEqual([1, 0, 0]);
+    // Sums, as printed for rhombohedral axes: (h, k, 2k−h) and (h, k, −h−k).
+    expect(millerIndices('h,k,2k-h', { h: 5, k: 2 })).toEqual([5, 2, -1]);
+    expect(millerIndices('h,k,-h-k', { h: 5, k: 2 })).toEqual([5, 2, -7]);
+    // Spaces are ignored; a negative value is substituted as it is; the face is not reduced.
+    expect(millerIndices('h, 0, l', { h: -2, l: 4 })).toEqual([-2, 0, 4]);
+    expect(Object.isFrozen(millerIndices('h,k,l', { h: 1, k: 1, l: 1 }))).toBe(true);
+  });
+
+  it('rejects what it cannot read or substitute', () => {
+    expect(() => millerIndices('h,k,l', { h: 1, k: 2 })).toThrow(/needs a value of l/);
+    expect(() => millerIndices('h,k,l', { h: 1.5, k: 2, l: 1 })).toThrow(/integer/);
+    expect(() => millerIndices('h,k,l', { h: 1, k: 2, l: 1, i: 3 } as never)).toThrow(/unknown value "i"/);
+    expect(() => millerIndices('h,0,0', { h: 0 })).toThrow(/\(000\)/);
+    expect(() => millerIndices('h,k', { h: 1, k: 2 })).toThrow(RangeError);
+    expect(() => millerIndices('hk,l', { h: 1, k: 2, l: 1 })).toThrow(/Unreadable/);
+    expect(() => millerIndices('h,k,h,l', { h: 1, k: 2, l: 1 })).toThrow(RangeError); // i ≠ −(h + k)
+    expect(() => millerIndices(321 as never, { h: 1 })).toThrow(RangeError);
+    expect(() => millerIndices('h,k,l', [3, 2, 1] as never)).toThrow(RangeError);
   });
 });

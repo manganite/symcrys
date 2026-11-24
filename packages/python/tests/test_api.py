@@ -479,3 +479,15 @@ def test_errors_survive_pickling() -> None:
     assert internal.js_name == "TypeError"
     error = pickle.loads(pickle.dumps(symcrys.SymcrysError("bad")))
     assert str(error) == "bad" and error.js_name == "RangeError"
+
+
+def test_miller_indices_and_face_normal() -> None:
+    for module in (symcrys, magnetic):
+        hkl = module.miller_indices("h,h,-2h,l", {"h": 3, "l": 1})
+        assert hkl.dtype == np.int64 and hkl.tolist() == [3, 3, 1]
+        n = module.face_normal(module.lattice_basis("cubic"), [1, 1, 1])
+        assert n.dtype == np.float64 and np.allclose(n, np.ones(3) / np.sqrt(3))
+        with pytest.raises(symcrys.SymcrysError, match="value of l"):
+            module.miller_indices("h,k,l", {"h": 1, "k": 2})
+    form = symcrys.crystal_forms("-43m")[2]
+    assert "representative" not in form

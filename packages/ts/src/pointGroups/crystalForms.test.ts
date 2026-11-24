@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { millerIndices } from '../indices.js';
+import { representativeFace } from './wyckoff.js';
 import { apply, type Vec3 } from '../linalg.js';
 import { siteSymmetryOf } from '../siteSymmetry.js';
 import { CRYSTAL_FORM_TYPES, crystalForms } from './crystalForms.js';
@@ -45,7 +47,7 @@ describe('crystalForms', () => {
     for (const { key, s } of ALL_SETTINGS) {
       for (const f of crystalForms(key, { setting: s.index })) {
         const label = `${key} #${s.index} ${f.letter} ${f.millerIndices}`;
-        const v = f.representative.cartesian;
+        const v = representativeFace(key, s.index, f.millerIndices, f.condition).cartesian;
         expect(wyckoffPosition(key, v, { setting: s.index }).letter, label).toBe(f.letter);
         expect(orbitSize(key, s.index, v), label).toBe(CRYSTAL_FORM_TYPES[f.formType - 1].faces);
         const ops = operations(key, { setting: s.index });
@@ -60,12 +62,15 @@ describe('crystalForms', () => {
     );
     expect(conditional.length).toBeGreaterThan(0);
     for (const f of conditional) {
-      const [h, , l] = f.representative.hkl.map(Math.abs);
+      const [h, , l] = millerIndices(
+        f.millerIndices,
+        f.condition === '|h|<|l|' ? { h: 1, k: 2, l: 3 } : { h: 3, k: 2, l: 1 },
+      ).map(Math.abs);
       expect(f.condition === '|h|<|l|' ? h < l : h > l, `${f.millerIndices} ${f.condition}`).toBe(true);
     }
     // -43m c: (113) is the trigon-tritetrahedron, (331) the tetragon-tritetrahedron.
     const c = crystalForms('-43m').filter((f) => f.letter === 'c' && f.basic);
-    expect(c.map((f) => [f.formType, f.representative.hkl])).toEqual([
+    expect(c.map((f) => [f.formType, representativeFace('-43m', 1, f.millerIndices, f.condition).hkl])).toEqual([
       [39, [1, 1, 3]],
       [38, [3, 3, 1]],
     ]);
@@ -121,7 +126,6 @@ describe('crystalForms', () => {
   it('are frozen', () => {
     const f = crystalForms('4mm')[1];
     expect(Object.isFrozen(crystalForms('4mm')) && Object.isFrozen(f)).toBe(true);
-    expect(Object.isFrozen(f.representative) && Object.isFrozen(f.representative.hkl)).toBe(true);
-    expect(Object.isFrozen(f.representative.cartesian)).toBe(true);
+    expect('representative' in f).toBe(false);
   });
 });

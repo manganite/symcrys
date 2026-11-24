@@ -7,6 +7,7 @@
 
 import { describe, expect, it } from 'vitest';
 import {
+  faceNormal,
   angleBetweenDirections,
   angleBetweenPlanes,
   isValidCell,
@@ -395,5 +396,41 @@ describe('residualMagneticOperations', () => {
     const ops = operations('4/mmm');
     expect(residualMagneticOperations(ops, cell)).toHaveLength(8);
     expect(() => residualMagneticOperations(ops.map((o) => ({ matrix: o.matrix })) as never, cell)).toThrow(RangeError);
+  });
+});
+
+describe('faceNormal (#137 G4)', () => {
+  const close = (u: readonly number[], v: readonly number[]) => u.every((x, i) => Math.abs(x - v[i]) < 1e-12);
+
+  it('is the unit vector h·a* + k·b* + l·c*', () => {
+    // Cubic: (111) along the body diagonal.
+    const cube = latticeFromParameters({ a: 4, b: 4, c: 4, alpha: 90, beta: 90, gamma: 90 });
+    expect(close(faceNormal(cube, [1, 1, 1]), [1 / Math.sqrt(3), 1 / Math.sqrt(3), 1 / Math.sqrt(3)])).toBe(true);
+    // Hexagonal, a along x, b at 120°: a* is normal to b and c, (√3/2, 1/2, 0).
+    const hex = latticeFromParameters({ a: 3, b: 3, c: 5, alpha: 90, beta: 90, gamma: 120 });
+    expect(close(faceNormal(hex, [1, 0, 0]), [Math.sqrt(3) / 2, 0.5, 0])).toBe(true);
+    expect(Object.isFrozen(faceNormal(hex, [1, 0, 0]))).toBe(true);
+  });
+
+  it('is normal to the lattice directions in the plane, for a monoclinic cell too', () => {
+    const mono = latticeFromParameters({ a: 5, b: 6, c: 7, alpha: 90, beta: 104, gamma: 90 });
+    const column = (j: number) => [mono[0][j], mono[1][j], mono[2][j]];
+    const dot = (u: readonly number[], v: readonly number[]) => u.reduce((s, x, i) => s + x * v[i], 0);
+    // (001) contains a and b; (101) contains b and a − c.
+    const n001 = faceNormal(mono, [0, 0, 1]);
+    expect(Math.abs(dot(n001, column(0))) + Math.abs(dot(n001, column(1)))).toBeLessThan(1e-12);
+    const n101 = faceNormal(mono, [1, 0, 1]);
+    const aMinusC = column(0).map((x, i) => x - column(2)[i]);
+    expect(Math.abs(dot(n101, column(1))) + Math.abs(dot(n101, aMinusC))).toBeLessThan(1e-12);
+    expect(Math.hypot(...n101)).toBeCloseTo(1, 14);
+    // The angle between two normals is angleBetweenPlanes.
+    const angle = (Math.acos(dot(n001, n101)) * 180) / Math.PI;
+    expect(angle).toBeCloseTo(angleBetweenPlanes(mono, [0, 0, 1], [1, 0, 1]), 10);
+  });
+
+  it('rejects a zero vector and a singular basis', () => {
+    const cube = latticeFromParameters({ a: 1, b: 1, c: 1, alpha: 90, beta: 90, gamma: 90 });
+    expect(() => faceNormal(cube, [0, 0, 0])).toThrow(RangeError);
+    expect(() => faceNormal([[1, 0, 0], [0, 1, 0], [0, 0, 0]], [1, 0, 0])).toThrow(RangeError); // prettier-ignore
   });
 });
