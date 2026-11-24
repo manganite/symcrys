@@ -16,6 +16,19 @@ import { planeAsymmetricUnit, planeElements, planeElementsInBox } from './spaceG
 import { toPlain, type ExactOperation } from './spaceGroups/affine.js';
 import { type PlaneSystem } from './spaceGroups/planeGroupData.js';
 import {
+  PLANE_FAMILIES,
+  planeBravaisLattice,
+  planeLatticeFromParameters,
+  planeLatticeParameters,
+  planeLaueClass,
+  planeMetricTensor,
+  planeReciprocalBasis,
+  type CellRestrictions,
+  type LatticeParameters,
+  type PlaneBravaisLattice,
+} from './spaceGroups/planeLattice.js';
+import { deepFreeze } from './freeze.js';
+import {
   PLANE_GROUP_KEYS as GROUP_KEYS,
   planeGroupEntry,
   planeGroupGenerators,
@@ -46,6 +59,13 @@ export { EPSILON, type ToleranceOptions } from './tolerances.js';
 import { toleranceOf, type ToleranceOptions } from './tolerances.js';
 import { compactSymbol } from './notation.js';
 export type { PlaneSystem } from './spaceGroups/planeGroupData.js';
+export type {
+  CellRestrictions,
+  LatticeParameters,
+  PlaneBravaisLattice,
+  PlaneCellParameter,
+  PlaneFixedAngles,
+} from './spaceGroups/planeLattice.js';
 export type { PlaneOperationKind } from './spaceGroups/describe.js';
 
 /** The short symbol of a plane group, e.g. `'p2mg'`. */
@@ -113,6 +133,13 @@ export interface PlaneGroup {
   readonly pointGroupSetting: number;
   /** The crystal system. */
   readonly crystalSystem: PlaneSystem;
+  /** The Bravais lattice (ITA 2016 Table 2.1.1.1, p. 143): `'mp'`, `'op'`, `'oc'`, `'tp'` or `'hp'`. */
+  readonly bravaisLattice: PlaneBravaisLattice;
+  /**
+   * The Patterson symmetry as ITA prints it in the headline of the group (Chapter 2.2), a plane group:
+   * the lattice of the group with its Laue class, e.g. `'p2mm'` for `p2mg`, `'c2mm'` for `cm`.
+   */
+  readonly pattersonSymmetry: PlaneGroupKey;
   /** The centring translations besides (0, 0): `[[0.5, 0.5]]` for `cm` and `c2mm`, otherwise none. */
   readonly centring: readonly (readonly number[])[];
   /** The block "Origin" as ITA prints it, its positions spaced as printed, e.g. `'at 2 m m'`, `'at 2 1 g'`. */
@@ -127,6 +154,11 @@ export interface PointGroup {
   readonly crystalSystem: PlaneSystem;
   /** The order of the group. */
   readonly order: number;
+  /**
+   * The Laue class: the point group with the symmetry centre of the plane, the twofold rotation,
+   * added (ITA 2016 § 3.2.1.1, p. 720); one of `'2'`, `'2mm'`, `'4'`, `'4mm'`, `'6'`, `'6mm'`.
+   */
+  readonly laueClass: PointGroupKey;
 }
 
 /** A plane group found by `findPlaneGroup`. */
@@ -491,6 +523,8 @@ export function planeGroup(key: PlaneGroupKey): PlaneGroup {
     pointGroup: point.key,
     pointGroupSetting: point.setting,
     crystalSystem: entry.system,
+    bravaisLattice: planeBravaisLattice(entry.system, entry.symbol),
+    pattersonSymmetry: entry.pattersonSymmetry as PlaneGroupKey,
     centring: Object.freeze(
       entry.centring.map((t) => Object.freeze(t.split(',').map((c) => toNumber(parseRational(c))))),
     ),
@@ -501,7 +535,12 @@ export function planeGroup(key: PlaneGroupKey): PlaneGroup {
 /** The plane point group with this key. Throws a RangeError for an unknown key. */
 export function pointGroup(key: PointGroupKey): PointGroup {
   const k = pointKey(key, 'pointGroup');
-  return Object.freeze({ key: k, crystalSystem: planePointGroupSystem(k), order: planePointGroupOperations(k).length });
+  return Object.freeze({
+    key: k,
+    crystalSystem: planePointGroupSystem(k),
+    order: planePointGroupOperations(k).length,
+    laueClass: planeLaueClass(k),
+  });
 }
 
 /**
@@ -777,4 +816,59 @@ export function symmetryElements(key: PlaneGroupKey, options?: SymmetryElementsO
       ),
     ),
   });
+}
+
+// --- lattices and cells (#119, #137 G5) ---------------------------------------------------------------
+
+const PLANE_SYSTEMS = Object.keys(PLANE_FAMILIES) as PlaneSystem[];
+
+/**
+ * The restrictions on the cell parameters of a crystal system of the plane, as ITA 2016 Table
+ * 2.1.1.1 (p. 143) gives them for the conventional cell: the parameters to be determined, the pairs
+ * of equal parameters, the fixed angles, and the angles conventionally taken non-acute. Throws a
+ * RangeError for anything that is not one of the four crystal systems of the plane.
+ */
+export function cellRestrictions(system: PlaneSystem): CellRestrictions {
+  if (!(PLANE_SYSTEMS as readonly unknown[]).includes(system)) {
+    throw new RangeError(`Unknown crystal system of the plane: ${shown(system)} (${PLANE_SYSTEMS.join(', ')})`);
+  }
+  const r = PLANE_FAMILIES[system].restrictions;
+  return deepFreeze({
+    parameters: [...r.parameters],
+    equal: r.equal.map((pair) => [...pair]),
+    angles: { ...r.angles },
+    nonAcute: [...r.nonAcute],
+  });
+}
+
+/**
+ * The Cartesian basis of a plane cell as the columns of a 2 × 2 matrix: a along x, b at γ from a
+ * towards +y (right-handed), in the unit of the edge lengths. Throws a RangeError for an edge that is
+ * not a positive number and for γ outside (0°, 180°).
+ */
+export function latticeFromParameters(parameters: LatticeParameters): readonly (readonly number[])[] {
+  return deepFreeze(planeLatticeFromParameters(parameters, 'latticeFromParameters').map((r) => [...r]));
+}
+
+/**
+ * The parameters a, b, γ of a basis given as the columns of a 2 × 2 Cartesian matrix, independent of
+ * its orientation and handedness. Throws a RangeError for a basis that is not a non-singular 2 × 2
+ * matrix.
+ */
+export function latticeParameters(basis: readonly (readonly number[])[]): LatticeParameters {
+  return Object.freeze(planeLatticeParameters(basis, 'latticeParameters'));
+}
+
+/** The metric tensor G = AᵀA of a basis A (columns a, b): g_ij = a_i · a_j. Throws a RangeError for a basis that is not a non-singular 2 × 2 matrix. */
+export function metricTensor(basis: readonly (readonly number[])[]): readonly (readonly number[])[] {
+  return deepFreeze(planeMetricTensor(basis, 'metricTensor').map((r) => [...r]));
+}
+
+/**
+ * The reciprocal basis B = A⁻ᵀ of a basis A (columns a, b) as the columns a*, b*, with
+ * a_i · a*_j = δ_ij (no factor 2π). Throws a RangeError for a basis that is not a non-singular 2 × 2
+ * matrix.
+ */
+export function reciprocalBasis(basis: readonly (readonly number[])[]): readonly (readonly number[])[] {
+  return deepFreeze(planeReciprocalBasis(basis, 'reciprocalBasis').map((r) => [...r]));
 }

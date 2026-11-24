@@ -474,11 +474,16 @@ function planeGroupPins(add: (id: string, f: () => unknown) => void, key: plane.
   const ops = plane.operations(key);
   // The pins carry the field fullSymbol, removed in #121 step 10c (#137 F4): now symbol(key, { form: 'full' }),
   // with spaces between the positions.
-  add(`${key}: planeGroup`, () => ({
-    ...plane.planeGroup(key),
-    fullSymbol: plane.symbol(key, { form: 'full' }).replace(/ /g, ''),
-    order: plane.operations(key).length,
-  }));
+  // bravaisLattice and pattersonSymmetry came in 0.12 (#137 G5), after the pins.
+  add(`${key}: planeGroup`, () => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { bravaisLattice, pattersonSymmetry, ...rest } = plane.planeGroup(key);
+    return {
+      ...rest,
+      fullSymbol: plane.symbol(key, { form: 'full' }).replace(/ /g, ''),
+      order: plane.operations(key).length,
+    };
+  });
   add(`${key}: operations`, () => ops);
   add(`${key}: generators`, () => plane.generators(key));
   add(`${key}: describeOperations`, () => oldDescriptions(plane.describeOperations(key)));
@@ -513,7 +518,12 @@ function planeGroupPins(add: (id: string, f: () => unknown) => void, key: plane.
 
 /** The pins of one plane point group in every setting. */
 function planePointGroupPins(add: (id: string, f: () => unknown) => void, key: plane.PointGroupKey): void {
-  add(`${key}: pointGroup`, () => plane.pointGroup(key));
+  // laueClass came in 0.12 (#137 G5), after the pins.
+  add(`${key}: pointGroup`, () => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { laueClass, ...rest } = plane.pointGroup(key);
+    return rest;
+  });
   // `default` before #121 step 7d (#137 C4).
   add(`${key}: settings`, () => plane.settings(key).map(({ isDefault, ...rest }) => ({ ...rest, default: isDefault })));
   for (const s of plane.settings(key)) {

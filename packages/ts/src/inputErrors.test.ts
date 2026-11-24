@@ -105,6 +105,26 @@ const CALLS: Record<string, [Record<string, unknown>, Record<string, Call>]> = {
       isPointGroupKey: call(['4mm']),
       findPlaneGroup: call(['p4']),
       findPointGroup: call(['3m1']),
+      cellRestrictions: call(['square']),
+      latticeFromParameters: call([{ a: 2, b: 2, gamma: 120 }]),
+      latticeParameters: call([
+        [
+          [1, 0],
+          [0, 2],
+        ],
+      ]),
+      metricTensor: call([
+        [
+          [1, 0],
+          [0, 2],
+        ],
+      ]),
+      reciprocalBasis: call([
+        [
+          [1, 0],
+          [0, 2],
+        ],
+      ]),
       settings: call(['3m']),
       symbol: call(['3m'], ['setting', 'form']),
       operations: call(['p4'], ['setting']),

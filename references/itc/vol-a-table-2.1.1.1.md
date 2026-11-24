@@ -7,8 +7,10 @@ on 2026-11-09.
 
 Transcription conventions: a leading minus sign is an overbar (`-3`). The point-group symbols carry
 the printed box markers as suffixes: `(L)` dashed box, a Laue group; `(H)` full box, a Laue group
-that is also a lattice point symmetry (holohedry). "deg" means degrees. Only the
-three-dimensional block is transcribed.
+that is also a lattice point symmetry (holohedry). "deg" means degrees. The three-dimensional block
+is the first table; the two-dimensional block, transcribed on 2026-11-24 from the page image of the
+chapter PDF (Zotero `9W72G6EC`, rendered at 400 dpi), is the section "Two dimensions" below the
+footnotes. The one-dimensional row is not transcribed.
 
 | Crystal family | Symbol | Crystal system | Crystallographic point groups | No. of space groups | Restrictions on cell parameters | Parameters to be determined | Bravais lattices |
 |----------------|--------|----------------|-------------------------------|---------------------|---------------------------------|-----------------------------|------------------|
@@ -34,3 +36,15 @@ non-acute, i.e. >= 90 deg.
 (d) = pilcrow: for the use of the letter S as a new general,
 setting-independent 'centring symbol' for monoclinic and orthorhombic
 Bravais lattices, see de Wolff et al. (1985).
+
+## Two dimensions
+
+The block "Two dimensions" of the same table, p. 143, in the same columns; the footnote marks refer
+to the printed footnotes above ((c) = section mark, here on γ of the oblique family).
+
+| Crystal family | Symbol | Crystal system | Crystallographic point groups | No. of space groups | Restrictions on cell parameters | Parameters to be determined | Bravais lattices |
+|----------------|--------|----------------|-------------------------------|---------------------|---------------------------------|-----------------------------|------------------|
+| Oblique (monoclinic) | m | Oblique | 1, 2 (H) | 2 | None | a, b, gamma (c) | mp |
+| Rectangular (orthorhombic) | o | Rectangular | m, 2mm (H) | 7 | gamma = 90 deg | a, b | op, oc |
+| Square (tetragonal) | t | Square | 4 (L), 4mm (H) | 3 | a = b; gamma = 90 deg | a | tp |
+| Hexagonal | h | Hexagonal | 3, 6 (L), 3m, 6mm (H) | 5 | a = b; gamma = 120 deg | a | hp |

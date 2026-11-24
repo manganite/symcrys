@@ -941,6 +941,19 @@ while implementing gets its own note here.
   implementing: they read the key and the full symbol, spaces ignored, the lattice letter in lower
   case only (an upper-case letter begins a space-group symbol); `{ setting }` takes the symbol of a
   setting too, as in the other entry points (#123).
+- **Lattices and cells of the plane** (#119, #137 G5, decided by Thomas on 2026-11-24, asked with
+  proposals and a recommendation): the Bravais lattice and the Patterson symmetry are fields of
+  `planeGroup(key)`, the Laue class a field of the plane `pointGroup(key)` (fixed by the key, as
+  "Fixed properties are fields of `pointGroup()`"); the restrictions on the cell parameters of ITA
+  Table 2.1.1.1 are data per crystal system, `cellRestrictions(system)`; the cell functions for
+  d = 2 come with them, with the names of the other entry points (`latticeFromParameters`,
+  `latticeParameters`, `metricTensor`, `reciprocalBasis`). Chosen while implementing: the Laue class
+  is computed by ITA's rule (the twofold rotation, the centre of the plane, added; § 3.2.1.1,
+  p. 720) and anchored twice in print (the boxed groups of Table 2.1.1.1, and the printed Patterson
+  symmetry of every plane group, the symmorphic group of its lattice with that Laue class); the
+  Patterson symmetry is stored as printed; the Bravais lattice is the family symbol of the table
+  with the lattice letter of the group; the record of the restrictions is `{ parameters, equal,
+angles, nonAcute }`, the last for the footnote § of the table (γ of the oblique system).
 - **No frieze, layer or magnetic plane groups for now** (#31 question 3): no consumer needs them;
   the dimension-generic module keeps them possible (idea in #74).
 - **Entry point `symcrys/plane`, later `symcrys/space`** (#31 question 4), as `symcrys/magnetic`

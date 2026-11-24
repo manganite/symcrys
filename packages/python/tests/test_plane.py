@@ -26,7 +26,7 @@ def test_keys_and_module() -> None:
     assert len(plane.PLANE_GROUP_KEYS) == 17 and len(plane.POINT_GROUP_KEYS) == 10
     assert plane.plane_group("p31m")["point_group_setting"] == 2
     assert plane.symbol("3m", setting=2) == "31m"
-    assert plane.point_group("3m") == {"key": "3m", "crystal_system": "hexagonal", "order": 6}
+    assert plane.point_group("3m") == {"key": "3m", "crystal_system": "hexagonal", "order": 6, "laue_class": "6mm"}
     assert [s["symbol"] for s in plane.settings("3m")] == ["3m1", "31m"]
     assert plane.plane_group("c2mm")["crystal_system"] == "rectangular"
 

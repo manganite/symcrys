@@ -35,6 +35,9 @@ _F = ("f",)
 
 PlaneSystem = Literal["oblique", "rectangular", "square", "hexagonal"]
 """A crystal system of the plane, as ITA names it."""
+PlaneBravaisLattice = Literal["mp", "op", "oc", "tp", "hp"]
+"""A Bravais lattice of the plane, by its symbol in ITA Table 2.1.1.1: family symbol and centring.
+"""
 PlaneOperationKind = Literal[
     "identity",
     "translation",
@@ -46,6 +49,8 @@ PlaneOperationKind = Literal[
 Table 2.1.2.1, p. 145): ``'reflection'`` (in a line, as ``'reflection'`` of the point groups) and
 ``'glide-reflection'``.
 """
+PlaneCellParameter = Literal["a", "b", "gamma"]
+"""A parameter of a plane cell: the edge lengths a, b and the angle γ between them."""
 
 
 @final
@@ -117,6 +122,15 @@ class PlaneGroup(TypedDict):
     """The setting of the point group: 2 for ``p31m``, otherwise 1."""
     crystal_system: PlaneSystem
     """The crystal system."""
+    bravais_lattice: PlaneBravaisLattice
+    """The Bravais lattice (ITA 2016 Table 2.1.1.1, p. 143): ``'mp'``, ``'op'``, ``'oc'``, ``'tp'`` or
+    ``'hp'``.
+    """
+    patterson_symmetry: str
+    """The Patterson symmetry as ITA prints it in the headline of the group (Chapter 2.2), a plane
+    group: the lattice of the group with its Laue class, e.g. ``'p2mm'`` for ``p2mg``, ``'c2mm'`` for
+    ``cm``.
+    """
     centring: NDArray[np.float64]
     """The centring translations besides (0, 0): ``[[0.5, 0.5]]`` for ``cm`` and ``c2mm``, otherwise
     none.
@@ -137,6 +151,11 @@ class PointGroup(TypedDict):
     """The crystal system."""
     order: int
     """The order of the group."""
+    laue_class: str
+    """The Laue class: the point group with the symmetry centre of the plane, the twofold rotation,
+    added (ITA 2016 § 3.2.1.1, p. 720); one of ``'2'``, ``'2mm'``, ``'4'``, ``'4mm'``, ``'6'``,
+    ``'6mm'``.
+    """
 
 
 @final
@@ -343,6 +362,49 @@ class SymmetryElements(TypedDict):
     """
 
 
+@final
+class PlaneFixedAngles(TypedDict):
+    """The angles of a plane cell fixed by its crystal system, in degrees."""
+
+    gamma: NotRequired[float]
+    """The angle γ between a and b, where the system fixes it."""
+
+
+@final
+class CellRestrictions(TypedDict):
+    """The restrictions on the cell parameters of a crystal system of the plane (ITA Table 2.1.1.1).
+    """
+
+    parameters: list[PlaneCellParameter]
+    """The parameters to be determined (column "Parameters to be determined"), e.g. ``['a']`` for
+    square.
+    """
+    equal: list[list[PlaneCellParameter]]
+    """Pairs of parameters that are equal: ``[['a', 'b']]`` for square and hexagonal."""
+    angles: PlaneFixedAngles
+    """The angles fixed to a value, in degrees: ``{ gamma: 90 }`` for rectangular and square, ``{ gamma:
+    120 }`` for hexagonal.
+    """
+    non_acute: list[PlaneCellParameter]
+    """The angles conventionally taken non-acute (≥ 90°), the footnote § of the table: ``['gamma']`` for
+    oblique.
+    """
+
+
+@final
+class LatticeParameters(TypedDict):
+    """The parameters of a plane cell: the edge lengths a, b and the angle γ between them in
+    degrees.
+    """
+
+    a: float
+    """Edge length a."""
+    b: float
+    """Edge length b."""
+    gamma: float
+    """Angle γ between a and b, in degrees."""
+
+
 _OPERATION_FIELDS = {"matrix": (np.int64, (2, 2)), "translation": (np.float64, (2,))}
 _S_Operations = ("ops", Operations, {"matrix": (np.int64, (2, 2)), "translation": (np.float64, (2,))})
 _S_PlaneGroup = (
@@ -353,11 +415,13 @@ _S_PlaneGroup = (
         "pointGroup": _V,
         "pointGroupSetting": _I,
         "crystalSystem": _V,
+        "bravaisLattice": _V,
+        "pattersonSymmetry": _V,
         "centring": ("a", np.float64, (-1, 2)),
         "origin": _V,
     },
 )
-_S_PointGroup = ("d", {"key": _V, "crystalSystem": _V, "order": _I})
+_S_PointGroup = ("d", {"key": _V, "crystalSystem": _V, "order": _I, "laueClass": _V})
 _S_PlaneGroupFound = ("d", {"key": _V})
 _S_PointGroupInSetting = ("d", {"key": _V, "setting": _I})
 _S_Setting = ("d", {"index": _I, "symbol": _V, "isDefault": _V})
@@ -430,6 +494,17 @@ _S_SymmetryElements = (
         "lines": ("l", _S_SymmetryLine),
     },
 )
+_S_PlaneFixedAngles = ("d", {"gamma": _F})
+_S_CellRestrictions = (
+    "d",
+    {
+        "parameters": ("l", _V),
+        "equal": ("l", ("l", _V)),
+        "angles": _S_PlaneFixedAngles,
+        "nonAcute": ("l", _V),
+    },
+)
+_S_LatticeParameters = ("d", {"a": _F, "b": _F, "gamma": _F})
 
 __all__ = [
     "VERSION",
@@ -439,8 +514,13 @@ __all__ = [
     "SymcrysError",
     "SymcrysInternalError",
     "AsymmetricUnit",
+    "CellRestrictions",
+    "LatticeParameters",
     "OperationDescription",
     "Operations",
+    "PlaneBravaisLattice",
+    "PlaneCellParameter",
+    "PlaneFixedAngles",
     "PlaneGroup",
     "PlaneGroupFound",
     "PlaneOperation",
@@ -457,6 +537,7 @@ __all__ = [
     "WyckoffDistance",
     "WyckoffPosition",
     "asymmetric_unit",
+    "cell_restrictions",
     "describe_operations",
     "describe_operations_of",
     "find_plane_group",
@@ -464,12 +545,16 @@ __all__ = [
     "generators",
     "is_plane_group_key",
     "is_point_group_key",
+    "lattice_from_parameters",
+    "lattice_parameters",
+    "metric_tensor",
     "operations",
     "orbit",
     "plane_group",
     "plane_groups",
     "point_group",
     "point_groups",
+    "reciprocal_basis",
     "settings",
     "site_symmetry",
     "symbol",
@@ -936,5 +1021,74 @@ def symmetry_elements(key: str, *, box: Optional[ArrayLike] = None) -> SymmetryE
             _shared.options(box=None if box is None else _shared.array(box, "box", np.float64)),
         ),
         _S_SymmetryElements,
+    )
+    return result
+
+
+def cell_restrictions(system: str) -> CellRestrictions:
+    """The restrictions on the cell parameters of a crystal system of the plane, as ITA 2016 Table
+    2.1.1.1 (p. 143) gives them for the conventional cell: the parameters to be determined, the
+    pairs of equal parameters, the fixed angles, and the angles conventionally taken non-acute.
+    Raises SymcrysError for anything that is not one of the four crystal systems of the plane.
+    """
+    result: CellRestrictions = _shared.convert(
+        _call("cellRestrictions", system),
+        _S_CellRestrictions,
+    )
+    return result
+
+
+def lattice_from_parameters(a: float, b: float, gamma: float) -> NDArray[np.float64]:
+    """The Cartesian basis of a plane cell as the columns of a 2 × 2 matrix: a along x, b at γ from
+    a towards +y (right-handed), in the unit of the edge lengths. Raises SymcrysError for an edge
+    that is not a positive number and for γ outside (0°, 180°).
+
+    Parameters
+    ----------
+    a
+        Edge length a.
+    b
+        Edge length b.
+    gamma
+        Angle γ between a and b, in degrees.
+    """
+    result: NDArray[np.float64] = _shared.convert(
+        _call("latticeFromParameters", _shared.options(a=a, b=b, gamma=gamma)),
+        ("a", np.float64, None),
+    )
+    return result
+
+
+def lattice_parameters(basis: ArrayLike) -> LatticeParameters:
+    """The parameters a, b, γ of a basis given as the columns of a 2 × 2 Cartesian matrix,
+    independent of its orientation and handedness. Raises SymcrysError for a basis that is not a
+    non-singular 2 × 2 matrix.
+    """
+    result: LatticeParameters = _shared.convert(
+        _call("latticeParameters", _shared.array(basis, "basis")),
+        _S_LatticeParameters,
+    )
+    return result
+
+
+def metric_tensor(basis: ArrayLike) -> NDArray[np.float64]:
+    """The metric tensor G = AᵀA of a basis A (columns a, b): g_ij = a_i · a_j. Raises SymcrysError
+    for a basis that is not a non-singular 2 × 2 matrix.
+    """
+    result: NDArray[np.float64] = _shared.convert(
+        _call("metricTensor", _shared.array(basis, "basis")),
+        ("a", np.float64, None),
+    )
+    return result
+
+
+def reciprocal_basis(basis: ArrayLike) -> NDArray[np.float64]:
+    """The reciprocal basis B = A⁻ᵀ of a basis A (columns a, b) as the columns a*, b*, with a_i ·
+    a*_j = δ_ij (no factor 2π). Raises SymcrysError for a basis that is not a non-singular 2 × 2
+    matrix.
+    """
+    result: NDArray[np.float64] = _shared.convert(
+        _call("reciprocalBasis", _shared.array(basis, "basis")),
+        ("a", np.float64, None),
     )
     return result
