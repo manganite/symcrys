@@ -64,6 +64,8 @@ def test_numpy_types() -> None:
     assert len(orbit) == 2 and orbit[0]["point"].dtype == np.float64 and orbit[0]["point"].shape == (2,)
     assert orbit[1]["operations"].dtype == np.int64 and orbit[1]["operations"].tolist() == [1]
     assert plane.settings("3m")[0]["is_default"] is True
+    assert plane.symbol("pm", form="full") == "p1m1" and plane.symbol("pm") == "pm"
+    assert "full_symbol" not in plane.plane_group("pm")
     distances = plane.wyckoff_distances("p6mm", np.array([0.34, 0.66]))
     b = next(d for d in distances if d["letter"] == "b")
     assert b["site_symmetry"] == "3m." and abs(b["distance"] - (0.34 - 1 / 3)) < 1e-12

@@ -81,6 +81,12 @@ export interface SettingOptions {
   readonly setting?: number;
 }
 
+/** Options of `symbol`: the setting, and the form of a plane group's symbol. */
+export interface SymbolOptions extends SettingOptions {
+  /** `'short'` (default): the short symbol, the key; `'full'`: the full symbol as ITA prints it (`'p1m1'` for `pm`). */
+  readonly form?: 'short' | 'full';
+}
+
 /** An operation (W, w) in the lattice basis: x ↦ W·x + w. */
 export interface PlaneOperation {
   /** The linear part W, a 2 × 2 matrix with integer entries, rows first. */
@@ -95,8 +101,6 @@ export interface PlaneGroup {
   readonly key: PlaneGroupKey;
   /** The number of the plane group, 1 to 17. */
   readonly number: number;
-  /** The full symbol as ITA prints it, e.g. `'p2mg'` or `'p1m1'`. */
-  readonly fullSymbol: string;
   /** The plane point group. */
   readonly pointGroup: PointGroupKey;
   /** The setting of the point group: 2 for `p31m`, otherwise 1. */
@@ -391,7 +395,6 @@ export function planeGroup(key: PlaneGroupKey): PlaneGroup {
   return Object.freeze({
     key: entry.symbol as PlaneGroupKey,
     number: entry.number,
-    fullSymbol: entry.fullSymbol,
     pointGroup: point.key,
     pointGroupSetting: point.setting,
     crystalSystem: entry.system,
@@ -421,9 +424,26 @@ export function settings(key: PointGroupKey): readonly Setting[] {
   );
 }
 
-/** The symbol of a plane point group in a setting: `'3m1'` or `'31m'` for `3m`, otherwise the key. */
-export function symbol(key: PointGroupKey, options?: SettingOptions): string {
-  checkOptions(options, ['setting'], 'symbol');
+/**
+ * The symbol of a plane group or a plane point group (#137 F4). A plane group: its short symbol
+ * (the key, `'p2mg'`) or with `form: 'full'` the full symbol as ITA prints it (`'p2mg'`,
+ * `'p1m1'` for `pm`); it has setting 1 only. A plane point group in a setting: `'3m1'` or `'31m'`
+ * for `3m`, otherwise the key, in both forms, since ITA prints one symbol for each. Throws a
+ * RangeError for an unknown key, setting or form.
+ */
+export function symbol(key: PlaneGroupKey | PointGroupKey, options?: SymbolOptions): string {
+  checkOptions(options, ['setting', 'form'], 'symbol');
+  const form = options?.form ?? 'short';
+  if (form !== 'short' && form !== 'full') {
+    throw new RangeError(`The form of a plane symbol is 'short' or 'full', not ${shown(form)}`);
+  }
+  if (isPlaneGroupKey(key)) {
+    const setting = settingOf(options);
+    if (setting !== undefined && setting !== 1) {
+      throw new RangeError(`The plane group ${key} has no setting ${shown(setting)}`);
+    }
+    return form === 'full' ? planeGroupEntry(key).fullSymbol : key;
+  }
   return planePointGroupSymbol(pointKey(key, 'symbol'), settingOf(options));
 }
 

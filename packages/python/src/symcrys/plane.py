@@ -115,17 +115,23 @@ def settings(key: str) -> list[dict[str, Any]]:
     return [dict(s) for s in _call("settings", key)]
 
 
-def symbol(key: str, *, setting: Optional[int] = None) -> str:
-    """The symbol of a plane point group in a setting: ``'3m1'`` or ``'31m'`` for ``3m``, otherwise
-    the key.
+def symbol(key: str, *, setting: Optional[int] = None, form: Optional[str] = None) -> str:
+    """The symbol of a plane group or a plane point group (#137 F4). A plane group: its short symbol
+    (the key, ``'p2mg'``) or with ``form: 'full'`` the full symbol as ITA prints it (``'p2mg'``,
+    ``'p1m1'`` for ``pm``); it has setting 1 only. A plane point group in a setting: ``'3m1'`` or
+    ``'31m'`` for ``3m``, otherwise the key, in both forms, since ITA prints one symbol for each.
+    Raises SymcrysError for an unknown key, setting or form.
 
     Parameters
     ----------
     setting : keyword-only, optional
         1-based setting: for the point group ``3m`` 1 is ``3m1`` (default) and 2 is ``31m``; the
         other point groups have one, and a plane group takes only 1.
+    form : keyword-only, optional
+        ``'short'`` (default): the short symbol, the key; ``'full'``: the full symbol as ITA prints
+        it (``'p1m1'`` for ``pm``).
     """
-    return str(_call("symbol", key, _shared.options(setting=setting)))
+    return str(_call("symbol", key, _shared.options(setting=setting, form=form)))
 
 
 def operations(key: str, *, setting: Optional[int] = None) -> list[Operation]:

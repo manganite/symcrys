@@ -980,6 +980,12 @@ while implementing gets its own note here.
   lies nearest to 0 from above; a box is its two corners, a line or a point allowed, at most a million
   rotation points. The ITC baseline pins keep the old shape
   through the box of the cell, clipped in the test, so they stay unchanged.
+- **The symbol of a plane group** (#137 F4, the part for 0.11, decided by Thomas on 2026-11-22;
+  see also #97 and #121 step 10c): `symbol(key, { form: 'short' | 'full' })` of `symcrys/plane` takes
+  the key of a plane group too, and the field `fullSymbol` of `planeGroup` goes, so that a symbol
+  is asked for in one way in every entry point. Chosen while implementing: for a plane point group
+  both forms give its symbol, since ITA prints one for each. `isPlaneGroupKey`, `findPlaneGroup` and
+  the lists come in 0.12.
 - **No frieze, layer or magnetic plane groups for now** (#31 question 3): no consumer needs them;
   the dimension-generic module keeps them possible (idea in #74).
 - **Entry point `symcrys/plane`, later `symcrys/space`** (#31 question 4), as `symcrys/magnetic`
