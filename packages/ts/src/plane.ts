@@ -36,6 +36,8 @@ import { planeSnapToWyckoffPosition } from './spaceGroups/snap.js';
 import { parseRational, rational, toNumber, type Rational } from './spaceGroups/rational.js';
 
 export { VERSION } from './version.js';
+export { EPSILON, type ToleranceOptions } from './tolerances.js';
+import { toleranceOf, type ToleranceOptions } from './tolerances.js';
 export type { PlaneSystem } from './spaceGroups/planeGroupData.js';
 
 /** The short symbol of a plane group, e.g. `'p2mg'`. */
@@ -71,15 +73,6 @@ export const POINT_GROUP_KEYS: readonly PointGroupKey[] = Object.freeze([...PLAN
 export interface SettingOptions {
   /** 1-based setting: for the point group `3m` 1 is `3m1` (default) and 2 is `31m`; the other point groups have one, and a plane group takes only 1. */
   readonly setting?: number;
-}
-
-/** Options of the functions that take a point. */
-export interface PointOptions {
-  /**
-   * Two points count as the same, modulo the lattice, if each coordinate (lattice basis) differs
-   * by less than this from an integer. Default 10⁻⁶; must be below 1/2.
-   */
-  readonly tolerance?: number;
 }
 
 /** An operation (W, w) in the lattice basis: x ↦ W·x + w. */
@@ -303,19 +296,33 @@ function describe(op: ExactOperation): OperationDescription {
 }
 
 /** Tolerance for reading an integer or a fraction from a double. */
-const READ_TOLERANCE = 1e-9;
 /** The largest denominator of a translation that `describeOperationsOf` reads. */
 const MAX_DENOMINATOR = 12;
 
-function fractionOf(value: unknown): Rational {
+/**
+ * The fraction with a denominator of at most `MAX_DENOMINATOR` within `tolerance` of the value.
+ * Two such fractions can lie as close as 1/132 (1/11 and 1/12): a value within the tolerance of two
+ * different ones is refused, not read as either.
+ */
+function fractionOf(value: unknown, tolerance: number): Rational {
   if (typeof value === 'number' && Number.isFinite(value)) {
+    const found: Rational[] = [];
     for (let d = 1; d <= MAX_DENOMINATOR; d++) {
-      const n = Math.round(value * d);
-      if (Math.abs(value * d - n) < READ_TOLERANCE * d) return rational(n, d);
+      for (const n of [Math.floor(value * d), Math.ceil(value * d)]) {
+        if (Math.abs(value - n / d) >= tolerance) continue;
+        const r = rational(n, d);
+        if (!found.some((f) => f[0] === r[0] && f[1] === r[1])) found.push(r);
+      }
+    }
+    if (found.length === 1) return found[0];
+    if (found.length > 1) {
+      throw new RangeError(
+        `The translation ${shown(value)} lies within ${tolerance} of ${found.map((f) => `${f[0]}/${f[1]}`).join(' and ')}: pass a smaller tolerance`,
+      );
     }
   }
   throw new RangeError(
-    `Not within 10⁻⁹ of a translation with a denominator of at most ${MAX_DENOMINATOR}: ${shown(value)}`,
+    `Not within ${tolerance} of a translation with a denominator of at most ${MAX_DENOMINATOR}: ${shown(value)}`,
   );
 }
 
@@ -329,7 +336,7 @@ function shown(value: unknown): string {
 }
 
 /** An operation from a caller as an exact operation; throws a RangeError unless it has the shape of a plane operation. */
-function exactOf(op: unknown): ExactOperation {
+function exactOf(op: unknown, tolerance: number): ExactOperation {
   const o = op as Partial<PlaneOperation> | null;
   const m = o?.matrix;
   const t = o?.translation;
@@ -339,13 +346,13 @@ function exactOf(op: unknown): ExactOperation {
   }
   const matrix = m.map((row) =>
     row.map((v) => {
-      if (!(typeof v === 'number' && Math.abs(v - Math.round(v)) < READ_TOLERANCE)) {
+      if (!(typeof v === 'number' && Math.abs(v - Math.round(v)) < tolerance)) {
         throw new RangeError(`The matrix of a plane operation has integer entries, not ${shown(m)}`);
       }
       return Math.round(v) + 0;
     }),
   );
-  return { matrix, translation: t.map(fractionOf) };
+  return { matrix, translation: t.map((v) => fractionOf(v, tolerance)) };
 }
 
 /** The plane group with this key (short symbol). Throws a RangeError for an unknown key. */
@@ -428,16 +435,21 @@ export function describeOperations(
  * `describeOperations` describes those of a group: for instance a product of operations, an
  * operation shifted by a lattice translation, or the operations of a site symmetry. Each operation is
  * `{ matrix, translation }` as `operations` gives it. Each matrix must have integer entries (within
- * 10⁻⁹) and be the linear part of a crystallographic plane point group (determinant ±1, order 1,
- * 2, 3, 4 or 6); each translation must lie within 10⁻⁹ of a fraction with a denominator of at most
- * 12 (1/3 as 0.333…), as the translations of `operations` and their products do. Throws a
- * RangeError otherwise.
+ * the tolerance, per entry) and be the linear part of a crystallographic plane point group
+ * (determinant ±1, order 1, 2, 3, 4 or 6); each component of a translation is read as the fraction
+ * with a denominator of at most 12 within the tolerance (1/3 from 0.333…), as the translations of
+ * `operations` and their products are. Throws a RangeError otherwise, also for a component within
+ * the tolerance of two such fractions (which can lie 1/132 apart).
  */
-export function describeOperationsOf(operations: readonly PlaneOperation[]): readonly OperationDescription[] {
+export function describeOperationsOf(
+  operations: readonly PlaneOperation[],
+  options?: ToleranceOptions,
+): readonly OperationDescription[] {
+  const tolerance = toleranceOf(options, 'operations');
   if (!Array.isArray(operations)) {
     throw new RangeError('describeOperationsOf takes a list of operations { matrix, translation }');
   }
-  return Object.freeze(operations.map((op) => describe(exactOf(op))));
+  return Object.freeze(operations.map((op) => describe(exactOf(op, tolerance))));
 }
 
 /**
@@ -460,7 +472,7 @@ export function wyckoffPositions(key: PlaneGroupKey): readonly WyckoffPosition[]
  * their fixed space. Throws a RangeError for an unknown key, a point that is not two finite
  * numbers, or a tolerance outside (0, 1/2).
  */
-export function siteSymmetry(key: PlaneGroupKey, point: readonly number[], options?: PointOptions): SiteSymmetry {
+export function siteSymmetry(key: PlaneGroupKey, point: readonly number[], options?: ToleranceOptions): SiteSymmetry {
   const site = planeSiteSymmetry(groupKey(key, 'siteSymmetry'), point, options);
   return Object.freeze({
     operations: Object.freeze([...site.operations]),
@@ -475,7 +487,11 @@ export function siteSymmetry(key: PlaneGroupKey, point: readonly number[], optio
  * it: the printed position of the point's multiplicity whose coordinates, with the centring, reach
  * the point set onto its site symmetry. Throws a RangeError as `siteSymmetry`.
  */
-export function wyckoffPosition(key: PlaneGroupKey, point: readonly number[], options?: PointOptions): WyckoffPosition {
+export function wyckoffPosition(
+  key: PlaneGroupKey,
+  point: readonly number[],
+  options?: ToleranceOptions,
+): WyckoffPosition {
   const k = groupKey(key, 'wyckoffPosition');
   const { letter } = planeWyckoffPositionOf(k, point, options);
   const found = wyckoffPositions(k).find((w) => w.letter === letter);
@@ -497,7 +513,7 @@ export function wyckoffPosition(key: PlaneGroupKey, point: readonly number[], op
 export function snapToWyckoffPosition(
   key: PlaneGroupKey,
   point: readonly number[],
-  options?: PointOptions,
+  options?: ToleranceOptions,
 ): SnappedPosition {
   const k = groupKey(key, 'snapToWyckoffPosition');
   if (!Array.isArray(point)) {
@@ -526,7 +542,7 @@ export interface PointOrbitEntry {
 export function orbit(
   key: PlaneGroupKey,
   point: readonly number[],
-  options?: PointOptions,
+  options?: ToleranceOptions,
 ): readonly PointOrbitEntry[] {
   return Object.freeze(
     planeOrbit(groupKey(key, 'orbit'), point, options).map((e) =>

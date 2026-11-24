@@ -6,6 +6,8 @@
 import { apply, inverse, type Mat3, type Vec3 } from '../linalg.js';
 import { checkCartesianOperations } from '../operations.js';
 import { siteTolerance } from '../siteSymmetry.js';
+import { TOLERANCE_BOUND } from '../tolerances.js';
+import type { ToleranceOptions } from '../tolerances.js';
 import type { Uvw } from '../symmetryDirections.js';
 import {
   integer,
@@ -114,15 +116,6 @@ function integerInverseTranspose(w: Mat3): Mat3 {
   return r;
 }
 
-/** Options of `orbitOf`. */
-export interface OrbitOptions {
-  /**
-   * Two images count as one pole if their unit vectors are closer than this (Euclidean distance).
-   * Default 10⁻⁶; a caller whose directions carry rounding errors passes a larger value.
-   */
-  readonly tolerance?: number;
-}
-
 /** One pole of the orbit of a direction under a list of operations. */
 export interface OrbitPole {
   /** The image of the given direction as a Cartesian unit vector (the first operation's image where several coincide). */
@@ -142,10 +135,11 @@ export interface OrbitPole {
 export function orbitOf(
   operations: readonly { readonly cartesian: Mat3 }[],
   direction: Vec3,
-  options?: OrbitOptions,
+  options?: ToleranceOptions,
 ): readonly OrbitPole[] {
   const tolerance = siteTolerance(options);
-  checkCartesianOperations(operations, tolerance);
+  // Operations are checked in their own metric, at most with the bound for operations.
+  checkCartesianOperations(operations, Math.min(tolerance, TOLERANCE_BOUND.operations));
   const n = Math.hypot(direction[0], direction[1], direction[2]);
   if (!(n > 0) || !Number.isFinite(n)) throw new RangeError(`Not a direction: ${JSON.stringify(direction)}`);
   const u: Vec3 = [direction[0] / n, direction[1] / n, direction[2] / n];

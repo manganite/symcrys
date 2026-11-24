@@ -15,12 +15,13 @@ export const ELIMINATION_EPSILON = 1e-12;
  * row's pivot, pivots ascending. The rows are unique for a given span, so the pivots name the free
  * parameters unambiguously: each is the lowest-index component that is independent of the ones
  * before it. For operations with float noise a row can keep entries too small to be a pivot
- * (below `PIVOT_EPSILON`) before its pivot, so the pivots are returned rather than read off the
- * rows (#88); entries below `ELIMINATION_EPSILON` are set to zero.
+ * (below `PIVOT_EPSILON`, or `pivotThreshold`) before its pivot, so the pivots are returned rather
+ * than read off the rows (#88); entries below `ELIMINATION_EPSILON` are set to zero.
  */
 export function rowEchelonWithPivots(
   vectors: readonly (readonly number[])[],
   dim: number,
+  pivotThreshold = PIVOT_EPSILON,
 ): { rows: number[][]; pivots: number[] } {
   const m = vectors.map((v) => Array.from(v));
   const pivots: number[] = [];
@@ -28,7 +29,7 @@ export function rowEchelonWithPivots(
   for (let c = 0; c < dim && row < m.length; c++) {
     let pivot = row;
     for (let r = row + 1; r < m.length; r++) if (Math.abs(m[r][c]) > Math.abs(m[pivot][c])) pivot = r;
-    if (Math.abs(m[pivot][c]) < PIVOT_EPSILON) continue;
+    if (Math.abs(m[pivot][c]) < pivotThreshold) continue;
     [m[row], m[pivot]] = [m[pivot], m[row]];
     const p = m[row][c];
     for (let j = 0; j < dim; j++) m[row][j] /= p;

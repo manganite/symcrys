@@ -7,16 +7,7 @@
 
 import { compose, equalModLattice, parseOperation, toPlain, type PlainOperation } from './affine.js';
 import { planeGroupEntry, planeGroupOperations } from './planeGroups.js';
-import { EPSILON } from '../tolerances.js';
-
-/** Options of the functions that take a point. */
-export interface PointOptions {
-  /**
-   * Two points count as the same, modulo the lattice, if each coordinate differs by less than this
-   * from an integer (coordinates in the lattice basis). Default 10⁻⁶.
-   */
-  readonly tolerance?: number;
-}
+import { toleranceOf, type ToleranceOptions } from '../tolerances.js';
 
 /** The site symmetry of a point under a plane group. */
 export interface PlaneSiteSymmetry {
@@ -49,13 +40,9 @@ export interface PlaneWyckoffPosition {
   readonly siteSymmetry: string;
 }
 
-function tolerance(options?: PointOptions): number {
-  const t = options?.tolerance ?? EPSILON;
+function tolerance(options?: ToleranceOptions): number {
   // Modulo the lattice two coordinates differ by at most 1/2, so a tolerance of 1/2 or more says nothing.
-  if (!(typeof t === 'number' && t > 0 && t < 0.5)) {
-    throw new RangeError(`The tolerance must lie between 0 and 1/2, not ${String(t)}`);
-  }
-  return t;
+  return toleranceOf(options, 'points');
 }
 
 function checkPoint(point: readonly number[]): void {
@@ -121,7 +108,7 @@ const plainOperations = (key: string): readonly PlainOperation[] => groupData(ke
 export function planeOrbit(
   key: string,
   point: readonly number[],
-  options?: PointOptions,
+  options?: ToleranceOptions,
 ): { point: number[]; operations: number[] }[] {
   // The point is first set onto its site symmetry, as planeSiteSymmetry does, so that the images of
   // one coset coincide exactly: merging images within the tolerance pairwise is not transitive, and
@@ -172,7 +159,11 @@ function fixingOperations(ops: readonly PlainOperation[], indices: readonly numb
  * groups; so the result is always a subgroup and the set point lies exactly on its elements. Throws a
  * RangeError if that does not settle (a tolerance far too large).
  */
-export function planeSiteSymmetry(key: string, point: readonly number[], options?: PointOptions): PlaneSiteSymmetry {
+export function planeSiteSymmetry(
+  key: string,
+  point: readonly number[],
+  options?: ToleranceOptions,
+): PlaneSiteSymmetry {
   checkPoint(point);
   const tol = tolerance(options);
   const ops = plainOperations(key);
@@ -256,7 +247,7 @@ function onExpression(expression: string, p: readonly number[], tol: number): bo
 export function planeWyckoffPositionOf(
   key: string,
   point: readonly number[],
-  options?: PointOptions,
+  options?: ToleranceOptions,
 ): PlaneWyckoffPosition {
   const tol = tolerance(options);
   const site = planeSiteSymmetry(key, point, options);

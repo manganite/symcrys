@@ -136,6 +136,24 @@ All notable changes to symcrys are recorded here. The format follows
   to 0.10 it was the first triplet as a string, which is now `coordinates[0]`. In Python a list of
   strings.
 
+- **One tolerance contract** (#137 D1, #93, #121 step 8a):
+  - one option type, `ToleranceOptions` (`{ tolerance }`), for every function that compares numbers
+    a caller passes in; it replaces `SiteSymmetryOptions`, `OrbitOptions`, `PointGroupOfOptions`,
+    `WyckoffOptions` (now `SettingOptions & ToleranceOptions`), `ResidualOperationsOptions` and the
+    plane `PointOptions`; `EPSILON` (10⁻⁶) is exported by all three entry points (Python
+    `symcrys.EPSILON`, `symcrys.magnetic.EPSILON`, `symcrys.plane.EPSILON`);
+  - `tensorFormOf`, `isCentrosymmetricOf`, `isEnantiomorphicOf`, `allowsPropertyOf`,
+    `allowedPropertiesOf`, `rotateTensor` and the plane `describeOperationsOf` take a `tolerance`
+    (Python: the keyword `tolerance`); the plane `describeOperationsOf` reads translations and
+    integer matrices within it, default 10⁻⁶ (was a fixed 10⁻⁹);
+  - one check of the tolerance everywhere, with one message: a finite number above 0 and below 0.1
+    (operations), 1 (directions), 1/2 (points) or 1 (`residualOperations`); `residualOperations`
+    refused only negative values and took 0, now 0 is refused; `null` is refused everywhere (it
+    took the default in some functions); comparisons are strict (`<`) everywhere;
+  - the plane `describeOperationsOf` refuses a translation within the tolerance of two fractions;
+  - `siteSymmetryOf`, `siteSymmetry`, `wyckoffPosition` and `orbitOf` check the orthogonality of
+    the operations with their tolerance, at most 0.1 (was the tolerance for directions, up to 1).
+
 ### Removed
 
 - **`latticeOperations`** (Python `lattice_operations`), in both entry points (#121 step 6d): its
@@ -164,6 +182,22 @@ All notable changes to symcrys are recorded here. The format follows
   | Python: `symcrys.operations(key, convention="itc")`, `symcrys.settings(key, "itc")`                                                    | `symcrys.operations(key)`, `symcrys.settings(key)`                                                                                                   |
   | `convention: 'birss'` (Python `convention="birss"`): Birss's default setting, symbols, order of the operations, generators, axis signs | gone; Birss's presentation is the application's (birss-app, #125). The frames of the two books: docs/conventions.md, "Birss as a second print check" |
   | `findPointGroup("m'm'm", 'birss')` and the reading of `mm'm'`, `6'/mmm'` as Birss symbols (#46)                                        | gone: a key gives the ITC default setting                                                                                                            |
+
+### Fixed
+
+- **Tensor forms of operations with rounding errors** (#89; wrong since 0.4.0, when `tensorFormOf`
+  came): operations rounded to 6 decimals (√3/2 as 0.866025), as files and other programs give
+  them, were accepted and gave too many free parameters (13 instead of 6 for the piezoelectric
+  tensor of `3`), without an error. The operations are now closed into a group within the
+  tolerance and made exact first, and the form is that of the exact group; `allowsPropertyOf` and
+  `allowedPropertiesOf` read them in the same way (docs/conventions.md, "Tolerances"). Such
+  operations need a `tolerance` of about ten times their rounding (10⁻⁵ for 6 decimals): with the
+  default they now throw a RangeError that says so, where they gave an answer before, with too many
+  free parameters for a tensor form; the same holds for `isCentrosymmetricOf`.
+- **Site symmetry of a grey group at a large tolerance** (#133; wrong since 0.6.0, which brought the grey groups): the products of
+  the fixing operations were looked up by their matrix alone, so the copy without time reversal
+  was always found, and the result could be no subgroup (15 of the 24 operations of `6mm1'` at
+  tolerance 0.7). Products are now whole operations.
 
 ## [0.10.1] - 2026-11-22
 

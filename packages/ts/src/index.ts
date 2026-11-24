@@ -6,6 +6,7 @@
  * SemVer (see CLAUDE.md); everything else is internal.
  */
 export { VERSION } from './version.js';
+export { EPSILON, type ToleranceOptions } from './tolerances.js';
 
 export type { Mat3, Vec3 } from './linalg.js';
 export {
@@ -27,7 +28,6 @@ export {
   type CellOperation,
   type IsValidCellOptions,
   type LatticeParameters,
-  type ResidualOperationsOptions,
 } from './cell.js';
 export {
   changeOfAxes,
@@ -44,11 +44,11 @@ export {
 export type { PointGroupKey, Setting, AxesOptions, SettingOptions, SymbolOptions } from './pointGroups/pointGroups.js';
 export { LATTICE_SYMMETRY_DIRECTIONS, type Uvw } from './symmetryDirections.js';
 export type { Axis, DirectionElements, OperationKind, SymmetryDirection } from './pointGroups/elements.js';
-export type { SiteSymmetry, SiteSymmetryOptions } from './siteSymmetry.js';
-export type { Hkl, WyckoffOptions, WyckoffPosition } from './pointGroups/wyckoff.js';
+export type { SiteSymmetry } from './siteSymmetry.js';
+export type { Hkl, WyckoffPosition } from './pointGroups/wyckoff.js';
 export type { CrystalForm, CrystalFormType } from './pointGroups/crystalForms.js';
-export type { DirectionOrbitEntry, FaceOrbitEntry, OrbitOptions, OrbitPole } from './pointGroups/orbits.js';
-export type { CartesianAxis, PointGroupOfOptions } from './pointGroups/identify.js';
+export type { DirectionOrbitEntry, FaceOrbitEntry, OrbitPole } from './pointGroups/orbits.js';
+export type { CartesianAxis } from './pointGroups/identify.js';
 export type { IntrinsicSymmetry, TensorForm, TensorParity, TensorRank } from './tensors/tensorForm.js';
 
 export {

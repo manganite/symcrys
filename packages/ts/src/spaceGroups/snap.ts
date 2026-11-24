@@ -7,7 +7,7 @@
 
 import { parseOperation, toPlain, type PlainOperation } from './affine.js';
 import { planeGroupEntry } from './planeGroups.js';
-import { EPSILON } from '../tolerances.js';
+import { toleranceOf } from '../tolerances.js';
 
 /** The point set of one printed coordinate expression, x ↦ M·(x, y) + c, with the columns of M that are not zero. */
 interface Expression {
@@ -93,17 +93,11 @@ export interface SnappedPoint {
  * the same number of free parameters the nearest wins. Throws a RangeError for a point that is not
  * two finite numbers or a tolerance outside (0, 1/2).
  */
-export function planeSnapToWyckoffPosition(
-  key: string,
-  point: readonly number[],
-  tolerance: number = EPSILON,
-): SnappedPoint {
+export function planeSnapToWyckoffPosition(key: string, point: readonly number[], tolerance?: number): SnappedPoint {
   if (point.length !== 2 || !point.every(Number.isFinite)) {
     throw new RangeError(`A point of the plane has two finite coordinates, not ${JSON.stringify(point)}`);
   }
-  if (!(typeof tolerance === 'number' && tolerance > 0 && tolerance < 0.5)) {
-    throw new RangeError(`The tolerance must lie between 0 and 1/2, not ${String(tolerance)}`);
-  }
+  const tol = toleranceOf({ tolerance }, 'points');
   const p = point.map(mod1);
   const rows = positionsOf(planeGroupEntry(key).symbol);
   for (const freedom of [0, 1, 2]) {
@@ -112,7 +106,7 @@ export function planeSnapToWyckoffPosition(
       for (const e of expressions) {
         if (e.freedom !== freedom) continue;
         const n = nearest(e, p);
-        if (n.distance < tolerance && (!best || n.distance < best.distance)) best = { row, ...n };
+        if (n.distance < tol && (!best || n.distance < best.distance)) best = { row, ...n };
       }
     }
     if (best) return { row: best.row, point: best.point.map(mod1) };

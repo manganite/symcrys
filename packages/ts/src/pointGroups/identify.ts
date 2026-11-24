@@ -4,9 +4,10 @@
  * group of a list of operations"). Shared by both entry points.
  */
 
-import { det, multiply, trace, type Mat3, type Vec3 } from '../linalg.js';
+import { det, trace, type Mat3, type Vec3 } from '../linalg.js';
+import { closeWithin, sameWithin } from '../closure.js';
 import { checkCartesianOperations, checkTimeReversal, type CartesianOperation } from '../operations.js';
-import { EPSILON } from '../tolerances.js';
+import { EPSILON, toleranceOf, type ToleranceOptions } from '../tolerances.js';
 import { axialVector, rotationAxis, type OperationKind } from './elements.js';
 import {
   MAGNETIC_POINT_GROUP_KEYS,
@@ -14,16 +15,6 @@ import {
   settings,
   type MagneticPointGroupKey,
 } from './pointGroups.js';
-
-/** Options of `pointGroupOf` and `describeOperationsOf`. */
-export interface PointGroupOfOptions {
-  /**
-   * Two matrices are the same operation if no entry differs by this much or more, and a matrix
-   * counts as orthogonal and crystallographic within it. Default `EPSILON` (10⁻⁶); a caller whose
-   * matrices carry rounding errors passes a larger value, below 0.1.
-   */
-  readonly tolerance?: number;
-}
 
 /** The point group of a list of operations: its key, and the setting if the operations are exactly those of one. */
 export interface IdentifiedPointGroup {
@@ -65,70 +56,17 @@ export interface CartesianOperationDescription {
 /** No point group has more than 96 operations (m-3m1'). */
 const MAX_ORDER = 96;
 
-function toleranceOf(options?: PointGroupOfOptions): number {
-  const t = options?.tolerance ?? EPSILON;
-  if (!(typeof t === 'number' && t > 0 && t < 0.1)) throw new RangeError(`Invalid tolerance: ${String(t)}`);
-  return t;
-}
-
 /**
  * How far the trace of a matrix with entries within `tolerance` may lie from an integer: three
  * diagonal entries, so three times the tolerance (at least that of `EPSILON`).
  */
 const traceTolerance = (tolerance: number): number => 3 * Math.max(tolerance, EPSILON);
 
-const same = (a: CartesianOperation, b: CartesianOperation, tolerance: number): boolean =>
-  a.timeReversal === b.timeReversal &&
-  a.cartesian.every((row, i) => row.every((v, j) => Math.abs(v - b.cartesian[i][j]) < tolerance));
+const same = sameWithin;
 
-/** The kind of an operation (rounded trace, sign of the determinant, time reversal): equal operations have the same. */
-const kindOf = (op: CartesianOperation): string =>
-  `${Math.round(trace(op.cartesian))}${det(op.cartesian) > 0 ? '+' : '-'}${op.timeReversal ? "'" : ''}`;
-
-/**
- * The group the operations generate, or undefined if it is larger than any point group. The
- * operations of the list that are not yet in the group are taken as generators, and the group is
- * grown by multiplying each element by each generator until nothing new appears; a new operation
- * is compared only with the operations of its kind.
- */
-function close(ops: readonly CartesianOperation[], tolerance: number): CartesianOperation[] | undefined {
-  const identity: CartesianOperation = {
-    cartesian: [
-      [1, 0, 0],
-      [0, 1, 0],
-      [0, 0, 1],
-    ],
-    timeReversal: false,
-  };
-  const group: CartesianOperation[] = [];
-  const byKind = new Map<string, CartesianOperation[]>();
-  const has = (op: CartesianOperation): boolean => (byKind.get(kindOf(op)) ?? []).some((g) => same(g, op, tolerance));
-  const push = (op: CartesianOperation): void => {
-    group.push(op);
-    const k = kindOf(op);
-    const list = byKind.get(k);
-    if (list) list.push(op);
-    else byKind.set(k, [op]);
-  };
-  push(identity);
-  const generators: CartesianOperation[] = [];
-  for (const s of ops) {
-    if (has(s)) continue;
-    generators.push(s);
-    for (let i = 0; i < group.length; i++) {
-      for (const t of generators) {
-        const product: CartesianOperation = {
-          cartesian: multiply(group[i].cartesian, t.cartesian),
-          timeReversal: group[i].timeReversal !== t.timeReversal,
-        };
-        if (has(product)) continue;
-        if (group.length >= MAX_ORDER) return undefined;
-        push(product);
-      }
-    }
-  }
-  return group;
-}
+/** The group the operations generate within the tolerance, or undefined if it is larger than any point group. */
+const close = (ops: readonly CartesianOperation[], tolerance: number): CartesianOperation[] | undefined =>
+  closeWithin(ops, tolerance, MAX_ORDER);
 
 /**
  * How many operations of each kind a group has: determinant, trace and time reversal of each. For
@@ -171,9 +109,9 @@ function keyOfSignature(s: string): MagneticPointGroupKey | undefined {
  */
 export function pointGroupOf(
   operations: readonly CartesianOperation[],
-  options?: PointGroupOfOptions,
+  options?: ToleranceOptions,
 ): IdentifiedPointGroup | undefined {
-  const tolerance = toleranceOf(options);
+  const tolerance = toleranceOf(options, 'operations');
   checkCartesianOperations(operations, tolerance);
   checkTimeReversal(operations);
   const group = close(operations, tolerance);
@@ -232,9 +170,9 @@ function describe(op: CartesianOperation, i: number, tolerance: number): Cartesi
  */
 export function describeOperationsOf(
   operations: readonly CartesianOperation[],
-  options?: PointGroupOfOptions,
+  options?: ToleranceOptions,
 ): readonly CartesianOperationDescription[] {
-  const tolerance = toleranceOf(options);
+  const tolerance = toleranceOf(options, 'operations');
   checkCartesianOperations(operations, tolerance);
   checkTimeReversal(operations);
   return Object.freeze(operations.map((op, i) => describe(op, i, tolerance)));

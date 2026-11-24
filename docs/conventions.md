@@ -450,8 +450,54 @@ the caller's. "Not found" is `undefined`, never `null` (`findPointGroup`, `point
 
 Matrices hold floating-point numbers. During group closure every entry within 10⁻⁹ of an exact
 value (0, ±1, ±1/2, ±√3/2, and ±√2/2 for the 45° setting frame) is set to that value, so products do not drift; two matrices are
-equal when all entries agree within 10⁻⁶. The matrix W of an operation in the lattice basis
+equal when all entries agree within 10⁻⁶. Operations a caller passes in are compared within the
+tolerance of the call ("Tolerances"). The matrix W of an operation in the lattice basis
 (`matrix`, "Operations") is exact: integers.
+
+## Tolerances
+
+Every function that compares numbers a caller passes in (operations, directions, points) takes one
+option, `tolerance` (`ToleranceOptions`; in Python the keyword `tolerance`), with the default
+`EPSILON` = 10⁻⁶, which all three entry points export (#137 D1, #93). Two numbers count as equal
+when they differ by less than the tolerance, in the metric of their kind:
+
+| Kind of object                            | Metric                                                  | Bound | Functions                                                                                                                                                                                |
+| ----------------------------------------- | ------------------------------------------------------- | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| operations                                | per matrix entry                                        | 0.1   | `pointGroupOf`, `describeOperationsOf` (also in `symcrys/plane`), `tensorFormOf`, `isCentrosymmetricOf`, `isEnantiomorphicOf`, `allowsPropertyOf`, `allowedPropertiesOf`, `rotateTensor` |
+| directions                                | Euclidean distance of the unit vectors                  | 1     | `siteSymmetryOf`, `siteSymmetry`, `wyckoffPosition`, `orbitOf`                                                                                                                           |
+| points of the plane                       | per coordinate in the lattice basis, modulo the lattice | 1/2   | `siteSymmetry`, `wyckoffPosition`, `orbit`, `snapToWyckoffPosition` of `symcrys/plane`                                                                                                   |
+| the metric tensor G of a cell (W ᵀGW = G) | per entry, relative to the largest entry of G           | 1     | `residualOperations`                                                                                                                                                                     |
+
+- **One check.** A tolerance is a finite number above 0 and below the bound of its kind, beyond
+  which it says nothing: two distinct operations of a crystallographic point group differ in some
+  matrix entry by at least √2/3 ≈ 0.47 in any orthonormal frame (‖A − B‖ = ‖1 − A⁻¹B‖ ≥ √2, the
+  least for a sixfold rotation), two unit vectors are at most 2 apart, two points modulo the lattice
+  at most 1/2 per coordinate. Anything else, `null` included, is a RangeError with one message; only
+  a missing tolerance takes the default. A function that compares directions checks the
+  orthogonality of the operations with its tolerance, at most 0.1 (per entry of RᵀR, at least
+  `EPSILON`). The translations read by `describeOperationsOf` of `symcrys/plane` are compared per
+  coordinate; one that lies within the tolerance of two fractions with denominators up to 12
+  (which can be 1/132 apart) is refused.
+- **Operations of a caller are made exact.** `tensorFormOf`, `isCentrosymmetricOf`,
+  `allowsPropertyOf` and `allowedPropertiesOf` close the list into a group within the tolerance and
+  replace it by the exact group nearest to it before they compute anything: each matrix f(x) by
+  the mean of f(xy)·f(y)⁻¹ over the group, repeated until it settles, which turns matrices that are
+  a group within a small error into an exact representation nearby, then made orthogonal by its
+  invariant metric. The rank of a tensor form is the trace of the group average of the exact
+  group, exact in any frame, and its free parameters are sought first among components larger
+  than ten times the distance between the caller's matrices and the exact group, so that a component of the order of that error is not
+  taken for an independent one (#89). Operations rounded to 4, 5 or 6 decimals give the form of
+  the exact group for every class in every setting, and its number of free parameters in a general
+  orientation, for all 122 groups (`tensors/tolerance.test.ts`). `isCentrosymmetricOf` only closes
+  the list within the tolerance and seeks the inversion in it.
+- **The tolerance must exceed the errors of the products.** Closing a list multiplies its
+  matrices, and their errors add up: matrices rounded to n decimals need a tolerance of about
+  10^(1−n), not 10^(−n). With the default, matrices rounded to 6 decimals in a hexagonal or
+  trigonal group generate no finite group, and the error says to pass a larger tolerance.
+- **The exact group is near the caller's, not necessarily the textbook one.** Matrices rounded to 4
+  decimals give an exact group within their errors (√3/2 written as 0.866 fixes the orientation of
+  a hexagonal group about z only to a few 10⁻⁵), so a form computed from them has entries within
+  about that of the exact form.
 
 ## Properties
 
@@ -941,12 +987,12 @@ seven properties have an axial tensor.
 orthogonal matrix R (rows: the new axes in the old frame), with the factor det(R) for an axial
 tensor. For the form at a surface: the site symmetry of the normal (`siteSymmetry`), its form
 (`tensorFormOf`), and the basis rotated into a frame with z along the normal. Both functions take
-Cartesian matrices only and throw for a matrix that is not orthogonal (e.g. one in the lattice
-basis).
+Cartesian matrices only and throw for a matrix that is not orthogonal within the tolerance (e.g. one
+in the lattice basis).
 
 **Numbers.** The form is computed in floating point: each component's unit tensor, symmetrised over
 the index symmetry, is averaged over the group, and the averages are row-reduced (pivot threshold
-10⁻⁷). An entry of the result within 10⁻⁹ of a multiple of 1/12 is set to it, as matrices are
+10⁻⁷; for operations of a caller, see "Tolerances"). An entry of the result within 10⁻⁹ of a multiple of 1/12 is set to it, as matrices are
 snapped ("Numbers" above): for the 32 classes in all their settings every entry of every form is 0,
 ±1/2, ±1 or ±2, which then come out exact; other values, e.g. in a rotated frame, are kept.
 
@@ -1026,7 +1072,7 @@ normals of a group are the printed symmetry directions at the positions where it
 of `symmetryElements` carry them too (maintainer, 2026-11-22, #84). `describeOperationsOf` describes
 any list of operations of the plane in the same way, such as a product of operations, an operation
 shifted by a lattice translation or the operations of a site symmetry; it reads each translation as
-a fraction with a denominator of at most 12 (within 10⁻⁹) and refuses a matrix that is not the linear
+a fraction with a denominator of at most 12 (within the tolerance, default 10⁻⁶) and refuses a matrix that is not the linear
 part of a plane point group (maintainer, 2026-11-22, #84).
 
 **Points.** `siteSymmetry`, `wyckoffPosition` and `orbit` take the key of a plane group and a point

@@ -396,3 +396,30 @@ def test_site_symmetry_of_a_key_and_of_a_list() -> None:
     assert symcrys.wyckoff_positions("mm2")[1]["coordinates"] == ["0,y,z", "0,-y,z"]
     assert plane.symmetry_elements("p4")["rotation_points"][0]["n"] == 4
     assert [d["n"] for d in plane.describe_operations("p4")] == [1, 2, 4, 4]
+
+
+def test_one_tolerance_contract() -> None:
+    # EPSILON in every module, and a tolerance for every function that compares numbers of a caller (#93).
+    assert symcrys.EPSILON == magnetic.EPSILON == plane.EPSILON == 1e-6
+    rounded = [{"cartesian": np.round(op["cartesian"], 4)} for op in symcrys.operations("6/mmm")]
+    assert symcrys.is_centrosymmetric_of(rounded, tolerance=1e-3)
+    assert not symcrys.is_enantiomorphic_of(rounded, tolerance=1e-3)
+    assert symcrys.allowed_properties_of(rounded, tolerance=1e-3) == symcrys.allowed_properties("6/mmm")
+    assert not symcrys.allows_property_of(rounded, "pyroelectric", tolerance=1e-3)
+    # Rounded operations give the form of the exact group (#89).
+    exact = symcrys.tensor_form("6/mmm", {"rank": 4, "parity": "polar", "intrinsic": "none"})
+    form = symcrys.tensor_form_of(rounded, {"rank": 4, "parity": "polar", "intrinsic": "none"}, tolerance=1e-3)
+    assert form["parameters"].tolist() == exact["parameters"].tolist()
+    r = np.round(symcrys.operations("6/mmm")[1]["cartesian"], 4)
+    assert symcrys.rotate_tensor([1.0, 0, 0], r, "pyroelectric", tolerance=1e-3).shape == (3,)
+    with pytest.raises(symcrys.SymcrysError, match="tolerance must be a number above 0 and below 0.1"):
+        symcrys.tensor_form_of(rounded, "piezoelectric", tolerance=0.5)
+    with pytest.raises(symcrys.SymcrysError):
+        symcrys.rotate_tensor([1.0, 0, 0], r, "pyroelectric")
+    m = [{"cartesian": op["cartesian"], "time_reversal": op["time_reversal"]} for op in magnetic.operations("4/mm'm'")]
+    assert magnetic.allows_property_of(m, "ferromagnetic", tolerance=1e-3)
+    assert magnetic.is_centrosymmetric_of(m, tolerance=1e-3)
+    shifted = [{"matrix": op["matrix"], "translation": op["translation"] + 1e-4} for op in plane.operations("p4gm")]
+    with pytest.raises(symcrys.SymcrysError):
+        plane.describe_operations_of(shifted)
+    assert len(plane.describe_operations_of(shifted, tolerance=1e-3)) == 8

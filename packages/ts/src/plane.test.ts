@@ -252,7 +252,23 @@ describe('describeOperationsOf', () => {
     }
   });
 
-  it('reads a translation within 10⁻⁹ of a fraction with a denominator up to 12', () => {
+  it('refuses a translation within the tolerance of two fractions, instead of reading either', () => {
+    // The review of #121 step 8a: 1/12 at tolerance 0.01 was read as 1/11 (the smaller denominator),
+    // and 1/4 at 0.09 as 1/3.
+    const op = (t: number[]) => ({
+      matrix: [
+        [1, 0],
+        [0, 1],
+      ],
+      translation: t,
+    });
+    expect(plane.describeOperationsOf([op([0.25, 1 / 12])])[0].translation).toEqual([0.25, 1 / 12]);
+    expect(() => plane.describeOperationsOf([op([0.25, 1 / 12])], { tolerance: 0.01 })).toThrow(/1\/11 and 1\/12/);
+    expect(() => plane.describeOperationsOf([op([0.25, 0])], { tolerance: 0.09 })).toThrow(RangeError);
+    expect(plane.describeOperationsOf([op([0.2501, 0.5])], { tolerance: 0.001 })[0].translation).toEqual([0.25, 0.5]);
+  });
+
+  it('reads a translation within the tolerance of a fraction with a denominator up to 12', () => {
     const [d] = plane.describeOperationsOf([
       {
         matrix: [
