@@ -17,7 +17,8 @@ import {
   type PointGroupKey,
   type SettingOptions,
 } from './pointGroups.js';
-import { siteSymmetryOf, siteTolerance, type SiteSymmetry, type SiteSymmetryOptions } from '../siteSymmetry.js';
+import { siteSymmetryOf, siteTolerance, type SiteSymmetry } from '../siteSymmetry.js';
+import type { ToleranceOptions } from '../tolerances.js';
 import { ITA_WYCKOFF, type WyckoffRow } from './wyckoffData.js';
 
 /** A face (hkl): three Miller indices in the conventional basis (for hexagonal axes without i = −(h + k)). */
@@ -55,9 +56,6 @@ export interface WyckoffPosition {
   /** Indices into `operations` (same setting) of the site symmetry of the representative. */
   readonly siteSymmetryOperations: readonly number[];
 }
-
-/** The setting (`SettingOptions`) and the tolerance (`SiteSymmetryOptions`) of `siteSymmetry` and `wyckoffPosition`. */
-export type WyckoffOptions = SettingOptions & SiteSymmetryOptions;
 
 /** The values substituted into ITA's Miller indices for the numeric representative. */
 export const REPRESENTATIVE_VALUES: Readonly<Record<'h' | 'k' | 'l', number>> = { h: 3, k: 2, l: 1 };
@@ -286,7 +284,11 @@ export function wyckoffPositions(key: PointGroupKey, options?: SettingOptions): 
  * setting: `siteSymmetryOf` applied to `operations(key, options)`, so the indices refer to those
  * operations (#137 C1). Time reversal is ignored. Throws a RangeError as `siteSymmetryOf` does.
  */
-export function siteSymmetry(key: MagneticPointGroupKey, direction: Vec3, options?: WyckoffOptions): SiteSymmetry {
+export function siteSymmetry(
+  key: MagneticPointGroupKey,
+  direction: Vec3,
+  options?: SettingOptions & ToleranceOptions,
+): SiteSymmetry {
   return siteSymmetryOf(operations(key, options), direction, options);
 }
 
@@ -298,7 +300,11 @@ const sortedKey = (list: readonly number[]): string => [...list].sort((a, b) => 
  * direction (ITA's definition). `tolerance` as for `siteSymmetryOf`; throws a RangeError if the
  * operations found within it do not match any position (a tolerance too large).
  */
-export function wyckoffPosition(key: PointGroupKey, direction: Vec3, options?: WyckoffOptions): WyckoffPosition {
+export function wyckoffPosition(
+  key: PointGroupKey,
+  direction: Vec3,
+  options?: SettingOptions & ToleranceOptions,
+): WyckoffPosition {
   const tolerance = siteTolerance(options);
   const setting = tableSetting(key, options);
   const ops = operations(key, { setting });

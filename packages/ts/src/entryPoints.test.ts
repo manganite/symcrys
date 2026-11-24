@@ -789,3 +789,75 @@ describe('every result is frozen, nested values included (#137 C4)', () => {
     expect(classes.zoneAxis([1, 1, 0], [2, 2, 0])).toBeUndefined();
   });
 });
+
+describe('one tolerance contract (#137 D1, #93)', () => {
+  const cubic = classes.operations('m-3m');
+  const magneticOps = magnetic.operations("4/m'mm");
+  const basis = classes.latticeBasis('cubic');
+  const p4 = plane.operations('p4');
+  type Call = (options: { tolerance?: unknown }) => unknown;
+  // Every function that compares numbers a caller passes in, with the bound of its metric.
+  const calls: Record<string, [Call, number]> = {
+    'symcrys pointGroupOf': [(o) => classes.pointGroupOf(cubic, o as never), 0.1],
+    'symcrys describeOperationsOf': [(o) => classes.describeOperationsOf(cubic, o as never), 0.1],
+    'symcrys tensorFormOf': [(o) => classes.tensorFormOf(cubic, 'piezoelectric', o as never), 0.1],
+    'symcrys isCentrosymmetricOf': [(o) => classes.isCentrosymmetricOf(cubic, o as never), 0.1],
+    'symcrys isEnantiomorphicOf': [(o) => classes.isEnantiomorphicOf(cubic, o as never), 0.1],
+    'symcrys allowsPropertyOf': [(o) => classes.allowsPropertyOf(cubic, 'pyroelectric', o as never), 0.1],
+    'symcrys allowedPropertiesOf': [(o) => classes.allowedPropertiesOf(cubic, o as never), 0.1],
+    'symcrys rotateTensor': [
+      (o) => classes.rotateTensor([1, 0, 0], cubic[1].cartesian, 'pyroelectric', o as never),
+      0.1,
+    ],
+    'symcrys siteSymmetryOf': [(o) => classes.siteSymmetryOf(cubic, [0, 0, 1], o as never), 1],
+    'symcrys siteSymmetry': [(o) => classes.siteSymmetry('m-3m', [0, 0, 1], o as never), 1],
+    'symcrys wyckoffPosition': [(o) => classes.wyckoffPosition('m-3m', [0, 0, 1], o as never), 1],
+    'symcrys orbitOf': [(o) => classes.orbitOf(cubic, [0, 0, 1], o as never), 1],
+    'symcrys residualOperations': [(o) => classes.residualOperations(cubic, basis, o as never), 1],
+    'symcrys/magnetic pointGroupOf': [(o) => magnetic.pointGroupOf(magneticOps, o as never), 0.1],
+    'symcrys/magnetic describeOperationsOf': [(o) => magnetic.describeOperationsOf(magneticOps, o as never), 0.1],
+    'symcrys/magnetic tensorFormOf': [(o) => magnetic.tensorFormOf(magneticOps, 'ferromagnetic', o as never), 0.1],
+    'symcrys/magnetic isCentrosymmetricOf': [(o) => magnetic.isCentrosymmetricOf(magneticOps, o as never), 0.1],
+    'symcrys/magnetic isEnantiomorphicOf': [(o) => magnetic.isEnantiomorphicOf(magneticOps, o as never), 0.1],
+    'symcrys/magnetic allowsPropertyOf': [
+      (o) => magnetic.allowsPropertyOf(magneticOps, 'ferromagnetic', o as never),
+      0.1,
+    ],
+    'symcrys/magnetic allowedPropertiesOf': [(o) => magnetic.allowedPropertiesOf(magneticOps, o as never), 0.1],
+    'symcrys/magnetic rotateTensor': [
+      (o) => magnetic.rotateTensor([1, 0, 0], cubic[1].cartesian, 'ferromagnetic', o as never),
+      0.1,
+    ],
+    'symcrys/magnetic siteSymmetryOf': [(o) => magnetic.siteSymmetryOf(magneticOps, [0, 0, 1], o as never), 1],
+    'symcrys/magnetic siteSymmetry': [(o) => magnetic.siteSymmetry("4/m'mm", [0, 0, 1], o as never), 1],
+    'symcrys/magnetic orbitOf': [(o) => magnetic.orbitOf(magneticOps, [0, 0, 1], o as never), 1],
+    'symcrys/magnetic residualOperations': [
+      (o) => magnetic.residualOperations(magneticOps, classes.latticeBasis('tetragonal'), o as never),
+      1,
+    ],
+    'symcrys/plane describeOperationsOf': [(o) => plane.describeOperationsOf(p4, o as never), 0.1],
+    'symcrys/plane siteSymmetry': [(o) => plane.siteSymmetry('p4', [0.1, 0.2], o as never), 0.5],
+    'symcrys/plane wyckoffPosition': [(o) => plane.wyckoffPosition('p4', [0.1, 0.2], o as never), 0.5],
+    'symcrys/plane orbit': [(o) => plane.orbit('p4', [0.1, 0.2], o as never), 0.5],
+    'symcrys/plane snapToWyckoffPosition': [(o) => plane.snapToWyckoffPosition('p4', [0.1, 0.2], o as never), 0.5],
+  };
+
+  it('EPSILON is 10⁻⁶ and exported by all three entry points', () => {
+    expect(classes.EPSILON).toBe(1e-6);
+    expect(magnetic.EPSILON).toBe(1e-6);
+    expect(plane.EPSILON).toBe(1e-6);
+  });
+
+  for (const [name, [call, bound]] of Object.entries(calls)) {
+    it(`${name}: takes a tolerance above 0 and below ${bound}, and refuses everything else`, () => {
+      expect(() => call({})).not.toThrow();
+      expect(() => call({ tolerance: 1e-6 })).not.toThrow();
+      expect(() => call({ tolerance: bound / 2 })).not.toThrow(/tolerance/);
+      for (const bad of [0, -1e-6, bound, 2 * bound, Number.NaN, Number.POSITIVE_INFINITY, '1e-3', null]) {
+        expect(() => call({ tolerance: bad }), JSON.stringify(bad)).toThrow(
+          new RangeError(`The tolerance must be a number above 0 and below ${bound}, not ${JSON.stringify(bad)}`),
+        );
+      }
+    });
+  }
+});

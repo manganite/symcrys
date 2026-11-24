@@ -10,6 +10,7 @@
  * allows no time-odd property (docs/conventions.md, "Two entry points").
  */
 export { VERSION } from './version.js';
+export { EPSILON, type ToleranceOptions } from './tolerances.js';
 
 export type { Mat3, Vec3 } from './linalg.js';
 export type { CartesianOperation, Operation } from './operations.js';
@@ -32,7 +33,6 @@ export {
   type CellOperation,
   type IsValidCellOptions,
   type LatticeParameters,
-  type ResidualOperationsOptions,
 } from './cell.js';
 export {
   changeOfAxes,
@@ -93,24 +93,16 @@ export {
   type SymmetryDirection,
 } from './pointGroups/elements.js';
 export { residualMagneticOperations as residualOperations, type MagneticCellOperation } from './cell.js';
-export { siteSymmetryOf, type SiteSymmetry, type SiteSymmetryOptions } from './siteSymmetry.js';
-export { siteSymmetry, type WyckoffOptions } from './pointGroups/wyckoff.js';
+export { siteSymmetryOf, type SiteSymmetry } from './siteSymmetry.js';
+export { siteSymmetry } from './pointGroups/wyckoff.js';
 export {
   describeOperationsOf,
   pointGroupOf,
   type CartesianAxis,
   type CartesianOperationDescription,
   type IdentifiedPointGroup,
-  type PointGroupOfOptions,
 } from './pointGroups/identify.js';
-export {
-  orbit,
-  orbitOf,
-  type DirectionOrbitEntry,
-  type FaceOrbitEntry,
-  type OrbitOptions,
-  type OrbitPole,
-} from './pointGroups/orbits.js';
+export { orbit, orbitOf, type DirectionOrbitEntry, type FaceOrbitEntry, type OrbitPole } from './pointGroups/orbits.js';
 export {
   rotateTensor,
   tensorForm,

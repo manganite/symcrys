@@ -6,7 +6,7 @@
 
 import { apply, inverse, isSingular, multiply, transpose, type Mat3, type Vec3 } from './linalg.js';
 import { checkTimeReversal, type CartesianOperation as MagneticOperation } from './operations.js';
-import { EPSILON } from './tolerances.js';
+import { toleranceOf, type ToleranceOptions } from './tolerances.js';
 import { deepFreeze } from './freeze.js';
 
 /** The lattice parameters of a cell: edge lengths and angles in degrees (α between b and c, β between a and c, γ between a and b). */
@@ -49,12 +49,6 @@ export interface IsValidCellOptions {
    * `isValidCell` otherwise accepts. A ratio near 0 is a nearly flat cell.
    */
   readonly minVolumeRatio?: number;
-}
-
-/** Options of `residualOperations`. */
-export interface ResidualOperationsOptions {
-  /** The largest accepted deviation of WᵀGW from G, relative to the largest entry of G; default `EPSILON`. */
-  readonly tolerance?: number;
 }
 
 const DEG = Math.PI / 180;
@@ -224,15 +218,10 @@ export function angleBetweenPlanes(basis: Mat3, plane1: Vec3, plane2: Vec3): num
 export function residualOperations<T extends CellOperation>(
   operations: readonly T[],
   basis: Mat3,
-  options?: ResidualOperationsOptions,
+  options?: ToleranceOptions,
 ): readonly T[] {
   const g = metricTensor(basis);
-  const tolerance = options?.tolerance ?? EPSILON;
-  if (typeof tolerance !== 'number' || !Number.isFinite(tolerance) || tolerance < 0) {
-    throw new RangeError(
-      `residualOperations: tolerance must be a non-negative number, not ${JSON.stringify(tolerance)}`,
-    );
-  }
+  const tolerance = toleranceOf(options, 'metric');
   if (!Array.isArray(operations)) throw new RangeError('residualOperations: operations must be a list');
   operations.forEach((op, i) => {
     const m = (op as { readonly matrix?: unknown } | null)?.matrix;
@@ -253,7 +242,7 @@ export function residualOperations<T extends CellOperation>(
   return Object.freeze(
     operations.filter((op) => {
       const m = multiply(multiply(transpose(op.matrix), g), op.matrix);
-      return m.every((row, i) => row.every((x, j) => Math.abs(x - g[i][j]) <= tolerance * scale));
+      return m.every((row, i) => row.every((x, j) => Math.abs(x - g[i][j]) < tolerance * scale));
     }),
   );
 }
@@ -275,7 +264,7 @@ export interface MagneticCellOperation extends CellOperation {
 export function residualMagneticOperations<T extends MagneticCellOperation>(
   operations: readonly T[],
   basis: Mat3,
-  options?: ResidualOperationsOptions,
+  options?: ToleranceOptions,
 ): readonly T[] {
   if (Array.isArray(operations)) checkTimeReversal(operations as unknown as readonly MagneticOperation[]);
   return residualOperations(operations, basis, options);

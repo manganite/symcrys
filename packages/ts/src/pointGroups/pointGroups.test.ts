@@ -4,7 +4,8 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { closeGroup, operationsEqual, type Operation } from '../operations.js';
+import { operationsEqual, type Operation } from '../operations.js';
+import { closeWithin } from '../closure.js';
 import {
   POINT_GROUP_KEYS,
   findPointGroup,
@@ -104,7 +105,7 @@ describe('settings', () => {
     for (const key of POINT_GROUP_KEYS) {
       for (const s of settings(key)) {
         const ops = operations(key, { setting: s.index });
-        const closed = closeGroup(generators(key, { setting: s.index }));
+        const closed = closeWithin(generators(key, { setting: s.index }), 1e-9) ?? [];
         expect(closed).toHaveLength(ops.length);
         expect(closed.every((a) => ops.some((b) => operationsEqual(a, b)))).toBe(true);
       }

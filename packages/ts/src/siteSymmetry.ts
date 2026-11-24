@@ -3,19 +3,9 @@
  * fixed (docs/conventions.md, "Site symmetry and Wyckoff positions").
  */
 
-import { apply, matricesEqual, multiply, type Vec3 } from './linalg.js';
+import { apply, multiply, type Vec3 } from './linalg.js';
 import { checkCartesianOperations, type CartesianOperation } from './operations.js';
-import { EPSILON } from './tolerances.js';
-
-/** Options of `siteSymmetryOf`, `siteSymmetry` and `wyckoffPosition`. */
-export interface SiteSymmetryOptions {
-  /**
-   * A direction counts as fixed by an operation if the operation moves its unit vector by less
-   * than this (Euclidean distance). Default 10⁻⁶; a caller whose directions carry
-   * rounding errors (e.g. read from a rounded link) passes a larger value.
-   */
-  readonly tolerance?: number;
-}
+import { EPSILON, TOLERANCE_BOUND, toleranceOf, type ToleranceOptions } from './tolerances.js';
 
 /** The site symmetry of a direction. */
 export interface SiteSymmetry {
@@ -53,17 +43,27 @@ function isIdentity(op: CartesianOperation): boolean {
 
 /**
  * The products of a list of operations, looked up as needed: `i * n + j` → index of op[i]·op[j] in
- * the list, or -1. Made per call, not kept between calls: a caller may change its list in place
- * (#90).
+ * the list, or -1. The product is the whole operation, time reversal included, so that in a grey
+ * group, where every matrix occurs twice, it finds the copy with the right time reversal (#133).
+ * Matrices count as equal per entry within the tolerance, at least `EPSILON` and at most the bound
+ * for operations (a tolerance for directions may be larger). Made per call, not kept between
+ * calls: a caller may change its list in place (#90).
  */
-function productLookup(operations: readonly CartesianOperation[]): (i: number, j: number) => number {
+function productLookup(operations: readonly CartesianOperation[], tolerance: number): (i: number, j: number) => number {
   const table = new Map<number, number>();
+  const within = Math.min(Math.max(tolerance, EPSILON), TOLERANCE_BOUND.operations);
+  const reversed = (op: CartesianOperation): boolean => op.timeReversal === true;
   return (i, j) => {
     const key = i * operations.length + j;
     let k = table.get(key);
     if (k === undefined) {
       const product = multiply(operations[i].cartesian, operations[j].cartesian);
-      k = operations.findIndex((op) => matricesEqual(op.cartesian, product));
+      const timeReversal = reversed(operations[i]) !== reversed(operations[j]);
+      k = operations.findIndex(
+        (op) =>
+          reversed(op) === timeReversal &&
+          op.cartesian.every((row, a) => row.every((v, b) => Math.abs(v - product[a][b]) < within)),
+      );
       table.set(key, k);
     }
     return k;
@@ -105,11 +105,9 @@ function meanImage(operations: readonly CartesianOperation[], indices: readonly 
 const sameIndices = (a: readonly number[], b: readonly number[]): boolean =>
   a.length === b.length && a.every((x, i) => x === b[i]);
 
-/** The tolerance of the options, checked. */
-export function siteTolerance(options?: SiteSymmetryOptions): number {
-  const t = options?.tolerance ?? EPSILON;
-  if (!(typeof t === 'number' && t > 0 && t < 1)) throw new RangeError(`Invalid tolerance: ${String(t)}`);
-  return t;
+/** The tolerance of the options for directions, checked. */
+export function siteTolerance(options?: ToleranceOptions): number {
+  return toleranceOf(options, 'directions');
 }
 
 /**
@@ -127,7 +125,7 @@ export function siteTolerance(options?: SiteSymmetryOptions): number {
 export function siteSymmetryOf(
   operations: readonly CartesianOperation[],
   direction: Vec3,
-  options?: SiteSymmetryOptions,
+  options?: ToleranceOptions,
 ): SiteSymmetry {
   const tolerance = siteTolerance(options);
   checkCartesianOperations(operations, tolerance);
@@ -143,7 +141,7 @@ export function siteSymmetryOf(
   // as fixing while its square does not). Close them under products found in the list, set v onto the
   // fixed space of the closure (the mean of its images, the projector for a group), and repeat on the
   // projected direction until the set is stable.
-  const product = productLookup(operations);
+  const product = productLookup(operations, tolerance);
   let set = closeWithin(product, fixing(v));
   let settled: { indices: number[]; projected: Vec3 } | undefined;
   for (let pass = 0; pass < 8 && !settled; pass++) {

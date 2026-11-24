@@ -105,11 +105,11 @@ export function rotationY(angleDeg: number): Mat3 {
  */
 const SNAP_VALUES = [0, 1, -1, 0.5, -0.5, Math.SQRT1_2, -Math.SQRT1_2, Math.sqrt(3) / 2, -Math.sqrt(3) / 2];
 
-/** Replaces each entry within SNAP_EPSILON of an exact value by that value (this also turns −0 into 0). */
-export function snap(a: Mat3): Mat3 {
+/** Replaces each entry within `epsilon` (default SNAP_EPSILON) of an exact value by that value (this also turns −0 into 0). */
+export function snap(a: Mat3, epsilon = SNAP_EPSILON): Mat3 {
   return build((i, j) => {
     const v = a[i][j];
-    for (const s of SNAP_VALUES) if (Math.abs(v - s) < SNAP_EPSILON) return s;
+    for (const s of SNAP_VALUES) if (Math.abs(v - s) < epsilon) return s;
     return v;
   });
 }

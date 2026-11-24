@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { apply, matricesEqual, multiply, type Vec3 } from '../linalg.js';
 import { siteSymmetryOf } from '../siteSymmetry.js';
 import { POINT_GROUP_KEYS, operations, settings } from './pointGroups.js';
+import { GREY_POINT_GROUP_KEYS } from './keys.js';
 import { numericHkl, wyckoffPosition, wyckoffPositions } from './wyckoff.js';
 
 const ALL_SETTINGS = POINT_GROUP_KEYS.flatMap((key) => settings(key).map((s) => ({ key, s })));
@@ -191,12 +192,50 @@ describe('siteSymmetry', () => {
     }
   });
 
+  it('gives a subgroup of a grey group also at a large tolerance, each matrix twice or not at all (#133)', () => {
+    // Before #133 the product of two operations was looked up by its matrix alone, so in a grey group
+    // it always found the copy without time reversal: 6mm1' at [0.74, -0.16, -0.14], tolerance 0.7,
+    // gave 15 of its 24 operations.
+    expect(siteSymmetryOf(operations("6mm1'"), [0.74, -0.16, -0.14], { tolerance: 0.7 }).operations).toHaveLength(24);
+    expect(GREY_POINT_GROUP_KEYS).toHaveLength(32);
+    for (const key of GREY_POINT_GROUP_KEYS) {
+      const ops = operations(key);
+      for (const d of DIRECTIONS) {
+        for (const tolerance of [0.5, 0.7, 0.9]) {
+          let site;
+          try {
+            site = siteSymmetryOf(ops, d, { tolerance });
+          } catch (e) {
+            expect(e, `${key} ${d} ${tolerance}`).toBeInstanceOf(RangeError);
+            continue;
+          }
+          const members = site.operations.map((i) => ops[i]);
+          for (const a of members) {
+            for (const b of members) {
+              const m = multiply(a.cartesian, b.cartesian);
+              const t = a.timeReversal !== b.timeReversal;
+              expect(
+                members.some((c) => c.timeReversal === t && matricesEqual(c.cartesian, m)),
+                `${key} ${d} ${tolerance}: closed under the magnetic product`,
+              ).toBe(true);
+            }
+          }
+          for (const a of members) {
+            expect(
+              members.filter((c) => matricesEqual(c.cartesian, a.cartesian)),
+              `${key} ${d} ${tolerance}`,
+            ).toHaveLength(2);
+          }
+        }
+      }
+    }
+  });
+
   it('throws if the fixing operations do not settle into a group, instead of returning a non-group (#91)', () => {
     // Found by a scan of the review of #91: before, this returned 10 of the 24 operations of 6221',
-    // which are no subgroup, and the direction not projected.
-    expect(() => siteSymmetryOf(operations("6221'"), [-0.655, 0.766, 0.415], { tolerance: 0.99 })).toThrow(
-      /does not settle/,
-    );
+    // which are no subgroup, and the direction not projected. Since #133 compares whole operations
+    // in the products, the closure fixes no common direction there, which throws as well.
+    expect(() => siteSymmetryOf(operations("6221'"), [-0.655, 0.766, 0.415], { tolerance: 0.99 })).toThrow(RangeError);
   });
 
   it('rejects a zero vector and an invalid tolerance', () => {
