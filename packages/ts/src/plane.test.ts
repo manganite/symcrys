@@ -226,6 +226,14 @@ describe('symmetryElements and asymmetricUnit (#137 F2, F3)', () => {
     expect(box.lines.map((l) => l.point[0])).toEqual([-1, -0.5, 0, 0.5, 1]);
     expect(Object.isFrozen(box.lines[0].point)).toBe(true);
     expect(() => plane.symmetryElements('p2', { box: [[1, 0], [0, 1]] })).toThrow(RangeError); // prettier-ignore
+    // A point as a box: the elements through it (the twofold point 1/2,1/2 of p2).
+    expect(plane.symmetryElements('p2', { box: [[0.5, 0.5], [0.5, 0.5]] }).rotationPoints).toHaveLength(1); // prettier-ignore
+    // cm modulo its centred lattice: the mirror line 0,y and the glide line 1/4,y, as ITA lists them.
+    expect(plane.symmetryElements('cm').lines.map((l) => [l.kind, l.point])).toEqual([
+      ['mirror', [0, 0]],
+      ['glide', [0.25, 0]],
+    ]);
+    expect(() => plane.symmetryElements('p6mm', { box: [[-1e4, -1e4], [1e4, 1e4]] })).toThrow(/more than/); // prettier-ignore
     expect(() => plane.symmetryElements('p2', { box: [[0, 0]] as never })).toThrow(RangeError);
   });
 

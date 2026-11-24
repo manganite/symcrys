@@ -213,8 +213,9 @@ All notable changes to symcrys are recorded here. The format follows
 
 - **Symmetry elements and asymmetric unit of the plane groups as data** (#137 F2, F3, #110 items
   12, 13, #121 step 10b):
-  - `symmetryElements(key)` gives each element once modulo the lattice (p2: four twofold points;
-    was nine, those in the closed cell [0, 1]²), lines as a `point` and a direction; the field
+  - `symmetryElements(key)` gives each element once modulo the lattice, the centring included
+    (p2: four twofold points, was nine, those in the closed cell [0, 1]²; cm: the lines 0,y and
+    1/4,y), lines as a `point` and a direction; the field
     `segment`, the part of a line in the cell, is gone. `symmetryElements(key, { box })` gives all
     lattice translates that meet a box, the lines not clipped.
   - `asymmetricUnit(key)` gives all printed inequalities in printed order, also those that hold no

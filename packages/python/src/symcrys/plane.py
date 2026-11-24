@@ -372,19 +372,20 @@ def asymmetric_unit(key: str) -> dict[str, Any]:
 
 def symmetry_elements(key: str, *, box: Optional[ArrayLike] = None) -> dict[str, Any]:
     """The symmetry elements of a plane group (#137 F2). Without a box, each element once modulo the
-    lattice translations, as ITA describes them: every rotation point in [0, 1)² with the highest n
-    of a rotation about it, and every mirror and glide line, as a point and a direction (a line that
-    is a mirror and a glide line appears as both). With ``{ box }``, all their lattice translates
-    that meet the box, boundary included; the lines are not clipped, since clipping is drawing.
-    Raises SymcrysError for an unknown key and a box that is not two corners [[x₀, y₀], [x₁, y₁]] of
-    finite numbers with x₀ < x₁ and y₀ < y₁.
+    lattice translations, the centring (1/2, 1/2) included, as ITA describes them (cm: the mirror
+    line 0,y and the glide line 1/4,y): every rotation point in [0, 1)² with the highest n of a
+    rotation about it, and every mirror and glide line, as a point in [0, 1)² and a direction. With
+    a box, all their lattice translates that meet it, boundary included; the lines are not clipped,
+    since clipping is drawing. Raises SymcrysError for an unknown key, a box that is not two corners
+    of finite numbers, the first not above or right of the second, and a box with more than a
+    million rotation points.
 
     Parameters
     ----------
     box : keyword-only, optional
-        A box of the plane, lattice basis, as its corners [[x₀, y₀], [x₁, y₁]] with x₀ < x₁, y₀ <
-        y₁: all lattice translates of the elements that meet it (boundary included), the lines not
-        clipped.
+        A box of the plane, lattice basis, as its lower left and its upper right corner (x₀ ≤ x₁, y₀
+        ≤ y₁; a line or a point of the plane also): all lattice translates of the elements that meet
+        it, boundary included, the lines not clipped.
 
     Returns
     -------

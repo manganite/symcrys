@@ -1143,15 +1143,16 @@ printed inequalities a·x + b·y ≤ c, all of them in printed order, also bound
 (p3: x ≤ 2/3, y ≤ 2/3; a double inequality and a `min` give one each), and the convex polygon they
 bound, its vertices counter-clockwise from the lowest and per edge the index of the inequality that
 holds it. `symmetryElements` gives the symmetry elements as ITA describes them (#137 F2): each once
-modulo the lattice translations, every rotation point in [0, 1)² with the highest n of a rotation
+modulo the lattice translations, the centring (1/2, 1/2) included (cm: the mirror line 0,y and the
+glide line 1/4,y, as ITA lists them), every rotation point in [0, 1)² with the highest n of a rotation
 about it (`rotationPoints`, ITA Table 2.1.2.1: the rotation point is the symmetry element of a
 rotation in the plane), and every mirror and glide line as a point and a direction, the point where
 it crosses y = 0 (x = 0 for a line along a), of the translates the one with that point in [0, 1)
 nearest to 0; a glide line carries its glide vector s·direction with 0 < s < 1 (in a plane group
-s = 1/2), and a line that is a mirror and a glide line appears as both. With `{ box }` it gives all
+s = 1/2). With a box (its two corners; a line or a point of the plane too) it gives all
 lattice translates that meet the box, boundary included, the lines not clipped: p2 has four
-twofold points modulo the lattice and nine in the closed cell [0, 1]². Clipping and drawing are
-left to the application.
+twofold points modulo the lattice and nine in the closed cell [0, 1]²; a box with more than a
+million rotation points is refused. Clipping and drawing are left to the application.
 
 **Not yet.** The positions and edge forms of the plane point groups (ITA Table 3.2.3.1, #81) and
 the determination of the plane group of a pattern (a later MINOR, #31).

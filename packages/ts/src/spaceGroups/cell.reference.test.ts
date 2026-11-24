@@ -365,48 +365,96 @@ describe('symmetry elements in the cell (the translates that meet the box [0, 1]
   }
 });
 
-describe('symmetry elements modulo the lattice (#137 F2)', () => {
+describe('symmetry elements modulo the lattice, centring included (#137 F2)', () => {
   for (const g of PRINT) {
-    it(`${g.symbol}: each element once, and the translates of these are those that meet a box`, () => {
+    it(`${g.symbol}: each element once, and the translates of these are exactly those that meet a box`, () => {
       const classes = planeElements(g.symbol);
-      // Rotation points in [0, 1)², none twice; lines with their point in [0, 1)², none twice.
-      for (const r of classes.rotationPoints) expect(num(r.point).every((v) => v >= 0 && v < 1)).toBe(true);
-      const rotationKeys = classes.rotationPoints.map((r) => key(num(r.point)));
-      expect(new Set(rotationKeys).size).toBe(rotationKeys.length);
       const offset = (l: SymmetryLine) =>
         -l.direction[1] * toNumber(l.point[0]) + l.direction[0] * toNumber(l.point[1]);
+      // Rotation points and the points of the lines in [0, 1)²; no two equal modulo the lattice
+      // with its centring (cm: m 0,y and b 1/4,y, as ITA lists them).
+      for (const r of classes.rotationPoints) expect(num(r.point).every((v) => v >= 0 && v < 1)).toBe(true);
       for (const l of classes.lines) expect(num(l.point).every((v) => v >= 0 && v < 1)).toBe(true);
-      const lineKeys = classes.lines.map((l) => `${l.direction} ${offset(l).toFixed(9)} ${l.kind} ${num(l.glide)}`);
-      expect(new Set(lineKeys).size).toBe(lineKeys.length);
-      // Every element in a box [−1.3, 2.2] × [−0.7, 1.9] is a lattice translate of a class, and every
-      // translate of a class that lies in the box is listed.
+      const shiftsOf = (p: readonly number[]) =>
+        g.centring.map((c) => key([(((p[0] + c[0]) % 1) + 1) % 1, (((p[1] + c[1]) % 1) + 1) % 1]));
+      const seen = new Set<string>();
+      for (const r of classes.rotationPoints) {
+        const images = shiftsOf(num(r.point));
+        expect(
+          images.some((k) => seen.has(k)),
+          `${g.symbol} ${num(r.point)}`,
+        ).toBe(false);
+        for (const k of images) seen.add(k);
+      }
+
+      // A box [−1.3, 2.2] × [−0.7, 1.9]. Rotation points: the translates of the classes by the lattice
+      // and the centring that lie in it.
       const box = [
         [-1.3, -0.7],
         [2.2, 1.9],
       ] as const;
+      const within = (p: readonly number[]) =>
+        p[0] >= box[0][0] && p[0] <= box[1][0] && p[1] >= box[0][1] && p[1] <= box[1][1];
       const inBox = planeElementsInBox(g.symbol, box);
       const expected = new Set<string>();
       for (const r of classes.rotationPoints) {
-        for (let i = -3; i <= 3; i++) {
-          for (let j = -3; j <= 3; j++) {
-            const p = [toNumber(r.point[0]) + i, toNumber(r.point[1]) + j];
-            if (p[0] >= box[0][0] && p[0] <= box[1][0] && p[1] >= box[0][1] && p[1] <= box[1][1])
-              expected.add(`${r.n}@${key(p)}`);
+        for (const c of g.centring) {
+          for (let i = -3; i <= 3; i++) {
+            for (let j = -3; j <= 3; j++) {
+              const p = [toNumber(r.point[0]) + c[0] + i, toNumber(r.point[1]) + c[1] + j];
+              if (within(p)) expected.add(`${r.n}@${key(p)}`);
+            }
           }
         }
       }
-      expect(new Set(inBox.rotationPoints.map((r) => `${r.n}@${key(num(r.point))}`))).toEqual(expected);
-      for (const l of inBox.lines) {
-        const base = classes.lines.find(
-          (b) =>
-            b.direction[0] === l.direction[0] &&
-            b.direction[1] === l.direction[1] &&
-            b.kind === l.kind &&
-            key(num(b.glide)) === key(num(l.glide)) &&
-            Math.abs((((offset(l) - offset(b)) % 1) + 1) % 1) < 1e-9,
-        );
-        expect(base, `${l.direction} ${num(l.point)}`).toBeDefined();
+      const listed = inBox.rotationPoints.map((r) => `${r.n}@${key(num(r.point))}`);
+      expect(new Set(listed).size).toBe(listed.length);
+      expect(new Set(listed)).toEqual(expected);
+
+      // Lines, derived independently from the printed general position (with the centring): every
+      // operation with det −1, shifted by |t_i| ≤ 8, gives a line along the fixed direction of W with
+      // glide g = (w + Ww)/2 through (w − g)/2; those that meet the box (touching included) are
+      // exactly the lines listed, each once.
+      const derived = new Set<string>();
+      const lineId = (d: readonly number[], c: number, s: number) =>
+        `${primitive(d).join(',')} c=${c.toFixed(9)} s=${((((Math.round(s * 1e9) / 1e9) % 1) + 1) % 1).toFixed(6)}`;
+      const corners = [box[0][0], box[1][0]].flatMap((x) => [box[0][1], box[1][1]].map((y) => [x, y]));
+      for (const c of g.centring) {
+        for (const text of g.wyckoff[0].coordinates) {
+          const op = toPlain(parseOperation(text));
+          const w0 = [op.translation[0] + c[0], op.translation[1] + c[1]];
+          const det = op.matrix[0][0] * op.matrix[1][1] - op.matrix[0][1] * op.matrix[1][0];
+          if (det !== -1) continue;
+          const ipw = [
+            [1 + op.matrix[0][0], op.matrix[0][1]],
+            [op.matrix[1][0], 1 + op.matrix[1][1]],
+          ];
+          const d = primitive(ipw[0][0] !== 0 || ipw[1][0] !== 0 ? [ipw[0][0], ipw[1][0]] : [ipw[0][1], ipw[1][1]]);
+          for (let a = -8; a <= 8; a++) {
+            for (let b = -8; b <= 8; b++) {
+              const w = [w0[0] + a, w0[1] + b];
+              const gl = [0, 1].map((k) => (w[k] + op.matrix[k][0] * w[0] + op.matrix[k][1] * w[1]) / 2);
+              const p = [(w[0] - gl[0]) / 2, (w[1] - gl[1]) / 2];
+              const cc = -d[1] * p[0] + d[0] * p[1];
+              const values = corners.map(([x, y]) => -d[1] * x + d[0] * y);
+              if (cc < Math.min(...values) - 1e-9 || cc > Math.max(...values) + 1e-9) continue;
+              derived.add(lineId(d, cc, d[0] !== 0 ? gl[0] / d[0] : gl[1] / d[1]));
+            }
+          }
+        }
       }
+      const listedLines = inBox.lines.map((l) =>
+        lineId(
+          l.direction,
+          offset(l),
+          l.kind === 'mirror'
+            ? 0
+            : toNumber(l.glide[l.direction[0] !== 0 ? 0 : 1]) /
+                (l.direction[0] !== 0 ? l.direction[0] : l.direction[1]),
+        ),
+      );
+      expect(new Set(listedLines).size).toBe(listedLines.length);
+      expect(new Set(listedLines)).toEqual(derived);
     });
   }
 });

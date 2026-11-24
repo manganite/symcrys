@@ -971,12 +971,14 @@ while implementing gets its own note here.
   (`cell.reference.test.ts`).
 - **Elements and the asymmetric unit as data** (#137 F2, F3, decided by Thomas on 2026-11-22; see
   also #110 items 12 and 13, and #121 step 10b): `symmetryElements(key, { box })` gives each element
-  once modulo the lattice (rotation points in [0, 1)²; lines as a point and a direction), with `box`
+  once modulo the lattice, the centring included (rotation points in [0, 1)²; lines as a point and a
+  direction), with `box`
   all translates that meet a box, the lines not clipped; `asymmetricUnit` gives all printed
   inequalities in printed order and the polygon with, per edge, the index of the inequality that
   holds it. Chosen while implementing: the point of a line is where it crosses y = 0 (x = 0 for a
   line along a), as in the descriptions of the operations, and of a class the translate whose point
-  lies nearest to 0 from above; a box is its two corners. The ITC baseline pins keep the old shape
+  lies nearest to 0 from above; a box is its two corners, a line or a point allowed, at most a million
+  rotation points. The ITC baseline pins keep the old shape
   through the box of the cell, clipped in the test, so they stay unchanged.
 - **No frieze, layer or magnetic plane groups for now** (#31 question 3): no consumer needs them;
   the dimension-generic module keeps them possible (idea in #74).
@@ -1004,7 +1006,9 @@ while implementing gets its own note here.
   symmetry elements in the cell as numbers in symcrys**: the asymmetric unit as inequalities
   (coefficients of a·x + b·y ≤ c) with its vertices, the elements as rotation centres with their
   order and lines with kind, glide vector and segment in the cell [0, 1]², so that the calculation
-  is in one place for all apps; the segment is the part nearest the drawing that still is geometry.
+  is in one place for all apps; the segment is the part nearest the drawing that still is geometry
+  _(replaced in #121 step 10b, #137 F2: lines as a point and a direction, once modulo the lattice or
+  in a box; "Elements and the asymmetric unit as data" above)_.
   **Python:** `matrix` float64 by the fixed rule, as for the point groups; `translation` float64.
   Asked in a second round (Thomas, 2026-11-22, #31, all four recommendations taken): **functions of a
   point take the key**, `siteSymmetry(key, point)`, `wyckoffPositionOf(key, point)`,
@@ -1014,7 +1018,7 @@ while implementing gets its own note here.
   and `3m` in the settings 1 = `3m1` and 2 = `31m` (`{ setting }`, `pointGroup`, `symbol`, as in
   `symcrys`); their **positions and edge forms** (ITA Table 3.2.3.1) later, #81. Chosen while
   implementing (PR #82): the Python layer converts the results of `symcrys.plane` itself (a translation,
-  point, vertex or segment float64 even where its entries are integers; a direction of a line int64,
+  point, vertex or segment _(no segment since #121 step 10b)_ float64 even where its entries are integers; a direction of a line int64,
   although `direction` is a float key of the fixed rule, which means a Cartesian vector there); a
   Wyckoff position gives all printed coordinates of its (0,0)+ set (`coordinates`, a list), since ITA
   prints them all for the plane groups; fields and functions as in `symcrys` where the notion is the

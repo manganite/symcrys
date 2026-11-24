@@ -1,11 +1,12 @@
 /**
- * The asymmetric unit of a plane group and its symmetry elements in the conventional cell, as numbers
- * (CLAUDE.md, "The API of `symcrys/plane`"): the asymmetric unit as inequalities with its vertices,
- * the elements as rotation points with their n and as mirror and glide lines with the segment
- * that lies in the cell [0, 1]². Exact, in the lattice basis; drawing them stays with the
- * applications. Internal for now.
+ * The asymmetric unit of a plane group and its symmetry elements, as numbers (CLAUDE.md, "Elements
+ * and the asymmetric unit as data"): the asymmetric unit as its printed inequalities with the
+ * polygon they bound, the elements as rotation points with their n and as mirror and glide lines
+ * by a point and a direction, once modulo the lattice or all translates in a box. Exact, in the
+ * lattice basis; drawing them stays with the applications. Internal for now.
  */
 
+import { shown } from '../checks.js';
 import { type ExactOperation } from './affine.js';
 import { describePlaneOperation } from './describe.js';
 import { planeGroupEntry, planeGroupOperations } from './planeGroups.js';
@@ -276,6 +277,8 @@ interface LineClass {
   axis: readonly [number, number];
   s: Rational;
   c: Rational;
+  /** The step of c between the translates of the line (1, or 1/2 under a centring). */
+  step: Rational;
 }
 
 /** The point of the line (d, c) on y = 0, or on x = 0 for a line along a. */
@@ -290,20 +293,47 @@ const lineParameter = (l: LineClass): number => {
 };
 
 /**
- * The offset c of a line class, one for all its lattice translates: a translation by t changes c by
- * (−d_y, d_x)·t, any integer, so the class is c modulo 1; of the translates the one is taken whose
- * point on y = 0 (on x = 0 for a line along a) lies nearest to 0 from above, in [0, 1/|d_y|)
- * (in [0, 1) for a line along a).
+ * The offset c of a line class, one for all its lattice translates: a lattice translation t changes c
+ * by (−d_y, d_x)·t, which for a primitive lattice is any integer and with the centring (1/2, 1/2) also
+ * (d_x − d_y)/2; so the class is c modulo `step` (1, or 1/2 where that is odd in a centred group). Of
+ * the translates the one is taken whose point on y = 0 (on x = 0 for a line along a) lies nearest to
+ * 0 from above.
  */
-function classOffset(d: readonly [number, number], c: Rational): Rational {
-  const reduced = frac(c);
+function classOffset(d: readonly [number, number], c: Rational, step: Rational): Rational {
+  const modulo = (v: Rational, m: Rational): Rational =>
+    subtract(v, scale(Math.floor(toNumber(v) / toNumber(m) + 1e-12), m));
+  const reduced = modulo(c, step);
   if (d[1] === 0) return reduced; // the point is (0, c/d_x) with d_x = 1
-  // x = −c/d_y; c' = c − m (m integer) moves x by m/d_y: take x in [0, 1/|d_y|).
+  // x = −c/d_y; c' = c − m·step moves x by m·step/d_y: take x in [0, step/|d_y|).
   const x = rational(-reduced[0], reduced[1] * d[1]);
-  const step = rational(1, Math.abs(d[1]));
-  const m = Math.floor(toNumber(x) / toNumber(step) + 1e-12);
-  const shifted = subtract(x, scale(m, step));
+  const shifted = modulo(x, rational(step[0], step[1] * Math.abs(d[1])));
   return rational(-shifted[0] * d[1], shifted[1]);
+}
+
+/** The centring translations of a plane group besides (0, 0), exact. */
+function centrings(entry: { readonly centring: readonly string[] }): Rational[][] {
+  return entry.centring.map((t) => t.split(',').map((v) => parseRational(v.trim())));
+}
+
+/** The step of c for a line along d under the lattice with these centrings: 1, or a fraction of it. */
+function lineStep(d: readonly [number, number], taus: readonly Rational[][]): Rational {
+  let step = r(1);
+  for (const tau of taus) {
+    const shift = frac(add(scale(-d[1], tau[0]), scale(d[0], tau[1])));
+    if (shift[0] !== 0 && toNumber(shift) < toNumber(step)) step = shift;
+  }
+  return step;
+}
+
+/** Of the points p + τ (mod 1) of one class under the centrings, the lowest (y, then x). */
+function classPoint(p: readonly Rational[], taus: readonly Rational[][]): Rational[] {
+  let best = [...p];
+  for (const tau of taus) {
+    const q = [frac(add(p[0], tau[0])), frac(add(p[1], tau[1]))];
+    const dy = toNumber(subtract(q[1], best[1]));
+    if (dy < 0 || (dy === 0 && toNumber(subtract(q[0], best[0])) < 0)) best = q;
+  }
+  return best;
 }
 
 const classCache = new Map<string, { rotations: { n: number; point: Rational[] }[]; lines: LineClass[] }>();
@@ -315,6 +345,7 @@ function elementClasses(key: string | number) {
   if (cached) return cached;
   const rotations: { n: number; point: Rational[] }[] = [];
   const lines: LineClass[] = [];
+  const taus = centrings(entry);
   for (const op of planeGroupOperations(entry.symbol)) {
     for (const t of SHIFTS) {
       const shifted: ExactOperation = {
@@ -325,7 +356,7 @@ function elementClasses(key: string | number) {
       if (d.kind === 'rotation') {
         const loc = d.location ?? [];
         if (!inCell(loc)) continue;
-        const p = loc.map(frac);
+        const p = classPoint(loc.map(frac), taus);
         const known = rotations.find((x) => samePoint(x.point, p));
         if (!known) rotations.push({ n: d.n, point: p });
         else known.n = Math.max(known.n, d.n);
@@ -335,8 +366,9 @@ function elementClasses(key: string | number) {
         // The glide vector is s·dir; s modulo 1, since a lattice translation along the line changes nothing.
         const g = d.glide ?? [ZERO, ZERO];
         const s = frac(dir[0] !== 0 ? rational(g[0][0], g[0][1] * dir[0]) : rational(g[1][0], g[1][1] * dir[1]));
-        // The line is the set of x with (−dir_y, dir_x)·x = c; dir is primitive, so the lattice shifts c by integers.
-        const c = classOffset([dir[0], dir[1]], add(scale(-dir[1], p[0]), scale(dir[0], p[1])));
+        // The line is the set of x with (−dir_y, dir_x)·x = c; the lattice shifts c by multiples of step.
+        const step = lineStep([dir[0], dir[1]], taus);
+        const c = classOffset([dir[0], dir[1]], add(scale(-dir[1], p[0]), scale(dir[0], p[1])), step);
         const known = lines.some(
           (l) =>
             l.direction[0] === dir[0] && l.direction[1] === dir[1] && rationalsEqual(l.c, c) && rationalsEqual(l.s, s),
@@ -348,6 +380,7 @@ function elementClasses(key: string | number) {
             axis: d.axis ?? [0, 0],
             s,
             c,
+            step,
           });
         }
       }
@@ -388,12 +421,15 @@ function freezeElements(rotations: { n: number; point: Rational[] }[], lines: Li
 
 const elementCache = new Map<string, CellElements>();
 
+/** The most rotation points a box may hold: a guard against a box far larger than any drawing. */
+const MAX_ELEMENTS = 1_000_000;
+
 /**
- * The symmetry elements of a plane group, each once modulo the lattice translations, as ITA
+ * The symmetry elements of a plane group, each once modulo the lattice translations (the centring
+ * included), as ITA
  * describes them (#137 F2): every rotation point in [0, 1)² with the highest n of a rotation about
  * it, and every mirror and glide line, as a point and a direction. A line that carries a glide is a
- * glide line with its shortest glide vector along the line (between 0 and the lattice vector); a
- * line that is a mirror and a glide line appears as both. Frozen.
+ * glide line with its shortest glide vector along the line (between 0 and the lattice vector). Frozen.
  */
 export function planeElements(key: string | number): CellElements {
   const entry = planeGroupEntry(key);
@@ -416,27 +452,41 @@ export function planeElements(key: string | number): CellElements {
  */
 export function planeElementsInBox(key: string | number, box: Box): CellElements {
   const [[x0, y0], [x1, y1]] = box;
-  const { rotations, lines } = elementClasses(key);
+  const entry = planeGroupEntry(key);
+  const { rotations, lines } = elementClasses(entry.symbol);
+  const taus = [[ZERO, ZERO], ...centrings(entry)];
+  // A bound on the output (#121 step 10b review): the rotation points of a class in the box.
+  const estimate = rotations.length * taus.length * (x1 - x0 + 2) * (y1 - y0 + 2);
+  if (!(estimate <= MAX_ELEMENTS)) {
+    throw new RangeError(
+      `The box ${shown(box)} holds about ${Math.round(estimate)} rotation points, more than ${MAX_ELEMENTS}`,
+    );
+  }
   const inside: { n: number; point: Rational[] }[] = [];
   for (const { n, point } of rotations) {
-    const [px, py] = point.map(num);
-    for (let i = Math.ceil(x0 - px - 1e-12); i <= Math.floor(x1 - px + 1e-12); i++) {
-      for (let j = Math.ceil(y0 - py - 1e-12); j <= Math.floor(y1 - py + 1e-12); j++) {
-        const p = [add(point[0], r(i)), add(point[1], r(j))];
-        const [qx, qy] = p.map(num);
-        if (qx >= x0 - 1e-12 && qx <= x1 + 1e-12 && qy >= y0 - 1e-12 && qy <= y1 + 1e-12) inside.push({ n, point: p });
+    for (const tau of taus) {
+      const base = [add(point[0], tau[0]), add(point[1], tau[1])];
+      const [px, py] = base.map(num);
+      for (let i = Math.ceil(x0 - px - 1e-12); i <= Math.floor(x1 - px + 1e-12); i++) {
+        for (let j = Math.ceil(y0 - py - 1e-12); j <= Math.floor(y1 - py + 1e-12); j++) {
+          const p = [add(base[0], r(i)), add(base[1], r(j))];
+          const [qx, qy] = p.map(num);
+          if (qx >= x0 - 1e-12 && qx <= x1 + 1e-12 && qy >= y0 - 1e-12 && qy <= y1 + 1e-12)
+            inside.push({ n, point: p });
+        }
       }
     }
   }
   const crossing: LineClass[] = [];
   for (const l of lines) {
-    // (−d_y, d_x)·x over the corners of the box: the line c + k meets it if c + k lies within.
+    // (−d_y, d_x)·x over the corners of the box: the translate c + k·step meets it if that lies within.
     const values = [x0, x1].flatMap((x) => [y0, y1].map((y) => -l.direction[1] * x + l.direction[0] * y));
     const lo = Math.min(...values);
     const hi = Math.max(...values);
     const c = num(l.c);
-    for (let k = Math.ceil(lo - c - 1e-12); k <= Math.floor(hi - c + 1e-12); k++) {
-      crossing.push({ ...l, c: add(l.c, r(k)) });
+    const step = num(l.step);
+    for (let k = Math.ceil((lo - c) / step - 1e-12); k <= Math.floor((hi - c) / step + 1e-12); k++) {
+      crossing.push({ ...l, c: add(l.c, scale(k, l.step)) });
     }
   }
   return freezeElements(inside, crossing);

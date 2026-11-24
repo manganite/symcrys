@@ -15,7 +15,13 @@ export function shown(value: unknown): string {
   try {
     return (
       JSON.stringify(value, (_, v: unknown) =>
-        typeof v === 'bigint' ? `${v}n` : typeof v === 'symbol' ? 'a symbol' : v,
+        typeof v === 'bigint'
+          ? `${v}n`
+          : typeof v === 'symbol'
+            ? 'a symbol'
+            : typeof v === 'number' && !Number.isFinite(v)
+              ? String(v)
+              : v,
       ) ?? String(value)
     );
   } catch {
