@@ -233,7 +233,7 @@ function isPlaneGroupKey(key: unknown): key is PlaneGroupKey {
 }
 
 function unknownKey(key: unknown, what = 'plane group or plane point group'): never {
-  throw new RangeError(`Unknown ${what}: ${JSON.stringify(key)}`);
+  throw new RangeError(`Unknown ${what}: ${shown(key)}`);
 }
 
 /** The plane group of a key; throws for a point group or an unknown key. */
@@ -517,7 +517,7 @@ export function snapToWyckoffPosition(
   checkOptions(options, TOLERANCE_KEYS, 'snapToWyckoffPosition');
   const k = groupKey(key, 'snapToWyckoffPosition');
   if (!Array.isArray(point)) {
-    throw new RangeError(`A point of the plane has two finite coordinates, not ${JSON.stringify(point)}`);
+    throw new RangeError(`A point of the plane has two finite coordinates, not ${shown(point)}`);
   }
   const snapped = planeSnapToWyckoffPosition(k, point, options?.tolerance);
   const position = wyckoffPositions(k)[snapped.row];

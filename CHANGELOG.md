@@ -158,14 +158,26 @@ All notable changes to symcrys are recorded here. The format follows
   - wrong input is a `RangeError` in every function of the three entry points, also where it was a
     `TypeError` from inside the library up to 0.10 (`null` or a number for a direction, a tensor
     specification, the parameters of a cell, a rotation or the options);
-  - an options argument that is not an object, and an option a function does not know (e.g.
-    `{ uniqueaxis: 'a' }` for `uniqueAxis`), are RangeErrors; up to 0.10 an unknown option was
-    ignored without notice;
+  - an options argument that is not a plain object (also a `Map`), and an option a function does
+    not know (e.g. `{ uniqueaxis: 'a' }` for `uniqueAxis`), are RangeErrors; up to 0.10 an unknown
+    option was ignored without notice;
+  - wrong input that was answered is a RangeError: `findPointGroup` with a value that is not a
+    string (was "not found"), `crystalFamily` with a value that is not a crystal system (returned
+    the value), `isValidCell` with an angle that is not a finite number (was `false`; a finite angle
+    outside (0°, 180°) still gives `false`), `siteSymmetryOf` and `orbitOf` with an empty list (gave
+    multiplicity 0);
+  - a direction, point, rotation or tensor must be an array of numbers; a typed array such as
+    `Float64Array`, which the types never allowed, is refused;
+  - a value in an error message is shown as it is (`NaN`, `1n`), and a BigInt or a value that
+    contains itself no longer makes the message itself fail with a TypeError;
   - Python: `SymcrysError` (a `ValueError`) is raised for a `RangeError` of the library and for
     wrong input found by the Python layer; any other error of the library raises the new
     `symcrys.SymcrysInternalError` (a `RuntimeError`, also in `symcrys.magnetic` and
     `symcrys.plane`), so that `except ValueError` does not hide a fault of symcrys; `js_name` of a
-    `SymcrysError` is `'RangeError'`.
+    `SymcrysError` is `'RangeError'`; arguments of the wrong type (a ragged array, a string or
+    complex numbers for a vector, a list for a mapping, an object JSON cannot write) raise a
+    `SymcrysError` that names the argument, where NumPy's or Python's own error came before, and
+    so does NaN.
 
 ### Removed
 

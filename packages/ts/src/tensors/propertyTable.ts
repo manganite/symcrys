@@ -89,9 +89,7 @@ export function specOf(specOrName: TensorSpec | TensorPropertyName): TensorSpec 
     return specOrName;
   }
   if (!Object.hasOwn(TENSOR_PROPERTIES, specOrName)) {
-    throw new RangeError(
-      `Unknown tensor property: ${JSON.stringify(specOrName)} (known: ${TENSOR_PROPERTY_NAMES.join(', ')})`,
-    );
+    throw new RangeError(`Unknown tensor property: ${shown(specOrName)} (known: ${TENSOR_PROPERTY_NAMES.join(', ')})`);
   }
   return TENSOR_PROPERTIES[specOrName].spec;
 }

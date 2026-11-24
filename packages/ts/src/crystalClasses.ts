@@ -11,7 +11,7 @@
  * comes in and leaves time reversal out of what goes back.
  */
 
-import { TOLERANCE_KEYS, checkOptions } from './checks.js';
+import { checkOptions, shown, TOLERANCE_KEYS } from './checks.js';
 import type { CrystalSystem } from './lattice.js';
 import type { Mat3, Vec3 } from './linalg.js';
 import type { CartesianOperation as MagneticOperation, Operation as MagneticRecord } from './operations.js';
@@ -167,9 +167,9 @@ const TENSOR_PROPERTY_NAMES = Object.freeze(Object.keys(TENSOR_PROPERTIES)) as r
 function classKey(key: PointGroupKey): PointGroupKey {
   if (groups.isPointGroupKey(key)) return key;
   if (groups.isMagneticPointGroupKey(key)) {
-    throw new RangeError(`${JSON.stringify(key)} is a magnetic point group, not a crystal class: ${USE_MAGNETIC}`);
+    throw new RangeError(`${shown(key)} is a magnetic point group, not a crystal class: ${USE_MAGNETIC}`);
   }
-  throw new RangeError(`Unknown point group key: ${JSON.stringify(key)}`);
+  throw new RangeError(`Unknown point group key: ${shown(key)}`);
 }
 
 /** A name of the table of this API, checked. */
@@ -177,22 +177,22 @@ function propertyName(name: TensorPropertyName): TensorPropertyName {
   if (typeof name === 'string') {
     if (Object.hasOwn(TENSOR_PROPERTIES, name)) return name;
     if (Object.hasOwn(ALL_TENSOR_PROPERTIES, name)) {
-      throw new RangeError(`${JSON.stringify(name)} is the property of a time-odd tensor: ${USE_MAGNETIC}`);
+      throw new RangeError(`${shown(name)} is the property of a time-odd tensor: ${USE_MAGNETIC}`);
     }
   }
-  throw new RangeError(`Unknown tensor property: ${JSON.stringify(name)} (known: ${TENSOR_PROPERTY_NAMES.join(', ')})`);
+  throw new RangeError(`Unknown tensor property: ${shown(name)} (known: ${TENSOR_PROPERTY_NAMES.join(', ')})`);
 }
 
 /** The time-even tensor of a specification or of a property name, as the shared modules take it. */
 function timeEven(specOrName: TensorSpecArgument | TensorPropertyName): tensors.TensorSpec | TensorPropertyName {
   if (typeof specOrName === 'string') return propertyName(specOrName);
   if (typeof specOrName !== 'object' || specOrName === null) {
-    throw new RangeError(`Not a tensor specification: ${JSON.stringify(specOrName)}`);
+    throw new RangeError(`Not a tensor specification: ${shown(specOrName)}`);
   }
   const timeParity = (specOrName as { readonly timeParity?: unknown }).timeParity;
   if (timeParity === 'c') throw new RangeError(`A time-odd tensor (timeParity 'c'): ${USE_MAGNETIC}`);
   if (timeParity !== undefined && timeParity !== 'i') {
-    throw new RangeError(`Unknown time parity: ${JSON.stringify(timeParity)}`);
+    throw new RangeError(`Unknown time parity: ${shown(timeParity)}`);
   }
   return { rank: specOrName.rank, parity: specOrName.parity, timeParity: 'i', intrinsic: specOrName.intrinsic };
 }
@@ -207,7 +207,7 @@ function checkUnitary(operations: readonly { readonly timeReversal?: false }[]):
       throw new RangeError(`Operation ${i} is combined with time reversal: ${USE_MAGNETIC}`);
     }
     if (timeReversal !== undefined && timeReversal !== false) {
-      throw new RangeError(`Operation ${i}: timeReversal must be false or absent, not ${JSON.stringify(timeReversal)}`);
+      throw new RangeError(`Operation ${i}: timeReversal must be false or absent, not ${shown(timeReversal)}`);
     }
   });
 }

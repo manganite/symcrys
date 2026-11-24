@@ -81,7 +81,7 @@ def _operation(op: dict[str, Any]) -> Operation:
 
 
 def _point(point: ArrayLike) -> list[float]:
-    p = np.asarray(point, dtype=np.float64)
+    p = _shared.array(point, "point", np.float64)
     if p.shape != (2,):
         raise SymcrysError(f"A point of the plane has two coordinates, not an array of shape {p.shape}", "RangeError")
     return [float(v) for v in p]

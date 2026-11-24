@@ -315,7 +315,9 @@ def symbol(
 
 
 def crystal_family(system: str) -> str:
-    """The crystal family of a crystal system: trigonal and hexagonal form the hexagonal family."""
+    """The crystal family of a crystal system: trigonal and hexagonal form the hexagonal family.
+    Throws a SymcrysError for anything that is not one of the seven crystal systems.
+    """
     return str(_call("crystalFamily", system))
 
 
@@ -359,7 +361,7 @@ def lattice_from_parameters(parameters: Mapping[str, float]) -> NDArray[np.float
     is right-handed. Raises SymcrysError for an edge that is not positive and for angles that give
     no cell.
     """
-    return np.asarray(_call("latticeFromParameters", dict(parameters), floats=True), dtype=np.float64)
+    return np.asarray(_call("latticeFromParameters", _shared.mapping(parameters, "parameters"), floats=True), dtype=np.float64)
 
 
 def lattice_parameters(basis: ArrayLike) -> dict[str, float]:
@@ -367,7 +369,7 @@ def lattice_parameters(basis: ArrayLike) -> dict[str, float]:
     lengths and the angles in degrees. Independent of the orientation of the basis in the Cartesian
     frame (and of its handedness). Raises SymcrysError for a singular matrix.
     """
-    result: dict[str, Any] = _call("latticeParameters", np.asarray(basis, dtype=np.float64))
+    result: dict[str, Any] = _call("latticeParameters", _shared.array(basis, "basis", np.float64))
     return {k: float(v) for k, v in result.items()}
 
 
@@ -386,28 +388,28 @@ def is_valid_cell(angles: Mapping[str, float], *, min_volume_ratio: Optional[flo
         lengths, from 0 to 1 (1 only for orthogonal axes); default 0, which accepts every cell that
         ``is_valid_cell`` otherwise accepts. A ratio near 0 is a nearly flat cell.
     """
-    return bool(_call("isValidCell", dict(angles), _shared.options(min_volume_ratio=min_volume_ratio)))
+    return bool(_call("isValidCell", _shared.mapping(angles, "angles"), _shared.options(min_volume_ratio=min_volume_ratio)))
 
 
 def metric_tensor(basis: ArrayLike) -> NDArray[np.float64]:
     """The metric tensor G = AᵀA of a basis A (columns a, b, c): g_ij = a_i · a_j, in the unit of
     the edge lengths squared.
     """
-    return np.asarray(_call("metricTensor", np.asarray(basis, dtype=np.float64), floats=True), dtype=np.float64)
+    return np.asarray(_call("metricTensor", _shared.array(basis, "basis", np.float64), floats=True), dtype=np.float64)
 
 
 def reciprocal_basis(basis: ArrayLike) -> NDArray[np.float64]:
     """The reciprocal basis B = A⁻ᵀ of a basis A (columns a, b, c) as the columns a*, b*, c*, with
     a_i · a*_j = δ_ij (no factor 2π), in the inverse unit of the edge lengths.
     """
-    return np.asarray(_call("reciprocalBasis", np.asarray(basis, dtype=np.float64), floats=True), dtype=np.float64)
+    return np.asarray(_call("reciprocalBasis", _shared.array(basis, "basis", np.float64), floats=True), dtype=np.float64)
 
 
 def angle_between_directions(basis: ArrayLike, direction1: ArrayLike, direction2: ArrayLike) -> float:
     """The angle in degrees between two lattice directions [uvw] (coordinates in the basis, columns
     a, b, c), 0° to 180°. Raises SymcrysError for a zero vector.
     """
-    return float(_call("angleBetweenDirections", np.asarray(basis, dtype=np.float64), np.asarray(direction1), np.asarray(direction2)))
+    return float(_call("angleBetweenDirections", _shared.array(basis, "basis", np.float64), _shared.array(direction1, "direction1"), _shared.array(direction2, "direction2")))
 
 
 def angle_between_planes(basis: ArrayLike, plane1: ArrayLike, plane2: ArrayLike) -> float:
@@ -415,7 +417,7 @@ def angle_between_planes(basis: ArrayLike, plane1: ArrayLike, plane2: ArrayLike)
     the reciprocal vectors h·a* + k·b* + l·c*. For two faces this is 180° minus the interior
     dihedral angle. Raises SymcrysError for a zero vector.
     """
-    return float(_call("angleBetweenPlanes", np.asarray(basis, dtype=np.float64), np.asarray(plane1), np.asarray(plane2)))
+    return float(_call("angleBetweenPlanes", _shared.array(basis, "basis", np.float64), _shared.array(plane1, "plane1"), _shared.array(plane2, "plane2")))
 
 
 def residual_operations(
@@ -439,7 +441,7 @@ def residual_operations(
         _call(
             "residualOperations",
             _shared.operation_list(operations, ("matrix",)),
-            np.asarray(basis, dtype=np.float64),
+            _shared.array(basis, "basis", np.float64),
             _shared.options(tolerance=tolerance),
         )
     )
@@ -449,31 +451,31 @@ def reduce_indices(indices: ArrayLike) -> NDArray[np.int64]:
     """The indices divided by their greatest common divisor, signs kept. Raises SymcrysError for
     non-integers and for all zeros.
     """
-    return np.asarray(_call("reduceIndices", np.asarray(indices)), dtype=np.int64)
+    return np.asarray(_call("reduceIndices", _shared.array(indices, "indices")), dtype=np.int64)
 
 
 def plane_to_four_indices(hkl: ArrayLike) -> NDArray[np.int64]:
     """The plane (hkl) of hexagonal axes as (hkil) with i = −(h + k)."""
-    return np.asarray(_call("planeToFourIndices", np.asarray(hkl)), dtype=np.int64)
+    return np.asarray(_call("planeToFourIndices", _shared.array(hkl, "hkl")), dtype=np.int64)
 
 
 def plane_from_four_indices(hkil: ArrayLike) -> NDArray[np.int64]:
     """The plane (hkil) as (hkl); raises SymcrysError unless i = −(h + k)."""
-    return np.asarray(_call("planeFromFourIndices", np.asarray(hkil)), dtype=np.int64)
+    return np.asarray(_call("planeFromFourIndices", _shared.array(hkil, "hkil")), dtype=np.int64)
 
 
 def direction_to_four_indices(uvw: ArrayLike) -> NDArray[np.int64]:
     """The direction [uvw] of hexagonal axes as [UVTW], reduced: U = (2u − v)/3, V = (2v − u)/3, T =
     −(U + V), W = w, scaled to the smallest integers.
     """
-    return np.asarray(_call("directionToFourIndices", np.asarray(uvw)), dtype=np.int64)
+    return np.asarray(_call("directionToFourIndices", _shared.array(uvw, "uvw")), dtype=np.int64)
 
 
 def direction_from_four_indices(uvtw: ArrayLike) -> NDArray[np.int64]:
     """The direction [UVTW] as [uvw], reduced: u = U − T, v = V − T, w = W; raises SymcrysError
     unless T = −(U + V).
     """
-    return np.asarray(_call("directionFromFourIndices", np.asarray(uvtw)), dtype=np.int64)
+    return np.asarray(_call("directionFromFourIndices", _shared.array(uvtw, "uvtw")), dtype=np.int64)
 
 
 def zone_axis(h1: ArrayLike, h2: ArrayLike) -> Optional[NDArray[np.int64]]:
@@ -481,7 +483,7 @@ def zone_axis(h1: ArrayLike, h2: ArrayLike) -> Optional[NDArray[np.int64]]:
     zone law hu + kv + lw = 0, the cross product h₁ × h₂ reduced (so its sign follows the order of
     the planes), or ``None`` for parallel planes.
     """
-    result = _call("zoneAxis", np.asarray(h1), np.asarray(h2))
+    result = _call("zoneAxis", _shared.array(h1, "h1"), _shared.array(h2, "h2"))
     return None if result is None else np.asarray(result, dtype=np.int64)
 
 
@@ -493,7 +495,7 @@ def change_of_axes(p: ArrayLike) -> dict[str, NDArray[np.float64]]:
     and for a P that is singular within rounding (the absolute value of det P at most 10⁻⁹ times the
     product of its column lengths).
     """
-    result: dict[str, NDArray[np.float64]] = _call("changeOfAxes", np.asarray(p, dtype=np.float64))
+    result: dict[str, NDArray[np.float64]] = _call("changeOfAxes", _shared.array(p, "p", np.float64))
     return result
 
 
@@ -689,7 +691,7 @@ def site_symmetry_of(
         ``multiplicity``, ``general``.
     """
     return _shared.site(
-        _call("siteSymmetryOf", _shared.operation_list(operations), np.asarray(direction), _shared.options(tolerance=tolerance))
+        _call("siteSymmetryOf", _shared.operation_list(operations), _shared.array(direction, "direction"), _shared.options(tolerance=tolerance))
     )
 
 
@@ -716,7 +718,7 @@ def site_symmetry(
         _call(
             "siteSymmetry",
             key,
-            np.asarray(direction),
+            _shared.array(direction, "direction"),
             _shared.options(setting=setting, axes=axes, unique_axis=unique_axis, tolerance=tolerance),
         )
     )
@@ -759,7 +761,7 @@ def orbit(
         In each, ``hkl`` (or ``uvw``) is an int64 array of shape (3,) and ``operations`` an int64
         array of shape (n,); ``indices`` is a dict ``{"hkl": ...}`` or ``{"uvw": ...}``.
     """
-    return list(_call("orbit", key, dict(indices), _shared.options(setting=setting, axes=axes, unique_axis=unique_axis)))
+    return list(_call("orbit", key, _shared.mapping(indices, "indices"), _shared.options(setting=setting, axes=axes, unique_axis=unique_axis)))
 
 
 def orbit_of(
@@ -787,7 +789,7 @@ def orbit_of(
         shape (n,).
     """
     return list(
-        _call("orbitOf", _shared.operation_list(operations), np.asarray(direction), _shared.options(tolerance=tolerance))
+        _call("orbitOf", _shared.operation_list(operations), _shared.array(direction, "direction"), _shared.options(tolerance=tolerance))
     )
 
 
@@ -848,7 +850,7 @@ def wyckoff_position(
         _call(
             "wyckoffPosition",
             key,
-            np.asarray(direction),
+            _shared.array(direction, "direction"),
             _shared.options(setting=setting, axes=axes, unique_axis=unique_axis, tolerance=tolerance),
         )
     )
@@ -1047,12 +1049,12 @@ def rotate_tensor(
         A float64 array of shape (3**rank,); ``tensor`` may have any shape with 3**rank entries (it
         is flattened in C order).
     """
-    flat = np.asarray(tensor, dtype=np.float64).reshape(-1)
+    flat = _shared.array(tensor, "tensor", np.float64).reshape(-1)
     return np.asarray(
         _call(
             "rotateTensor",
             flat,
-            np.asarray(rotation),
+            _shared.array(rotation, "rotation"),
             _shared.spec(spec),
             _shared.options(tolerance=tolerance),
             floats=True,

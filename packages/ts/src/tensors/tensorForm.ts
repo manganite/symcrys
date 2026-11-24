@@ -94,11 +94,9 @@ const RANKS: readonly number[] = [0, 1, 2, 3, 4];
 /** Checks a specification and returns the index permutations that generate its intrinsic symmetry. */
 function checkSpec(spec: TensorSpec): number[][] {
   const { rank, parity, timeParity, intrinsic } = spec;
-  if (!RANKS.includes(rank)) throw new RangeError(`Tensor rank must be 0 to 4, not ${JSON.stringify(rank)}`);
-  if (parity !== 'polar' && parity !== 'axial')
-    throw new RangeError(`Unknown tensor parity: ${JSON.stringify(parity)}`);
-  if (timeParity !== 'i' && timeParity !== 'c')
-    throw new RangeError(`Unknown time parity: ${JSON.stringify(timeParity)}`);
+  if (!RANKS.includes(rank)) throw new RangeError(`Tensor rank must be 0 to 4, not ${shown(rank)}`);
+  if (parity !== 'polar' && parity !== 'axial') throw new RangeError(`Unknown tensor parity: ${shown(parity)}`);
+  if (timeParity !== 'i' && timeParity !== 'c') throw new RangeError(`Unknown time parity: ${shown(timeParity)}`);
   const swap = (a: number, b: number) => {
     const p = Array.from({ length: rank }, (_, k) => k);
     [p[a], p[b]] = [p[b], p[a]];
@@ -116,7 +114,7 @@ function checkSpec(spec: TensorSpec): number[][] {
       if (rank !== 4) throw new RangeError(`Intrinsic symmetry '${intrinsic}' needs rank 4, not ${rank}`);
       return intrinsic === 'ij_kl' ? [swap(0, 1), swap(2, 3)] : [swap(0, 1), swap(2, 3), [2, 3, 0, 1]];
     default:
-      throw new RangeError(`Unknown intrinsic symmetry: ${JSON.stringify(intrinsic)}`);
+      throw new RangeError(`Unknown intrinsic symmetry: ${shown(intrinsic)}`);
   }
 }
 

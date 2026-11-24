@@ -4,6 +4,8 @@
  * "Tolerances"): one option, one metric per kind of object, one check.
  */
 
+import { shown } from './checks.js';
+
 /**
  * The default tolerance of every function that compares numbers a caller passes in (operations,
  * directions, points): two numbers closer than this count as equal, in the metric of their kind
@@ -46,9 +48,7 @@ export function toleranceOf(options: ToleranceOptions | undefined, kind: keyof t
   const t: unknown = options?.tolerance === undefined ? EPSILON : options.tolerance;
   const bound = TOLERANCE_BOUND[kind];
   if (!(typeof t === 'number' && t > 0 && t < bound)) {
-    // String() for numbers, as JSON writes NaN and Infinity as null.
-    const shown = typeof t === 'number' ? String(t) : JSON.stringify(t);
-    throw new RangeError(`The tolerance must be a number above 0 and below ${bound}, not ${shown}`);
+    throw new RangeError(`The tolerance must be a number above 0 and below ${bound}, not ${shown(t)}`);
   }
   return t;
 }

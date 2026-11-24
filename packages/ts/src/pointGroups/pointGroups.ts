@@ -4,7 +4,7 @@
  * operations, generators and symbols, as ITC gives them (CLAUDE.md, "Pure ITC").
  */
 
-import { SETTING_KEYS, checkOptions } from '../checks.js';
+import { checkOptions, SETTING_KEYS, shown } from '../checks.js';
 import { INVERSION, det, inverse, matricesEqual, multiply, type Mat3 } from '../linalg.js';
 import { EPSILON } from '../tolerances.js';
 import { compactSymbol } from '../notation.js';
@@ -142,10 +142,10 @@ function criteriaArgument(arg: unknown): AxesOptions | undefined {
   // for a symbol that names no group.
   const { axes, uniqueAxis } = arg as AxesOptions;
   if (axes !== undefined && axes !== 'hexagonal' && axes !== 'rhombohedral') {
-    throw new RangeError(`axes must be 'hexagonal' or 'rhombohedral', not ${JSON.stringify(axes)}`);
+    throw new RangeError(`axes must be 'hexagonal' or 'rhombohedral', not ${shown(axes)}`);
   }
   if (uniqueAxis !== undefined && uniqueAxis !== 'a' && uniqueAxis !== 'b' && uniqueAxis !== 'c') {
-    throw new RangeError(`uniqueAxis must be 'a', 'b' or 'c', not ${JSON.stringify(uniqueAxis)}`);
+    throw new RangeError(`uniqueAxis must be 'a', 'b' or 'c', not ${shown(uniqueAxis)}`);
   }
   return arg as AxesOptions;
 }
@@ -242,7 +242,7 @@ export function isMagneticPointGroupKey(key: string): key is MagneticPointGroupK
 
 function data(key: string): GroupData {
   const d = BY_KEY.get(key);
-  if (!d) throw new RangeError(`Unknown point group key: ${JSON.stringify(key)}`);
+  if (!d) throw new RangeError(`Unknown point group key: ${shown(key)}`);
   return d;
 }
 
@@ -293,7 +293,7 @@ function criteriaOf(
   const uniqueAxis = options?.uniqueAxis;
   if (axes !== undefined) {
     if (axes !== 'hexagonal' && axes !== 'rhombohedral') {
-      throw new RangeError(`axes must be 'hexagonal' or 'rhombohedral', not ${JSON.stringify(axes)}`);
+      throw new RangeError(`axes must be 'hexagonal' or 'rhombohedral', not ${shown(axes)}`);
     }
     if (crystalFamily(d.crystalSystem) !== 'hexagonal') {
       throw new RangeError(
@@ -303,7 +303,7 @@ function criteriaOf(
   }
   if (uniqueAxis !== undefined) {
     if (uniqueAxis !== 'a' && uniqueAxis !== 'b' && uniqueAxis !== 'c') {
-      throw new RangeError(`uniqueAxis must be 'a', 'b' or 'c', not ${JSON.stringify(uniqueAxis)}`);
+      throw new RangeError(`uniqueAxis must be 'a', 'b' or 'c', not ${shown(uniqueAxis)}`);
     }
     if (d.crystalSystem !== 'monoclinic') {
       throw new RangeError(`Point group ${d.key} (${d.crystalSystem}): uniqueAxis applies to the monoclinic groups`);
@@ -349,16 +349,16 @@ function settingIndex(d: GroupData, options?: SettingOptions): number {
   const criteria = criteriaOf(d, options);
   const requested = options?.setting;
   if (requested !== undefined && requested !== null && typeof requested !== 'number' && typeof requested !== 'string') {
-    throw new RangeError(`The setting must be an index or a symbol, not ${JSON.stringify(requested)}`);
+    throw new RangeError(`The setting must be an index or a symbol, not ${shown(requested)}`);
   }
   if (typeof requested === 'string') {
     const named = settingsNamed(d, requested);
     if (named.length === 0) {
       throw new RangeError(
-        `Point group ${d.key} has no setting ${JSON.stringify(requested)} (settings ${listSettings(d, allSettings(d))})`,
+        `Point group ${d.key} has no setting ${shown(requested)} (settings ${listSettings(d, allSettings(d))})`,
       );
     }
-    return choose(d, named, criteria, JSON.stringify(requested));
+    return choose(d, named, criteria, shown(requested));
   }
   if (requested === undefined || requested === null) return choose(d, allSettings(d), criteria, '');
   const count = d.settingCount;
@@ -652,7 +652,7 @@ const frozenMatrix = (m: Mat3 | IntMat3): Mat3 =>
 export function integer(m: Mat3, what: string): Mat3 {
   const r = m.map((row) => row.map((v) => Math.round(v) + 0)) as unknown as Mat3;
   if (!m.every((row, i) => row.every((v, j) => Math.abs(v - r[i][j]) < 1e-9))) {
-    throw new Error(`${what} is not an integer matrix in the lattice basis: ${JSON.stringify(m)}`);
+    throw new Error(`${what} is not an integer matrix in the lattice basis: ${shown(m)}`);
   }
   return r;
 }
@@ -758,7 +758,7 @@ export function symbol(key: MagneticPointGroupKey, options?: SymbolOptions): str
   if (form === 'schoenflies') return volDSchoenflies(d.schoenflies);
   if (form === 'short') return s.short;
   if (form === 'full') return s.full;
-  throw new RangeError(`Unknown symbol form: ${JSON.stringify(form)}`);
+  throw new RangeError(`Unknown symbol form: ${shown(form)}`);
 }
 
 /** A point group in a given setting. */
@@ -777,7 +777,9 @@ function find(
   classesOnly: boolean,
   options: AxesOptions | undefined,
 ): PointGroupInSetting<MagneticPointGroupKey> | undefined {
-  if (typeof symbol !== 'string') return undefined;
+  // A symbol that names no group is not found; a value that is no symbol at all is wrong input.
+  if (typeof symbol !== 'string')
+    throw new RangeError(`findPointGroup takes a symbol (a string), not ${shown(symbol)}`);
   const target = compact(symbol);
   const candidates = [...BY_KEY.values()].filter((d) => !classesOnly || d.type === 'I');
   // The key, a short or full symbol of a setting (spaces ignored), Birss's cubic form; then a
@@ -792,13 +794,13 @@ function find(
   }
   if (found.length > 1) {
     throw new RangeError(
-      `The symbol ${JSON.stringify(symbol)} names several point groups: ${found.map((m) => m.d.key).join(', ')}`,
+      `The symbol ${shown(symbol)} names several point groups: ${found.map((m) => m.d.key).join(', ')}`,
     );
   }
   if (found.length === 0) return undefined;
   const { d, named } = found[0]!;
   // A name that several settings share gives the standard, unless axes or uniqueAxis chooses another.
-  return { key: d.key, setting: choose(d, named, criteriaOf(d, options), JSON.stringify(symbol)) };
+  return { key: d.key, setting: choose(d, named, criteriaOf(d, options), shown(symbol)) };
 }
 
 /**

@@ -4,6 +4,7 @@
  * of a set of generators into a group.
  */
 
+import { shown } from './checks.js';
 import { matricesEqual, multiply, snap, type Mat3 } from './linalg.js';
 import { EPSILON } from './tolerances.js';
 
@@ -55,7 +56,7 @@ export function checkOrthogonalWithin(m: Mat3, what: string, tolerance: number):
     for (let j = 0; j < 3; j++) {
       const d = m[0][i] * m[0][j] + m[1][i] * m[1][j] + m[2][i] * m[2][j];
       if (!(Math.abs(d - (i === j ? 1 : 0)) < t)) {
-        throw new RangeError(`${what} is not an orthogonal (Cartesian) matrix: ${JSON.stringify(m)}`);
+        throw new RangeError(`${what} is not an orthogonal (Cartesian) matrix: ${shown(m)}`);
       }
     }
   }
@@ -106,7 +107,7 @@ export function checkTimeReversal(operations: readonly CartesianOperation[]): vo
   operations.forEach((op, i) => {
     if (typeof (op as Partial<CartesianOperation> | null)?.timeReversal !== 'boolean') {
       throw new RangeError(
-        `Operation ${i}: timeReversal must be true or false, not ${JSON.stringify((op as Partial<CartesianOperation> | null)?.timeReversal)}; an operation of the magnetic API says whether it is combined with time reversal`,
+        `Operation ${i}: timeReversal must be true or false, not ${shown((op as Partial<CartesianOperation> | null)?.timeReversal)}; an operation of the magnetic API says whether it is combined with time reversal`,
       );
     }
   });

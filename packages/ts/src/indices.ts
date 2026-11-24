@@ -3,6 +3,7 @@
  * (docs/conventions.md, "Cell, metric and indices"). Plain integers and matrices in and out.
  */
 
+import { shown } from './checks.js';
 import { det, inverse, isSingular, transpose, type Mat3, type Vec3 } from './linalg.js';
 import { deepFreeze } from './freeze.js';
 
@@ -23,9 +24,7 @@ function integers(v: readonly number[], who: string, length?: number): void {
     v.length === 0 ||
     !v.every((x) => Number.isSafeInteger(x))
   ) {
-    throw new RangeError(
-      `${who}: ${length === undefined ? 'a list of' : length} integers expected, not ${JSON.stringify(v)}`,
-    );
+    throw new RangeError(`${who}: ${length === undefined ? 'a list of' : length} integers expected, not ${shown(v)}`);
   }
 }
 
@@ -48,7 +47,7 @@ export function planeToFourIndices(hkl: Vec3): FourIndices {
 export function planeFromFourIndices(hkil: FourIndices): Vec3 {
   integers(hkil, 'planeFromFourIndices', 4);
   if (hkil[2] !== -(hkil[0] + hkil[1]))
-    throw new RangeError(`planeFromFourIndices: i must be −(h + k) in ${JSON.stringify(hkil)}`);
+    throw new RangeError(`planeFromFourIndices: i must be −(h + k) in ${shown(hkil)}`);
   return deepFreeze([hkil[0] + 0, hkil[1] + 0, hkil[3] + 0]);
 }
 
@@ -68,7 +67,7 @@ export function directionFromFourIndices(uvtw: FourIndices): Vec3 {
   integers(uvtw, 'directionFromFourIndices', 4);
   if (uvtw.every((x) => x === 0)) throw new RangeError('directionFromFourIndices: zero vector');
   const [U, V, T, W] = uvtw;
-  if (T !== -(U + V)) throw new RangeError(`directionFromFourIndices: T must be −(U + V) in ${JSON.stringify(uvtw)}`);
+  if (T !== -(U + V)) throw new RangeError(`directionFromFourIndices: T must be −(U + V) in ${shown(uvtw)}`);
   return deepFreeze(reduceIndices([U - T, V - T, W]) as unknown as Vec3);
 }
 

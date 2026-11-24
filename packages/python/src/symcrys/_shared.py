@@ -106,7 +106,26 @@ def form(result: dict[str, Any]) -> TensorForm:
 
 
 def spec(spec_or_name: Mapping[str, Any] | str) -> Any:
-    return spec_or_name if isinstance(spec_or_name, str) else dict(spec_or_name)
+    return spec_or_name if isinstance(spec_or_name, str) else mapping(spec_or_name, "spec")
+
+
+def array(value: Any, what: str, dtype: Any = None) -> NDArray[Any]:
+    """An argument as a NumPy array of real numbers, or SymcrysError naming it (a ragged list, a
+    string, complex numbers): the library checks the shape and the values (#92)."""
+    try:
+        result = np.asarray(value, dtype=dtype)
+    except (TypeError, ValueError) as e:
+        raise _engine.SymcrysError(f"{what} must be an array of numbers ({e})") from None
+    if result.dtype.kind not in "biuf":
+        raise _engine.SymcrysError(f"{what} must be an array of real numbers, not of {result.dtype}")
+    return result
+
+
+def mapping(value: Any, what: str) -> dict[str, Any]:
+    """An argument as a dict, or SymcrysError naming it."""
+    if not isinstance(value, Mapping):
+        raise _engine.SymcrysError(f"{what} must be a mapping, not {type(value).__name__}")
+    return dict(value)
 
 
 def site(result: Any) -> SiteSymmetry:

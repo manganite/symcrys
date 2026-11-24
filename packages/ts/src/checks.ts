@@ -3,14 +3,23 @@
  * RangeError that names what is wrong, never a TypeError from deep inside the library.
  */
 
-/** A value for an error message; never throws (BigInt, circular objects, functions). */
+/**
+ * A value for an error message; never throws: numbers as written (NaN, Infinity), BigInt with its
+ * `n`, a function or symbol by its kind, and a value with a cycle as such.
+ */
 export function shown(value: unknown): string {
   if (typeof value === 'number') return String(value);
+  if (typeof value === 'bigint') return `${value}n`;
   if (typeof value === 'function') return 'a function';
+  if (typeof value === 'symbol') return 'a symbol';
   try {
-    return JSON.stringify(value) ?? String(value);
+    return (
+      JSON.stringify(value, (_, v: unknown) =>
+        typeof v === 'bigint' ? `${v}n` : typeof v === 'symbol' ? 'a symbol' : v,
+      ) ?? String(value)
+    );
   } catch {
-    return String(value);
+    return 'a value that contains itself';
   }
 }
 
@@ -27,7 +36,7 @@ export const TOLERANCE_KEYS = ['tolerance'] as const;
  */
 export function checkOptions(options: unknown, keys: readonly string[], what: string): void {
   if (options === undefined) return;
-  if (typeof options !== 'object' || options === null || Array.isArray(options)) {
+  if (!isPlainObject(options)) {
     throw new RangeError(`${what} takes its options as an object { ${keys.join(', ')} }, not ${shown(options)}`);
   }
   const unknown = Object.keys(options).filter((k) => !keys.includes(k));
@@ -56,7 +65,14 @@ export function checkNumbers(v: unknown, length: number, what: string): asserts 
   }
 }
 
-/** Throws unless `v` is a plain object (not null, not an array). */
+/** True for a plain object: `{ … }` or one without a prototype, not an array, a Map or a Date. */
+export function isPlainObject(v: unknown): v is Record<string, unknown> {
+  if (typeof v !== 'object' || v === null) return false;
+  const proto = Object.getPrototypeOf(v) as unknown;
+  return proto === Object.prototype || proto === null;
+}
+
+/** Throws unless `v` is a plain object. */
 export function checkObject(v: unknown, what: string): asserts v is object {
-  if (typeof v !== 'object' || v === null || Array.isArray(v)) throw new RangeError(`${what}, not ${shown(v)}`);
+  if (!isPlainObject(v)) throw new RangeError(`${what}, not ${shown(v)}`);
 }

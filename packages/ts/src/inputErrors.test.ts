@@ -113,8 +113,17 @@ const CALLS: Record<string, [Record<string, unknown>, Record<string, Call>]> = {
   ],
 };
 
-/** Wrong values: of the wrong type, of the wrong shape, not finite. */
+/** A value that contains itself: JSON cannot write it. */
+const circular: Record<string, unknown> = {};
+circular.self = circular;
+
+/** Wrong values: of the wrong type, of the wrong shape, not finite, not writable as JSON. */
 const WRONG: readonly unknown[] = [
+  1n,
+  [1n, 0n, 0n],
+  circular,
+  Symbol('x'),
+  new Map([['setting', 2]]),
   undefined,
   null,
   0,
@@ -135,6 +144,37 @@ const WRONG: readonly unknown[] = [
   { matrix: 1 },
   () => 1,
 ];
+
+/**
+ * The positions where a wrong value may be answered instead of refused: a predicate answers false
+ * (`isPointGroupKey`), a search answers "not found" for a string that names no group
+ * (`findPointGroup`), and a list of operations may be empty where it is closed into a group (the
+ * group of the identity) or described one by one.
+ */
+const isEmptyObject = (v: unknown): boolean =>
+  typeof v === 'object' && v !== null && Object.getPrototypeOf(v) === Object.prototype && Object.keys(v).length === 0;
+
+const display = (v: unknown): string => {
+  try {
+    return typeof v === 'symbol' || typeof v === 'bigint' ? String(v) : (JSON.stringify(v) ?? String(v));
+  } catch {
+    return 'circular';
+  }
+};
+
+const MAY_ANSWER: Readonly<Record<string, (position: number, value: unknown) => boolean>> = {
+  isPointGroupKey: () => true,
+  reduceIndices: (p, v) => Array.isArray(v) && v.length > 0 && v.every((x) => Number.isSafeInteger(x) && x !== 0),
+  findPointGroup: (p, v) => p === 0 && typeof v === 'string',
+  pointGroupOf: (p, v) => p === 0 && Array.isArray(v) && v.length === 0,
+  describeOperationsOf: (p, v) => p === 0 && Array.isArray(v) && v.length === 0,
+  tensorFormOf: (p, v) => p === 0 && Array.isArray(v) && v.length === 0,
+  isCentrosymmetricOf: (p, v) => p === 0 && Array.isArray(v) && v.length === 0,
+  isEnantiomorphicOf: (p, v) => p === 0 && Array.isArray(v) && v.length === 0,
+  allowsPropertyOf: (p, v) => p === 0 && Array.isArray(v) && v.length === 0,
+  allowedPropertiesOf: (p, v) => p === 0 && Array.isArray(v) && v.length === 0,
+  residualOperations: (p, v) => p === 0 && Array.isArray(v) && v.length === 0,
+};
 
 /** The outcome of a call: 'ok', 'RangeError', or the name and message of another error. */
 function outcome(f: (...a: unknown[]) => unknown, args: readonly unknown[]): string {
@@ -160,13 +200,17 @@ describe('wrong input is a RangeError (#137 D2)', () => {
         expect(outcome(f, c.args), 'valid arguments').toBe('ok');
         const bad: string[] = [];
         const positions = c.args.length + (c.options ? 1 : 0);
-        for (let i = 0; i < Math.max(positions, 1); i++) {
+        for (let i = 0; i < positions; i++) {
           for (const w of WRONG) {
-            if (w === undefined && i >= c.args.length) continue; // an omitted options argument
+            // An omitted or empty options argument is valid.
+            if (i >= c.args.length && (w === undefined || isEmptyObject(w))) continue;
             const args = [...c.args];
             args[i] = w;
             const result = outcome(f, args);
-            if (result !== 'ok' && result !== 'RangeError') bad.push(`argument ${i} = ${String(w)}: ${result}`);
+            const mayAnswer = MAY_ANSWER[name]?.(i, w) ?? false;
+            if (result !== 'RangeError' && !(result === 'ok' && mayAnswer)) {
+              bad.push(`argument ${i} = ${display(w)}: ${result}`);
+            }
           }
         }
         expect(bad).toEqual([]);
@@ -175,7 +219,16 @@ describe('wrong input is a RangeError (#137 D2)', () => {
       if (c.options) {
         const { index, keys } = c.options;
         it(`${entry} ${name}: refuses an unknown option key and options that are not an object`, () => {
-          for (const options of [{ bogus: 1 }, { [keys[0]]: undefined, typo: 1 }, 'setting', 3, [], null]) {
+          for (const options of [
+            { bogus: 1 },
+            { [keys[0]]: undefined, typo: 1 },
+            'setting',
+            3,
+            [],
+            null,
+            new Map([[keys[0], 1]]),
+            new Date(0),
+          ]) {
             const args = [...c.args];
             args[index] = options;
             expect(outcome(f, args), JSON.stringify(options)).toBe('RangeError');

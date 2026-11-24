@@ -4,7 +4,7 @@
  * coordinates, as `latticeBasis` gives it; lengths in any unit, angles in degrees.
  */
 
-import { TOLERANCE_KEYS, checkObject, checkOptions } from './checks.js';
+import { checkObject, checkOptions, shown, TOLERANCE_KEYS } from './checks.js';
 import { apply, inverse, isSingular, multiply, transpose, type Mat3, type Vec3 } from './linalg.js';
 import { checkTimeReversal, type CartesianOperation as MagneticOperation } from './operations.js';
 import { toleranceOf, type ToleranceOptions } from './tolerances.js';
@@ -83,6 +83,13 @@ function anglesOk({ alpha, beta, gamma }: CellAngles): boolean {
 export function isValidCell(angles: CellAngles, options?: IsValidCellOptions): boolean {
   checkOptions(options, ['minVolumeRatio'], 'isValidCell');
   checkObject(angles, 'isValidCell takes the angles { alpha, beta, gamma }');
+  // Numbers out of range are no cell (false); anything else is wrong input.
+  for (const name of ['alpha', 'beta', 'gamma'] as const) {
+    const x = (angles as Partial<CellAngles>)[name];
+    if (!(typeof x === 'number' && Number.isFinite(x))) {
+      throw new RangeError(`The angle ${name} must be a finite number of degrees, not ${shown(x)}`);
+    }
+  }
   if (!anglesOk(angles)) return false;
   const min = options?.minVolumeRatio ?? 0;
   if (!(typeof min === 'number' && min >= 0 && min <= 1))
@@ -101,7 +108,7 @@ function checkEdges(p: LatticeParameters): void {
     ['c', c],
   ] as const) {
     if (typeof x !== 'number' || !Number.isFinite(x) || x <= 0) {
-      throw new RangeError(`latticeFromParameters: edge ${name} must be a positive number, not ${JSON.stringify(x)}`);
+      throw new RangeError(`latticeFromParameters: edge ${name} must be a positive number, not ${shown(x)}`);
     }
   }
 }
@@ -239,7 +246,7 @@ export function residualOperations<T extends CellOperation>(
     // W is an integer matrix; a Cartesian matrix (±√3/2) passed as `matrix` would give a wrong answer.
     if (!(m as number[][]).every((r) => r.every((x) => Math.abs(x - Math.round(x)) <= 1e-9))) {
       throw new RangeError(
-        `residualOperations: the matrix of operation ${i} is not an integer matrix in the lattice basis (the field matrix of an operation, not cartesian): ${JSON.stringify(m)}`,
+        `residualOperations: the matrix of operation ${i} is not an integer matrix in the lattice basis (the field matrix of an operation, not cartesian): ${shown(m)}`,
       );
     }
   });

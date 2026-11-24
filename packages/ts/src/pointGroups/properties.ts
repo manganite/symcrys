@@ -6,7 +6,7 @@
  * (tensors/tensorProperties.ts).
  */
 
-import { TOLERANCE_KEYS, checkOptions } from '../checks.js';
+import { checkOptions, shown, TOLERANCE_KEYS } from '../checks.js';
 import type { CrystalSystem } from '../lattice.js';
 import { INVERSION, det } from '../linalg.js';
 import { checkCartesianOperations, checkTimeReversal, type CartesianOperation } from '../operations.js';
@@ -63,6 +63,6 @@ const HOLOHEDRY: Readonly<Record<CrystalSystem, PointGroupKey>> = Object.freeze(
  * (`latticeBasis`, hexagonal axes for both systems) has.
  */
 export function holohedry(system: CrystalSystem): PointGroupKey {
-  if (!Object.hasOwn(HOLOHEDRY, system)) throw new RangeError(`Unknown crystal system: ${JSON.stringify(system)}`);
+  if (!Object.hasOwn(HOLOHEDRY, system)) throw new RangeError(`Unknown crystal system: ${shown(system)}`);
   return HOLOHEDRY[system];
 }

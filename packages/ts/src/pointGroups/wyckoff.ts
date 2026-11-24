@@ -4,7 +4,7 @@
  * Wyckoff position of any direction (docs/conventions.md, "Site symmetry and Wyckoff positions").
  */
 
-import { SETTING_KEYS, TOLERANCE_KEYS, checkOptions, pick } from '../checks.js';
+import { checkOptions, pick, SETTING_KEYS, shown, TOLERANCE_KEYS } from '../checks.js';
 import { apply, inverse, transpose, type Mat3, type Vec3 } from '../linalg.js';
 import { crystalFamily } from '../lattice.js';
 import { itcBasis, itcClass, itcSetting as itcClassSetting } from './itcData.js';
@@ -226,9 +226,7 @@ const cache = new Map<string, readonly WyckoffPosition[]>();
  */
 export function tableSetting(key: PointGroupKey, options?: SettingOptions, what = 'Wyckoff positions'): number {
   if (isMagneticPointGroupKey(key) && !isPointGroupKey(key)) {
-    throw new RangeError(
-      `${what} are given for the 32 crystal classes only; ${JSON.stringify(key)} is a magnetic point group`,
-    );
+    throw new RangeError(`${what} are given for the 32 crystal classes only; ${shown(key)} is a magnetic point group`);
   }
   const index = settingIndexOf(key, options);
   operations(key, pick(options, SETTING_KEYS)); // validates the setting index
@@ -321,6 +319,6 @@ export function wyckoffPosition(
     if (row) return row;
   }
   throw new RangeError(
-    `Point group ${key}, setting ${setting}: no Wyckoff position for ${JSON.stringify(direction)} (tolerance too large?)`,
+    `Point group ${key}, setting ${setting}: no Wyckoff position for ${shown(direction)} (tolerance too large?)`,
   );
 }

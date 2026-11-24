@@ -4,6 +4,7 @@
  * Internal for now; the entry point `symcrys/plane` comes later.
  */
 
+import { shown } from '../checks.js';
 import {
   closure,
   compose,
@@ -23,7 +24,7 @@ export const PLANE_GROUP_KEYS = PLANE_GROUP_DATA.map((g) => g.symbol);
 export function planeGroupEntry(key: string | number): PlaneGroupEntry {
   const entry = PLANE_GROUP_DATA.find((g) => g.symbol === key || g.number === key);
   if (!entry) {
-    throw new RangeError(`Unknown plane group: ${JSON.stringify(key)}`);
+    throw new RangeError(`Unknown plane group: ${shown(key)}`);
   }
   return entry;
 }

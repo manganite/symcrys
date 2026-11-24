@@ -11,7 +11,7 @@
  * (docs/conventions.md, "Two entry points").
  */
 
-import { TOLERANCE_KEYS, checkOptions } from '../checks.js';
+import { checkOptions, shown, TOLERANCE_KEYS } from '../checks.js';
 import type { CartesianOperation } from '../operations.js';
 import type { MagneticPointGroupKey } from '../pointGroups/pointGroups.js';
 import { TENSOR_PROPERTY_NAMES, specOf, type TensorPropertyName } from './propertyTable.js';
@@ -22,7 +22,7 @@ import { deepFreeze } from '../freeze.js';
 
 /** A name of the table; anything else, a specification included, is an error here. */
 function named(name: TensorPropertyName): TensorPropertyName {
-  if (typeof name !== 'string') throw new RangeError(`Unknown tensor property: ${JSON.stringify(name)}`);
+  if (typeof name !== 'string') throw new RangeError(`Unknown tensor property: ${shown(name)}`);
   specOf(name);
   return name;
 }

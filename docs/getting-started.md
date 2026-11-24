@@ -92,7 +92,7 @@ from symcrys import plane
 plane.wyckoff_position("p6mm", [1 / 3, 2 / 3]), plane.asymmetric_unit("p6mm")["vertices"]
 ```
 
-Wrong input (an unknown key, a vector of the wrong length, an unknown option) raises
+Wrong input (an unknown key, a vector of the wrong length, an argument of the wrong type) raises
 `symcrys.SymcrysError`, a subclass of `ValueError`; a fault of symcrys itself raises
 `symcrys.SymcrysInternalError`, a `RuntimeError`, so that `except ValueError` does not hide it:
 
