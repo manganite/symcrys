@@ -100,7 +100,7 @@ def test_shg_at_m3m_surfaces_is_yarivs_form(normal: list[int], x: list[int], pan
     z = np.array(normal, float) / np.linalg.norm(normal)
     xa = np.array(x, float) / np.linalg.norm(x)
     frame = np.array([xa, np.cross(z, xa), z])
-    basis = np.array([symcrys.rotate_tensor(b, frame, SHG) for b in form["basis"]])
+    basis = np.array([symcrys.rotate_tensor(b, frame, SHG) for b in form["basis"]]).reshape(len(form["basis"]), -1)
     row = YARIV[panel]
     assert len(basis) == int(row[3])
     assert cells(basis) == printed_cells(row)
@@ -199,7 +199,7 @@ def test_itc_vol_d_magnetic_forms(file: str, name: str, count: int, shape: tuple
         assert any(found), cell
         for where in filter(None, found):
             form = magnetic.tensor_form(where["key"], name, setting=where["setting"])
-            assert same_space(form["basis"], printed), cell
+            assert same_space(form["basis"].reshape(len(form["basis"]), -1), printed), cell
         keys.append(next(filter(None, found))["key"])
     assert len(keys) == count
     assert sorted(keys) == sorted(k for k in NOT_GREY if magnetic.allows_property(k, name))
@@ -305,7 +305,7 @@ def test_ita_3232_operations_in_the_lattice_basis_and_orbit(row: list[str]) -> N
     printed = [[_coefficients(c) for c in t.split(",")] for t in row[4].split()]
     ops = symcrys.operations(key, setting=setting)
     assert [op["matrix"].tolist() for op in ops] == printed
-    uvw = [e["uvw"].tolist() for e in symcrys.orbit(key, {"uvw": [3, 2, 1]}, setting=setting)]
+    uvw = [e["uvw"].tolist() for e in symcrys.orbit(key, uvw=[3, 2, 1], setting=setting)]
     assert uvw == [(np.array(w) @ [3, 2, 1]).tolist() for w in printed]
 
 
@@ -318,7 +318,7 @@ def test_ita_3232_general_faces(row: list[str]) -> None:
         v = [(-1 if c.startswith("-") else 1) * value[c.lstrip("-")] for c in face.split(",")]
         expected.append(v if len(v) == 3 else [v[0], v[1], v[3]])
     key, setting = _setting(row[0], row[1])
-    computed = [e["hkl"].tolist() for e in symcrys.orbit(key, {"hkl": [3, 2, 1]}, setting=setting)]
+    computed = [e["hkl"].tolist() for e in symcrys.orbit(key, hkl=[3, 2, 1], setting=setting)]
     # The printed order (see the transcription, "Order"): 6/m and 6mm print two rows the other way
     # round; 32, 3m and -3m with rhombohedral axes the row of the second coset shifted by one.
     if row[0] in ("6/m", "6mm"):

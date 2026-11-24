@@ -86,27 +86,28 @@ export interface TensorSpec {
 
 /**
  * The form of a tensor under a point group: the subspace of tensors invariant under every
- * operation and with the requested index symmetry. Every entry is a plain number; a vector of
- * components has length 3^rank (flat index, see the module documentation).
+ * operation and with the requested index symmetry. Every entry is a plain number; a component is
+ * named by its flat index, the first index slowest (see the module documentation).
  */
 export interface TensorForm {
   /** The rank of the tensor. */
   readonly rank: TensorRank;
   /**
-   * A basis of the allowed tensors in reduced row echelon form: one row per free parameter, with 1
-   * at the parameter's own component and 0 at every other parameter's component. Every allowed
+   * A basis of the allowed tensors in reduced row echelon form: one tensor per free parameter, with
+   * 1 at the parameter's own component and 0 at every other parameter's component. Every allowed
    * tensor is Σₖ pₖ·basis[k], where pₖ is the value of its component `parameters[k]`. Empty if the
    * tensor vanishes.
    */
   readonly basis: readonly (readonly number[])[];
   /**
    * The free parameters, as the index lists of their components (e.g. `[0, 1, 1]` for xyy), one per
-   * basis row and in its order: each is the lowest component independent of those before it.
+   * basis tensor and in its order: each is the lowest component independent of those before it.
    */
   readonly parameters: readonly (readonly number[])[];
   /**
    * The constraints: one row r per component that is not a parameter, in ascending flat index,
-   * with r·t = 0 for every allowed tensor t. Row c reads t_c − Σₖ basis[k][c]·t_{parameters[k]} = 0;
+   * with r·t = 0 for every allowed tensor t, both by flat index. Row c reads
+   * t_c − Σₖ b_{k,c}·t_{parameters[k]} = 0, with b_{k,c} the component c of basis[k];
    * a row with a single 1 says that the component vanishes.
    */
   readonly relations: readonly (readonly number[])[];
@@ -421,7 +422,7 @@ export function checkedSpec(spec: TensorSpec | TensorPropertyName): {
 }
 
 /**
- * The components of `tensor` (length 3^rank, flat index) in a frame rotated by the orthogonal
+ * The tensor `tensor` in a frame rotated by the orthogonal
  * matrix `rotation`: t′_{i…} = f·Σ R_{ia}…R_{…}·t_{a…}, with f = det(R) for an axial tensor and 1
  * for a polar one. To express a tensor in the frame of a surface, pass the matrix whose rows are
  * the new axes in the old frame. Time parity plays no part. The kind of tensor is given by its

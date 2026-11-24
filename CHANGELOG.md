@@ -8,6 +8,9 @@ All notable changes to symcrys are recorded here. The format follows
 
 ### Added
 
+- `FaceIndices` and `DirectionIndices`: the types of the face and the direction that `orbit` takes
+  (#121 step 12c), so that their fields are documented.
+
 - **Faces with numbers** (#137 G3, G4, #110, #115, #121 step 11b): `millerIndices(printed,
 { h, k, l })` substitutes values into the Miller indices ITA prints (`'h,h,-2h,l'` with h = 3,
   l = 1 gives (3, 3, 1); i dropped for hexagonal axes), and `faceNormal(basis, hkl)` gives the unit
@@ -58,6 +61,17 @@ All notable changes to symcrys are recorded here. The format follows
   Gallego et al. (2019) as well; its `description` names the vector the axial toroidal moment.
 
 ### Changed
+
+- **Python: keyword arguments and tensor shapes** (#137 H2, #98, #121 step 12c): an object parameter
+  is now its fields as arguments: `lattice_from_parameters(a, b, c, alpha, beta, gamma)`,
+  `is_valid_cell(alpha, beta, gamma, *, min_volume_ratio=None)`, `orbit(key, *, hkl=None, uvw=None,
+…)` (with typed overloads), where each took a dict, and so `miller_indices(printed, *, h=None,
+k=None, l=None)` (new in this version).
+  `tensor_form` and `tensor_form_of` give `basis` as (p, 3, …, 3), one tensor per parameter (was
+  (p, 3**rank)), a scalar (rank 0) as (p,); `rotate_tensor` keeps the shape of the tensor, (3, …, 3)
+  or flat (was always flat; a scalar comes back as `()`), and takes stacks of tensors and of
+  rotations, broadcast as in NumPy; other shapes with 3**rank entries, such as (3, 9) at rank 3,
+  which it took before, are refused.
 
 - **Python: operations as a record of arrays** (#137 H1, #98, #121 step 12b): `operations`,
   `generators` and `residual_operations` return `Operations`, a frozen dataclass with `matrix`

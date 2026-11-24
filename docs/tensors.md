@@ -54,12 +54,13 @@ Second-harmonic generation, for example, is `{ rank: 3, kind: 'polar', intrinsic
 
 A form has
 
-- `basis`: the allowed tensors as rows of length 3<sup>rank</sup>, in reduced row echelon form,
-  components by flat index with the first index slowest (xyz of rank 3 is 5). Every allowed tensor
-  is Σ<sub>k</sub> p<sub>k</sub> · basis[k];
-- `parameters`: the free components as index lists, one per row of `basis`, each the lowest
+- `basis`: the allowed tensors, in reduced row echelon form of their components by flat index with
+  the first index slowest (xyz of rank 3 is 5); in TypeScript rows of length 3<sup>rank</sup>, in
+  Python each tensor an array of shape (3, …, 3). Every allowed tensor is
+  Σ<sub>k</sub> p<sub>k</sub> · basis[k];
+- `parameters`: the free components as index lists, one per entry of `basis`, each the lowest
   component independent of those before it;
-- `relations`: rows r with r · t = 0 for every allowed tensor t.
+- `relations`: rows r with r · t = 0 for every allowed tensor t, its components by flat index.
 
 ```{code-cell} ipython3
 import symcrys

@@ -23,10 +23,8 @@ import * as forms from './pointGroups/crystalForms.js';
 import * as identify from './pointGroups/identify.js';
 import * as orbits from './pointGroups/orbits.js';
 import * as wyckoff from './pointGroups/wyckoff.js';
-import type { Hkl } from './pointGroups/wyckoff.js';
 import * as cell from './cell.js';
 import * as site from './siteSymmetry.js';
-import type { Uvw } from './symmetryDirections.js';
 import { TENSOR_PROPERTIES as ALL_TENSOR_PROPERTIES } from './tensors/propertyTable.js';
 import type { TensorPropertyName as MagneticTensorPropertyName } from './tensors/propertyTable.js';
 import * as tensors from './tensors/tensorForm.js';
@@ -534,25 +532,25 @@ export function residualOperations<T extends CellOperationArgument>(
  */
 export function orbit(
   key: PointGroupKey,
-  indices: { readonly hkl: Hkl },
+  indices: orbits.FaceIndices,
   options?: SettingOptions,
 ): readonly orbits.FaceOrbitEntry[];
 export function orbit(
   key: PointGroupKey,
-  indices: { readonly uvw: Uvw },
+  indices: orbits.DirectionIndices,
   options?: SettingOptions,
 ): readonly orbits.DirectionOrbitEntry[];
 export function orbit(
   key: PointGroupKey,
-  indices: { readonly hkl: Hkl } | { readonly uvw: Uvw },
+  indices: orbits.FaceIndices | orbits.DirectionIndices,
   options?: SettingOptions,
 ): readonly orbits.FaceOrbitEntry[] | readonly orbits.DirectionOrbitEntry[];
 export function orbit(
   key: PointGroupKey,
-  indices: { readonly hkl: Hkl } | { readonly uvw: Uvw },
+  indices: orbits.FaceIndices | orbits.DirectionIndices,
   options?: SettingOptions,
 ): readonly orbits.FaceOrbitEntry[] | readonly orbits.DirectionOrbitEntry[] {
-  return orbits.orbit(classKey(key), indices as { readonly hkl: Hkl }, options);
+  return orbits.orbit(classKey(key), indices as orbits.FaceIndices, options);
 }
 
 /**
@@ -627,7 +625,7 @@ export function tensorFormOf(
 }
 
 /**
- * The components of `tensor` (length 3^rank, flat index) in a frame rotated by the orthogonal
+ * The tensor `tensor` in a frame rotated by the orthogonal
  * matrix `rotation`: t′_{i…} = f·Σ R_{ia}…R_{…}·t_{a…}, with f = det(R) for an axial tensor and 1
  * for a polar one. To express a tensor in the frame of a surface, pass the matrix whose rows are
  * the new axes in the old frame. The kind of tensor is given by its specification or by the name

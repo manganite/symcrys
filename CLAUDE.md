@@ -270,7 +270,9 @@ Carried over from birss-app, where the calculations come from.
   that they agree, and `npm run bundle:python` refuses to bundle otherwise.
 - **The Python API follows the TypeScript API by fixed rules** (#30; `packages/python/src/symcrys/_convert.py`):
   function names and object keys camelCase → snake_case; an options object becomes keyword-only
-  arguments; arrays of numbers become NumPy arrays (`float64` for Cartesian matrices and vectors,
+  arguments, and another object parameter its fields as arguments, those every signature requires
+  positional, the others keyword-only (`lattice_from_parameters(3, 3, 5, 90, 90, 120)`,
+  `orbit(key, hkl=…)`; #137 H2); arrays of numbers become NumPy arrays (`float64` for Cartesian matrices and vectors,
   tensor bases and relations; `int64` for index lists, Miller indices, lattice directions and the
   matrices W of the operations), by
   the name of their field (`packages/python/api.json`, "arrays"; `symcrys.plane` with a list of its
@@ -301,7 +303,8 @@ Carried over from birss-app, where the calculations come from.
   TypeScript type (`_convert.convert`), so the two languages cannot drift, and the gate `docs`
   fails on a stale module, not only on a stale docstring. Hand-written are `packages/python/api.json`
   (how TypeScript types become Python types where the types do not say it: the dtype of an array
-  field, int or float for a number, a function's own argument, the fields of `Operations`; the
+  field, int or float for a number, a function's own argument or body in `_shared.py`, the fields
+  of `Operations`; the
   module docstrings),
   `packages/python/docstrings.json` (the Returns sections), and the modules `_shared.py`,
   `_convert.py`, `_engine.py`. Chosen while implementing: the names of the TypedDicts are those of
@@ -575,6 +578,17 @@ operations }`; `undefined`, never `null` (`zoneAxis`); every result frozen and `
   also as an array, since they do not depend on it; `residual_operations` passes the caller's
   operations to the library as they are and needs every field of those it keeps (it returns
   them).
+- **Keyword arguments and tensor shapes in Python** (#137 H2, decided by Thomas on 2026-11-22; #98;
+  #121 step 12c): an object parameter of the TypeScript API becomes its fields as arguments
+  (`lattice_from_parameters(a, b, c, alpha, beta, gamma)`, `is_valid_cell(alpha, beta, gamma)`,
+  `miller_indices(printed, h=…, k=…, l=…)`, `orbit(key, hkl=…)` or `uvw=…`), and the overloads of a
+  TypeScript function become Python `@overload`s (`orbit` with `hkl=` gives `list[FaceOrbitEntry]`);
+  `tensor_form` gives each basis tensor in its shape (p, 3, …, 3), the relations stay rows over the
+  flat components; `rotate_tensor` keeps the shape of the tensor, (3, …, 3) or flat, and takes
+  stacks of tensors and rotations as leading axes, broadcast as in NumPy. Chosen while
+  implementing: the library rotates one tensor by one rotation per call and the Python layer loops
+  (batched calls are #100); an object parameter's fields are documented by their TSDoc, so `orbit`
+  got the named types `FaceIndices` and `DirectionIndices` in TypeScript.
 - **Holohedry by lattice system** (#137 G1, decided by Thomas on 2026-11-22; #113; #121 step 11a):
   the holohedry belongs to the lattice system, as ITA defines it (ITA 2016 § 1.3.4.4.2 and Table
   1.3.4.1, p. 39): a type `LatticeSystem` with ITA's seven names, `holohedry(latticeSystem)` and

@@ -166,13 +166,13 @@ def test_operations_in_the_lattice_basis_and_orbits() -> None:
     assert not hasattr(symcrys, "lattice_operations") and not hasattr(magnetic, "lattice_operations")
     with pytest.raises(symcrys.SymcrysError, match="operation 0 has no key 'cartesian'.*its 'matrix' is the matrix W"):
         symcrys.point_group_of([{"matrix": op["matrix"]} for op in ops])
-    faces = symcrys.orbit("4mm", {"hkl": np.array([0, 0, 1])})
+    faces = symcrys.orbit("4mm", hkl=np.array([0, 0, 1]))
     assert len(faces) == 1 and faces[0]["hkl"].dtype == np.int64 and faces[0]["operations"].tolist() == list(range(8))
     poles = symcrys.orbit_of(symcrys.operations("4mm"), [1, 0, 0])
     assert [p["operations"].tolist() for p in poles] == [[0, 4], [1, 5], [2, 7], [3, 6]]
     assert poles[0]["direction"].dtype == np.float64
     with pytest.raises(symcrys.SymcrysError, match="either hkl"):
-        symcrys.orbit("4mm", {})
+        symcrys.orbit("4mm")
 
 
 def test_point_group_of_a_list_of_operations() -> None:
@@ -189,11 +189,14 @@ def test_point_group_of_a_list_of_operations() -> None:
 
 def test_tensor_form_arrays_have_fixed_shapes_also_when_empty() -> None:
     f = symcrys.tensor_form("mm2", SHG)
-    assert f["basis"].shape == (5, 27) and f["relations"].shape == (22, 27) and f["parameters"].shape == (5, 3)
+    # Each basis tensor in its shape (3, 3, 3) since #137 H2; the relations are rows over the flat
+    # components.
+    assert f["basis"].shape == (5, 3, 3, 3) and f["relations"].shape == (22, 27) and f["parameters"].shape == (5, 3)
+    assert np.allclose(f["relations"] @ f["basis"].reshape(5, -1).T, 0)
     zero = symcrys.tensor_form("m-3m", SHG)
-    assert zero["basis"].shape == (0, 27) and zero["parameters"].shape == (0, 3) and zero["relations"].shape == (27, 27)
+    assert zero["basis"].shape == (0, 3, 3, 3) and zero["parameters"].shape == (0, 3) and zero["relations"].shape == (27, 27)
     scalar = symcrys.tensor_form("1", {"rank": 0, "kind": "polar", "intrinsic": "none"})
-    assert scalar["basis"].shape == (1, 1) and scalar["parameters"].shape == (1, 0)
+    assert scalar["basis"].shape == (1,) and scalar["parameters"].shape == (1, 0)
 
 
 def test_operations_go_back_into_the_library_unchanged() -> None:
@@ -266,8 +269,32 @@ def test_rotate_tensor_takes_arrays_of_any_shape() -> None:
     t = np.arange(27, dtype=float).reshape(3, 3, 3)
     rz = np.array([[0.0, -1.0, 0.0], [1.0, 0.0, 0.0], [0.0, 0.0, 1.0]])
     rotated = symcrys.rotate_tensor(t, rz, SHG)
-    assert rotated.shape == (27,)
-    assert np.allclose(rotated.reshape(3, 3, 3), np.einsum("ia,jb,kc,abc->ijk", rz, rz, rz, t))
+    # The shape is kept since #137 H2: (3, 3, 3) in, (3, 3, 3) out; flat in, flat out.
+    assert rotated.shape == (3, 3, 3)
+    assert np.allclose(rotated, np.einsum("ia,jb,kc,abc->ijk", rz, rz, rz, t))
+    assert symcrys.rotate_tensor(t.reshape(-1), rz, SHG).shape == (27,)
+    # Stacks: leading axes of the tensor and of the rotation broadcast as in NumPy, each pair as
+    # one call would rotate it.
+    rotations = symcrys.operations("4").cartesian
+    stacked = symcrys.rotate_tensor(t, rotations, SHG)
+    assert stacked.shape == (4, 3, 3, 3)
+    assert all(np.allclose(stacked[i], symcrys.rotate_tensor(t, rotations[i], SHG)) for i in range(4))
+    tensors = np.stack([t, 2 * t])
+    assert symcrys.rotate_tensor(tensors[:, None], rotations, SHG).shape == (2, 4, 3, 3, 3)
+    assert np.allclose(symcrys.rotate_tensor(tensors, rotations[:2], SHG)[1], symcrys.rotate_tensor(2 * t, rotations[1], SHG))
+    assert symcrys.rotate_tensor(np.zeros((0, 3)), rz, "pyroelectric").shape == (0, 3)
+    with pytest.raises(symcrys.SymcrysError, match="do not broadcast"):
+        symcrys.rotate_tensor(np.stack([t, t, t]), rotations, SHG)
+    with pytest.raises(symcrys.SymcrysError, match="rank 1 has the shape"):
+        symcrys.rotate_tensor([1, 2], rz, "pyroelectric")
+    assert magnetic.rotate_tensor([1.0, 0, 0], rotations, "ferromagnetic").shape == (4, 3)
+    # Review of #121 step 12c: a rank of any integer type keeps the shape; an empty stack still
+    # checks the rotation.
+    for rank in (np.int64(2), 2.0):
+        spec = {"rank": rank, "kind": "polar", "intrinsic": "none"}
+        assert symcrys.rotate_tensor(np.eye(3), rotations, spec).shape == (4, 3, 3)  # type: ignore[arg-type]
+    with pytest.raises(symcrys.SymcrysError, match="orthogonal"):
+        symcrys.rotate_tensor(np.zeros((0, 3, 3, 3)), 2 * np.eye(3), SHG)
 
 
 def test_library_errors_are_value_errors_with_the_message() -> None:
@@ -341,13 +368,13 @@ def test_boundary_is_one_function() -> None:
 
 def test_cell_metric_and_indices() -> None:
     # No expected values of their own beyond the layer: types, shapes, names (the values are tested in TypeScript).
-    basis = symcrys.lattice_from_parameters({"a": 3, "b": 3, "c": 5, "alpha": 90, "beta": 90, "gamma": 120})
+    basis = symcrys.lattice_from_parameters(a=3, b=3, c=5, alpha=90, beta=90, gamma=120)
     assert basis.dtype == np.float64 and basis.shape == (3, 3)
     assert symcrys.lattice_parameters(basis)["gamma"] == pytest.approx(120)
     assert all(type(v) is float for v in symcrys.lattice_parameters(np.eye(3)).values())
-    assert symcrys.is_valid_cell({"alpha": 90, "beta": 90, "gamma": 90}) is True
-    assert symcrys.is_valid_cell({"alpha": 60, "beta": 60, "gamma": 120}) is False
-    assert symcrys.is_valid_cell({"alpha": 90, "beta": 90, "gamma": 30}, min_volume_ratio=0.6) is False
+    assert symcrys.is_valid_cell(alpha=90, beta=90, gamma=90) is True
+    assert symcrys.is_valid_cell(alpha=60, beta=60, gamma=120) is False
+    assert symcrys.is_valid_cell(alpha=90, beta=90, gamma=30, min_volume_ratio=0.6) is False
     assert symcrys.metric_tensor(basis).dtype == np.float64
     assert symcrys.reciprocal_basis(basis).shape == (3, 3)
     assert symcrys.angle_between_directions(basis, [1, 0, 0], [0, 1, 0]) == pytest.approx(120)
@@ -366,9 +393,9 @@ def test_cell_metric_and_indices() -> None:
     with pytest.raises(ValueError):
         symcrys.reduce_indices([0, 0, 0])
     with pytest.raises(symcrys.SymcrysError, match="minVolumeRatio must be a number from 0 to 1"):
-        symcrys.is_valid_cell({"alpha": 90, "beta": 90, "gamma": 90}, min_volume_ratio=-1)
+        symcrys.is_valid_cell(alpha=90, beta=90, gamma=90, min_volume_ratio=-1)
     # a cell in metres: the reciprocal basis is that of the cell in ångström, divided by 10⁻¹⁰
-    metres = symcrys.lattice_from_parameters({"a": 3e-10, "b": 3e-10, "c": 5e-10, "alpha": 90, "beta": 90, "gamma": 120})
+    metres = symcrys.lattice_from_parameters(a=3e-10, b=3e-10, c=5e-10, alpha=90, beta=90, gamma=120)
     assert np.allclose(symcrys.reciprocal_basis(metres) * 1e-10, symcrys.reciprocal_basis(basis))
 
 
@@ -382,7 +409,7 @@ def test_site_symmetry_refuses_a_matrix_that_is_not_orthogonal() -> None:
 
 def test_residual_operations_in_both_apis() -> None:
     ops = symcrys.operations("4/mmm")
-    cell = symcrys.lattice_from_parameters({"a": 2, "b": 2.1, "c": 3, "alpha": 90, "beta": 90, "gamma": 90})
+    cell = symcrys.lattice_from_parameters(a=2, b=2.1, c=3, alpha=90, beta=90, gamma=90)
     assert len(symcrys.residual_operations(ops, cell)) == 8
     assert len(symcrys.residual_operations(ops, cell, tolerance=0.1)) == 16
     mops = magnetic.operations("4/mmm")
@@ -481,9 +508,11 @@ def test_input_of_the_wrong_type_is_a_symcrys_error_that_names_the_argument() ->
     ops = symcrys.operations("4mm")
     cases = [
         (lambda: symcrys.rotate_tensor([1, 2, 3], [[1, 0, 0], [0, 1], [0, 0, 1]], "pyroelectric"), "rotation"),
-        (lambda: symcrys.orbit("32", [1, 0, 0]), "indices must be a mapping"),  # type: ignore[arg-type]
-        (lambda: symcrys.is_valid_cell([90, 90, 90]), "angles must be a mapping"),  # type: ignore[arg-type]
-        (lambda: symcrys.lattice_from_parameters([1, 2, 3]), "parameters must be a mapping"),  # type: ignore[arg-type]
+        # The fields of an object as arguments since #137 H2: the library names the wrong one.
+        (lambda: symcrys.orbit("32", hkl=[1, 0]), "hkl must be three"),
+        (lambda: symcrys.is_valid_cell("90", 90, 90), "angle alpha must be a finite number"),  # type: ignore[arg-type]
+        (lambda: symcrys.lattice_from_parameters(1, 2, "3", 90, 90, 90), "edge c must be a positive number"),  # type: ignore[arg-type]
+        (lambda: symcrys.miller_indices("h,k,l", h=1.5, k=1, l=1), "h must be an integer"),  # type: ignore[arg-type]
         (lambda: symcrys.tensor_form("32", 3), "spec must be a mapping"),  # type: ignore[arg-type]
         (lambda: symcrys.site_symmetry_of(ops, [1, 0, 1j]), "direction must be an array of real numbers"),
         (lambda: symcrys.site_symmetry_of(ops, "z"), "direction must be an array of real numbers"),
@@ -508,12 +537,12 @@ def test_errors_survive_pickling() -> None:
 
 def test_miller_indices_and_face_normal() -> None:
     for module in (symcrys, magnetic):
-        hkl = module.miller_indices("h,h,-2h,l", {"h": 3, "l": 1})
+        hkl = module.miller_indices("h,h,-2h,l", h=3, l=1)
         assert hkl.dtype == np.int64 and hkl.tolist() == [3, 3, 1]
         n = module.face_normal(module.lattice_basis("cubic"), [1, 1, 1])
         assert n.dtype == np.float64 and np.allclose(n, np.ones(3) / np.sqrt(3))
         with pytest.raises(symcrys.SymcrysError, match="value of l"):
-            module.miller_indices("h,k,l", {"h": 1, "k": 2})
+            module.miller_indices("h,k,l", h=1, k=2)
     form = symcrys.crystal_forms("-43m")[2]
     assert "representative" not in form
 
@@ -553,7 +582,7 @@ def test_operations_are_a_record_of_arrays() -> None:
     for form in (ops, ops.cartesian, [{"cartesian": c} for c in ops.cartesian]):
         assert symcrys.allowed_properties_of(form) == symcrys.allowed_properties("4mm")
     # residual_operations keeps the caller's operations as Operations; it needs every field.
-    basis = symcrys.lattice_from_parameters({"a": 3, "b": 3.2, "c": 5, "alpha": 90, "beta": 90, "gamma": 120})
+    basis = symcrys.lattice_from_parameters(a=3, b=3.2, c=5, alpha=90, beta=90, gamma=120)
     kept = symcrys.residual_operations(symcrys.operations("6/mmm"), basis)
     # a ≠ b at γ = 120°: the lattice keeps 2/m of 6/mmm, 4 operations.
     assert isinstance(kept, symcrys.Operations) and len(kept) == 4

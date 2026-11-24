@@ -102,10 +102,7 @@
     },
     "rotateTensor": {
       "returns": "float64",
-      "args": {
-        "tensor": "_shared.array(tensor, \"tensor\", np.float64).reshape(-1)",
-        "rotation": "_shared.array(rotation, \"rotation\")"
-      }
+      "body": "rotate_tensor"
     },
     "latticeBasis": {
       "returns": "float64"
