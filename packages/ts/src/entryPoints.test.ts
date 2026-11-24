@@ -728,6 +728,26 @@ describe('every result is frozen, nested values included (#137 C4)', () => {
     pointGroups: [],
     findPlaneGroup: ['p 4 m m'],
     findPointGroup: ['31m'],
+    cellRestrictions: ['square'],
+    latticeFromParameters: [{ a: 2, b: 2, gamma: 120 }],
+    latticeParameters: [
+      [
+        [1, 0],
+        [0, 2],
+      ],
+    ],
+    metricTensor: [
+      [
+        [1, 0],
+        [0, 2],
+      ],
+    ],
+    reciprocalBasis: [
+      [
+        [1, 0],
+        [0, 2],
+      ],
+    ],
     settings: ['3m'],
     operations: ['p4'],
     generators: ['p4'],

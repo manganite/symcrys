@@ -1177,6 +1177,21 @@ lattice translates that meet the box, boundary included, the lines not clipped: 
 twofold points modulo the lattice and nine in the closed cell [0, 1]²; a box with more than a
 million rotation points is refused. Clipping and drawing are left to the application.
 
+**Lattices and cells** (#119, #137 G5, 0.12). `planeGroup(key)` gives the Bravais lattice
+(`bravaisLattice`: `'mp'`, `'op'`, `'oc'`, `'tp'`, `'hp'`, the family symbol of ITA Table 2.1.1.1
+followed by the lattice letter of the group) and the Patterson symmetry as the headline of the
+group prints it (`pattersonSymmetry`, a plane group: `'p2mm'` for `p2mg`, `'c2mm'` for `cm`,
+`'p6mm'` for `p3m1`). `pointGroup(key)` of a plane point group gives its Laue class (`laueClass`):
+the point group with the twofold rotation added, the symmetry centre of the plane ("its Laue class
+is obtained if a symmetry centre is added to its point group", ITA § 3.2.1.1, p. 720), one of the
+six Laue classes 2, 2mm, 4, 4mm, 6, 6mm. `cellRestrictions(system)` gives the restrictions of
+Table 2.1.1.1 for the conventional cell as data: the parameters to be determined (`['a']` for
+square), the pairs of equal parameters (`[['a', 'b']]`), the fixed angles (`{ gamma: 120 }`) and the
+angles conventionally taken non-acute (γ of the oblique system, the footnote of the table). The cell
+functions have the names of the other entry points, for 2 × 2 matrices whose columns are a and b:
+`latticeFromParameters({ a, b, gamma })` (a along x, b at γ from a towards +y),
+`latticeParameters(basis)`, `metricTensor(basis)` and `reciprocalBasis(basis)` (a_i · a*_j = δ_ij).
+
 **Not yet.** The positions and edge forms of the plane point groups (ITA Table 3.2.3.1, #81) and
 the determination of the plane group of a pattern (a later MINOR, #31).
 
@@ -1217,6 +1232,7 @@ the determination of the plane group of a pattern (a later MINOR, #31).
 | plane groups: site symmetry, orbit and Wyckoff position of a point                                                                           | the Wyckoff positions of the same pages: every printed point of every position                                                                                                                                                                                                                                    | `spaceGroups/positions.reference.test.ts`                                                               |
 | plane groups: asymmetric unit, symmetry elements in the cell                                                                                 | the printed vertices and inequalities, the Wyckoff positions (centres and mirror lines) and the printed glides of the same pages; all lines also derived from the printed general position                                                                                                                        | `spaceGroups/cell.reference.test.ts`                                                                    |
 | plane groups: finding a group by its short or full symbol (`findPlaneGroup`)                                                                 | the short and full symbols of the same pages                                                                                                                                                                                                                                                                      | `spaceGroups/planeGroups.reference.test.ts`                                                             |
+| plane lattices: crystal families, Bravais lattices, restrictions on the cell, Laue classes; Patterson symmetry                               | ITA 6th ed. (2016), Table 2.1.1.1 (p. 143), block "Two dimensions": `references/itc/vol-a-table-2.1.1.1.md`; § 3.2.1.1 (p. 720); the headlines of Chapter 2.2                                                                                                                                                     | `spaceGroups/planeLattice.reference.test.ts`                                                            |
 | plane point groups: keys, settings of `3m`, operations                                                                                       | ITA 6th ed. (2016), Table 3.2.1.1 (p. 720), Ch. 3.2, p. 721, item (d); operations: the linear parts of the plane groups (above)                                                                                                                                                                                   | `plane.test.ts`                                                                                         |
 
 Each file in `references/` names its source and the printed page. ITA means Vol. A, 6th edition

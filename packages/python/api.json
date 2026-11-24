@@ -31,6 +31,7 @@
     "K": "str",
     "TensorRank": "int",
     "Mat3": [3, 3],
+    "Mat2": [2, 2],
     "Vec3": [3],
     "Hkl": [3],
     "Uvw": [3],

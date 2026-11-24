@@ -103,8 +103,8 @@ describe('plane point groups', () => {
     expect(() => plane.symbol('p7' as plane.PlaneGroupKey)).toThrow(/Unknown plane group or plane point group/);
     expect(() => plane.symbol('pm', { setting: 2 })).toThrow(RangeError);
     expect(() => plane.symbol('pm', { form: 'long' as never })).toThrow(RangeError);
-    expect(plane.pointGroup('3m')).toEqual({ key: '3m', crystalSystem: 'hexagonal', order: 6 });
-    expect(plane.pointGroup('4mm')).toEqual({ key: '4mm', crystalSystem: 'square', order: 8 });
+    expect(plane.pointGroup('3m')).toEqual({ key: '3m', crystalSystem: 'hexagonal', order: 6, laueClass: '6mm' });
+    expect(plane.pointGroup('4mm')).toEqual({ key: '4mm', crystalSystem: 'square', order: 8, laueClass: '4mm' });
     expect(plane.settings('3m')).toEqual([
       { index: 1, symbol: '3m1', isDefault: true },
       { index: 2, symbol: '31m', isDefault: false },
@@ -156,6 +156,8 @@ describe('plain numbers at the API', () => {
       pointGroup: '2mm',
       pointGroupSetting: 1,
       crystalSystem: 'rectangular',
+      bravaisLattice: 'oc',
+      pattersonSymmetry: 'c2mm',
       centring: [[0.5, 0.5]],
       origin: 'at 2 m m',
     });
@@ -525,5 +527,139 @@ describe('errors', () => {
     }
     expect(() => plane.siteSymmetry('4mm' as plane.PlaneGroupKey, [0, 0])).toThrow(RangeError);
     expect(() => plane.orbit('p2', [0.1, 0.2], { tolerance: 0.5 })).toThrow(RangeError);
+  });
+});
+
+describe('plane cells (#119, #137 G5)', () => {
+  const close = (x: readonly (readonly number[])[], y: readonly (readonly number[])[]) =>
+    x.every((r, i) => r.every((v, j) => Math.abs(v - y[i][j]) < 1e-12));
+
+  it('latticeFromParameters: a along x, b at gamma towards +y; latticeParameters reads them back', () => {
+    expect(plane.latticeFromParameters({ a: 3, b: 4, gamma: 90 })).toEqual([
+      [3, 0],
+      [0, 4],
+    ]);
+    const hex = plane.latticeFromParameters({ a: 2, b: 2, gamma: 120 });
+    expect(hex[0]).toEqual([2, -1]);
+    expect(hex[1][1]).toBeCloseTo(Math.sqrt(3), 15);
+    for (const p of [
+      { a: 3, b: 4, gamma: 90 },
+      { a: 2, b: 2, gamma: 120 },
+      { a: 1.5, b: 7, gamma: 101.3 },
+      { a: 5, b: 2, gamma: 37 },
+    ]) {
+      const back = plane.latticeParameters(plane.latticeFromParameters(p));
+      expect(back.a).toBeCloseTo(p.a, 12);
+      expect(back.b).toBeCloseTo(p.b, 12);
+      expect(back.gamma).toBeCloseTo(p.gamma, 12);
+    }
+    // Independent of orientation and handedness.
+    expect(
+      plane.latticeParameters([
+        [0, 3],
+        [4, 0],
+      ]),
+    ).toEqual({ a: 4, b: 3, gamma: 90 });
+    expect(Object.isFrozen(plane.latticeFromParameters({ a: 1, b: 1, gamma: 90 })[0])).toBe(true);
+  });
+
+  it('metricTensor is AᵀA and reciprocalBasis A⁻ᵀ, with a_i · a*_j = δ_ij', () => {
+    const basis = plane.latticeFromParameters({ a: 1.5, b: 7, gamma: 101.3 });
+    const g = plane.metricTensor(basis);
+    const c = Math.cos((101.3 * Math.PI) / 180);
+    expect(
+      close(g, [
+        [2.25, 1.5 * 7 * c],
+        [1.5 * 7 * c, 49],
+      ]),
+    ).toBe(true);
+    const r = plane.reciprocalBasis(basis);
+    for (let i = 0; i < 2; i++) {
+      for (let j = 0; j < 2; j++) {
+        const dot = basis[0][i] * r[0][j] + basis[1][i] * r[1][j];
+        expect(dot).toBeCloseTo(i === j ? 1 : 0, 14);
+      }
+    }
+  });
+
+  it('refuses bad parameters and bases', () => {
+    for (const p of [
+      { a: 0, b: 1, gamma: 90 },
+      { a: 1, b: -1, gamma: 90 },
+      { a: 1, b: 1, gamma: 180 },
+      { a: 1, b: 1, gamma: 0 },
+    ]) {
+      expect(() => plane.latticeFromParameters(p), JSON.stringify(p)).toThrow(RangeError);
+    }
+    for (const b of [
+      [
+        [1, 0],
+        [2, 0],
+      ],
+      [
+        [1, 0, 0],
+        [0, 1, 0],
+      ],
+      [[1, 0]],
+    ]) {
+      expect(() => plane.metricTensor(b as never), JSON.stringify(b)).toThrow(RangeError);
+      expect(() => plane.reciprocalBasis(b as never)).toThrow(RangeError);
+      expect(() => plane.latticeParameters(b as never)).toThrow(RangeError);
+    }
+    // Flat within rounding, and scales whose products overflow or vanish, are refused (review of
+    // #172), as in the cell functions of the point groups.
+    for (const gamma of [1e-8, 180 - 1e-7]) {
+      expect(() => plane.latticeFromParameters({ a: 1, b: 1, gamma }), String(gamma)).toThrow(/gives no cell/);
+    }
+    for (const x of [1e-200, 1e200]) {
+      const b: plane.Mat2 = [
+        [x, 0],
+        [0, x],
+      ];
+      expect(() => plane.metricTensor(b), String(x)).toThrow(/singular/);
+      expect(() => plane.reciprocalBasis(b)).toThrow(/singular/);
+      expect(() => plane.latticeParameters(b)).toThrow(/singular/);
+      expect(() => plane.latticeFromParameters({ a: x, b: x, gamma: 90 })).toThrow(/singular/);
+    }
+    const small: plane.Mat2 = [
+      [1e-150, 0],
+      [0, 1e-150],
+    ];
+    expect(plane.latticeParameters(small).gamma).toBe(90);
+    expect(plane.reciprocalBasis(small)[0][0]).toBeCloseTo(1e150, -140);
+    expect(() => plane.cellRestrictions('trigonal' as plane.PlaneSystem)).toThrow(
+      /oblique, rectangular, square, hexagonal/,
+    );
+  });
+
+  it('the metric of a cell built to the restrictions of each system is the metric of that system', () => {
+    // G = [[a², ab cos γ], [ab cos γ, b²]] with the printed restrictions: square a²·I, hexagonal
+    // a²·[[1, −1/2], [−1/2, 1]], rectangular diagonal.
+    const g = (system: plane.PlaneSystem, a: number, b: number, gamma = 104) => {
+      const r = plane.cellRestrictions(system);
+      return plane.metricTensor(
+        plane.latticeFromParameters({ a, b: r.equal.length ? a : b, gamma: r.angles.gamma ?? gamma }),
+      );
+    };
+    expect(
+      close(g('square', 3, 4), [
+        [9, 0],
+        [0, 9],
+      ]),
+    ).toBe(true);
+    expect(
+      close(g('hexagonal', 2, 5), [
+        [4, -2],
+        [-2, 4],
+      ]),
+    ).toBe(true);
+    expect(
+      close(g('rectangular', 3, 4), [
+        [9, 0],
+        [0, 16],
+      ]),
+    ).toBe(true);
+    const oblique = g('oblique', 3, 4);
+    expect(oblique[0][1]).toBeCloseTo(12 * Math.cos((104 * Math.PI) / 180), 12);
   });
 });

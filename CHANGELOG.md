@@ -14,6 +14,14 @@ All notable changes to symcrys are recorded here. The format follows
   gives `{ key: '3m', setting: 2 }`), as in the other entry points; `{ setting }` takes the symbol of
   a setting too (`{ setting: '31m' }`). Python: `is_plane_group_key`, `is_point_group_key`,
   `plane_groups`, `point_groups`, `find_plane_group`, `find_point_group` in `symcrys.plane`.
+- **`symcrys/plane`: lattices and cells** (#119, #137 G5): `planeGroup(key)` gives `bravaisLattice`
+  (`'mp'`, `'op'`, `'oc'`, `'tp'`, `'hp'`, ITA 2016 Table 2.1.1.1, p. 143) and `pattersonSymmetry`
+  (as the headline of the group prints it, `'p2mm'` for `p2mg`); `pointGroup(key)` of a plane point
+  group gives `laueClass` (the point group with the twofold rotation added, ITA § 3.2.1.1, p. 720);
+  `cellRestrictions(system)` the restrictions of Table 2.1.1.1 on the cell parameters as data; and
+  the cell functions for 2 × 2 bases, with the names of the other entry points:
+  `latticeFromParameters({ a, b, gamma })`, `latticeParameters`, `metricTensor`,
+  `reciprocalBasis`. Python: the same in `symcrys.plane` (`lattice_from_parameters(a, b, gamma)`).
 - The type `PlaneOperationKind` of `symcrys/plane` (Python `symcrys.plane.PlaneOperationKind`), the
   `kind` of a plane operation description, named as `OperationKind` is in the other entry points.
 

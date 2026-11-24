@@ -112,6 +112,7 @@ describe('plane groups: transcription', () => {
         fullSymbol: g.fields['Full symbol'],
         pointGroup: g.fields['Point group'],
         system: g.fields.System.toLowerCase(),
+        pattersonSymmetry: g.fields['Patterson symmetry'],
         page: g.page,
         origin: g.fields.Origin,
         asymmetricUnit: g.fields['Asymmetric unit'],
