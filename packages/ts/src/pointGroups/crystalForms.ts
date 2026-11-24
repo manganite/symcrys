@@ -33,8 +33,8 @@ export interface CrystalForm {
   /** Oriented site-symmetry symbol of the Wyckoff position, e.g. `..m` (the face symmetry). */
   readonly siteSymmetry: string;
   /**
-   * True for a basic form, a form of lowest eigensymmetry of the position (two at the faces (hhl) of
-   * -43m and m-3m), false for a limiting form: its faces have the face symmetry of the position,
+   * `true` for a basic form, a form of lowest eigensymmetry of the position (two at the faces (hhl)
+   * of -43m and m-3m), `false` for a limiting form: its faces have the face symmetry of the position,
    * but the form has a higher eigensymmetry (ITA 6th ed., § 3.2.1.2.2, p. 723).
    */
   readonly basic: boolean;

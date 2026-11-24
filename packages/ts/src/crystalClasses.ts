@@ -637,10 +637,10 @@ export function tensorFormOf(
 export function rotateTensor(
   tensor: readonly number[],
   rotation: Mat3,
-  specOrName: TensorSpecArgument | TensorPropertyName,
+  spec: TensorSpecArgument | TensorPropertyName,
   options?: ToleranceOptions,
 ): readonly number[] {
-  return tensors.rotateTensor(tensor, rotation, timeEven(specOrName), options);
+  return tensors.rotateTensor(tensor, rotation, timeEven(spec), options);
 }
 
 /**

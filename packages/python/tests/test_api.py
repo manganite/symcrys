@@ -24,23 +24,23 @@ def test_every_export_of_the_library_has_its_python_name() -> None:
         own = [(name[len(prefix) :], kind) for name, kind in exported if (name.startswith(prefix) if prefix else "." not in name)]
         expected = {name if kind == "value" else snake(name) for name, kind in own}
         assert len(expected) > (12 if module is plane else 20)
-        extra = (
-            TYPES | {"magnetic", "plane"}
-            if module is symcrys
-            else {"SymcrysError", "SymcrysInternalError", "Operation"} if module is plane else TYPES
-        )
+        # Besides the exports of the library: the errors, the TypedDicts and Literal types of the
+        # generated module (scripts/python-api.mjs, #99), and the submodules of symcrys.
+        types = {n for n in module.__all__ if n[0].isupper() and not n.isupper()}
+        assert TYPES - {"TensorSpec"} <= types or module is plane, module.__name__
+        extra = {"SymcrysError", "SymcrysInternalError"} | types | ({"magnetic", "plane"} if module is symcrys else set())
         assert set(module.__all__) == expected | extra, module.__name__
         for name in expected:
             assert hasattr(module, name), name
 
 
 def test_every_function_has_its_docstring_from_the_tsdoc() -> None:
-    # Written from the TSDoc comments by scripts/python-docstrings.mjs (#29); whether they are
+    # Written from the TSDoc comments by scripts/python-api.mjs (#29, #99); whether they are
     # current is checked by `npm run docs:check` in the gate docs, which needs the TypeScript sources.
     for module in (symcrys, magnetic, plane):
         for name in module.__all__:
             obj = getattr(module, name)
-            if callable(obj) and not isinstance(obj, type) and name not in TYPES:
+            if callable(obj) and not isinstance(obj, type) and not (name[0].isupper() and not name.isupper()):
                 doc = obj.__doc__ or ""
                 assert len(doc.strip()) > 20, f"{module.__name__}.{name} has no docstring"
                 assert not re.search(r"``[^`]*\b[a-z]+[A-Z]\w*[^`]*``", doc), f"{module.__name__}.{name}: camelCase"
@@ -48,7 +48,9 @@ def test_every_function_has_its_docstring_from_the_tsdoc() -> None:
 
 def test_the_two_modules_have_the_same_names() -> None:
     only_classes = {"magnetic", "plane", "CRYSTAL_FORM_TYPES", "crystal_forms", "wyckoff_position", "wyckoff_positions"}
-    assert set(symcrys.__all__) - only_classes == set(magnetic.__all__)
+    only_classes |= {"CrystalForm", "CrystalFormType", "WyckoffPosition"}
+    only_magnetic = {"PointGroupType", "TimeParity"}
+    assert set(symcrys.__all__) - only_classes == set(magnetic.__all__) - only_magnetic
     assert symcrys.magnetic is magnetic and magnetic.VERSION == symcrys.VERSION == symcrys.__version__
 
 

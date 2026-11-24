@@ -21,13 +21,13 @@ apply here. Where this file and another document disagree on process, this file 
 
 ## Layout
 
-| Path                   | What                                                                                                                   |
-| ---------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `packages/ts`          | the npm package `symcrys`: `src/`, `dist/`, `package.json`, `tsconfig.build.json`, a README for npm                    |
-| `packages/python`      | the PyPI package `symcrys`: `pyproject.toml`, `src/symcrys/`, `tests/`, `examples/`                                    |
-| `references/`, `docs/` | shared by both packages; `docs/` is also the source of the documentation site                                          |
-| `scripts/`, `audit/`   | repository tools: `check-dist.mjs`, `bundle-python.mjs`, `python-docstrings.mjs`; the audits against sibling checkouts |
-| root `package.json`    | private npm workspace: the dev dependencies and the gates                                                              |
+| Path                   | What                                                                                                            |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `packages/ts`          | the npm package `symcrys`: `src/`, `dist/`, `package.json`, `tsconfig.build.json`, a README for npm             |
+| `packages/python`      | the PyPI package `symcrys`: `pyproject.toml`, `src/symcrys/`, `tests/`, `examples/`                             |
+| `references/`, `docs/` | shared by both packages; `docs/` is also the source of the documentation site                                   |
+| `scripts/`, `audit/`   | repository tools: `check-dist.mjs`, `bundle-python.mjs`, `python-api.mjs`; the audits against sibling checkouts |
+| root `package.json`    | private npm workspace: the dev dependencies and the gates                                                       |
 
 Below, `src/`, `dist/` and `tsconfig.build.json` without a prefix are those of `packages/ts`.
 Decision on the layout (maintainer, 2026-11-19, #30): two package folders, as first proposed in
@@ -271,16 +271,18 @@ Carried over from birss-app, where the calculations come from.
 - **The Python API follows the TypeScript API by fixed rules** (#30; `packages/python/src/symcrys/_convert.py`):
   function names and object keys camelCase → snake_case; an options object becomes keyword-only
   arguments; arrays of numbers become NumPy arrays (`float64` for matrices, Cartesian vectors,
-  tensor bases and relations; `int64` for index lists, Miller indices and lattice directions);
+  tensor bases and relations; `int64` for index lists, Miller indices and lattice directions), by
+  the name of their field (`packages/python/api.json`, "arrays"; `symcrys.plane` with a list of its
+  own); a record becomes a dict, typed by a TypedDict of the same name as its TypeScript interface;
   a `RangeError` of the library (wrong input) raises `SymcrysError`, a `ValueError`, any other
-  error `SymcrysInternalError`, a `RuntimeError` (#137 D2). `symcrys.plane` converts its arrays
-  field by field instead of by key ("The API of `symcrys/plane`" below). A new export of `src/index.ts` gets
+  error `SymcrysInternalError`, a `RuntimeError` (#137 D2). A new export of `src/index.ts` gets
   its Python function in `symcrys`, one of `src/magnetic.ts` in `symcrys.magnetic`, one of
-  `src/plane.ts` in `symcrys.plane`, in the same PR; a test fails until it has one.
+  `src/plane.ts` in `symcrys.plane`, in the same PR, by `npm run docs:python` ("The Python modules
+  are generated" below); a test fails until it has one.
 - **One description of every export: its TSDoc comment** (maintainer, 2026-11-20, #29). The
   TypeScript reference is generated from it (TypeDoc), and so are the docstrings of the Python
-  functions and constants (`scripts/python-docstrings.mjs`, `npm run docs:python`, which rewrites
-  them in `symcrys/__init__.py`, `symcrys/magnetic.py` and `symcrys/plane.py`), by the rules above: names in
+  functions, constants and TypedDicts (`scripts/python-api.mjs`, `npm run docs:python`, which writes
+  `symcrys/__init__.py`, `symcrys/magnetic.py` and `symcrys/plane.py`), by the rules above: names in
   snake_case, the options object as a "Parameters" section of keyword arguments, `RangeError` as
   `SymcrysError`, `undefined`/`true`/`false` as `None`/`True`/`False`. Hand-written for Python is
   only what Python alone has, the shapes and dtypes of the NumPy arrays
@@ -289,6 +291,22 @@ Carried over from birss-app, where the calculations come from.
   a value in step) goes into `@remarks`, which the Python docstrings leave out. The docstrings are
   committed, so that editors show them; the gate `docs` fails if one is missing or stale, or if a
   TypeScript name is left in it. A PR that changes a TSDoc comment runs `npm run docs:python`.
+- **The Python modules are generated** (#99, #137 H2; Thomas, 2026-11-24, generator before the
+  changes of H1 and H2; #121 step 12a): `scripts/python-api.mjs` writes `symcrys/__init__.py`,
+  `symcrys/magnetic.py` and `symcrys/plane.py` in full from the TypeScript entry points (TypeDoc's
+  JSON): signatures, bodies, docstrings, a TypedDict for every record and a Literal type for every
+  named union of strings, and `__all__`. Each result is converted by a schema written from its
+  TypeScript type (`_convert.convert`), so the two languages cannot drift, and the gate `docs`
+  fails on a stale module, not only on a stale docstring. Hand-written are `packages/python/api.json`
+  (how TypeScript types become Python types where the types do not say it: the dtype of an array
+  field, int or float for a number, a function's own argument; the module docstrings),
+  `packages/python/docstrings.json` (the Returns sections), and the modules `_shared.py`,
+  `_convert.py`, `_engine.py`. Chosen while implementing: the names of the TypedDicts are those of
+  the TypeScript interfaces (`symcrys.plane.PlaneOperation` for what was `Operation`); each module
+  has its own TypedDicts (a `PointGroup` of `symcrys.magnetic` has `type`); a number field not
+  listed as int or float, and an array field not listed as float64 or int64, are an error of the
+  generator. Checked when it came: the outputs of all functions over all keys and settings were the
+  same, value, type, dtype and shape, before and after (9027 calls).
 - **The engine stays replaceable** (#30): the whole boundary is one function, `call(name,
 argsJson) → resultJson` (`_engine.py`, `scripts/bundle-python.mjs`; a name of the magnetic API has
   the prefix `magnetic.`, one of the plane API `plane.`), so another backend

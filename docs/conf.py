@@ -1,6 +1,6 @@
 """Sphinx configuration of the symcrys site (#29): MyST for Markdown, MyST-NB for the notebooks and
 the pages with Python code cells (executed at every build), autodoc with napoleon for the Python
-reference (docstrings written from the TSDoc comments, scripts/python-docstrings.mjs), and the
+reference (docstrings written from the TSDoc comments, scripts/python-api.mjs), and the
 TypeDoc reference copied in as ts/ (html_extra_path). Build: README.md, "Documentation"."""
 
 from __future__ import annotations
@@ -56,9 +56,10 @@ napoleon_use_rtype = False
 nitpicky = True
 nitpick_ignore_regex = [
     (r"py:.*", r"(numpy|np|NDArray|ArrayLike|Any|Optional|Literal|Mapping|Sequence|TypedDict).*"),
-    (r"py:.*", r"(symcrys\.)?(magnetic\.|plane\.)?(_shared\.)?(TensorParity|IntrinsicSymmetry|TimeParity|TensorPropertyName|SiteSymmetry|TensorForm|TensorSpec|Operation)"),
+    # The Literal types of the generated modules (scripts/python-api.mjs) are data, not classes.
+    (r"py:.*", r"(symcrys\.)?(magnetic\.|plane\.)?[A-Z][A-Za-z]*(System|Family|Kind|Symmetry|Parity|Type|PropertyName)"),
     (r"py:.*", r"(str|int|float|bool|dict|list|tuple)"),
-    # The type column of the generated Parameters sections (scripts/python-docstrings.mjs).
+    # The type column of the generated Parameters sections (scripts/python-api.mjs).
     (r"py:.*", r"(keyword-only|optional)"),
 ]
 

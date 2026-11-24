@@ -10,7 +10,7 @@ import { EPSILON } from './tolerances.js';
 
 /**
  * A point operation as the calculations use it: its orthogonal Cartesian matrix (rotation,
- * rotoinversion, mirror, inversion), combined with time reversal if `timeReversal` is true (a primed
+ * rotoinversion, mirror, inversion), combined with time reversal if `timeReversal` is `true` (a primed
  * operation). Every function that takes operations from a caller and computes with Cartesian
  * matrices reads these two fields (`residualOperations` reads `matrix` instead), so an `Operation`
  * of the API can be passed as it is.
@@ -18,7 +18,7 @@ import { EPSILON } from './tolerances.js';
 export interface CartesianOperation {
   /** The orthogonal Cartesian 3×3 matrix, rows first. */
   readonly cartesian: Mat3;
-  /** True if the operation is combined with time reversal (a primed operation). */
+  /** `true` if the operation is combined with time reversal (a primed operation). */
   readonly timeReversal: boolean;
 }
 
@@ -27,7 +27,7 @@ export interface CartesianOperation {
  * the setting (`matrix`, integer, acting on the coordinates of a lattice direction [uvw]; the
  * coordinate triplets of ITA's general position are its rows) and the same operation as an
  * orthogonal Cartesian matrix (`cartesian`, R = B·W·B⁻¹ with the basis B of the setting), combined
- * with time reversal if `timeReversal` is true (a primed operation). docs/conventions.md,
+ * with time reversal if `timeReversal` is `true` (a primed operation). docs/conventions.md,
  * "Operations".
  */
 export interface Operation extends CartesianOperation {
