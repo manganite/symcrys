@@ -213,9 +213,13 @@ function functionDocstring(decl, extra, where, indent) {
   const summary = render(sig.comment?.summary, where);
   if (!summary) problems.push(`${where}: no TSDoc comment`);
   const params = [];
-  for (const p of sig.parameters ?? []) {
+  for (const [i, p] of (sig.parameters ?? []).entries()) {
+    const alts = objectAlternatives(decl, i, where);
     if (isOptions(p)) {
       for (const o of optionProperties(p.type, where)) params.push({ name: snake(o.name), doc: o.doc, keyword: true });
+    } else if (alts) {
+      // An object parameter: its fields, documented by their TSDoc.
+      for (const f of objectFields(alts)) params.push({ name: snake(f.name), doc: f.doc, keyword: !f.required });
     } else {
       const doc = render(p.comment?.summary, `${where}(${p.name})`);
       if (doc) params.push({ name: snake(p.name), doc });
@@ -585,6 +589,45 @@ function schema(ctx, ir, field, where, dtype) {
   }
 }
 
+// --- object parameters ------------------------------------------------------------------------------
+//
+// A parameter that is an object of plain fields (the cell parameters, the angles, the values of h, k,
+// l, the face {hkl} or direction {uvw} of orbit) becomes its fields as arguments (#137 H2): a field
+// every signature requires a parameter, the others keyword-only. Operations, tensor specifications and
+// options objects are not such objects.
+
+/**
+ * The alternatives of an object parameter, one record per signature, or null.
+ * @param {Json} decl
+ * @param {number} i
+ * @param {string} where
+ * @returns {any[] | null}
+ */
+function objectAlternatives(decl, i, where) {
+  const p = decl.signatures[0].parameters[i];
+  if (p.name === 'operations' || isOptions(p)) return null;
+  const alts = decl.signatures.flatMap((/** @type {Json} */ s) => {
+    const ir = read(s.parameters[i].type, where);
+    return ir.k === 'union' ? ir.of : [ir];
+  });
+  if (!alts.every((/** @type {any} */ a) => a.k === 'rec' && !/TensorSpec/.test(a.name ?? ''))) return null;
+  return alts;
+}
+
+/**
+ * The fields of an object parameter: required if every alternative requires it.
+ * @param {any[]} alts
+ * @returns {{ name: string, required: boolean, ir: any, doc: string }[]}
+ */
+function objectFields(alts) {
+  const names = [...new Set(alts.flatMap((a) => a.fields.map((/** @type {Field} */ f) => f.name)))];
+  return names.map((name) => {
+    const own = alts.map((a) => a.fields.find((/** @type {Field} */ f) => f.name === name));
+    const first = own.find(Boolean);
+    return { name, required: own.every((f) => f && !f.optional), ir: first.ir, doc: first.doc ?? '' };
+  });
+}
+
 // --- arguments --------------------------------------------------------------------------------------
 
 /**
@@ -809,14 +852,37 @@ async function generate(name, cfg) {
       const sig = sigs[0];
       const own = api.functions[d.name] ?? {};
       for (const k of ['returns', 'custom', 'listOf']) if (own[k] !== undefined) used.add(`functions.${d.name}.${k}`);
+      /** @type {string[]} */
       const params = [];
+      /** @type {{ py: string, ann: string, expr: string }[]} */
       const keywords = [];
+      /** @type {string[]} */
       const args = [];
+      /** @type {{ tsIndex: number, fields: any[], alts: any[] } | null} */
+      let objectParam = null;
       for (const [i, p] of (sig.parameters ?? []).entries()) {
         if (isOptions(p)) {
           const kw = keywordArguments(ctx, p.type, `${where}(${p.name})`);
           keywords.push(...kw);
           args.push(`_shared.options(${kw.map((k) => k.expr).join(', ')})`);
+          continue;
+        }
+        const alts = objectAlternatives(d, i, `${where}(${p.name})`);
+        if (alts) {
+          // Its fields as arguments; the library gets the object back (only the fields given).
+          const fields = objectFields(alts);
+          for (const f of fields) {
+            const ann = isNumArray(f.ir)
+              ? 'ArrayLike'
+              : f.ir.k === 'num'
+                ? numberOrInt(f.name, `${where}.${f.name}`)
+                : null;
+            if (!ann) throw new Error(`${where}(${p.name}).${f.name}: a field of kind ${f.ir.k}`);
+            if (f.required) params.push(`${snake(f.name)}: ${ann}`);
+            else keywords.push({ py: snake(f.name), ann: `Optional[${ann}]`, expr: '' });
+          }
+          objectParam = { tsIndex: i, fields, alts };
+          args.push(`_shared.options(${fields.map((f) => `${snake(f.name)}=${snake(f.name)}`).join(', ')})`);
           continue;
         }
         // An overloaded function: the parameter's types of all signatures. Operations are read by name.
@@ -859,6 +925,35 @@ async function generate(name, cfg) {
         ann = [...new Set(returns.of.map((/** @type {any} */ u) => pyType(ctx, u, d.name, where)))].join(' | ');
       }
       if (extra[py]) extrasUsed.add(py);
+      // An overloaded function whose overloads differ in an object parameter (orbit: hkl or uvw):
+      // one Python @overload per TypeScript signature that takes one alternative, with its result.
+      const overloads = [];
+      if (objectParam && sigs.length > 1) {
+        for (const s of sigs) {
+          const alt = read(s.parameters[objectParam.tsIndex].type, where);
+          if (alt.k !== 'rec') continue;
+          const own = new Set(
+            alt.fields.filter((/** @type {Field} */ f) => !f.optional).map((/** @type {Field} */ f) => f.name),
+          );
+          const kws = keywords.flatMap((k) => {
+            const field = objectParam?.fields.find((f) => snake(f.name) === k.py && !f.required);
+            if (!field) return [`${k.py}: ${k.ann} = None`];
+            if (own.has(field.name)) return [`${k.py}: ${k.ann.replace(/^Optional\[(.*)\]$/, '$1')}`];
+            return [];
+          });
+          const result = pyType(ctx, read(s.type, where), d.name, where);
+          const sigLines = [...params, ...(kws.length ? ['*', ...kws] : [])];
+          const one = `def ${py}(${sigLines.join(', ')}) -> ${result}: ...`;
+          overloads.push(
+            [
+              '@overload',
+              ...(one.length <= WIDTH
+                ? [one]
+                : [`def ${py}(`, ...sigLines.map((x) => `    ${x},`), `) -> ${result}: ...`]),
+            ].join('\n'),
+          );
+        }
+      }
       const signature = [
         ...params,
         ...(keywords.length ? ['*', ...keywords.map((k) => `${k.py}: ${k.ann} = None`)] : []),
@@ -877,6 +972,33 @@ async function generate(name, cfg) {
         one.length <= WIDTH
           ? [one]
           : [`    result: ${ann} = _shared.convert(`, ...callLines, `        ${sch},`, '    )'];
+      if (own.body) {
+        // A function with a body of its own in _shared.py (rotateTensor: shapes and stacks), given
+        // the library call and the arguments as the caller passed them, options converted.
+        used.add(`functions.${d.name}.body`);
+        const parameters = sig.parameters ?? [];
+        const raw = parameters.map((/** @type {Json} */ p, /** @type {number} */ k) =>
+          isOptions(p) ? args[k] : snake(p.name),
+        );
+        const one = `    result: ${ann} = _shared.${own.body}(_call, _value, ${raw.join(', ')})`;
+        functions.push(
+          [
+            ...defLines,
+            ...doc,
+            ...(one.length <= WIDTH
+              ? [one]
+              : [
+                  `    result: ${ann} = _shared.${own.body}(`,
+                  '        _call,',
+                  '        _value,',
+                  ...raw.map((/** @type {string} */ x) => `        ${x},`),
+                  '    )',
+                ]),
+            '    return result',
+          ].join('\n'),
+        );
+        continue;
+      }
       if (own.selects) {
         // A function that keeps some of the caller's operations (residualOperations): the library is
         // given the caller's operations as they are, each with its index (so that it refuses what it
@@ -900,7 +1022,7 @@ async function generate(name, cfg) {
         );
         continue;
       }
-      functions.push([...defLines, ...doc, ...body, '    return result'].join('\n'));
+      functions.push([...overloads, [...defLines, ...doc, ...body, '    return result'].join('\n')].join('\n\n\n'));
     } else if (![KIND.interface, KIND.typeAlias, KIND.module].includes(d.kind)) {
       problems.push(`${where}: an export of kind ${d.kind}, which this script does not convert`);
     }
@@ -1054,7 +1176,7 @@ async function generate(name, cfg) {
     'SymcrysError',
     'SymcrysInternalError',
     ...publicTypes,
-    ...names(functions.map((f) => f.replace(/^def /, ''))).sort(),
+    ...functions.map((f) => f.match(/^def (\w+)\(/m)?.[1] ?? f).sort(),
     ...(cfg.submodules ?? []),
   ];
   const header = [

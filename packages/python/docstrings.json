@@ -32,19 +32,19 @@
     },
     "tensor_form": {
       "type": "dict",
-      "doc": "``basis`` float64 array of shape (p, 3**rank), ``parameters`` int64 array of shape (p, rank), ``relations`` float64 array of shape (3**rank - p, 3**rank), ``rank``; p is the number of free parameters. A row of ``basis`` reshaped to ``(3,) * rank`` is a tensor."
+      "doc": "``basis`` float64 array of shape (p, 3, …, 3), each allowed tensor with its rank axes; ``parameters`` int64 array of shape (p, rank); ``relations`` float64 array of shape (3**rank - p, 3**rank), rows r with r @ t.reshape(-1) == 0 for every allowed tensor t; ``rank``. p is the number of free parameters."
     },
     "tensor_form_of": {
       "type": "dict",
-      "doc": "``basis`` float64 array of shape (p, 3**rank), ``parameters`` int64 array of shape (p, rank), ``relations`` float64 array of shape (3**rank - p, 3**rank), ``rank``; p is the number of free parameters."
+      "doc": "``basis`` float64 array of shape (p, 3, …, 3), each allowed tensor with its rank axes; ``parameters`` int64 array of shape (p, rank); ``relations`` float64 array of shape (3**rank - p, 3**rank), rows r with r @ t.reshape(-1) == 0 for every allowed tensor t; ``rank``. p is the number of free parameters."
     },
     "rotate_tensor": {
       "type": "numpy.ndarray",
-      "doc": "A float64 array of shape (3**rank,); ``tensor`` may have any shape with 3**rank entries (it is flattened in C order)."
+      "doc": "A float64 array of the shape of ``tensor`` (shape (3, …, 3), or flat (3**rank,)), with the stacks of ``tensor`` and ``rotation`` (leading axes, broadcast as in NumPy) in front: a rotation of shape (k, 3, 3) rotates the tensor k times, a stack of tensors (m, 3, …, 3) is rotated each."
     },
     "orbit": {
       "type": "list of dict",
-      "doc": "In each, ``hkl`` (or ``uvw``) is an int64 array of shape (3,) and ``operations`` an int64 array of shape (n,); ``indices`` is a dict ``{\"hkl\": ...}`` or ``{\"uvw\": ...}``."
+      "doc": "In each, ``hkl`` (or ``uvw``) is an int64 array of shape (3,) and ``operations`` an int64 array of shape (n,). Give ``hkl=`` for a face or ``uvw=`` for a lattice direction."
     },
     "orbit_of": {
       "type": "list of dict",
@@ -95,19 +95,19 @@
     },
     "tensor_form": {
       "type": "dict",
-      "doc": "``basis`` float64 array of shape (p, 3**rank), ``parameters`` int64 array of shape (p, rank), ``relations`` float64 array of shape (3**rank - p, 3**rank), ``rank``; p is the number of free parameters. A row of ``basis`` reshaped to ``(3,) * rank`` is a tensor."
+      "doc": "``basis`` float64 array of shape (p, 3, …, 3), each allowed tensor with its rank axes; ``parameters`` int64 array of shape (p, rank); ``relations`` float64 array of shape (3**rank - p, 3**rank), rows r with r @ t.reshape(-1) == 0 for every allowed tensor t; ``rank``. p is the number of free parameters."
     },
     "tensor_form_of": {
       "type": "dict",
-      "doc": "``basis`` float64 array of shape (p, 3**rank), ``parameters`` int64 array of shape (p, rank), ``relations`` float64 array of shape (3**rank - p, 3**rank), ``rank``; p is the number of free parameters."
+      "doc": "``basis`` float64 array of shape (p, 3, …, 3), each allowed tensor with its rank axes; ``parameters`` int64 array of shape (p, rank); ``relations`` float64 array of shape (3**rank - p, 3**rank), rows r with r @ t.reshape(-1) == 0 for every allowed tensor t; ``rank``. p is the number of free parameters."
     },
     "rotate_tensor": {
       "type": "numpy.ndarray",
-      "doc": "A float64 array of shape (3**rank,); ``tensor`` may have any shape with 3**rank entries (it is flattened in C order)."
+      "doc": "A float64 array of the shape of ``tensor`` (shape (3, …, 3), or flat (3**rank,)), with the stacks of ``tensor`` and ``rotation`` (leading axes, broadcast as in NumPy) in front: a rotation of shape (k, 3, 3) rotates the tensor k times, a stack of tensors (m, 3, …, 3) is rotated each."
     },
     "orbit": {
       "type": "list of dict",
-      "doc": "In each, ``hkl`` (or ``uvw``) is an int64 array of shape (3,) and ``operations`` an int64 array of shape (n,); ``indices`` is a dict ``{\"hkl\": ...}`` or ``{\"uvw\": ...}``."
+      "doc": "In each, ``hkl`` (or ``uvw``) is an int64 array of shape (3,) and ``operations`` an int64 array of shape (n,). Give ``hkl=`` for a face or ``uvw=`` for a lattice direction."
     },
     "orbit_of": {
       "type": "list of dict",

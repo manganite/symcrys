@@ -99,7 +99,9 @@ def _tensor_form(x: Any) -> Any:
     n = len(x["basis"])
     return {
         "rank": rank,
-        "basis": np.asarray(x["basis"], dtype=np.float64).reshape(n, dim),
+        # Each basis tensor in its shape (3, …, 3), rank times (#137 H2); the relations stay rows over
+        # the components in C order, r @ t.reshape(-1) == 0.
+        "basis": np.asarray(x["basis"], dtype=np.float64).reshape((n, *(3,) * rank)),
         "parameters": np.asarray(x["parameters"], dtype=np.int64).reshape(n, rank),
         "relations": np.asarray(x["relations"], dtype=np.float64).reshape(dim - n, dim),
     }

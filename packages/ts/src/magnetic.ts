@@ -107,7 +107,15 @@ export {
   type CartesianOperationDescription,
   type IdentifiedPointGroup,
 } from './pointGroups/identify.js';
-export { orbit, orbitOf, type DirectionOrbitEntry, type FaceOrbitEntry, type OrbitPole } from './pointGroups/orbits.js';
+export {
+  orbit,
+  orbitOf,
+  type DirectionIndices,
+  type DirectionOrbitEntry,
+  type FaceIndices,
+  type FaceOrbitEntry,
+  type OrbitPole,
+} from './pointGroups/orbits.js';
 export {
   rotateTensor,
   tensorForm,

@@ -851,7 +851,13 @@ def face_normal(basis: ArrayLike, hkl: ArrayLike) -> NDArray[np.float64]:
     return result
 
 
-def is_valid_cell(angles: Mapping[str, float], *, min_volume_ratio: Optional[float] = None) -> bool:
+def is_valid_cell(
+    alpha: float,
+    beta: float,
+    gamma: float,
+    *,
+    min_volume_ratio: Optional[float] = None,
+) -> bool:
     """Whether three angles (degrees) belong to a cell: each between 0° and 180°, and the three axes
     not in one plane (the volume radicand 1 − cos²α − cos²β − cos²γ + 2 cos α cos β cos γ exceeds
     10⁻¹², i.e. V/(abc) > 10⁻⁶: a cell that is flat within rounding is refused). With
@@ -861,6 +867,12 @@ def is_valid_cell(angles: Mapping[str, float], *, min_volume_ratio: Optional[flo
 
     Parameters
     ----------
+    alpha
+        Angle α between b and c, in degrees.
+    beta
+        Angle β between a and c, in degrees.
+    gamma
+        Angle γ between a and b, in degrees.
     min_volume_ratio : keyword-only, optional
         The smallest accepted ratio V/(abc) of the cell volume to the volume of the box of its edge
         lengths, from 0 to 1 (1 only for orthogonal axes); default 0, which accepts every cell that
@@ -869,7 +881,7 @@ def is_valid_cell(angles: Mapping[str, float], *, min_volume_ratio: Optional[flo
     result: bool = _shared.convert(
         _call(
             "isValidCell",
-            _shared.mapping(angles, "angles"),
+            _shared.options(alpha=alpha, beta=beta, gamma=gamma),
             _shared.options(min_volume_ratio=min_volume_ratio),
         ),
         _V,
@@ -877,7 +889,14 @@ def is_valid_cell(angles: Mapping[str, float], *, min_volume_ratio: Optional[flo
     return result
 
 
-def lattice_from_parameters(parameters: Mapping[str, float]) -> NDArray[np.float64]:
+def lattice_from_parameters(
+    a: float,
+    b: float,
+    c: float,
+    alpha: float,
+    beta: float,
+    gamma: float,
+) -> NDArray[np.float64]:
     """The Cartesian basis of a cell as the columns of a 3×3 matrix, in the frame of this library
     for a general cell: a along x, b in the xy plane (y > 0 for γ < 180°), c towards +z. It is the
     frame of ``lattice_basis`` where that exists (hexagonal axes: x ∥ a, z ∥ c), so a cell with the
@@ -885,9 +904,27 @@ def lattice_from_parameters(parameters: Mapping[str, float]) -> NDArray[np.float
     with unique axis b, b lies along y (docs/conventions.md, "Cell, metric and indices"). The basis
     is right-handed. Raises SymcrysError for an edge that is not positive and for angles that give
     no cell.
+
+    Parameters
+    ----------
+    a
+        Edge length a.
+    b
+        Edge length b.
+    c
+        Edge length c.
+    alpha
+        Angle α between b and c, in degrees.
+    beta
+        Angle β between a and c, in degrees.
+    gamma
+        Angle γ between a and b, in degrees.
     """
     result: NDArray[np.float64] = _shared.convert(
-        _call("latticeFromParameters", _shared.mapping(parameters, "parameters")),
+        _call(
+            "latticeFromParameters",
+            _shared.options(a=a, b=b, c=c, alpha=alpha, beta=beta, gamma=gamma),
+        ),
         ("a", np.float64, None),
     )
     return result
@@ -982,7 +1019,13 @@ def plane_to_four_indices(hkl: ArrayLike) -> NDArray[np.int64]:
     return result
 
 
-def miller_indices(printed: str, values: Mapping[str, int]) -> NDArray[np.int64]:
+def miller_indices(
+    printed: str,
+    *,
+    h: Optional[int] = None,
+    k: Optional[int] = None,
+    l: Optional[int] = None,
+) -> NDArray[np.int64]:
     """The face (hkl) of printed Miller indices with the caller's values of h, k, l substituted
     (#137 G3): the printed ``h,h,-2h,l`` with h = 3 and l = 1 gives (3, 3, 1). The printed strings
     are those of ``wyckoff_positions`` and ``crystal_forms`` (``miller_indices``), as ITA prints
@@ -992,9 +1035,18 @@ def miller_indices(printed: str, values: Mapping[str, int]) -> NDArray[np.int64]
     values keep it in its position (a general face (hkl) with h = k lies on a special one) is the
     caller's choice. Raises SymcrysError for an unreadable string, a missing or non-integer value,
     an unknown key and the face (000).
+
+    Parameters
+    ----------
+    h : keyword-only, optional
+        The value of h, an integer.
+    k : keyword-only, optional
+        The value of k, an integer.
+    l : keyword-only, optional
+        The value of l, an integer.
     """
     result: NDArray[np.int64] = _shared.convert(
-        _call("millerIndices", printed, _shared.mapping(values, "values")),
+        _call("millerIndices", printed, _shared.options(h=h, k=k, l=l)),
         ("a", np.int64, None),
     )
     return result
@@ -1195,10 +1247,33 @@ def describe_operations_of(
     return result
 
 
+@overload
 def orbit(
     key: str,
-    indices: Mapping[str, ArrayLike],
     *,
+    hkl: ArrayLike,
+    axes: Optional[Literal["hexagonal", "rhombohedral"]] = None,
+    unique_axis: Optional[Literal["a", "b", "c"]] = None,
+    setting: Optional[Union[int, str]] = None,
+) -> list[FaceOrbitEntry]: ...
+
+
+@overload
+def orbit(
+    key: str,
+    *,
+    uvw: ArrayLike,
+    axes: Optional[Literal["hexagonal", "rhombohedral"]] = None,
+    unique_axis: Optional[Literal["a", "b", "c"]] = None,
+    setting: Optional[Union[int, str]] = None,
+) -> list[DirectionOrbitEntry]: ...
+
+
+def orbit(
+    key: str,
+    *,
+    hkl: Optional[ArrayLike] = None,
+    uvw: Optional[ArrayLike] = None,
     axes: Optional[Literal["hexagonal", "rhombohedral"]] = None,
     unique_axis: Optional[Literal["a", "b", "c"]] = None,
     setting: Optional[Union[int, str]] = None,
@@ -1214,6 +1289,10 @@ def orbit(
 
     Parameters
     ----------
+    hkl : keyword-only, optional
+        The face (hkl), three integers not all zero (hexagonal axes: three indices, without i).
+    uvw : keyword-only, optional
+        The lattice direction [uvw], three integers not all zero.
     axes : keyword-only, optional
         The axes, as ITA's headlines name them: ``'rhombohedral'`` chooses the setting with
         rhombohedral axes of a trigonal group, ``'hexagonal'`` one with hexagonal axes, which every
@@ -1231,13 +1310,13 @@ def orbit(
     -------
     list of dict
         In each, ``hkl`` (or ``uvw``) is an int64 array of shape (3,) and ``operations`` an int64
-        array of shape (n,); ``indices`` is a dict ``{"hkl": ...}`` or ``{"uvw": ...}``.
+        array of shape (n,). Give ``hkl=`` for a face or ``uvw=`` for a lattice direction.
     """
     result: list[FaceOrbitEntry] | list[DirectionOrbitEntry] = _shared.convert(
         _call(
             "orbit",
             key,
-            _shared.mapping(indices, "indices"),
+            _shared.options(hkl=hkl, uvw=uvw),
             _shared.options(axes=axes, unique_axis=unique_axis, setting=setting),
         ),
         ("l", ("d", {"hkl": ("a", np.int64, None), "operations": ("a", np.int64, None), "uvw": ("a", np.int64, None)})),
@@ -1692,9 +1771,10 @@ def tensor_form(
     Returns
     -------
     dict
-        ``basis`` float64 array of shape (p, 3**rank), ``parameters`` int64 array of shape (p,
-        rank), ``relations`` float64 array of shape (3**rank - p, 3**rank), ``rank``; p is the
-        number of free parameters. A row of ``basis`` reshaped to ``(3,) * rank`` is a tensor.
+        ``basis`` float64 array of shape (p, 3, …, 3), each allowed tensor with its rank axes;
+        ``parameters`` int64 array of shape (p, rank); ``relations`` float64 array of shape (3**rank
+        - p, 3**rank), rows r with r @ t.reshape(-1) == 0 for every allowed tensor t; ``rank``. p is
+        the number of free parameters.
     """
     result: TensorForm = _shared.convert(
         _call(
@@ -1736,9 +1816,10 @@ def tensor_form_of(
     Returns
     -------
     dict
-        ``basis`` float64 array of shape (p, 3**rank), ``parameters`` int64 array of shape (p,
-        rank), ``relations`` float64 array of shape (3**rank - p, 3**rank), ``rank``; p is the
-        number of free parameters.
+        ``basis`` float64 array of shape (p, 3, …, 3), each allowed tensor with its rank axes;
+        ``parameters`` int64 array of shape (p, rank); ``relations`` float64 array of shape (3**rank
+        - p, 3**rank), rows r with r @ t.reshape(-1) == 0 for every allowed tensor t; ``rank``. p is
+        the number of free parameters.
     """
     result: TensorForm = _shared.convert(
         _call(
@@ -1776,18 +1857,18 @@ def rotate_tensor(
     Returns
     -------
     numpy.ndarray
-        A float64 array of shape (3**rank,); ``tensor`` may have any shape with 3**rank entries (it
-        is flattened in C order).
+        A float64 array of the shape of ``tensor`` (shape (3, …, 3), or flat (3**rank,)), with the
+        stacks of ``tensor`` and ``rotation`` (leading axes, broadcast as in NumPy) in front: a
+        rotation of shape (k, 3, 3) rotates the tensor k times, a stack of tensors (m, 3, …, 3) is
+        rotated each.
     """
-    result: NDArray[np.float64] = _shared.convert(
-        _call(
-            "rotateTensor",
-            _shared.array(tensor, "tensor", np.float64).reshape(-1),
-            _shared.array(rotation, "rotation"),
-            _shared.spec(spec),
-            _shared.options(tolerance=tolerance),
-        ),
-        ("a", np.float64, None),
+    result: NDArray[np.float64] = _shared.rotate_tensor(
+        _call,
+        _value,
+        tensor,
+        rotation,
+        spec,
+        _shared.options(tolerance=tolerance),
     )
     return result
 

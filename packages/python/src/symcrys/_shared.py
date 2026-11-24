@@ -197,6 +197,45 @@ def freeze(operations: Any, fields: Mapping[str, tuple[Any, tuple[int, ...]]]) -
         object.__setattr__(operations, name, view)
 
 
+def rotate_tensor(call: Any, value: Any, tensor: Any, rotation: Any, spec_or_name: Any, options: Any) -> NDArray[np.float64]:
+    """``rotate_tensor`` of the generated modules (#137 H2): the tensor keeps its shape, (3, …, 3) or
+    the flat (3**rank,), and leading axes of the tensor and of the rotation (…, 3, 3) are stacks,
+    broadcast against each other as NumPy does. The library rotates one tensor by one rotation per
+    call; this only loops."""
+    t = array(tensor, "tensor", np.float64)
+    r = array(rotation, "rotation")
+    given = spec(spec_or_name)
+    if isinstance(given, str):
+        rank = value("TENSOR_PROPERTIES").get(given, {}).get("spec", {}).get("rank")
+    else:
+        rank = given.get("rank")
+    if not isinstance(rank, int) or isinstance(rank, bool) or not 0 <= rank <= 4:
+        # An unknown name or a wrong specification: the library says what is wrong.
+        return np.asarray(call("rotateTensor", t.reshape(-1), r, given, options), dtype=np.float64)
+    full = (3,) * rank
+    if t.ndim >= rank and t.shape[t.ndim - rank :] == full:
+        core: tuple[int, ...] = full
+    elif t.ndim >= 1 and t.shape[-1] == 3**rank:
+        core = (3**rank,)
+    else:
+        shapes = f"{full} or ({3**rank},)" if rank != 1 else "(3,)"
+        raise _engine.SymcrysError(
+            f"a tensor of rank {rank} has the shape {shapes}, with stacks before it, not {t.shape}", "RangeError"
+        )
+    if r.ndim < 2 or r.shape[-2:] != (3, 3):
+        raise _engine.SymcrysError(f"the rotation has the shape (3, 3), with stacks before it, not {r.shape}", "RangeError")
+    try:
+        lead = np.broadcast_shapes(t.shape[: t.ndim - len(core)], r.shape[:-2])
+    except ValueError:
+        raise _engine.SymcrysError(
+            f"the stacks of the tensor {t.shape} and of the rotation {r.shape} do not broadcast", "RangeError"
+        ) from None
+    tensors = np.broadcast_to(t, lead + core).reshape(-1, 3**rank)
+    rotations = np.broadcast_to(r, lead + (3, 3)).reshape(-1, 3, 3)
+    out = [call("rotateTensor", tt, rr, given, options) for tt, rr in zip(tensors, rotations)]
+    return np.asarray(out, dtype=np.float64).reshape(lead + core)
+
+
 def value(name: str) -> Any:
     return _engine.value(name)
 

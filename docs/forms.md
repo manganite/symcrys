@@ -40,7 +40,7 @@ site symmetry (the cell decides the pole: for monoclinic and triclinic crystals 
 
 ```{code-cell} ipython3
 f = symcrys.crystal_forms("-43m")[2]  # h,h,l with |h| < |l|, the trigon-tritetrahedron
-hkl = symcrys.miller_indices(f["miller_indices"], {"h": 1, "l": 3})
+hkl = symcrys.miller_indices(f["miller_indices"], h=1, l=3)
 hkl, symcrys.face_normal(symcrys.lattice_basis("cubic"), hkl)
 ```
 
@@ -57,7 +57,7 @@ hexagonal axes a face transforms otherwise than a lattice direction
 ```
 
 ```{code-cell} ipython3
-[f["hkl"] for f in symcrys.orbit("-3m", {"hkl": [1, 0, 1]})]
+[f["hkl"] for f in symcrys.orbit("-3m", hkl=[1, 0, 1])]
 ```
 
 ```{code-cell} ipython3

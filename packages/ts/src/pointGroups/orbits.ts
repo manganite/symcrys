@@ -54,6 +54,18 @@ export interface DirectionOrbitEntry {
   readonly operations: readonly number[];
 }
 
+/** A face (hkl) for `orbit`. */
+export interface FaceIndices {
+  /** The face (hkl), three integers not all zero (hexagonal axes: three indices, without i). */
+  readonly hkl: Hkl;
+}
+
+/** A lattice direction [uvw] for `orbit`. */
+export interface DirectionIndices {
+  /** The lattice direction [uvw], three integers not all zero. */
+  readonly uvw: Uvw;
+}
+
 /**
  * The orbit of a face (hkl) or of a lattice direction [uvw] under a point group, exactly, in the
  * lattice basis: the distinct faces (directions), in the order in which the operations reach them
@@ -67,22 +79,22 @@ export interface DirectionOrbitEntry {
  */
 export function orbit(
   key: MagneticPointGroupKey,
-  indices: { readonly hkl: Hkl },
+  indices: FaceIndices,
   options?: SettingOptions,
 ): readonly FaceOrbitEntry[];
 export function orbit(
   key: MagneticPointGroupKey,
-  indices: { readonly uvw: Uvw },
+  indices: DirectionIndices,
   options?: SettingOptions,
 ): readonly DirectionOrbitEntry[];
 export function orbit(
   key: MagneticPointGroupKey,
-  indices: { readonly hkl: Hkl } | { readonly uvw: Uvw },
+  indices: FaceIndices | DirectionIndices,
   options?: SettingOptions,
 ): readonly FaceOrbitEntry[] | readonly DirectionOrbitEntry[];
 export function orbit(
   key: MagneticPointGroupKey,
-  indices: { readonly hkl: Hkl } | { readonly uvw: Uvw },
+  indices: FaceIndices | DirectionIndices,
   options?: SettingOptions,
 ): readonly FaceOrbitEntry[] | readonly DirectionOrbitEntry[] {
   checkOptions(options, SETTING_KEYS, 'orbit');

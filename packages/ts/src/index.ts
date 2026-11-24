@@ -51,7 +51,13 @@ export type { Axis, DirectionElements, OperationKind, SymmetryDirection } from '
 export type { SiteSymmetry } from './siteSymmetry.js';
 export type { Hkl, WyckoffPosition } from './pointGroups/wyckoff.js';
 export type { CrystalForm, CrystalFormType } from './pointGroups/crystalForms.js';
-export type { DirectionOrbitEntry, FaceOrbitEntry, OrbitPole } from './pointGroups/orbits.js';
+export type {
+  DirectionIndices,
+  DirectionOrbitEntry,
+  FaceIndices,
+  FaceOrbitEntry,
+  OrbitPole,
+} from './pointGroups/orbits.js';
 export type { CartesianAxis } from './pointGroups/identify.js';
 export type { IntrinsicSymmetry, TensorForm, TensorKind, TensorRank } from './tensors/tensorForm.js';
 
