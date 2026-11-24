@@ -5,7 +5,7 @@
       "ts": "index",
       "py": "packages/python/src/symcrys/__init__.py",
       "prefix": "",
-      "docstring": "symcrys: crystallographic symmetry calculations, from Python.\n\nA thin layer over the TypeScript library symcrys of the same version, which runs in an embedded\nJavaScript engine (quickjs-ng). Every function here calls the function of the same name in the\nlibrary (camelCase there, snake_case here) and returns its result as plain Python data, matrices\nand vectors as NumPy arrays (rules in ``symcrys._convert``; ``symcrys.plane`` converts its arrays\nitself, see its module docstring). The conventions, frames and print\nsources are documented once, for both languages: https://manganite.github.io/symcrys/conventions.html\n\nThis module is the crystallographic API: the 32 crystal classes, without time reversal. The\nmagnetic point groups, time-odd tensors and operations with time reversal are in\n``symcrys.magnetic``, under the same function names; there ``\"32\"`` is the white group, and a\ncrystal without magnetic order has the grey group of its class (quartz: ``\"321'\"``). A question\nthat involves time reversal raises ``SymcrysError`` here (docs/conventions.md, \"Two entry points\").\nThe plane groups and plane point groups are in ``symcrys.plane``.\n\nEach call costs about a millisecond or more (the forms of rank-4 tensors up to a few tenths of a\nsecond); fetch operations or forms once and compute with NumPy, rather than calling in a loop.\n",
+      "docstring": "symcrys: crystallographic symmetry calculations, from Python.\n\nA thin layer over the TypeScript library symcrys of the same version, which runs in an embedded\nJavaScript engine (quickjs-ng). Every function here calls the function of the same name in the\nlibrary (camelCase there, snake_case here) and returns its result as plain Python data, matrices\nand vectors as NumPy arrays, records as dicts typed by the TypedDicts of the module (rules in\n``symcrys._convert``). The conventions, frames and print\nsources are documented once, for both languages: https://manganite.github.io/symcrys/conventions.html\n\nThis module is the crystallographic API: the 32 crystal classes, without time reversal. The\nmagnetic point groups, time-odd tensors and operations with time reversal are in\n``symcrys.magnetic``, under the same function names; there ``\"32\"`` is the white group, and a\ncrystal without magnetic order has the grey group of its class (quartz: ``\"321'\"``). A question\nthat involves time reversal raises ``SymcrysError`` here (docs/conventions.md, \"Two entry points\").\nThe plane groups and plane point groups are in ``symcrys.plane``.\n\nEach call costs about a millisecond or more (the forms of rank-4 tensors up to a few tenths of a\nsecond); fetch operations or forms once and compute with NumPy, rather than calling in a loop.\n",
       "version": true,
       "submodules": ["magnetic", "plane"]
     },
@@ -26,10 +26,7 @@
     "//": "TypeScript type names with a fixed Python reading: 'str' for keys, an array shape for vectors and matrices, 'int' for an integer type.",
     "PointGroupKey": "str",
     "MagneticPointGroupKey": "str",
-    "CrystalClassKey": "str",
-    "ClassKey": "str",
     "PlaneGroupKey": "str",
-    "PlanePointGroupKey": "str",
     "K": "str",
     "TensorRank": "int",
     "Mat3": [3, 3],
@@ -84,7 +81,20 @@
       "formType",
       "pointGroupSetting"
     ],
-    "float": ["a", "b", "c", "alpha", "beta", "gamma", "distance", "tolerance", "minVolumeRatio", "EPSILON"]
+    "float": [
+      "a",
+      "b",
+      "c",
+      "alpha",
+      "beta",
+      "gamma",
+      "distance",
+      "tolerance",
+      "minVolumeRatio",
+      "EPSILON",
+      "angleBetweenDirections",
+      "angleBetweenPlanes"
+    ]
   },
   "functions": {
     "//": "What a function's TypeScript type does not say: the dtype of an array it returns, the keys an operation must have, an argument converted otherwise.",
@@ -94,7 +104,8 @@
     "rotateTensor": {
       "returns": "float64",
       "args": {
-        "tensor": "_shared.array(tensor, \"tensor\", np.float64).reshape(-1)"
+        "tensor": "_shared.array(tensor, \"tensor\", np.float64).reshape(-1)",
+        "rotation": "_shared.array(rotation, \"rotation\")"
       }
     },
     "latticeBasis": {

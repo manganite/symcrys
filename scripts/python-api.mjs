@@ -36,6 +36,9 @@ const KIND = {
 };
 const WIDTH = 100;
 
+/** The entries of api.json that the modules used: one that is not used is reported. */
+const used = new Set();
+
 /** @typedef {any} Json A node of TypeDoc's JSON output. */
 
 const snake = (/** @type {string} */ name) => name.replace(/(?<=[a-z0-9])([A-Z])/g, '_$1').toLowerCase();
@@ -304,7 +307,9 @@ function read(t, where) {
       return { k: 'arr', of: read(t.elementType, where) };
     case 'tuple': {
       const els = (t.elements ?? []).map((/** @type {Json} */ e) => read(e, where));
-      const of = els.every((/** @type {any} */ e) => e.k === 'num') ? { k: 'num' } : els[0];
+      // A tuple of one kind of element: numbers, strings, or equal arrays.
+      const of = unite(els);
+      if (of.k === 'union') throw new Error(`${where}: a tuple of mixed elements`);
       const inner = of.k === 'arr' && of.shape ? of.shape : [];
       return { k: 'arr', of: of.k === 'arr' ? of.of : of, shape: [els.length, ...inner] };
     }
@@ -328,6 +333,7 @@ function read(t, where) {
 /**
  * A union of types: of string literals one string type, of numbers one number type.
  * @param {any[]} of
+ * @returns {any}
  */
 function unite(of) {
   of = of.flatMap((u) => (u.k === 'union' ? u.of : [u]));
@@ -369,6 +375,7 @@ function readDeclaration(d, where, name) {
  */
 function readReference(t, where) {
   const fixed = api.types[t.name];
+  if (fixed) used.add(`types.${t.name}`);
   if (fixed === 'str') return { k: 'str' };
   if (fixed === 'int') return { k: 'num', int: true };
   if (Array.isArray(fixed)) return { k: 'arr', of: { k: 'num' }, shape: fixed };
@@ -398,7 +405,7 @@ function readReference(t, where) {
 /**
  * The context of a module: its tables, and the TypedDicts and Literal aliases it collects.
  * @typedef {{ name: string, ts: string, prefix: string, floats: Set<string>, ints: Set<string>,
- *   shapes: Record<string, number[]>, records: Map<string, any>, done: string[],
+ *   arrays: string, shapes: Record<string, number[]>, records: Map<string, any>, exports: Map<string, Json>, notRequired: boolean, done: string[],
  *   literals: Map<string, { lits: string[], doc: string }>,
  *   lib: Record<string, any> }} Ctx
  */
@@ -410,6 +417,7 @@ function readReference(t, where) {
  * @param {string} where
  */
 function dtypeOf(ctx, field, where) {
+  used.add(`arrays.${ctx.arrays}.${field}`);
   if (ctx.floats.has(field)) return 'float64';
   if (ctx.ints.has(field)) return 'int64';
   throw new Error(`${where}: array field ${field} is in neither list of api.json "arrays" (${ctx.name})`);
@@ -430,6 +438,7 @@ function isNumArray(ir) {
  * @param {string} where
  */
 function numberType(ctx, field, where) {
+  used.add(`numbers.${field}`);
   if (api.numbers.int.includes(field)) return 'int';
   if (api.numbers.float.includes(field)) return 'float';
   throw new Error(`${where}: number ${field} is in neither list of api.json "numbers"`);
@@ -486,7 +495,15 @@ function pyType(ctx, ir, field, where, dtype) {
  * @param {string} where
  */
 function collect(ctx, ir, where) {
-  if (ctx.records.has(ir.name)) return;
+  if (ctx.records.has(ir.name)) {
+    // Two records of one name (TypeDoc lists an internal type of the same name too) must agree.
+    const known = ctx.records.get(ir.name);
+    const names = (/** @type {any[]} */ fs) => fs.map((f) => `${f.name}${f.optional ? '?' : ''}`).join(',');
+    if (known && names(known.fields) !== names(ir.fields)) {
+      throw new Error(`${where}: two records named ${ir.name} with different fields`);
+    }
+    return;
+  }
   ctx.records.set(ir.name, null); // reserved, against recursion
   const fields = ir.fields.map((/** @type {Field} */ f) => ({
     ...f,
@@ -517,6 +534,7 @@ function schema(ctx, ir, field, where, dtype) {
     case 'arr':
       if (isNumArray(ir)) {
         const shape = ctx.shapes[field];
+        if (shape) used.add(`shapes.${ctx.name}.${field}`);
         return `("a", np.${dtype ?? dtypeOf(ctx, field, where)}, ${shape ? `(${shape.join(', ')}${shape.length === 1 ? ',' : ''})` : 'None'})`;
       }
       return `("l", ${schema(ctx, ir.of, field, where)})`;
@@ -567,9 +585,11 @@ function schema(ctx, ir, field, where, dtype) {
 function argument(ctx, ir, name, fn, where) {
   const py = snake(name);
   const own = api.functions[fn]?.args?.[name];
+  if (own) used.add(`functions.${fn}.args.${name}`);
   if (own) return { py: 'ArrayLike', expr: own };
   if (ctx.name === 'symcrys.plane' && name === 'point') return { py: 'ArrayLike', expr: api.plane.point };
   if (name === 'operations') {
+    if (api.functions[fn]?.operationKeys) used.add(`functions.${fn}.operationKeys`);
     const keys =
       api.functions[fn]?.operationKeys ?? (ctx.name === 'symcrys.plane' ? api.plane.operationKeys : ['cartesian']);
     const k =
@@ -579,8 +599,11 @@ function argument(ctx, ir, name, fn, where) {
     return { py: 'Sequence[Mapping[str, Any]]', expr: `_shared.operation_list(${py}${k})` };
   }
   if (ir.k === 'union' && ir.of.some((/** @type {any} */ u) => u.k === 'rec' && /TensorSpec/.test(u.name ?? ''))) {
-    const rec = ir.of.find((/** @type {any} */ u) => u.k === 'rec');
-    collect(ctx, { ...rec, name: 'TensorSpec' }, where);
+    // The TypedDict is the exported TensorSpec of the entry point, not the type of the argument
+    // (in symcrys a TensorSpec that also accepts a time parity, to refuse it with a message).
+    const exported = ctx.exports.get('TensorSpec');
+    if (!exported) throw new Error(`${where}: the entry point exports no TensorSpec`);
+    collect(ctx, readDeclaration(exported, where, 'TensorSpec'), where);
     tensorPropertyName(ctx);
     return { py: 'TensorSpec | Mapping[str, Any] | TensorPropertyName', expr: `_shared.spec(${py})` };
   }
@@ -610,6 +633,7 @@ function argument(ctx, ir, name, fn, where) {
  * @param {string} where
  */
 function numberOrInt(field, where) {
+  used.add(`numbers.${field}`);
   if (['h', 'k', 'l'].includes(field) || api.numbers.int.includes(field)) return 'int';
   if (api.numbers.float.includes(field)) return 'float';
   throw new Error(`${where}: number ${field} is in neither list of api.json "numbers"`);
@@ -658,6 +682,7 @@ function keywordArguments(ctx, type, where) {
       ann = p.ir.lits ? `Literal[${p.ir.lits.map((/** @type {string} */ s) => JSON.stringify(s)).join(', ')}]` : 'str';
     else if (p.ir.k === 'num') ann = numberOrInt(p.name, `${where}.${p.name}`);
     else if (
+      p.name === 'setting' &&
       p.ir.k === 'union' &&
       p.ir.of.some((/** @type {any} */ u) => u.k === 'num') &&
       p.ir.of.some((/** @type {any} */ u) => u.k === 'str')
@@ -697,17 +722,20 @@ async function generate(name, cfg) {
     name,
     ts: cfg.ts,
     prefix: cfg.prefix,
+    arrays: api.arrays[name] ? name : 'symcrys',
     floats: new Set(arrays.float64),
     ints: new Set(arrays.int64),
     shapes: api.shapes[name] ?? {},
     records: new Map(),
+    exports: new Map(),
+    notRequired: false,
     done: [],
     literals: new Map(),
     lib,
   };
   const done = ctx.done;
-  const recordOrder = () => {};
   const tsModule = project.children.find((/** @type {Json} */ m) => m.name === cfg.ts);
+  for (const c of tsModule.children) ctx.exports.set(c.name, c.kind === KIND.reference ? byId.get(c.target) : c);
   const extra = extras[name] ?? {};
   const extrasUsed = new Set();
   const constants = [];
@@ -717,6 +745,7 @@ async function generate(name, cfg) {
     const where = `${cfg.ts}.${d.name}`;
     if (d.kind === KIND.variable) {
       const own = api.constants[d.name];
+      if (own) used.add(`constants.${d.name}`);
       let ann;
       let sch;
       if (own) {
@@ -724,7 +753,15 @@ async function generate(name, cfg) {
         sch = `("x", "${own.custom}")`;
       } else {
         let ir = read(d.type, where);
-        if (ir.k === 'rec' && !ir.name) ir = { k: 'map', of: ir.fields[0].ir };
+        if (ir.k === 'rec' && !ir.name) {
+          // An object literal type with a field per name (magnetic TENSOR_PROPERTIES): a mapping, if
+          // every field has the same type.
+          const types = new Set(ir.fields.map((/** @type {Field} */ f) => f.ir.name ?? JSON.stringify(f.ir)));
+          if (types.size !== 1) throw new Error(`${where}: an object of fields of different types`);
+          ir = { k: 'map', of: ir.fields[0].ir };
+        }
+        // A string constant (VERSION) is a str, not a Literal of its one value.
+        if (ir.k === 'str') ir = { k: 'str' };
         if (ir.k === 'arr' && ir.of.k === 'str') {
           ann = 'tuple[str, ...]';
           sch = '("t", _V)';
@@ -733,7 +770,6 @@ async function generate(name, cfg) {
           sch = schema(ctx, ir, d.name, where);
         }
       }
-      recordOrder();
       if (extra[d.name]) extrasUsed.add(d.name);
       const doc = quote(variableDocstring(d, extra[d.name], where), '');
       const line = `${d.name}: ${ann} = _shared.convert(_value("${d.name}"), ${sch})`;
@@ -747,6 +783,7 @@ async function generate(name, cfg) {
       const sigs = d.signatures;
       const sig = sigs[0];
       const own = api.functions[d.name] ?? {};
+      for (const k of ['returns', 'custom', 'listOf']) if (own[k] !== undefined) used.add(`functions.${d.name}.${k}`);
       const params = [];
       const keywords = [];
       const args = [];
@@ -786,8 +823,8 @@ async function generate(name, cfg) {
         ann = pyType(ctx, returns, d.name, where);
         sch = `("x", "${own.custom}")`;
       } else if (returns.k === 'num') {
-        ann = 'float';
-        sch = '_F';
+        ann = numberType(ctx, d.name, where);
+        sch = ann === 'int' ? '_I' : '_F';
       } else {
         const dtype = own.returns;
         ann = pyType(ctx, returns, d.name, where, dtype);
@@ -796,7 +833,6 @@ async function generate(name, cfg) {
       if (returns.k === 'union' && returns.of.every((/** @type {any} */ u) => u.k === 'arr')) {
         ann = [...new Set(returns.of.map((/** @type {any} */ u) => pyType(ctx, u, d.name, where)))].join(' | ');
       }
-      recordOrder();
       if (extra[py]) extrasUsed.add(py);
       const signature = [
         ...params,
@@ -838,7 +874,6 @@ async function generate(name, cfg) {
   const schemas = [];
   for (const n of done) {
     const r = ctx.records.get(n);
-    const required = r.fields.filter((/** @type {any} */ f) => !f.optional);
     const optional = r.fields.filter((/** @type {any} */ f) => f.optional);
     const body = (/** @type {any[]} */ fs) =>
       fs.flatMap((f) => [
@@ -851,21 +886,12 @@ async function generate(name, cfg) {
           '    ',
         )
       : [];
-    if (optional.length && required.length) {
-      typed.push([`class _${n}Required(TypedDict):`, ...body(required)].join('\n'));
-      typed.push(
-        [`class ${n}(_${n}Required, total=False):`, ...doc, ...(doc.length ? [''] : []), ...body(optional)].join('\n'),
-      );
-    } else {
-      typed.push(
-        [
-          `class ${n}(TypedDict${optional.length ? ', total=False' : ''}):`,
-          ...doc,
-          ...(doc.length ? [''] : []),
-          ...body(r.fields.length ? r.fields : []),
-        ].join('\n'),
-      );
-    }
+    // One class: an optional field is NotRequired (Python 3.11, typing_extensions for type checkers
+    // on 3.10), so that Sphinx documents every field; @final lets a type checker narrow a union of
+    // TypedDicts by a key (`if "hkl" in entry`).
+    const fields = r.fields.map((/** @type {any} */ f) => (f.optional ? { ...f, py: `NotRequired[${f.py}]` } : f));
+    if (optional.length) ctx.notRequired = true;
+    typed.push(['@final', `class ${n}(TypedDict):`, ...doc, ...(doc.length ? [''] : []), ...body(fields)].join('\n'));
     const entries = r.fields.map((/** @type {any} */ f) => `"${f.name}": ${f.schema}`);
     const line = `_S_${n} = ("d", {${entries.join(', ')}})`;
     schemas.push(
@@ -926,13 +952,23 @@ async function generate(name, cfg) {
       : []),
   ];
   let text = sections.join('\n\n\n') + '\n';
-  const typing = ['Any', 'Literal', 'Mapping', 'Optional', 'Sequence', 'TypedDict', 'Union'].filter((w) =>
+  const typing = ['Any', 'Literal', 'Mapping', 'Optional', 'Sequence', 'TypedDict', 'Union', 'final'].filter((w) =>
     new RegExp(`\\b${w}\\b`).test(text.replace('IMPORTS', '')),
   );
   const nptyping = ['ArrayLike', 'NDArray'].filter((w) => new RegExp(`\\b${w}\\b`).test(text));
   const imports = [
-    `from typing import ${typing.join(', ')}`,
+    ...(ctx.notRequired ? ['import sys'] : []),
+    `from typing import ${[...(ctx.notRequired ? ['TYPE_CHECKING'] : []), ...typing].join(', ')}`,
     '',
+    ...(ctx.notRequired
+      ? [
+          'if sys.version_info >= (3, 11):',
+          '    from typing import NotRequired',
+          'elif TYPE_CHECKING:  # Python 3.10: for type checkers; the annotations stay strings at run time',
+          '    from typing_extensions import NotRequired',
+          '',
+        ]
+      : []),
     'import numpy as np',
     ...(nptyping.length ? [`from numpy.typing import ${nptyping.join(', ')}`] : []),
     '',
@@ -943,7 +979,6 @@ async function generate(name, cfg) {
   return text;
 }
 
-const problemsBefore = problems.length;
 for (const [name, cfg] of Object.entries(api.modules)) {
   const file = path.join(root, cfg.py);
   let text;
@@ -961,7 +996,28 @@ for (const [name, cfg] of Object.entries(api.modules)) {
     console.log(`python-api: ${cfg.py} written`);
   }
 }
-void problemsBefore;
+
+// Every entry of api.json must have been used by some module.
+const own = (/** @type {Record<string, unknown>} */ o) => Object.keys(o).filter((k) => k !== '//');
+const entries = [
+  ...own(api.types).map((k) => `types.${k}`),
+  ...[...api.numbers.int, ...api.numbers.float].map((k) => `numbers.${k}`),
+  ...Object.entries(api.arrays)
+    .filter(([k]) => k !== '//')
+    .flatMap(([m, t]) => [...t.float64, ...t.int64].map((k) => `arrays.${m}.${k}`)),
+  ...Object.entries(api.shapes)
+    .filter(([k]) => k !== '//')
+    .flatMap(([m, t]) => Object.keys(t).map((k) => `shapes.${m}.${k}`)),
+  ...own(api.constants).map((k) => `constants.${k}`),
+  ...Object.entries(api.functions)
+    .filter(([k]) => k !== '//')
+    .flatMap(([f, o]) =>
+      Object.entries(o).flatMap(([k, v]) =>
+        k === 'args' ? Object.keys(v).map((a) => `functions.${f}.args.${a}`) : [`functions.${f}.${k}`],
+      ),
+    ),
+];
+for (const e of entries) if (!used.has(e)) problems.push(`packages/python/api.json: ${e} is not used`);
 
 if (problems.length) {
   for (const p of problems) console.error(`python-api: ${p}`);

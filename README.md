@@ -109,7 +109,8 @@ npm run docs:linkcheck # external links (CI: workflow Links, not a gate)
 ```
 
 The docstrings of the Python package are written from the TSDoc comments: after changing a TSDoc
-comment or an export, run `npm run docs:python` and commit the result: `scripts/python-api.mjs`
+comment or an export, run `npm run build && npm run docs:python` and commit the result (the
+generator reads the build for the values of literal types): `scripts/python-api.mjs`
 writes the Python modules `symcrys`, `symcrys.magnetic` and `symcrys.plane` from the TypeScript
 entry points; what the types do not say is in `packages/python/api.json` and
 `packages/python/docstrings.json`.

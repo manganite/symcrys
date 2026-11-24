@@ -5,6 +5,8 @@ import re
 import threading
 from types import MappingProxyType
 
+import typing
+
 import numpy as np
 import pytest
 
@@ -26,8 +28,12 @@ def test_every_export_of_the_library_has_its_python_name() -> None:
         assert len(expected) > (12 if module is plane else 20)
         # Besides the exports of the library: the errors, the TypedDicts and Literal types of the
         # generated module (scripts/python-api.mjs, #99), and the submodules of symcrys.
-        types = {n for n in module.__all__ if n[0].isupper() and not n.isupper()}
-        assert TYPES - {"TensorSpec"} <= types or module is plane, module.__name__
+        types = {n for n in module.__all__ if n[0].isupper() and not n.isupper()} - {"SymcrysError", "SymcrysInternalError"}
+        for name in types:
+            obj = getattr(module, name)
+            # A TypedDict of the generated module, or one of its Literal types.
+            assert typing.is_typeddict(obj) or typing.get_origin(obj) is typing.Literal, f"{module.__name__}.{name}"
+        assert TYPES - {"SymcrysError", "SymcrysInternalError"} <= types or module is plane, module.__name__
         extra = {"SymcrysError", "SymcrysInternalError"} | types | ({"magnetic", "plane"} if module is symcrys else set())
         assert set(module.__all__) == expected | extra, module.__name__
         for name in expected:

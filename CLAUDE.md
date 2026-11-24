@@ -303,9 +303,10 @@ Carried over from birss-app, where the calculations come from.
   `packages/python/docstrings.json` (the Returns sections), and the modules `_shared.py`,
   `_convert.py`, `_engine.py`. Chosen while implementing: the names of the TypedDicts are those of
   the TypeScript interfaces (`symcrys.plane.PlaneOperation` for what was `Operation`); each module
-  has its own TypedDicts (a `PointGroup` of `symcrys.magnetic` has `type`); a number field not
-  listed as int or float, and an array field not listed as float64 or int64, are an error of the
-  generator. Checked when it came: the outputs of all functions over all keys and settings were the
+  has its own TypedDicts (a `PointGroup` of `symcrys.magnetic` has `type`); an optional field is
+  `NotRequired` and every TypedDict `@final`, so that a type checker narrows a union by a key; a
+  number not listed as int or float, an array field not listed as float64 or int64, a type the
+  generator cannot read and an entry of `api.json` no module uses are errors of the generator. Checked when it came: the outputs of all functions over all keys and settings were the
   same, value, type, dtype and shape, before and after (9027 calls).
 - **The engine stays replaceable** (#30): the whole boundary is one function, `call(name,
 argsJson) → resultJson` (`_engine.py`, `scripts/bundle-python.mjs`; a name of the magnetic API has
@@ -1064,7 +1065,8 @@ while implementing gets its own note here.
   `symmetryElements(key)`, ITA's terms; **plane point groups** with ten keys as in ITA Table 3.2.1.1
   and `3m` in the settings 1 = `3m1` and 2 = `31m` (`{ setting }`, `pointGroup`, `symbol`, as in
   `symcrys`); their **positions and edge forms** (ITA Table 3.2.3.1) later, #81. Chosen while
-  implementing (PR #82): the Python layer converts the results of `symcrys.plane` itself (a translation,
+  implementing (PR #82): the Python layer converts the results of `symcrys.plane` itself _(by the
+  schema of the generator since #121 step 12a, with the same dtypes)_ (a translation,
   point, vertex or segment _(no segment since #121 step 10b)_ float64 even where its entries are integers; a direction of a line int64,
   although `direction` is a float key of the fixed rule, which means a Cartesian vector there); a
   Wyckoff position gives all printed coordinates of its (0,0)+ set (`coordinates`, a list), since ITA

@@ -3,8 +3,8 @@
 A thin layer over the TypeScript library symcrys of the same version, which runs in an embedded
 JavaScript engine (quickjs-ng). Every function here calls the function of the same name in the
 library (camelCase there, snake_case here) and returns its result as plain Python data, matrices
-and vectors as NumPy arrays (rules in ``symcrys._convert``; ``symcrys.plane`` converts its arrays
-itself, see its module docstring). The conventions, frames and print
+and vectors as NumPy arrays, records as dicts typed by the TypedDicts of the module (rules in
+``symcrys._convert``). The conventions, frames and print
 sources are documented once, for both languages: https://manganite.github.io/symcrys/conventions.html
 
 This module is the crystallographic API: the 32 crystal classes, without time reversal. The
@@ -23,7 +23,13 @@ second); fetch operations or forms once and compute with NumPy, rather than call
 
 from __future__ import annotations
 
-from typing import Any, Literal, Mapping, Optional, Sequence, TypedDict, Union
+import sys
+from typing import TYPE_CHECKING, Any, Literal, Mapping, Optional, Sequence, TypedDict, Union, final
+
+if sys.version_info >= (3, 11):
+    from typing import NotRequired
+elif TYPE_CHECKING:  # Python 3.10: for type checkers; the annotations stay strings at run time
+    from typing_extensions import NotRequired
 
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
@@ -106,6 +112,7 @@ CrystalFamily = Literal[
 """
 
 
+@final
 class LatticeParameters(TypedDict):
     """The lattice parameters of a cell: edge lengths and angles in degrees (α between b and c, β
     between a and c, γ between a and b).
@@ -125,6 +132,7 @@ class LatticeParameters(TypedDict):
     """Angle γ between a and b, in degrees."""
 
 
+@final
 class TensorSpec(TypedDict):
     """The kind of tensor."""
 
@@ -136,6 +144,7 @@ class TensorSpec(TypedDict):
     """The index symmetry of the tensor."""
 
 
+@final
 class TensorProperty(TypedDict):
     """A named property: the tensor that describes it, what it is and where it is defined."""
 
@@ -147,6 +156,7 @@ class TensorProperty(TypedDict):
     """Print source of the definition, with printed page."""
 
 
+@final
 class PointGroup(TypedDict):
     """A crystal class with the properties that are fixed by its operations. None of them depends on
     the setting (docs/conventions.md, "Properties").
@@ -172,6 +182,7 @@ class PointGroup(TypedDict):
     """
 
 
+@final
 class PointGroupInSetting(TypedDict):
     """A crystal class in a given setting."""
 
@@ -181,30 +192,29 @@ class PointGroupInSetting(TypedDict):
     """The 1-based index of the setting."""
 
 
-class _SettingRequired(TypedDict):
+@final
+class Setting(TypedDict):
+    """A setting of a point group: an orientation of its symmetry directions in the Cartesian frame
+    (docs/conventions.md, "Settings").
+    """
+
     index: int
     """1-based."""
     symbol: str
     """Short symbol of the setting."""
     full_symbol: str
     """Full symbol, symmetry directions separated by single spaces."""
+    unique_axis: NotRequired[Literal["a", "b", "c"]]
+    """Monoclinic settings only: the unique axis."""
+    axes: NotRequired[Literal["hexagonal", "rhombohedral"]]
+    """Trigonal settings only: the axes of the conventional basis, ``'hexagonal'`` or
+    ``'rhombohedral'``.
+    """
     is_default: bool
     """True for the ITC default setting."""
 
 
-class Setting(_SettingRequired, total=False):
-    """A setting of a point group: an orientation of its symmetry directions in the Cartesian frame
-    (docs/conventions.md, "Settings").
-    """
-
-    unique_axis: Literal["a", "b", "c"]
-    """Monoclinic settings only: the unique axis."""
-    axes: Literal["hexagonal", "rhombohedral"]
-    """Trigonal settings only: the axes of the conventional basis, ``'hexagonal'`` or
-    ``'rhombohedral'``.
-    """
-
-
+@final
 class Operation(TypedDict):
     """A point operation of a crystal class in a setting: ITA's matrix W in the lattice basis of the
     setting (``matrix``, integer, acting on the coordinates of a lattice direction [uvw]; the
@@ -219,22 +229,21 @@ class Operation(TypedDict):
     """The orthogonal Cartesian 3×3 matrix, rows first."""
 
 
-class _IdentifiedPointGroupRequired(TypedDict):
-    key: str
-    """The key of the crystal class the operations generate."""
-
-
-class IdentifiedPointGroup(_IdentifiedPointGroupRequired, total=False):
+@final
+class IdentifiedPointGroup(TypedDict):
     """The crystal class of a list of operations: its key, and the setting if the operations are
     exactly those of one.
     """
 
-    setting: int
+    key: str
+    """The key of the crystal class the operations generate."""
+    setting: NotRequired[int]
     """The 1-based index of the setting whose operations the group equals, in the Cartesian frame of
     symcrys; absent if the group is the class in another orientation.
     """
 
 
+@final
 class CartesianAxis(TypedDict):
     """An axis in the Cartesian frame only, for operations that are not tied to a lattice."""
 
@@ -242,28 +251,27 @@ class CartesianAxis(TypedDict):
     """Unit vector; its first non-zero component, in the order x, y, z, is positive."""
 
 
-class _CartesianOperationDescriptionRequired(TypedDict):
+@final
+class CartesianOperationDescription(TypedDict):
+    """One operation of any list described geometrically (``describe_operations_of``)."""
+
     kind: OperationKind
     """What the operation is, without time reversal."""
     n: int
     """The n of the symbol n or n̄ (ITA 2016 § 1.2.1, p. 12: an n-fold rotation): 1 for the identity and
     the inversion, 2 for a reflection (m = 2̄), otherwise the order of the rotation part.
     """
-
-
-class CartesianOperationDescription(_CartesianOperationDescriptionRequired, total=False):
-    """One operation of any list described geometrically (``describe_operations_of``)."""
-
-    axis: CartesianAxis
+    axis: NotRequired[CartesianAxis]
     """Rotation axis, rotoinversion axis or the normal of the mirror plane; absent for the identity and
     the inversion.
     """
-    sense: Literal["+", "-"]
+    sense: NotRequired[Literal["+", "-"]]
     """For n ≥ 3: ``'+'`` if the rotation part turns by +360°/n about ``axis`` (counter-clockwise seen
     from the tip of ``axis`` looking towards the origin), ``'-'`` if by −360°/n.
     """
 
 
+@final
 class Axis(TypedDict):
     """A symmetry direction: as a lattice direction [uvw] and as a Cartesian unit vector."""
 
@@ -275,28 +283,27 @@ class Axis(TypedDict):
     """
 
 
-class _OperationDescriptionRequired(TypedDict):
+@final
+class OperationDescription(TypedDict):
+    """One point operation described geometrically."""
+
     kind: OperationKind
     """What the operation is, without time reversal."""
     n: int
     """The n of the symbol n or n̄ (ITA 2016 § 1.2.1, p. 12: an n-fold rotation): 1 for the identity and
     the inversion, 2 for a reflection (m = 2̄), otherwise the order of the rotation part.
     """
-
-
-class OperationDescription(_OperationDescriptionRequired, total=False):
-    """One point operation described geometrically."""
-
-    axis: Axis
+    axis: NotRequired[Axis]
     """Rotation axis, rotoinversion axis or the normal of the mirror plane; absent for the identity and
     the inversion.
     """
-    sense: Literal["+", "-"]
+    sense: NotRequired[Literal["+", "-"]]
     """For n ≥ 3: ``'+'`` if the rotation part turns by +360°/n about ``axis`` (counter-clockwise seen
     from the tip of ``axis`` looking towards the origin), ``'-'`` if by −360°/n.
     """
 
 
+@final
 class DirectionElements(TypedDict):
     """The symmetry elements along one symmetry direction."""
 
@@ -317,23 +324,22 @@ class DirectionElements(TypedDict):
     """True if a mirror plane is perpendicular to this direction."""
 
 
-class _SymmetryDirectionRequired(TypedDict):
+@final
+class SymmetryDirection(TypedDict):
+    """One position of the full Hermann–Mauguin symbol: its symbol and its symmetry directions."""
+
     position: int
     """1-based position in the full symbol."""
+    symbol: NotRequired[str]
+    """The symbol at this position of the full symbol, if the full symbol has this position; for a
+    magnetic group with its primes (``4'/m``).
+    """
     directions: list[DirectionElements]
     """The symmetry directions of this position (ITA Table 2.1.3.1), each with the elements along it.
     """
 
 
-class SymmetryDirection(_SymmetryDirectionRequired, total=False):
-    """One position of the full Hermann–Mauguin symbol: its symbol and its symmetry directions."""
-
-    symbol: str
-    """The symbol at this position of the full symbol, if the full symbol has this position; for a
-    magnetic group with its primes (``4'/m``).
-    """
-
-
+@final
 class SiteSymmetry(TypedDict):
     """The site symmetry of a direction."""
 
@@ -355,6 +361,7 @@ class SiteSymmetry(TypedDict):
     """
 
 
+@final
 class WyckoffPosition(TypedDict):
     """One Wyckoff position of a point group for directions."""
 
@@ -380,6 +387,7 @@ class WyckoffPosition(TypedDict):
     """
 
 
+@final
 class FaceOrbitEntry(TypedDict):
     """One face of the orbit of a face: its Miller indices and the operations that map the given
     face onto it.
@@ -393,6 +401,7 @@ class FaceOrbitEntry(TypedDict):
     """
 
 
+@final
 class DirectionOrbitEntry(TypedDict):
     """One direction of the orbit of a lattice direction: its indices and the operations that map
     the given direction onto it.
@@ -406,6 +415,7 @@ class DirectionOrbitEntry(TypedDict):
     """
 
 
+@final
 class OrbitPole(TypedDict):
     """One pole of the orbit of a direction under a list of operations."""
 
@@ -417,6 +427,7 @@ class OrbitPole(TypedDict):
     """Indices into the given operations of those that map the direction here, ascending."""
 
 
+@final
 class CrystalFormType(TypedDict):
     """One of the 47 crystal forms of ITA Table 3.2.1.3."""
 
@@ -434,7 +445,10 @@ class CrystalFormType(TypedDict):
     """
 
 
-class _CrystalFormRequired(TypedDict):
+@final
+class CrystalForm(TypedDict):
+    """One crystal form of a crystal class: a set of faces equivalent under the class."""
+
     letter: str
     """ITA's letter of the Wyckoff position the faces belong to."""
     multiplicity: int
@@ -452,17 +466,13 @@ class _CrystalFormRequired(TypedDict):
     """ITA's first face as printed, components separated by commas, e.g. ``h,0,l``, or ``h,h,-2h,l``
     (Bravais–Miller indices) for hexagonal axes; a leading ``-`` is an overbar.
     """
-
-
-class CrystalForm(_CrystalFormRequired, total=False):
-    """One crystal form of a crystal class: a set of faces equivalent under the class."""
-
-    condition: str
+    condition: NotRequired[str]
     """The condition ITA prints with the form, ``|h|<|l|`` or ``|h|>|l|`` (cubic forms (hhl)); absent
     otherwise.
     """
 
 
+@final
 class TensorForm(TypedDict):
     """The form of a tensor under a point group: the subspace of tensors invariant under every
     operation and with the requested index symmetry. Every entry is a plain number; a vector of
@@ -487,6 +497,7 @@ class TensorForm(TypedDict):
     """
 
 
+@final
 class AxisChange(TypedDict):
     """The matrices that carry coordinates of a direction and indices of a plane to a new basis."""
 
@@ -738,7 +749,7 @@ EPSILON: float = _shared.convert(_value("EPSILON"), _F)
 directions, points): two numbers closer than this count as equal, in the metric of their kind
 (docs/conventions.md, "Tolerances").
 """
-VERSION: Literal["0.10.1"] = _shared.convert(_value("VERSION"), _V)
+VERSION: str = _shared.convert(_value("VERSION"), _V)
 """The version of symcrys, the same for the TypeScript and the Python package."""
 __version__ = VERSION
 
@@ -1753,7 +1764,7 @@ def rotate_tensor(
         _call(
             "rotateTensor",
             _shared.array(tensor, "tensor", np.float64).reshape(-1),
-            _shared.array(rotation, "rotation", np.float64),
+            _shared.array(rotation, "rotation"),
             _shared.spec(spec),
             _shared.options(tolerance=tolerance),
         ),

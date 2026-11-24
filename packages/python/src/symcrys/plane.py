@@ -12,7 +12,13 @@ line is an int64 array of shape (2,) (docs/conventions.md, "Plane groups").
 
 from __future__ import annotations
 
-from typing import Any, Literal, Mapping, Optional, Sequence, TypedDict
+import sys
+from typing import TYPE_CHECKING, Any, Literal, Mapping, Optional, Sequence, TypedDict, final
+
+if sys.version_info >= (3, 11):
+    from typing import NotRequired
+elif TYPE_CHECKING:  # Python 3.10: for type checkers; the annotations stay strings at run time
+    from typing_extensions import NotRequired
 
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
@@ -30,6 +36,7 @@ PlaneSystem = Literal["oblique", "rectangular", "square", "hexagonal"]
 """A crystal system of the plane, as ITA names it."""
 
 
+@final
 class PlaneGroup(TypedDict):
     """A plane group."""
 
@@ -53,6 +60,7 @@ class PlaneGroup(TypedDict):
     """
 
 
+@final
 class PointGroup(TypedDict):
     """A plane point group."""
 
@@ -64,6 +72,7 @@ class PointGroup(TypedDict):
     """The order of the group."""
 
 
+@final
 class Setting(TypedDict):
     """A setting of a plane point group."""
 
@@ -75,6 +84,7 @@ class Setting(TypedDict):
     """True for the default setting (setting 1)."""
 
 
+@final
 class PlaneOperation(TypedDict):
     """An operation (W, w) in the lattice basis: x ↦ W·x + w."""
 
@@ -84,7 +94,10 @@ class PlaneOperation(TypedDict):
     """The translation part w; for a plane group in [0, 1), for a point group zero."""
 
 
-class _OperationDescriptionRequired(TypedDict):
+@final
+class OperationDescription(TypedDict):
+    """What an operation is, geometrically, as ITA describes it under "Symmetry operations"."""
+
     kind: Literal["identity", "rotation", "reflection", "translation", "glide-reflection"]
     """``'identity'``, ``'translation'``, ``'rotation'``, ``'reflection'`` (in a line) or
     ``'glide-reflection'``, as ITA names the operations (ITA 2016 Table 2.1.2.1, p. 145).
@@ -93,34 +106,30 @@ class _OperationDescriptionRequired(TypedDict):
     """The n of the linear part (an n-fold rotation): 1 for the identity and a translation, 2 for a
     reflection or glide reflection.
     """
-
-
-class OperationDescription(_OperationDescriptionRequired, total=False):
-    """What an operation is, geometrically, as ITA describes it under "Symmetry operations"."""
-
-    sense: Literal["+", "-"]
+    sense: NotRequired[Literal["+", "-"]]
     """For a rotation of order 3 or more: ``'+'`` if it turns a towards b, ``'-'`` otherwise."""
-    translation: NDArray[np.float64]
+    translation: NotRequired[NDArray[np.float64]]
     """For a translation: the translation vector."""
-    location: NDArray[np.float64]
+    location: NotRequired[NDArray[np.float64]]
     """For a rotation: its centre. For a mirror or glide: a point of its line, on y = 0 unless the line
     is parallel to it, then on x = 0. Not reduced modulo the lattice.
     """
-    direction: NDArray[np.int64]
+    direction: NotRequired[NDArray[np.int64]]
     """For a mirror or glide: the direction of its line, the shortest integer vector, first non-zero
     component positive.
     """
-    axis: NDArray[np.int64]
+    axis: NotRequired[NDArray[np.int64]]
     """For a reflection or glide reflection: its axis, the normal of its line in the lattice basis (as
     the ``axis`` of a reflection of the point groups is the normal of its plane, #137 C3), its symmetry
     direction as in ITA Table 2.1.3.1: the shortest integer vector along the columns of W − I, first
     non-zero component positive. Without a metric it is not the perpendicular of ``direction``: in a
     hexagonal basis the normal of a line along [1,0] is [1,2].
     """
-    glide: NDArray[np.float64]
+    glide: NotRequired[NDArray[np.float64]]
     """For a glide: the glide vector (w + W·w)/2, not reduced modulo the lattice."""
 
 
+@final
 class WyckoffPosition(TypedDict):
     """A Wyckoff position of a plane group, as ITA prints it."""
 
@@ -137,6 +146,7 @@ class WyckoffPosition(TypedDict):
     """
 
 
+@final
 class SiteSymmetry(TypedDict):
     """The site symmetry of a point under a plane group."""
 
@@ -155,6 +165,7 @@ class SiteSymmetry(TypedDict):
     """
 
 
+@final
 class WyckoffDistance(TypedDict):
     """The distance of a point to a Wyckoff position: the position, as ``wyckoff_positions`` gives
     it, the nearest point of it, and the distance.
@@ -181,6 +192,7 @@ class WyckoffDistance(TypedDict):
     """
 
 
+@final
 class PointOrbitEntry(TypedDict):
     """One point of the orbit of a point."""
 
@@ -192,6 +204,7 @@ class PointOrbitEntry(TypedDict):
     """
 
 
+@final
 class AsymmetricUnit(TypedDict):
     """The asymmetric unit of a plane group: the printed inequalities, and the convex polygon they
     bound (lattice basis).
@@ -211,6 +224,7 @@ class AsymmetricUnit(TypedDict):
     """
 
 
+@final
 class RotationPoint(TypedDict):
     """A rotation point (ITA 2016 Table 2.1.2.1, p. 145: the symmetry element of a rotation in the
     plane).
@@ -222,6 +236,7 @@ class RotationPoint(TypedDict):
     """Its location, lattice basis."""
 
 
+@final
 class SymmetryLine(TypedDict):
     """A mirror or glide line, as a point and a direction (lattice basis)."""
 
@@ -239,6 +254,7 @@ class SymmetryLine(TypedDict):
     """A point of the line: its intersection with y = 0, or with x = 0 for a line along a."""
 
 
+@final
 class SymmetryElements(TypedDict):
     """Symmetry elements of a plane group."""
 
@@ -388,7 +404,7 @@ def _value(name: str) -> Any:
     return _shared.value(_PREFIX + name)
 
 
-VERSION: Literal["0.10.1"] = _shared.convert(_value("VERSION"), _V)
+VERSION: str = _shared.convert(_value("VERSION"), _V)
 """The version of symcrys, the same for the TypeScript and the Python package."""
 EPSILON: float = _shared.convert(_value("EPSILON"), _F)
 """The default tolerance of every function that compares numbers a caller passes in (operations,

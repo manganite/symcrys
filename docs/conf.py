@@ -56,8 +56,6 @@ napoleon_use_rtype = False
 nitpicky = True
 nitpick_ignore_regex = [
     (r"py:.*", r"(numpy|np|NDArray|ArrayLike|Any|Optional|Literal|Mapping|Sequence|TypedDict).*"),
-    # The Literal types of the generated modules (scripts/python-api.mjs) are data, not classes.
-    (r"py:.*", r"(symcrys\.)?(magnetic\.|plane\.)?[A-Z][A-Za-z]*(System|Family|Kind|Symmetry|Parity|Type|PropertyName)"),
     (r"py:.*", r"(str|int|float|bool|dict|list|tuple)"),
     # The type column of the generated Parameters sections (scripts/python-api.mjs).
     (r"py:.*", r"(keyword-only|optional)"),
