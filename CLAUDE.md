@@ -46,8 +46,8 @@ crystallography-common's `sync.mjs --kern` is `packages/ts` of a symcrys checkou
   the browser; `scripts/check-dist.mjs` fails on any import or type reference in `dist/` that is
   not a relative `.js` path.
 - **One-way dependency.** symcrys knows nothing about crystallography-common, the apps or
-  birss-app. Exception: scripts under `audit/` may read sibling checkouts (`../birss-app`,
-  `../stereography`); they are run by hand, never by the build, the tests or CI. Lint and format
+  birss-app. Exception: scripts under `audit/` may read sibling checkouts (`../stereography`,
+  `../plane-groups`); they are run by hand, never by the build, the tests or CI. Lint and format
   apply to them like to any other file, except generated reports (`audit/**/report.md`), which
   Prettier leaves alone. The scripts are not type-checked, because they import the sibling
   checkouts.
@@ -56,17 +56,17 @@ crystallography-common's `sync.mjs --kern` is `packages/ts` of a symcrys checkou
 
 ## Where things go
 
-| What                                                                                     | Where                                       |
-| ---------------------------------------------------------------------------------------- | ------------------------------------------- |
-| Working mode, process, decisions with their reason                                       | this file                                   |
-| Purpose, use, build commands, release procedure                                          | `README.md`                                 |
-| Changes per version                                                                      | `CHANGELOG.md` (Keep a Changelog)           |
-| Supported versions, how to report a vulnerability                                        | `SECURITY.md`                               |
-| Open work, ideas, open questions                                                         | GitHub issues of this repository            |
-| Conventions (axis frames, settings, symbols, ITC vs Birss) with their literature anchors | `docs/conventions.md`                       |
-| Guides and examples for users (the documentation site)                                   | `docs/` (Sphinx with MyST)                  |
-| What a function or type does                                                             | its TSDoc comment in `packages/ts/src`      |
-| Transcribed reference tables re-parsed by tests                                          | `references/`, with source and printed page |
+| What                                                                                         | Where                                       |
+| -------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| Working mode, process, decisions with their reason                                           | this file                                   |
+| Purpose, use, build commands, release procedure                                              | `README.md`                                 |
+| Changes per version                                                                          | `CHANGELOG.md` (Keep a Changelog)           |
+| Supported versions, how to report a vulnerability                                            | `SECURITY.md`                               |
+| Open work, ideas, open questions                                                             | GitHub issues of this repository            |
+| Conventions (axis frames, settings, symbols, Birss as second check) with their print anchors | `docs/conventions.md`                       |
+| Guides and examples for users (the documentation site)                                       | `docs/` (Sphinx with MyST)                  |
+| What a function or type does                                                                 | its TSDoc comment in `packages/ts/src`      |
+| Transcribed reference tables re-parsed by tests                                              | `references/`, with source and printed page |
 
 Documentation describes the **current state**, not how it was reached. Material taken over from
 birss-app is rewritten to its present conclusions; its development history (revisions, superseded
@@ -103,72 +103,60 @@ convention or the process updates this file (or the `docs/` file) in the same PR
   pp. 66, 140, 240) agree with ITC Vol. D; its Tables 6.11 (p. 141) and 7.6 (pp. 240 ff.) give the forms after
   Bhagavantam and Birss.
 
-## Pure ITC (decided 2026-11-22; the code follows in the ITC migration)
+## Pure ITC (decided 2026-11-22)
 
 Decided by Thomas on 2026-11-22 (#106, #110), after a review of 0.10.0 and an audit of the API
-against ITC: earlier decisions led to special solutions for the existing apps, which is not a good
-way. symcrys is to be efficient, logically structured, user-friendly and **strictly ITC**; an
-application adapts to symcrys, not the other way round (this sharpens "ITC standard for every
-consumer" below). This section is binding for all new work.
-The sections below that it replaces describe the code as it still is; the ITC migration (#121,
-#126) changes code, `docs/conventions.md` and those sections together and rewrites them to the new
-state (#127). Until then (Thomas, 2026-11-22): existing behaviour keeps working and is fixed where
-broken, since it is the safety net of the migration (#121), and new exports take no `convention`
-option. The Birss mode, its data and its birss-app pins were removed in step 5 of #121 (#121,
-2026-11-23); passages below that describe them are history until #127 rewrites them.
+against ITC: earlier decisions had led to special solutions for the existing apps, which is not a
+good way. symcrys is efficient, logically structured, user-friendly and **strictly ITC**; an
+application adapts to symcrys, not the other way round. The ITC migration (#121, 0.11) brought the
+code to this state; the decisions below follow it.
 
-- **One convention, ITC.** The option `convention` and the Birss output mode go; so do birss-app's
-  order of the operations, its generators and its axis signs as API behaviour, the special reading
-  of `mm'm'` and `6'/mmm'` by `findPointGroup` (#46), and the birss-app pins as reference. The
-  conversion to Birss's presentation belongs in birss-app (#125). Replaces "Two conventions: ITC
-  (default) and Birss" below and the Birss parts of the decisions under "Point groups" and
-  "Tensors".
-- **No special solutions for applications.** An application's choice is no longer a reason. A
-  choice that print leaves open is made by ITC's conventions where they extend to the case,
-  otherwise with Thomas, and recorded here; replaces "birss-app is the reference where print leaves
-  a choice open". The special solutions found so far are listed in #110; each stays until #110 or
-  its own issue decides it, and none of these patterns is extended in new work (they are tagged
-  "under review" below).
-- **ITC is the source of the data.** The data move from the Birss frame into the ITC frame; nothing
-  is derived from Birss any more (how they are stored: #122). Long-term clarity and the inner
-  structure of the project come before the amount of work. The print-verified Birss tests (Birss
-  Tables 3, 4a–4f, 6, 7 and the generating matrices σ(N) of eq. (2.17); Tables 3 and σ(N) confirmed
-  by Thomas on 2026-11-22) stay as an independent second print check: Birss's operations and the ITC forms are
-  carried into one frame and compared there (`testUtils/birssFrame.ts`).
+- **One convention, ITC.** There is no option `convention` and no Birss output mode, and birss-app's
+  order of the operations, its generators and its axis signs are not API behaviour. The conversion
+  to Birss's presentation belongs in birss-app (#125).
+- **No special solutions for applications.** An application's choice is no reason. A choice that
+  print leaves open is made by ITC's conventions where they extend to the case, otherwise with
+  Thomas, and recorded here. The special solutions found in 0.10 are listed in #110; one is still
+  open there (tagged "under review" below), and none of these patterns is extended in new work.
+  Example (maintainer, 2026-11-21, #24): stereography keeps its own Cartesian frame and rotates
+  symcrys' results into it; symcrys is meant to be useful to other users too, who expect ITC.
+- **ITC is the source of the data.** The data are stored in the ITC frame (#122); nothing is
+  derived from Birss. Long-term clarity and the inner structure of the project come before the
+  amount of work. The print-verified Birss tests (Birss Tables 3, 4a–4f, 6, 7 and the generating
+  matrices σ(N) of eq. (2.17); Tables 3 and σ(N) confirmed by Thomas on 2026-11-22) stay as an
+  independent second print check: Birss's operations and the ITC forms are carried into one frame
+  and compared there (`testUtils/birssFrame.ts`).
 - **Settings as ITC prints them.** Only settings that ITC prints, selected by their ITC symbol
-  with the index as a second handle (#116; design of the setting record: #123); missing ones are
-  added (unique axis a, rhombohedral axes #111). "Printed by ITC" means printed as the symbol of
-  the point group in that orientation anywhere in ITC, not only in ITA Table 3.2.3.2 (Thomas,
-  2026-11-22, after a search of the volumes): so `mm2` keeps `2mm` and `m2m` (ITA 2016 § 1.6.4,
-  p. 114, "the three point groups 2mm, m2m and mm2"; ITC Vol. D Tables 1.2.3.1, p. 49, and 1.5.7.1,
-  p. 135), and `2'm'm` keeps all six orientations (ITC Vol. D pp. 111, 113, 135–136, 139–140).
-  The inventory of what ITC prints is `references/itc/orientations.md`. Its reading (Thomas,
-  2026-11-23, #121): a grey group has every setting of its class, since it is the class with time
-  reversal (ITC Vol. D eq. (1.5.2.1)), although ITC prints grey groups in their standard
-  orientation only; a symbol in a list of group types without a frame counts as printed in the
-  orientation its positions name (so `6'/mmm'` keeps `6'/mm'm`, Vol. D Table 1.2.6.12, p. 66);
-  orientations that ITC prints only as site symmetries in another lattice (`2.mm`, `mm2` turned
-  30° in a hexagonal cell) are not settings. Every trigonal group gets the rhombohedral setting of
-  its class, a black-and-white group where the hexagonal setting it comes from exists (Thomas,
-  2026-11-23).
+  with the index as a second handle (#116, #123), including unique axis a and the rhombohedral
+  axes (#111). "Printed by ITC" means printed as the symbol of the point group in that orientation
+  anywhere in ITC, not only in ITA Table 3.2.3.2 (Thomas, 2026-11-22, after a search of the
+  volumes): so `mm2` keeps `2mm` and `m2m` (ITA 2016 § 1.6.4, p. 114, "the three point groups
+  2mm, m2m and mm2"; ITC Vol. D Tables 1.2.3.1, p. 49, and 1.5.7.1, p. 135), and `2'm'm` keeps all
+  six orientations (ITC Vol. D pp. 111, 113, 135–136, 139–140). The inventory of what ITC prints is
+  `references/itc/orientations.md`. Its reading (Thomas, 2026-11-23, #121): a grey group has every
+  setting of its class, since it is the class with time reversal (ITC Vol. D eq. (1.5.2.1)),
+  although ITC prints grey groups in their standard orientation only; a symbol in a list of group
+  types without a frame counts as printed in the orientation its positions name (so `6'/mmm'`
+  keeps `6'/mm'm`, Vol. D Table 1.2.6.12, p. 66); orientations that ITC prints only as site
+  symmetries in another lattice (`2.mm`, `mm2` turned 30° in a hexagonal cell) are not settings.
+  Every trigonal group has the rhombohedral setting of its class, a black-and-white group where
+  the hexagonal setting it comes from exists (Thomas, 2026-11-23).
 - **Tolerant input**, in every entry point, where it is a pure normalisation before the comparison
   and the input stays unambiguous (spaces, overbar spellings such as `-`, a combining overbar or
   `bar`, prime variants, Birss's printed forms such as `m3m`); an input that could match two groups
-  is an error that lists the candidates (#96; for two settings see the revision below). Decided further by Thomas on 2026-11-23
-  (#96): a Schoenflies symbol names the group and gives its default setting. Revised by Thomas on
-  2026-11-23 in #151 (replacing his earlier answer that a symbol with spaces is a full symbol first,
-  `3 2` the rhombohedral setting, and the rule of #150 that compared full symbols with their spaces):
-  spaces carry no meaning, since print writes the symbols without them; a symbol that names several
-  settings gives the standard (ITC default) setting, also in `{ setting }` (where it was an error),
-  as a name without ITA's headline means the standard; the other settings are chosen by the options
-  `axes` (`'hexagonal'`, which holds for every group of the hexagonal family, or `'rhombohedral'`)
-  and `uniqueAxis`, named as ITA's headlines name them, in every function with `setting` and in
-  `findPointGroup`; criteria that no setting meets are an error. Implemented in
-  #121 step 7b (`notation.ts`; `docs/conventions.md`, "Reading symbols"). Chosen while
-  implementing (#151): further spellings that are unambiguous, the right single quotation mark `’`
-  as a prime, the minus sign and the hyphens as the overbar, `¯` after the digit (the overbar of the
-  text layer of the ITA 2016 PDFs), LaTeX's `\bar{3}` and subscripts (`C_{3v}`); `{ setting }`
-  reads Birss's cubic symbols too, but no Schoenflies symbol, which names no setting.
+  is an error that lists the candidates (#96). A Schoenflies symbol names the group and gives its
+  default setting (Thomas, 2026-11-23, #96). Spaces carry no meaning, since print writes the
+  symbols without them; a symbol that names several settings gives the standard (ITC default)
+  setting, also in `{ setting }`, as a name without ITA's headline means the standard; the other
+  settings are chosen by the options `axes` (`'hexagonal'`, which holds for every group of the
+  hexagonal family, or `'rhombohedral'`) and `uniqueAxis`, named as ITA's headlines name them, in
+  every function with `setting` and in `findPointGroup`; criteria that no setting meets are an
+  error (Thomas, 2026-11-23, #151, revising his earlier answers in #96 and #150; `notation.ts`;
+  `docs/conventions.md`, "Reading symbols"). Chosen while implementing (#151): further spellings
+  that are unambiguous, the right single quotation mark `’` as a prime, the minus sign and the
+  hyphens as the overbar, `¯` after the digit (the overbar of the text layer of the ITA 2016
+  PDFs), LaTeX's `\bar{3}` and subscripts (`C_{3v}`); `{ setting }` reads Birss's cubic symbols
+  too, but no Schoenflies symbol, which names no setting.
 - **Signs of axes:** the axis of an operation (for a reflection, its normal) carries the sign of its
   Seitz symbol (ITA 6th ed., Tables 1.4.2.1/1.4.2.2), in every entry point; Table 2.1.3.1 stays the
   anchor of the lattice symmetry directions (#114; for the plane groups, #107).
@@ -176,31 +164,6 @@ option. The Birss mode, its data and its birss-app pins were removed in step 5 o
   from the space-group tables (Ch. 2.3) keeps the 5th ed. (2006, Part 7) as anchor, because
   transcribing and checking the 230 space groups from as many separate PDFs of the 2016 edition is
   not feasible (#124). This is the one place for the reference edition.
-
-## Two conventions: ITC (default) and Birss
-
-_Replaced by "Pure ITC" above; describes the code until the ITC migration._
-
-- symcrys supports two conventions for point groups: the _International Tables for
-  Crystallography_ (ITC: Vol. A for the 32 crystal classes, Vol. D Ch. 1.5 for the magnetic point
-  groups) and Birss, _Symmetry and Magnetism_ (1966). **ITC is the default** (`'itc'`); Birss
-  (`'birss'`) is an option a caller selects explicitly. Maintainer decision 2026-11-08.
-- The convention decides the default setting (axis frame), the symbols, and therefore which
-  Cartesian tensor components survive. Every divergence is documented in `docs/` and every new one
-  is added there in the same PR.
-- The stored data are in the Birss frame and ITC is derived from them, so the print-verified tests
-  carried over from birss-app stay valid (maintainer, 2026-11-08). Each convention is tested
-  against its own print source: ITC output against ITC tables, Birss output against Birss's tables.
-- birss-app keeps Birss as its own default for now and selects `'birss'`; to be revisited when it
-  moves onto symcrys (maintainer, 2026-11-08).
-- **ITC output in the ITC convention, Birss output in the Birss convention** (maintainer,
-  2026-11-18): in `'birss'` symcrys gives what birss-app gives today, so that birss-app shows the
-  same once it moves onto symcrys; where Birss's print leaves a choice open (generators, order of
-  the operations, sign of an axis), birss-app's choice holds. Behavioural pins captured from
-  birss-app check it (`docs/conventions.md`, "Birss convention and birss-app"); for these choices
-  they are the reference, not only regression detectors, because birss-app defines them. In `'itc'`
-  the output follows ITA. Where symcrys has a setting birss-app lacks (`2'm'm`, settings 4 to 6),
-  the Birss output follows the same rules and is unpinned until birss-app has the setting.
 
 ## Correctness and provenance
 
@@ -230,8 +193,8 @@ Carried over from birss-app, where the calculations come from.
   and is left out of `dist/` and the npm package; `check:dist` fails if any of it is built. Any
   other file in `src/` is library code.
 - Test classes by file suffix: `*.reference.test.ts` (re-parse print transcriptions),
-  `*.audit.test.ts` (exhaustive coverage), `*.pins.test.ts` (behavioural pins), plain `*.test.ts`;
-  further suffixes from birss-app may come along. `npm test` runs all of them; no subset is a
+  `*.audit.test.ts` (exhaustive coverage), `*.pins.test.ts` (behavioural pins), plain `*.test.ts`.
+  `npm test` runs all of them; no subset is a
   gate of its own.
 - **Captured fixtures are JSON** (maintainer, 2026-11-19, #30): a capture script writes
   `*.pins.json` (one entry per line, left alone by Prettier, not in the npm package), so that the
@@ -240,13 +203,14 @@ Carried over from birss-app, where the calculations come from.
 - **Python tests** (`packages/python/tests`, pytest) read the same `references/` and `*.pins.json`
   and have no expected values of their own (#30); in addition they test the layer itself (names,
   conversions, errors) and run the example notebooks.
-- **ITC baseline pins** (#121): the safety net of the ITC migration. `testUtils/itcBaseline.ts`
-  collects the ITC output of all three entry points over the public API; `audit/itc-baseline`
-  (`npm run audit:itc-baseline`) writes it from a clean checkout as `itcBaseline.pins.json` in
-  `pointGroups/`, `tensors/` and `spaceGroups/`, and `itcBaseline.pins.test.ts` compares. A PR of
-  the migration that changes a pin lists every change and why, then re-captures; a rename changes
-  only the calls in `itcBaseline.ts`. Python does not read these pins: the migration rewrites the
-  Python layer (#98), whose own tests follow it.
+- **ITC baseline pins** (#121): captured before the ITC migration as its safety net, kept as
+  regression pins. `testUtils/itcBaseline.ts` collects the output of all three entry points over
+  the public API; `audit/itc-baseline` (`npm run audit:itc-baseline`) writes it from a clean
+  checkout as `itcBaseline.pins.json` in `pointGroups/`, `tensors/` and `spaceGroups/`, and
+  `itcBaseline.pins.test.ts` compares. A PR that changes a pin lists every change and why, then
+  re-captures; a change of the API's shape (a rename, a removed field) changes only
+  `itcBaseline.ts`, which maps the current API back to the shape of the pins. Python does not read
+  these pins; its own tests cover the layer.
 - **Test timeout** 30 s (`vitest.config.ts`): several exhaustive tests take one to two seconds alone
   and four times that with every file in parallel on a slower machine (WSL, 12 workers).
 
@@ -312,8 +276,36 @@ Carried over from birss-app, where the calculations come from.
   has its own TypedDicts (a `PointGroup` of `symcrys.magnetic` has `type`); an optional field is
   `NotRequired` and every TypedDict `@final`, so that a type checker narrows a union by a key; a
   number not listed as int or float, an array field not listed as float64 or int64, a type the
-  generator cannot read and an entry of `api.json` no module uses are errors of the generator. Checked when it came: the outputs of all functions over all keys and settings were the
-  same, value, type, dtype and shape, before and after (9027 calls).
+  generator cannot read and an entry of `api.json` no module uses are errors of the generator.
+- **Operations in Python** (#137 H1, decided by Thomas on 2026-11-22, the type, a bare array in
+  `symcrys.magnetic` and the access per operation on 2026-11-24; #121 step 12b): `operations`,
+  `generators` and `residual_operations` give `Operations`, a frozen dataclass of read-only arrays,
+  one row per operation: `matrix` (n, 3, 3) int64 and `cartesian` (n, 3, 3) float64, in
+  `symcrys.magnetic` also `time_reversal` (n,) bool, in `symcrys.plane` `matrix` (n, 2, 2) and
+  `translation` (n, 2). Beside the arrays, `ops[i]` and `for op in ops` give one operation as a dict
+  (the TypedDict of the TypeScript record, `Operation` or `PlaneOperation`), and `ops[mask]` or
+  `ops[[0, 2]]` an `Operations` of those rows, so that loops written for lists keep working. Every
+  function that takes operations accepts `Operations`, a list of dicts, and in `symcrys` an array
+  of Cartesian matrices (n, 3, 3); `symcrys.magnetic` refuses such an array, since it does not say
+  which operations carry time reversal, and `symcrys.plane` has no Cartesian matrices. Chosen while
+  implementing: the class is generated from the TypeScript record with the dtypes and shapes of
+  `api.json` ("operations"); a caller may build one, its arrays checked (shape, one n, integers for
+  W, booleans for `time_reversal`), equal only to itself, read-only also after a copy or a pickle;
+  `site_symmetry_of` and `orbit_of` of `symcrys.magnetic` take operations without time reversal,
+  also as an array, since they do not depend on it; `residual_operations` passes the caller's
+  operations to the library as they are and needs every field of those it keeps (it returns
+  them).
+- **Keyword arguments and tensor shapes in Python** (#137 H2, decided by Thomas on 2026-11-22; #98;
+  #121 step 12c): an object parameter of the TypeScript API becomes its fields as arguments
+  (`lattice_from_parameters(a, b, c, alpha, beta, gamma)`, `is_valid_cell(alpha, beta, gamma)`,
+  `miller_indices(printed, h=…, k=…, l=…)`, `orbit(key, hkl=…)` or `uvw=…`), and the overloads of a
+  TypeScript function become Python `@overload`s (`orbit` with `hkl=` gives `list[FaceOrbitEntry]`);
+  `tensor_form` gives each basis tensor in its shape (p, 3, …, 3), the relations stay rows over the
+  flat components; `rotate_tensor` keeps the shape of the tensor, (3, …, 3) or flat, and takes
+  stacks of tensors and rotations as leading axes, broadcast as in NumPy. Chosen while
+  implementing: the library rotates one tensor by one rotation per call and the Python layer loops
+  (batched calls are #100); an object parameter's fields are documented by their TSDoc, so `orbit`
+  got the named types `FaceIndices` and `DirectionIndices` in TypeScript.
 - **The engine stays replaceable** (#30): the whole boundary is one function, `call(name,
 argsJson) → resultJson` (`_engine.py`, `scripts/bundle-python.mjs`; a name of the magnetic API has
   the prefix `magnetic.`, one of the plane API `plane.`), so another backend
@@ -407,7 +399,7 @@ build && npm run bundle:python`, then in `packages/python` `pip install -e ".[te
   another way to read them. Scripts call both compilers by path, because the two packages compete
   for the `tsc` command. The `.d.ts` files are read by TypeScript 6 and 7 (the apps check with
   7.0.2).
-- **vitest** as in birss-app (there 4.1, here 5.1); its tests move over with relative imports
+- **vitest** as in birss-app (there 4.1, here 5.1); its tests moved over with relative imports
   given the `.js` extension. **Prettier** with birss-app's settings, so moved code is not
   reformatted.
 - **Two type checks** (2026-11-08): library code without environment types
@@ -460,34 +452,14 @@ Decided by Thomas on 2026-11-20 (#29), asked before implementation, unless a poi
   title names its subject (`docs/_templates/base.html`; furo gives it the site's name alone). No image
   for link previews yet; symcrys has none of its own.
 
-### ITC standard for every consumer
-
-- **symcrys follows the ITC standard; an application adapts** (maintainer, 2026-11-21, #24): the API
-  always follows ITC _(sharpened by "Pure ITC" above, which removes the Birss convention)_. Only in the
-  Birss convention does it make the adjustments that are checked
-  against Birss. If one of Thomas' apps deviates from the ITC standard (a frame, a setting, a
-  symbol), the app does the conversion, not symcrys. Reason: symcrys is meant to be useful to other
-  users too, and that works only if it follows what users of such a library expect, the ITC
-  standard. Example: stereography keeps its own Cartesian frame and rotates symcrys' results into it.
-
 ### Point groups
 
 The conventions themselves are in `docs/conventions.md`; here, what was decided and why.
 
-- **Keys are ITC short symbols of the class** _(The reason "birss-app selects 'birss' anyway" is void
-  under "Pure ITC"; the key of D3h: #115.)_ (maintainer, 2026-11-08, #13): ITC is the default
-  convention, and birss-app selects `'birss'` anyway. For the 32 classes they equal birss-app's
-  keys; for the magnetic groups they are the short symbols of ITC Vol. D Table 1.5.2.3,
-  which differ from birss-app's keys for D2h(C2h) (`mm'm'`, birss-app `m'm'm`) and D6h(D3h)
-  (`6'/mmm'`, birss-app `6'/mm'm`); a grey group is the class key followed by `1'`.
-- **Order of work** (maintainer, 2026-11-08, #13): first the 32 crystal classes (type I) with
-  settings, both conventions, symbols and the properties that follow from the operations; the 90
-  magnetic groups (types II and III) in a second step. Data and code are shared; the split only
-  keeps reviews small. **The magnetic groups come after stereography has moved onto symcrys**
-  (maintainer, 2026-11-18, crystallography-common#99): the teaching apps do not need them and
-  birss-app rests; adding them is additive, and the first real consumer tests the API early. **Magnetic groups and group properties in three PRs** (maintainer, 2026-11-19, #13, #41):
-  data, symbols and operations; then the `'c'`-tensors and the named tensor properties; then the
-  fixed properties of a class as fields of `pointGroup()`; released together as one MINOR.
+- **Keys are ITC short symbols of the class** (maintainer, 2026-11-08, #13): for the 32 classes ITA's
+  short symbols, for the magnetic groups the short symbols of ITC Vol. D Table 1.5.2.3; a grey
+  group is the class key followed by `1'`. D3h keeps the key `-6m2`; `-62m`, which ITA's tables of
+  classes print, is the symbol of its second setting (#115; `docs/conventions.md`, "Keys").
 - **Error types** (#137 D2, decided by Thomas on 2026-11-22; #92; #121 step 8b): wrong input is a
   `RangeError` in TypeScript, a plain `Error` (or a `TypeError`) only a fault of symcrys; in Python
   `SymcrysError` (a `ValueError`) for a `RangeError` and `SymcrysInternalError` (a `RuntimeError`)
@@ -512,9 +484,8 @@ The conventions themselves are in `docs/conventions.md`; here, what was decided 
   general orientation (tested before the choice). One tolerant closure (`closeWithin`) serves these
   functions and `pointGroupOf`.
 - **One name for the axis, and smaller uniformity** (#137 C3, C4, decided by Thomas on 2026-11-22;
-  #121 step 7d): the axis of an operation is `axis` in every entry point, for a reflection its normal,
-  so the plane groups give `axis` for what was `normal` (descriptions and the lines of
-  `symmetryElements`); `isDefault` also in `symcrys/plane`; the plane `orbit` gives `{ point,
+  #121 step 7d): the axis of an operation is `axis` in every entry point, for a reflection its normal
+  (in `symcrys/plane` in the descriptions and the lines of `symmetryElements` too); `isDefault` also in `symcrys/plane`; the plane `orbit` gives `{ point,
 operations }`; `undefined`, never `null` (`zoneAxis`); every result frozen and `readonly` (tested
   over every function of the three entry points; `residualOperations` freezes its list, not the
   caller's operations); parameter names `direction1`, `direction2`, `plane1`, `plane2`, `symbol`; the
@@ -523,118 +494,76 @@ operations }`; `undefined`, never `null` (`zoneAxis`); every result frozen and `
   2026-11-23: transcribed in full from ITA Table 3.2.3.2; the second part of step 7d).
 - **Names of ITA** (#137 C1, C2, decided by Thomas on 2026-11-22; #121 step 7c): the suffix `…Of`
   means "of a list of operations" and only that: `siteSymmetryOf(operations, direction)` beside
-  `siteSymmetry(key, direction, options)`, and `wyckoffPosition(key, x)` (was `wyckoffPositionOf`,
-  also in `symcrys/plane`); ITA's terms: in operation descriptions `n` (was `order`, ITA 2016 § 1.2.1, p. 12)
-  and the kinds `'reflection'`, `'glide-reflection'` (were `'mirror'`, `'glide'`; ITA Table
-  2.1.2.1, p. 145, names the operations so, and the elements mirror and glide line, which `symmetryElements`
-  keeps), `enantiomorphic` and `isEnantiomorphicOf` (were `chiral`, `isChiralOf`; ITA § 3.2.2.1.3,
-  p. 738), in `symcrys/plane` `rotationPoints` (was `rotations`) and no `planeGroup(key).order`.
+  `siteSymmetry(key, direction, options)`, and `wyckoffPosition(key, x)` (also in `symcrys/plane`);
+  ITA's terms: in operation descriptions `n` (ITA 2016 § 1.2.1, p. 12) and the kinds `'reflection'`,
+  `'glide-reflection'` (ITA Table 2.1.2.1, p. 145, names the operations so, and the elements mirror
+  and glide line, which `symmetryElements` keeps), `enantiomorphic` and `isEnantiomorphicOf` (ITA
+  § 3.2.2.1.3, p. 738), in `symcrys/plane` `rotationPoints`, and no field `order` in
+  `planeGroup(key)` (it is the number of operations).
   Chosen while implementing: a rotation point carries `n` too, as the operation that it is the
   element of; `siteSymmetry(key, …)` is in both point-group entry points, with the options of
-  `wyckoffPosition` (`setting`, `axes`, `uniqueAxis`, `tolerance`). The entries below keep the
-  names of their time.
+  `wyckoffPosition` (`setting`, `axes`, `uniqueAxis`, `tolerance`).
 - **Fixed properties are fields of `pointGroup()`** (maintainer, 2026-11-20, #41; decided on the
   call sites of stereography and birss-app, listed in #41): what is fixed once the group is named
-  (`crystalSystem`, `order`, `centrosymmetric`, `polar`, `chiral`, `laueClass`; in the magnetic API
-  also `type`, `crystalClass`) is data of the record, and the functions `isCentrosymmetric`,
-  `isPolar`, `isChiral` and `laueClass` are removed, so that there is one way to ask (MINOR; a
-  consumer that passes a function writes `(key) => pointGroup(key).polar`). A key and a list of
+  (`crystalSystem`, `order`, `centrosymmetric`, `polar`, `enantiomorphic`, `laueClass`; in the
+  magnetic API also `type`, `crystalClass`) is data of the record, so that there is one way to ask
+  (a consumer that passes a function writes `(key) => pointGroup(key).polar`). A key and a list of
   operations are two cases: for the operations of a distorted crystal or a site symmetry there are
-  `isCentrosymmetricOf(operations)` and `isChiralOf(operations)`, named like `tensorFormOf` and
-  asking of the list what it asks (orthogonal matrices; in the magnetic API `timeReversal`); polar
-  is there `allowsPropertyOf(operations, 'pyroelectric')`, and a Laue class needs the group
-  identified first. **`holohedry(system)` is a function of the crystal system** _(replaced
-  in #121 step 11a, #137 G1: "Holohedry by lattice system" below)_, not a field:
-  the holohedry depends on the group only through its system, and both readings for the trigonal
-  classes have a consumer (birss-app shows `-3m`, the holohedry of the trigonal system;
-  stereography needs `6/mmm`, the lattice symmetry in hexagonal axes:
-  `holohedry(crystalFamily(system))`); a field would have had to pick one.
+  `isCentrosymmetricOf(operations)` and `isEnantiomorphicOf(operations)`, named like `tensorFormOf`
+  and asking of the list what it asks (orthogonal matrices; in the magnetic API `timeReversal`);
+  polar is there `allowsPropertyOf(operations, 'pyroelectric')`, and a Laue class needs the group
+  identified first. The holohedry is a function of the lattice system ("Holohedry by lattice
+  system").
 - **Faces with numbers** (#137 G3, G4, decided by Thomas on 2026-11-22 and, how the two fit
   together, on 2026-11-24; #110 item 10; #115 item 2; #121 step 11b): the Wyckoff positions and
-  crystal forms give their faces only as ITA prints them (`millerIndices`, with letters); the fixed
-  face h, k, l = 3, 2, 1 with its Cartesian normal (`representative`) goes, since its numbers were a
-  choice of symcrys inside print-anchored records and its normal was wrong for every real monoclinic
-  and triclinic cell. Two functions instead: `millerIndices(printed, { h, k, l })` substitutes a
+  crystal forms give their faces only as ITA prints them (`millerIndices`, with letters), since
+  fixed numbers would be a choice of symcrys inside print-anchored records, and a normal without a
+  cell is wrong for every real monoclinic and triclinic cell. Two functions give the rest: `millerIndices(printed, { h, k, l })` substitutes a
   caller's values and gives three indices, i dropped for hexagonal axes as `orbit` takes them
   (`planeToFourIndices` gives four), and `faceNormal(basis, hkl)` gives the unit normal in a cell,
   so a normal never exists without one. Chosen while implementing: both in both entry points, with
   the index functions; inside, the positions are still checked with the face 3, 2, 1 (5, 2, 1 with
   rhombohedral axes, 1, 2, 3 under |h| < |l|), and the ITC baseline pins add the old field from it.
-- **Operations in Python** (#137 H1, decided by Thomas on 2026-11-22, the type, a bare array in
-  `symcrys.magnetic` and the access per operation on 2026-11-24; #121 step 12b): `operations`,
-  `generators` and `residual_operations` give `Operations`, a frozen dataclass of read-only arrays,
-  one row per operation: `matrix` (n, 3, 3) int64 and `cartesian` (n, 3, 3) float64, in
-  `symcrys.magnetic` also `time_reversal` (n,) bool, in `symcrys.plane` `matrix` (n, 2, 2) and
-  `translation` (n, 2). Beside the arrays, `ops[i]` and `for op in ops` give one operation as a dict
-  (the TypedDict of the TypeScript record, `Operation` or `PlaneOperation`), and `ops[mask]` or
-  `ops[[0, 2]]` an `Operations` of those rows, so that loops written for lists keep working. Every
-  function that takes operations accepts `Operations`, a list of dicts, and in `symcrys` an array
-  of Cartesian matrices (n, 3, 3); `symcrys.magnetic` refuses such an array, since it does not say
-  which operations carry time reversal, and `symcrys.plane` has no Cartesian matrices. Chosen while
-  implementing: the class is generated from the TypeScript record with the dtypes and shapes of
-  `api.json` ("operations"); a caller may build one, its arrays checked (shape, one n, integers for
-  W, booleans for `time_reversal`), equal only to itself, read-only also after a copy or a pickle;
-  `site_symmetry_of` and `orbit_of` of `symcrys.magnetic` take operations without time reversal,
-  also as an array, since they do not depend on it; `residual_operations` passes the caller's
-  operations to the library as they are and needs every field of those it keeps (it returns
-  them).
-- **Keyword arguments and tensor shapes in Python** (#137 H2, decided by Thomas on 2026-11-22; #98;
-  #121 step 12c): an object parameter of the TypeScript API becomes its fields as arguments
-  (`lattice_from_parameters(a, b, c, alpha, beta, gamma)`, `is_valid_cell(alpha, beta, gamma)`,
-  `miller_indices(printed, h=…, k=…, l=…)`, `orbit(key, hkl=…)` or `uvw=…`), and the overloads of a
-  TypeScript function become Python `@overload`s (`orbit` with `hkl=` gives `list[FaceOrbitEntry]`);
-  `tensor_form` gives each basis tensor in its shape (p, 3, …, 3), the relations stay rows over the
-  flat components; `rotate_tensor` keeps the shape of the tensor, (3, …, 3) or flat, and takes
-  stacks of tensors and rotations as leading axes, broadcast as in NumPy. Chosen while
-  implementing: the library rotates one tensor by one rotation per call and the Python layer loops
-  (batched calls are #100); an object parameter's fields are documented by their TSDoc, so `orbit`
-  got the named types `FaceIndices` and `DirectionIndices` in TypeScript.
 - **Holohedry by lattice system** (#137 G1, decided by Thomas on 2026-11-22; #113; #121 step 11a):
   the holohedry belongs to the lattice system, as ITA defines it (ITA 2016 § 1.3.4.4.2 and Table
   1.3.4.1, p. 39): a type `LatticeSystem` with ITA's seven names, `holohedry(latticeSystem)` and
   `latticeSystems(key)`, which gives `hexagonal` and `rhombohedral` for a trigonal class, since
-  lattice systems classify lattices, not point groups. `holohedry(system)` and its reading through
-  the crystal family are gone; an application names the lattice system it means (stereography
-  `'hexagonal'`, birss-app `'rhombohedral'`). Chosen while implementing: `latticeSystems` is a
+  lattice systems classify lattices, not point groups; an application names the lattice system it
+  means (stereography `'hexagonal'`, birss-app `'rhombohedral'`). Chosen while implementing: `latticeSystems` is a
   function, as G1 (a) names it, in both entry points (a magnetic group has the lattice systems of
   its class); `holohedry('trigonal')` is an error that names the two lattice systems.
-- **Symmetry elements as structured data** _(Axis signs and Birss part replaced by "Pure ITC" above:
-  Seitz anchor, #114.)_ (maintainer, 2026-11-18, #16): symcrys describes each
-  operation (`describeOperations`: kind, n, axis, sense, and in the magnetic API time reversal) and the elements along each
-  symmetry direction (`symmetryDirections`); strings such as `4⁺ 0,0,z` or `2_z` stay in the
-  applications, which also translate them. An axis is given both as a lattice direction [uvw] and as
-  a Cartesian unit vector. In the ITC convention it has the sign of ITA Table 2.1.3.1, which fixes
-  what the sense refers to and reproduces ITA's printed operation symbols; in the Birss convention
-  the sign birss-app gives it (`docs/conventions.md`, "Symmetry directions and elements").
-- **Operations in ITA's order in the ITC convention** _(Birss part replaced by "Pure ITC" above; describes the code until the ITC migration.)_
-  (maintainer, 2026-11-18,
-  crystallography-common#99): `operations` returns the operations as ITA numbers them, built coset
-  by coset from ITA's selected generators (`docs/conventions.md`, "Order of the operations").
-  Consumers draw and list operations in this order (stereography: poles, faces, face lists), so it
-  should mean something and stay stable; the closure order had no meaning of its own. For the classes
-  the set comes from ITA's selected generators (`pointGroups/itcData.ts`, #122).
-- **Generators per convention** _(Birss part replaced by "Pure ITC" above; describes the code until the ITC migration.)_
-  (maintainer, 2026-11-18, #25, #27): `generators` returns ITA's
-  selected generators in the ITC convention and birss-app's (the stored ones) in the Birss
-  convention (`docs/conventions.md`, "Generators").
+- **Symmetry elements as structured data** (maintainer, 2026-11-18, #16): symcrys describes each
+  operation (`describeOperations`: kind, n, axis, sense, and in the magnetic API time reversal) and
+  the elements along each symmetry direction (`symmetryDirections`); strings such as `4⁺ 0,0,z` or
+  `2_z` stay in the applications, which also translate them. An axis is given both as a lattice
+  direction [uvw] and as a Cartesian unit vector, with the sign of its Seitz symbol ("Pure ITC",
+  #114), which fixes what the sense refers to; the symmetry directions follow ITA Table 2.1.3.1
+  (`docs/conventions.md`, "Symmetry directions and elements").
+- **Operations in ITA's order, ITA's generators** (maintainer, 2026-11-18,
+  crystallography-common#99; #25, #27): `operations` returns the operations as ITA numbers them,
+  built coset by coset from ITA's selected generators, and `generators` returns those generators
+  (`docs/conventions.md`, "Order of the operations", "Generators"). Consumers draw and list
+  operations in this order (stereography: poles, faces, face lists), so it should mean something
+  and stay stable; a closure order has no meaning of its own. The data are ITA's selected
+  generators (`pointGroups/itcData.ts`, #122).
 - **Cartesian floating-point matrices with snapping** (maintainer, 2026-11-08, #13), as in
-  birss-app, so its tests carry over; exact lattice-basis matrices when a consumer needs them
-  (#24; since #121 step 6d the field `matrix` of every operation, "The operation record" below).
+  birss-app, whose tests came with them; the exact matrix W in the lattice basis is the field
+  `matrix` of every operation ("The operation record").
 - **The operation record** (#137 A2, decided by Thomas on 2026-11-22; #94; #121 step 6d): an
   operation is `{ matrix, cartesian }`, in the magnetic API with `timeReversal`: `matrix` is ITA's
   W in the lattice basis in every entry point (as in `symcrys/plane`), `cartesian` the orthogonal
-  matrix; `latticeOperations` is removed. Every function that takes operations from a caller and
+  matrix; there is no separate list of lattice operations. Every function that takes operations from a caller and
   computes with Cartesian matrices reads `cartesian` and refuses a record without it, so that W
   cannot pass for a Cartesian matrix silently; `residualOperations` reads `matrix` and refuses one
   that is not integer. Chosen while implementing: inside the library the calculations work on
   `CartesianOperation` (`{ cartesian, timeReversal }`), so a record of the API passes as it is and
-  a caller may build `{ cartesian }` alone; in Python `matrix` stays float64 by the fixed rule
-  for matrices (#137 H may revisit it) _(int64 since #121 step 12b, in `Operations`, #137 H1)_.
+  a caller may build `{ cartesian }` alone. In Python a list of operations is one record of arrays,
+  `Operations` ("Operations in Python").
 - **Properties that need tensors** come with the tensor module (maintainer, 2026-11-08, #13), as
   named tensor properties ("Tensors" below, #41).
-- **Hexagonal frame x ∥ a, z ∥ c** (maintainer, 2026-11-08, #6): birss-app's frame, in which its
-  print-verified tensor tests hold; ITC Vol. D puts the secondary direction of the trigonal groups
-  along x₁ as well.
+- **Hexagonal frame x ∥ a, z ∥ c** (maintainer, 2026-11-08, #6): ITC Vol. D puts the secondary
+  direction of the trigonal groups along x₁ as well, and birss-app's print-verified tensor tests
+  hold in this frame (`docs/conventions.md`, "Cartesian frame").
 - **ITC anchor for the crystal classes** (maintainer, 2026-11-09, #13, #18): the operations of
   every ITC setting that ITA lists must equal its general position printed in ITA Table 3.2.3.2, a
   print anchor (class (a)) and so stronger than a derivation; it is also the basis for exact
@@ -642,73 +571,50 @@ operations }`; `undefined`, never `null` (`zoneAxis`); every result frozen and `
   directions of ITA Table 2.1.3.1 and closed independently, must give the same operations; this
   also covers `2mm`, `m2m` and monoclinic unique axis a, which ITA does not list. ITC Vol. D Table 1.5.2.3 is transcribed with
   the magnetic groups.
-- **Stored frame and settings** _(Storage in the Birss frame and the Birss part replaced by "Pure ITC" above;
-  the settings follow #116.)_ (2026-11-09, #14): data are stored once, in Birss's frame (setting
-  1); every setting, the ITC ones included, is a rotation of it. A setting index names a physical
-  frame and means the same in both conventions; the convention picks the default and the symbols and
-  how the operations are presented (order, generators, axis signs), not their set. One data set then
-  serves both conventions, and the Birss print tests apply directly.
-- **birss-app is the reference where print leaves a choice open** (_replaced on 2026-11-22 by
-  "Pure ITC" above; describes the code until the ITC migration_) (maintainer, 2026-11-09, #17):
-  symcrys follows birss-app's current implementation unless it is wrong on the subject. The choices
-  for the crystal classes were checked against birss-app 2be5fe3: D3h keeps the key and ITC
-  default `-6m2` (print state in `docs/conventions.md`, "Keys"), and the Birss symbols that Birss
-  does not print are derived as birss-app reads them. Where birss-app is not wrong but can be
-  improved, symcrys improves on it only after clarifying with Thomas; `docs/conventions.md` records
-  the difference with its reason, and #19 collects what birss-app takes over when it moves onto
-  symcrys.
-- **Site symmetry and Wyckoff positions** _(Birss part replaced by "Pure ITC" above; describes the code until the ITC migration.)_
-  (maintainer, 2026-11-18, #24 item 1; asked before
-  implementation): Wyckoff positions in the ITC convention only, because neither Birss nor birss-app
-  has them (no Birss output to follow); the site symmetry itself, plain computation, in both. The
-  representative is ITA's printed point and face as strings plus one numeric face (hkl) _(replaced in
-  #121 step 11b, #137 G3, G4: "Faces with numbers" below)_ with its
-  Cartesian normal, since the apps work with face poles. "Lies on the element" uses an optional
-  `tolerance`, default `EPSILON`, so that stereography can pass 10⁻⁴ for its rounded links while
-  symcrys projects onto the fixed space. `mm2` settings 2 and 3 and monoclinic unique axis a, which
-  ITA does not print, are
-  derived from setting 1 by a permutation of the axes (settings cab and bca of ITA 2016 Table
-  1.5.4.4, #122), with a test that reads the oriented symbol independently, as for the symbols.
-  `siteSymmetry` takes any list of operations, so that a consumer can use it for
-  the operations of a distorted crystal (stereography, `analyzeGroup`); whether stereography uses it
-  so is decided when stereography moves (#24). The print anchor is ITA 6th ed. Table 3.2.3.2
-  (`references/`); the 5th edition (Table 10.1.2.2, via stereography's form catalogue) is an
-  additional check by `audit/wyckoff-2006`, not the reference (docs/conventions.md, "Site symmetry
-  and Wyckoff positions").
+- **Stored frame and settings** (#122, #116, #123): the data are stored in the ITC frame, ITA's
+  selected generators as exact integer matrices in the lattice basis of each ITC setting
+  (`pointGroups/itcData.ts`; for the magnetic groups `pointGroups/itcMagneticData.ts`); a setting is
+  selected by its ITC symbol or by its index, numbered as `docs/conventions.md` ("Settings") gives
+  them (the orthorhombic ones by the column order of ITA 2016 Table 1.5.4.4, #137 A4; monoclinic
+  unique axis a is setting 3, #137 A5). A setting index names one frame in both point-group entry
+  points.
+- **Site symmetry and Wyckoff positions** (maintainer, 2026-11-18, #24 item 1; asked before
+  implementation): Wyckoff positions for the 32 crystal classes, as ITA tabulates them; the site
+  symmetry itself, plain computation, in both point-group entry points. A position gives ITA's
+  printed point and face as strings ("Faces with numbers" for faces with numbers and their normals).
+  "Lies on the element" uses an optional `tolerance`, default `EPSILON` ("One tolerance contract"),
+  so that stereography can pass 10⁻⁴ for its rounded links while symcrys projects onto the fixed
+  space. `mm2` settings 2 and 3 and monoclinic unique axis a, which ITA does not print, are derived
+  from setting 1 by a permutation of the axes (settings cab and bca of ITA 2016 Table 1.5.4.4,
+  #122), with a test that reads the oriented symbol independently, as for the symbols.
+  `siteSymmetryOf` takes any list of operations, so that a consumer can use it for the operations
+  of a distorted crystal (stereography, `analyzeGroup`). The print anchor is ITA 6th ed. Table
+  3.2.3.2 (`references/`); the 5th edition (Table 10.1.2.2, via stereography's form catalogue) is
+  an additional check by `audit/wyckoff-2006`, not the reference (`docs/conventions.md`, "Site
+  symmetry and Wyckoff positions").
 - **Crystal forms, group identification, orbits** (maintainer, 2026-11-21, #24 items 2 and 3;
   asked before implementation). **Data of a form:** a table of the 47 forms of ITA Table 3.2.1.3
   (`CRYSTAL_FORM_TYPES`: number, English name as printed, number of faces, eigensymmetry), to which
   the forms of a class refer by number; the English names are terms of the print source, like the
   symbols, while names in other languages (stereography's German ones) and the link ids stay in the
-  apps; point forms are left out. **Names**, in the `…Of` scheme: `crystalForms(key, { setting })`;
-  `pointGroupOf(operations)` beside `pointGroup(key)`; `latticeOperations(key, { setting })` _(replaced
-  by the field `matrix` of every operation, #121 step 6d)_;
-  `orbit(key, …)`, exact in the lattice basis, and `orbitOf(operations, direction)`, Cartesian, with
-  coinciding poles merged. **Tolerance:** an optional `tolerance`, default `EPSILON`, as for
-  `siteSymmetry`. **Lattice-basis operations** for all families and settings, integer and without
-  cell angles: the integer matrices of the point operations do not depend on the cell angles (ITA
-  prints them as the general position), so the restriction of `latticeBasis` below does not apply;
-  Cartesian matrices for a real monoclinic or triclinic cell belong to #24 item 4. **Identification:**
-  `pointGroupOf` closes the list into a group, returns the key always and the setting only if the
-  operations equal those of a setting in symcrys's frame, `undefined` if they form no crystallographic
-  point group; the elements of any list of operations come from `describeOperationsOf`. **Three
-  PRs, one MINOR:** forms; lattice operations and orbits; identification. Crystal forms are given in
-  the ITC convention only, like the Wyckoff positions they belong to (decided by that precedent, not
-  asked again). Asked while implementing the second PR _(replaced by "The operation record" above,
-  #121 step 6d)_: `latticeOperations` returns the shape of
-  `operations` (`{ matrix }`, index for index, in the magnetic API with `timeReversal`), so that a
-  caller switches between the two lists, although Python then gives the integer matrices as float64
-  under the fixed rule for `matrix`; `latticeOperations`, `orbit` and `orbitOf` are in both entry
-  points, by the rule for new functions (a face's orbit does not depend on time reversal). The
-  print anchor of the forms is ITA 6th ed. Tables 3.2.3.2 and 3.2.1.3, checked against each other;
-  stereography's catalogue (ITA 2006) is an additional check by `audit/forms-2006`, not the
-  reference (docs/conventions.md, "Crystal forms"). Chosen while implementing the third PR:
-  `pointGroupOf` names the group by how often each combination of determinant, trace and time
-  reversal occurs, which differs for all 122 groups (tested) and so names any point group in any
-  orientation; it takes no convention, because a setting index means the same frame in both;
-  `describeOperationsOf` signs its Cartesian axes as the Birss convention of `describeOperations`
-  does (first non-zero component positive), since no lattice names them _(to be redefined with the
-  Seitz anchor, #114, #127)_.
+  apps; point forms are left out. Crystal forms are given for the crystal classes only, like the
+  Wyckoff positions they belong to. **Names**, in the `…Of` scheme: `crystalForms(key, { setting })`;
+  `pointGroupOf(operations)` beside `pointGroup(key)`; `orbit(key, …)`, exact in the lattice basis
+  from the integer matrices W, which do not depend on the cell angles (ITA prints them as the
+  general position), and `orbitOf(operations, direction)`, Cartesian, with coinciding poles merged;
+  both in both point-group entry points (a face's orbit does not depend on time reversal).
+  **Tolerance:** an optional `tolerance`, default `EPSILON`, as for `siteSymmetry`.
+  **Identification:** `pointGroupOf` closes the list into a group, returns the key always and the
+  setting only if the operations equal those of a setting in symcrys's frame, `undefined` if they
+  form no crystallographic point group; the elements of any list of operations come from
+  `describeOperationsOf`. The print anchor of the forms is ITA 6th ed. Tables 3.2.3.2 and 3.2.1.3,
+  checked against each other; stereography's catalogue (ITA 2006) is an additional check by
+  `audit/forms-2006`, not the reference (`docs/conventions.md`, "Crystal forms"). Chosen while
+  implementing: `pointGroupOf` names the group by how often each combination of determinant, trace
+  and time reversal occurs, which differs for all 122 groups (tested) and so names any point group
+  in any orientation; `describeOperationsOf` signs its Cartesian axes so that the first non-zero
+  component is positive, since no lattice names them and the Seitz anchor ("Pure ITC") needs one
+  (`docs/conventions.md`, "Point group of a list of operations").
 - **Rhombohedral axes** (#111, #121 step 6c; the setting itself decided by Thomas on 2026-11-23,
   "Pure ITC" above): the obverse axes in the hexagonal cell of setting 1 (ITA 2016 Table 1.5.1.1,
   p. 78), so the Cartesian operations are those of setting 1. Chosen while implementing, recorded on
@@ -716,9 +622,10 @@ operations }`; `undefined`, never `null` (`zoneAxis`); every result frozen and `
   two settings hold the same Cartesian operations and a list of them cannot say which basis is
   meant; **a key is the key** in `findPointGroup`, also where it is the symbol of another setting
   (`32` gives setting 1, not the rhombohedral setting 3; before, no key was such a symbol), the
-  rhombohedral setting is chosen by `{ axes: 'rhombohedral' }` (#96, step 7b); the **representative face** with rhombohedral axes takes h = 5, k = 2, l = 1,
-  since (321) lies there on the limiting form (h,k,2k−h) and h = 4 would give printed faces with a
-  common factor ((4,2,−6), (4,2,0)). The symbols of the magnetic groups in the rhombohedral setting
+  rhombohedral setting is chosen by `{ axes: 'rhombohedral' }` (#96, step 7b); the face with which
+  the positions are checked inside ("Faces with numbers") takes h = 5, k = 2, l = 1 with
+  rhombohedral axes, since (321) lies there on the limiting form (h,k,2k−h) and h = 4 would give
+  printed faces with a common factor ((4,2,−6), (4,2,0)). The symbols of the magnetic groups in the rhombohedral setting
   follow the rule for all black-and-white symbols (the symbol of the class in that frame with the
   primes of the operations).
 - **`latticeBasis` only for families with fixed cell angles** (2026-11-09, #14): for monoclinic
@@ -731,11 +638,10 @@ operations }`; `undefined`, never `null` (`zoneAxis`); every result frozen and `
   Chosen by Thomas among three proposals: two entry points with the same function names (the import
   decides the reading), rather than two families of names in one entry point
   (`tensorForm` / `magneticTensorForm`) or a context option. The crystallographic API has no time
-  reversal at all (operations `{ matrix, cartesian }` since #121 step 6d, no time parity, no `type`, the time-even properties
-  only), and a question that involves time reversal is an error that names the magnetic API,
-  because a wrong reading should fail, not answer. Chosen while implementing _(under review, #110
-  item 8)_: `timeParity: 'i'` _(`'even'` since #121 step 9a)_ and
-  `timeReversal: false` are accepted in what a caller passes in, so that data of the magnetic API
+  reversal at all (operations `{ matrix, cartesian }`, no time parity, no `type`, the time-even
+  properties only), and a question that involves time reversal is an error that names the magnetic
+  API, because a wrong reading should fail, not answer. Chosen while implementing _(under review,
+  #110 item 8)_: `timeParity: 'even'` and `timeReversal: false` are accepted in what a caller passes in, so that data of the magnetic API
   without time reversal can be handed on; for the same reason, in the other direction, the
   magnetic API refuses an operation that does not say whether it is combined with time reversal
   (operations of the crystallographic API), instead of reading it as a white group; a search
@@ -750,18 +656,7 @@ operations }`; `undefined`, never `null` (`zoneAxis`); every result frozen and `
   one set of functions taking all 122 keys with a list of magnetic keys beside the classes. A new
   function is added to the shared modules and exported by both entry points, with its wrapper in
   `crystalClasses.ts` if a key, an operation or a tensor passes through it.
-- **A search reads its argument as a symbol** _(Replaced by "Pure ITC" above; describes the code until the ITC migration.)_
-  (maintainer, 2026-11-20, #46): `findPointGroup`
-  gives the setting a symbol names, also where the string is a key, so that
-  `findPointGroup(symbol(key, { convention, setting }), convention)` returns the setting. It
-  matters for two keys in the Birss convention (`mm'm'`, `6'/mmm'`: the Birss symbols of setting
-  2). Thomas on the alternative, a key always giving the default setting, which would have left
-  these two symbols unfindable as symbols: it makes no sense, and in the end birss-app has to give
-  the same as it does now, as far as that is mathematically correct; only real errors are fixed.
-  birss-app names setting 2 of the two groups by exactly these symbols (2be5fe3:
-  `conventionMapping.ts`, `symmetryGroups.ts`; in symcrys the pins of the setting symbols).
-  Everywhere else a key is the key and means the default setting.
-- **Magnetic point groups: order and generators in the ITC convention** (maintainer, 2026-11-19,
+- **Magnetic point groups: order and generators** (maintainer, 2026-11-19,
   #13; asked before implementation): ITC Vol. D prints neither (Table 1.5.2.3 groups the operators),
   so an operation of a black-and-white group keeps the number ITA gives it in the crystal class,
   time reversal being a mark on the operation, and a grey group lists the class first, then the
@@ -769,15 +664,12 @@ operations }`; `undefined`, never `null` (`zoneAxis`); every result frozen and `
   and its coset after it (ITC Vol. D eq. (1.5.2.2)), would have changed the numbers against the
   class. The generators follow the same idea: those of the class with their time reversal, for a
   grey group followed by `1'` (chosen while implementing).
-- **Six settings of `2'm'm`** _(The six settings stay, all printed in ITC Vol. D ("Pure ITC" above); the
-  reasons from birss-app and the numbering are replaced, #116, #123.)_
-  (maintainer, 2026-11-20, #19): an orthorhombic group gets a setting
-  for every distinct orientation of its axes. birss-app's standing decision (at most three settings
-  per group, by the axis that carries the unique element) does not cover the one group whose three
-  elements all differ; it has six orientations, and print uses all of them (Birss, four tables of
-  ITC Vol. D, Paufler), so a reader who takes a symbol from print must be able to select it.
-  Since #121 step 6b the six are numbered by the column order of ITA 2016 Table 1.5.4.4 (#137 A4;
-  `docs/conventions.md`, "Settings"), and monoclinic unique axis a is setting 3 (#121 step 6c, #137 A5).
+- **Six settings of `2'm'm`** (maintainer, 2026-11-20, #19; "Pure ITC"): an orthorhombic group has
+  a setting for every distinct orientation of its axes that ITC prints; `2'm'm`, the one group whose
+  three elements all differ, has six, all printed in ITC Vol. D, and print uses all of them (Birss,
+  four tables of ITC Vol. D, Paufler), so a reader who takes a symbol from print can select it. The
+  six are numbered by the column order of ITA 2016 Table 1.5.4.4 (#137 A4; `docs/conventions.md`,
+  "Settings").
 - **Symbols per volume** (#137 B2, B3, B5, decided by Thomas on 2026-11-22; #121 step 7a): each
   entry point writes the symbols of the volume it is anchored in. The magnetic API: the default
   setting of a grey or black-and-white group has its key as short symbol (`32'` as ITC Vol. D Table
@@ -790,17 +682,12 @@ operations }`; `undefined`, never `null` (`zoneAxis`); every result frozen and `
   still selects the default setting. Confirmed by Thomas on 2026-11-23
   (#150): the white groups keep `321`, and the default short symbol is the one of Table 1.5.2.3
   (`3m'`), although Vol. D writes `3m'1` where it sets the orientation against `31m'` (p. 140).
-- **Magnetic point groups: data** _(Storage in the Birss frame replaced by "Pure ITC" above; the reason
-  given for the type names is corrected in #109. Since #122 PR 2c the ITC full symbols of the
-  black-and-white groups are stored, one per setting, and the rule runs the other way: the time
-  reversal of the operations is derived from them (`pointGroups/itcMagneticData.ts`).)_ (2026-11-19, #13): stored like the classes, in the Birss frame
-  with birss-app's generators and settings (birss-app 2be5fe3), ITC derived. Not stored: the grey
-  groups (class and time reversal, ITC Vol. D eq. (1.5.2.1)) and the symbols of the black-and-white
-  groups, which are the symbols of the class in the same frame with the primes of the operations;
-  one rule then serves all settings and both conventions, and the print (58 full symbols of ITC
-  Vol. D Table 1.5.2.3, 58 symbols of Birss Table 6) checks the rule instead of a list of strings.
-  The types are named `'I'`, `'II'`, `'III'` as in birss-app; ITC Vol. D numbers them differently
-  (`docs/conventions.md`, "Types").
+- **Magnetic point groups: data** (2026-11-19, #13; #122, #109): stored are the ITC full symbols of
+  the black-and-white groups, one per setting, and the time reversal of their operations is derived
+  from them (`pointGroups/itcMagneticData.ts`). Not stored: the grey groups (class and time
+  reversal, ITC Vol. D eq. (1.5.2.1)). The print (58 full symbols of ITC Vol. D Table 1.5.2.3, 58
+  symbols of Birss Table 6) checks the symbols. The types `'I'`, `'II'`, `'III'` are those of ITC
+  Vol. D Table 1.2.6.12 ("Symbols per volume"; `docs/conventions.md`, "Types").
 - **Reading ITC Vol. D** (2026-11-19): the volume in Zotero (`YQKTNYVN`) is one PDF of 541 pages;
   the printed page number is the PDF page number plus 1 (checked at Table 1.5.2.3: PDF pages
   110–111 are printed pp. 111–112). Its text layer loses primes, overbars and underlines, so tables
@@ -822,9 +709,10 @@ The conventions are in `docs/conventions.md` ("Tensors"); here, what was decided
   (ITC Vol. D's terms, replacing Birss's `'i'`/`'c'`); `intrinsic` descriptive, each value with its
   Jahn symbol in the TSDoc as Gallego et al. write them (_Acta Cryst._ A75, 438 (2019), pp. 439–440,
   after Jahn 1949; Zotero `UP3I7WGX`, `Y7PSZEWG`): `'symmetric-first-pair'`, `'symmetric-last-pair'`, `'symmetric-pairs'`,
-  `'symmetric-pairs-exchangeable'` (were `'ij'`, `'jk'`, `'ij_kl'`, `'voigt'`), and new
-  `'antisymmetric'` (rank 2) and `'totally-symmetric'`. Chosen while implementing: a specification
-  with the names of 0.10 is a RangeError that names the new ones; `'totally-symmetric'` from rank 2;
+  `'symmetric-pairs-exchangeable'`, `'antisymmetric'` (rank 2) and `'totally-symmetric'`. Chosen
+  while implementing: a specification with the names of Birss and of 0.10 (`'i'`/`'c'`, `'ij'`,
+  `'jk'`, `'ij_kl'`, `'voigt'`) is a RangeError that names the current ones; `'totally-symmetric'`
+  from rank 2;
   an antisymmetric index symmetry is computed with signed orbits of the index permutations.
 - **Named properties and parameters in ITC's terms** (#137 E3, E4, decided by Thomas on 2026-11-22;
   #118; #121 step 9b): `'ferrotoroidic'` (rank 1, polar, time-odd) as the eighth property, anchored
@@ -852,35 +740,32 @@ The conventions are in `docs/conventions.md` ("Tensors"); here, what was decided
 - **Scope: symmetry only** (maintainer, 2026-11-19): the form for a point group and for any list of
   operations, the named properties, rotation of a tensor. birss-app's SHG source terms (`computeShg`),
   lab geometry, simulator and polarimetry are applications of the forms and stay in birss-app.
-- **Ranks 0 to 4 with all index symmetries of birss-app in the first step** (maintainer,
-  2026-11-19): the print anchors for rank 4 (Birss Table 4f, Hoshi 1995) exist, and electric-
-  quadrupole SHG of centrosymmetric crystals needs rank 4. In the ITC convention rank 4 is anchored
-  by the diagrams of ITC Vol. D § 1.1.4.10.6 (#39; printed pp. 27–29, PDF pages 26–28; 29 for the
-  crystal classes, compared with the computed forms, and one for the spherical system, compared with
-  the isotropic tensors written out by hand). Reading them: crossing lines at 550 dpi, followed end
-  to end; a dot with a half circle around it is passed by the line, not linked; where a line runs
-  through a dot without ending there and without a bridge (44 in the diagrams of 3, -3), the printed
-  count and the dot's own links decide, and the reading is noted in the transcription
+- **Ranks 0 to 4** (maintainer, 2026-11-19): the print anchors for rank 4 exist, and
+  electric-quadrupole SHG of centrosymmetric crystals needs rank 4. Rank 4 is anchored in ITC by the
+  diagrams of ITC Vol. D § 1.1.4.10.6 (#39; printed pp. 27–29, PDF pages 26–28; 29 for the crystal
+  classes, compared with the computed forms, and one for the spherical system, compared with the
+  isotropic tensors written out by hand), and by Birss Table 4f and Hoshi (1995) as further checks.
+  Reading the diagrams: crossing lines at 550 dpi, followed end to end; a dot with a half circle
+  around it is passed by the line, not linked; where a line runs through a dot without ending there
+  and without a bridge (44 in the diagrams of 3, -3), the printed count and the dot's own links
+  decide, and the reading is noted in the transcription
   (`references/itc/vol-d-1.1.4.10.6-rank-4-forms.md`).
-- **Names** _(The field names taken from birss-app are replaced by those of ITC since #121 step 9a, #137 E1, E2: "The tensor specification" above.)_
-  (maintainer, 2026-11-19): `tensorForm(key, spec, options)`,
-  `tensorFormOf(operations, spec)`, `rotateTensor(tensor, rotation, spec)`; in the magnetic API
-  `TensorSpec` with birss-app's fields (`rank`, `parity`, `timeParity`, `intrinsic`), so birss-app
-  passes its specifications unchanged; in the crystallographic API without `timeParity` (#47).
-- **Free parameters are the pivots of the reduced row echelon form** _(Birss part replaced by "Pure ITC" above; describes the code until the ITC migration.)_: the lowest component
-  independent of those before it. This is birss-app's rule since its Q0 reduction, so in the Birss
-  convention the parameters agreed with birss-app by name and order without a rule of their own
-  (behavioural pins, removed with the Birss mode), and in the ITC convention the same rule
-  applies to the ITC setting.
+- **Names** (maintainer, 2026-11-19): `tensorForm(key, spec, options)`,
+  `tensorFormOf(operations, spec, options)`, `rotateTensor(tensor, rotation, spec, options)`, with the
+  specification of "The tensor specification"; in the crystallographic API without `timeParity`
+  (#47).
+- **Free parameters are the pivots of the reduced row echelon form**: the lowest component
+  independent of those before it, birss-app's rule since its Q0 reduction, applied to the ITC
+  setting; documented as not ITC's choice (#137 E4, "Named properties and parameters in ITC's
+  terms").
 - **An index symmetry that does not apply at the rank is an error** (2026-11-19): birss-app ignores
   `'voigt'` at rank 3 and the like; a library call with it is a mistake of the caller, and silently
   computing another tensor would hide it.
-- **Time reversal is built in** _(Birss part replaced by "Pure ITC" above; describes the code until the ITC migration.)_
-  (#13): an operation with `timeReversal` changes the sign of a
-  `'c'`-tensor, so the magnetic point groups use the same tensor code, and in the magnetic API
-  `tensorForm` and the functions for named properties take all 122 keys. Their forms are anchored in print in both
-  conventions: Birss's Table 7 with Tables 4b–4f, and ITC Vol. D Tables 1.5.2.4, 1.5.7.1 and 1.5.8.1
-  (`docs/conventions.md`, "Tensors").
+- **Time reversal is built in** (#13): an operation with `timeReversal` changes the sign of a
+  time-odd tensor, so the magnetic point groups use the same tensor code, and in the magnetic API
+  `tensorForm` and the functions for named properties take all 122 keys. Their forms are anchored in
+  ITC Vol. D Tables 1.5.2.4, 1.5.7.1 and 1.5.8.1, with Birss's Table 7 and Tables 4b–4f as the
+  second print check (`docs/conventions.md`, "Tensors").
 - **Crystal class and white group are two readings of one key** (maintainer, 2026-11-20): the 32
   crystal classes are not simply the 32 white magnetic groups. In a purely crystallographic context
   quartz has the class `32`; in the context of magnetism it has the grey group `321'`, and `32`
@@ -894,8 +779,7 @@ The conventions are in `docs/conventions.md` ("Tensors"); here, what was decided
   function of its own, so a new property is a line of data, and the same call serves a key and any
   list of operations: `allowsProperty(key, name)`, `allowedProperties(key)`,
   `allowsPropertyOf(operations, name)`, `allowedPropertiesOf(operations)`; `tensorForm` and
-  `tensorFormOf` (and `rotateTensor`) take a name in place of a specification. `isPiezoelectric` is
-  removed (MINOR).
+  `tensorFormOf` (and `rotateTensor`) take a name in place of a specification.
   Chosen by Thomas among the proposals: `allows…` rather than `has…`, because symmetry allows a
   property and does not say the crystal has it; names as adjectives (`'pyroelectric'`,
   `'piezoelectric'`, `'gyrotropic'` for optical activity, `'ferromagnetic'`, `'magnetoelectric'`,
@@ -949,12 +833,10 @@ while implementing gets its own note here.
   as fractions (integer numerator over the smallest denominator), so that comparing operations and
   points of the group data modulo the lattice needs no tolerance. At the API it is
   `{ matrix, translation }` in the lattice basis: `matrix` a d × d matrix with integer entries, the
-  object shape `{ matrix }` of the lattice operations of the point groups with `translation` added, and `translation` as
+  `matrix` of the point groups with `translation` added, and `translation` as
   numbers (1/3 as the nearest double), as spglib gives its symmetry (integer rotations, float
-  translations), which is what users of such a library expect. The Cartesian operations of the
-  crystal classes and magnetic groups (`operations`, tensors) stay as they are _(since #121 step 6d
-  an operation of a point group is `{ matrix, cartesian }`, `matrix` W as here, "The operation
-  record")_. The alternatives were
+  translations), which is what users of such a library expect. An operation of a point group is
+  `{ matrix, cartesian }` with the same W ("The operation record"). The alternatives were
   exact fractions at the API ([numerator, denominator] pairs: unusual, and every consumer would
   compute with fractions itself), floating point with snapping as for the point groups (not exact;
   comparisons modulo 1 with a tolerance, cf. plane-groups `CLAUDE.md`, "Toleranzen der Bestimmung")
@@ -986,39 +868,27 @@ while implementing gets its own note here.
 - **Description of an operation** (chosen while implementing, PR #78; `src/spaceGroups/describe.ts`,
   fields in its TSDoc): structured and exact, as for the point groups ("Symmetry elements as
   structured data"); the symbols such as `g(1/2,1/2) x,x` stay with the applications. The kinds
-  `'mirror'` and `'glide'` match `'mirror'` of the point groups. The line of a mirror or glide is
+  `'reflection'` and `'glide-reflection'` are ITA's ("Names of ITA"). The line of a mirror or glide is
   given by its direction and one point; the point on y = 0 (on x = 0 for a line along a) is one fixed
   choice among many, so that equal lines give equal data. Checked against print: the symbols written
   from the description reproduce every printed "Symmetry operations" entry of the 17 groups
   (`describe.reference.test.ts`); invariants that do not depend on the computation (a centre is
   fixed, a point of the line moves by the glide vector) cover the operations shifted by lattice
   translations, where print has no centres of order ≥ 3 away from the origin.
-- **Points: orbit, site symmetry, Wyckoff position** _(The criterion is replaced in #121 step 10a by the distance to a position, #137 F1: "Distance to a Wyckoff position" below.)_ (chosen while implementing, PR #79;
+- **Points: orbit, site symmetry, Wyckoff position** (chosen while implementing, PR #79;
   `src/spaceGroups/positions.ts`): a point from a caller has floating-point coordinates in the
   lattice basis, so these functions work in floating point on the exact operations, with the
-  `tolerance` of #31 measured per coordinate modulo the lattice (default `EPSILON`), as
-  `siteSymmetry` does for directions; a tolerance in the lattice basis needs no metric, which a
-  plane group does not fix; it must stay below 1/2. As `siteSymmetry` does, the operations fixing the
-  point are closed under products and the point is set onto the fixed space of the closure (the mean
-  of its images), repeated until stable, so a large tolerance still gives a subgroup. The Wyckoff position is the printed row of the point's
-  multiplicity whose printed coordinates (with the centring) reach the point, so letter and
-  oriented symbol come from print, not from a rule of symcrys. Checked: every printed point of every
-  Wyckoff position of the 17 groups, displaced by about 3·10⁻⁸ in both directions, gives its printed letter, multiplicity,
+  `tolerance` measured per coordinate modulo the lattice (default `EPSILON`); a tolerance in the
+  lattice basis needs no metric, which a plane group does not fix; it must stay below 1/2. The
+  Wyckoff position, the site symmetry and the orbit of a point follow from its distance to the
+  printed positions ("Distance to a Wyckoff position"), so letter and oriented symbol come from
+  print, not from a rule of symcrys. Checked: every printed point of every Wyckoff position of the
+  17 groups, displaced by about 3·10⁻⁸ in both directions, gives its printed letter, multiplicity,
   symbol and printed orbit (`positions.reference.test.ts`).
-- **Snapping onto a Wyckoff position** _(Replaced in #121 step 10a by `wyckoffDistances`, #137 F1: "Distance to a Wyckoff position" below.)_
-  (`snapToWyckoffPosition`, decided by Thomas on 2026-11-22,
-  #85; chosen while implementing, PR #104; `src/spaceGroups/snap.ts`): the criterion of plane-groups
-  (`lage`, `einrasten`), the distance of the point to the point set of a position, not of its images:
-  per printed coordinate expression with every centring, the parameters by least squares in the
-  lattice coordinates, accepted if both coordinate differences are below the tolerance; points before
-  lines before the general position. Different from the app, among positions of the same kind the
-  nearest wins, not the first in print order; the two differ only near the crossing of two lines,
-  where the nearer line is the better answer. The least-squares point is not always the nearest in
-  the per-coordinate measure (on `x,2x` it reaches 0.8 of the tolerance), as in the app. Checked:
-  every printed point of every Wyckoff position snaps onto its letter (`snap.reference.test.ts`).
 - **Distance to a Wyckoff position** (#137 F1, decided by Thomas on 2026-11-22 and, the two open
-  points, on 2026-11-24; #108; #121 step 10a): `wyckoffDistances(key, point, { basis })` replaces
-  `snapToWyckoffPosition`: for every printed position the nearest point of its point set and the
+  points, on 2026-11-24; #108, #85; #121 step 10a): `wyckoffDistances(key, point, { basis })` gives,
+  for every printed position (the distance of the point to the point set of a position, as
+  plane-groups snaps a point, rather than of its images) the nearest point of its point set and the
   distance, per lattice coordinate (the larger of |Δx|, |Δy| modulo the lattice, the metric of the
   tolerance for points) without a basis, Euclidean with one. `wyckoffPosition` decides by that
   distance (the most special position within the tolerance, the nearest among equal
@@ -1028,22 +898,6 @@ while implementing gets its own note here.
   The snapping policy belongs to the applications. Chosen while implementing: the nearest point
   of a line per coordinate is found where a component vanishes or the two are equal (the
   minimum of the larger of two linear functions); the basis has the columns a, b.
-- **Asymmetric unit and elements in the cell** _(Replaced in #121 step 10b, #137 F2, F3: "Elements and the asymmetric unit as data" below; the checks against print stay.)_
-  (chosen while implementing, PR #80;
-  `src/spaceGroups/cell.ts`): exact rationals inside, as the rest of the module. The asymmetric unit
-  is the polygon of the printed inequalities, given by its vertices (counter-clockwise from the
-  lowest) and, per edge, the printed inequality that holds it with integer coefficients without a
-  common factor; printed bounds that hold no edge (e.g. `y <= 2/3` in p3) are left out, so every
-  inequality is an edge to draw. The elements are found by describing every operation shifted by the
-  lattice translations that can reach the cell (bound in the code), keeping what meets [0, 1]² with
-  its boundary: a centre with the highest order about it, a line with its segment, as a glide line
-  with its glide reduced to s·direction, 0 < s < 1. Checked against print: the printed vertices
-  (hexagonal groups) and the printed inequalities read as text; centres and mirror lines from the
-  Wyckoff positions (no free parameter and a rotation; one free parameter and a mirror) with their
-  lattice translates; every printed glide; all lines also derived independently from the printed general
-  position (ITA prints no glide line of p4mm, p3m1, p31m, p6mm); and from the group alone the area 1/|G|, one image of a
-  general point inside, each line the element of an operation, the lines mapped onto themselves
-  (`cell.reference.test.ts`).
 - **Elements and the asymmetric unit as data** (#137 F2, F3, decided by Thomas on 2026-11-22; see
   also #110 items 12 and 13, and #121 step 10b): `symmetryElements(key, { box })` gives each element
   once modulo the lattice, the centring included (rotation points in [0, 1)²; lines as a point and a
@@ -1053,12 +907,18 @@ while implementing gets its own note here.
   holds it. Chosen while implementing: the point of a line is where it crosses y = 0 (x = 0 for a
   line along a), as in the descriptions of the operations, and of a class the translate whose point
   lies nearest to 0 from above; a box is its two corners, a line or a point allowed, at most a million
-  rotation points. The ITC baseline pins keep the old shape
-  through the box of the cell, clipped in the test, so they stay unchanged.
+  rotation points. Exact rationals inside, as the rest of the module (`src/spaceGroups/cell.ts`).
+  Checked against print (`cell.reference.test.ts`): the printed vertices (hexagonal groups) and the
+  printed inequalities read as text; centres and mirror lines from the Wyckoff positions (no free
+  parameter and a rotation; one free parameter and a mirror) with their lattice translates; every
+  printed glide; all lines also derived independently from the printed general position (ITA
+  prints no glide line of p4mm, p3m1, p31m, p6mm), in a box exactly; and from the group alone the
+  area 1/|G|, one image of a general point inside, each line the element of an operation, the
+  lines mapped onto themselves.
 - **The symbol of a plane group** (#137 F4, the part for 0.11, decided by Thomas on 2026-11-22;
   see also #97 and #121 step 10c): `symbol(key, { form: 'short' | 'full' })` of `symcrys/plane` takes
-  the key of a plane group too, and the field `fullSymbol` of `planeGroup` goes, so that a symbol
-  is asked for in one way in every entry point. The full symbol has its positions separated by
+  the key of a plane group too, and `planeGroup` has no field of a symbol beside its key, so that a
+  symbol is asked for in one way in every entry point. The full symbol has its positions separated by
   spaces, as in the other entry points (Thomas, 2026-11-24: `p 1 m 1`, and later `P 1 21/c 1` for
   the space groups). Chosen while implementing: a plane point group, for which ITA prints no other
   full symbol (Ch. 3.2, p. 721; Table 3.2.3.1), gives its symbol spaced (`3 m 1`). `isPlaneGroupKey`, `findPlaneGroup` and
@@ -1078,52 +938,37 @@ while implementing gets its own note here.
   fails for `m`, since no setting of the class `m` has its mirror normal to a, as pm has
   (`-x,y`); a test checks that every plane group's linear parts are its point group.
 - **The API of `symcrys/plane`** (Thomas, 2026-11-22, #31, asked with proposals and a
-  recommendation): **`planeGroup(key)`** names the function that gives a plane group (number,
-  symbols _(the full one by `symbol` since #121 step 10c)_, point group, system, centring), not `spaceGroup` as recommended (one name for plane and
-  space): a name that says what it is serves teaching and the apps; `symcrys/space` will have
-  `spaceGroup`. The other names come from the other entry points (`operations`, `generators`,
-  `wyckoffPositions`, `siteSymmetry`, `orbit`, `describeOperations`) and take the key of a plane
-  group or of a plane point group. **The plane point groups in the lattice basis** (integer 2 × 2
-  matrices, the type of the plane groups, so that the point group of a plane group is its linear
-  part), and `3m` in two settings, `3m1` and `31m`, as in p3m1 and p31m. **Asymmetric unit and
-  symmetry elements in the cell as numbers in symcrys**: the asymmetric unit as inequalities
-  (coefficients of a·x + b·y ≤ c) with its vertices, the elements as rotation centres with their
-  order and lines with kind, glide vector and segment in the cell [0, 1]², so that the calculation
-  is in one place for all apps; the segment is the part nearest the drawing that still is geometry
-  _(replaced in #121 step 10b, #137 F2: lines as a point and a direction, once modulo the lattice or
-  in a box; "Elements and the asymmetric unit as data" above)_.
-  **Python:** `matrix` float64 by the fixed rule, as for the point groups _(int64 in `Operations` since
-  #121 step 12b)_; `translation` float64.
-  Asked in a second round (Thomas, 2026-11-22, #31, all four recommendations taken): **functions of a
-  point take the key**, `siteSymmetry(key, point)`, `wyckoffPositionOf(key, point)`,
-  `orbit(key, point)` with `{ tolerance }` (the site symmetry needs the group modulo the lattice;
-  arbitrary lists of operations belong to the determination); **names** `asymmetricUnit(key)` and
-  `symmetryElements(key)`, ITA's terms; **plane point groups** with ten keys as in ITA Table 3.2.1.1
-  and `3m` in the settings 1 = `3m1` and 2 = `31m` (`{ setting }`, `pointGroup`, `symbol`, as in
-  `symcrys`); their **positions and edge forms** (ITA Table 3.2.3.1) later, #81. Chosen while
-  implementing (PR #82): the Python layer converts the results of `symcrys.plane` itself _(by the
-  schema of the generator since #121 step 12a, with the same dtypes)_ (a translation,
-  point, vertex or segment _(no segment since #121 step 10b)_ float64 even where its entries are integers; a direction of a line int64,
-  although `direction` is a float key of the fixed rule, which means a Cartesian vector there); a
-  Wyckoff position gives all printed coordinates of its (0,0)+ set (`coordinates`, a list), since ITA
-  prints them all for the plane groups; fields and functions as in `symcrys` where the notion is the
-  same (`crystalSystem`, `settings(key)` as a list of settings with `index`, `symbol`, `default` _(`isDefault` since #121 step 7d)_,
-  `wyckoffPositionOf` giving the same record as `wyckoffPositions`; review of PR #82). Asked in a third round (Thomas,
-  2026-11-22, #84, #85; recommendations taken): **`describeOperationsOf(operations)`** describes any
-  list of operations of the plane, the name of the other entry points for the same notion; a
-  translation is read as a fraction with a denominator of at most 12, within 10⁻⁹ _(within the
-  tolerance since #121 step 8a)_ (chosen while
-  implementing, as proposed in the question). **`normal`** _(sign: #107, #114; named `axis` since #121 step 7d, #137 C3)_ of a mirror or glide line, its symmetry
-  direction in the lattice basis (ITA Table 2.1.3.1), in the descriptions and in each line of
-  `symmetryElements`, so that an application can assign a line to a position of the symbol without a
-  metric. **Snapping** onto the nearest Wyckoff position by the distance to the position, the most
-  special first, gets a function of its own, `snapToWyckoffPosition(key, point, { tolerance })` (#85), rather
-  than an option of `wyckoffPositionOf`, which keeps its criterion (the distance of the images).
-- **Print anchor: ITA 6th edition (2016), Chapter 2.2** _(The reference edition and its exception are
-  stated in "Pure ITC" above.)_ (#31, asked together with the four
-  questions): the 6th edition is the reference of symcrys for what it holds (`docs/conventions.md`,
-  "Sources"); for the crystal classes only the order of the operations, the selected generators and the
-  symbols of the operations come from the space-group tables of the 5th edition (Part 7). The
+  recommendation): **`planeGroup(key)`** names the function that gives a plane group (number, point
+  group, system, centring, origin; the symbols by `symbol`), not `spaceGroup` as recommended (one
+  name for plane and space): a name that says what it is serves teaching and the apps;
+  `symcrys/space` will have `spaceGroup`. The other names come from the other entry points
+  (`operations`, `generators`, `wyckoffPositions`, `siteSymmetry`, `orbit`, `describeOperations`)
+  and take the key of a plane group or of a plane point group. **The plane point groups in the
+  lattice basis** (integer 2 × 2 matrices, the type of the plane groups, so that the point group of
+  a plane group is its linear part), and `3m` in two settings, `3m1` and `31m`, as in p3m1 and
+  p31m. **Asymmetric unit and symmetry elements as numbers in symcrys**, so that the calculation is
+  in one place for all apps ("Elements and the asymmetric unit as data"). Asked in a second round
+  (Thomas, 2026-11-22, #31, all four recommendations taken): **functions of a point take the key**,
+  `siteSymmetry(key, point)`, `wyckoffPosition(key, point)`, `orbit(key, point)` with
+  `{ tolerance }` (the site symmetry needs the group modulo the lattice; arbitrary lists of
+  operations belong to the determination); **names** `asymmetricUnit(key)` and
+  `symmetryElements(key)`, ITA's terms; **plane point groups** with ten keys as in ITA Table
+  3.2.1.1 and `3m` in the settings 1 = `3m1` and 2 = `31m` (`{ setting }`, `pointGroup`, `symbol`,
+  as in `symcrys`); their **positions and edge forms** (ITA Table 3.2.3.1) later, #81. Chosen while
+  implementing (PR #82): a Wyckoff position gives all printed coordinates of its (0,0)+ set
+  (`coordinates`, a list), since ITA prints them all for the plane groups; fields and functions as
+  in `symcrys` where the notion is the same (`crystalSystem`, `settings(key)` as a list of settings
+  with `index`, `symbol`, `isDefault`; review of PR #82). In Python a translation, a point and a
+  vertex are float64 even where their entries are integers, a direction of a line int64 (the plane
+  list of `api.json`, "arrays"). Asked in a third round (Thomas, 2026-11-22, #84, #85;
+  recommendations taken): **`describeOperationsOf(operations)`** describes any list of operations
+  of the plane, the name of the other entry points for the same notion; a translation is read as a
+  fraction with a denominator of at most 12, within the tolerance. **`axis`** of a mirror or glide
+  line, its symmetry direction in the lattice basis (ITA Table 2.1.3.1; sign: #107, #114), in the
+  descriptions and in each line of `symmetryElements`, so that an application can assign a line to a
+  position of the symbol without a metric.
+- **Print anchor: ITA 6th edition (2016), Chapter 2.2** (#31, asked together with the four
+  questions; the reference edition and its exception: "Pure ITC"). The
   2016 volume in Zotero (`7NZ258UB`) holds Chapters 2.1 (`9W72G6EC`) and 3.2 (`Y6Z8P8NR`), and
   Thomas added Chapter 2.2 on 2026-11-22 as one PDF per plane group (attachments
   `sgtable2o2o001` to `sgtable2o2o017`); plane group n is printed on p. 175 + n (checked at 7, 8, 9
