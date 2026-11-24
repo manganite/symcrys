@@ -59,6 +59,13 @@ All notable changes to symcrys are recorded here. The format follows
 
 ### Changed
 
+- **Python: the modules are generated from the TypeScript API** (#99, #137 H2, #121 step 12a):
+  `symcrys`, `symcrys.magnetic` and `symcrys.plane` are written by `scripts/python-api.mjs`, with a
+  TypedDict for every record a function returns (`PointGroup`, `WyckoffPosition`, `SiteSymmetry`,
+  …) and a Literal type for every named union of strings (`CrystalSystem`, `LatticeSystem`, …), all
+  in `__all__`. The values are as before (type, dtype and shape of every result checked over all
+  keys and settings). Renamed: `symcrys.plane.Operation` is `PlaneOperation`, as in TypeScript.
+
 - **`holohedry` takes a lattice system** (#137 G1, #113, #121 step 11a), not a crystal system, as
   ITA defines the holohedry: `holohedry('hexagonal')` is `6/mmm`, `holohedry('rhombohedral')` is
   `-3m`, and `holohedry('trigonal')` is an error. Before, `holohedry('trigonal')` gave `-3m` and the

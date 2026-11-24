@@ -1,0 +1,165 @@
+{
+  "//": "The hand-written part of the generated Python layer (scripts/python-api.mjs, #99, #121 step 12a): how TypeScript types become Python types and NumPy arrays, and what only Python has. Everything else comes from the TypeScript entry points and their TSDoc.",
+  "modules": {
+    "symcrys": {
+      "ts": "index",
+      "py": "packages/python/src/symcrys/__init__.py",
+      "prefix": "",
+      "docstring": "symcrys: crystallographic symmetry calculations, from Python.\n\nA thin layer over the TypeScript library symcrys of the same version, which runs in an embedded\nJavaScript engine (quickjs-ng). Every function here calls the function of the same name in the\nlibrary (camelCase there, snake_case here) and returns its result as plain Python data, matrices\nand vectors as NumPy arrays, records as dicts typed by the TypedDicts of the module (rules in\n``symcrys._convert``). The conventions, frames and print\nsources are documented once, for both languages: https://manganite.github.io/symcrys/conventions.html\n\nThis module is the crystallographic API: the 32 crystal classes, without time reversal. The\nmagnetic point groups, time-odd tensors and operations with time reversal are in\n``symcrys.magnetic``, under the same function names; there ``\"32\"`` is the white group, and a\ncrystal without magnetic order has the grey group of its class (quartz: ``\"321'\"``). A question\nthat involves time reversal raises ``SymcrysError`` here (docs/conventions.md, \"Two entry points\").\nThe plane groups and plane point groups are in ``symcrys.plane``.\n\nEach call costs about a millisecond or more (the forms of rank-4 tensors up to a few tenths of a\nsecond); fetch operations or forms once and compute with NumPy, rather than calling in a loop.\n",
+      "version": true,
+      "submodules": ["magnetic", "plane"]
+    },
+    "symcrys.magnetic": {
+      "ts": "magnetic",
+      "py": "packages/python/src/symcrys/magnetic.py",
+      "prefix": "magnetic.",
+      "docstring": "symcrys.magnetic: the magnetic API, for the 122 magnetic point groups, with time reversal.\n\nThe functions have the names they have in ``symcrys``, the crystallographic API; the module decides\nwhich reading a key has. Here a key of type ``'I'`` (``\"32\"``) is a white (colourless) group: the\nsymmetry of a magnetically ordered crystal in which time reversal does not occur at all. A crystal\nwithout magnetic order has the grey group of its class (quartz: ``\"321'\"``), which allows no\ntime-odd property. Operations carry ``time_reversal``, a tensor specification ``time_parity``\n(docs/conventions.md, \"Two entry points\").\n"
+    },
+    "symcrys.plane": {
+      "ts": "plane",
+      "py": "packages/python/src/symcrys/plane.py",
+      "prefix": "plane.",
+      "docstring": "symcrys.plane: the plane API, for the 17 plane groups and the 10 plane point groups.\n\nCoordinates and operations are in the lattice basis (a, b), as ITA (6th ed., 2016) prints them in\nChapter 2.2. Keys are the symbols ITA prints: ``\"p2mg\"``, ``\"c2mm\"`` for the plane groups,\n``\"2mm\"``, ``\"3m\"`` for the plane point groups. A matrix is a float64 array of shape (2, 2) with\ninteger entries, a translation, a point and a vertex float64 arrays of shape (2,); a direction of a\nline is an int64 array of shape (2,) (docs/conventions.md, \"Plane groups\").\n"
+    }
+  },
+  "types": {
+    "//": "TypeScript type names with a fixed Python reading: 'str' for keys, an array shape for vectors and matrices, 'int' for an integer type.",
+    "PointGroupKey": "str",
+    "MagneticPointGroupKey": "str",
+    "PlaneGroupKey": "str",
+    "K": "str",
+    "TensorRank": "int",
+    "Mat3": [3, 3],
+    "Vec3": [3],
+    "Hkl": [3],
+    "Uvw": [3],
+    "FourIndices": [4]
+  },
+  "literals": {
+    "//": "Literal types whose values are the keys of a constant of the entry point.",
+    "TensorPropertyName": "TENSOR_PROPERTIES"
+  },
+  "arrays": {
+    "//": "The dtype of an array of numbers in a result, by the name of its field: float64 or int64. A field of arrays not listed is an error of the generator. symcrys.plane has its own list, since there `direction` is a lattice direction.",
+    "symcrys": {
+      "float64": ["matrix", "cartesian", "direction", "basis", "relations", "plane"],
+      "int64": ["lattice", "hkl", "uvw", "operations", "parameters", "siteSymmetryOperations"]
+    },
+    "symcrys.plane": {
+      "float64": ["matrix", "translation", "location", "glide", "point", "vertices", "centring"],
+      "int64": ["direction", "axis", "operations", "edges", "inequalities"]
+    }
+  },
+  "shapes": {
+    "//": "The shape of an array field where the nested lists may be empty (-1: any length).",
+    "symcrys.plane": {
+      "matrix": [2, 2],
+      "translation": [2],
+      "location": [2],
+      "glide": [2],
+      "point": [2],
+      "vertices": [-1, 2],
+      "centring": [-1, 2],
+      "inequalities": [-1, 3],
+      "direction": [2],
+      "axis": [2]
+    }
+  },
+  "numbers": {
+    "//": "Number fields and option properties by name: int or float.",
+    "int": [
+      "order",
+      "n",
+      "index",
+      "setting",
+      "position",
+      "rotation",
+      "rotoinversion",
+      "multiplicity",
+      "number",
+      "faces",
+      "formType",
+      "pointGroupSetting"
+    ],
+    "float": [
+      "a",
+      "b",
+      "c",
+      "alpha",
+      "beta",
+      "gamma",
+      "distance",
+      "tolerance",
+      "minVolumeRatio",
+      "EPSILON",
+      "angleBetweenDirections",
+      "angleBetweenPlanes"
+    ]
+  },
+  "functions": {
+    "//": "What a function's TypeScript type does not say: the dtype of an array it returns, the keys an operation must have, an argument converted otherwise.",
+    "faceNormal": {
+      "returns": "float64"
+    },
+    "rotateTensor": {
+      "returns": "float64",
+      "args": {
+        "tensor": "_shared.array(tensor, \"tensor\", np.float64).reshape(-1)",
+        "rotation": "_shared.array(rotation, \"rotation\")"
+      }
+    },
+    "latticeBasis": {
+      "returns": "float64"
+    },
+    "latticeFromParameters": {
+      "returns": "float64"
+    },
+    "metricTensor": {
+      "returns": "float64"
+    },
+    "reciprocalBasis": {
+      "returns": "float64"
+    },
+    "zoneAxis": {
+      "returns": "int64"
+    },
+    "millerIndices": {
+      "returns": "int64"
+    },
+    "reduceIndices": {
+      "returns": "int64"
+    },
+    "planeToFourIndices": {
+      "returns": "int64"
+    },
+    "planeFromFourIndices": {
+      "returns": "int64"
+    },
+    "directionToFourIndices": {
+      "returns": "int64"
+    },
+    "directionFromFourIndices": {
+      "returns": "int64"
+    },
+    "residualOperations": {
+      "operationKeys": ["matrix"],
+      "listOf": "Operation"
+    },
+    "tensorForm": {
+      "custom": "tensor_form"
+    },
+    "tensorFormOf": {
+      "custom": "tensor_form"
+    }
+  },
+  "constants": {
+    "LATTICE_SYMMETRY_DIRECTIONS": {
+      "custom": "lattice_symmetry_directions",
+      "type": "dict[str, list[NDArray[np.int64]]]"
+    }
+  },
+  "plane": {
+    "operationKeys": ["matrix", "translation"],
+    "point": "_shared.plane_point(point)"
+  }
+}

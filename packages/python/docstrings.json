@@ -1,5 +1,5 @@
 {
-  "//": "What only Python has, added to the docstrings that scripts/python-docstrings.mjs writes from the TSDoc comments (#29): the shapes and dtypes of the NumPy arrays. Keys are the Python names; a function gets {type, doc} as its Returns section, a constant a string as its last paragraph.",
+  "//": "What only Python has, added to the docstrings that scripts/python-api.mjs writes from the TSDoc comments (#29): the shapes and dtypes of the NumPy arrays. Keys are the Python names; a function gets {type, doc} as its Returns section, a constant a string as its last paragraph.",
   "symcrys": {
     "LATTICE_SYMMETRY_DIRECTIONS": "In Python: family → one int64 array of shape (n, 3) per position, the n directions [uvw] as rows.",
     "operations": {

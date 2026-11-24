@@ -1,45 +1,15 @@
-"""What the two entry points of the Python layer share: types and the call into the library."""
+"""What the generated modules of the Python layer share: the checks of the arguments and the call
+into the library (scripts/python-api.mjs, #99)."""
 
 from __future__ import annotations
 
-from typing import Any, Literal, Mapping, TypedDict
+from typing import Any, Mapping
 
 import numpy as np
 from numpy.typing import NDArray
 
 from . import _engine
-from ._convert import from_js, to_js
-
-TensorKind = Literal["polar", "axial"]
-IntrinsicSymmetry = Literal[
-    "none",
-    "symmetric-first-pair",
-    "symmetric-last-pair",
-    "symmetric-pairs",
-    "symmetric-pairs-exchangeable",
-    "antisymmetric",
-    "totally-symmetric",
-]
-
-MAGNETIC = "magnetic."
-"""Prefix of the names of the magnetic API at the boundary to the library (``magnetic.tensorForm``)."""
-
-
-class TensorForm(TypedDict):
-    rank: int
-    basis: NDArray[np.float64]
-    """Of shape (number of parameters, 3**rank), in reduced row echelon form; flat index in C order."""
-    parameters: NDArray[np.int64]
-    """Of shape (number of parameters, rank); the components that are the free parameters."""
-    relations: NDArray[np.float64]
-    """Of shape (3**rank - number of parameters, 3**rank); rows r with r @ t = 0 for every allowed t."""
-
-
-class SiteSymmetry(TypedDict):
-    operations: NDArray[np.int64]
-    direction: NDArray[np.float64]
-    multiplicity: int
-    general: bool
+from ._convert import convert as _convert_schema, to_js
 
 
 def options(**kwargs: Any) -> dict[str, Any]:
@@ -85,32 +55,8 @@ def operation_list(operations: Any, keys: tuple[str, ...] = ("cartesian",)) -> l
     return [dict(op) for op in ops]
 
 
-def call(name: str, *args: Any, floats: bool = False) -> Any:
-    """Calls the function ``name`` of the library (``magnetic.…`` for the magnetic API)."""
-    return from_js(_engine.invoke(name, *(to_js(a) for a in args)), floats=floats)
-
-
 def value(name: str) -> Any:
     return _engine.value(name)
-
-
-def lattice_symmetry_directions(name: str) -> dict[str, list[NDArray[np.int64]]]:
-    return {
-        family: [np.asarray(d, dtype=np.int64).reshape(-1, 3) for d in positions]
-        for family, positions in _engine.value(name).items()
-    }
-
-
-def form(result: dict[str, Any]) -> TensorForm:
-    rank = int(result["rank"])
-    dim = 3**rank
-    n = len(result["basis"])
-    return {
-        "rank": rank,
-        "basis": np.asarray(result["basis"], dtype=np.float64).reshape(n, dim),
-        "parameters": np.asarray(result["parameters"], dtype=np.int64).reshape(n, rank),
-        "relations": np.asarray(result["relations"], dtype=np.float64).reshape(dim - n, dim),
-    }
 
 
 def spec(spec_or_name: Mapping[str, Any] | str) -> Any:
@@ -136,7 +82,20 @@ def mapping(value: Any, what: str) -> dict[str, Any]:
     return dict(value)
 
 
-def site(result: Any) -> SiteSymmetry:
-    typed: SiteSymmetry = result
-    typed["operations"] = np.asarray(typed["operations"], dtype=np.int64)
-    return typed
+def call(name: str, *args: Any) -> Any:
+    """Calls the function ``name`` of the library (``magnetic.…``, ``plane.…`` for the other entry
+    points) and returns its result as JSON gives it; the generated modules convert it (``convert``)."""
+    return _engine.invoke(name, *(to_js(a) for a in args))
+
+
+def convert(value: Any, schema: tuple[Any, ...]) -> Any:
+    """A result converted by its schema (``_convert.convert``)."""
+    return _convert_schema(value, schema)
+
+
+def plane_point(point: Any) -> list[float]:
+    """A point of the plane: two coordinates, or SymcrysError."""
+    p = array(point, "point", np.float64)
+    if p.shape != (2,):
+        raise _engine.SymcrysError(f"A point of the plane has two coordinates, not an array of shape {p.shape}", "RangeError")
+    return [float(v) for v in p]

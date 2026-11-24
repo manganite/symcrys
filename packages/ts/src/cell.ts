@@ -121,22 +121,24 @@ function checkEdges(p: LatticeParameters): void {
  * axis b, b lies along y (docs/conventions.md, "Cell, metric and indices"). The basis is
  * right-handed. Throws a RangeError for an edge that is not positive and for angles that give no cell.
  */
-export function latticeFromParameters(p: LatticeParameters): Mat3 {
-  checkEdges(p);
-  if (!isValidCell(p)) {
-    throw new RangeError(`latticeFromParameters: angles ${p.alpha}°, ${p.beta}°, ${p.gamma}° give no cell`);
+export function latticeFromParameters(parameters: LatticeParameters): Mat3 {
+  checkEdges(parameters);
+  if (!isValidCell(parameters)) {
+    throw new RangeError(
+      `latticeFromParameters: angles ${parameters.alpha}°, ${parameters.beta}°, ${parameters.gamma}° give no cell`,
+    );
   }
-  const ca = cosDeg(p.alpha);
-  const cb = cosDeg(p.beta);
-  const cg = cosDeg(p.gamma);
+  const ca = cosDeg(parameters.alpha);
+  const cb = cosDeg(parameters.beta);
+  const cg = cosDeg(parameters.gamma);
   const sg = Math.sqrt(1 - cg * cg);
-  const volumeRatio = Math.sqrt(radicand(p));
+  const volumeRatio = Math.sqrt(radicand(parameters));
   // columns: a = (a, 0, 0), b = (b cos γ, b sin γ, 0), c = (c cos β, c (cos α − cos β cos γ)/sin γ, c V/(abc sin γ))
-  const cy = (p.c * (ca - cb * cg)) / sg;
-  const cz = (p.c * volumeRatio) / sg;
+  const cy = (parameters.c * (ca - cb * cg)) / sg;
+  const cz = (parameters.c * volumeRatio) / sg;
   return deepFreeze([
-    [p.a + 0, p.b * cg + 0, p.c * cb + 0],
-    [0, p.b * sg + 0, cy + 0],
+    [parameters.a + 0, parameters.b * cg + 0, parameters.c * cb + 0],
+    [0, parameters.b * sg + 0, cy + 0],
     [0, 0, cz + 0],
   ]);
 }

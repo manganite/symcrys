@@ -431,25 +431,25 @@ export function checkedSpec(spec: TensorSpec | TensorPropertyName): {
 export function rotateTensor(
   tensor: readonly number[],
   rotation: Mat3,
-  specOrName: TensorSpec | TensorPropertyName,
+  spec: TensorSpec | TensorPropertyName,
   options?: ToleranceOptions,
 ): readonly number[] {
   checkOptions(options, TOLERANCE_KEYS, 'rotateTensor');
-  const spec = specOf(specOrName);
-  checkSpec(spec);
+  const resolved = specOf(spec);
+  checkSpec(resolved);
   if (!Array.isArray(rotation) || rotation.length !== 3) {
     throw new RangeError(`The rotation must be a 3 × 3 matrix, not ${shown(rotation)}`);
   }
   rotation.forEach((row, i) => checkNumbers(row, 3, `Row ${i} of the rotation`));
   checkOrthogonalWithin(rotation, 'The rotation', toleranceOf(options, 'operations'));
-  const { rank } = spec;
+  const { rank } = resolved;
   const dim = 3 ** rank;
   if (!Array.isArray(tensor) || tensor.length !== dim)
     throw new RangeError(`A tensor of rank ${rank} has ${dim} components, not ${shown(tensor)}`);
   checkNumbers(tensor, dim, 'The tensor');
   const d = digits(rank);
   const m = rotation.flat();
-  const f = spec.kind === 'axial' ? Math.sign(det(rotation)) : 1;
+  const f = resolved.kind === 'axial' ? Math.sign(det(rotation)) : 1;
   const out = new Array<number>(dim).fill(0);
   for (let o = 0; o < dim; o++) {
     let acc = 0;
