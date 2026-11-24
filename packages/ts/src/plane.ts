@@ -12,7 +12,7 @@
 
 import { TOLERANCE_KEYS, checkOptions, shown } from './checks.js';
 import { describePlaneOperation } from './spaceGroups/describe.js';
-import { planeAsymmetricUnit, planeCellElements } from './spaceGroups/cell.js';
+import { planeAsymmetricUnit, planeElements, planeElementsInBox } from './spaceGroups/cell.js';
 import { toPlain, type ExactOperation } from './spaceGroups/affine.js';
 import { type PlaneSystem } from './spaceGroups/planeGroupData.js';
 import {
@@ -208,23 +208,28 @@ export interface SiteSymmetry {
   readonly general: boolean;
 }
 
-/** The asymmetric unit of a plane group, a convex polygon in the lattice basis. */
+/** The asymmetric unit of a plane group: the printed inequalities, and the convex polygon they bound (lattice basis). */
 export interface AsymmetricUnit {
-  /** Its vertices, counter-clockwise (a towards b), starting at the lowest (smallest y, then x). */
-  readonly vertices: readonly (readonly number[])[];
-  /** Per edge, the inequality [a, b, c] for a·x + b·y ≤ c (integers, no common factor); entry i holds the edge from vertex i to vertex i + 1. */
+  /**
+   * The inequalities as ITA prints them, in printed order, each [a, b, c] for a·x + b·y ≤ c
+   * (integers, no common factor), also those that hold no edge of the polygon (p3: x ≤ 2/3).
+   */
   readonly inequalities: readonly (readonly number[])[];
+  /** The vertices of the polygon, counter-clockwise (a towards b), starting at the lowest (smallest y, then x). */
+  readonly vertices: readonly (readonly number[])[];
+  /** Per edge, from vertex i to vertex i + 1, the index into `inequalities` of the inequality that holds it. */
+  readonly edges: readonly number[];
 }
 
-/** A rotation point in the cell (ITA 2016 Table 2.1.2.1, p. 145: the symmetry element of a rotation in the plane). */
+/** A rotation point (ITA 2016 Table 2.1.2.1, p. 145: the symmetry element of a rotation in the plane). */
 export interface RotationPoint {
   /** The highest n of an n-fold rotation about it. */
   readonly n: number;
-  /** Its position in [0, 1]². */
+  /** Its location, lattice basis. */
   readonly point: readonly number[];
 }
 
-/** A mirror or glide line: the part of it in the cell. */
+/** A mirror or glide line, as a point and a direction (lattice basis). */
 export interface SymmetryLine {
   /** `'mirror'` or `'glide'`. */
   readonly kind: 'mirror' | 'glide';
@@ -234,16 +239,25 @@ export interface SymmetryLine {
   readonly axis: readonly number[];
   /** For a glide line its glide vector s·direction, 0 < s < 1; for a mirror line (0, 0). */
   readonly glide: readonly number[];
-  /** The two ends of the segment of the line in the cell [0, 1]², in the order of `direction`. */
-  readonly segment: readonly (readonly number[])[];
+  /** A point of the line: its intersection with y = 0, or with x = 0 for a line along a. */
+  readonly point: readonly number[];
 }
 
-/** The symmetry elements of a plane group in its conventional cell [0, 1]², boundary included. */
+/** Symmetry elements of a plane group. */
 export interface SymmetryElements {
   /** The rotation points, by descending n, then by y and x. */
   readonly rotationPoints: readonly RotationPoint[];
-  /** The mirror and glide lines that cross the cell, by direction, then by the start of the segment (y, then x). */
+  /** The mirror and glide lines, by direction, then by their point (x on y = 0, or y on x = 0), mirror before glide. */
   readonly lines: readonly SymmetryLine[];
+}
+
+/** Options of `symmetryElements`. */
+export interface SymmetryElementsOptions {
+  /**
+   * A box of the plane, lattice basis, as its corners [[x₀, y₀], [x₁, y₁]] with x₀ < x₁, y₀ < y₁:
+   * all lattice translates of the elements that meet it (boundary included), the lines not clipped.
+   */
+  readonly box?: readonly (readonly number[])[];
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -583,24 +597,50 @@ export function orbit(
 }
 
 /**
- * The asymmetric unit of a plane group as ITA prints it: a convex polygon given by its vertices and,
- * per edge, the printed inequality that holds it. Throws a RangeError for an unknown key.
+ * The asymmetric unit of a plane group as ITA prints it (#137 F3): the printed inequalities, all of
+ * them in printed order (a double inequality and a `min` give one each), and the convex polygon
+ * they bound, with its vertices and, per edge, the index of the inequality that holds it. Throws a
+ * RangeError for an unknown key.
  */
 export function asymmetricUnit(key: PlaneGroupKey): AsymmetricUnit {
   const unit = planeAsymmetricUnit(groupKey(key, 'asymmetricUnit'));
   return Object.freeze({
-    vertices: Object.freeze(unit.vertices.map((v) => Object.freeze(numbers(v)))),
     inequalities: Object.freeze(unit.inequalities.map((q) => Object.freeze([...q]))),
+    vertices: Object.freeze(unit.vertices.map((v) => Object.freeze(numbers(v)))),
+    edges: Object.freeze([...unit.edges]),
   });
 }
 
 /**
- * The symmetry elements of a plane group in its conventional cell [0, 1]², boundary included:
- * every rotation point with the highest n of a rotation about it, and every mirror and glide
- * line that crosses the cell, with the segment inside it. Throws a RangeError for an unknown key.
+ * The symmetry elements of a plane group (#137 F2). Without a box, each element once modulo the
+ * lattice translations, as ITA describes them: every rotation point in [0, 1)² with the highest n
+ * of a rotation about it, and every mirror and glide line, as a point and a direction (a line that
+ * is a mirror and a glide line appears as both). With `{ box }`, all their lattice translates that
+ * meet the box, boundary included; the lines are not clipped, since clipping is drawing. Throws a
+ * RangeError for an unknown key and a box that is not two corners [[x₀, y₀], [x₁, y₁]] of finite
+ * numbers with x₀ < x₁ and y₀ < y₁.
  */
-export function symmetryElements(key: PlaneGroupKey): SymmetryElements {
-  const e = planeCellElements(groupKey(key, 'symmetryElements'));
+export function symmetryElements(key: PlaneGroupKey, options?: SymmetryElementsOptions): SymmetryElements {
+  checkOptions(options, ['box'], 'symmetryElements');
+  const k = groupKey(key, 'symmetryElements');
+  const box = options?.box;
+  let e;
+  if (box === undefined) e = planeElements(k);
+  else {
+    const ok =
+      Array.isArray(box) &&
+      box.length === 2 &&
+      box.every(
+        (c) => Array.isArray(c) && c.length === 2 && c.every((v) => typeof v === 'number' && Number.isFinite(v)),
+      );
+    if (!ok || !(box[0][0] < box[1][0] && box[0][1] < box[1][1])) {
+      throw new RangeError(`A box is two corners [[x0, y0], [x1, y1]] with x0 < x1 and y0 < y1, not ${shown(box)}`);
+    }
+    e = planeElementsInBox(k, [
+      [box[0][0], box[0][1]],
+      [box[1][0], box[1][1]],
+    ]);
+  }
   return Object.freeze({
     rotationPoints: Object.freeze(
       e.rotationPoints.map((r) => Object.freeze({ n: r.n, point: Object.freeze(numbers(r.point)) })),
@@ -612,7 +652,7 @@ export function symmetryElements(key: PlaneGroupKey): SymmetryElements {
           direction: Object.freeze([...l.direction]),
           axis: Object.freeze([...l.axis]),
           glide: Object.freeze(numbers(l.glide)),
-          segment: Object.freeze(l.segment.map((p) => Object.freeze(numbers(p)))),
+          point: Object.freeze(numbers(l.point)),
         }),
       ),
     ),

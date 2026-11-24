@@ -28,23 +28,25 @@ import {
 /** An inequality a·x + b·y ≤ c with integer coefficients without a common factor. */
 export type Inequality = readonly [a: number, b: number, c: number];
 
-/** The asymmetric unit of a plane group, a convex polygon in the lattice basis. */
+/** The asymmetric unit of a plane group: the printed inequalities, and the convex polygon they bound. */
 export interface AsymmetricUnit {
-  /** Its vertices, counter-clockwise in the lattice basis (a towards b), starting at the vertex with the smallest y, then x. */
-  readonly vertices: readonly (readonly Rational[])[];
-  /** Its edges as inequalities: inequality i holds the edge from vertex i to vertex i + 1. */
+  /** The inequalities as printed, in printed order, also those that hold no edge (p3: x ≤ 2/3). */
   readonly inequalities: readonly Inequality[];
+  /** The vertices of the polygon, counter-clockwise in the lattice basis (a towards b), starting at the vertex with the smallest y, then x. */
+  readonly vertices: readonly (readonly Rational[])[];
+  /** Per edge, from vertex i to vertex i + 1, the index into `inequalities` of the one that holds it. */
+  readonly edges: readonly number[];
 }
 
-/** A rotation point in the cell (ITA 2016 Table 2.1.2.1, p. 145: the symmetry element of a rotation in the plane). */
+/** A rotation point (ITA 2016 Table 2.1.2.1, p. 145: the symmetry element of a rotation in the plane). */
 export interface RotationPoint {
   /** The highest n of an n-fold rotation about it. */
   readonly n: number;
-  /** Its position in [0, 1]². */
+  /** Its location. */
   readonly point: readonly Rational[];
 }
 
-/** A mirror or glide line, the part of it in the cell. */
+/** A mirror or glide line, as a point and a direction. */
 export interface SymmetryLine {
   /** `'mirror'` or `'glide'`. */
   readonly kind: 'mirror' | 'glide';
@@ -54,17 +56,20 @@ export interface SymmetryLine {
   readonly axis: readonly [number, number];
   /** For a glide line: its glide vector s·direction with 0 < s < 1; for a mirror line (0, 0). */
   readonly glide: readonly Rational[];
-  /** The ends of the segment of the line in the cell [0, 1]², in the order of `direction`. */
-  readonly segment: readonly [readonly Rational[], readonly Rational[]];
+  /** A point of the line: its intersection with y = 0, or with x = 0 for a line along a. */
+  readonly point: readonly Rational[];
 }
 
-/** The symmetry elements of a plane group in the cell [0, 1]². */
+/** Symmetry elements of a plane group. */
 export interface CellElements {
   /** The rotation points, by descending n, then by y and x. */
   readonly rotationPoints: readonly RotationPoint[];
-  /** The mirror and glide lines with a segment of non-zero length in the cell, by direction, then by the start of the segment (y, then x). */
+  /** The mirror and glide lines, by direction, then by their point (x on y = 0, or y on x = 0), then mirror before glide. */
   readonly lines: readonly SymmetryLine[];
 }
+
+/** A box [x₀, y₀] – [x₁, y₁] of the plane, lattice basis, boundary included. */
+export type Box = readonly [readonly [number, number], readonly [number, number]];
 
 // ---------------------------------------------------------------------------------------------
 // Asymmetric unit
@@ -215,9 +220,10 @@ const samePoint = (p: readonly Rational[], q: readonly Rational[]): boolean =>
 const unitCache = new Map<string, AsymmetricUnit>();
 
 /**
- * The asymmetric unit of a plane group as ITA prints it, a convex polygon: its vertices and, for each
- * edge, the inequality a·x + b·y ≤ c that holds it. Printed inequalities that hold no edge are
- * left out. Frozen.
+ * The asymmetric unit of a plane group as ITA prints it (#137 F3): the printed inequalities
+ * a·x + b·y ≤ c, all of them in printed order (a double inequality and a `min` give one each), and
+ * the convex polygon they bound: its vertices and, per edge, the index of the inequality that holds
+ * it. Frozen.
  */
 export function planeAsymmetricUnit(key: string | number): AsymmetricUnit {
   const entry = planeGroupEntry(key);
@@ -225,15 +231,16 @@ export function planeAsymmetricUnit(key: string | number): AsymmetricUnit {
   if (!unit) {
     const printed = parseAsymmetricUnit(entry.asymmetricUnit);
     const vertices = polygon(printed);
-    const inequalities = vertices.map((p, i) => {
+    const edges = vertices.map((p, i) => {
       const q = vertices[(i + 1) % vertices.length];
-      const edge = printed.find((e) => excess(e, p)[0] === 0 && excess(e, q)[0] === 0);
-      if (!edge) throw new Error(`No printed inequality of ${entry.symbol} holds an edge`);
-      return Object.freeze(edge);
+      const edge = printed.findIndex((e) => excess(e, p)[0] === 0 && excess(e, q)[0] === 0);
+      if (edge < 0) throw new Error(`No printed inequality of ${entry.symbol} holds an edge`);
+      return edge;
     });
     unit = Object.freeze({
+      inequalities: Object.freeze(printed.map((e) => Object.freeze(e))),
       vertices: Object.freeze(vertices.map((v) => Object.freeze(v))),
-      inequalities: Object.freeze(inequalities),
+      edges: Object.freeze(edges),
     });
     unitCache.set(entry.symbol, unit);
   }
@@ -241,46 +248,20 @@ export function planeAsymmetricUnit(key: string | number): AsymmetricUnit {
 }
 
 // ---------------------------------------------------------------------------------------------
-// Symmetry elements in the cell
+// Symmetry elements
 
 const inCell = (p: readonly Rational[]): boolean => p.every((v) => v[0] >= 0 && v[0] <= v[1]);
 
 /**
  * The lattice shifts t, |t_i| ≤ 3, added to each coset representative (W, w), w in [0, 1). Enough to
- * reach every element that meets the cell: a centre p in [0, 1]² of (W, w + t) has
- * t = (I − W)p − w, and the entries of I − W (at most 2 on the diagonal, 1 off it) give
- * (I − W)p in [−2, 3]; a line through p in the cell, taken with its glide g along it reduced to
- * g = d/2 (in a plane group s is 0 or 1/2, and |d_i| ≤ 2, so |g_i| ≤ 1), has t = (I − W)p + g − w, where for a reflection (I − W)p lies in [−1, 2].
+ * reach every element that meets the cell [0, 1]², and so every element modulo the lattice: a centre
+ * p in [0, 1]² of (W, w + t) has t = (I − W)p − w, and the entries of I − W (at most 2 on the
+ * diagonal, 1 off it) give (I − W)p in [−2, 3]; a line through p in the cell, taken with its glide
+ * g along it reduced to g = d/2 (in a plane group s is 0 or 1/2, and |d_i| ≤ 2, so |g_i| ≤ 1), has
+ * t = (I − W)p + g − w, where for a reflection (I − W)p lies in [−1, 2].
  */
 const SHIFTS: Rational[][] = [];
 for (let i = -3; i <= 3; i++) for (let j = -3; j <= 3; j++) SHIFTS.push([r(i), r(j)]);
-
-/**
- * The segment of the line through p along d in [0, 1]², or undefined if it has no length there.
- * Exact: the parameter λ of p + λd is bounded by each coordinate.
- */
-function clip(
-  p: readonly Rational[],
-  d: readonly [number, number],
-): [readonly Rational[], readonly Rational[]] | undefined {
-  let lo: Rational | undefined;
-  let hi: Rational | undefined;
-  for (let k = 0; k < 2; k++) {
-    if (d[k] === 0) {
-      if (p[k][0] < 0 || p[k][0] > p[k][1]) return undefined;
-      continue;
-    }
-    // 0 ≤ p_k + λ d_k ≤ 1
-    const a = rational(-p[k][0], p[k][1] * d[k]);
-    const b = rational(p[k][1] - p[k][0], p[k][1] * d[k]);
-    const [l, h] = d[k] > 0 ? [a, b] : [b, a];
-    if (lo === undefined || toNumber(subtract(l, lo)) > 0) lo = l;
-    if (hi === undefined || toNumber(subtract(h, hi)) < 0) hi = h;
-  }
-  if (lo === undefined || hi === undefined || toNumber(subtract(hi, lo)) <= 0) return undefined;
-  const at = (lambda: Rational) => [add(p[0], scale(d[0], lambda)), add(p[1], scale(d[1], lambda))];
-  return [at(lo), at(hi)];
-}
 
 /** s mod 1 in [0, 1). */
 function frac(s: Rational): Rational {
@@ -288,27 +269,52 @@ function frac(s: Rational): Rational {
   return subtract(s, r(n));
 }
 
-const elementCache = new Map<string, CellElements>();
+/** A line: {x : (−d_y, d_x)·x = c} with its glide s·d; for a class, c as `classOffset` chooses it. */
+interface LineClass {
+  kind: 'mirror' | 'glide';
+  direction: [number, number];
+  axis: readonly [number, number];
+  s: Rational;
+  c: Rational;
+}
+
+/** The point of the line (d, c) on y = 0, or on x = 0 for a line along a. */
+function linePoint(d: readonly [number, number], c: Rational): Rational[] {
+  return d[1] !== 0 ? [rational(-c[0], c[1] * d[1]), ZERO] : [ZERO, rational(c[0], c[1] * d[0])];
+}
+
+/** The coordinate of that point that is not 0: where the line crosses y = 0 (or x = 0). */
+const lineParameter = (l: LineClass): number => {
+  const p = linePoint(l.direction, l.c);
+  return toNumber(l.direction[1] !== 0 ? p[0] : p[1]);
+};
 
 /**
- * The symmetry elements of a plane group in its conventional cell [0, 1]², boundary included: every
- * rotation point with the highest n of a rotation about it, and every mirror and glide line
- * that crosses the cell, with the segment inside it. A line that carries a glide is a glide line
- * with its shortest glide vector along the line (between 0 and the lattice vector). Frozen.
+ * The offset c of a line class, one for all its lattice translates: a translation by t changes c by
+ * (−d_y, d_x)·t, any integer, so the class is c modulo 1; of the translates the one is taken whose
+ * point on y = 0 (on x = 0 for a line along a) lies nearest to 0 from above, in [0, 1/|d_y|)
+ * (in [0, 1) for a line along a).
  */
-export function planeCellElements(key: string | number): CellElements {
+function classOffset(d: readonly [number, number], c: Rational): Rational {
+  const reduced = frac(c);
+  if (d[1] === 0) return reduced; // the point is (0, c/d_x) with d_x = 1
+  // x = −c/d_y; c' = c − m (m integer) moves x by m/d_y: take x in [0, 1/|d_y|).
+  const x = rational(-reduced[0], reduced[1] * d[1]);
+  const step = rational(1, Math.abs(d[1]));
+  const m = Math.floor(toNumber(x) / toNumber(step) + 1e-12);
+  const shifted = subtract(x, scale(m, step));
+  return rational(-shifted[0] * d[1], shifted[1]);
+}
+
+const classCache = new Map<string, { rotations: { n: number; point: Rational[] }[]; lines: LineClass[] }>();
+
+/** The elements of a plane group modulo the lattice: rotation points in [0, 1)², one translate of each line (`classOffset`). */
+function elementClasses(key: string | number) {
   const entry = planeGroupEntry(key);
-  const cached = elementCache.get(entry.symbol);
+  const cached = classCache.get(entry.symbol);
   if (cached) return cached;
-  const rotationPoints: { n: number; point: Rational[] }[] = [];
-  const lines: {
-    kind: 'mirror' | 'glide';
-    direction: [number, number];
-    axis: readonly [number, number];
-    s: Rational;
-    c: Rational;
-    segment: [readonly Rational[], readonly Rational[]];
-  }[] = [];
+  const rotations: { n: number; point: Rational[] }[] = [];
+  const lines: LineClass[] = [];
   for (const op of planeGroupOperations(entry.symbol)) {
     for (const t of SHIFTS) {
       const shifted: ExactOperation = {
@@ -317,10 +323,11 @@ export function planeCellElements(key: string | number): CellElements {
       };
       const d = describePlaneOperation(shifted);
       if (d.kind === 'rotation') {
-        const p = [...(d.location ?? [])];
-        if (!inCell(p)) continue;
-        const known = rotationPoints.find((x) => samePoint(x.point, p));
-        if (!known) rotationPoints.push({ n: d.n, point: p });
+        const loc = d.location ?? [];
+        if (!inCell(loc)) continue;
+        const p = loc.map(frac);
+        const known = rotations.find((x) => samePoint(x.point, p));
+        if (!known) rotations.push({ n: d.n, point: p });
         else known.n = Math.max(known.n, d.n);
       } else if (d.kind === 'reflection' || d.kind === 'glide-reflection') {
         const dir = d.direction ?? [0, 0];
@@ -328,55 +335,109 @@ export function planeCellElements(key: string | number): CellElements {
         // The glide vector is s·dir; s modulo 1, since a lattice translation along the line changes nothing.
         const g = d.glide ?? [ZERO, ZERO];
         const s = frac(dir[0] !== 0 ? rational(g[0][0], g[0][1] * dir[0]) : rational(g[1][0], g[1][1] * dir[1]));
-        // The line is the set of x with (−dir_y, dir_x)·x = c.
-        const c = add(scale(-dir[1], p[0]), scale(dir[0], p[1]));
-        if (
-          lines.some(
-            (l) =>
-              l.direction[0] === dir[0] &&
-              l.direction[1] === dir[1] &&
-              rationalsEqual(l.c, c) &&
-              rationalsEqual(l.s, s),
-          )
-        ) {
-          continue;
+        // The line is the set of x with (−dir_y, dir_x)·x = c; dir is primitive, so the lattice shifts c by integers.
+        const c = classOffset([dir[0], dir[1]], add(scale(-dir[1], p[0]), scale(dir[0], p[1])));
+        const known = lines.some(
+          (l) =>
+            l.direction[0] === dir[0] && l.direction[1] === dir[1] && rationalsEqual(l.c, c) && rationalsEqual(l.s, s),
+        );
+        if (!known) {
+          lines.push({
+            kind: s[0] === 0 ? 'mirror' : 'glide',
+            direction: [dir[0], dir[1]],
+            axis: d.axis ?? [0, 0],
+            s,
+            c,
+          });
         }
-        const segment = clip(p, dir);
-        if (!segment) continue;
-        lines.push({
-          kind: s[0] === 0 ? 'mirror' : 'glide',
-          direction: [dir[0], dir[1]],
-          axis: d.axis ?? [0, 0],
-          s,
-          c,
-          segment,
-        });
       }
     }
   }
-  const num = (v: Rational) => toNumber(v);
-  rotationPoints.sort((a, b) => b.n - a.n || num(a.point[1]) - num(b.point[1]) || num(a.point[0]) - num(b.point[0]));
+  const result = { rotations, lines };
+  classCache.set(entry.symbol, result);
+  return result;
+}
+
+const num = (v: Rational) => toNumber(v);
+
+/** The elements as frozen records, sorted. */
+function freezeElements(rotations: { n: number; point: Rational[] }[], lines: LineClass[]): CellElements {
+  rotations.sort((a, b) => b.n - a.n || num(a.point[1]) - num(b.point[1]) || num(a.point[0]) - num(b.point[0]));
   lines.sort(
     (a, b) =>
       a.direction[0] - b.direction[0] ||
       a.direction[1] - b.direction[1] ||
-      num(a.segment[0][1]) - num(b.segment[0][1]) ||
-      num(a.segment[0][0]) - num(b.segment[0][0]),
+      lineParameter(a) - lineParameter(b) ||
+      num(a.s) - num(b.s),
   );
-  const result: CellElements = Object.freeze({
-    rotationPoints: Object.freeze(rotationPoints.map((x) => Object.freeze({ n: x.n, point: Object.freeze(x.point) }))),
+  return Object.freeze({
+    rotationPoints: Object.freeze(rotations.map((x) => Object.freeze({ n: x.n, point: Object.freeze(x.point) }))),
     lines: Object.freeze(
       lines.map((l) =>
         Object.freeze({
           kind: l.kind,
-          direction: Object.freeze(l.direction) as readonly [number, number],
+          direction: Object.freeze([...l.direction]) as readonly [number, number],
           axis: Object.freeze([...l.axis]) as readonly [number, number],
           glide: Object.freeze([scale(l.direction[0], l.s), scale(l.direction[1], l.s)]),
-          segment: Object.freeze(l.segment.map((p) => Object.freeze([...p]))) as unknown as SymmetryLine['segment'],
+          point: Object.freeze(linePoint(l.direction, l.c)),
         }),
       ),
     ),
   });
-  elementCache.set(entry.symbol, result);
+}
+
+const elementCache = new Map<string, CellElements>();
+
+/**
+ * The symmetry elements of a plane group, each once modulo the lattice translations, as ITA
+ * describes them (#137 F2): every rotation point in [0, 1)² with the highest n of a rotation about
+ * it, and every mirror and glide line, as a point and a direction. A line that carries a glide is a
+ * glide line with its shortest glide vector along the line (between 0 and the lattice vector); a
+ * line that is a mirror and a glide line appears as both. Frozen.
+ */
+export function planeElements(key: string | number): CellElements {
+  const entry = planeGroupEntry(key);
+  let result = elementCache.get(entry.symbol);
+  if (!result) {
+    const { rotations, lines } = elementClasses(entry.symbol);
+    result = freezeElements(
+      rotations.map((x) => ({ n: x.n, point: [...x.point] })),
+      lines.map((l) => ({ ...l })),
+    );
+    elementCache.set(entry.symbol, result);
+  }
   return result;
+}
+
+/**
+ * The symmetry elements of a plane group with all their lattice translates that meet a box
+ * (boundary included): the rotation points inside it, and the lines that cross or touch it, as a
+ * point and a direction (not clipped). Frozen.
+ */
+export function planeElementsInBox(key: string | number, box: Box): CellElements {
+  const [[x0, y0], [x1, y1]] = box;
+  const { rotations, lines } = elementClasses(key);
+  const inside: { n: number; point: Rational[] }[] = [];
+  for (const { n, point } of rotations) {
+    const [px, py] = point.map(num);
+    for (let i = Math.ceil(x0 - px - 1e-12); i <= Math.floor(x1 - px + 1e-12); i++) {
+      for (let j = Math.ceil(y0 - py - 1e-12); j <= Math.floor(y1 - py + 1e-12); j++) {
+        const p = [add(point[0], r(i)), add(point[1], r(j))];
+        const [qx, qy] = p.map(num);
+        if (qx >= x0 - 1e-12 && qx <= x1 + 1e-12 && qy >= y0 - 1e-12 && qy <= y1 + 1e-12) inside.push({ n, point: p });
+      }
+    }
+  }
+  const crossing: LineClass[] = [];
+  for (const l of lines) {
+    // (−d_y, d_x)·x over the corners of the box: the line c + k meets it if c + k lies within.
+    const values = [x0, x1].flatMap((x) => [y0, y1].map((y) => -l.direction[1] * x + l.direction[0] * y));
+    const lo = Math.min(...values);
+    const hi = Math.max(...values);
+    const c = num(l.c);
+    for (let k = Math.ceil(lo - c - 1e-12); k <= Math.floor(hi - c + 1e-12); k++) {
+      crossing.push({ ...l, c: add(l.c, r(k)) });
+    }
+  }
+  return freezeElements(inside, crossing);
 }

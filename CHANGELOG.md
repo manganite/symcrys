@@ -211,6 +211,19 @@ All notable changes to symcrys are recorded here. The format follows
   `orbit`) changes near lines of the hexagonal groups, where it is now the nearest point of the line
   per coordinate rather than the mean of the images.
 
+- **Symmetry elements and asymmetric unit of the plane groups as data** (#137 F2, F3, #110 items
+  12, 13, #121 step 10b):
+  - `symmetryElements(key)` gives each element once modulo the lattice (p2: four twofold points;
+    was nine, those in the closed cell [0, 1]²), lines as a `point` and a direction; the field
+    `segment`, the part of a line in the cell, is gone. `symmetryElements(key, { box })` gives all
+    lattice translates that meet a box, the lines not clipped.
+  - `asymmetricUnit(key)` gives all printed inequalities in printed order, also those that hold no
+    edge (p3: x ≤ 2/3, y ≤ 2/3; up to 0.10 left out), the vertices, and the new field `edges`, per
+    edge the index of the inequality that holds it (up to 0.10 `inequalities` was that list of
+    edge inequalities).
+  - Python: `symmetry_elements(key, box=…)`, the line field `point`; `asymmetric_unit` with
+    `edges`.
+
 ### Removed
 
 - `snapToWyckoffPosition` of `symcrys/plane` (Python `snap_to_wyckoff_position`) and its result type

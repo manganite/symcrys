@@ -351,33 +351,50 @@ def orbit(key: str, point: ArrayLike, *, tolerance: Optional[float] = None) -> l
 
 
 def asymmetric_unit(key: str) -> dict[str, Any]:
-    """The asymmetric unit of a plane group as ITA prints it: a convex polygon given by its vertices
-    and, per edge, the printed inequality that holds it. Raises SymcrysError for an unknown key.
+    """The asymmetric unit of a plane group as ITA prints it (#137 F3): the printed inequalities,
+    all of them in printed order (a double inequality and a ``min`` give one each), and the convex
+    polygon they bound, with its vertices and, per edge, the index of the inequality that holds it.
+    Raises SymcrysError for an unknown key.
 
     Returns
     -------
     dict
-        ``vertices`` a float64 array of shape (n, 2), ``inequalities`` an int64 array of shape (n,
-        3).
+        ``inequalities`` an int64 array of shape (m, 3), ``vertices`` a float64 array of shape (n,
+        2), ``edges`` an int64 array of shape (n,), indices into ``inequalities``.
     """
     result = dict(_call("asymmetricUnit", key))
-    return {"vertices": _floats(result["vertices"], -1, 2), "inequalities": _ints(result["inequalities"])}
+    return {
+        "inequalities": _ints(result["inequalities"]).reshape(-1, 3),
+        "vertices": _floats(result["vertices"], -1, 2),
+        "edges": _ints(result["edges"]),
+    }
 
 
-def symmetry_elements(key: str) -> dict[str, Any]:
-    """The symmetry elements of a plane group in its conventional cell [0, 1]², boundary included:
-    every rotation point with the highest n of a rotation about it, and every mirror and glide line
-    that crosses the cell, with the segment inside it. Raises SymcrysError for an unknown key.
+def symmetry_elements(key: str, *, box: Optional[ArrayLike] = None) -> dict[str, Any]:
+    """The symmetry elements of a plane group (#137 F2). Without a box, each element once modulo the
+    lattice translations, as ITA describes them: every rotation point in [0, 1)² with the highest n
+    of a rotation about it, and every mirror and glide line, as a point and a direction (a line that
+    is a mirror and a glide line appears as both). With ``{ box }``, all their lattice translates
+    that meet the box, boundary included; the lines are not clipped, since clipping is drawing.
+    Raises SymcrysError for an unknown key and a box that is not two corners [[x₀, y₀], [x₁, y₁]] of
+    finite numbers with x₀ < x₁ and y₀ < y₁.
+
+    Parameters
+    ----------
+    box : keyword-only, optional
+        A box of the plane, lattice basis, as its corners [[x₀, y₀], [x₁, y₁]] with x₀ < x₁, y₀ <
+        y₁: all lattice translates of the elements that meet it (boundary included), the lines not
+        clipped.
 
     Returns
     -------
     dict
         ``rotation_points``: dicts ``{"n", "point"}``, point a float64 array of shape (2,);
-        ``lines``: dicts ``{"kind", "direction", "axis", "glide", "segment"}``, direction and axis
-        int64 of shape (2,), glide float64 of shape (2,), segment float64 of shape (2, 2), the two
-        ends as rows.
+        ``lines``: dicts ``{"kind", "direction", "axis", "glide", "point"}``, direction and axis
+        int64 of shape (2,), glide and point float64 of shape (2,).
     """
-    result = dict(_call("symmetryElements", key))
+    options = _shared.options(box=None if box is None else _shared.array(box, "box", np.float64))
+    result = dict(_call("symmetryElements", key, options))
     return {
         "rotation_points": [{"n": int(r["n"]), "point": _floats(r["point"], 2)} for r in result["rotation_points"]],
         "lines": [
@@ -386,7 +403,7 @@ def symmetry_elements(key: str) -> dict[str, Any]:
                 "direction": _ints(line["direction"]),
                 "axis": _ints(line["axis"]),
                 "glide": _floats(line["glide"], 2),
-                "segment": _floats(line["segment"], 2, 2),
+                "point": _floats(line["point"], 2),
             }
             for line in result["lines"]
         ],

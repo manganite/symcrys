@@ -5,7 +5,7 @@
 
 import { describe, expect, it } from 'vitest';
 import * as plane from './plane.js';
-import { planeAsymmetricUnit, planeCellElements } from './spaceGroups/cell.js';
+import { planeAsymmetricUnit, planeElements } from './spaceGroups/cell.js';
 import { describePlaneOperation } from './spaceGroups/describe.js';
 import { compose, translationOperation } from './spaceGroups/affine.js';
 import { planeGroupOperations } from './spaceGroups/planeGroups.js';
@@ -129,10 +129,9 @@ describe('plain numbers at the API', () => {
         expect(d.axis).toEqual(exact[i].axis);
       });
       expect(plane.asymmetricUnit(k).vertices).toEqual(planeAsymmetricUnit(k).vertices.map((v) => v.map(toNumber)));
-      const e = planeCellElements(k);
-      expect(plane.symmetryElements(k).lines.map((l) => l.segment)).toEqual(
-        e.lines.map((l) => l.segment.map((p) => p.map(toNumber))),
-      );
+      expect(plane.asymmetricUnit(k).edges).toEqual(planeAsymmetricUnit(k).edges);
+      const e = planeElements(k);
+      expect(plane.symmetryElements(k).lines.map((l) => l.point)).toEqual(e.lines.map((l) => l.point.map(toNumber)));
       expect(plane.symmetryElements(k).lines.map((l) => l.axis)).toEqual(e.lines.map((l) => l.axis));
       expect(plane.symmetryElements(k).rotationPoints.map((r) => r.n)).toEqual(e.rotationPoints.map((r) => r.n));
     }
@@ -202,6 +201,48 @@ describe('plain numbers at the API', () => {
     expect(Object.isFrozen(plane.operations('p2')[0].matrix[0])).toBe(true);
     expect(Object.isFrozen(plane.symmetryElements('p2').rotationPoints[0].point)).toBe(true);
     expect(Object.isFrozen(plane.PLANE_GROUP_KEYS)).toBe(true);
+  });
+});
+
+describe('symmetryElements and asymmetricUnit (#137 F2, F3)', () => {
+  it('give each element once modulo the lattice, and the translates in a box on request', () => {
+    // p2: the four twofold points 0,0; 1/2,0; 0,1/2; 1/2,1/2, each once (in the cell [0, 1]² there are nine).
+    const once = plane.symmetryElements('p2');
+    expect(once.rotationPoints.map((r) => r.point)).toEqual([
+      [0, 0],
+      [0.5, 0],
+      [0, 0.5],
+      [0.5, 0.5],
+    ]);
+    const cell = plane.symmetryElements('p2', { box: [[0, 0], [1, 1]] }); // prettier-ignore
+    expect(cell.rotationPoints).toHaveLength(9);
+    // pm: the mirror lines x = 0 and x = 1/2 once, as a point and a direction.
+    expect(plane.symmetryElements('pm').lines.map((l) => [l.kind, l.point, l.direction])).toEqual([
+      ['mirror', [0, 0], [0, 1]],
+      ['mirror', [0.5, 0], [0, 1]],
+    ]);
+    // In a box [−1, 1] × [0, 1] the lines x = −1, −1/2, 0, 1/2, 1, not clipped.
+    const box = plane.symmetryElements('pm', { box: [[-1, 0], [1, 1]] }); // prettier-ignore
+    expect(box.lines.map((l) => l.point[0])).toEqual([-1, -0.5, 0, 0.5, 1]);
+    expect(Object.isFrozen(box.lines[0].point)).toBe(true);
+    expect(() => plane.symmetryElements('p2', { box: [[1, 0], [0, 1]] })).toThrow(RangeError); // prettier-ignore
+    expect(() => plane.symmetryElements('p2', { box: [[0, 0]] as never })).toThrow(RangeError);
+  });
+
+  it('give the printed inequalities, also those that hold no edge (p3: x ≤ 2/3, y ≤ 2/3)', () => {
+    // ITA 2016, p. 188: 0 ≤ x ≤ 2/3; 0 ≤ y ≤ 2/3; x ≤ (1 + y)/2; y ≤ min(1 − x, (1 + x)/2).
+    const unit = plane.asymmetricUnit('p3');
+    expect(unit.inequalities).toEqual([
+      [-1, 0, 0],
+      [3, 0, 2],
+      [0, -1, 0],
+      [0, 3, 2],
+      [2, -1, 1],
+      [1, 1, 1],
+      [-1, 2, 1],
+    ]);
+    expect(unit.edges.map((e) => unit.inequalities[e])).not.toContainEqual([3, 0, 2]);
+    expect(unit.edges).toHaveLength(unit.vertices.length);
   });
 });
 
