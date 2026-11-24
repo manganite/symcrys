@@ -157,11 +157,11 @@
     },
     "asymmetric_unit": {
       "type": "dict",
-      "doc": "``vertices`` a float64 array of shape (n, 2), ``inequalities`` an int64 array of shape (n, 3)."
+      "doc": "``inequalities`` an int64 array of shape (m, 3), ``vertices`` a float64 array of shape (n, 2), ``edges`` an int64 array of shape (n,), indices into ``inequalities``."
     },
     "symmetry_elements": {
       "type": "dict",
-      "doc": "``rotation_points``: dicts ``{\"n\", \"point\"}``, point a float64 array of shape (2,); ``lines``: dicts ``{\"kind\", \"direction\", \"axis\", \"glide\", \"segment\"}``, direction and axis int64 of shape (2,), glide float64 of shape (2,), segment float64 of shape (2, 2), the two ends as rows."
+      "doc": "``rotation_points``: dicts ``{\"n\", \"point\"}``, point a float64 array of shape (2,); ``lines``: dicts ``{\"kind\", \"direction\", \"axis\", \"glide\", \"point\"}``, direction and axis int64 of shape (2,), glide and point float64 of shape (2,)."
     }
   }
 }

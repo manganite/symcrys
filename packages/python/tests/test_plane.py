@@ -50,8 +50,12 @@ def test_numpy_types() -> None:
     assert mirror["kind"] == "reflection" and mirror["axis"].tolist() == [1, 2] and mirror["direction"].tolist() == [1, 0]
     unit = plane.asymmetric_unit("p6mm")
     assert unit["vertices"].shape == (3, 2) and unit["inequalities"].dtype == np.int64
+    assert unit["edges"].dtype == np.int64 and unit["edges"].shape == (3,)
+    assert plane.asymmetric_unit("p3")["inequalities"].shape == (7, 3)  # also x <= 2/3, y <= 2/3
     elements = plane.symmetry_elements("p4mm")
-    assert elements["lines"][0]["segment"].shape == (2, 2)
+    assert elements["lines"][0]["point"].shape == (2,)
+    assert len(plane.symmetry_elements("p2")["rotation_points"]) == 4
+    assert len(plane.symmetry_elements("p2", box=np.array([[0, 0], [1, 1]]))["rotation_points"]) == 9
     assert elements["rotation_points"][0]["point"].dtype == np.float64
     assert elements["lines"][0]["axis"].dtype == np.int64
     site = plane.site_symmetry("p2mm", np.array([0.5, 0.2]))

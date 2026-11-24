@@ -3,7 +3,7 @@
 Crystallographic symmetry calculations: the 32 crystal classes and the 122 magnetic point groups,
 with their settings, symbols, symmetry elements, site symmetry, Wyckoff positions and crystal forms,
 and the forms of the property tensors (rank 0 to 4) they allow; the 17 plane groups with their
-operations, Wyckoff positions, asymmetric unit and symmetry elements in the cell. The results are checked against print, the
+operations, Wyckoff positions, asymmetric unit and symmetry elements. The results are checked against print, the
 _International Tables for Crystallography_ (ITC), whose conventions symcrys follows, and, as a second
 check, Birss, _Symmetry and Magnetism_ (1966).
 

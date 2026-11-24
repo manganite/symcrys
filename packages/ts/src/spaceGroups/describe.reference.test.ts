@@ -17,7 +17,7 @@ import { readReference, tableRows } from '../testUtils/references.js';
 import { applyToPoint, compose, parseOperation, translationOperation, type ExactOperation } from './affine.js';
 import { describePlaneOperation, type PlaneOperationDescription } from './describe.js';
 import { PLANE_GROUP_KEYS, planeGroupEntry, planeGroupOperations } from './planeGroups.js';
-import { planeCellElements } from './cell.js';
+import { planeElements } from './cell.js';
 import { add, formatRational, rational, scale, type Rational } from './rational.js';
 
 const f = formatRational;
@@ -220,7 +220,7 @@ describe('normals of mirror and glide lines against ITA Table 2.1.3.1 and the fu
       }
     }
     expect([...fromOperations].sort()).toEqual([...expected].sort());
-    const fromCell = new Set(planeCellElements(key).lines.map((l) => l.axis.join(',')));
+    const fromCell = new Set(planeElements(key).lines.map((l) => l.axis.join(',')));
     expect([...fromCell].sort()).toEqual([...expected].sort());
   });
 });

@@ -201,7 +201,45 @@ const oldPointGroup = ({ enantiomorphic, ...rest }: { readonly enantiomorphic: b
 /** Symmetry elements in the shape of the pins (before #121 step 7c): `rotations` with `order`. */
 const oldElements = ({ rotationPoints, lines }: plane.SymmetryElements) => ({
   rotations: rotationPoints.map(({ n, point }) => ({ order: n, point })),
-  lines: lines.map(({ axis, ...rest }) => ({ ...rest, normal: axis })),
+  lines: lines
+    .map(({ axis, point, ...rest }) => ({ ...rest, normal: axis, segment: clipToCell(point, rest.direction) }))
+    .filter((l) => l.segment !== undefined)
+    .sort(
+      (a, b) =>
+        a.direction[0] - b.direction[0] ||
+        a.direction[1] - b.direction[1] ||
+        a.segment![0][1] - b.segment![0][1] ||
+        a.segment![0][0] - b.segment![0][0],
+    ),
+});
+
+/**
+ * The segment of the line p + λd in the cell [0, 1]², in the order of d, or undefined if it has no
+ * length there: the lines of `symmetryElements` were clipped to the cell up to #121 step 10b.
+ */
+function clipToCell(p: readonly number[], d: readonly number[]): number[][] | undefined {
+  let lo = -Infinity;
+  let hi = Infinity;
+  for (let k = 0; k < 2; k++) {
+    if (d[k] === 0) {
+      if (p[k] < -1e-12 || p[k] > 1 + 1e-12) return undefined;
+      continue;
+    }
+    const a = -p[k] / d[k];
+    const b = (1 - p[k]) / d[k];
+    lo = Math.max(lo, Math.min(a, b));
+    hi = Math.min(hi, Math.max(a, b));
+  }
+  if (hi - lo <= 1e-12) return undefined;
+  return [lo, hi].map((l) =>
+    [p[0] + l * d[0], p[1] + l * d[1]].map((v) => (Math.abs(v - Math.round(v)) < 1e-12 ? Math.round(v) : v)),
+  );
+}
+
+/** The asymmetric unit in the shape of the pins (before #121 step 10b): the vertices, and per edge its inequality. */
+const oldUnit = ({ vertices, inequalities, edges }: plane.AsymmetricUnit) => ({
+  vertices,
+  inequalities: edges.map((e) => inequalities[e]),
 });
 
 /** Operations in the shape of the pins of `operations` (captured before #121 step 6d): the Cartesian matrices. */
@@ -426,8 +464,17 @@ function planeGroupPins(add: (id: string, f: () => unknown) => void, key: plane.
   add(`${key}: describeOperations`, () => oldDescriptions(plane.describeOperations(key)));
   add(`${key}: describeOperationsOf(operations)`, () => oldDescriptions(plane.describeOperationsOf(ops)));
   add(`${key}: wyckoffPositions`, () => plane.wyckoffPositions(key));
-  add(`${key}: asymmetricUnit`, () => plane.asymmetricUnit(key));
-  add(`${key}: symmetryElements`, () => oldElements(plane.symmetryElements(key)));
+  add(`${key}: asymmetricUnit`, () => oldUnit(plane.asymmetricUnit(key)));
+  add(`${key}: symmetryElements`, () =>
+    oldElements(
+      plane.symmetryElements(key, {
+        box: [
+          [0, 0],
+          [1, 1],
+        ],
+      }),
+    ),
+  );
   for (const p of POINTS) {
     add(`${key}: siteSymmetry (${p})`, () => plane.siteSymmetry(key, p));
     add(`${key}: wyckoffPositionOf (${p})`, () => plane.wyckoffPosition(key, p));

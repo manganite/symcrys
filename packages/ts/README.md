@@ -34,7 +34,7 @@ The 17 plane groups and the 10 plane point groups are in `symcrys/plane`, in the
 import { symmetryElements, wyckoffPosition } from 'symcrys/plane';
 
 wyckoffPosition('p6mm', [1 / 3, 2 / 3]).letter; // 'b'
-symmetryElements('p4gm').rotationPoints; // the 4- and 2-fold rotation points in the cell
+symmetryElements('p4gm').rotationPoints; // the 4- and 2-fold rotation points, each once modulo the lattice
 ```
 
 Documentation (getting started, conventions, tensors, examples, reference):
