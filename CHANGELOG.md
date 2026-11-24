@@ -21,7 +21,9 @@ the function):
 | Up to 0.10                                                                                                      | From 0.11                                                                                     |
 | --------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
 | option `convention` (`{ convention: 'itc' }`), type `Convention`                                                | drop it; `convention: 'birss'` is gone (#125)                                                 |
-| `settings(key, 'itc')`, `findPointGroup(symbol, 'itc')`                                                         | `settings(key)`, `findPointGroup(symbol, { axes, uniqueAxis })`                               |
+| `settings(key, 'itc')`, `findPointGroup(symbol, 'itc')`                                                         | `settings(key)`, `findPointGroup(symbol)`                                                     |
+| `findPointGroup("m'm'm", 'birss')`, Birss's reading of `mm'm'`, `6'/mmm'`                                       | gone: a symbol names an ITC setting                                                           |
+| `settings(key)[i].uniqueAxis` of an orthorhombic setting (`mm2`, `2'm'm`, `mm'm'`, …)                           | its `symbol` (`uniqueAxis` is only for the monoclinic settings)                               |
 | `{ setting: 2 }` (index)                                                                                        | `{ setting: '312' }` (symbol; the indices changed, "Changed" below), or the index             |
 | `operations(key)[i].matrix` (Cartesian)                                                                         | `operations(key)[i].cartesian`                                                                |
 | `latticeOperations(key)[i].matrix`                                                                              | `operations(key)[i].matrix`                                                                   |
@@ -49,17 +51,19 @@ the function):
 
 **Python** (besides the names above in snake_case):
 
-| Up to 0.10                                                               | From 0.11                                                                                                         |
-| ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------- |
-| keyword `convention=`                                                    | drop it (a `TypeError` now)                                                                                       |
-| `lattice_from_parameters({"a": …, …})`, `is_valid_cell({"alpha": …, …})` | `lattice_from_parameters(a, b, c, alpha, beta, gamma)`, `is_valid_cell(alpha, beta, gamma)`                       |
-| `orbit(key, {"hkl": h})`                                                 | `orbit(key, hkl=h)` (or `uvw=`)                                                                                   |
-| `operations(key)`: a list of dicts, `matrix` float64 Cartesian           | `Operations`: `ops.cartesian` (n, 3, 3), `ops.matrix` (n, 3, 3) int64; `ops[i]` a dict                            |
-| `lattice_operations(key)`                                                | `operations(key).matrix`                                                                                          |
-| `tensor_form(…)["basis"]` (p, 3**rank)                                   | (p, 3, …, 3); `.reshape(p, -1)` gives the old rows                                                                |
-| `rotate_tensor(t, r, spec)`, always flat                                 | keeps the shape of `t` (flat or (3, …, 3)), takes stacks                                                          |
-| `except SymcrysError` for every error                                    | `SymcrysError` (a `ValueError`) for wrong input, `SymcrysInternalError` (a `RuntimeError`) for a fault of symcrys |
-| `symcrys.plane.Operation`                                                | `symcrys.plane.PlaneOperation`                                                                                    |
+| Up to 0.10                                                                           | From 0.11                                                                                                         |
+| ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------- |
+| keyword `convention=`                                                                | drop it (a `TypeError` now)                                                                                       |
+| `lattice_from_parameters({"a": …, …})`, `is_valid_cell({"alpha": …, …})`             | `lattice_from_parameters(a, b, c, alpha, beta, gamma)`, `is_valid_cell(alpha, beta, gamma)`                       |
+| `orbit(key, {"hkl": h})`                                                             | `orbit(key, hkl=h)` (or `uvw=`)                                                                                   |
+| `operations(key)`: a list of dicts, `matrix` float64 Cartesian                       | `Operations`: `ops.cartesian` (n, 3, 3), `ops.matrix` (n, 3, 3) int64; `ops[i]` a dict                            |
+| `lattice_operations(key)`                                                            | `operations(key).matrix`                                                                                          |
+| `tensor_form(…)["basis"]` (p, 3**rank)                                               | (p, 3, …, 3); `.reshape(p, -1)` gives the old rows                                                                |
+| `rotate_tensor(t, r, spec)`, always flat                                             | keeps the shape of `t` (flat or (3, …, 3)), takes stacks                                                          |
+| `except SymcrysError` for every error                                                | `SymcrysError` (a `ValueError`) for wrong input, `SymcrysInternalError` (a `RuntimeError`) for a fault of symcrys |
+| `symcrys.plane.Operation`                                                            | `symcrys.plane.PlaneOperation`                                                                                    |
+| keyword arguments `find_point_group(hm=…)`, `holohedry(system=…)`                    | `symbol=`, `lattice_system=`                                                                                      |
+| `angle_between_directions(basis, u=…, v=…)`, `angle_between_planes(basis, h=…, k=…)` | `direction1=`, `direction2=`; `plane1=`, `plane2=`                                                                |
 
 **Results that change for the same call:**
 
@@ -69,12 +73,14 @@ the function):
   Schoenflies `S6` instead of `C3i`;
 - the axis of an operation in the hexagonal family: [1, 1, 0] and [2, 1, 0] (were their
   negatives), the sign of the Seitz symbol;
-- `findPointGroup` of `mm'm'` or `6'/mmm'`: the ITC default setting (was Birss's reading);
 - plane groups: `wyckoffPosition`, `siteSymmetry` and `orbit` near an element within about the
   tolerance; `symmetryElements` gives each element once modulo the lattice; `asymmetricUnit` all
-  printed inequalities;
+  printed inequalities; `planeGroup(key).origin` spaced as printed (`'at 2 1 g'`, was `'at 21g'`);
+  the plane `describeOperationsOf` reads within 10⁻⁶ by default (was 10⁻⁹);
+- `findPointGroup` reads more spellings (`m3m`, Schoenflies symbols) that gave `undefined`;
 - wrong input throws a `RangeError` (was partly a `TypeError`, partly answered), also for an
-  unknown option key; a tolerance of 0 or `null` is refused;
+  unknown option key; a tolerance of 0 or `null` is refused, and the orthogonality of operations
+  is checked within at most 0.1;
 - every result is frozen;
 - tensor forms of operations with rounding errors and the site symmetry of a grey group at a large
   tolerance are fixed ("Fixed").
