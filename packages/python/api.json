@@ -27,6 +27,7 @@
     "PointGroupKey": "str",
     "MagneticPointGroupKey": "str",
     "PlaneGroupKey": "str",
+    "PlanePointGroupKey": "str",
     "K": "str",
     "TensorRank": "int",
     "Mat3": [3, 3],

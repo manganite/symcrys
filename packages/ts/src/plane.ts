@@ -11,7 +11,7 @@
  */
 
 import { TOLERANCE_KEYS, checkOptions, shown } from './checks.js';
-import { describePlaneOperation } from './spaceGroups/describe.js';
+import { describePlaneOperation, type PlaneOperationKind } from './spaceGroups/describe.js';
 import { planeAsymmetricUnit, planeElements, planeElementsInBox } from './spaceGroups/cell.js';
 import { toPlain, type ExactOperation } from './spaceGroups/affine.js';
 import { type PlaneSystem } from './spaceGroups/planeGroupData.js';
@@ -44,7 +44,9 @@ import { parseRational, rational, toNumber, type Rational } from './spaceGroups/
 export { VERSION } from './version.js';
 export { EPSILON, type ToleranceOptions } from './tolerances.js';
 import { toleranceOf, type ToleranceOptions } from './tolerances.js';
+import { compactSymbol } from './notation.js';
 export type { PlaneSystem } from './spaceGroups/planeGroupData.js';
+export type { PlaneOperationKind } from './spaceGroups/describe.js';
 
 /** The short symbol of a plane group, e.g. `'p2mg'`. */
 export type PlaneGroupKey =
@@ -77,8 +79,12 @@ export const POINT_GROUP_KEYS: readonly PointGroupKey[] = Object.freeze([...PLAN
 
 /** Options that choose the setting of a plane point group. */
 export interface SettingOptions {
-  /** 1-based setting: for the point group `3m` 1 is `3m1` (default) and 2 is `31m`; the other point groups have one, and a plane group takes only 1. */
-  readonly setting?: number;
+  /**
+   * The setting, by its 1-based index or its symbol (spaces ignored): for the point group `3m` 1 or
+   * `'3m1'` (default) and 2 or `'31m'`, and the key `'3m'` names the default; the other point groups
+   * have one, and a plane group takes only 1 or its own symbol (short or full).
+   */
+  readonly setting?: number | string;
 }
 
 /** Options of `symbol`: the setting, and the form of a plane group's symbol. */
@@ -123,6 +129,20 @@ export interface PointGroup {
   readonly order: number;
 }
 
+/** A plane group found by `findPlaneGroup`. */
+export interface PlaneGroupFound {
+  /** The key of the plane group. */
+  readonly key: PlaneGroupKey;
+}
+
+/** A plane point group in a setting, as `findPointGroup` finds it. */
+export interface PointGroupInSetting {
+  /** The key of the plane point group. */
+  readonly key: PointGroupKey;
+  /** The 1-based index of the setting. */
+  readonly setting: number;
+}
+
 /** A setting of a plane point group. */
 export interface Setting {
   /** 1-based. */
@@ -139,7 +159,7 @@ export interface OperationDescription {
    * `'identity'`, `'translation'`, `'rotation'`, `'reflection'` (in a line) or `'glide-reflection'`,
    * as ITA names the operations (ITA 2016 Table 2.1.2.1, p. 145).
    */
-  readonly kind: 'identity' | 'translation' | 'rotation' | 'reflection' | 'glide-reflection';
+  readonly kind: PlaneOperationKind;
   /** The n of the linear part (an n-fold rotation): 1 for the identity and a translation, 2 for a reflection or glide reflection. */
   readonly n: number;
   /** For a rotation of order 3 or more: `'+'` if it turns a towards b, `'-'` otherwise. */
@@ -270,7 +290,7 @@ export interface SymmetryElementsOptions {
 
 const numbers = (v: readonly Rational[]): number[] => v.map(toNumber);
 
-function isPlaneGroupKey(key: unknown): key is PlaneGroupKey {
+function isGroupKey(key: unknown): key is PlaneGroupKey {
   return typeof key === 'string' && (GROUP_KEYS as readonly string[]).includes(key);
 }
 
@@ -280,7 +300,7 @@ function unknownKey(key: unknown, what = 'plane group or plane point group'): ne
 
 /** The plane group of a key; throws for a point group or an unknown key. */
 function groupKey(key: unknown, what: string): PlaneGroupKey {
-  if (isPlaneGroupKey(key)) return key;
+  if (isGroupKey(key)) return key;
   if (isPlanePointGroupKey(key)) {
     throw new RangeError(`${what} takes the key of a plane group, not of the point group ${key}`);
   }
@@ -290,26 +310,47 @@ function groupKey(key: unknown, what: string): PlaneGroupKey {
 /** The key of a plane point group; throws for a plane group or an unknown key. */
 function pointKey(key: unknown, what: string): PointGroupKey {
   if (isPlanePointGroupKey(key)) return key;
-  if (isPlaneGroupKey(key)) {
+  if (isGroupKey(key)) {
     throw new RangeError(`${what} takes the key of a plane point group; ${key} is a plane group (planeGroup)`);
   }
   return unknownKey(key, 'plane point group');
 }
 
-function settingOf(options: SettingOptions | undefined): number | undefined {
-  return options?.setting;
+/**
+ * The index of the setting that `options` names for a key, or undefined if it names none: an index
+ * is passed on (and checked where it is used), a symbol is looked up among the settings of the key.
+ */
+function settingOf(key: PlaneGroupKey | PointGroupKey, options: SettingOptions | undefined): number | undefined {
+  const setting = options?.setting;
+  if (typeof setting !== 'string') return setting;
+  const wanted = compactSymbol(setting);
+  if (isGroupKey(key)) {
+    if (wanted === key || wanted === planeGroupEntry(key).fullSymbol) return 1;
+    throw new RangeError(
+      `The plane group ${key} has no setting ${shown(setting)} (its symbols: ${key}, ${planeGroupEntry(key).fullSymbol})`,
+    );
+  }
+  const symbols = Array.from({ length: planePointGroupSettingCount(key) }, (_, i) => planePointGroupSymbol(key, i + 1));
+  const index = symbols.findIndex((s) => s === wanted);
+  if (index >= 0) return index + 1;
+  // The key of a point group with several settings is the symbol of none; it names the default.
+  if (wanted === key) return 1;
+  throw new RangeError(
+    `The plane point group ${key} has no setting ${shown(setting)} (settings: ${symbols.join(', ')})`,
+  );
 }
 
 /** The exact operations for a key: a plane group (setting 1 only) or a point group in a setting. */
 function exact(key: unknown, options: SettingOptions | undefined, generatorsOnly: boolean): ExactOperation[] {
-  const setting = settingOf(options);
-  if (isPlaneGroupKey(key)) {
+  if (isGroupKey(key)) {
+    const setting = settingOf(key, options);
     if (setting !== undefined && setting !== 1) {
       throw new RangeError(`The plane group ${key} has no setting ${String(setting)}`);
     }
     return generatorsOnly ? planeGroupGenerators(key) : planeGroupOperations(key);
   }
   if (isPlanePointGroupKey(key)) {
+    const setting = settingOf(key, options);
     return generatorsOnly ? planePointGroupGenerators(key, setting) : planePointGroupOperations(key, setting);
   }
   return unknownKey(key);
@@ -389,6 +430,57 @@ function exactOf(op: unknown, tolerance: number): ExactOperation {
   return { matrix, translation: t.map((v) => fractionOf(v, tolerance)) };
 }
 
+/** True if `key` is the key of one of the 17 plane groups (its short symbol, as ITA prints it). */
+export function isPlaneGroupKey(key: string): key is PlaneGroupKey {
+  return isGroupKey(key);
+}
+
+/** True if `key` is the key of one of the 10 plane point groups. */
+export function isPointGroupKey(key: string): key is PointGroupKey {
+  return isPlanePointGroupKey(key);
+}
+
+/** The 17 plane groups, in ITA's order (plane group n at index n − 1). */
+export function planeGroups(): readonly PlaneGroup[] {
+  return Object.freeze(PLANE_GROUP_KEYS.map((key) => planeGroup(key)));
+}
+
+/** The 10 plane point groups, in the order of ITA Table 3.2.1.1. */
+export function pointGroups(): readonly PointGroup[] {
+  return Object.freeze(POINT_GROUP_KEYS.map((key) => pointGroup(key)));
+}
+
+/**
+ * Finds a plane group by a symbol: the key (the short symbol, `'pm'`) or the full symbol (`'p1m1'`,
+ * `'p 1 m 1'`), spaces ignored (docs/conventions.md, "Reading symbols"). The lattice letter is
+ * lower case, as ITA prints it. Gives `undefined` if the symbol names no plane group; throws a
+ * RangeError for a value that is not a string.
+ */
+export function findPlaneGroup(symbol: string): PlaneGroupFound | undefined {
+  if (typeof symbol !== 'string') throw new RangeError(`A symbol is a string, not ${shown(symbol)}`);
+  const wanted = compactSymbol(symbol);
+  const key = PLANE_GROUP_KEYS.find((k) => k === wanted || planeGroupEntry(k).fullSymbol === wanted);
+  return key === undefined ? undefined : Object.freeze({ key });
+}
+
+/**
+ * Finds a plane point group by a symbol: the key, or the symbol of a setting (`'3m1'`, `'31m'`),
+ * spaces ignored; the key `'3m'` gives the default setting 1. Gives `undefined` if the symbol names
+ * no plane point group, also for the symbol of a plane group (that is `findPlaneGroup`); throws a
+ * RangeError for a value that is not a string.
+ */
+export function findPointGroup(symbol: string): PointGroupInSetting | undefined {
+  if (typeof symbol !== 'string') throw new RangeError(`A symbol is a string, not ${shown(symbol)}`);
+  const wanted = compactSymbol(symbol);
+  for (const key of POINT_GROUP_KEYS) {
+    for (let i = 1; i <= planePointGroupSettingCount(key); i++) {
+      if (planePointGroupSymbol(key, i) === wanted) return Object.freeze({ key, setting: i });
+    }
+    if (key === wanted) return Object.freeze({ key, setting: 1 });
+  }
+  return undefined;
+}
+
 /** The plane group with this key (short symbol). Throws a RangeError for an unknown key. */
 export function planeGroup(key: PlaneGroupKey): PlaneGroup {
   const entry = planeGroupEntry(groupKey(key, 'planeGroup'));
@@ -442,15 +534,15 @@ export function symbol(key: PlaneGroupKey | PointGroupKey, options?: SymbolOptio
   }
   // Every position of a plane symbol is one character, the lattice letter included.
   const spaced = (text: string) => (form === 'full' ? [...text].join(' ') : text);
-  if (isPlaneGroupKey(key)) {
-    const setting = settingOf(options);
+  if (isGroupKey(key)) {
+    const setting = settingOf(key, options);
     if (setting !== undefined && setting !== 1) {
       throw new RangeError(`The plane group ${key} has no setting ${shown(setting)}`);
     }
     return spaced(form === 'full' ? planeGroupEntry(key).fullSymbol : key);
   }
   if (!isPlanePointGroupKey(key)) return unknownKey(key);
-  return spaced(planePointGroupSymbol(key, settingOf(options)));
+  return spaced(planePointGroupSymbol(key, settingOf(key, options)));
 }
 
 /**

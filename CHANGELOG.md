@@ -6,6 +6,25 @@ All notable changes to symcrys are recorded here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- **`symcrys/plane`: lookups and lists** (#97, #137 F4): `isPlaneGroupKey`, `isPointGroupKey`,
+  `planeGroups()`, `pointGroups()`, `findPlaneGroup(symbol)` (the key or the full symbol, spaces
+  ignored: `findPlaneGroup('p 1 m 1')` gives `{ key: 'pm' }`) and `findPointGroup(symbol)` (`'31m'`
+  gives `{ key: '3m', setting: 2 }`), as in the other entry points; `{ setting }` takes the symbol of
+  a setting too (`{ setting: '31m' }`). Python: `is_plane_group_key`, `is_point_group_key`,
+  `plane_groups`, `point_groups`, `find_plane_group`, `find_point_group` in `symcrys.plane`.
+- The type `PlaneOperationKind` of `symcrys/plane` (Python `symcrys.plane.PlaneOperationKind`), the
+  `kind` of a plane operation description, named as `OperationKind` is in the other entry points.
+
+### Fixed
+
+- **Python: the key of a plane point group is `str`**, as every key in the three modules: the fields
+  `PointGroup.key`, `PlaneGroup.point_group` (and the new `PointGroupInSetting.key`) of
+  `symcrys.plane` were annotated as a `Literal` of the ten keys, in TypeScript's order, since 0.11.0
+  (the TypeScript type was derived from the list of keys, and the declarations expand such a type).
+  The values were right; a test now checks the annotation of every key.
+
 ## [0.11.0] - 2026-11-24
 
 symcrys follows ITC only (#106, #121): the Birss convention is gone, the data are stored in the ITC

@@ -406,7 +406,7 @@ writes; ITC Vol. D and the magnetic API write `S6`).
 
 ## Reading symbols
 
-`findPointGroup` (in both entry points) and the option `setting` read a symbol tolerantly, as a pure
+`findPointGroup` (in the point-group entry points) and the option `setting` read a symbol tolerantly, as a pure
 normalisation before the comparison (#96; decided by Thomas on 2026-11-22 and 2026-11-23):
 
 - **Spellings** (`notation.ts`): the overbar as `-`, `−` (U+2212), a combining overbar or overline
@@ -435,7 +435,13 @@ normalisation before the comparison (#96; decided by Thomas on 2026-11-22 and 20
   with the same rule: a symbol of several settings gives the standard, unless `axes` or
   `uniqueAxis` chooses another. A Schoenflies symbol names no setting and is not read here.
 
-`symcrys/plane` has no lookup by symbol yet (#97).
+`symcrys/plane` reads its symbols with the same spellings, spaces ignored (#97, 0.12); it has no
+Schoenflies or Birss symbols to read: `findPlaneGroup` the key or the full
+symbol of a plane group (`'pm'`, `'p1m1'`, `'p 1 m 1'`) and gives `{ key }`; `findPointGroup` the key
+or the symbol of a setting of a plane point group (`'31m'`, `'3 1 m'`) and gives `{ key, setting }`,
+the key `'3m'` its default setting; `{ setting }` takes the index or the symbol of a setting. The
+lattice letter is lower case, as ITA prints it: `'P2mg'` names no plane group, so that a symbol of a
+space group is not read as one of a plane group.
 
 ## Results
 
@@ -1210,6 +1216,7 @@ the determination of the plane group of a pattern (a later MINOR, #31).
 | plane groups: description of the operations                                                                                                  | the block "Symmetry operations" of the same pages, both sets of the centred groups; symbols as in ITA § 2.1.3.9 (pp. 160–161); normals: ITA Table 2.1.3.1 (p. 151), `references/itc/vol-a-table-2.1.3.1-plane.md`, with the full symbols                                                                          | `spaceGroups/describe.reference.test.ts`                                                                |
 | plane groups: site symmetry, orbit and Wyckoff position of a point                                                                           | the Wyckoff positions of the same pages: every printed point of every position                                                                                                                                                                                                                                    | `spaceGroups/positions.reference.test.ts`                                                               |
 | plane groups: asymmetric unit, symmetry elements in the cell                                                                                 | the printed vertices and inequalities, the Wyckoff positions (centres and mirror lines) and the printed glides of the same pages; all lines also derived from the printed general position                                                                                                                        | `spaceGroups/cell.reference.test.ts`                                                                    |
+| plane groups: finding a group by its short or full symbol (`findPlaneGroup`)                                                                 | the short and full symbols of the same pages                                                                                                                                                                                                                                                                      | `spaceGroups/planeGroups.reference.test.ts`                                                             |
 | plane point groups: keys, settings of `3m`, operations                                                                                       | ITA 6th ed. (2016), Table 3.2.1.1 (p. 720), Ch. 3.2, p. 721, item (d); operations: the linear parts of the plane groups (above)                                                                                                                                                                                   | `plane.test.ts`                                                                                         |
 
 Each file in `references/` names its source and the printed page. ITA means Vol. A, 6th edition

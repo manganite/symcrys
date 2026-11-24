@@ -56,6 +56,34 @@ def test_every_function_has_its_docstring_from_the_tsdoc() -> None:
                 assert not re.search(r"``[^`]*\b[a-z]+[A-Z]\w*[^`]*``", doc), f"{module.__name__}.{name}: camelCase"
 
 
+KEY_FIELDS = {"key", "point_group", "laue_class", "crystal_class", "holohedry"}
+
+
+def test_every_key_of_a_group_is_a_str() -> None:
+    # The fixed reading of api.json, "types": a key is `str` in every module, in the fields of the
+    # TypedDicts and in the parameters, never a Literal of the keys (which a TypeScript type derived
+    # from a list would give, since the declarations expand it).
+    # The annotations as written (the modules use `from __future__ import annotations`, and
+    # NotRequired exists at run time only from Python 3.11), so they are read as text.
+    def written(a: object) -> str:
+        return a.__forward_arg__ if isinstance(a, typing.ForwardRef) else str(a)
+
+    checked = 0
+    for module in (symcrys, magnetic, plane):
+        for name in module.__all__:
+            obj = getattr(module, name)
+            if typing.is_typeddict(obj):
+                fields = {f: a for f, a in obj.__annotations__.items() if f in KEY_FIELDS}
+            elif callable(obj) and not isinstance(obj, type) and not (name[0].isupper() and not name.isupper()):
+                fields = {f: a for f, a in getattr(obj, "__annotations__", {}).items() if f == "key"}
+            else:
+                continue
+            for field, hint in fields.items():
+                checked += 1
+                assert written(hint) in ("str", "NotRequired[str]"), f"{module.__name__}.{name}.{field}: {written(hint)}"
+    assert checked > 50
+
+
 def test_the_two_modules_have_the_same_names() -> None:
     only_classes = {"magnetic", "plane", "CRYSTAL_FORM_TYPES", "crystal_forms", "wyckoff_position", "wyckoff_positions"}
     only_classes |= {"CrystalForm", "CrystalFormType", "WyckoffPosition"}

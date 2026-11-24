@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import sys
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Iterator, Literal, Mapping, Optional, Sequence, TypedDict, final, overload
+from typing import TYPE_CHECKING, Any, Iterator, Literal, Mapping, Optional, Sequence, TypedDict, Union, final, overload
 
 if sys.version_info >= (3, 11):
     from typing import NotRequired
@@ -35,6 +35,17 @@ _F = ("f",)
 
 PlaneSystem = Literal["oblique", "rectangular", "square", "hexagonal"]
 """A crystal system of the plane, as ITA names it."""
+PlaneOperationKind = Literal[
+    "identity",
+    "translation",
+    "rotation",
+    "reflection",
+    "glide-reflection",
+]
+"""What an operation of a plane group or plane point group is, as ITA names the operations (ITA 2016
+Table 2.1.2.1, p. 145): ``'reflection'`` (in a line, as ``'reflection'`` of the point groups) and
+``'glide-reflection'``.
+"""
 
 
 @final
@@ -100,7 +111,7 @@ class PlaneGroup(TypedDict):
     """The short symbol, e.g. ``'p2mg'``."""
     number: int
     """The number of the plane group, 1 to 17."""
-    point_group: Literal["1", "2", "3", "4", "6", "m", "4mm", "3m", "6mm", "2mm"]
+    point_group: str
     """The plane point group."""
     point_group_setting: int
     """The setting of the point group: 2 for ``p31m``, otherwise 1."""
@@ -120,12 +131,30 @@ class PlaneGroup(TypedDict):
 class PointGroup(TypedDict):
     """A plane point group."""
 
-    key: Literal["1", "2", "3", "4", "6", "m", "4mm", "3m", "6mm", "2mm"]
+    key: str
     """The key, e.g. ``'2mm'``."""
     crystal_system: PlaneSystem
     """The crystal system."""
     order: int
     """The order of the group."""
+
+
+@final
+class PlaneGroupFound(TypedDict):
+    """A plane group found by ``find_plane_group``."""
+
+    key: str
+    """The key of the plane group."""
+
+
+@final
+class PointGroupInSetting(TypedDict):
+    """A plane point group in a setting, as ``find_point_group`` finds it."""
+
+    key: str
+    """The key of the plane point group."""
+    setting: int
+    """The 1-based index of the setting."""
 
 
 @final
@@ -144,7 +173,7 @@ class Setting(TypedDict):
 class OperationDescription(TypedDict):
     """What an operation is, geometrically, as ITA describes it under "Symmetry operations"."""
 
-    kind: Literal["identity", "rotation", "reflection", "translation", "glide-reflection"]
+    kind: PlaneOperationKind
     """``'identity'``, ``'translation'``, ``'rotation'``, ``'reflection'`` (in a line) or
     ``'glide-reflection'``, as ITA names the operations (ITA 2016 Table 2.1.2.1, p. 145).
     """
@@ -329,6 +358,8 @@ _S_PlaneGroup = (
     },
 )
 _S_PointGroup = ("d", {"key": _V, "crystalSystem": _V, "order": _I})
+_S_PlaneGroupFound = ("d", {"key": _V})
+_S_PointGroupInSetting = ("d", {"key": _V, "setting": _I})
 _S_Setting = ("d", {"index": _I, "symbol": _V, "isDefault": _V})
 _S_OperationDescription = (
     "d",
@@ -411,9 +442,12 @@ __all__ = [
     "OperationDescription",
     "Operations",
     "PlaneGroup",
+    "PlaneGroupFound",
     "PlaneOperation",
+    "PlaneOperationKind",
     "PlaneSystem",
     "PointGroup",
+    "PointGroupInSetting",
     "PointOrbitEntry",
     "RotationPoint",
     "Setting",
@@ -425,11 +459,17 @@ __all__ = [
     "asymmetric_unit",
     "describe_operations",
     "describe_operations_of",
+    "find_plane_group",
+    "find_point_group",
     "generators",
+    "is_plane_group_key",
+    "is_point_group_key",
     "operations",
     "orbit",
     "plane_group",
+    "plane_groups",
     "point_group",
+    "point_groups",
     "settings",
     "site_symmetry",
     "symbol",
@@ -461,6 +501,58 @@ POINT_GROUP_KEYS: tuple[str, ...] = _shared.convert(_value("POINT_GROUP_KEYS"), 
 """The keys of the 10 plane point groups, in the order of ITA Table 3.2.1.1."""
 
 
+def is_plane_group_key(key: str) -> bool:
+    """True if ``key`` is the key of one of the 17 plane groups (its short symbol, as ITA prints
+    it).
+    """
+    result: bool = _shared.convert(_call("isPlaneGroupKey", key), _V)
+    return result
+
+
+def is_point_group_key(key: str) -> bool:
+    """True if ``key`` is the key of one of the 10 plane point groups."""
+    result: bool = _shared.convert(_call("isPointGroupKey", key), _V)
+    return result
+
+
+def plane_groups() -> list[PlaneGroup]:
+    """The 17 plane groups, in ITA's order (plane group n at index n − 1)."""
+    result: list[PlaneGroup] = _shared.convert(_call("planeGroups"), ("l", _S_PlaneGroup))
+    return result
+
+
+def point_groups() -> list[PointGroup]:
+    """The 10 plane point groups, in the order of ITA Table 3.2.1.1."""
+    result: list[PointGroup] = _shared.convert(_call("pointGroups"), ("l", _S_PointGroup))
+    return result
+
+
+def find_plane_group(symbol: str) -> Optional[PlaneGroupFound]:
+    """Finds a plane group by a symbol: the key (the short symbol, ``'pm'``) or the full symbol
+    (``'p1m1'``, ``'p 1 m 1'``), spaces ignored (docs/conventions.md, "Reading symbols"). The
+    lattice letter is lower case, as ITA prints it. Gives ``None`` if the symbol names no plane
+    group; raises SymcrysError for a value that is not a string.
+    """
+    result: Optional[PlaneGroupFound] = _shared.convert(
+        _call("findPlaneGroup", symbol),
+        ("o", _S_PlaneGroupFound),
+    )
+    return result
+
+
+def find_point_group(symbol: str) -> Optional[PointGroupInSetting]:
+    """Finds a plane point group by a symbol: the key, or the symbol of a setting (``'3m1'``,
+    ``'31m'``), spaces ignored; the key ``'3m'`` gives the default setting 1. Gives ``None`` if the
+    symbol names no plane point group, also for the symbol of a plane group (that is
+    ``find_plane_group``); raises SymcrysError for a value that is not a string.
+    """
+    result: Optional[PointGroupInSetting] = _shared.convert(
+        _call("findPointGroup", symbol),
+        ("o", _S_PointGroupInSetting),
+    )
+    return result
+
+
 def plane_group(key: str) -> PlaneGroup:
     """The plane group with this key (short symbol). Raises SymcrysError for an unknown key.
 
@@ -490,7 +582,7 @@ def settings(key: str) -> list[Setting]:
 def symbol(
     key: str,
     *,
-    setting: Optional[int] = None,
+    setting: Optional[Union[int, str]] = None,
     form: Optional[Literal["short", "full"]] = None,
 ) -> str:
     """The symbol of a plane group or a plane point group (#137 F4). In the short form (the default)
@@ -504,8 +596,10 @@ def symbol(
     Parameters
     ----------
     setting : keyword-only, optional
-        1-based setting: for the point group ``3m`` 1 is ``3m1`` (default) and 2 is ``31m``; the
-        other point groups have one, and a plane group takes only 1.
+        The setting, by its 1-based index or its symbol (spaces ignored): for the point group ``3m``
+        1 or ``'3m1'`` (default) and 2 or ``'31m'``, and the key ``'3m'`` names the default; the
+        other point groups have one, and a plane group takes only 1 or its own symbol (short or
+        full).
     form : keyword-only, optional
         ``'short'`` (default): the symbol as one word, the key; ``'full'``: the full symbol,
         positions separated by spaces (``'p 1 m 1'`` for ``pm``).
@@ -517,7 +611,7 @@ def symbol(
     return result
 
 
-def operations(key: str, *, setting: Optional[int] = None) -> Operations:
+def operations(key: str, *, setting: Optional[Union[int, str]] = None) -> Operations:
     """The operations of a plane group or a plane point group, in ITA's order, identity first. A
     plane group: one per coset of the integer translations, translations in [0, 1), the general
     position as numbered, then for a centred group the same sequence with the centring added (the
@@ -528,8 +622,10 @@ def operations(key: str, *, setting: Optional[int] = None) -> Operations:
     Parameters
     ----------
     setting : keyword-only, optional
-        1-based setting: for the point group ``3m`` 1 is ``3m1`` (default) and 2 is ``31m``; the
-        other point groups have one, and a plane group takes only 1.
+        The setting, by its 1-based index or its symbol (spaces ignored): for the point group ``3m``
+        1 or ``'3m1'`` (default) and 2 or ``'31m'``, and the key ``'3m'`` names the default; the
+        other point groups have one, and a plane group takes only 1 or its own symbol (short or
+        full).
 
     Returns
     -------
@@ -544,7 +640,7 @@ def operations(key: str, *, setting: Optional[int] = None) -> Operations:
     return result
 
 
-def generators(key: str, *, setting: Optional[int] = None) -> Operations:
+def generators(key: str, *, setting: Optional[Union[int, str]] = None) -> Operations:
     """ITA's selected generators, in printed order, without the identity and the integer
     translations: for a centred plane group the centring translation first. A point group: the
     linear parts of the generators of its symmorphic plane group. Raises SymcrysError for an unknown
@@ -553,8 +649,10 @@ def generators(key: str, *, setting: Optional[int] = None) -> Operations:
     Parameters
     ----------
     setting : keyword-only, optional
-        1-based setting: for the point group ``3m`` 1 is ``3m1`` (default) and 2 is ``31m``; the
-        other point groups have one, and a plane group takes only 1.
+        The setting, by its 1-based index or its symbol (spaces ignored): for the point group ``3m``
+        1 or ``'3m1'`` (default) and 2 or ``'31m'``, and the key ``'3m'`` names the default; the
+        other point groups have one, and a plane group takes only 1 or its own symbol (short or
+        full).
 
     Returns
     -------
@@ -569,7 +667,11 @@ def generators(key: str, *, setting: Optional[int] = None) -> Operations:
     return result
 
 
-def describe_operations(key: str, *, setting: Optional[int] = None) -> list[OperationDescription]:
+def describe_operations(
+    key: str,
+    *,
+    setting: Optional[Union[int, str]] = None,
+) -> list[OperationDescription]:
     """Each operation of ``operations`` (same key and setting) described geometrically, index for
     index: what it is, its n and sense, where its symmetry element lies, its glide part. Raises
     SymcrysError for an unknown key or setting.
@@ -577,8 +679,10 @@ def describe_operations(key: str, *, setting: Optional[int] = None) -> list[Oper
     Parameters
     ----------
     setting : keyword-only, optional
-        1-based setting: for the point group ``3m`` 1 is ``3m1`` (default) and 2 is ``31m``; the
-        other point groups have one, and a plane group takes only 1.
+        The setting, by its 1-based index or its symbol (spaces ignored): for the point group ``3m``
+        1 or ``'3m1'`` (default) and 2 or ``'31m'``, and the key ``'3m'`` names the default; the
+        other point groups have one, and a plane group takes only 1 or its own symbol (short or
+        full).
 
     Returns
     -------

@@ -836,9 +836,10 @@ function birssCubic(compactTarget: string): string | undefined {
  * settings (the option `axes` set to `'rhombohedral'` for the key `32`).
  *
  * Spellings: the overbar as `-`, `−`, a combining overbar or `¯` after the digit (`m3̄m`), `bar3` (also with a backslash and braces, as in LaTeX);
- * Schoenflies subscripts also as Unicode or LaTeX subscripts (`C₃ᵥ`, `C_{3v}`). Returns undefined if nothing matches,
- * also for a value that is not a string and for the symbol of a magnetic group with time reversal
- * (`findMagneticPointGroup`); a symbol that names several groups is a RangeError that lists them.
+ * Schoenflies subscripts also as Unicode or LaTeX subscripts (`C₃ᵥ`, `C_{3v}`). Returns `undefined` if nothing matches,
+ * also for the symbol of a magnetic group with time reversal (`findMagneticPointGroup`); a value
+ * that is not a string, and a symbol that names several groups, are a RangeError (the latter lists
+ * the groups).
  */
 export function findPointGroup(symbol: string, options?: AxesOptions): PointGroupInSetting | undefined {
   if (arguments.length > 2) rejectConventionArgument(arguments.length);
@@ -858,8 +859,8 @@ export function findPointGroup(symbol: string, options?: AxesOptions): PointGrou
  *
  * Spellings: the overbar as `-`, `−`, a combining overbar or `¯` after the digit (`m3̄m`), `bar3` (also with a backslash and braces, as in LaTeX);
  * the prime as `'`, `′`, `ʹ` or `’`; Schoenflies subscripts also as Unicode or LaTeX subscripts (`D₃d(S₆)`, `D_{3d}`).
- * Returns undefined if nothing matches, also for a value that is not a string; a symbol that names
- * several groups is a RangeError that lists them.
+ * Returns `undefined` if nothing matches; a value that is not a string, and a symbol that names
+ * several groups, are a RangeError (the latter lists the groups).
  */
 export function findMagneticPointGroup(
   symbol: string,

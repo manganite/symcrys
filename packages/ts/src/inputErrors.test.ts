@@ -99,6 +99,12 @@ const CALLS: Record<string, [Record<string, unknown>, Record<string, Call>]> = {
     {
       planeGroup: call(['p4']),
       pointGroup: call(['4mm']),
+      planeGroups: call([]),
+      pointGroups: call([]),
+      isPlaneGroupKey: call(['p4']),
+      isPointGroupKey: call(['4mm']),
+      findPlaneGroup: call(['p4']),
+      findPointGroup: call(['3m1']),
       settings: call(['3m']),
       symbol: call(['3m'], ['setting', 'form']),
       operations: call(['p4'], ['setting']),
@@ -167,6 +173,8 @@ const display = (v: unknown): string => {
 
 const MAY_ANSWER: Readonly<Record<string, (position: number, value: unknown) => boolean>> = {
   isPointGroupKey: () => true,
+  isPlaneGroupKey: () => true,
+  findPlaneGroup: (p, v) => p === 0 && typeof v === 'string',
   reduceIndices: (p, v) => Array.isArray(v) && v.length > 0 && v.every((x) => Number.isSafeInteger(x) && x !== 0),
   findPointGroup: (p, v) => p === 0 && typeof v === 'string',
   pointGroupOf: (p, v) => p === 0 && Array.isArray(v) && v.length === 0,

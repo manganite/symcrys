@@ -91,6 +91,18 @@ describe('plane groups: transcription', () => {
     }
   });
 
+  it('findPlaneGroup finds every group by its printed short and full symbol, with or without spaces (#97)', () => {
+    for (const g of PRINT) {
+      const full = g.fields['Full symbol'];
+      for (const text of [g.symbol, full, [...full].join(' '), ` ${[...g.symbol].join('  ')} `]) {
+        expect(plane.findPlaneGroup(text), text).toEqual({ key: g.symbol });
+      }
+      expect(plane.isPlaneGroupKey(g.symbol)).toBe(true);
+      // A plane group's symbol names no plane point group.
+      expect(plane.findPointGroup(g.symbol)).toBeUndefined();
+    }
+  });
+
   it('equals the data file', () => {
     const fromPrint = PRINT.map((g) => {
       const gens = g.fields['Generators selected'];

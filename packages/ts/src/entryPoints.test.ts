@@ -724,6 +724,10 @@ describe('every result is frozen, nested values included (#137 C4)', () => {
   const planeCalls: Record<string, unknown[]> = {
     planeGroup: ['p4'],
     pointGroup: ['4mm'],
+    planeGroups: [],
+    pointGroups: [],
+    findPlaneGroup: ['p 4 m m'],
+    findPointGroup: ['31m'],
     settings: ['3m'],
     operations: ['p4'],
     generators: ['p4'],
@@ -767,6 +771,7 @@ describe('every result is frozen, nested values included (#137 C4)', () => {
       'holohedry',
       'isCentrosymmetricOf',
       'isEnantiomorphicOf',
+      'isPlaneGroupKey',
       'isPointGroupKey',
       'isValidCell',
       'symbol',

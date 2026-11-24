@@ -12,10 +12,30 @@ import { planeGroupEntry, planeGroupGenerators, planeGroupOperations } from './p
 import { ZERO } from './rational.js';
 
 /** The keys of the ten plane point groups, in the order of ITA Table 3.2.1.1. */
-export const PLANE_POINT_GROUP_KEYS = ['1', '2', 'm', '2mm', '4', '4mm', '3', '3m', '6', '6mm'] as const;
+/**
+ * The key of a plane point group. Written out rather than derived from the list below, so that the
+ * declarations keep its name (a derived type is expanded there), by which the Python generator
+ * reads it as a key (`str`).
+ */
+export type PlanePointGroupKey = '1' | '2' | 'm' | '2mm' | '4' | '4mm' | '3' | '3m' | '6' | '6mm';
 
-/** The key of a plane point group. */
-export type PlanePointGroupKey = (typeof PLANE_POINT_GROUP_KEYS)[number];
+export const PLANE_POINT_GROUP_KEYS = [
+  '1',
+  '2',
+  'm',
+  '2mm',
+  '4',
+  '4mm',
+  '3',
+  '3m',
+  '6',
+  '6mm',
+] as const satisfies readonly PlanePointGroupKey[];
+
+// Every key is in the list (the list holds no other value by `satisfies`).
+type MissingKey = Exclude<PlanePointGroupKey, (typeof PLANE_POINT_GROUP_KEYS)[number]>;
+const everyKeyListed: [MissingKey] extends [never] ? true : never = true;
+void everyKeyListed;
 
 /** The symmorphic plane group of each point group and setting, whose linear parts it is. */
 const SOURCE: Record<PlanePointGroupKey, readonly string[]> = {

@@ -280,7 +280,10 @@ Carried over from birss-app, where the calculations come from.
   has its own TypedDicts (a `PointGroup` of `symcrys.magnetic` has `type`); an optional field is
   `NotRequired` and every TypedDict `@final`, so that a type checker narrows a union by a key; a
   number not listed as int or float, an array field not listed as float64 or int64, a type the
-  generator cannot read and an entry of `api.json` no module uses are errors of the generator.
+  generator cannot read and an entry of `api.json` no module uses are errors of the generator. A
+  key of a group is `str` in every field and parameter (tested, `test_api.py`), so a key type is
+  written out in TypeScript, not derived from a list: the declarations expand a derived type to
+  its values, and the generator reads a key by the name of its type (#97, review).
 - **Operations in Python** (#137 H1, decided by Thomas on 2026-11-22, the type, a bare array in
   `symcrys.magnetic` and the access per operation on 2026-11-24; #121 step 12b): `operations`,
   `generators` and `residual_operations` give `Operations`, a frozen dataclass of read-only arrays,
@@ -931,8 +934,13 @@ while implementing gets its own note here.
   symbol is asked for in one way in every entry point. The full symbol has its positions separated by
   spaces, as in the other entry points (Thomas, 2026-11-24: `p 1 m 1`, and later `P 1 21/c 1` for
   the space groups). Chosen while implementing: a plane point group, for which ITA prints no other
-  full symbol (Ch. 3.2, p. 721; Table 3.2.3.1), gives its symbol spaced (`3 m 1`). `isPlaneGroupKey`, `findPlaneGroup` and
-  the lists come in 0.12.
+  full symbol (Ch. 3.2, p. 721; Table 3.2.3.1), gives its symbol spaced (`3 m 1`). The lookups and
+  lists (#97, 0.12): `isPlaneGroupKey`, `isPointGroupKey`, `findPlaneGroup`, `findPointGroup`,
+  `planeGroups()`, `pointGroups()`; `findPlaneGroup` gives `{ key }` (Thomas, 2026-11-24), the shape
+  of `findPointGroup` without a setting, which a plane group does not have. Chosen while
+  implementing: they read the key and the full symbol, spaces ignored, the lattice letter in lower
+  case only (an upper-case letter begins a space-group symbol); `{ setting }` takes the symbol of a
+  setting too, as in the other entry points (#123).
 - **No frieze, layer or magnetic plane groups for now** (#31 question 3): no consumer needs them;
   the dimension-generic module keeps them possible (idea in #74).
 - **Entry point `symcrys/plane`, later `symcrys/space`** (#31 question 4), as `symcrys/magnetic`

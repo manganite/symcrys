@@ -1006,9 +1006,9 @@ def find_point_group(
 
     Spellings: the overbar as ``-``, ``−``, a combining overbar or ``¯`` after the digit (``m3̄m``),
     ``bar3`` (also with a backslash and braces, as in LaTeX); Schoenflies subscripts also as Unicode
-    or LaTeX subscripts (``C₃ᵥ``, ``C_{3v}``). Returns None if nothing matches, also for a value
-    that is not a string and for the symbol of a magnetic group with time reversal; a symbol that
-    names several groups raises SymcrysError that lists them.
+    or LaTeX subscripts (``C₃ᵥ``, ``C_{3v}``). Returns ``None`` if nothing matches, also for the
+    symbol of a magnetic group with time reversal; a value that is not a string, and a symbol that
+    names several groups, are a SymcrysError (the latter lists the groups).
 
     Parameters
     ----------
