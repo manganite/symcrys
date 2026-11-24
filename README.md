@@ -30,7 +30,7 @@ symcrys holds calculations, not presentation. It has:
 Planned: space groups (`symcrys/space`).
 
 Property tensors: the symmetry-reduced form of a tensor of rank 0 to 4 under a point group or any
-set of operations, from birss-app; results are numbers (coefficient matrices). Rendering (LaTeX,
+set of operations; results are numbers (coefficient matrices). Rendering (LaTeX,
 SVG, relation strings, view models) and translated display names stay in the applications that use
 symcrys.
 
@@ -43,8 +43,7 @@ holds the plane groups and plane point groups.
 symcrys is the computational core of the crystallography teaching apps
 ([stereography](https://github.com/manganite/stereography),
 [plane-groups](https://github.com/manganite/plane-groups)) and of
-[birss-app](https://github.com/manganite/birss-app); its calculations start from those of
-birss-app.
+[birss-app](https://github.com/manganite/birss-app).
 
 ## Documentation
 
@@ -115,14 +114,13 @@ writes the Python modules `symcrys`, `symcrys.magnetic` and `symcrys.plane` from
 entry points; what the types do not say is in `packages/python/api.json` and
 `packages/python/docstrings.json`.
 
-Audits under `audit/` compare the code bases symcrys draws on. They are run by hand, with
-[birss-app](https://github.com/manganite/birss-app) and
-[stereography](https://github.com/manganite/stereography) checked out next to this repository:
-`npm run audit:point-groups` writes `audit/point-groups/report.md`; `npm run audit:wyckoff-2006`,
-`audit:forms-2006` and `audit:plane-groups-2006` compare with the 5th edition of ITA as transcribed
-in stereography and in [plane-groups](https://github.com/manganite/plane-groups) (checked out next to
-this repository as well). stereography now takes these data from symcrys, so the two audits read
-its own transcription at a fixed revision (`audit/stereography-2006.ts`); a full clone is needed.
+Audits under `audit/` are run by hand. `npm run audit:wyckoff-2006`, `audit:forms-2006` and
+`audit:plane-groups-2006` compare with the 5th edition of ITA as transcribed in
+[stereography](https://github.com/manganite/stereography) and
+[plane-groups](https://github.com/manganite/plane-groups), checked out next to this repository.
+stereography now takes these data from symcrys, so the two audits of its catalogue read its own
+transcription at a fixed revision (`audit/stereography-2006.ts`); a full clone is needed.
+`npm run audit:itc-baseline` captures the ITC baseline pins (CLAUDE.md, "Tests").
 
 CI runs these seven gates on every pull request, on Node 22 and 24, the gate `python` (bundle,
 build sdist and wheel, install the wheel, `mypy`, `pytest`) on Python 3.10 and the newest, and the

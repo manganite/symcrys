@@ -21,11 +21,10 @@ describes the magnetic API.
 
 symcrys follows ITC: Vol. A (6th ed., 2016) for the 32 crystal classes, Vol. D (2nd ed., 2013),
 Ch. 1.5, for the magnetic point groups (the reference edition and its exception: CLAUDE.md, "Pure
-ITC"). Up to 0.10 a second convention, after R. R. Birss, _Symmetry and Magnetism_ (North-Holland,
-Amsterdam, 1966), was an option (`convention: 'birss'`); it was removed in 0.11.0, and a function
-given the option `convention` throws a RangeError, so that a caller who still asks for Birss's
-presentation is not answered in ITC's without notice. Birss's tables stay an independent second
-print check of the ITC output ("Birss as a second print check").
+ITC"). There is no other convention: a function given the option `convention` (with which a caller
+chose Birss's presentation before 0.11) throws a RangeError, so that such a call is not answered in
+ITC's presentation without notice. R. R. Birss, _Symmetry and Magnetism_ (North-Holland, Amsterdam,
+1966), is an independent second print check of the ITC output ("Birss as a second print check").
 
 ## Keys
 
@@ -35,8 +34,8 @@ classes with several settings, `symbol()` gives the symbol of a setting (`321`, 
 
 For D3h the key is `-6m2`, as in ITC Vol. D Table 1.5.2.3. ITA lists both orientations, `-6m2`
 first (§ 3.2.1.2.1 (b), p. 721; Table 3.2.3.2, pp. 762–763), but its tables of classes print `-62m`
-(Tables 2.1.1.1, 3.2.1.2, 3.2.2.1). symcrys keeps `-6m2`, the symbol of the magnetic table (#17,
-#137 B1).
+(Tables 2.1.1.1, 3.2.1.2, 3.2.2.1). symcrys keeps `-6m2`, the symbol of the magnetic table (#137
+B1).
 
 The 32 class keys are the `POINT_GROUP_KEYS` of the crystallographic API. The `POINT_GROUP_KEYS` of
 the magnetic API are all 122 keys: the 32 classes, the 32 grey groups in the same order, and the 58
@@ -182,7 +181,7 @@ maintainer 2026-11-22; #94):
 
 `matrix` means W in every entry point: in `symcrys/plane` an operation is `{ matrix, translation }`
 with the same W ("Plane groups"). `operations` and `generators` give these records; there is no
-separate list of lattice operations (`latticeOperations` up to 0.10).
+separate list of lattice operations.
 
 **Operations from a caller.** The functions that compute with Cartesian matrices (`pointGroupOf`,
 `describeOperationsOf`, `siteSymmetryOf`, `orbitOf`, `isCentrosymmetricOf`, `isEnantiomorphicOf`,
@@ -272,7 +271,7 @@ The ITC defaults of symcrys:
 - `321` and `3m1`: the frame of the tensor tables of ITC Vol. D (§ 1.1.4.10.4.4, #6);
 - `-3m1`: their Laue class in the same frame (a consistency choice; ITC Vol. D Table 1.5.2.3 prints
   its full symbol `-3 2/m 1`);
-- `-6m2`: ITC Vol. D Table 1.5.2.3, and the first entry in ITA (#17);
+- `-6m2`: ITC Vol. D Table 1.5.2.3, and the first entry in ITA (#137 B1);
 - `-42m`, `mm2`: the first or only entry in ITA.
 
 Frames: the monoclinic settings have the unique axis along y, z and x (unique axis a: from b by
@@ -892,8 +891,7 @@ the caller passes them.
 crystal class or a magnetic point group: which Cartesian components it may have and how they depend
 on each other. `tensorFormOf(operations, spec)` does the same for any list of operations (closed
 into a group first), e.g. the site symmetry of a surface normal from `siteSymmetry`. In place of
-`spec`, both take the name of a property ("Named properties" below). Moved from birss-app (`tensorForms.ts`,
-`tensorProjection.ts`, `linalg.ts`, revision 2be5fe3).
+`spec`, both take the name of a property ("Named properties" below).
 
 **Kind of tensor** (`TensorSpec`, #137 E1, E2): `rank` 0 to 4; `kind` `'polar'` (transforms with
 R) or `'axial'` (with det(R)·R; ITC calls the behaviour under inversion "parity", under which a polar
@@ -909,9 +907,9 @@ piezoelectric tensor; at rank 2 both mean a symmetric tensor), at rank 4 `'symme
 pairs symmetric, not interchangeable: electric-quadrupole SHG, photoelasticity) and
 `'symmetric-pairs-exchangeable'` (the pairs interchangeable too: elastic stiffness, the symmetry
 Voigt's notation uses), at rank 2 `'antisymmetric'`, and from rank 2 `'totally-symmetric'` (SHG
-under Kleinman's condition). An index symmetry that does not apply at the rank is an error. Up to
-0.10 the names were Birss's and birss-app's (`parity`, `'i'`/`'c'`, `'ij'`, `'jk'`, `'ij_kl'`,
-`'voigt'`); a specification with them is an error that names the new ones.
+under Kleinman's condition). An index symmetry that does not apply at the rank is an error, and so
+is a specification with the names of Birss and of symcrys before 0.11 (`parity`, `'i'`/`'c'`,
+`'ij'`, `'jk'`, `'ij_kl'`, `'voigt'`), which names the current ones.
 
 **Components** are numbered by a flat index: indices (i₁, …, iₙ) with x, y, z = 0, 1, 2 give
 i₁·3ⁿ⁻¹ + … + iₙ, the first index varying slowest (the order of a NumPy array of shape (3,)·n in C
@@ -945,7 +943,7 @@ the polar vector lies along y in the default setting (unique axis b) and along z
 **Time reversal** (magnetic API). An operation with time reversal changes the sign of a time-odd tensor.
 The 32 white groups have none, so their time-odd forms equal their time-even forms. A grey group contains time reversal
 itself, so all its time-odd tensors vanish, and its time-even forms are those of its class. This is Birss's
-reading (pp. 84, 102) and birss-app's: the grey groups are the groups of non-magnetic crystals; the
+reading (pp. 84, 102): the grey groups are the groups of non-magnetic crystals; the
 32 groups without time reversal (the white groups: "Types") are, like the 58 black-and-white
 groups, groups of magnetic crystals, the limiting case in which time reversal does not occur. Litvin (_Acta Cryst._ A**64**, 419 (2008), p. 419) says the
 same of the space groups: a group without time inversion is also the invariance group of an
@@ -1042,7 +1040,7 @@ snapped ("Numbers" above): for the 32 classes in all their settings every entry 
 
 **Print anchors.** Birss's Tables 4a–4f (pp. 56–66) for ranks 0 to 4, polar and axial, as a second
 print check: the forms of the ITC default setting carried into Birss's frame
-(`testUtils/birssFrame.ts`). ITC convention: ITA Table 3.2.2.1 (counts of three tensors and the direction
+(`testUtils/birssFrame.ts`). The ITC anchor: ITA Table 3.2.2.1 (counts of three tensors and the direction
 of the pyroelectric vector, in the ITC default setting); ITC Vol. D § 1.1.4.10.7 (the full forms of
 axial tensors of rank 2, general and symmetric, in the ITC default setting and, for the monoclinic
 classes, also with the axis along z); ITC Vol. D § 1.1.4.10.6 (`'symmetric-pairs'` and `'symmetric-pairs-exchangeable'` tensors of
@@ -1063,7 +1061,7 @@ black-and-white groups the symbol class of Tables 4b–4f for i- and c-tensors, 
 even and odd rank; all ranks 0 to 4 of the ITC forms are compared in Birss's frame, a class in
 parentheses in a frame rotated against it (Birss p. 110). Two rows of the table, `(-6'2m')` and `-6m'2'`, lack parentheses;
 both are recorded printing errors of the book (found in birss-app; errata with their reasons in
-`references/birss/table-7.md`), and the tests apply the corrections. ITC convention: ITC Vol. D Table 1.5.2.4 (the 31 ferromagnetic
+`references/birss/table-7.md`), and the tests apply the corrections. The ITC anchor: ITC Vol. D Table 1.5.2.4 (the 31 ferromagnetic
 groups and the direction of M_s), Table 1.5.7.1 (the piezomagnetic matrix Λ_iα of 66 groups, with
 Λ_i4 = 2Λ_i23 and so on, eq. (1.5.7.4)) and Table 1.5.8.1 (the magnetoelectric tensor of 58 groups).
 A printed form belongs to the orientation its symbol names (ITC Vol. D § 1.5.7.1, p. 134: x, y, z
@@ -1185,7 +1183,7 @@ the determination of the plane group of a pattern (a later MINOR, #31).
 | operations in the lattice basis; orbits of directions and faces                                                                              | ITA Table 3.2.3.2 (pp. 745–769): the general positions, `references/itc/vol-a-table-3.2.3.2-general-positions.md`; the faces of the general form for hexagonal axes (pp. 752–764), `references/itc/vol-a-table-3.2.3.2-general-faces.md`                                                                          | `orbits.reference.test.ts`                                                                              |
 | the point group of a list of operations                                                                                                      | none needed: the groups are built from the operations of the 122 groups (anchored above) and, independently, from the full symbols of the 32 classes along Cartesian directions, in a general orientation                                                                                                         | `identify.test.ts`                                                                                      |
 | tensor forms, second print check: ITC forms carried into Birss's frame                                                                       | Birss Tables 4a–4f (pp. 56–66): `references/birss/table-4a.md` … `table-4f.md`                                                                                                                                                                                                                                    | `tensors/birss.reference.test.ts`                                                                       |
-| tensor forms, ITC convention: counts, pyroelectric direction, piezoelectric classes                                                          | ITA Table 3.2.2.1 (p. 738)                                                                                                                                                                                                                                                                                        | `tensors/itc.reference.test.ts`                                                                         |
+| tensor forms, ITC: counts, pyroelectric direction, piezoelectric classes                                                                     | ITA Table 3.2.2.1 (p. 738)                                                                                                                                                                                                                                                                                        | `tensors/itc.reference.test.ts`                                                                         |
 | ferroaxial classes (axial vector, time-even)                                                                                                 | Birss Table 4a (pp. 56–57) with Table 4c (p. 58): `references/birss/`; the term: Hlinka, Privratska, Ondrejkovic & Janovec, _Phys. Rev. Lett._ **116**, 177602 (2016)                                                                                                                                             | `tensors/tensorProperties.test.ts`                                                                      |
 | rank 3, `'symmetric-last-pair'` (SHG, piezoelectric d_ijk): cells, classes, signs; the forms at m-3m surfaces                                | Yariv, _Quantum Electronics_, 2nd ed. (Wiley, 1975), Table 16.1 (pp. 410–411): `references/yariv/table-16.1.md`                                                                                                                                                                                                   | `tensors/yariv.reference.test.ts`, `tensors/tensorForm.test.ts`                                         |
 | rank 4, `'symmetric-pairs'` (electric-quadrupole SHG) for 6/mmm, 6mm                                                                         | Hoshi et al., Phys. Rev. B 52, 12355 (1995), Eqs. (11)–(12): `references/hoshi/eqs-11-12.md`                                                                                                                                                                                                                      | `tensors/hoshi.reference.test.ts`                                                                       |
