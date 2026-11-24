@@ -899,8 +899,8 @@ vector is odd, so the field is not named `parity`); in the magnetic API `timePar
 `'odd'` (ITC Vol. D: time-even, time-odd; a time-odd tensor changes sign under an operation with
 time reversal), while a specification of the crystallographic API has no time parity and means a
 time-even tensor ("Two entry points"); and `intrinsic`, the symmetry of the tensor under
-permutation of its own indices, independent of the crystal, named descriptively with its Jahn
-symbol (ITC Vol. D § 1.1.4.10) in the TSDoc of `IntrinsicSymmetry`: `'none'`,
+permutation of its own indices, independent of the crystal, named descriptively with its symbol in
+Jahn's nomenclature (Jahn 1949, as ITC Vol. D § 1.9.2, p. 232, names it, where the totally symmetric case is [bᴺ]) in the TSDoc of `IntrinsicSymmetry`: `'none'`,
 `'symmetric-first-pair'`, `'symmetric-last-pair'` (the index symmetry of SHG and of the
 piezoelectric tensor; at rank 2 both mean a symmetric tensor), at rank 4 `'symmetric-pairs'` (both
 pairs symmetric, not interchangeable: electric-quadrupole SHG, photoelasticity) and
@@ -932,9 +932,9 @@ presentation and stay in the applications; they follow from these numbers.
 **Settings.** A tensor form is Cartesian, so it depends on the setting (above, "Settings"): for `2`
 the polar vector lies along y in the default setting (unique axis b) and along z in setting 2 (unique axis c).
 
-**Time reversal** (magnetic API). An operation with time reversal changes the sign of a `'c'`-tensor.
-The 32 white groups have none, so their `'c'`-forms equal their `'i'`-forms. A grey group contains time reversal
-itself, so all its `'c'`-tensors vanish, and its `'i'`-forms are those of its class. This is Birss's
+**Time reversal** (magnetic API). An operation with time reversal changes the sign of a time-odd tensor.
+The 32 white groups have none, so their time-odd forms equal their time-even forms. A grey group contains time reversal
+itself, so all its time-odd tensors vanish, and its time-even forms are those of its class. This is Birss's
 reading (pp. 84, 102) and birss-app's: the grey groups are the groups of non-magnetic crystals; the
 32 groups without time reversal (the white groups: "Types") are, like the 58 black-and-white
 groups, groups of magnetic crystals, the limiting case in which time reversal does not occur. Litvin (_Acta Cryst._ A**64**, 419 (2008), p. 419) says the
@@ -945,8 +945,8 @@ group is not a magnetic group, because time inversion as an element excludes suc
 same way, 32 grey (non-magnetic) and 32 + 58 = 90 magnetically ordered, and asks that, where
 magnetic properties are discussed, a non-magnetic crystal be given the grey symbol (rock salt
 m3m1′, low quartz 321′), to avoid confusion with the magnetic group of the same class.
-In a black-and-white group the `'i'`-forms are those of the crystal class in the same frame, and
-the `'c'`-forms are those of two other crystal classes, possibly in a rotated frame, which Birss's
+In a black-and-white group the time-even forms are those of the crystal class in the same frame, and
+the time-odd forms are those of two other crystal classes, possibly in a rotated frame, which Birss's
 Table 7 names (pp. 109–110): polar time-odd (Birss's `c`) tensors of odd rank and axial ones of even rank have the
 form of the time-even (`i`) tensors of his group A (eq. (3.24): the operations without time reversal and
 those with time reversal times the inversion), the others that of the time-even tensors of the
@@ -957,15 +957,15 @@ table prints a symbol class in parentheses where the frame is rotated.
 kind does not vanish has a name in `TENSOR_PROPERTIES`: name → kind of tensor (`spec`), what the
 tensor relates (`description`) and the print source of the definition (`source`).
 
-| Name                | Tensor                                  | Property                                             |
-| ------------------- | --------------------------------------- | ---------------------------------------------------- |
-| `'pyroelectric'`    | rank 1, polar, `'i'`                    | spontaneous polarization                             |
-| `'ferroaxial'`      | rank 1, axial, `'i'`                    | ferroaxial (ferro-rotational) order: an axial vector |
-| `'piezoelectric'`   | rank 3, polar, `'i'`, symmetric in j, k | P_i = d_ijk T_jk                                     |
-| `'gyrotropic'`      | rank 2, axial, `'i'`, symmetric         | optical activity: the gyration tensor g_ij           |
-| `'ferromagnetic'`   | rank 1, axial, `'c'`                    | spontaneous magnetization (also ferri-, weak ferro-) |
-| `'magnetoelectric'` | rank 2, axial, `'c'`                    | linear magnetoelectric effect, P_i = α_ij H_j        |
-| `'piezomagnetic'`   | rank 3, axial, `'c'`, symmetric in j, k | M_i = Λ_ijk T_jk                                     |
+| Name                | Tensor                                 | Property                                             |
+| ------------------- | -------------------------------------- | ---------------------------------------------------- |
+| `'pyroelectric'`    | rank 1, polar, even                    | spontaneous polarization                             |
+| `'ferroaxial'`      | rank 1, axial, even                    | ferroaxial (ferro-rotational) order: an axial vector |
+| `'piezoelectric'`   | rank 3, polar, even, symmetric in j, k | P_i = d_ijk T_jk                                     |
+| `'gyrotropic'`      | rank 2, axial, even, symmetric         | optical activity: the gyration tensor g_ij           |
+| `'ferromagnetic'`   | rank 1, axial, odd                     | spontaneous magnetization (also ferri-, weak ferro-) |
+| `'magnetoelectric'` | rank 2, axial, odd                     | linear magnetoelectric effect, P_i = α_ij H_j        |
+| `'piezomagnetic'`   | rank 3, axial, odd, symmetric in j, k  | M_i = Λ_ijk T_jk                                     |
 
 `allowsProperty(key, name)` is true if the form is not zero, `allowedProperties(key)` lists the
 names a group allows, in the order of the table; `allowsPropertyOf(operations, name)` and

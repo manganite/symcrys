@@ -48,7 +48,7 @@ export type TimeParity = 'even' | 'odd';
 
 /**
  * Symmetry of the tensor under permutation of its own indices, independent of the crystal, with its
- * Jahn symbol (ITC Vol. D § 1.1.4.10):
+ * symbol in Jahn's nomenclature (Jahn 1949, as ITC Vol. D § 1.9.2, p. 232, names it, where the totally symmetric case is [bᴺ]):
  * - `'none'`: no index symmetry, Vⁿ;
  * - `'symmetric-first-pair'` (rank 2 and above): the first two indices are interchangeable, [V²]V…;
  * - `'symmetric-last-pair'` (rank 2 and above): the last two, V…[V²] (at rank 3 second-harmonic
@@ -132,7 +132,7 @@ function checkSpec(spec: TensorSpec): SignedPermutation[] {
   const { rank, kind, timeParity, intrinsic } = spec;
   if ('parity' in spec) {
     throw new RangeError(
-      `The field parity of a tensor specification is named kind since symcrys 0.11 ('polar' or 'axial'), not parity`,
+      `The field parity of a tensor specification is named kind since symcrys 0.11 ('polar' or 'axial')`,
     );
   }
   if (!RANKS.includes(rank)) throw new RangeError(`Tensor rank must be 0 to 4, not ${shown(rank)}`);

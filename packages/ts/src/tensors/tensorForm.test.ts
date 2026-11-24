@@ -177,14 +177,14 @@ describe('a tensor form', () => {
     expect(() => tensorForm('2', spec(1), { convention: 'birss' } as never)).toThrow(/option convention was removed/);
   });
 
-  it('c-tensors equal i-tensors for the 32 classes, which have no time reversal', () => {
+  it('time-odd tensors equal time-even ones for the 32 classes, which have no time reversal', () => {
     for (const key of POINT_GROUP_KEYS) {
       for (const sp of SPECS) expect(tensorForm(key, { ...sp, timeParity: 'odd' })).toEqual(tensorForm(key, sp));
     }
   });
 
-  it('time reversal: a primed operation changes the sign of a c-tensor', () => {
-    // 1' (grey group of 1): every c-tensor vanishes, every i-tensor is free.
+  it('time reversal: a primed operation changes the sign of a time-odd tensor', () => {
+    // 1' (grey group of 1): every time-odd tensor vanishes, every time-even one is free.
     const greyOne: CartesianOperation[] = [
       {
         cartesian: operation([
@@ -204,7 +204,7 @@ describe('index symmetries, counts for class 1 and between symmetries', () => {
   const n = (key: PointGroupKey, rank: TensorRank, intrinsic: IntrinsicSymmetry) =>
     tensorForm(key, spec(rank, 'polar', intrinsic)).basis.length;
 
-  it('class 1: rank 3 ij 18, rank 4 ij_kl 36, voigt 21, rank 2 ij and jk 6', () => {
+  it('class 1: rank 3 symmetric-first-pair 18, rank 4 symmetric-pairs 36, -exchangeable 21, rank 2 symmetric 6', () => {
     expect([
       n('1', 3, 'symmetric-first-pair'),
       n('1', 4, 'symmetric-pairs'),
@@ -214,7 +214,7 @@ describe('index symmetries, counts for class 1 and between symmetries', () => {
     ]).toEqual([18, 36, 21, 6, 6]);
   });
 
-  it('rank 3: ij and jk give equal counts for every class; rank 4: voigt ≤ ij_kl ≤ none', () => {
+  it('rank 3: the first and the last pair give equal counts for every class; rank 4: exchangeable ≤ pairs ≤ none', () => {
     for (const key of POINT_GROUP_KEYS) {
       expect(n(key, 3, 'symmetric-first-pair'), key).toBe(n(key, 3, 'symmetric-last-pair'));
       expect(
@@ -284,6 +284,67 @@ describe("the index symmetries 'antisymmetric' and 'totally-symmetric' (#137 E2)
           expect(satisfies([row], last.relations), `${key} rank ${rank}`).toBe(true);
         }
         expect(total.parameters.length).toBeLessThanOrEqual(last.parameters.length);
+      }
+    }
+  });
+
+  it('their numbers of parameters equal the rank of the group average times the symmetriser, built here independently', () => {
+    // The tensor representation as Kronecker powers of the matrices, the index symmetry as the mean
+    // of the permutation matrices (with signs for 'antisymmetric'): rank(P·S) is the dimension of the
+    // invariant tensors with that symmetry. Independent of the signed orbits of the library.
+    const kron = (a: number[][], b: number[][]) =>
+      a.flatMap((ra) => b.map((rb) => ra.flatMap((x) => rb.map((y) => x * y))));
+    const permutations = (n: number): number[][] =>
+      n === 1
+        ? [[0]]
+        : permutations(n - 1).flatMap((p) =>
+            Array.from({ length: n }, (_, k) => [...p.slice(0, k), n - 1, ...p.slice(k)]),
+          );
+    const parity = (p: number[]) => {
+      let s = 1;
+      for (let i = 0; i < p.length; i++) for (let j = i + 1; j < p.length; j++) if (p[i] > p[j]) s = -s;
+      return s;
+    };
+    for (const key of ['1', '2/m', 'mm2', '-42m', '3m', '6/mmm', '23', 'm-3m', "4'mm'", "-3'm", "m-3m1'"] as const) {
+      const ops = operations(key as PointGroupKey);
+      for (const [rank, intrinsic] of [
+        [2, 'antisymmetric'],
+        [2, 'totally-symmetric'],
+        [3, 'totally-symmetric'],
+        [4, 'totally-symmetric'],
+      ] as const) {
+        const dim = 3 ** rank;
+        const signed = intrinsic === 'antisymmetric';
+        const sym = Array.from({ length: dim }, () => new Array<number>(dim).fill(0));
+        const perms = permutations(rank);
+        for (const p of perms) {
+          for (let f = 0; f < dim; f++) {
+            const g = p.map((k) => INDICES[rank][f][k]).reduce((acc, x) => acc * 3 + x, 0);
+            sym[g][f] += (signed ? parity(p) : 1) / perms.length;
+          }
+        }
+        for (const kind of ['polar', 'axial'] as const) {
+          for (const timeParity of ['even', 'odd'] as const) {
+            const avg = Array.from({ length: dim }, () => new Array<number>(dim).fill(0));
+            for (const op of ops) {
+              let m: number[][] = [[1]];
+              for (let r = 0; r < rank; r++)
+                m = kron(
+                  m,
+                  op.cartesian.map((row) => [...row]),
+                );
+              const sign =
+                (kind === 'axial' ? Math.sign(det(op.cartesian)) : 1) *
+                (timeParity === 'odd' && op.timeReversal ? -1 : 1);
+              for (let i = 0; i < dim; i++) for (let j = 0; j < dim; j++) avg[i][j] += (sign * m[i][j]) / ops.length;
+            }
+            const product = avg.map((row) => sym[0].map((_, j) => row.reduce((acc, x, k) => acc + x * sym[k][j], 0)));
+            expect(
+              count(key, spec(rank, kind, intrinsic, timeParity)),
+              `${key} rank ${rank} ${intrinsic} ${kind} ${timeParity}`,
+            ).toBe(matrixRank(product, dim));
+          }
+        }
       }
     }
   });

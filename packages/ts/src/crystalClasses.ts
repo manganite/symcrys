@@ -190,7 +190,9 @@ function timeEven(specOrName: TensorSpecArgument | TensorPropertyName): tensors.
     throw new RangeError(`Not a tensor specification: ${shown(specOrName)}`);
   }
   const timeParity = (specOrName as { readonly timeParity?: unknown }).timeParity;
-  if (timeParity === 'odd') throw new RangeError(`A time-odd tensor (timeParity 'odd'): ${USE_MAGNETIC}`);
+  if (timeParity === 'odd' || timeParity === 'c') {
+    throw new RangeError(`A time-odd tensor (timeParity '${timeParity}'): ${USE_MAGNETIC}`);
+  }
   if (timeParity !== undefined && timeParity !== 'even') {
     // The shared check names the values and the names up to 0.10 ('i', 'c').
     return { ...specOrName, timeParity: timeParity as never };

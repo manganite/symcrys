@@ -22,7 +22,7 @@ A tensor is given by its specification:
 | `timeParity` | `'even'`, `'odd'` (magnetic API only) | a time-odd tensor changes sign under time reversal                    |
 | `intrinsic`  | see below                             | the index symmetry                                                    |
 
-The index symmetries, with their Jahn symbols (ITC Vol. D § 1.1.4.10):
+The index symmetries, with their symbols in Jahn's nomenclature (Jahn 1949, as ITC Vol. D § 1.9.2, p. 232, names it, where the totally symmetric case is [bᴺ]):
 
 | `intrinsic`                      | Ranks | Jahn symbol | Index symmetry                                               |
 | -------------------------------- | ----- | ----------- | ------------------------------------------------------------ |

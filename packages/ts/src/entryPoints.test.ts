@@ -507,13 +507,13 @@ describe('the types keep the two entry points apart', () => {
     // @ts-expect-error a time-odd specification
     attempt(() => classes.tensorForm('32', { rank: 1, kind: 'axial', timeParity: 'odd', intrinsic: 'none' }));
     const magneticSpec: magnetic.TensorSpec = { rank: 1, kind: 'polar', timeParity: 'even', intrinsic: 'none' };
-    // @ts-expect-error a specification of the magnetic API, whose time parity may be 'c'
+    // @ts-expect-error a specification of the magnetic API, whose time parity may be 'odd'
     attempt(() => classes.tensorForm('32', magneticSpec));
     // @ts-expect-error operations of the magnetic API, which may be combined with time reversal
     attempt(() => classes.tensorFormOf(magnetic.operations("321'"), 'piezoelectric'));
     // @ts-expect-error also for the site symmetry
     attempt(() => classes.siteSymmetryOf(magnetic.operations('32'), [0, 0, 1]));
-    // Accepted: time parity 'i' and no time reversal, stated.
+    // Accepted: time parity 'even' and no time reversal, stated.
     attempt(() => classes.tensorForm('32', { rank: 1, kind: 'polar', timeParity: 'even', intrinsic: 'none' }));
     attempt(() =>
       classes.tensorFormOf([{ cartesian: classes.operations('1')[0].cartesian, timeReversal: false }], 'pyroelectric'),
