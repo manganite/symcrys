@@ -25,6 +25,7 @@ import {
   planeReciprocalBasis,
   type CellRestrictions,
   type LatticeParameters,
+  type Mat2,
   type PlaneBravaisLattice,
 } from './spaceGroups/planeLattice.js';
 import { deepFreeze } from './freeze.js';
@@ -62,6 +63,7 @@ export type { PlaneSystem } from './spaceGroups/planeGroupData.js';
 export type {
   CellRestrictions,
   LatticeParameters,
+  Mat2,
   PlaneBravaisLattice,
   PlaneCellParameter,
   PlaneFixedAngles,
@@ -822,6 +824,11 @@ export function symmetryElements(key: PlaneGroupKey, options?: SymmetryElementsO
 
 const PLANE_SYSTEMS = Object.keys(PLANE_FAMILIES) as PlaneSystem[];
 
+const copy = (m: Mat2): Mat2 => [
+  [m[0][0], m[0][1]],
+  [m[1][0], m[1][1]],
+];
+
 /**
  * The restrictions on the cell parameters of a crystal system of the plane, as ITA 2016 Table
  * 2.1.1.1 (p. 143) gives them for the conventional cell: the parameters to be determined, the pairs
@@ -846,8 +853,8 @@ export function cellRestrictions(system: PlaneSystem): CellRestrictions {
  * towards +y (right-handed), in the unit of the edge lengths. Throws a RangeError for an edge that is
  * not a positive number and for γ outside (0°, 180°).
  */
-export function latticeFromParameters(parameters: LatticeParameters): readonly (readonly number[])[] {
-  return deepFreeze(planeLatticeFromParameters(parameters, 'latticeFromParameters').map((r) => [...r]));
+export function latticeFromParameters(parameters: LatticeParameters): Mat2 {
+  return deepFreeze(copy(planeLatticeFromParameters(parameters, 'latticeFromParameters')));
 }
 
 /**
@@ -855,13 +862,13 @@ export function latticeFromParameters(parameters: LatticeParameters): readonly (
  * its orientation and handedness. Throws a RangeError for a basis that is not a non-singular 2 × 2
  * matrix.
  */
-export function latticeParameters(basis: readonly (readonly number[])[]): LatticeParameters {
+export function latticeParameters(basis: Mat2): LatticeParameters {
   return Object.freeze(planeLatticeParameters(basis, 'latticeParameters'));
 }
 
 /** The metric tensor G = AᵀA of a basis A (columns a, b): g_ij = a_i · a_j. Throws a RangeError for a basis that is not a non-singular 2 × 2 matrix. */
-export function metricTensor(basis: readonly (readonly number[])[]): readonly (readonly number[])[] {
-  return deepFreeze(planeMetricTensor(basis, 'metricTensor').map((r) => [...r]));
+export function metricTensor(basis: Mat2): Mat2 {
+  return deepFreeze(copy(planeMetricTensor(basis, 'metricTensor')));
 }
 
 /**
@@ -869,6 +876,6 @@ export function metricTensor(basis: readonly (readonly number[])[]): readonly (r
  * a_i · a*_j = δ_ij (no factor 2π). Throws a RangeError for a basis that is not a non-singular 2 × 2
  * matrix.
  */
-export function reciprocalBasis(basis: readonly (readonly number[])[]): readonly (readonly number[])[] {
-  return deepFreeze(planeReciprocalBasis(basis, 'reciprocalBasis').map((r) => [...r]));
+export function reciprocalBasis(basis: Mat2): Mat2 {
+  return deepFreeze(copy(planeReciprocalBasis(basis, 'reciprocalBasis')));
 }

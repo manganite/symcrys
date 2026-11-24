@@ -952,8 +952,11 @@ while implementing gets its own note here.
   p. 720) and anchored twice in print (the boxed groups of Table 2.1.1.1, and the printed Patterson
   symmetry of every plane group, the symmorphic group of its lattice with that Laue class); the
   Patterson symmetry is stored as printed; the Bravais lattice is the family symbol of the table
-  with the lattice letter of the group; the record of the restrictions is `{ parameters, equal,
-angles, nonAcute }`, the last for the footnote § of the table (γ of the oblique system).
+  with the lattice letter of the group; the record of the restrictions has `parameters`, `equal`,
+  `angles` and `nonAcute`, the last for the footnote § of the table (γ of the oblique system); a
+  basis is the type `Mat2` (two rows of two numbers, as `Mat3`), and a cell flat within rounding or
+  with edges whose products overflow or vanish is refused by the criterion of the 3D cell functions
+  (review).
 - **No frieze, layer or magnetic plane groups for now** (#31 question 3): no consumer needs them;
   the dimension-generic module keeps them possible (idea in #74).
 - **Entry point `symcrys/plane`, later `symcrys/space`** (#31 question 4), as `symcrys/magnetic`

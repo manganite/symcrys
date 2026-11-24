@@ -5,7 +5,7 @@
  * entry point is `symcrys/plane`.
  */
 
-import { shown } from '../checks.js';
+import { checkObject, shown } from '../checks.js';
 import type { PlaneSystem } from './planeGroupData.js';
 import {
   PLANE_POINT_GROUP_KEYS,
@@ -32,7 +32,7 @@ export interface CellRestrictions {
   readonly parameters: readonly PlaneCellParameter[];
   /** Pairs of parameters that are equal: `[['a', 'b']]` for square and hexagonal. */
   readonly equal: readonly (readonly PlaneCellParameter[])[];
-  /** The angles fixed to a value, in degrees: `{ gamma: 90 }` for rectangular and square, `{ gamma: 120 }` for hexagonal. */
+  /** The angles fixed to a value, in degrees: gamma 90 for rectangular and square, 120 for hexagonal; none for oblique. */
   readonly angles: PlaneFixedAngles;
   /** The angles conventionally taken non-acute (≥ 90°), the footnote § of the table: `['gamma']` for oblique. */
   readonly nonAcute: readonly PlaneCellParameter[];
@@ -102,8 +102,8 @@ export function planeLaueClass(key: PlanePointGroupKey): PlanePointGroupKey {
 
 // --- cells ------------------------------------------------------------------------------------------
 
-/** A 2 × 2 matrix, rows first. */
-export type Mat2 = readonly (readonly number[])[];
+/** A 2 × 2 matrix, as two rows: a basis has the columns a and b. */
+export type Mat2 = readonly [readonly [number, number], readonly [number, number]];
 
 /** The parameters of a plane cell: the edge lengths a, b and the angle γ between them in degrees. */
 export interface LatticeParameters {
@@ -126,12 +126,11 @@ function cosDeg(x: number): number {
 /**
  * The Cartesian basis of a plane cell as the columns of a 2 × 2 matrix: a along x, b at γ from a
  * towards +y, so the basis is right-handed. Throws a RangeError for an edge that is not a positive
- * finite number and for γ outside (0°, 180°).
+ * finite number, for γ outside (0°, 180°), and for a cell that is flat within rounding (sin γ, the
+ * ratio V/(ab), at most 10⁻⁶, as the cells of the point groups).
  */
 export function planeLatticeFromParameters(p: LatticeParameters, who: string): Mat2 {
-  if (typeof p !== 'object' || p === null || Array.isArray(p)) {
-    throw new RangeError(`${who} takes the parameters { a, b, gamma }, not ${shown(p)}`);
-  }
+  checkObject(p, `${who} takes the parameters { a, b, gamma }`);
   for (const name of ['a', 'b'] as const) {
     const x = p[name];
     if (!(typeof x === 'number' && Number.isFinite(x) && x > 0)) {
@@ -144,13 +143,21 @@ export function planeLatticeFromParameters(p: LatticeParameters, who: string): M
   }
   const c = cosDeg(g);
   const s = Math.sqrt(1 - c * c);
-  return [
+  if (!(s > 1e-6)) throw new RangeError(`${who}: gamma ${g}° gives no cell (a and b parallel within rounding)`);
+  const basis: Mat2 = [
     [p.a + 0, p.b * c + 0],
     [0, p.b * s + 0],
   ];
+  // Edges so large or small that the cell cannot be computed with are refused as by the basis check.
+  planeBasisColumns(basis, who);
+  return basis;
 }
 
-/** The columns a, b of a basis, checked: two rows of two finite numbers, not singular. */
+/**
+ * The columns a, b of a basis, checked: two rows of two finite numbers, and regular by the criterion
+ * of the point groups (`isSingular`): the product of the column lengths finite and not zero, the
+ * determinant above 10⁻⁹ of it, so that no later product overflows or vanishes.
+ */
 export function planeBasisColumns(basis: unknown, who: string): [readonly number[], readonly number[]] {
   const ok =
     Array.isArray(basis) &&
@@ -158,13 +165,12 @@ export function planeBasisColumns(basis: unknown, who: string): [readonly number
     basis.every(
       (row) => Array.isArray(row) && row.length === 2 && row.every((x) => typeof x === 'number' && Number.isFinite(x)),
     );
-  const b = basis as Mat2;
-  const na = ok ? Math.hypot(b[0][0], b[1][0]) : 0;
-  const nb = ok ? Math.hypot(b[0][1], b[1][1]) : 0;
-  // Singular if V/(ab) is below 10⁻⁹, with the columns scaled to unit length (as planeMetric).
-  const ratio = na > 0 && nb > 0 ? (b[0][0] / na) * (b[1][1] / nb) - (b[0][1] / nb) * (b[1][0] / na) : 0;
-  if (!ok || !(Math.abs(ratio) > 1e-9)) {
-    throw new RangeError(`${who}: the basis is a non-singular 2 × 2 matrix (columns a, b), not ${shown(basis)}`);
+  if (!ok) throw new RangeError(`${who}: the basis must be a 2 × 2 matrix of finite numbers, not ${shown(basis)}`);
+  const b = basis as unknown as Mat2;
+  const bound = Math.hypot(b[0][0], b[1][0]) * Math.hypot(b[0][1], b[1][1]);
+  const det = b[0][0] * b[1][1] - b[0][1] * b[1][0];
+  if (!(Number.isFinite(bound) && bound > 0 && Math.abs(det) > 1e-9 * bound)) {
+    throw new RangeError(`${who}: singular basis ${shown(basis)}`);
   }
   return [
     [b[0][0], b[1][0]],

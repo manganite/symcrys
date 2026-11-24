@@ -382,8 +382,8 @@ class CellRestrictions(TypedDict):
     equal: list[list[PlaneCellParameter]]
     """Pairs of parameters that are equal: ``[['a', 'b']]`` for square and hexagonal."""
     angles: PlaneFixedAngles
-    """The angles fixed to a value, in degrees: ``{ gamma: 90 }`` for rectangular and square, ``{ gamma:
-    120 }`` for hexagonal.
+    """The angles fixed to a value, in degrees: gamma 90 for rectangular and square, 120 for hexagonal;
+    none for oblique.
     """
     non_acute: list[PlaneCellParameter]
     """The angles conventionally taken non-acute (≥ 90°), the footnote § of the table: ``['gamma']`` for
@@ -1065,7 +1065,7 @@ def lattice_parameters(basis: ArrayLike) -> LatticeParameters:
     non-singular 2 × 2 matrix.
     """
     result: LatticeParameters = _shared.convert(
-        _call("latticeParameters", _shared.array(basis, "basis")),
+        _call("latticeParameters", _shared.array(basis, "basis", np.float64)),
         _S_LatticeParameters,
     )
     return result
@@ -1076,7 +1076,7 @@ def metric_tensor(basis: ArrayLike) -> NDArray[np.float64]:
     for a basis that is not a non-singular 2 × 2 matrix.
     """
     result: NDArray[np.float64] = _shared.convert(
-        _call("metricTensor", _shared.array(basis, "basis")),
+        _call("metricTensor", _shared.array(basis, "basis", np.float64)),
         ("a", np.float64, None),
     )
     return result
@@ -1088,7 +1088,7 @@ def reciprocal_basis(basis: ArrayLike) -> NDArray[np.float64]:
     matrix.
     """
     result: NDArray[np.float64] = _shared.convert(
-        _call("reciprocalBasis", _shared.array(basis, "basis")),
+        _call("reciprocalBasis", _shared.array(basis, "basis", np.float64)),
         ("a", np.float64, None),
     )
     return result

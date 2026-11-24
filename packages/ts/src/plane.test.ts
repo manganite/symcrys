@@ -602,22 +602,64 @@ describe('plane cells (#119, #137 G5)', () => {
       ],
       [[1, 0]],
     ]) {
-      expect(() => plane.metricTensor(b), JSON.stringify(b)).toThrow(RangeError);
-      expect(() => plane.reciprocalBasis(b)).toThrow(RangeError);
-      expect(() => plane.latticeParameters(b)).toThrow(RangeError);
+      expect(() => plane.metricTensor(b as never), JSON.stringify(b)).toThrow(RangeError);
+      expect(() => plane.reciprocalBasis(b as never)).toThrow(RangeError);
+      expect(() => plane.latticeParameters(b as never)).toThrow(RangeError);
     }
+    // Flat within rounding, and scales whose products overflow or vanish, are refused (review of
+    // #172), as in the cell functions of the point groups.
+    for (const gamma of [1e-8, 180 - 1e-7]) {
+      expect(() => plane.latticeFromParameters({ a: 1, b: 1, gamma }), String(gamma)).toThrow(/gives no cell/);
+    }
+    for (const x of [1e-200, 1e200]) {
+      const b: plane.Mat2 = [
+        [x, 0],
+        [0, x],
+      ];
+      expect(() => plane.metricTensor(b), String(x)).toThrow(/singular/);
+      expect(() => plane.reciprocalBasis(b)).toThrow(/singular/);
+      expect(() => plane.latticeParameters(b)).toThrow(/singular/);
+      expect(() => plane.latticeFromParameters({ a: x, b: x, gamma: 90 })).toThrow(/singular/);
+    }
+    const small: plane.Mat2 = [
+      [1e-150, 0],
+      [0, 1e-150],
+    ];
+    expect(plane.latticeParameters(small).gamma).toBe(90);
+    expect(plane.reciprocalBasis(small)[0][0]).toBeCloseTo(1e150, -140);
     expect(() => plane.cellRestrictions('trigonal' as plane.PlaneSystem)).toThrow(
       /oblique, rectangular, square, hexagonal/,
     );
   });
 
-  it('a cell built to the restrictions of a system has them', () => {
-    for (const system of ['oblique', 'rectangular', 'square', 'hexagonal'] as const) {
+  it('the metric of a cell built to the restrictions of each system is the metric of that system', () => {
+    // G = [[a², ab cos γ], [ab cos γ, b²]] with the printed restrictions: square a²·I, hexagonal
+    // a²·[[1, −1/2], [−1/2, 1]], rectangular diagonal.
+    const g = (system: plane.PlaneSystem, a: number, b: number, gamma = 104) => {
       const r = plane.cellRestrictions(system);
-      const p = { a: 3, b: r.equal.length ? 3 : 4, gamma: r.angles.gamma ?? 104 };
-      const back = plane.latticeParameters(plane.latticeFromParameters(p));
-      if (r.angles.gamma !== undefined) expect(back.gamma).toBeCloseTo(r.angles.gamma, 12);
-      for (const [x, y] of r.equal) expect(back[x as 'a']).toBeCloseTo(back[y as 'b'], 12);
-    }
+      return plane.metricTensor(
+        plane.latticeFromParameters({ a, b: r.equal.length ? a : b, gamma: r.angles.gamma ?? gamma }),
+      );
+    };
+    expect(
+      close(g('square', 3, 4), [
+        [9, 0],
+        [0, 9],
+      ]),
+    ).toBe(true);
+    expect(
+      close(g('hexagonal', 2, 5), [
+        [4, -2],
+        [-2, 4],
+      ]),
+    ).toBe(true);
+    expect(
+      close(g('rectangular', 3, 4), [
+        [9, 0],
+        [0, 16],
+      ]),
+    ).toBe(true);
+    const oblique = g('oblique', 3, 4);
+    expect(oblique[0][1]).toBeCloseTo(12 * Math.cos((104 * Math.PI) / 180), 12);
   });
 });
