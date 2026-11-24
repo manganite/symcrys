@@ -10,6 +10,7 @@
  * `tensorProjection.ts`, `linalg.ts`, revision 2be5fe3).
  */
 
+import { SETTING_KEYS, TOLERANCE_KEYS, checkNumbers, checkOptions, shown } from '../checks.js';
 import { det, type Mat3 } from '../linalg.js';
 import {
   checkCartesianOperations,
@@ -93,11 +94,9 @@ const RANKS: readonly number[] = [0, 1, 2, 3, 4];
 /** Checks a specification and returns the index permutations that generate its intrinsic symmetry. */
 function checkSpec(spec: TensorSpec): number[][] {
   const { rank, parity, timeParity, intrinsic } = spec;
-  if (!RANKS.includes(rank)) throw new RangeError(`Tensor rank must be 0 to 4, not ${JSON.stringify(rank)}`);
-  if (parity !== 'polar' && parity !== 'axial')
-    throw new RangeError(`Unknown tensor parity: ${JSON.stringify(parity)}`);
-  if (timeParity !== 'i' && timeParity !== 'c')
-    throw new RangeError(`Unknown time parity: ${JSON.stringify(timeParity)}`);
+  if (!RANKS.includes(rank)) throw new RangeError(`Tensor rank must be 0 to 4, not ${shown(rank)}`);
+  if (parity !== 'polar' && parity !== 'axial') throw new RangeError(`Unknown tensor parity: ${shown(parity)}`);
+  if (timeParity !== 'i' && timeParity !== 'c') throw new RangeError(`Unknown time parity: ${shown(timeParity)}`);
   const swap = (a: number, b: number) => {
     const p = Array.from({ length: rank }, (_, k) => k);
     [p[a], p[b]] = [p[b], p[a]];
@@ -115,7 +114,7 @@ function checkSpec(spec: TensorSpec): number[][] {
       if (rank !== 4) throw new RangeError(`Intrinsic symmetry '${intrinsic}' needs rank 4, not ${rank}`);
       return intrinsic === 'ij_kl' ? [swap(0, 1), swap(2, 3)] : [swap(0, 1), swap(2, 3), [2, 3, 0, 1]];
     default:
-      throw new RangeError(`Unknown intrinsic symmetry: ${JSON.stringify(intrinsic)}`);
+      throw new RangeError(`Unknown intrinsic symmetry: ${shown(intrinsic)}`);
   }
 }
 
@@ -270,6 +269,7 @@ export function tensorForm(
   spec: TensorSpec | TensorPropertyName,
   options?: SettingOptions,
 ): TensorForm {
+  checkOptions(options, SETTING_KEYS, 'tensorForm');
   const resolved = specOf(spec);
   const perms = checkSpec(resolved);
   const ops = operations(key, options); // checks key and setting
@@ -301,6 +301,7 @@ export function tensorFormOf(
   spec: TensorSpec | TensorPropertyName,
   options?: ToleranceOptions,
 ): TensorForm {
+  checkOptions(options, TOLERANCE_KEYS, 'tensorFormOf');
   const resolved = specOf(spec);
   const perms = checkSpec(resolved);
   return formOfGroup(callerGroup(operations, options), resolved, perms);
@@ -343,13 +344,19 @@ export function rotateTensor(
   specOrName: TensorSpec | TensorPropertyName,
   options?: ToleranceOptions,
 ): readonly number[] {
+  checkOptions(options, TOLERANCE_KEYS, 'rotateTensor');
   const spec = specOf(specOrName);
   checkSpec(spec);
+  if (!Array.isArray(rotation) || rotation.length !== 3) {
+    throw new RangeError(`The rotation must be a 3 × 3 matrix, not ${shown(rotation)}`);
+  }
+  rotation.forEach((row, i) => checkNumbers(row, 3, `Row ${i} of the rotation`));
   checkOrthogonalWithin(rotation, 'The rotation', toleranceOf(options, 'operations'));
   const { rank } = spec;
   const dim = 3 ** rank;
-  if (tensor.length !== dim)
-    throw new RangeError(`A tensor of rank ${rank} has ${dim} components, not ${tensor.length}`);
+  if (!Array.isArray(tensor) || tensor.length !== dim)
+    throw new RangeError(`A tensor of rank ${rank} has ${dim} components, not ${shown(tensor)}`);
+  checkNumbers(tensor, dim, 'The tensor');
   const d = digits(rank);
   const m = rotation.flat();
   const f = spec.parity === 'axial' ? Math.sign(det(rotation)) : 1;

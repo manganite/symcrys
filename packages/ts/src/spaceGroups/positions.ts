@@ -5,6 +5,7 @@
  * point groups (`siteSymmetryOf`). Internal for now.
  */
 
+import { shown } from '../checks.js';
 import { compose, equalModLattice, parseOperation, toPlain, type PlainOperation } from './affine.js';
 import { planeGroupEntry, planeGroupOperations } from './planeGroups.js';
 import { toleranceOf, type ToleranceOptions } from '../tolerances.js';
@@ -46,8 +47,8 @@ function tolerance(options?: ToleranceOptions): number {
 }
 
 function checkPoint(point: readonly number[]): void {
-  if (point.length !== 2 || !point.every(Number.isFinite)) {
-    throw new RangeError(`A point of the plane has two finite coordinates, not ${JSON.stringify(point)}`);
+  if (!Array.isArray(point) || point.length !== 2 || !point.every((x) => typeof x === 'number' && Number.isFinite(x))) {
+    throw new RangeError(`A point of the plane has two finite coordinates, not ${shown(point)}`);
   }
 }
 
@@ -189,7 +190,7 @@ export function planeSiteSymmetry(
     set = next;
   }
   throw new RangeError(
-    `No common fixed point for the operations fixing ${JSON.stringify(point)} within ${tol} (tolerance too large?)`,
+    `No common fixed point for the operations fixing ${shown(point)} within ${tol} (tolerance too large?)`,
   );
 }
 
@@ -262,5 +263,5 @@ export function planeWyckoffPositionOf(
       }
     }
   }
-  throw new RangeError(`No Wyckoff position of ${entry.symbol} holds the point ${JSON.stringify(point)}`);
+  throw new RangeError(`No Wyckoff position of ${entry.symbol} holds the point ${shown(point)}`);
 }

@@ -5,6 +5,7 @@
  * stay with the applications (CLAUDE.md, "Symmetry elements as structured data").
  */
 
+import { shown } from '../checks.js';
 import { determinant, dimensionOf, trace, type ExactOperation, type IntMatrix } from './affine.js';
 import { ZERO, add, multiply, rational, scale, type Rational } from './rational.js';
 
@@ -90,7 +91,7 @@ export function describePlaneOperation(op: ExactOperation): PlaneOperationDescri
   if (det === 1) {
     const n = ORDER_BY_TRACE[trace(w)];
     if (n === undefined || !isIdentity(power(w, n))) {
-      throw new RangeError(`Not a crystallographic rotation: ${JSON.stringify(w)}`);
+      throw new RangeError(`Not a crystallographic rotation: ${shown(w)}`);
     }
     if (n === 1) {
       return t.every((v) => v[0] === 0)
@@ -113,7 +114,7 @@ export function describePlaneOperation(op: ExactOperation): PlaneOperationDescri
     return Object.freeze(n === 2 ? description : { ...description, sense: w[1][0] > 0 ? '+' : '-' });
   }
   if (det !== -1 || trace(w) !== 0 || !isIdentity(power(w, 2))) {
-    throw new RangeError(`Not a crystallographic reflection: ${JSON.stringify(w)}`);
+    throw new RangeError(`Not a crystallographic reflection: ${shown(w)}`);
   }
   // A mirror or glide: W² = I. Glide vector g = (w + W·w)/2, along the line; the line is the set of p with (I − W) p = w − g.
   const wt = [add(scale(w[0][0], t[0]), scale(w[0][1], t[1])), add(scale(w[1][0], t[0]), scale(w[1][1], t[1]))];

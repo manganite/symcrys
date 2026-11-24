@@ -14,7 +14,7 @@ from symcrys._convert import camel, snake
 
 SHG = {"rank": 3, "parity": "polar", "intrinsic": "jk"}
 MAGNETIC_SHG = {**SHG, "time_parity": "i"}
-TYPES = {"SymcrysError", "TensorForm", "TensorSpec"}
+TYPES = {"SymcrysError", "SymcrysInternalError", "TensorForm", "TensorSpec"}
 
 
 def test_every_export_of_the_library_has_its_python_name() -> None:
@@ -27,7 +27,7 @@ def test_every_export_of_the_library_has_its_python_name() -> None:
         extra = (
             TYPES | {"magnetic", "plane"}
             if module is symcrys
-            else {"SymcrysError", "Operation"} if module is plane else TYPES
+            else {"SymcrysError", "SymcrysInternalError", "Operation"} if module is plane else TYPES
         )
         assert set(module.__all__) == expected | extra, module.__name__
         for name in expected:
@@ -423,3 +423,56 @@ def test_one_tolerance_contract() -> None:
     with pytest.raises(symcrys.SymcrysError):
         plane.describe_operations_of(shifted)
     assert len(plane.describe_operations_of(shifted, tolerance=1e-3)) == 8
+
+
+def test_wrong_input_is_a_symcrys_error_and_a_fault_of_symcrys_is_not_a_value_error() -> None:
+    # #137 D2, #92: only a RangeError of the library is SymcrysError (a ValueError); anything else is
+    # SymcrysInternalError (a RuntimeError), so that ``except ValueError`` does not hide a bug.
+    with pytest.raises(symcrys.SymcrysError, match="takes the options setting, axes, uniqueAxis") as e:
+        _engine.invoke("operations", "32", {"uniqueaxis": "a"})
+    assert e.value.js_name == "RangeError"
+    with pytest.raises(symcrys.SymcrysError, match="A direction must be 3 finite numbers"):
+        symcrys.site_symmetry_of(symcrys.operations("4mm"), [0, 1])
+    assert issubclass(symcrys.SymcrysInternalError, RuntimeError)
+    assert not issubclass(symcrys.SymcrysInternalError, ValueError)
+    assert symcrys.SymcrysInternalError is magnetic.SymcrysInternalError is plane.SymcrysInternalError
+
+
+def test_an_error_of_the_library_other_than_a_range_error_is_internal(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(_engine, "call", lambda name, args: '{"error": {"name": "TypeError", "message": "x is undefined"}}')
+    with pytest.raises(symcrys.SymcrysInternalError, match="x is undefined.*internal error of symcrys") as e:
+        symcrys.point_group("32")
+    assert e.value.js_name == "TypeError"
+    monkeypatch.setattr(_engine, "call", lambda name, args: '{"error": {"name": "RangeError", "message": "bad"}}')
+    with pytest.raises(symcrys.SymcrysError, match="bad"):
+        symcrys.point_group("32")
+
+
+def test_input_of_the_wrong_type_is_a_symcrys_error_that_names_the_argument() -> None:
+    # The review of #121 step 8b: these raised NumPy's ValueError or Python's TypeError before.
+    ops = symcrys.operations("4mm")
+    cases = [
+        (lambda: symcrys.rotate_tensor([1, 2, 3], [[1, 0, 0], [0, 1], [0, 0, 1]], "pyroelectric"), "rotation"),
+        (lambda: symcrys.orbit("32", [1, 0, 0]), "indices must be a mapping"),  # type: ignore[arg-type]
+        (lambda: symcrys.is_valid_cell([90, 90, 90]), "angles must be a mapping"),  # type: ignore[arg-type]
+        (lambda: symcrys.lattice_from_parameters([1, 2, 3]), "parameters must be a mapping"),  # type: ignore[arg-type]
+        (lambda: symcrys.tensor_form("32", 3), "spec must be a mapping"),  # type: ignore[arg-type]
+        (lambda: symcrys.site_symmetry_of(ops, [1, 0, 1j]), "direction must be an array of real numbers"),
+        (lambda: symcrys.site_symmetry_of(ops, "z"), "direction must be an array of real numbers"),
+        (lambda: symcrys.operations("32", setting=object()), "Argument 2 of operations cannot be passed"),  # type: ignore[arg-type]
+        (lambda: symcrys.site_symmetry_of(ops, [0, np.nan, 1]), "Argument 2 of siteSymmetryOf: every number"),
+        (lambda: plane.orbit("p4", [[0.1], [0.2, 0.3]]), "point must be an array of numbers"),
+    ]
+    for call, message in cases:
+        with pytest.raises(symcrys.SymcrysError, match=message):
+            call()
+
+
+def test_errors_survive_pickling() -> None:
+    import pickle
+
+    internal = pickle.loads(pickle.dumps(symcrys.SymcrysInternalError("x is undefined", "TypeError")))
+    assert str(internal) == "x is undefined (an internal error of symcrys; please report it)"
+    assert internal.js_name == "TypeError"
+    error = pickle.loads(pickle.dumps(symcrys.SymcrysError("bad")))
+    assert str(error) == "bad" and error.js_name == "RangeError"

@@ -16,6 +16,7 @@
  * Internal.
  */
 
+import { shown } from '../checks.js';
 import { operation, type CartesianOperation } from '../operations.js';
 import type { BlackWhitePointGroupKey, PointGroupKey } from './keys.js';
 import { itcCartesianOperations, itcClass, itcLatticeGenerators, itcTimeReversal } from './itcData.js';
@@ -145,7 +146,7 @@ const BY_KEY = new Map<string, ItcBlackWhite>(ITC_BLACK_WHITE.map((g) => [g.key,
 /** The ITC data of a black-and-white group. */
 export function itcBlackWhite(key: BlackWhitePointGroupKey): ItcBlackWhite {
   const g = BY_KEY.get(key);
-  if (!g) throw new RangeError(`Unknown black-and-white point group key: ${JSON.stringify(key)}`);
+  if (!g) throw new RangeError(`Unknown black-and-white point group key: ${shown(key)}`);
   return g;
 }
 

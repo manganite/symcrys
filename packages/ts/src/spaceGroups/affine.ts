@@ -5,6 +5,7 @@
  * space groups). CLAUDE.md, "Plane groups (and later space groups)".
  */
 
+import { shown } from '../checks.js';
 import {
   ZERO,
   add,
@@ -63,7 +64,7 @@ function checkDimension(d: number): number {
 export function dimensionOf(op: ExactOperation): number {
   const d = op.matrix.length;
   if (d < 1 || d > 3 || op.translation.length !== d || op.matrix.some((row) => row.length !== d)) {
-    throw new RangeError(`Not an operation of dimension 1 to 3: ${JSON.stringify(op)}`);
+    throw new RangeError(`Not an operation of dimension 1 to 3: ${shown(op)}`);
   }
   for (const row of op.matrix) {
     for (const v of row) {
@@ -118,7 +119,7 @@ export function checkUnimodular(op: ExactOperation): void {
   dimensionOf(op);
   const det = determinant(op.matrix);
   if (det !== 1 && det !== -1) {
-    throw new RangeError(`Determinant ${det} is not ±1: ${JSON.stringify(op.matrix)}`);
+    throw new RangeError(`Determinant ${det} is not ±1: ${shown(op.matrix)}`);
   }
 }
 

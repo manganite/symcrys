@@ -6,6 +6,7 @@
  * (tensors/tensorProperties.ts).
  */
 
+import { checkOptions, shown, TOLERANCE_KEYS } from '../checks.js';
 import type { CrystalSystem } from '../lattice.js';
 import { INVERSION, det } from '../linalg.js';
 import { checkCartesianOperations, checkTimeReversal, type CartesianOperation } from '../operations.js';
@@ -21,6 +22,7 @@ import type { PointGroupKey } from './keys.js';
  * RangeError as `tensorFormOf`.
  */
 export function isCentrosymmetricOf(operations: readonly CartesianOperation[], options?: ToleranceOptions): boolean {
+  checkOptions(options, TOLERANCE_KEYS, 'isCentrosymmetricOf');
   const tolerance = toleranceOf(options, 'operations');
   checkCartesianOperations(operations, tolerance);
   checkTimeReversal(operations);
@@ -36,6 +38,7 @@ export function isCentrosymmetricOf(operations: readonly CartesianOperation[], o
  * tolerance) and for an operation that does not say whether it is combined with time reversal.
  */
 export function isEnantiomorphicOf(operations: readonly CartesianOperation[], options?: ToleranceOptions): boolean {
+  checkOptions(options, TOLERANCE_KEYS, 'isEnantiomorphicOf');
   checkCartesianOperations(operations, toleranceOf(options, 'operations'));
   checkTimeReversal(operations);
   return operations.every((op) => det(op.cartesian) > 0);
@@ -60,6 +63,6 @@ const HOLOHEDRY: Readonly<Record<CrystalSystem, PointGroupKey>> = Object.freeze(
  * (`latticeBasis`, hexagonal axes for both systems) has.
  */
 export function holohedry(system: CrystalSystem): PointGroupKey {
-  if (!Object.hasOwn(HOLOHEDRY, system)) throw new RangeError(`Unknown crystal system: ${JSON.stringify(system)}`);
+  if (!Object.hasOwn(HOLOHEDRY, system)) throw new RangeError(`Unknown crystal system: ${shown(system)}`);
   return HOLOHEDRY[system];
 }

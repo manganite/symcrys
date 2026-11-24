@@ -3,6 +3,7 @@
  * fixed (docs/conventions.md, "Site symmetry and Wyckoff positions").
  */
 
+import { checkNumbers, checkOptions, shown, TOLERANCE_KEYS } from './checks.js';
 import { apply, multiply, type Vec3 } from './linalg.js';
 import { checkCartesianOperations, type CartesianOperation } from './operations.js';
 import { EPSILON, TOLERANCE_BOUND, toleranceOf, type ToleranceOptions } from './tolerances.js';
@@ -27,8 +28,9 @@ export interface SiteSymmetry {
 }
 
 function unit(v: Vec3): Vec3 {
+  checkNumbers(v, 3, 'A direction');
   const n = Math.hypot(v[0], v[1], v[2]);
-  if (!(n > 0) || !Number.isFinite(n)) throw new RangeError(`Not a direction: ${JSON.stringify(v)}`);
+  if (!(n > 0) || !Number.isFinite(n)) throw new RangeError(`Not a direction: ${shown(v)}`);
   return [v[0] / n, v[1] / n, v[2] / n];
 }
 
@@ -127,9 +129,11 @@ export function siteSymmetryOf(
   direction: Vec3,
   options?: ToleranceOptions,
 ): SiteSymmetry {
+  checkOptions(options, TOLERANCE_KEYS, 'siteSymmetryOf');
   const tolerance = siteTolerance(options);
   // Operations are checked in their own metric, at most with the bound for operations.
   checkCartesianOperations(operations, Math.min(tolerance, TOLERANCE_BOUND.operations));
+  if (operations.length === 0) throw new RangeError('siteSymmetryOf takes a list of at least one operation');
   const v = unit(direction);
   const fixing = (w: Vec3): number[] => {
     const out: number[] = [];
@@ -149,7 +153,7 @@ export function siteSymmetryOf(
     const mean = meanImage(operations, set, v);
     if (mean === undefined) {
       throw new RangeError(
-        `No common fixed direction for the operations fixing ${JSON.stringify(direction)} within ${tolerance} (tolerance too large?)`,
+        `No common fixed direction for the operations fixing ${shown(direction)} within ${tolerance} (tolerance too large?)`,
       );
     }
     const next = closeWithin(product, fixing(mean));
@@ -160,7 +164,7 @@ export function siteSymmetryOf(
     // Only for a tolerance far too large; the site symmetry would be neither closed nor its direction
     // projected (#91).
     throw new RangeError(
-      `The site symmetry of ${JSON.stringify(direction)} does not settle within ${tolerance} (tolerance too large?)`,
+      `The site symmetry of ${shown(direction)} does not settle within ${tolerance} (tolerance too large?)`,
     );
   }
   const { indices, projected } = settled;

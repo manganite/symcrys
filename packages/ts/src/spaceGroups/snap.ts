@@ -5,6 +5,7 @@
  * this asks whether the point lies within the tolerance of the point set of a position. Internal.
  */
 
+import { shown } from '../checks.js';
 import { parseOperation, toPlain, type PlainOperation } from './affine.js';
 import { planeGroupEntry } from './planeGroups.js';
 import { toleranceOf } from '../tolerances.js';
@@ -95,7 +96,7 @@ export interface SnappedPoint {
  */
 export function planeSnapToWyckoffPosition(key: string, point: readonly number[], tolerance?: number): SnappedPoint {
   if (point.length !== 2 || !point.every(Number.isFinite)) {
-    throw new RangeError(`A point of the plane has two finite coordinates, not ${JSON.stringify(point)}`);
+    throw new RangeError(`A point of the plane has two finite coordinates, not ${shown(point)}`);
   }
   const tol = toleranceOf({ tolerance }, 'points');
   const p = point.map(mod1);
@@ -111,5 +112,5 @@ export function planeSnapToWyckoffPosition(key: string, point: readonly number[]
     }
     if (best) return { row: best.row, point: best.point.map(mod1) };
   }
-  throw new Error(`The general position of ${key} does not hold ${JSON.stringify(point)}`);
+  throw new Error(`The general position of ${key} does not hold ${shown(point)}`);
 }

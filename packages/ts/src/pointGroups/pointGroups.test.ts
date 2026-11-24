@@ -156,7 +156,9 @@ describe('a setting by its symbol', () => {
     expect(() => operations('2', { uniqueAxis: 'z' as never })).toThrow(/uniqueAxis must be 'a', 'b' or 'c'/);
     expect(() => operations('32', { axes: 'trigonal' as never })).toThrow(/axes must be 'hexagonal' or 'rhombohedral'/);
     expect(() => findPointGroup('mm2', { uniqueAxis: 'c' })).toThrow(/uniqueAxis applies to the monoclinic groups/);
-    expect(() => findPointGroup('32', { setting: 2 } as never)).toThrow(/takes the options axes and uniqueAxis/);
+    expect(() => findPointGroup('32', { setting: 2 } as never)).toThrow(
+      /takes the options axes, uniqueAxis, not "setting"/,
+    );
     expect(() => findPointGroup('xyz', { axes: 'bogus' } as never)).toThrow(/axes must be/);
     expect(() => findPointGroup('32', { convention: 'itc' } as never)).toThrow(/option convention was removed/);
     expect(() => (findPointGroup as (...args: unknown[]) => unknown)('32', 'birss')).toThrow(
@@ -216,6 +218,7 @@ describe('findPointGroup', () => {
     expect(findPointGroup('m3m')).toEqual({ key: 'm-3m', setting: 1 }); // Birss's spelling (#96)
     expect(findPointGroup('m3m3')).toBeUndefined();
     expect(findPointGroup('P4mm')).toBeUndefined();
-    expect(findPointGroup(42 as unknown as string)).toBeUndefined();
+    // Not a symbol at all: wrong input, not "not found" (#137 D2).
+    expect(() => findPointGroup(42 as unknown as string)).toThrow(RangeError);
   });
 });

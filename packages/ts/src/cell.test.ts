@@ -197,7 +197,9 @@ describe('isValidCell', () => {
     expect(isValidCell({ alpha: 60, beta: 60, gamma: 120 })).toBe(false); // exactly flat
     expect(isValidCell({ alpha: 90, beta: 90, gamma: 180 })).toBe(false);
     expect(isValidCell({ alpha: 0, beta: 90, gamma: 90 })).toBe(false);
-    expect(isValidCell({ alpha: Number.NaN, beta: 90, gamma: 90 })).toBe(false);
+    // A value that is no finite number is wrong input, not a cell that does not exist (#137 D2).
+    expect(() => isValidCell({ alpha: Number.NaN, beta: 90, gamma: 90 })).toThrow(RangeError);
+    expect(() => isValidCell({ alpha: '90' as never, beta: 90, gamma: 90 })).toThrow(RangeError);
   });
 
   it('minVolumeRatio refuses nearly flat cells: V / (abc) = sin γ here', () => {

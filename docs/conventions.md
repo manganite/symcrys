@@ -446,6 +446,16 @@ the three entry points). `residualOperations` freezes its list, not the operatio
 the caller's. "Not found" is `undefined`, never `null` (`findPointGroup`, `pointGroupOf`,
 `zoneAxis`; in Python `None`).
 
+## Errors
+
+Wrong input is a `RangeError` whose message says what is wrong, in every function of the three
+entry points: an unknown key or setting, a vector of the wrong length or with a number that is not
+finite, an options argument that is not an object, an option the function does not know (a
+misspelling such as `uniqueaxis` is not ignored), a tolerance outside its bounds ("Tolerances"). A
+`TypeError` or a plain `Error` is a fault of symcrys (#137 D2; `inputErrors.test.ts` calls every
+function with wrong values in every position). In Python a `RangeError` raises `SymcrysError`, a
+`ValueError`, and any other error `SymcrysInternalError`, a `RuntimeError`.
+
 ## Numbers
 
 Matrices hold floating-point numbers. During group closure every entry within 10⁻⁹ of an exact

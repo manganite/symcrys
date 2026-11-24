@@ -3,6 +3,7 @@
  * entry points.
  */
 
+import { checkNumbers, checkOptions, SETTING_KEYS, shown, TOLERANCE_KEYS } from '../checks.js';
 import { apply, inverse, type Mat3, type Vec3 } from '../linalg.js';
 import { checkCartesianOperations } from '../operations.js';
 import { siteTolerance } from '../siteSymmetry.js';
@@ -32,7 +33,7 @@ function indicesOf(value: unknown, name: string): readonly [number, number, numb
     !value.every((x) => typeof x === 'number' && Number.isSafeInteger(x)) ||
     value.every((x) => x === 0)
   ) {
-    throw new RangeError(`${name} must be three (safe) integers, not all zero: ${JSON.stringify(value)}`);
+    throw new RangeError(`${name} must be three (safe) integers, not all zero: ${shown(value)}`);
   }
   return [value[0] + 0, value[1] + 0, value[2] + 0];
 }
@@ -84,6 +85,7 @@ export function orbit(
   indices: { readonly hkl: Hkl } | { readonly uvw: Uvw },
   options?: SettingOptions,
 ): readonly FaceOrbitEntry[] | readonly DirectionOrbitEntry[] {
+  checkOptions(options, SETTING_KEYS, 'orbit');
   const given = (indices ?? {}) as { readonly hkl?: unknown; readonly uvw?: unknown };
   const hasHkl = given.hkl !== undefined;
   const hasUvw = given.uvw !== undefined;
@@ -137,11 +139,14 @@ export function orbitOf(
   direction: Vec3,
   options?: ToleranceOptions,
 ): readonly OrbitPole[] {
+  checkOptions(options, TOLERANCE_KEYS, 'orbitOf');
   const tolerance = siteTolerance(options);
   // Operations are checked in their own metric, at most with the bound for operations.
   checkCartesianOperations(operations, Math.min(tolerance, TOLERANCE_BOUND.operations));
+  if (operations.length === 0) throw new RangeError('orbitOf takes a list of at least one operation');
+  checkNumbers(direction, 3, 'A direction');
   const n = Math.hypot(direction[0], direction[1], direction[2]);
-  if (!(n > 0) || !Number.isFinite(n)) throw new RangeError(`Not a direction: ${JSON.stringify(direction)}`);
+  if (!(n > 0) || !Number.isFinite(n)) throw new RangeError(`Not a direction: ${shown(direction)}`);
   const u: Vec3 = [direction[0] / n, direction[1] / n, direction[2] / n];
   const poles: { direction: Vec3; operations: number[] }[] = [];
   operations.forEach((op, i) => {

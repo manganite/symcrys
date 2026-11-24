@@ -3,6 +3,7 @@
  * of symcrys (docs/conventions.md, "Cartesian frame").
  */
 
+import { shown } from './checks.js';
 import type { Mat3 } from './linalg.js';
 
 /** One of the seven crystal systems. */
@@ -12,8 +13,22 @@ export type CrystalSystem =
 /** One of the six crystal families: the trigonal and the hexagonal system form the hexagonal family. */
 export type CrystalFamily = 'triclinic' | 'monoclinic' | 'orthorhombic' | 'tetragonal' | 'hexagonal' | 'cubic';
 
-/** The crystal family of a crystal system: trigonal and hexagonal form the hexagonal family. */
+const SYSTEMS: readonly string[] = [
+  'triclinic',
+  'monoclinic',
+  'orthorhombic',
+  'tetragonal',
+  'trigonal',
+  'hexagonal',
+  'cubic',
+];
+
+/**
+ * The crystal family of a crystal system: trigonal and hexagonal form the hexagonal family. Throws
+ * a RangeError for anything that is not one of the seven crystal systems.
+ */
 export function crystalFamily(system: CrystalSystem): CrystalFamily {
+  if (!SYSTEMS.includes(system)) throw new RangeError(`Unknown crystal system: ${shown(system)}`);
   return system === 'trigonal' ? 'hexagonal' : system;
 }
 

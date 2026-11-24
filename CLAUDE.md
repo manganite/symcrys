@@ -272,7 +272,8 @@ Carried over from birss-app, where the calculations come from.
   function names and object keys camelCase → snake_case; an options object becomes keyword-only
   arguments; arrays of numbers become NumPy arrays (`float64` for matrices, Cartesian vectors,
   tensor bases and relations; `int64` for index lists, Miller indices and lattice directions);
-  errors of the library raise `SymcrysError`, a `ValueError`. `symcrys.plane` converts its arrays
+  a `RangeError` of the library (wrong input) raises `SymcrysError`, a `ValueError`, any other
+  error `SymcrysInternalError`, a `RuntimeError` (#137 D2). `symcrys.plane` converts its arrays
   field by field instead of by key ("The API of `symcrys/plane`" below). A new export of `src/index.ts` gets
   its Python function in `symcrys`, one of `src/magnetic.ts` in `symcrys.magnetic`, one of
   `src/plane.ts` in `symcrys.plane`, in the same PR; a test fails until it has one.
@@ -462,6 +463,15 @@ The conventions themselves are in `docs/conventions.md`; here, what was decided 
   birss-app rests; adding them is additive, and the first real consumer tests the API early. **Magnetic groups and group properties in three PRs** (maintainer, 2026-11-19, #13, #41):
   data, symbols and operations; then the `'c'`-tensors and the named tensor properties; then the
   fixed properties of a class as fields of `pointGroup()`; released together as one MINOR.
+- **Error types** (#137 D2, decided by Thomas on 2026-11-22; #92; #121 step 8b): wrong input is a
+  `RangeError` in TypeScript, a plain `Error` (or a `TypeError`) only a fault of symcrys; in Python
+  `SymcrysError` (a `ValueError`) for a `RangeError` and `SymcrysInternalError` (a `RuntimeError`)
+  for anything else. Chosen while implementing: an options argument that is not a plain object, and
+  a key a function does not know (a misspelling such as `uniqueaxis`), are RangeErrors
+  (`checks.ts`, `checkOptions`; the plan of step 8 on #121); a function that passes part of its
+  options on passes only the keys of the callee. `inputErrors.test.ts` calls every function of the
+  three entry points with wrong values in every position and fails for a TypeError or an `Error`,
+  and for a new export it does not call.
 - **One tolerance contract** (#137 D1, decided by Thomas on 2026-11-22; #93, #89, #133; #121 step
   8a): one option type, `ToleranceOptions`, for every function that compares numbers of a caller,
   `EPSILON` exported, one check (finite, above 0, below the bound of the metric, `null` refused) and

@@ -15,6 +15,7 @@
  * #137 A4 (`ItcSetting.index`).
  */
 
+import { shown } from '../checks.js';
 import { crystalFamily, latticeBasis, type CrystalSystem } from '../lattice.js';
 import { inverse, multiply, snap, type Mat3 } from '../linalg.js';
 import type { PointGroupKey } from './keys.js';
@@ -218,7 +219,7 @@ const BY_KEY = new Map(ITC_CLASSES.map((c) => [c.key, c]));
 /** The class data of a key. */
 export function itcClass(key: PointGroupKey): ItcClass {
   const c = BY_KEY.get(key);
-  if (!c) throw new RangeError(`Unknown point group key: ${JSON.stringify(key)}`);
+  if (!c) throw new RangeError(`Unknown point group key: ${shown(key)}`);
   return c;
 }
 
@@ -249,7 +250,7 @@ const IDENTITY: IntMat3 = [
 function iinverse(m: IntMat3): IntMat3 {
   const [[a, b, c], [d, e, f], [g, h, i]] = m;
   const det = a * (e * i - f * h) - b * (d * i - f * g) + c * (d * h - e * g);
-  if (det !== 1 && det !== -1) throw new RangeError(`Not unimodular: ${JSON.stringify(m)}`);
+  if (det !== 1 && det !== -1) throw new RangeError(`Not unimodular: ${shown(m)}`);
   const adj = [
     [e * i - f * h, c * h - b * i, b * f - c * e],
     [f * g - d * i, a * i - c * g, c * d - a * f],

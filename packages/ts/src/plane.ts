@@ -10,6 +10,7 @@
  * `tolerance` (docs/conventions.md, "Plane groups").
  */
 
+import { TOLERANCE_KEYS, checkOptions, shown } from './checks.js';
 import { describePlaneOperation } from './spaceGroups/describe.js';
 import { planeAsymmetricUnit, planeCellElements } from './spaceGroups/cell.js';
 import { toPlain, type ExactOperation } from './spaceGroups/affine.js';
@@ -232,7 +233,7 @@ function isPlaneGroupKey(key: unknown): key is PlaneGroupKey {
 }
 
 function unknownKey(key: unknown, what = 'plane group or plane point group'): never {
-  throw new RangeError(`Unknown ${what}: ${JSON.stringify(key)}`);
+  throw new RangeError(`Unknown ${what}: ${shown(key)}`);
 }
 
 /** The plane group of a key; throws for a point group or an unknown key. */
@@ -326,15 +327,6 @@ function fractionOf(value: unknown, tolerance: number): Rational {
   );
 }
 
-/** A value for an error message; never throws (BigInt, circular objects). */
-function shown(value: unknown): string {
-  try {
-    return JSON.stringify(value) ?? String(value);
-  } catch {
-    return String(value);
-  }
-}
-
 /** An operation from a caller as an exact operation; throws a RangeError unless it has the shape of a plane operation. */
 function exactOf(op: unknown, tolerance: number): ExactOperation {
   const o = op as Partial<PlaneOperation> | null;
@@ -394,6 +386,7 @@ export function settings(key: PointGroupKey): readonly Setting[] {
 
 /** The symbol of a plane point group in a setting: `'3m1'` or `'31m'` for `3m`, otherwise the key. */
 export function symbol(key: PointGroupKey, options?: SettingOptions): string {
+  checkOptions(options, ['setting'], 'symbol');
   return planePointGroupSymbol(pointKey(key, 'symbol'), settingOf(options));
 }
 
@@ -406,6 +399,7 @@ export function symbol(key: PointGroupKey, options?: SettingOptions): string {
  * or setting.
  */
 export function operations(key: PlaneGroupKey | PointGroupKey, options?: SettingOptions): readonly PlaneOperation[] {
+  checkOptions(options, ['setting'], 'operations');
   return Object.freeze(exact(key, options, false).map(plain));
 }
 
@@ -415,6 +409,7 @@ export function operations(key: PlaneGroupKey | PointGroupKey, options?: Setting
  * generators of its symmorphic plane group. Throws a RangeError for an unknown key or setting.
  */
 export function generators(key: PlaneGroupKey | PointGroupKey, options?: SettingOptions): readonly PlaneOperation[] {
+  checkOptions(options, ['setting'], 'generators');
   return Object.freeze(exact(key, options, true).map(plain));
 }
 
@@ -427,6 +422,7 @@ export function describeOperations(
   key: PlaneGroupKey | PointGroupKey,
   options?: SettingOptions,
 ): readonly OperationDescription[] {
+  checkOptions(options, ['setting'], 'describeOperations');
   return Object.freeze(exact(key, options, false).map(describe));
 }
 
@@ -445,6 +441,7 @@ export function describeOperationsOf(
   operations: readonly PlaneOperation[],
   options?: ToleranceOptions,
 ): readonly OperationDescription[] {
+  checkOptions(options, TOLERANCE_KEYS, 'describeOperationsOf');
   const tolerance = toleranceOf(options, 'operations');
   if (!Array.isArray(operations)) {
     throw new RangeError('describeOperationsOf takes a list of operations { matrix, translation }');
@@ -473,6 +470,7 @@ export function wyckoffPositions(key: PlaneGroupKey): readonly WyckoffPosition[]
  * numbers, or a tolerance outside (0, 1/2).
  */
 export function siteSymmetry(key: PlaneGroupKey, point: readonly number[], options?: ToleranceOptions): SiteSymmetry {
+  checkOptions(options, TOLERANCE_KEYS, 'siteSymmetry');
   const site = planeSiteSymmetry(groupKey(key, 'siteSymmetry'), point, options);
   return Object.freeze({
     operations: Object.freeze([...site.operations]),
@@ -492,6 +490,7 @@ export function wyckoffPosition(
   point: readonly number[],
   options?: ToleranceOptions,
 ): WyckoffPosition {
+  checkOptions(options, TOLERANCE_KEYS, 'wyckoffPosition');
   const k = groupKey(key, 'wyckoffPosition');
   const { letter } = planeWyckoffPositionOf(k, point, options);
   const found = wyckoffPositions(k).find((w) => w.letter === letter);
@@ -515,9 +514,10 @@ export function snapToWyckoffPosition(
   point: readonly number[],
   options?: ToleranceOptions,
 ): SnappedPosition {
+  checkOptions(options, TOLERANCE_KEYS, 'snapToWyckoffPosition');
   const k = groupKey(key, 'snapToWyckoffPosition');
   if (!Array.isArray(point)) {
-    throw new RangeError(`A point of the plane has two finite coordinates, not ${JSON.stringify(point)}`);
+    throw new RangeError(`A point of the plane has two finite coordinates, not ${shown(point)}`);
   }
   const snapped = planeSnapToWyckoffPosition(k, point, options?.tolerance);
   const position = wyckoffPositions(k)[snapped.row];
@@ -544,6 +544,7 @@ export function orbit(
   point: readonly number[],
   options?: ToleranceOptions,
 ): readonly PointOrbitEntry[] {
+  checkOptions(options, TOLERANCE_KEYS, 'orbit');
   return Object.freeze(
     planeOrbit(groupKey(key, 'orbit'), point, options).map((e) =>
       Object.freeze({ point: Object.freeze(e.point), operations: Object.freeze(e.operations) }),

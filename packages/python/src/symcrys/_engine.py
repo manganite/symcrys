@@ -14,18 +14,38 @@ from typing import Any
 
 import quickjs  # type: ignore[import-untyped]
 
-__all__ = ["SymcrysError", "call", "exports", "value"]
+__all__ = ["SymcrysError", "SymcrysInternalError", "call", "exports", "value"]
 
 
 class SymcrysError(ValueError):
-    """An error raised by symcrys (e.g. an unknown key, setting or tensor specification).
+    """Wrong input to symcrys (e.g. an unknown key, setting or tensor specification, a vector of the
+    wrong length, an unknown option): the ``RangeError`` of the TypeScript library, or a check of
+    the Python layer. ``js_name`` is the name of the JavaScript error, ``RangeError``.
+    """
 
-    ``js_name`` is the name of the JavaScript error (``RangeError``, ``TypeError``, ``Error``).
+    def __init__(self, message: str, js_name: str = "RangeError") -> None:
+        super().__init__(message)
+        self.js_name = js_name
+
+    def __reduce__(self) -> tuple[Any, tuple[str, str]]:
+        return (type(self), (str(self.args[0]), self.js_name))
+
+
+class SymcrysInternalError(RuntimeError):
+    """A fault of symcrys itself, not of its input: any error of the library other than a
+    ``RangeError``. It is not a ``ValueError``, so that ``except ValueError`` does not hide it (#92);
+    please report it. ``js_name`` is the name of the JavaScript error (``TypeError``, ``Error``).
     """
 
     def __init__(self, message: str, js_name: str = "Error") -> None:
         super().__init__(message)
         self.js_name = js_name
+
+    def __str__(self) -> str:
+        return f"{super().__str__()} (an internal error of symcrys; please report it)"
+
+    def __reduce__(self) -> tuple[Any, tuple[str, str]]:
+        return (type(self), (str(self.args[0]), self.js_name))
 
 
 _lock = threading.Lock()
@@ -55,18 +75,31 @@ def call(name: str, args_json: str) -> str:
 
 
 def invoke(name: str, *args: Any) -> Any:
-    """Calls ``name`` with JSON-compatible arguments; returns the decoded result or raises SymcrysError."""
+    """Calls ``name`` with JSON-compatible arguments; returns the decoded result. Raises SymcrysError for
+    a RangeError of the library (wrong input) and SymcrysInternalError for any other error.
+    """
     try:
         args_json = json.dumps(args, allow_nan=False)
-    except ValueError as e:
-        # JSON has no NaN or infinity; without this check the engine's parser reported "unexpected token" (#92).
-        if "Out of range float" not in str(e):
-            raise
-        raise SymcrysError("Every number passed to symcrys must be finite, not NaN or infinite", "RangeError") from None
+    except (TypeError, ValueError):
+        # JSON has no NaN or infinity, and no other Python objects; without this check the engine's
+        # parser reported "unexpected token" (#92). The message names the argument.
+        for i, arg in enumerate(args):
+            try:
+                json.dumps(arg, allow_nan=False)
+            except ValueError:
+                raise SymcrysError(
+                    f"Argument {i + 1} of {name}: every number passed to symcrys must be finite, not NaN or infinite",
+                    "RangeError",
+                ) from None
+            except TypeError as e:
+                raise SymcrysError(f"Argument {i + 1} of {name} cannot be passed to symcrys: {e}", "RangeError") from None
+        raise
     answer = json.loads(call(name, args_json))
     if "error" in answer:
         error = answer["error"]
-        raise SymcrysError(error["message"], error["name"])
+        if error["name"] == "RangeError":
+            raise SymcrysError(error["message"], error["name"])
+        raise SymcrysInternalError(error["message"], error["name"])
     return answer.get("result")
 
 

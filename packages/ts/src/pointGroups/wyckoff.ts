@@ -4,6 +4,7 @@
  * Wyckoff position of any direction (docs/conventions.md, "Site symmetry and Wyckoff positions").
  */
 
+import { checkOptions, pick, SETTING_KEYS, shown, TOLERANCE_KEYS } from '../checks.js';
 import { apply, inverse, transpose, type Mat3, type Vec3 } from '../linalg.js';
 import { crystalFamily } from '../lattice.js';
 import { itcBasis, itcClass, itcSetting as itcClassSetting } from './itcData.js';
@@ -225,12 +226,10 @@ const cache = new Map<string, readonly WyckoffPosition[]>();
  */
 export function tableSetting(key: PointGroupKey, options?: SettingOptions, what = 'Wyckoff positions'): number {
   if (isMagneticPointGroupKey(key) && !isPointGroupKey(key)) {
-    throw new RangeError(
-      `${what} are given for the 32 crystal classes only; ${JSON.stringify(key)} is a magnetic point group`,
-    );
+    throw new RangeError(`${what} are given for the 32 crystal classes only; ${shown(key)} is a magnetic point group`);
   }
   const index = settingIndexOf(key, options);
-  operations(key, options); // validates the setting index
+  operations(key, pick(options, SETTING_KEYS)); // validates the setting index
   return index;
 }
 
@@ -242,6 +241,7 @@ export function tableSetting(key: PointGroupKey, options?: SettingOptions, what 
  * of setting 1 carried into their frame.
  */
 export function wyckoffPositions(key: PointGroupKey, options?: SettingOptions): readonly WyckoffPosition[] {
+  checkOptions(options, SETTING_KEYS, 'wyckoffPositions');
   const setting = tableSetting(key, options);
   const cacheKey = `${key}#${setting}`;
   let result = cache.get(cacheKey);
@@ -289,7 +289,8 @@ export function siteSymmetry(
   direction: Vec3,
   options?: SettingOptions & ToleranceOptions,
 ): SiteSymmetry {
-  return siteSymmetryOf(operations(key, options), direction, options);
+  checkOptions(options, [...SETTING_KEYS, ...TOLERANCE_KEYS], 'siteSymmetry');
+  return siteSymmetryOf(operations(key, pick(options, SETTING_KEYS)), direction, pick(options, TOLERANCE_KEYS));
 }
 
 const sortedKey = (list: readonly number[]): string => [...list].sort((a, b) => a - b).join(',');
@@ -305,6 +306,7 @@ export function wyckoffPosition(
   direction: Vec3,
   options?: SettingOptions & ToleranceOptions,
 ): WyckoffPosition {
+  checkOptions(options, [...SETTING_KEYS, ...TOLERANCE_KEYS], 'wyckoffPosition');
   const tolerance = siteTolerance(options);
   const setting = tableSetting(key, options);
   const ops = operations(key, { setting });
@@ -317,6 +319,6 @@ export function wyckoffPosition(
     if (row) return row;
   }
   throw new RangeError(
-    `Point group ${key}, setting ${setting}: no Wyckoff position for ${JSON.stringify(direction)} (tolerance too large?)`,
+    `Point group ${key}, setting ${setting}: no Wyckoff position for ${shown(direction)} (tolerance too large?)`,
   );
 }

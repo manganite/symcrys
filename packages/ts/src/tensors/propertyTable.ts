@@ -5,6 +5,7 @@
  * name up here (docs/conventions.md, "Named tensor properties").
  */
 
+import { shown } from '../checks.js';
 import type { TensorSpec } from './tensorForm.js';
 
 /** A named property: the tensor that describes it, what it is and where it is defined. */
@@ -79,11 +80,16 @@ export const TENSOR_PROPERTY_NAMES = Object.freeze(Object.keys(TENSOR_PROPERTIES
 
 /** The specification behind a property name; a specification is returned as it is. */
 export function specOf(specOrName: TensorSpec | TensorPropertyName): TensorSpec {
-  if (typeof specOrName !== 'string') return specOrName;
+  if (typeof specOrName !== 'string') {
+    if (typeof specOrName !== 'object' || specOrName === null || Array.isArray(specOrName)) {
+      throw new RangeError(
+        `A tensor is given by its specification { rank, parity, intrinsic } or the name of a property, not ${shown(specOrName)}`,
+      );
+    }
+    return specOrName;
+  }
   if (!Object.hasOwn(TENSOR_PROPERTIES, specOrName)) {
-    throw new RangeError(
-      `Unknown tensor property: ${JSON.stringify(specOrName)} (known: ${TENSOR_PROPERTY_NAMES.join(', ')})`,
-    );
+    throw new RangeError(`Unknown tensor property: ${shown(specOrName)} (known: ${TENSOR_PROPERTY_NAMES.join(', ')})`);
   }
   return TENSOR_PROPERTIES[specOrName].spec;
 }

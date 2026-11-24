@@ -7,6 +7,7 @@
  * (docs/conventions.md, "Symbols").
  */
 
+import { shown } from '../checks.js';
 import { matricesEqual, type Mat3, type Vec3 } from '../linalg.js';
 import { crystalFamily, latticeBasis, type CrystalFamily, type CrystalSystem } from '../lattice.js';
 import type { CartesianOperation } from '../operations.js';
@@ -58,7 +59,7 @@ function prime(ops: readonly CartesianOperation[], matrix: Mat3, what: string): 
 function primedToken(token: string, u: Vec3 | undefined, ops: readonly CartesianOperation[], what: string): string {
   if (token === '1') return token;
   const parts = /^(?:(-?)([1-6]))?(\/?m)?$/.exec(token);
-  if (!parts || token === '') throw new Error(`${what}: unreadable position ${JSON.stringify(token)}`);
+  if (!parts || token === '') throw new Error(`${what}: unreadable position ${shown(token)}`);
   const [, bar, n, mirror] = parts;
   let result = '';
   if (n) {
