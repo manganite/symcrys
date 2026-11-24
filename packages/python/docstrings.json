@@ -3,12 +3,12 @@
   "symcrys": {
     "LATTICE_SYMMETRY_DIRECTIONS": "In Python: family → one int64 array of shape (n, 3) per position, the n directions [uvw] as rows.",
     "operations": {
-      "type": "list of dict",
-      "doc": "Dicts ``{\"matrix\", \"cartesian\"}``; ``matrix`` is a float64 array of shape (3, 3) holding integers (the fixed rule for matrices), ``cartesian`` a float64 array of shape (3, 3)."
+      "type": "Operations",
+      "doc": "``matrix`` an int64 array of shape (n, 3, 3), ``cartesian`` a float64 array of shape (n, 3, 3); ``ops[i]`` and ``for op in ops`` give one operation as a dict."
     },
     "generators": {
-      "type": "list of dict",
-      "doc": "Dicts ``{\"matrix\", \"cartesian\"}``; ``matrix`` is a float64 array of shape (3, 3) holding integers (the fixed rule for matrices), ``cartesian`` a float64 array of shape (3, 3)."
+      "type": "Operations",
+      "doc": "``matrix`` an int64 array of shape (n, 3, 3), ``cartesian`` a float64 array of shape (n, 3, 3); ``ops[i]`` and ``for op in ops`` give one operation as a dict."
     },
     "lattice_basis": {
       "type": "numpy.ndarray",
@@ -61,17 +61,21 @@
     "site_symmetry_of": {
       "type": "dict",
       "doc": "``operations`` int64 array of shape (n,), ``direction`` float64 array of shape (3,), ``multiplicity``, ``general``."
+    },
+    "residual_operations": {
+      "type": "Operations",
+      "doc": "The kept operations of the caller, in their order."
     }
   },
   "symcrys.magnetic": {
     "LATTICE_SYMMETRY_DIRECTIONS": "In Python: family → one int64 array of shape (n, 3) per position, the n directions [uvw] as rows.",
     "operations": {
-      "type": "list of dict",
-      "doc": "Dicts ``{\"matrix\", \"cartesian\", \"time_reversal\"}``; ``matrix`` is a float64 array of shape (3, 3) holding integers (the fixed rule for matrices), ``cartesian`` a float64 array of shape (3, 3)."
+      "type": "Operations",
+      "doc": "``matrix`` an int64 array of shape (n, 3, 3), ``cartesian`` a float64 array of shape (n, 3, 3), ``time_reversal`` a bool array of shape (n,); ``ops[i]`` and ``for op in ops`` give one operation as a dict."
     },
     "generators": {
-      "type": "list of dict",
-      "doc": "Dicts ``{\"matrix\", \"cartesian\", \"time_reversal\"}``; ``matrix`` is a float64 array of shape (3, 3) holding integers (the fixed rule for matrices), ``cartesian`` a float64 array of shape (3, 3)."
+      "type": "Operations",
+      "doc": "``matrix`` an int64 array of shape (n, 3, 3), ``cartesian`` a float64 array of shape (n, 3, 3), ``time_reversal`` a bool array of shape (n,); ``ops[i]`` and ``for op in ops`` give one operation as a dict."
     },
     "lattice_basis": {
       "type": "numpy.ndarray",
@@ -116,6 +120,10 @@
     "site_symmetry_of": {
       "type": "dict",
       "doc": "``operations`` int64 array of shape (n,), ``direction`` float64 array of shape (3,), ``multiplicity``, ``general``."
+    },
+    "residual_operations": {
+      "type": "Operations",
+      "doc": "The kept operations of the caller, in their order."
     }
   },
   "symcrys.plane": {
@@ -124,12 +132,12 @@
       "doc": "``centring`` is a float64 array of shape (n, 2), n = 0 or 1."
     },
     "operations": {
-      "type": "list of dict",
-      "doc": "Dicts ``{\"matrix\", \"translation\"}``: float64 arrays of shape (2, 2) and (2,)."
+      "type": "Operations",
+      "doc": "``matrix`` an int64 array of shape (n, 2, 2), ``translation`` a float64 array of shape (n, 2); ``ops[i]`` and ``for op in ops`` give one operation as a dict."
     },
     "generators": {
-      "type": "list of dict",
-      "doc": "Dicts ``{\"matrix\", \"translation\"}``: float64 arrays of shape (2, 2) and (2,)."
+      "type": "Operations",
+      "doc": "``matrix`` an int64 array of shape (n, 2, 2), ``translation`` a float64 array of shape (n, 2); ``ops[i]`` and ``for op in ops`` give one operation as a dict."
     },
     "describe_operations": {
       "type": "list of dict",

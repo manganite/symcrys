@@ -54,6 +54,8 @@ def to_js(x: Any) -> Any:
 #   ("d", {jsKey: schema})       a record: keys turned into snake_case, each field by its schema
 #   ("m", schema)                a mapping with keys kept as they are (names, families)
 #   ("x", name)                  a converter of its own (CUSTOM below)
+#   ("ops", cls, fields)         a list of operation records as one record of arrays, the class
+#                                ``Operations`` of the module (#137 H1); fields {jsKey: (dtype, shape)}
 
 
 def convert(x: Any, schema: tuple[Any, ...]) -> Any:
@@ -85,6 +87,9 @@ def convert(x: Any, schema: tuple[Any, ...]) -> Any:
         return {k: convert(v, schema[1]) for k, v in x.items()}
     if kind == "x":
         return CUSTOM[schema[1]](x)
+    if kind == "ops":
+        cls, spec = schema[1], schema[2]
+        return cls(**{snake(k): np.asarray([e[k] for e in x], dtype=dtype).reshape((len(x), *shape)) for k, (dtype, shape) in spec.items()})
     raise ValueError(f"unknown schema {schema!r}")
 
 

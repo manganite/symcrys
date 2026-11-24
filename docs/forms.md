@@ -61,7 +61,7 @@ hexagonal axes a face transforms otherwise than a lattice direction
 ```
 
 ```{code-cell} ipython3
-symcrys.operations("3")[1]["matrix"]  # W in the lattice basis: integers, as a float64 array
+symcrys.operations("3").matrix[1]  # W in the lattice basis, an int64 array
 ```
 
 ## A distorted crystal
@@ -77,7 +77,8 @@ Cartesian axes ([Conventions](conventions.md), "Point group of a list of operati
 ```{code-cell} ipython3
 import numpy as np
 
-kept = [op for op in symcrys.operations("m-3m") if np.allclose(op["cartesian"] @ [1, 1, 1], [1, 1, 1])
-        or np.allclose(op["cartesian"] @ [1, 1, 1], [-1, -1, -1])]
+ops = symcrys.operations("m-3m")
+image = ops.cartesian @ [1, 1, 1]  # the image of [111] under every operation at once
+kept = ops[np.isclose(np.abs(image.sum(axis=1)), 3)]  # those that keep the line [111]: ±[111]
 symcrys.point_group_of(kept)
 ```

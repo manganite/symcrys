@@ -554,6 +554,20 @@ operations }`; `undefined`, never `null` (`zoneAxis`); every result frozen and `
   so a normal never exists without one. Chosen while implementing: both in both entry points, with
   the index functions; inside, the positions are still checked with the face 3, 2, 1 (5, 2, 1 with
   rhombohedral axes, 1, 2, 3 under |h| < |l|), and the ITC baseline pins add the old field from it.
+- **Operations in Python** (#137 H1, decided by Thomas on 2026-11-22, the type, a bare array in
+  `symcrys.magnetic` and the access per operation on 2026-11-24; #121 step 12b): `operations`,
+  `generators` and `residual_operations` give `Operations`, a frozen dataclass of read-only arrays,
+  one row per operation: `matrix` (n, 3, 3) int64 and `cartesian` (n, 3, 3) float64, in
+  `symcrys.magnetic` also `time_reversal` (n,) bool, in `symcrys.plane` `matrix` (n, 2, 2) and
+  `translation` (n, 2). Beside the arrays, `ops[i]` and `for op in ops` give one operation as a dict
+  (the TypedDict of the TypeScript record, `Operation` or `PlaneOperation`), and `ops[mask]` or
+  `ops[[0, 2]]` an `Operations` of those rows, so that loops written for lists keep working. Every
+  function that takes operations accepts `Operations`, a list of dicts, and in `symcrys` an array
+  of Cartesian matrices (n, 3, 3); `symcrys.magnetic` refuses such an array, since it does not say
+  which operations carry time reversal, and `symcrys.plane` has no Cartesian matrices. Chosen while
+  implementing: the class is generated from the TypeScript record with the dtypes and shapes of
+  `api.json` ("operations"); a caller may build one, its arrays checked (shape, one n, integers for
+  W); `residual_operations` needs every field of the operations it keeps (it returns them).
 - **Holohedry by lattice system** (#137 G1, decided by Thomas on 2026-11-22; #113; #121 step 11a):
   the holohedry belongs to the lattice system, as ITA defines it (ITA 2016 § 1.3.4.4.2 and Table
   1.3.4.1, p. 39): a type `LatticeSystem` with ITA's seven names, `holohedry(latticeSystem)` and
@@ -593,7 +607,8 @@ operations }`; `undefined`, never `null` (`zoneAxis`); every result frozen and `
   cannot pass for a Cartesian matrix silently; `residualOperations` reads `matrix` and refuses one
   that is not integer. Chosen while implementing: inside the library the calculations work on
   `CartesianOperation` (`{ cartesian, timeReversal }`), so a record of the API passes as it is and
-  a caller may build `{ cartesian }` alone; in Python `matrix` stays float64 by the fixed rule
+  a caller may build `{ cartesian }` alone; in Python `matrix` stays float64 by the fixed rule _(int64
+  since #121 step 12b, in `Operations`, #137 H1)_
   for matrices (#137 H may revisit it).
 - **Properties that need tensors** come with the tensor module (maintainer, 2026-11-08, #13), as
   named tensor properties ("Tensors" below, #41).
@@ -1057,7 +1072,8 @@ while implementing gets its own note here.
   is in one place for all apps; the segment is the part nearest the drawing that still is geometry
   _(replaced in #121 step 10b, #137 F2: lines as a point and a direction, once modulo the lattice or
   in a box; "Elements and the asymmetric unit as data" above)_.
-  **Python:** `matrix` float64 by the fixed rule, as for the point groups; `translation` float64.
+  **Python:** `matrix` float64 by the fixed rule, as for the point groups _(int64 in `Operations` since
+  #121 step 12b)_; `translation` float64.
   Asked in a second round (Thomas, 2026-11-22, #31, all four recommendations taken): **functions of a
   point take the key**, `siteSymmetry(key, point)`, `wyckoffPositionOf(key, point)`,
   `orbit(key, point)` with `{ tolerance }` (the site symmetry needs the group modulo the lattice;

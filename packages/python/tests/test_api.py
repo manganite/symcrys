@@ -32,7 +32,9 @@ def test_every_export_of_the_library_has_its_python_name() -> None:
         for name in types:
             obj = getattr(module, name)
             # A TypedDict of the generated module, or one of its Literal types.
-            assert typing.is_typeddict(obj) or typing.get_origin(obj) is typing.Literal, f"{module.__name__}.{name}"
+            # A TypedDict of the generated module, one of its Literal types, or its Operations (#137 H1).
+            ok = typing.is_typeddict(obj) or typing.get_origin(obj) is typing.Literal or name == "Operations"
+            assert ok, f"{module.__name__}.{name}"
         assert TYPES - {"SymcrysError", "SymcrysInternalError"} <= types or module is plane, module.__name__
         extra = {"SymcrysError", "SymcrysInternalError"} | types | ({"magnetic", "plane"} if module is symcrys else set())
         assert set(module.__all__) == expected | extra, module.__name__
@@ -81,7 +83,12 @@ def test_crystal_classes_here_magnetic_point_groups_there() -> None:
 
 def test_the_magnetic_api_asks_every_operation_for_its_time_reversal() -> None:
     # Operations of the crystallographic API do not say; read as a group they would give wrong forms.
-    for ops in (symcrys.generators("m-3m"), symcrys.operations("32"), [{"cartesian": -np.eye(3)}]):
+    # A list of dicts without time_reversal is refused by the Python layer, Operations of symcrys by
+    # the library (they convert to operations without timeReversal).
+    for bad in ([{"cartesian": -np.eye(3)}], [{"cartesian": -np.eye(3), "matrix": -np.eye(3)}]):
+        with pytest.raises(symcrys.SymcrysError, match="operation 0 has no key 'time_reversal'"):
+            magnetic.allowed_properties_of(bad)
+    for ops in (symcrys.generators("m-3m"), symcrys.operations("32")):
         with pytest.raises(symcrys.SymcrysError, match="timeReversal must be true or false, not undefined"):
             magnetic.allowed_properties_of(ops)
         with pytest.raises(symcrys.SymcrysError, match="timeReversal must be true or false"):
@@ -132,7 +139,8 @@ def test_name_rule_both_ways(js: str, py: str) -> None:
 
 def test_matrices_are_float_arrays_and_indices_int_arrays() -> None:
     op = symcrys.operations("4")[1]
-    assert op["matrix"].dtype == np.float64 and op["matrix"].shape == (3, 3)
+    # The matrix W is integer since #137 H1 (Operations), float64 before.
+    assert op["matrix"].dtype == np.int64 and op["matrix"].shape == (3, 3)
     assert op["cartesian"].dtype == np.float64 and op["cartesian"].shape == (3, 3)
     assert isinstance(magnetic.operations("4")[1]["time_reversal"], bool)
     site = symcrys.site_symmetry_of(symcrys.operations("4mm"), [0, 0, 1])
@@ -152,7 +160,7 @@ def test_crystal_forms_and_the_removed_convention() -> None:
 
 def test_operations_in_the_lattice_basis_and_orbits() -> None:
     ops = symcrys.operations("3")
-    assert ops[1]["matrix"].dtype == np.float64 and ops[1]["matrix"].tolist() == [[0, -1, 0], [1, -1, 0], [0, 0, 1]]
+    assert ops[1]["matrix"].dtype == np.int64 and ops[1]["matrix"].tolist() == [[0, -1, 0], [1, -1, 0], [0, 0, 1]]
     assert not hasattr(symcrys, "lattice_operations") and not hasattr(magnetic, "lattice_operations")
     with pytest.raises(symcrys.SymcrysError, match="operation 0 has no key 'cartesian'.*its 'matrix' is the matrix W"):
         symcrys.point_group_of([{"matrix": op["matrix"]} for op in ops])
@@ -280,12 +288,19 @@ def test_nan_and_wrong_shapes_give_readable_errors() -> None:
         assert e.value.js_name == "RangeError"
     with pytest.raises(symcrys.SymcrysError, match="must be finite"):
         plane.orbit("p4", [np.nan, 0.0])
-    matrices = np.array([op["cartesian"] for op in ops])
-    for module in (symcrys, magnetic):
-        with pytest.raises(symcrys.SymcrysError, match=r"list of operations \{\"cartesian\"\}.*not ndarray"):
-            module.point_group_of(matrices)
-        with pytest.raises(symcrys.SymcrysError, match=r"operation 0 must be a mapping"):
-            module.tensor_form_of(list(matrices), SHG if module is symcrys else MAGNETIC_SHG)
+    # An array of Cartesian matrices is read as operations in symcrys (#137 H1); symcrys.magnetic
+    # refuses it, since it does not say which operations carry time reversal (Thomas, 2026-11-24).
+    matrices = ops.cartesian
+    assert symcrys.point_group_of(matrices) == symcrys.point_group_of(ops) == {"key": "4mm", "setting": 1}
+    assert symcrys.tensor_form_of(list(matrices), SHG)["parameters"].tolist() == symcrys.tensor_form("4mm", SHG)["parameters"].tolist()
+    with pytest.raises(symcrys.SymcrysError, match=r"does not say what the operations are.*time reversal"):
+        magnetic.point_group_of(matrices)
+    with pytest.raises(symcrys.SymcrysError, match=r"does not say what the operations are"):
+        plane.describe_operations_of(np.zeros((2, 3, 3)))
+    with pytest.raises(symcrys.SymcrysError, match=r"operation 0 must be a mapping"):
+        symcrys.tensor_form_of([matrices[0], {"cartesian": matrices[1]}], SHG)
+    with pytest.raises(symcrys.SymcrysError, match=r"must be Operations.*not dict"):
+        symcrys.point_group_of({"cartesian": matrices[0]})
     with pytest.raises(symcrys.SymcrysError, match=r"\{\"matrix\", \"translation\"\}"):
         plane.describe_operations_of([{"matrix": np.eye(2)}])
     # Any iterable of mappings is taken: a generator, an object array, read-only mappings.
@@ -499,3 +514,50 @@ def test_miller_indices_and_face_normal() -> None:
             module.miller_indices("h,k,l", {"h": 1, "k": 2})
     form = symcrys.crystal_forms("-43m")[2]
     assert "representative" not in form
+
+
+def test_operations_are_a_record_of_arrays() -> None:
+    # #137 H1: operations() and generators() give one record of arrays, frozen, one row per operation.
+    ops = symcrys.operations("4mm")
+    assert isinstance(ops, symcrys.Operations) and len(ops) == 8
+    assert ops.matrix.dtype == np.int64 and ops.matrix.shape == (8, 3, 3)
+    assert ops.cartesian.dtype == np.float64 and ops.cartesian.shape == (8, 3, 3)
+    with pytest.raises(ValueError, match="read-only"):
+        ops.cartesian[0, 0, 0] = 2.0
+    with pytest.raises(Exception, match="cannot assign"):
+        ops.matrix = ops.matrix  # type: ignore[misc]
+    mops = magnetic.operations("4'mm'")
+    assert mops.time_reversal.dtype == np.bool_ and mops.time_reversal.tolist() == [False, False, True, True, False, False, True, True]
+    pops = plane.operations("c2mm")
+    assert pops.matrix.shape == (8, 2, 2) and pops.translation.shape == (8, 2) and pops.translation[5].tolist() == [0.5, 0.5]
+    # Empty: shapes kept.
+    assert symcrys.generators("1").matrix.shape == (0, 3, 3) and magnetic.generators("1").time_reversal.shape == (0,)
+    # Per operation: ops[i] and iteration give a dict, other indices an Operations of those rows.
+    assert set(ops[1]) == {"matrix", "cartesian"} and ops[-1]["cartesian"].tolist() == ops.cartesian[7].tolist()
+    assert [op["time_reversal"] for op in mops] == mops.time_reversal.tolist() and isinstance(mops[2]["time_reversal"], bool)
+    assert len(ops[[0, 2]]) == 2 and len(ops[1:3]) == 2 and len(ops[ops.matrix[:, 2, 2] == 1]) == 8
+    with pytest.raises(IndexError):
+        ops[8]
+    # Built by a caller, checked: shapes, one n for all fields, integers for W.
+    own = symcrys.Operations(matrix=ops.matrix[:2], cartesian=ops.cartesian[:2])
+    assert symcrys.point_group_of(own) == symcrys.point_group_of(ops[:2])
+    with pytest.raises(symcrys.SymcrysError, match="cartesian has 3 operations, the others 2"):
+        symcrys.Operations(matrix=np.zeros((2, 3, 3)), cartesian=np.zeros((3, 3, 3)))
+    with pytest.raises(symcrys.SymcrysError, match="shape"):
+        symcrys.Operations(matrix=np.zeros((2, 2, 2)), cartesian=np.zeros((2, 2, 2)))
+    with pytest.raises(symcrys.SymcrysError, match="integers"):
+        symcrys.Operations(matrix=np.full((1, 3, 3), 0.5), cartesian=np.zeros((1, 3, 3)))
+    # Every function that takes operations takes the three forms alike.
+    for form in (ops, ops.cartesian, [{"cartesian": c} for c in ops.cartesian]):
+        assert symcrys.allowed_properties_of(form) == symcrys.allowed_properties("4mm")
+    # residual_operations keeps the caller's operations as Operations; it needs every field.
+    basis = symcrys.lattice_from_parameters({"a": 3, "b": 3.2, "c": 5, "alpha": 90, "beta": 90, "gamma": 120})
+    kept = symcrys.residual_operations(symcrys.operations("6/mmm"), basis)
+    # a ≠ b at γ = 120°: the lattice keeps 2/m of 6/mmm, 4 operations.
+    assert isinstance(kept, symcrys.Operations) and len(kept) == 4
+    hexagonal = symcrys.operations("6/mmm")
+    assert symcrys.residual_operations(list(hexagonal), basis).cartesian.tolist() == kept.cartesian.tolist()
+    with pytest.raises(symcrys.SymcrysError, match="each needs 'matrix', 'cartesian'"):
+        symcrys.residual_operations([{"matrix": m} for m in hexagonal.matrix], basis)
+    mkept = magnetic.residual_operations(magnetic.operations("6/mmm1'"), basis)
+    assert len(mkept) == 8 and mkept.time_reversal.sum() == 4

@@ -33,7 +33,7 @@ def test_keys_and_module() -> None:
 
 def test_numpy_types() -> None:
     op = plane.operations("c2mm")[5]
-    assert op["matrix"].dtype == np.float64 and op["matrix"].shape == (2, 2)
+    assert op["matrix"].dtype == np.int64 and op["matrix"].shape == (2, 2)
     assert op["translation"].dtype == np.float64 and op["translation"].tolist() == [0.5, 0.5]
     assert plane.operations("p2")[0]["translation"].dtype == np.float64
     assert plane.plane_group("p2")["centring"].shape == (0, 2)
