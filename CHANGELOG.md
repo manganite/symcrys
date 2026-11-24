@@ -66,8 +66,9 @@ All notable changes to symcrys are recorded here. The format follows
   `ops[i]` and `for op in ops` give one operation as a dict, as the list did. Functions that take
   operations accept `Operations`, a list of dicts, and in `symcrys` an array of Cartesian matrices
   (n, 3, 3), which `symcrys.magnetic` refuses (it does not say which operations carry time
-  reversal). In `symcrys.magnetic` a dict without `time_reversal` is refused by the Python layer,
-  and `residual_operations` needs every field of the operations it keeps.
+  reversal), except `site_symmetry_of` and `orbit_of`, which do not depend on time reversal. In
+  `symcrys.magnetic` a dict without `time_reversal` is refused by the Python layer (there too, the
+  two functions excepted), and `residual_operations` needs every field of the operations it keeps.
 
 - **Python: the modules are generated from the TypeScript API** (#99, #137 H2, #121 step 12a):
   `symcrys`, `symcrys.magnetic` and `symcrys.plane` are written by `scripts/python-api.mjs`, with a

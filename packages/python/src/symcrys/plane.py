@@ -47,7 +47,7 @@ class PlaneOperation(TypedDict):
     """The translation part w; for a plane group in [0, 1), for a point group zero."""
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False)
 class Operations:
     """The operations of a plane group or plane point group as arrays, one row per operation, in the
     order of ``operations`` (#137 H1): what ``operations`` and ``generators`` return, and what
@@ -64,8 +64,14 @@ class Operations:
     in [0, 1), for a point group zero.
     """
 
+    _symcrys_operations = True
+
     def __post_init__(self) -> None:
         _shared.freeze(self, _OPERATION_FIELDS)
+
+    def __reduce__(self) -> tuple[Any, ...]:
+        # A copy or a pickle is built anew, so its arrays are checked and read-only too.
+        return (type(self), tuple(getattr(self, name) for name in _OPERATION_FIELDS))
 
     def __len__(self) -> int:
         return len(self.matrix)
@@ -74,12 +80,12 @@ class Operations:
         return (self[i] for i in range(len(self)))
 
     @overload
-    def __getitem__(self, index: int) -> PlaneOperation: ...
+    def __getitem__(self, index: int | np.integer[Any]) -> PlaneOperation: ...
 
     @overload
     def __getitem__(self, index: slice | Sequence[int] | NDArray[Any]) -> Operations: ...
 
-    def __getitem__(self, index: int | slice | Sequence[int] | NDArray[Any]) -> PlaneOperation | Operations:
+    def __getitem__(self, index: int | np.integer[Any] | slice | Sequence[int] | NDArray[Any]) -> PlaneOperation | Operations:
         """One operation as a dict ``{"matrix", "translation"}`` for an integer, otherwise
         the ``Operations`` of the selected rows (a slice, a list of indices, a boolean mask)."""
         result: PlaneOperation | Operations = _shared.operation_at(self, index)

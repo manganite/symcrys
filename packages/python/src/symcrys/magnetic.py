@@ -135,7 +135,7 @@ class Operation(TypedDict):
     """``True`` if the operation is combined with time reversal (a primed operation)."""
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False)
 class Operations:
     """The operations of a magnetic point group as arrays, one row per operation, in the order of
     ``operations`` (#137 H1): what ``operations``, ``generators`` and ``residual_operations``
@@ -158,8 +158,14 @@ class Operations:
     reversal (a primed operation).
     """
 
+    _symcrys_operations = True
+
     def __post_init__(self) -> None:
         _shared.freeze(self, _OPERATION_FIELDS)
+
+    def __reduce__(self) -> tuple[Any, ...]:
+        # A copy or a pickle is built anew, so its arrays are checked and read-only too.
+        return (type(self), tuple(getattr(self, name) for name in _OPERATION_FIELDS))
 
     def __len__(self) -> int:
         return len(self.matrix)
@@ -168,12 +174,12 @@ class Operations:
         return (self[i] for i in range(len(self)))
 
     @overload
-    def __getitem__(self, index: int) -> Operation: ...
+    def __getitem__(self, index: int | np.integer[Any]) -> Operation: ...
 
     @overload
     def __getitem__(self, index: slice | Sequence[int] | NDArray[Any]) -> Operations: ...
 
-    def __getitem__(self, index: int | slice | Sequence[int] | NDArray[Any]) -> Operation | Operations:
+    def __getitem__(self, index: int | np.integer[Any] | slice | Sequence[int] | NDArray[Any]) -> Operation | Operations:
         """One operation as a dict ``{"matrix", "cartesian", "time_reversal"}`` for an integer, otherwise
         the ``Operations`` of the selected rows (a slice, a list of indices, a boolean mask)."""
         result: Operation | Operations = _shared.operation_at(self, index)
@@ -753,13 +759,14 @@ def residual_operations(
     Operations
         The kept operations of the caller, in their order.
     """
-    ops = _shared.operations_of(operations, Operations, ("matrix",))
+    given = _shared.operation_list(operations, ("matrix",))
     kept = _call(
         "residualOperations",
-        [{**op, "index": i} for i, op in enumerate(_shared.records(ops))],
+        [{**op, "index": i} for i, op in enumerate(given)],
         _shared.array(basis, "basis", np.float64),
         _shared.options(tolerance=tolerance),
     )
+    ops = operations if isinstance(operations, Operations) else _shared.operations_of(given, Operations)
     result: Operations = _shared.select(ops, kept)
     return result
 
@@ -1239,7 +1246,7 @@ def orbit(
 
 
 def orbit_of(
-    operations: Operations | Sequence[Mapping[str, Any]],
+    operations: Operations | Sequence[Mapping[str, Any]] | ArrayLike,
     direction: ArrayLike,
     *,
     tolerance: Optional[float] = None,
@@ -1269,7 +1276,7 @@ def orbit_of(
     result: list[OrbitPole] = _shared.convert(
         _call(
             "orbitOf",
-            _shared.operation_list(operations, ("cartesian", "time_reversal")),
+            _shared.operation_list(operations, ("cartesian",), bare="cartesian"),
             _shared.array(direction, "direction"),
             _shared.options(tolerance=tolerance),
         ),
@@ -1612,7 +1619,7 @@ def site_symmetry(
 
 
 def site_symmetry_of(
-    operations: Operations | Sequence[Mapping[str, Any]],
+    operations: Operations | Sequence[Mapping[str, Any]] | ArrayLike,
     direction: ArrayLike,
     *,
     tolerance: Optional[float] = None,
@@ -1645,7 +1652,7 @@ def site_symmetry_of(
     result: SiteSymmetry = _shared.convert(
         _call(
             "siteSymmetryOf",
-            _shared.operation_list(operations, ("cartesian", "time_reversal")),
+            _shared.operation_list(operations, ("cartesian",), bare="cartesian"),
             _shared.array(direction, "direction"),
             _shared.options(tolerance=tolerance),
         ),

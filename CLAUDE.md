@@ -270,10 +270,12 @@ Carried over from birss-app, where the calculations come from.
   that they agree, and `npm run bundle:python` refuses to bundle otherwise.
 - **The Python API follows the TypeScript API by fixed rules** (#30; `packages/python/src/symcrys/_convert.py`):
   function names and object keys camelCase → snake_case; an options object becomes keyword-only
-  arguments; arrays of numbers become NumPy arrays (`float64` for matrices, Cartesian vectors,
-  tensor bases and relations; `int64` for index lists, Miller indices and lattice directions), by
+  arguments; arrays of numbers become NumPy arrays (`float64` for Cartesian matrices and vectors,
+  tensor bases and relations; `int64` for index lists, Miller indices, lattice directions and the
+  matrices W of the operations), by
   the name of their field (`packages/python/api.json`, "arrays"; `symcrys.plane` with a list of its
-  own); a record becomes a dict, typed by a TypedDict of the same name as its TypeScript interface;
+  own); a record becomes a dict, typed by a TypedDict of the same name as its TypeScript interface,
+  and a list of operations one record of arrays, `Operations` ("Operations in Python" below);
   a `RangeError` of the library (wrong input) raises `SymcrysError`, a `ValueError`, any other
   error `SymcrysInternalError`, a `RuntimeError` (#137 D2). A new export of `src/index.ts` gets
   its Python function in `symcrys`, one of `src/magnetic.ts` in `symcrys.magnetic`, one of
@@ -299,7 +301,8 @@ Carried over from birss-app, where the calculations come from.
   TypeScript type (`_convert.convert`), so the two languages cannot drift, and the gate `docs`
   fails on a stale module, not only on a stale docstring. Hand-written are `packages/python/api.json`
   (how TypeScript types become Python types where the types do not say it: the dtype of an array
-  field, int or float for a number, a function's own argument; the module docstrings),
+  field, int or float for a number, a function's own argument, the fields of `Operations`; the
+  module docstrings),
   `packages/python/docstrings.json` (the Returns sections), and the modules `_shared.py`,
   `_convert.py`, `_engine.py`. Chosen while implementing: the names of the TypedDicts are those of
   the TypeScript interfaces (`symcrys.plane.PlaneOperation` for what was `Operation`); each module
@@ -567,7 +570,11 @@ operations }`; `undefined`, never `null` (`zoneAxis`); every result frozen and `
   which operations carry time reversal, and `symcrys.plane` has no Cartesian matrices. Chosen while
   implementing: the class is generated from the TypeScript record with the dtypes and shapes of
   `api.json` ("operations"); a caller may build one, its arrays checked (shape, one n, integers for
-  W); `residual_operations` needs every field of the operations it keeps (it returns them).
+  W, booleans for `time_reversal`), equal only to itself, read-only also after a copy or a pickle;
+  `site_symmetry_of` and `orbit_of` of `symcrys.magnetic` take operations without time reversal,
+  also as an array, since they do not depend on it; `residual_operations` passes the caller's
+  operations to the library as they are and needs every field of those it keeps (it returns
+  them).
 - **Holohedry by lattice system** (#137 G1, decided by Thomas on 2026-11-22; #113; #121 step 11a):
   the holohedry belongs to the lattice system, as ITA defines it (ITA 2016 § 1.3.4.4.2 and Table
   1.3.4.1, p. 39): a type `LatticeSystem` with ITA's seven names, `holohedry(latticeSystem)` and
@@ -607,9 +614,8 @@ operations }`; `undefined`, never `null` (`zoneAxis`); every result frozen and `
   cannot pass for a Cartesian matrix silently; `residualOperations` reads `matrix` and refuses one
   that is not integer. Chosen while implementing: inside the library the calculations work on
   `CartesianOperation` (`{ cartesian, timeReversal }`), so a record of the API passes as it is and
-  a caller may build `{ cartesian }` alone; in Python `matrix` stays float64 by the fixed rule _(int64
-  since #121 step 12b, in `Operations`, #137 H1)_
-  for matrices (#137 H may revisit it).
+  a caller may build `{ cartesian }` alone; in Python `matrix` stays float64 by the fixed rule
+  for matrices (#137 H may revisit it) _(int64 since #121 step 12b, in `Operations`, #137 H1)_.
 - **Properties that need tensors** come with the tensor module (maintainer, 2026-11-08, #13), as
   named tensor properties ("Tensors" below, #41).
 - **Hexagonal frame x ∥ a, z ∥ c** (maintainer, 2026-11-08, #6): birss-app's frame, in which its

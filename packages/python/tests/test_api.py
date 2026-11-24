@@ -1,6 +1,8 @@
 """The Python layer itself: names, conversions, errors. The values are the library's (pins and
 print are checked in test_pins.py and test_references.py)."""
 
+import copy
+import pickle
 import re
 import threading
 from types import MappingProxyType
@@ -561,3 +563,45 @@ def test_operations_are_a_record_of_arrays() -> None:
         symcrys.residual_operations([{"matrix": m} for m in hexagonal.matrix], basis)
     mkept = magnetic.residual_operations(magnetic.operations("6/mmm1'"), basis)
     assert len(mkept) == 8 and mkept.time_reversal.sum() == 4
+
+
+def test_operations_review_of_step_12b() -> None:
+    # Cases from the review of #121 step 12b, each a fault before it was fixed.
+    eye = np.eye(3)
+    # residual_operations passes the caller's operations to the library as they are, so the
+    # crystallographic API still refuses time reversal.
+    with pytest.raises(symcrys.SymcrysError, match="combined with time reversal"):
+        symcrys.residual_operations(magnetic.operations("4/m1'"), eye)
+    with pytest.raises(symcrys.SymcrysError, match="not an integer matrix"):
+        symcrys.residual_operations([{"matrix": eye * 0.5, "cartesian": eye}], eye)
+    # The site symmetry and the orbit of a direction do not depend on time reversal: the magnetic
+    # API takes operations without it there, also as an array (docs/conventions.md).
+    cartesian = symcrys.operations("4mm").cartesian
+    assert magnetic.site_symmetry_of([{"cartesian": c} for c in cartesian], [0, 0, 1])["multiplicity"] == 1
+    assert len(magnetic.orbit_of(cartesian, [1, 0, 0])) == 4
+    # time_reversal takes booleans only (0 and 1 too); W integers only, as int64.
+    for bad in (["False"], [0.5], [None]):
+        with pytest.raises(symcrys.SymcrysError, match="True or False"):
+            magnetic.Operations(matrix=[eye], cartesian=[eye], time_reversal=bad)
+    for bad_matrix in (np.full((1, 3, 3), 1e30), [1j * eye], [eye.astype(bool)]):
+        with pytest.raises(symcrys.SymcrysError, match="integers"):
+            symcrys.Operations(matrix=bad_matrix, cartesian=[eye])
+    # Indices: an IndexError or TypeError for what is no index, numpy integers as integers.
+    ops = symcrys.operations("4/m")
+    for bad_index in (True, None):
+        with pytest.raises(TypeError):
+            ops[bad_index]  # type: ignore[call-overload]
+    with pytest.raises(IndexError):
+        ops[[[0, 1]]]  # type: ignore[index]
+    assert ops[np.int64(3)]["matrix"].tolist() == ops.matrix[3].tolist() and len(ops[(0, 1)]) == 2
+    # Identity, not array equality; a hash; read-only also after setflags, a copy or a pickle.
+    assert ops != symcrys.operations("4/m") and ops == ops and isinstance(hash(ops), int)
+    with pytest.raises(ValueError):
+        ops.cartesian.setflags(write=True)
+    for copied in (copy.deepcopy(ops), pickle.loads(pickle.dumps(ops))):
+        assert copied.matrix.tolist() == ops.matrix.tolist()
+        with pytest.raises(ValueError, match="read-only"):
+            copied.cartesian[0, 0, 0] = 2.0
+    # Neither a foreign dataclass nor the class itself is taken as operations.
+    with pytest.raises(symcrys.SymcrysError, match="must be Operations"):
+        symcrys.point_group_of(symcrys.Operations)  # type: ignore[arg-type]

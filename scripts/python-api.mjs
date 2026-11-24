@@ -603,10 +603,18 @@ function argument(ctx, ir, name, fn, where) {
   if (own) return { py: 'ArrayLike', expr: own };
   if (ctx.name === 'symcrys.plane' && name === 'point') return { py: 'ArrayLike', expr: api.plane.point };
   if (name === 'operations') {
-    if (api.functions[fn]?.operationKeys) used.add(`functions.${fn}.operationKeys`);
-    const keys = api.functions[fn]?.operationKeys ?? ctx.ops.keys;
+    // The keys an operation needs, and the field a bare array of matrices is read as: the module's,
+    // or a function's own in api.json (an array, or per module an object).
+    const perModule = (/** @type {any} */ v) =>
+      v === undefined || typeof v === 'string' || Array.isArray(v) ? v : v[ctx.name];
+    const ownKeys = perModule(api.functions[fn]?.operationKeys);
+    const ownBare = perModule(api.functions[fn]?.bare);
+    if (ownKeys) used.add(`functions.${fn}.operationKeys`);
+    if (ownBare) used.add(`functions.${fn}.bare`);
+    const keys = ownKeys ?? ctx.ops.keys;
     const tuple = `(${keys.map((/** @type {string} */ s) => `"${s}"`).join(', ')}${keys.length === 1 ? ',' : ''})`;
-    const bare = ctx.ops.bare && keys.length === 1 && keys[0] === ctx.ops.bare ? `, bare="${ctx.ops.bare}"` : '';
+    const field = ownBare ?? ctx.ops.bare;
+    const bare = field && keys.length === 1 && keys[0] === field ? `, bare="${field}"` : '';
     ctx.usesOperations = true;
     return {
       py: `Operations | Sequence[Mapping[str, Any]]${bare ? ' | ArrayLike' : ''}`,
@@ -871,20 +879,21 @@ async function generate(name, cfg) {
           : [`    result: ${ann} = _shared.convert(`, ...callLines, `        ${sch},`, '    )'];
       if (own.selects) {
         // A function that keeps some of the caller's operations (residualOperations): the library is
-        // given each operation with its index, and the result takes the kept ones from the caller's.
+        // given the caller's operations as they are, each with its index (so that it refuses what it
+        // refuses), and the result takes the kept ones from them, as Operations.
         used.add(`functions.${d.name}.selects`);
-        const keys = (own.operationKeys ?? ctx.ops.keys).map((/** @type {string} */ s) => `"${s}"`);
         const rest = args.slice(1).map((a) => `        ${a},`);
         functions.push(
           [
             ...defLines,
             ...doc,
-            `    ops = _shared.operations_of(operations, Operations, (${keys.join(', ')}${keys.length === 1 ? ',' : ''}))`,
+            `    given = ${args[0]}`,
             `    kept = _call(`,
             `        "${d.name}",`,
-            '        [{**op, "index": i} for i, op in enumerate(_shared.records(ops))],',
+            '        [{**op, "index": i} for i, op in enumerate(given)],',
             ...rest,
             '    )',
+            '    ops = operations if isinstance(operations, Operations) else _shared.operations_of(given, Operations)',
             `    result: ${ann} = _shared.select(ops, kept)`,
             '    return result',
           ].join('\n'),
@@ -931,7 +940,7 @@ async function generate(name, cfg) {
     if (done.includes(opRecord)) throw new Error(`${name}: ${opRecord} is a result record too`);
     typed.unshift(
       [
-        '@dataclass(frozen=True)',
+        '@dataclass(frozen=True, eq=False)',
         'class Operations:',
         ...quote(
           wrapParagraphs(ctx.ops.doc, '    ', 3).map((l) => l.slice(4)),
@@ -940,8 +949,14 @@ async function generate(name, cfg) {
         '',
         ...fieldLines,
         '',
+        '    _symcrys_operations = True',
+        '',
         '    def __post_init__(self) -> None:',
         '        _shared.freeze(self, _OPERATION_FIELDS)',
+        '',
+        '    def __reduce__(self) -> tuple[Any, ...]:',
+        '        # A copy or a pickle is built anew, so its arrays are checked and read-only too.',
+        '        return (type(self), tuple(getattr(self, name) for name in _OPERATION_FIELDS))',
         '',
         '    def __len__(self) -> int:',
         `        return len(self.${first})`,
@@ -950,12 +965,12 @@ async function generate(name, cfg) {
         '        return (self[i] for i in range(len(self)))',
         '',
         '    @overload',
-        `    def __getitem__(self, index: int) -> ${opRecord}: ...`,
+        `    def __getitem__(self, index: int | np.integer[Any]) -> ${opRecord}: ...`,
         '',
         '    @overload',
         '    def __getitem__(self, index: slice | Sequence[int] | NDArray[Any]) -> Operations: ...',
         '',
-        `    def __getitem__(self, index: int | slice | Sequence[int] | NDArray[Any]) -> ${opRecord} | Operations:`,
+        `    def __getitem__(self, index: int | np.integer[Any] | slice | Sequence[int] | NDArray[Any]) -> ${opRecord} | Operations:`,
         `        """One operation as a dict \`\`{${entries.map(([k]) => `"${snake(k)}"`).join(', ')}}\`\` for an integer, otherwise`,
         '        the ``Operations`` of the selected rows (a slice, a list of indices, a boolean mask)."""',
         `        result: ${opRecord} | Operations = _shared.operation_at(self, index)`,
