@@ -1,6 +1,6 @@
 /**
  * Wyckoff positions of the crystal classes for directions (face normals), as ITA gives them:
- * ITA's letters, multiplicities and oriented site-symmetry symbols, a representative face, and the
+ * ITA's letters, multiplicities, oriented site-symmetry symbols, coordinates and faces as printed, and the
  * Wyckoff position of any direction (docs/conventions.md, "Site symmetry and Wyckoff positions").
  */
 
@@ -279,7 +279,7 @@ const sortedKey = (list: readonly number[]): string => [...list].sort((a, b) => 
 
 /**
  * The Wyckoff position of a direction (any non-zero Cartesian vector) in a crystal class: the
- * position whose representative has a site symmetry conjugate to that of the
+ * position whose printed face has a site symmetry conjugate to that of the
  * direction (ITA's definition). `tolerance` as for `siteSymmetryOf`; throws a RangeError if the
  * operations found within it do not match any position (a tolerance too large).
  */

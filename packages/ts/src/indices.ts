@@ -141,14 +141,17 @@ function printedIndex(component: string, values: MillerValues, fail: (message: s
     if (v === undefined) throw fail(`The Miller index ${component} needs a value of ${letter}`);
     return v;
   };
-  return terms.reduce((sum, term) => {
+  const result = terms.reduce((sum, term) => {
     const m = /^([+-]?)(\d*)([hkil]?)$/.exec(term)!;
     const sign = m[1] === '-' ? -1 : 1;
     const factor = m[2] === '' ? 1 : Number(m[2]);
+    if (!Number.isSafeInteger(factor)) throw fail(`The factor in ${component} is not a safe integer`);
     if (m[3] === '') return sum + sign * factor;
     if (m[3] === 'i') return sum + sign * factor * -(value('h') + value('k'));
     return sum + sign * factor * value(m[3] as 'h' | 'k' | 'l');
   }, 0);
+  if (!Number.isSafeInteger(result)) throw fail(`The Miller index ${component} is not a safe integer: ${result}`);
+  return result;
 }
 
 /**
@@ -157,7 +160,12 @@ function printedIndex(component: string, values: MillerValues, fail: (message: s
  * `fail` makes the error.
  */
 export function substituteMillerIndices(printed: string, values: MillerValues, fail: (message: string) => Error): Vec3 {
-  const parts = printed.split(',').map((c) => printedIndex(c.trim(), values, fail) + 0);
+  const components = printed.split(',').map((c) => c.trim());
+  // i is the third of four indices; ITA prints no i among three.
+  if (components.length === 3 && components.some((c) => c.includes('i'))) {
+    throw fail(`Unreadable Miller indices: ${printed} (i among three indices)`);
+  }
+  const parts = components.map((c) => printedIndex(c, values, fail) + 0);
   if (parts.length === 3) return [parts[0], parts[1], parts[2]];
   if (parts.length === 4 && parts[2] === -(parts[0] + parts[1])) return [parts[0], parts[1], parts[3]];
   throw fail(`Unreadable Miller indices: ${printed}`);
@@ -179,17 +187,20 @@ export function millerIndices(printed: string, values: MillerValues): Vec3 {
   if (values === null || typeof values !== 'object' || Array.isArray(values)) {
     throw new RangeError(`millerIndices: values { h, k, l } expected, not ${shown(values)}`);
   }
-  for (const [key, v] of Object.entries(values)) {
+  for (const key of Object.keys(values)) {
     if (!['h', 'k', 'l'].includes(key)) throw new RangeError(`millerIndices: unknown value ${shown(key)} (h, k or l)`);
-    if (v !== undefined && !Number.isSafeInteger(v)) {
-      throw new RangeError(`millerIndices: ${key} must be an integer, not ${shown(v)}`);
-    }
   }
-  const hkl = substituteMillerIndices(
-    printed.replace(/\s+/g, ''),
-    values,
-    (m) => new RangeError(`millerIndices: ${m}`),
-  );
+  // The own values only, each checked as it is read (an inherited or non-enumerable one included).
+  const own: { h?: number; k?: number; l?: number } = {};
+  for (const letter of ['h', 'k', 'l'] as const) {
+    if (!Object.hasOwn(values, letter)) continue;
+    const v: unknown = values[letter];
+    if (v === undefined) continue;
+    if (!Number.isSafeInteger(v)) throw new RangeError(`millerIndices: ${letter} must be an integer, not ${shown(v)}`);
+    own[letter] = v as number;
+  }
+  // Spaces around the commas are allowed; a space inside an index is unreadable.
+  const hkl = substituteMillerIndices(printed, own, (m) => new RangeError(`millerIndices: ${m}`));
   if (hkl.every((x) => x === 0))
     throw new RangeError(`millerIndices: ${printed} gives the face (000) with ${shown(values)}`);
   return deepFreeze(hkl);

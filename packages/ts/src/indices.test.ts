@@ -237,5 +237,13 @@ describe('millerIndices (#137 G3)', () => {
     expect(() => millerIndices('h,k,h,l', { h: 1, k: 2, l: 1 })).toThrow(RangeError); // i ≠ −(h + k)
     expect(() => millerIndices(321 as never, { h: 1 })).toThrow(RangeError);
     expect(() => millerIndices('h,k,l', [3, 2, 1] as never)).toThrow(RangeError);
+    // Review of #121 step 11b: unsafe integers, inherited or hidden values, spaces inside an index, i among three.
+    expect(() => millerIndices('2h,k,l', { h: 2 ** 53 - 1, k: 0, l: 0 })).toThrow(/safe integer/);
+    expect(() => millerIndices('99999999999999999999h,k,l', { h: 1, k: 0, l: 0 })).toThrow(/safe integer/);
+    expect(() => millerIndices('h,k,l', Object.create({ h: 1.5, k: 1, l: 1 }) as never)).toThrow(/needs a value of h/);
+    const hidden = Object.defineProperty({ k: 1, l: 1 }, 'h', { value: 2.5, enumerable: false });
+    expect(() => millerIndices('h,k,l', hidden)).toThrow(/integer/);
+    expect(() => millerIndices('1 0,0,1', {})).toThrow(/Unreadable/);
+    expect(() => millerIndices('i,k,l', { h: 1, k: 2, l: 3 })).toThrow(/i among three/);
   });
 });
