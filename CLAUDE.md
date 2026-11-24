@@ -462,6 +462,19 @@ The conventions themselves are in `docs/conventions.md`; here, what was decided 
   birss-app rests; adding them is additive, and the first real consumer tests the API early. **Magnetic groups and group properties in three PRs** (maintainer, 2026-11-19, #13, #41):
   data, symbols and operations; then the `'c'`-tensors and the named tensor properties; then the
   fixed properties of a class as fields of `pointGroup()`; released together as one MINOR.
+- **One tolerance contract** (#137 D1, decided by Thomas on 2026-11-22; #93, #89, #133; #121 step
+  8a): one option type, `ToleranceOptions`, for every function that compares numbers of a caller,
+  `EPSILON` exported, one check (finite, above 0, below the bound of the metric, `null` refused) and
+  one metric per kind of object (`docs/conventions.md`, "Tolerances"). Chosen while implementing:
+  the metric tensor of `residualOperations` keeps its relative metric as a fourth kind, since it
+  compares G and not the operations; the bounds are 0.1 (operations), 1 (directions), 1/2 (points),
+  1 (metric); `rotateTensor` and the plane `describeOperationsOf` take the tolerance too. #89 is
+  fixed by making the caller's group exact before the projection (averaging over the group table,
+  `closure.ts`), so that the rank is exact, and by seeking the pivots relative to the distance of
+  the caller's matrices from that group; the pivot threshold relative to the tolerance alone, as
+  #137 proposed, failed for tolerances well above the actual errors and for small genuine pivots in a
+  general orientation (tested before the choice). One tolerant closure (`closeWithin`) serves these
+  functions and `pointGroupOf`.
 - **One name for the axis, and smaller uniformity** (#137 C3, C4, decided by Thomas on 2026-11-22;
   #121 step 7d): the axis of an operation is `axis` in every entry point, for a reflection its normal,
   so the plane groups give `axis` for what was `normal` (descriptions and the lines of
@@ -950,7 +963,8 @@ while implementing gets its own note here.
   `wyckoffPositionOf` giving the same record as `wyckoffPositions`; review of PR #82). Asked in a third round (Thomas,
   2026-11-22, #84, #85; recommendations taken): **`describeOperationsOf(operations)`** describes any
   list of operations of the plane, the name of the other entry points for the same notion; a
-  translation is read as a fraction with a denominator of at most 12, within 10⁻⁹ (chosen while
+  translation is read as a fraction with a denominator of at most 12, within 10⁻⁹ _(within the
+  tolerance since #121 step 8a)_ (chosen while
   implementing, as proposed in the question). **`normal`** _(sign: #107, #114; named `axis` since #121 step 7d, #137 C3)_ of a mirror or glide line, its symmetry
   direction in the lattice basis (ITA Table 2.1.3.1), in the descriptions and in each line of
   `symmetryElements`, so that an application can assign a line to a position of the symbol without a

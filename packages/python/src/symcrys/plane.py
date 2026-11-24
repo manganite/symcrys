@@ -29,6 +29,7 @@ class Operation(TypedDict):
 __all__ = [
     "PLANE_GROUP_KEYS",
     "POINT_GROUP_KEYS",
+    "EPSILON",
     "VERSION",
     "Operation",
     "SymcrysError",
@@ -51,6 +52,11 @@ __all__ = [
 
 VERSION: str = _shared.value(PLANE + "VERSION")
 """The version of symcrys, the same for the TypeScript and the Python package."""
+EPSILON: float = float(_shared.value(PLANE + "EPSILON"))
+"""The default tolerance of every function that compares numbers a caller passes in (operations,
+directions, points): two numbers closer than this count as equal, in the metric of their kind
+(docs/conventions.md, "Tolerances").
+"""
 PLANE_GROUP_KEYS: tuple[str, ...] = tuple(_shared.value(PLANE + "PLANE_GROUP_KEYS"))
 """The short symbols of the 17 plane groups, in ITA's order (plane group n at index n − 1)."""
 POINT_GROUP_KEYS: tuple[str, ...] = tuple(_shared.value(PLANE + "POINT_GROUP_KEYS"))
@@ -183,15 +189,24 @@ def describe_operations(key: str, *, setting: Optional[int] = None) -> list[dict
     return [_description(d) for d in _call("describeOperations", key, _shared.options(setting=setting))]
 
 
-def describe_operations_of(operations: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+def describe_operations_of(
+    operations: Sequence[Mapping[str, Any]], *, tolerance: Optional[float] = None
+) -> list[dict[str, Any]]:
     """Any operations of the plane (lattice basis) described geometrically, index for index, as
     ``describe_operations`` describes those of a group: for instance a product of operations, an
     operation shifted by a lattice translation, or the operations of a site symmetry. Each operation
     is ``{ matrix, translation }`` as ``operations`` gives it. Each matrix must have integer entries
-    (within 10⁻⁹) and be the linear part of a crystallographic plane point group (determinant ±1,
-    order 1, 2, 3, 4 or 6); each translation must lie within 10⁻⁹ of a fraction with a denominator
-    of at most 12 (1/3 as 0.333…), as the translations of ``operations`` and their products do.
-    Raises SymcrysError otherwise.
+    (within the tolerance, per entry) and be the linear part of a crystallographic plane point group
+    (determinant ±1, order 1, 2, 3, 4 or 6); each component of a translation is read as the fraction
+    with the smallest denominator, at most 12, within the tolerance (1/3 from 0.333…), as the
+    translations of ``operations`` and their products are. Raises SymcrysError otherwise.
+
+    Parameters
+    ----------
+    tolerance : keyword-only, optional
+        Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁶). It is measured per
+        matrix entry for operations, as the distance of unit vectors for directions and per
+        coordinate modulo the lattice for points (docs/conventions.md, "Tolerances").
 
     Returns
     -------
@@ -200,7 +215,7 @@ def describe_operations_of(operations: Sequence[Mapping[str, Any]]) -> list[dict
         float64 arrays of shape (2,), ``direction`` and ``axis`` int64 arrays of shape (2,).
     """
     checked = _shared.operation_list(operations, ("matrix", "translation"))
-    return [_description(d) for d in _call("describeOperationsOf", checked)]
+    return [_description(d) for d in _call("describeOperationsOf", checked, _shared.options(tolerance=tolerance))]
 
 
 def _description(d: dict[str, Any]) -> dict[str, Any]:
@@ -234,8 +249,9 @@ def site_symmetry(key: str, point: ArrayLike, *, tolerance: Optional[float] = No
     Parameters
     ----------
     tolerance : keyword-only, optional
-        Two points count as the same, modulo the lattice, if each coordinate (lattice basis) differs
-        by less than this from an integer. Default 10⁻⁶; must be below 1/2.
+        Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁶). It is measured per
+        matrix entry for operations, as the distance of unit vectors for directions and per
+        coordinate modulo the lattice for points (docs/conventions.md, "Tolerances").
 
     Returns
     -------
@@ -257,8 +273,9 @@ def wyckoff_position(key: str, point: ArrayLike, *, tolerance: Optional[float] =
     Parameters
     ----------
     tolerance : keyword-only, optional
-        Two points count as the same, modulo the lattice, if each coordinate (lattice basis) differs
-        by less than this from an integer. Default 10⁻⁶; must be below 1/2.
+        Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁶). It is measured per
+        matrix entry for operations, as the distance of unit vectors for directions and per
+        coordinate modulo the lattice for points (docs/conventions.md, "Tolerances").
     """
     return dict(_call("wyckoffPosition", key, _point(point), _shared.options(tolerance=tolerance)))
 
@@ -277,8 +294,9 @@ def snap_to_wyckoff_position(key: str, point: ArrayLike, *, tolerance: Optional[
     Parameters
     ----------
     tolerance : keyword-only, optional
-        Two points count as the same, modulo the lattice, if each coordinate (lattice basis) differs
-        by less than this from an integer. Default 10⁻⁶; must be below 1/2.
+        Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁶). It is measured per
+        matrix entry for operations, as the distance of unit vectors for directions and per
+        coordinate modulo the lattice for points (docs/conventions.md, "Tolerances").
 
     Returns
     -------
@@ -301,8 +319,9 @@ def orbit(key: str, point: ArrayLike, *, tolerance: Optional[float] = None) -> l
     Parameters
     ----------
     tolerance : keyword-only, optional
-        Two points count as the same, modulo the lattice, if each coordinate (lattice basis) differs
-        by less than this from an integer. Default 10⁻⁶; must be below 1/2.
+        Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁶). It is measured per
+        matrix entry for operations, as the distance of unit vectors for directions and per
+        coordinate modulo the lattice for points (docs/conventions.md, "Tolerances").
 
     Returns
     -------

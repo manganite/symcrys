@@ -252,7 +252,7 @@ describe('describeOperationsOf', () => {
     }
   });
 
-  it('reads a translation within 10⁻⁹ of a fraction with a denominator up to 12', () => {
+  it('reads a translation within the tolerance of a fraction with a denominator up to 12', () => {
     const [d] = plane.describeOperationsOf([
       {
         matrix: [
