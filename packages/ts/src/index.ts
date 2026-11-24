@@ -15,6 +15,7 @@ export {
   type CrystalFamily,
   type CrystalSystem,
   type FixedAngleFamily,
+  type LatticeSystem,
 } from './lattice.js';
 export {
   angleBetweenDirections,
@@ -68,6 +69,7 @@ export {
   isCentrosymmetricOf,
   isEnantiomorphicOf,
   isPointGroupKey,
+  latticeSystems,
   residualOperations,
   operations,
   orbit,

@@ -549,7 +549,12 @@ function generalPins(add: (id: string, f: () => unknown) => void): void {
     'hexagonal',
     'cubic',
   ] as const) {
-    add(`crystalFamily, holohedry ${s}`, () => [classes.crystalFamily(s), classes.holohedry(s)]);
+    // holohedry took a crystal system until #121 step 11a (#137 G1); the trigonal system gave -3m,
+    // the holohedry of the rhombohedral lattice system.
+    add(`crystalFamily, holohedry ${s}`, () => [
+      classes.crystalFamily(s),
+      classes.holohedry(s === 'trigonal' ? 'rhombohedral' : s),
+    ]);
   }
   for (const p of CELLS) {
     const id = `cell ${p.a} ${p.b} ${p.c} ${p.alpha} ${p.beta} ${p.gamma}`;

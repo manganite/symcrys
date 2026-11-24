@@ -20,6 +20,7 @@ export {
   type CrystalFamily,
   type CrystalSystem,
   type FixedAngleFamily,
+  type LatticeSystem,
 } from './lattice.js';
 export {
   angleBetweenDirections,
@@ -70,6 +71,7 @@ export {
   findMagneticPointGroup as findPointGroup,
   generators,
   isMagneticPointGroupKey as isPointGroupKey,
+  latticeSystems,
   magneticPointGroups as pointGroups,
   operations,
   pointGroup,

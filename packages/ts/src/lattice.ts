@@ -32,6 +32,31 @@ export function crystalFamily(system: CrystalSystem): CrystalFamily {
   return system === 'trigonal' ? 'hexagonal' : system;
 }
 
+/**
+ * One of the seven lattice systems of ITA Table 1.3.4.1 (p. 39): the lattices whose point symmetry
+ * is the same holohedry. The hexagonal family has two, `'hexagonal'` (hP) and `'rhombohedral'` (hR).
+ */
+export type LatticeSystem =
+  'triclinic' | 'monoclinic' | 'orthorhombic' | 'tetragonal' | 'hexagonal' | 'rhombohedral' | 'cubic';
+
+/**
+ * The lattice systems on which the point groups of a crystal system act (ITA § 1.3.4.4.2, p. 39):
+ * both of the hexagonal family for the trigonal system, which belongs to either depending on the
+ * basis, otherwise the one of the same name.
+ */
+export function latticeSystemsOfSystem(system: CrystalSystem): readonly LatticeSystem[] {
+  if (!SYSTEMS.includes(system)) throw new RangeError(`Unknown crystal system: ${shown(system)}`);
+  if (system === 'trigonal') return TRIGONAL;
+  return LATTICE_SYSTEM_OF[system];
+}
+
+const TRIGONAL: readonly LatticeSystem[] = Object.freeze(['hexagonal', 'rhombohedral']);
+const LATTICE_SYSTEM_OF = Object.freeze(
+  Object.fromEntries(
+    ['triclinic', 'monoclinic', 'orthorhombic', 'tetragonal', 'hexagonal', 'cubic'].map((s) => [s, Object.freeze([s])]),
+  ),
+) as Readonly<Record<Exclude<CrystalSystem, 'trigonal'>, readonly LatticeSystem[]>>;
+
 /** The families whose cell angles are fixed, so that their lattice basis is fixed up to edge lengths. */
 export type FixedAngleFamily = 'orthorhombic' | 'tetragonal' | 'hexagonal' | 'cubic';
 
