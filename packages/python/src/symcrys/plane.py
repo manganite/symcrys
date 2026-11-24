@@ -585,8 +585,9 @@ def symbol(
     ----------
     setting : keyword-only, optional
         The setting, by its 1-based index or its symbol (spaces ignored): for the point group ``3m``
-        1 or ``'3m1'`` (default) and 2 or ``'31m'``; the other point groups have one, and a plane
-        group takes only 1 or its own symbol.
+        1 or ``'3m1'`` (default) and 2 or ``'31m'``, and the key ``'3m'`` names the default; the
+        other point groups have one, and a plane group takes only 1 or its own symbol (short or
+        full).
     form : keyword-only, optional
         ``'short'`` (default): the symbol as one word, the key; ``'full'``: the full symbol,
         positions separated by spaces (``'p 1 m 1'`` for ``pm``).
@@ -610,8 +611,9 @@ def operations(key: str, *, setting: Optional[Union[int, str]] = None) -> Operat
     ----------
     setting : keyword-only, optional
         The setting, by its 1-based index or its symbol (spaces ignored): for the point group ``3m``
-        1 or ``'3m1'`` (default) and 2 or ``'31m'``; the other point groups have one, and a plane
-        group takes only 1 or its own symbol.
+        1 or ``'3m1'`` (default) and 2 or ``'31m'``, and the key ``'3m'`` names the default; the
+        other point groups have one, and a plane group takes only 1 or its own symbol (short or
+        full).
 
     Returns
     -------
@@ -636,8 +638,9 @@ def generators(key: str, *, setting: Optional[Union[int, str]] = None) -> Operat
     ----------
     setting : keyword-only, optional
         The setting, by its 1-based index or its symbol (spaces ignored): for the point group ``3m``
-        1 or ``'3m1'`` (default) and 2 or ``'31m'``; the other point groups have one, and a plane
-        group takes only 1 or its own symbol.
+        1 or ``'3m1'`` (default) and 2 or ``'31m'``, and the key ``'3m'`` names the default; the
+        other point groups have one, and a plane group takes only 1 or its own symbol (short or
+        full).
 
     Returns
     -------
@@ -665,8 +668,9 @@ def describe_operations(
     ----------
     setting : keyword-only, optional
         The setting, by its 1-based index or its symbol (spaces ignored): for the point group ``3m``
-        1 or ``'3m1'`` (default) and 2 or ``'31m'``; the other point groups have one, and a plane
-        group takes only 1 or its own symbol.
+        1 or ``'3m1'`` (default) and 2 or ``'31m'``, and the key ``'3m'`` names the default; the
+        other point groups have one, and a plane group takes only 1 or its own symbol (short or
+        full).
 
     Returns
     -------

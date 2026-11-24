@@ -80,8 +80,8 @@ export const POINT_GROUP_KEYS: readonly PointGroupKey[] = Object.freeze([...PLAN
 export interface SettingOptions {
   /**
    * The setting, by its 1-based index or its symbol (spaces ignored): for the point group `3m` 1 or
-   * `'3m1'` (default) and 2 or `'31m'`; the other point groups have one, and a plane group takes only
-   * 1 or its own symbol.
+   * `'3m1'` (default) and 2 or `'31m'`, and the key `'3m'` names the default; the other point groups
+   * have one, and a plane group takes only 1 or its own symbol (short or full).
    */
   readonly setting?: number | string;
 }
@@ -325,7 +325,9 @@ function settingOf(key: PlaneGroupKey | PointGroupKey, options: SettingOptions |
   const wanted = compactSymbol(setting);
   if (isGroupKey(key)) {
     if (wanted === key || wanted === planeGroupEntry(key).fullSymbol) return 1;
-    throw new RangeError(`The plane group ${key} has no setting ${shown(setting)} (its symbol: ${key})`);
+    throw new RangeError(
+      `The plane group ${key} has no setting ${shown(setting)} (its symbols: ${key}, ${planeGroupEntry(key).fullSymbol})`,
+    );
   }
   const symbols = Array.from({ length: planePointGroupSettingCount(key) }, (_, i) => planePointGroupSymbol(key, i + 1));
   const index = symbols.findIndex((s) => s === wanted);

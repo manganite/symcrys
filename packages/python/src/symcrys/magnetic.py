@@ -1578,8 +1578,8 @@ def find_point_group(
     Spellings: the overbar as ``-``, ``−``, a combining overbar or ``¯`` after the digit (``m3̄m``),
     ``bar3`` (also with a backslash and braces, as in LaTeX); the prime as ``'``, ``′``, ``ʹ`` or
     ``’``; Schoenflies subscripts also as Unicode or LaTeX subscripts (``D₃d(S₆)``, ``D_{3d}``).
-    Returns None if nothing matches, also for a value that is not a string; a symbol that names
-    several groups raises SymcrysError that lists them.
+    Returns ``None`` if nothing matches; a value that is not a string, and a symbol that names
+    several groups, are a SymcrysError (the latter lists the groups).
 
     Parameters
     ----------
