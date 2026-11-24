@@ -3,7 +3,7 @@ import { apply, matricesEqual, multiply, type Vec3 } from '../linalg.js';
 import { siteSymmetryOf } from '../siteSymmetry.js';
 import { POINT_GROUP_KEYS, operations, settings } from './pointGroups.js';
 import { GREY_POINT_GROUP_KEYS } from './keys.js';
-import { numericHkl, wyckoffPosition, wyckoffPositions } from './wyckoff.js';
+import { numericHkl, representativeFace, wyckoffPosition, wyckoffPositions } from './wyckoff.js';
 
 const ALL_SETTINGS = POINT_GROUP_KEYS.flatMap((key) => settings(key).map((s) => ({ key, s })));
 const DIRECTIONS: Vec3[] = [
@@ -50,7 +50,6 @@ describe('wyckoffPositions', () => {
   it('are frozen', () => {
     const w = wyckoffPositions('4mm')[1];
     expect(Object.isFrozen(w)).toBe(true);
-    expect(Object.isFrozen(w.representative.cartesian)).toBe(true);
     expect(Object.isFrozen(w.siteSymmetryOperations)).toBe(true);
   });
 });
@@ -61,7 +60,7 @@ describe('wyckoffPosition', () => {
       const ops = operations(key, { setting: s.index });
       for (const w of wyckoffPositions(key, { setting: s.index })) {
         for (const g of ops) {
-          const image = apply(g.cartesian, w.representative.cartesian);
+          const image = apply(g.cartesian, representativeFace(key, s.index, w.millerIndices).cartesian);
           expect(wyckoffPosition(key, image, { setting: s.index }).letter, `${key} #${s.index} ${w.letter}`).toBe(
             w.letter,
           );
@@ -85,7 +84,7 @@ describe('wyckoffPosition', () => {
       const ops = operations(key, { setting: s.index });
       for (const w of wyckoffPositions(key, { setting: s.index })) {
         for (const g of ops) {
-          const image = apply(g.cartesian, w.representative.cartesian);
+          const image = apply(g.cartesian, representativeFace(key, s.index, w.millerIndices).cartesian);
           for (const delta of [tolerance / 4, tolerance, 2 * tolerance]) {
             const near: Vec3 = [image[0] + rnd() * delta, image[1] + rnd() * delta, image[2] + rnd() * delta];
             const site = siteSymmetryOf(ops, near, { tolerance });

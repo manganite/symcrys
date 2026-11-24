@@ -33,12 +33,15 @@ for f in symcrys.crystal_forms("-43m"):
     print(f["letter"], f["basic"], f["miller_indices"], f.get("condition", ""), form["name"])
 ```
 
-Each form has a representative face with numbers, its Miller indices and its Cartesian unit normal
-in the frame of the setting, e.g. to draw its pole or to compute its site symmetry:
+The Miller indices of a form are printed with letters. `miller_indices` substitutes values of your
+choice, and `face_normal` gives the pole of that face in a cell, e.g. to draw it or to compute its
+site symmetry (the cell decides the pole: for monoclinic and triclinic crystals give the real cell,
+`lattice_from_parameters`):
 
 ```{code-cell} ipython3
-f = symcrys.crystal_forms("-43m")[2]
-f["representative"]["hkl"], f["representative"]["cartesian"]
+f = symcrys.crystal_forms("-43m")[2]  # h,h,l with |h| < |l|, the trigon-tritetrahedron
+hkl = symcrys.miller_indices(f["miller_indices"], {"h": 1, "l": 3})
+hkl, symcrys.face_normal(symcrys.lattice_basis("cubic"), hkl)
 ```
 
 ## Orbits and the lattice basis

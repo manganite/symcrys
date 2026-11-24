@@ -80,7 +80,9 @@ __all__ = [
     "reciprocal_basis",
     "angle_between_directions",
     "angle_between_planes",
+    "face_normal",
     "residual_operations",
+    "miller_indices",
     "reduce_indices",
     "plane_to_four_indices",
     "plane_from_four_indices",
@@ -461,6 +463,30 @@ def residual_operations(
             _shared.options(tolerance=tolerance),
         )
     )
+
+
+def miller_indices(printed: str, values: Mapping[str, int]) -> NDArray[np.int64]:
+    """The face (hkl) of printed Miller indices with the caller's values of h, k, l substituted
+    (#137 G3): the printed ``h,h,-2h,l`` with h = 3 and l = 1 gives (3, 3, 1). The printed strings
+    are those of ``wyckoff_positions`` and ``crystal_forms`` (``miller_indices``), as ITA prints
+    them: three indices, or four for hexagonal axes, of which i = −(h + k) is dropped, so that the
+    face can be passed to ``orbit`` (``plane_to_four_indices`` gives the four). Each value is an
+    integer; only the letters the string uses are needed. The face is not reduced, and whether the
+    values keep it in its position (a general face (hkl) with h = k lies on a special one) is the
+    caller's choice. Raises SymcrysError for an unreadable string, a missing or non-integer value,
+    an unknown key and the face (000).
+    """
+    return np.asarray(_call("millerIndices", printed, _shared.mapping(values, "values")), dtype=np.int64)
+
+
+def face_normal(basis: ArrayLike, hkl: ArrayLike) -> NDArray[np.float64]:
+    """The unit normal of a plane (hkl) in a cell, a Cartesian vector: h·a* + k·b* + l·c*
+    normalised, the pole of the face (#137 G4). With ``lattice_basis(family)`` for a family with
+    fixed cell angles, or ``lattice_from_parameters`` for a real cell; Miller indices of hexagonal
+    axes are three, without i. Raises SymcrysError for a basis that is not a regular 3 × 3 matrix
+    and for a zero vector.
+    """
+    return np.asarray(_call("faceNormal", _shared.array(basis, "basis", np.float64), _shared.array(hkl, "hkl")), dtype=np.float64)
 
 
 def reduce_indices(indices: ArrayLike) -> NDArray[np.int64]:

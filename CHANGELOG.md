@@ -8,6 +8,11 @@ All notable changes to symcrys are recorded here. The format follows
 
 ### Added
 
+- **Faces with numbers** (#137 G3, G4, #110, #115, #121 step 11b): `millerIndices(printed,
+{ h, k, l })` substitutes values into the Miller indices ITA prints (`'h,h,-2h,l'` with h = 3,
+  l = 1 gives (3, 3, 1); i dropped for hexagonal axes), and `faceNormal(basis, hkl)` gives the unit
+  normal of a face in a cell; in both entry points and in Python (`miller_indices`, `face_normal`).
+
 - **Lattice systems** (#137 G1, #113, #121 step 11a): the type `LatticeSystem` with ITA's seven
   lattice systems (ITA 2016 Table 1.3.4.1, p. 39) and `latticeSystems(key)`, the lattice systems a
   class acts on: `['hexagonal', 'rhombohedral']` for a trigonal class, one otherwise; in both entry
@@ -32,8 +37,7 @@ All notable changes to symcrys are recorded here. The format follows
   obverse ones in the hexagonal cell of setting 1 (ITA 2016 Table 1.5.1.1, p. 78, the matrix Q of R₁ obverse), so the Cartesian
   operations equal those of setting 1: `pointGroupOf` names them setting 1. `findPointGroup('32')`
   gives the default, since `32` is the key; choose the setting by its index or by the axes,
-  `{ axes: 'rhombohedral' }` (#96, below). The representative face of a position with rhombohedral axes takes h = 5 ((521) for the
-  general position), since (321) lies on a limiting form there.
+  `{ axes: 'rhombohedral' }` (#96, below).
 
 - **Tolerant reading of symbols** (#96, #121 step 7b): `findPointGroup` (Python `find_point_group`)
   in both entry points reads every symbol `symbol()` writes, Schoenflies symbols included (`Oh`,
@@ -243,6 +247,13 @@ All notable changes to symcrys are recorded here. The format follows
   `plane.symbol(key, form=…)`.
 
 ### Removed
+
+- The field `representative` of `wyckoffPositions`, `wyckoffPosition` and `crystalForms` (#137 G3,
+  G4, #121 step 11b): the face with h, k, l = 3, 2, 1 (1, 2, 3 for the cubic forms with the condition
+  |h| < |l|) and its Cartesian normal. Its normal was that of a, b, c along x, y, z for the
+  monoclinic and triclinic classes, not the pole of any real cell with free angles. Now
+  `faceNormal(basis, millerIndices(printed, values))` with the caller's cell and values; values
+  that meet a printed condition are the caller's to choose.
 
 - The field `fullSymbol` of `planeGroup` (`symcrys/plane`; Python `plane_group(key)["full_symbol"]`)
   (#137 F4, #121 step 10c): the full symbol is `symbol(key, { form: 'full' })`, with spaces.

@@ -651,35 +651,37 @@ such a group, use the key of its crystal class or `siteSymmetry` with its key.
 `wyckoffPositions(key, { setting })` lists them in ITA's order, general position first, as ITA
 prints them for that setting (ITA 6th ed., Table 3.2.3.2, pp. 745–769):
 
-| Field                    | Meaning                                                                                                                                                    |
-| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `letter`                 | ITA's Wyckoff letter                                                                                                                                       |
-| `multiplicity`           | number of equivalent directions (faces of the form)                                                                                                        |
-| `siteSymmetry`           | oriented site-symmetry symbol as printed, e.g. `..m`, `4m.m`; the positions are those of the symmetry directions of ITA Table 2.1.3.1                      |
-| `coordinates`            | the printed coordinate triplets in printed order, one per equivalent direction, e.g. `['x,x,z', '-x,-x,z', …]`; the first is a representative point        |
-| `millerIndices`          | the first printed face, e.g. `h,h,l`, Bravais–Miller indices for hexagonal axes, e.g. `h,h,-2h,l`                                                          |
-| `representative`         | that face with h = 3, k = 2, l = 1 (rhombohedral axes: h = 5, below): `hkl` (three indices, without i) and its Cartesian unit normal h a\* + k b\* + l c\* |
-| `siteSymmetryOperations` | indices into `operations` (same setting) of the operations fixing the representative                                                                       |
+| Field                    | Meaning                                                                                                                                             |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `letter`                 | ITA's Wyckoff letter                                                                                                                                |
+| `multiplicity`           | number of equivalent directions (faces of the form)                                                                                                 |
+| `siteSymmetry`           | oriented site-symmetry symbol as printed, e.g. `..m`, `4m.m`; the positions are those of the symmetry directions of ITA Table 2.1.3.1               |
+| `coordinates`            | the printed coordinate triplets in printed order, one per equivalent direction, e.g. `['x,x,z', '-x,-x,z', …]`; the first is a representative point |
+| `millerIndices`          | the first printed face, e.g. `h,h,l`, Bravais–Miller indices for hexagonal axes, e.g. `h,h,-2h,l`                                                   |
+| `siteSymmetryOperations` | indices into `operations` (same setting) of the operations fixing that face (for values of h, k, l that keep it in the position)                    |
 
 - The **point at the origin** (letter o, site symmetry the whole group), which ITA 2016 prints for
   every group except the ten polar ones (1, 2, m, mm2, 4, 4mm, 3, 3m, 6, 6mm), is not a direction
   and is left out.
 - The printed point and the printed face of a position may lie on **different, conjugate
   elements**: in 321, position b prints the point x,0,0 (on the twofold axis along a) and the face
-  (112̄0) (on the twofold axis along [110]). Both belong to the position; the representative of
-  symcrys is the face, as the applications work with face poles.
-- **Rhombohedral axes:** three Miller indices, some printed as sums (`h,k,-h-k`, `h,k,2k-h`). The
-  representative takes h = 5, k = 2, l = 1, since (321) lies on the limiting form (h,k,2k−h)
-  printed for 32, 3m and -3m (pp. 755–759), (116) in hexagonal axes; (521) is (318) there, and
-  every printed face of these entries is in lowest terms with these values, as with 3, 2, 1
-  elsewhere (h = 4 would give (4,2,−6) and (4,2,0)).
+  (112̄0) (on the twofold axis along [110]). Both belong to the position; `siteSymmetryOperations`
+  are those of the face, as the applications work with face poles.
+- **Faces with numbers** (#137 G3, G4): the records give the faces as ITA prints them, with
+  letters. `millerIndices(printed, { h, k, l })` substitutes a caller's values (three indices; for
+  hexagonal axes i = −(h + k) is dropped, as `orbit` takes them; rhombohedral axes print sums such
+  as `h,k,-h-k` and `h,k,2k-h`), and `faceNormal(basis, hkl)` gives the unit normal
+  h a\* + k b\* + l c\* of a face in a cell. A normal exists only for a cell: `latticeBasis(family)`
+  for the families with fixed cell angles, `latticeFromParameters` for a real cell, which the
+  monoclinic and triclinic classes need, since a point group does not fix their cell angles. The
+  values are the caller's choice; values that put a face on a limiting form or a special position
+  (a general face with h = k) give the face of that form. Inside, symcrys checks each printed
+  position with the face h, k, l = 3, 2, 1 (rhombohedral axes 5, 2, 1, since (321) lies there on the
+  limiting form (h,k,2k−h), pp. 755–759; 1, 2, 3 for the condition |h| < |l|) and its normal for
+  a, b, c along x, y, z where the angles are free, which gives the right site symmetry.
 - Where ITA prints a face with "or", e.g. (001) or (001̄) for the pedion of 4mm, the two faces
-  belong to the same Wyckoff position (ITA 6th ed., § 3.2.1.2.4 (i), p. 729); the first is the
-  representative.
-- **Monoclinic and triclinic:** the Cartesian normal takes a, b, c along x, y, z, as
-  `describeOperations` does, since a point group does not fix the cell angles. This is exact for the
-  unique axis; for any other face it is the normal for orthogonal axes, not the true pole for
-  β ≠ 90°, but it gives the correct site symmetry, which does not depend on the cell angles.
+  belong to the same Wyckoff position (ITA 6th ed., § 3.2.1.2.4 (i), p. 729); `millerIndices` is the
+  first.
 - **Settings ITA does not print** (`mm2` settings 2 and 3, `2mm` and `m2m`; monoclinic unique
   axis a, whose site symmetries `2`, `m`, `2/m` name the element on the unique axis and are not
   permuted): the positions of
@@ -694,7 +696,7 @@ prints them for that setting (ITA 6th ed., Table 3.2.3.2, pp. 745–769):
   (`wyckoff.reference.test.ts`).
 
 `wyckoffPosition(key, direction, { setting, tolerance })` gives the Wyckoff position of any
-direction: the one whose representative has a site symmetry conjugate to that of the direction.
+direction: the one whose printed face has a site symmetry conjugate to that of the direction.
 
 **ITA 2006 and 2016.** The 5th edition prints these data as Table 10.1.2.2, without coordinates
 ("for point coordinates see text", § 10.1.2.3) and without the point at the origin. Letters,
@@ -724,28 +726,27 @@ a ditetragonal prism, eigensymmetry 4/mmm, a limiting form of the general form, 
 pyramid of eigensymmetry 4mm. A limiting form may occur more than once at one position (the two
 tetragonal dipyramids of 422, (h0l) and (hhl)).
 
-| Field            | Meaning                                                                                   |
-| ---------------- | ----------------------------------------------------------------------------------------- |
-| `letter`         | the Wyckoff letter of the position the faces belong to                                    |
-| `multiplicity`   | number of faces, the multiplicity of the position                                         |
-| `siteSymmetry`   | the oriented site-symmetry symbol of the position (the face symmetry)                     |
-| `basic`          | true for the basic form of the position, false for a limiting form                        |
-| `formType`       | the number of the form in `CRYSTAL_FORM_TYPES`                                            |
-| `millerIndices`  | ITA's first face of the form as printed, e.g. `h,0,l`, `1,1,-2,0`                         |
-| `condition`      | the condition printed with the cubic forms (hhl), below; absent otherwise                 |
-| `representative` | that face with numbers, as for the Wyckoff positions: `hkl` and its Cartesian unit normal |
+| Field           | Meaning                                                                   |
+| --------------- | ------------------------------------------------------------------------- |
+| `letter`        | the Wyckoff letter of the position the faces belong to                    |
+| `multiplicity`  | number of faces, the multiplicity of the position                         |
+| `siteSymmetry`  | the oriented site-symmetry symbol of the position (the face symmetry)     |
+| `basic`         | true for the basic form of the position, false for a limiting form        |
+| `formType`      | the number of the form in `CRYSTAL_FORM_TYPES`                            |
+| `millerIndices` | ITA's first face of the form as printed, e.g. `h,0,l`, `1,1,-2,0`         |
+| `condition`     | the condition printed with the cubic forms (hhl), below; absent otherwise |
 
 - **Two forms on the faces (hhl).** In the cubic classes the faces (hhl) of one Wyckoff position
   form two different forms depending on whether |h| < |l| or |h| > |l| (trigon- and
   tetragon-tritetrahedron in 23 and -43m, trigon- and tetragon-trioctahedron in m-3, 432 and m-3m).
   ITA prints both with the condition, which `condition` gives as `'|h|<|l|'` or `'|h|>|l|'`; in
-  -43m and m-3m both are basic forms of the position, elsewhere both are limiting forms. The
-  representative takes h = 3, k = 2, l = 1 as for the Wyckoff positions (rhombohedral axes: h = 5),
-  and h = 1, l = 3 where the condition is |h| < |l|: (331) and (113).
+  -43m and m-3m both are basic forms of the position, elsewhere both are limiting forms. A face
+  with numbers must meet the condition: `millerIndices('h,h,l', { h: 1, l: 3 })` is (113), a face of
+  the |h| < |l| form, and (331) one of the other.
 - **Groups.** As the Wyckoff positions: the 32 crystal classes only (a RangeError otherwise), and the settings ITA does not print (`mm2` settings 2 and 3, monoclinic unique axis a) are
   setting 1 carried into their frame.
-- **Monoclinic and triclinic:** the Cartesian normal of the representative takes a, b, c along x, y,
-  z, as for the Wyckoff positions; the form and its number do not depend on the cell angles.
+- **Faces with numbers and their normals:** `millerIndices` and `faceNormal`, as for the Wyckoff
+  positions; the form and its number do not depend on the cell angles.
 - **Print anchors.** Table 3.2.3.2 for the forms of each position, Table 3.2.1.3 for the 47 forms. The
   tests check the two tables against each other: every form of Table 3.2.3.2, with the face symmetry
   of its position, is listed among the generating point groups of its form in Table 3.2.1.3, in bold

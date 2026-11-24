@@ -524,6 +524,17 @@ operations }`; `undefined`, never `null` (`zoneAxis`); every result frozen and `
   classes have a consumer (birss-app shows `-3m`, the holohedry of the trigonal system;
   stereography needs `6/mmm`, the lattice symmetry in hexagonal axes:
   `holohedry(crystalFamily(system))`); a field would have had to pick one.
+- **Faces with numbers** (#137 G3, G4, decided by Thomas on 2026-11-22 and, how the two fit
+  together, on 2026-11-24; #110 item 10; #115 item 2; #121 step 11b): the Wyckoff positions and
+  crystal forms give their faces only as ITA prints them (`millerIndices`, with letters); the fixed
+  face h, k, l = 3, 2, 1 with its Cartesian normal (`representative`) goes, since its numbers were a
+  choice of symcrys inside print-anchored records and its normal was wrong for every real monoclinic
+  and triclinic cell. Two functions instead: `millerIndices(printed, { h, k, l })` substitutes a
+  caller's values and gives three indices, i dropped for hexagonal axes as `orbit` takes them
+  (`planeToFourIndices` gives four), and `faceNormal(basis, hkl)` gives the unit normal in a cell,
+  so a normal never exists without one. Chosen while implementing: both in both entry points, with
+  the index functions; inside, the positions are still checked with the face 3, 2, 1 (5, 2, 1 with
+  rhombohedral axes, 1, 2, 3 under |h| < |l|), and the ITC baseline pins add the old field from it.
 - **Holohedry by lattice system** (#137 G1, decided by Thomas on 2026-11-22; #113; #121 step 11a):
   the holohedry belongs to the lattice system, as ITA defines it (ITA 2016 § 1.3.4.4.2 and Table
   1.3.4.1, p. 39): a type `LatticeSystem` with ITA's seven names, `holohedry(latticeSystem)` and
@@ -596,8 +607,8 @@ operations }`; `undefined`, never `null` (`zoneAxis`); every result frozen and `
   (maintainer, 2026-11-18, #24 item 1; asked before
   implementation): Wyckoff positions in the ITC convention only, because neither Birss nor birss-app
   has them (no Birss output to follow); the site symmetry itself, plain computation, in both. The
-  representative is ITA's printed point and face as strings plus one numeric face (hkl) _(under review,
-  #110 item 10, #115)_ with its
+  representative is ITA's printed point and face as strings plus one numeric face (hkl) _(replaced in
+  #121 step 11b, #137 G3, G4: "Faces with numbers" below)_ with its
   Cartesian normal, since the apps work with face poles. "Lies on the element" uses an optional
   `tolerance`, default `EPSILON`, so that stereography can pass 10⁻⁴ for its rounded links while
   symcrys projects onto the fixed space. `mm2` settings 2 and 3 and monoclinic unique axis a, which

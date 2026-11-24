@@ -25,6 +25,7 @@ export {
 export {
   angleBetweenDirections,
   angleBetweenPlanes,
+  faceNormal,
   isValidCell,
   latticeFromParameters,
   latticeParameters,
@@ -41,10 +42,12 @@ export {
   directionToFourIndices,
   planeFromFourIndices,
   planeToFourIndices,
+  millerIndices,
   reduceIndices,
   zoneAxis,
   type AxisChange,
   type FourIndices,
+  type MillerValues,
 } from './indices.js';
 
 import type {

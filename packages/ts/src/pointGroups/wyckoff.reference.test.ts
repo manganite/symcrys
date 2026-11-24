@@ -9,6 +9,8 @@
  * Wyckoff positions must agree with these independent results.
  */
 
+import { millerIndices } from '../indices.js';
+import { representativeFace } from './wyckoff.js';
 import { describe, expect, it } from 'vitest';
 import {
   close,
@@ -433,7 +435,10 @@ describe('ITA Table 3.2.3.2: Wyckoff positions', () => {
       ).toEqual(faces.map((x) => [x[4], x[3], x[5], x[6], x[7]]));
       lib.forEach((w, i) => {
         const n = faceNormal(e.basis, hklOf(faces[i][7], e.axes));
-        expect(sameV(w.representative.cartesian, n)).toBe(true);
+        // The public millerIndices with these values gives the face the test reads from print (#137 G3).
+        const values = e.axes === 'rhombohedral axes' ? { h: 5, k: 2, l: 1 } : { h: 3, k: 2, l: 1 };
+        expect(millerIndices(w.millerIndices, values)).toEqual(hklOf(faces[i][7], e.axes));
+        expect(sameV(representativeFace(key, index, w.millerIndices).cartesian, n)).toBe(true);
         const stab = stabilizerOf(e.group, n).map((s) => ({ m: s.m, t: false }));
         expect(
           sameGroup(
@@ -470,7 +475,7 @@ describe('Settings ITA does not print: mm2 as 2mm and m2m', () => {
       expect(lib.map((w) => w.letter)).toEqual(['d', 'c', 'b', 'a']);
       for (const w of lib) {
         const n = faceNormal(ORTHONORMAL, hklOf(w.millerIndices));
-        expect(sameV(w.representative.cartesian, n)).toBe(true);
+        expect(sameV(representativeFace('mm2', s.index, w.millerIndices).cartesian, n)).toBe(true);
         const stab = stabilizerOf(group, n);
         expect(stab.length * w.multiplicity).toBe(4);
         const readings = symbolGroups(w.siteSymmetry, 'orthorhombic', ORTHONORMAL, undefined, n);
@@ -512,7 +517,7 @@ describe('Settings ITA does not print: monoclinic unique axis a', () => {
       expect(lib.map((w) => w.letter)).toEqual(wyckoffPositions(key, { setting: 1 }).map((w) => w.letter));
       for (const w of lib) {
         const n = faceNormal(ORTHONORMAL, hklOf(w.millerIndices));
-        expect(sameV(w.representative.cartesian, n)).toBe(true);
+        expect(sameV(representativeFace(key, s.index, w.millerIndices).cartesian, n)).toBe(true);
         const stab = stabilizerOf(group, n);
         expect(stab.length * w.multiplicity).toBe(group.length);
         const readings = symbolGroups(w.siteSymmetry, 'monoclinic', ORTHONORMAL, [1, 0, 0], n);

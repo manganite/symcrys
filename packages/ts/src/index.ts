@@ -20,6 +20,7 @@ export {
 export {
   angleBetweenDirections,
   angleBetweenPlanes,
+  faceNormal,
   isValidCell,
   latticeFromParameters,
   latticeParameters,
@@ -36,10 +37,12 @@ export {
   directionToFourIndices,
   planeFromFourIndices,
   planeToFourIndices,
+  millerIndices,
   reduceIndices,
   zoneAxis,
   type AxisChange,
   type FourIndices,
+  type MillerValues,
 } from './indices.js';
 
 export type { PointGroupKey, Setting, AxesOptions, SettingOptions, SymbolOptions } from './pointGroups/pointGroups.js';

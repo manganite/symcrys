@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { representativeFace } from './wyckoff.js';
 import { apply, det, inverse, matricesEqual, multiply, transpose, type Mat3, type Vec3 } from '../linalg.js';
 import { latticeBasis } from '../lattice.js';
 import { orbit, orbitOf } from './orbits.js';
@@ -39,9 +40,10 @@ describe('orbit', () => {
   it('has as many faces as the multiplicity of each Wyckoff position, the given face first with its site symmetry', () => {
     for (const { key, s } of ALL_SETTINGS) {
       for (const w of wyckoffPositions(key, { setting: s.index })) {
-        const faces = orbit(key, { hkl: w.representative.hkl }, { setting: s.index });
+        const face = representativeFace(key, s.index, w.millerIndices);
+        const faces = orbit(key, { hkl: face.hkl }, { setting: s.index });
         expect(faces, `${key} #${s.index} ${w.letter}`).toHaveLength(w.multiplicity);
-        expect(faces[0].hkl).toEqual(w.representative.hkl);
+        expect(faces[0].hkl).toEqual(face.hkl);
         expect(faces[0].operations).toEqual(w.siteSymmetryOperations);
         expect(faces.flatMap((f) => f.operations).sort((a, b) => a - b)).toEqual(
           Array.from({ length: operations(key, { setting: s.index }).length }, (_, i) => i),
@@ -113,8 +115,9 @@ describe('orbitOf', () => {
     for (const { key, s } of ALL_SETTINGS) {
       const ops = operations(key, { setting: s.index });
       for (const w of wyckoffPositions(key, { setting: s.index })) {
-        const exact = orbit(key, { hkl: w.representative.hkl }, { setting: s.index });
-        const poles = orbitOf(ops, w.representative.cartesian);
+        const face = representativeFace(key, s.index, w.millerIndices);
+        const exact = orbit(key, { hkl: face.hkl }, { setting: s.index });
+        const poles = orbitOf(ops, face.cartesian);
         expect(
           poles.map((p) => p.operations),
           `${key} #${s.index} ${w.letter}`,

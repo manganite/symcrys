@@ -28,11 +28,7 @@
     },
     "wyckoff_positions": {
       "type": "list of dict",
-      "doc": "In each, ``representative`` has ``hkl`` (int64, shape (3,)) and ``cartesian`` (float64, shape (3,)), ``site_symmetry_operations`` is an int64 array of shape (n,)."
-    },
-    "crystal_forms": {
-      "type": "list of dict",
-      "doc": "In each, ``representative`` has ``hkl`` (int64, shape (3,)) and ``cartesian`` (float64, shape (3,))."
+      "doc": "In each, ``site_symmetry_operations`` is an int64 array of shape (n,)."
     },
     "tensor_form": {
       "type": "dict",
@@ -60,7 +56,7 @@
     },
     "wyckoff_position": {
       "type": "dict",
-      "doc": "``representative`` has ``hkl`` (int64, shape (3,)) and ``cartesian`` (float64, shape (3,)), ``site_symmetry_operations`` is an int64 array of shape (n,)."
+      "doc": "``site_symmetry_operations`` is an int64 array of shape (n,)."
     },
     "site_symmetry_of": {
       "type": "dict",

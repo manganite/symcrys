@@ -1,12 +1,13 @@
 /**
  * Wyckoff positions of the crystal classes for directions (face normals), as ITA gives them:
- * ITA's letters, multiplicities and oriented site-symmetry symbols, a representative face, and the
+ * ITA's letters, multiplicities, oriented site-symmetry symbols, coordinates and faces as printed, and the
  * Wyckoff position of any direction (docs/conventions.md, "Site symmetry and Wyckoff positions").
  */
 
 import { checkOptions, pick, SETTING_KEYS, shown, TOLERANCE_KEYS } from '../checks.js';
 import { apply, inverse, transpose, type Mat3, type Vec3 } from '../linalg.js';
 import { crystalFamily } from '../lattice.js';
+import { substituteMillerIndices } from '../indices.js';
 import { itcBasis, itcClass, itcSetting as itcClassSetting } from './itcData.js';
 import {
   settingIndexOf,
@@ -41,20 +42,14 @@ export interface WyckoffPosition {
   readonly coordinates: readonly string[];
   /**
    * ITA's representative face as printed, components separated by commas, e.g. `h,h,l`, or
-   * `h,h,-2h,l` (Bravais–Miller indices) for hexagonal axes.
+   * `h,h,-2h,l` (Bravais–Miller indices) for hexagonal axes. `millerIndices(printed, { h, k, l })` gives
+   * a face with numbers, `faceNormal(basis, hkl)` its normal in a cell.
    */
   readonly millerIndices: string;
-  /** A representative face with numbers: `millerIndices` with h = 3, k = 2, l = 1 (rhombohedral axes: h = 5). */
-  readonly representative: {
-    /** The Miller indices (hkl) of the face. */
-    readonly hkl: Hkl;
-    /**
-     * Its face normal, a Cartesian unit vector. Monoclinic and triclinic: the normal for a, b, c along
-     * x, y, z (no cell angles), exact for the unique axis only, but with the correct site symmetry.
-     */
-    readonly cartesian: Vec3;
-  };
-  /** Indices into `operations` (same setting) of the site symmetry of the representative. */
+  /**
+   * Indices into `operations` (same setting) of the site symmetry of the position: of the operations
+   * that fix its first printed face for values of h, k, l that keep the face in the position.
+   */
   readonly siteSymmetryOperations: readonly number[];
 }
 
@@ -75,34 +70,9 @@ export function representativeValues(key: PointGroupKey, setting: number): Reado
   return itcClassSetting(key, setting).axes === 'rhombohedral' ? RHOMBOHEDRAL_VALUES : REPRESENTATIVE_VALUES;
 }
 
-/**
- * One printed index as a number: a term (`h`, `-2h`, `0`, `1`) or a sum of terms (`-h-k`, `2k-h`,
- * as printed for rhombohedral axes).
- */
-function index(component: string, values: Readonly<Record<'h' | 'k' | 'l', number>>): number {
-  // A term is a signed number, or a signed letter with an optional factor; terms after the first
-  // begin with their sign, so that run-together terms (`hk`, `h2`) are unreadable.
-  if (!/^-?(\d+|\d*[hkil])([+-](\d+|\d*[hkil]))*$/.test(component)) {
-    throw new Error(`Unreadable Miller index: ${component}`);
-  }
-  const terms = component.match(/[+-]?\d*[hkil]?/g)!.filter((t) => t !== '');
-  return terms.reduce((sum, term) => {
-    const m = /^([+-]?)(\d*)([hkil]?)$/.exec(term);
-    if (!m || (m[2] === '' && m[3] === '')) throw new Error(`Unreadable Miller index: ${component}`);
-    const sign = m[1] === '-' ? -1 : 1;
-    const factor = m[2] === '' ? 1 : Number(m[2]);
-    if (m[3] === '') return sum + sign * factor;
-    if (m[3] === 'i') return sum + sign * factor * -(values.h + values.k);
-    return sum + sign * factor * values[m[3] as 'h' | 'k' | 'l'];
-  }, 0);
-}
-
 /** Printed Miller indices (three, or four for hexagonal axes) as three numbers, with the given values of h, k, l. */
 export function numericHkl(miller: string, values = REPRESENTATIVE_VALUES): Hkl {
-  const parts = miller.split(',').map((c) => index(c, values));
-  if (parts.length === 3) return [parts[0], parts[1], parts[2]];
-  if (parts.length === 4 && parts[2] === -(parts[0] + parts[1])) return [parts[0], parts[1], parts[3]];
-  throw new Error(`Unreadable Miller indices: ${miller}`);
+  return substituteMillerIndices(miller, values, (m) => new Error(m));
 }
 
 export const IDENTITY: Mat3 = [
@@ -218,6 +188,25 @@ export function faceBasis(key: PointGroupKey, setting: number): Mat3 {
   return itcBasis(key, setting);
 }
 
+/** h, k, l of a representative face under the printed condition |h| < |l| (cubic forms (hhl)). */
+export const SMALL_H: Readonly<Record<'h' | 'k' | 'l', number>> = Object.freeze({ h: 1, k: 2, l: 3 });
+
+/**
+ * A face of a position or form with numbers, internal (#137 G3: the API gives the printed indices
+ * only): h, k, l = 3, 2, 1 (rhombohedral axes: 5, 2, 1; 1, 2, 3 under the condition |h| < |l|), and
+ * its normal in the basis of the setting (`faceBasis`; monoclinic and triclinic a, b, c along x, y,
+ * z, which gives the correct site symmetry but not the pole of a real cell, #137 G4).
+ */
+export function representativeFace(
+  key: PointGroupKey,
+  setting: number,
+  miller: string,
+  condition?: string,
+): { readonly hkl: Hkl; readonly cartesian: Vec3 } {
+  const hkl = numericHkl(miller, condition === '|h|<|l|' ? SMALL_H : representativeValues(key, setting));
+  return { hkl, cartesian: normal(faceBasis(key, setting), hkl) };
+}
+
 const cache = new Map<string, readonly WyckoffPosition[]>();
 
 /**
@@ -247,14 +236,11 @@ export function wyckoffPositions(key: PointGroupKey, options?: SettingOptions): 
   let result = cache.get(cacheKey);
   if (!result) {
     const ops = operations(key, { setting });
-    const basis = faceBasis(key, setting);
     result = Object.freeze(
       printedRows(key, setting)
         .filter(([letter]) => letter !== 'o')
         .map(([letter, multiplicity, site, coordinates, millerIndices]) => {
-          const hkl = numericHkl(millerIndices, representativeValues(key, setting));
-          const cartesian = normal(basis, hkl);
-          const stab = siteSymmetryOf(ops, cartesian);
+          const stab = siteSymmetryOf(ops, representativeFace(key, setting, millerIndices).cartesian);
           if (stab.multiplicity !== multiplicity) {
             throw new Error(
               `Point group ${key}, setting ${setting}, position ${letter}: multiplicity differs from print`,
@@ -266,10 +252,6 @@ export function wyckoffPositions(key: PointGroupKey, options?: SettingOptions): 
             siteSymmetry: site,
             coordinates: Object.freeze([...coordinates]),
             millerIndices,
-            representative: Object.freeze({
-              hkl: Object.freeze(hkl) as Hkl,
-              cartesian: Object.freeze(cartesian) as Vec3,
-            }),
             siteSymmetryOperations: stab.operations,
           });
         }),
@@ -297,7 +279,7 @@ const sortedKey = (list: readonly number[]): string => [...list].sort((a, b) => 
 
 /**
  * The Wyckoff position of a direction (any non-zero Cartesian vector) in a crystal class: the
- * position whose representative has a site symmetry conjugate to that of the
+ * position whose printed face has a site symmetry conjugate to that of the
  * direction (ITA's definition). `tolerance` as for `siteSymmetryOf`; throws a RangeError if the
  * operations found within it do not match any position (a tolerance too large).
  */
