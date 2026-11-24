@@ -299,12 +299,26 @@ function describe(op: ExactOperation): OperationDescription {
 /** The largest denominator of a translation that `describeOperationsOf` reads. */
 const MAX_DENOMINATOR = 12;
 
-/** The fraction with the smallest denominator, at most `MAX_DENOMINATOR`, within `tolerance` of the value. */
+/**
+ * The fraction with a denominator of at most `MAX_DENOMINATOR` within `tolerance` of the value.
+ * Two such fractions can lie as close as 1/132 (1/11 and 1/12): a value within the tolerance of two
+ * different ones is refused, not read as either.
+ */
 function fractionOf(value: unknown, tolerance: number): Rational {
   if (typeof value === 'number' && Number.isFinite(value)) {
+    const found: Rational[] = [];
     for (let d = 1; d <= MAX_DENOMINATOR; d++) {
-      const n = Math.round(value * d);
-      if (Math.abs(value * d - n) < tolerance * d) return rational(n, d);
+      for (const n of [Math.floor(value * d), Math.ceil(value * d)]) {
+        if (Math.abs(value - n / d) >= tolerance) continue;
+        const r = rational(n, d);
+        if (!found.some((f) => f[0] === r[0] && f[1] === r[1])) found.push(r);
+      }
+    }
+    if (found.length === 1) return found[0];
+    if (found.length > 1) {
+      throw new RangeError(
+        `The translation ${shown(value)} lies within ${tolerance} of ${found.map((f) => `${f[0]}/${f[1]}`).join(' and ')}: pass a smaller tolerance`,
+      );
     }
   }
   throw new RangeError(
@@ -423,8 +437,9 @@ export function describeOperations(
  * `{ matrix, translation }` as `operations` gives it. Each matrix must have integer entries (within
  * the tolerance, per entry) and be the linear part of a crystallographic plane point group
  * (determinant ±1, order 1, 2, 3, 4 or 6); each component of a translation is read as the fraction
- * with the smallest denominator, at most 12, within the tolerance (1/3 from 0.333…), as the
- * translations of `operations` and their products are. Throws a RangeError otherwise.
+ * with a denominator of at most 12 within the tolerance (1/3 from 0.333…), as the translations of
+ * `operations` and their products are. Throws a RangeError otherwise, also for a component within
+ * the tolerance of two such fractions (which can lie 1/132 apart).
  */
 export function describeOperationsOf(
   operations: readonly PlaneOperation[],

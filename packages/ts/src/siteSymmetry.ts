@@ -128,7 +128,8 @@ export function siteSymmetryOf(
   options?: ToleranceOptions,
 ): SiteSymmetry {
   const tolerance = siteTolerance(options);
-  checkCartesianOperations(operations, tolerance);
+  // Operations are checked in their own metric, at most with the bound for operations.
+  checkCartesianOperations(operations, Math.min(tolerance, TOLERANCE_BOUND.operations));
   const v = unit(direction);
   const fixing = (w: Vec3): number[] => {
     const out: number[] = [];

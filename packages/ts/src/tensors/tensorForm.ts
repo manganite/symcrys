@@ -25,7 +25,7 @@ import {
   type SettingOptions,
 } from '../pointGroups/pointGroups.js';
 import { specOf, type TensorPropertyName } from './propertyTable.js';
-import { EPSILON, SNAP_EPSILON, toleranceOf, type ToleranceOptions } from '../tolerances.js';
+import { EPSILON, MAX_PIVOT_THRESHOLD, SNAP_EPSILON, toleranceOf, type ToleranceOptions } from '../tolerances.js';
 import { PIVOT_EPSILON, rowEchelonWithPivots } from './rowEchelon.js';
 import { deepFreeze } from '../freeze.js';
 
@@ -172,6 +172,10 @@ function project(group: readonly CartesianOperation[], spec: TensorSpec, perms: 
   }));
 
   const spanning: number[][] = [];
+  // The trace of the group average on the tensors of this index symmetry: the dimension of the
+  // invariant subspace, since the average is an orthogonal projector for orthogonal operations. The
+  // sums over the orbits of the index symmetry are an orthogonal basis of those tensors.
+  let trace = 0;
   for (let seed = 0; seed < dim; seed++) {
     const members = orbit(seed, rank, perms);
     if (seed !== Math.min(...members)) continue;
@@ -190,10 +194,11 @@ function project(group: readonly CartesianOperation[], spec: TensorSpec, perms: 
       }
     }
     for (let k = 0; k < dim; k++) averaged[k] /= ops.length;
+    trace += members.reduce((sum, s) => sum + averaged[s], 0) / members.length;
     if (averaged.some((x) => Math.abs(x) >= EPSILON)) spanning.push(averaged);
   }
 
-  const reduced = reduce(spanning, dim, deviation);
+  const reduced = reduce(spanning, dim, deviation, Math.round(trace));
   const basis = reduced.rows.map((row) => row.map(snapEntry));
   const { pivots } = reduced;
   const relations: number[][] = [];
@@ -215,22 +220,27 @@ function project(group: readonly CartesianOperation[], spec: TensorSpec, perms: 
 }
 
 /**
- * The reduced row echelon form of the projections. The group is exact, so its rank is that of the
- * projections at `PIVOT_EPSILON`. For a group made exact from operations of a caller
- * (`idealGroup`), which lies `deviation` from them, a component smaller than about that is not
- * known to be independent: the pivots are first sought at 10 × `deviation`, and the threshold is
- * lowered tenfold until they reach the rank, so that the free parameters are those of the exact
- * form unless one of its pivots is itself of the order of the deviation (#89).
+ * The reduced row echelon form of the projections, with as many pivots as the invariant subspace
+ * has dimensions (`rank`, the trace of the group average, exact for an exact group in any frame).
+ * For a group made exact from operations of a caller (`idealGroup`), which lies `deviation` from
+ * them, a component smaller than about that is not known to be independent: the pivots are first
+ * sought at 10 × `deviation` (at least `PIVOT_EPSILON`) and the threshold is lowered tenfold until
+ * the pivots reach the rank, so that the free parameters are those of the exact form unless one of
+ * its pivots is itself of the order of the deviation (#89). Should the pivots exceed the rank even
+ * at `PIVOT_EPSILON` (a component of the order of 10⁻⁷ in a general orientation), the threshold is
+ * raised instead until they reach it.
  */
-function reduce(spanning: readonly number[][], dim: number, deviation: number) {
-  const exact = rowEchelonWithPivots(spanning, dim);
-  let threshold = 10 * deviation;
-  while (threshold > PIVOT_EPSILON) {
+function reduce(spanning: readonly number[][], dim: number, deviation: number, rank: number) {
+  const start = Math.max(10 * deviation, PIVOT_EPSILON);
+  for (let threshold = start; threshold >= PIVOT_EPSILON * 0.999; threshold /= 10) {
     const reduced = rowEchelonWithPivots(spanning, dim, threshold);
-    if (reduced.pivots.length === exact.pivots.length) return reduced;
-    threshold /= 10;
+    if (reduced.pivots.length === rank) return reduced;
   }
-  return exact;
+  for (let threshold = start * 10; threshold <= MAX_PIVOT_THRESHOLD; threshold *= 10) {
+    const reduced = rowEchelonWithPivots(spanning, dim, threshold);
+    if (reduced.pivots.length === rank) return reduced;
+  }
+  throw new Error(`The projections of a tensor form give no ${rank} independent components`);
 }
 
 /**

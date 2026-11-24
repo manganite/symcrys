@@ -6,6 +6,7 @@
 import { apply, inverse, type Mat3, type Vec3 } from '../linalg.js';
 import { checkCartesianOperations } from '../operations.js';
 import { siteTolerance } from '../siteSymmetry.js';
+import { TOLERANCE_BOUND } from '../tolerances.js';
 import type { ToleranceOptions } from '../tolerances.js';
 import type { Uvw } from '../symmetryDirections.js';
 import {
@@ -137,7 +138,8 @@ export function orbitOf(
   options?: ToleranceOptions,
 ): readonly OrbitPole[] {
   const tolerance = siteTolerance(options);
-  checkCartesianOperations(operations, tolerance);
+  // Operations are checked in their own metric, at most with the bound for operations.
+  checkCartesianOperations(operations, Math.min(tolerance, TOLERANCE_BOUND.operations));
   const n = Math.hypot(direction[0], direction[1], direction[2]);
   if (!(n > 0) || !Number.isFinite(n)) throw new RangeError(`Not a direction: ${JSON.stringify(direction)}`);
   const u: Vec3 = [direction[0] / n, direction[1] / n, direction[2] / n];

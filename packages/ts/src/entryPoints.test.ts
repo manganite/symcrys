@@ -855,7 +855,9 @@ describe('one tolerance contract (#137 D1, #93)', () => {
       expect(() => call({ tolerance: bound / 2 })).not.toThrow(/tolerance/);
       for (const bad of [0, -1e-6, bound, 2 * bound, Number.NaN, Number.POSITIVE_INFINITY, '1e-3', null]) {
         expect(() => call({ tolerance: bad }), JSON.stringify(bad)).toThrow(
-          new RangeError(`The tolerance must be a number above 0 and below ${bound}, not ${JSON.stringify(bad)}`),
+          new RangeError(
+            `The tolerance must be a number above 0 and below ${bound}, not ${typeof bad === 'number' ? String(bad) : JSON.stringify(bad)}`,
+          ),
         );
       }
     });

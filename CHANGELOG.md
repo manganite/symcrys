@@ -149,7 +149,10 @@ All notable changes to symcrys are recorded here. The format follows
   - one check of the tolerance everywhere, with one message: a finite number above 0 and below 0.1
     (operations), 1 (directions), 1/2 (points) or 1 (`residualOperations`); `residualOperations`
     refused only negative values and took 0, now 0 is refused; `null` is refused everywhere (it
-    took the default in some functions); comparisons are strict (`<`) everywhere.
+    took the default in some functions); comparisons are strict (`<`) everywhere;
+  - the plane `describeOperationsOf` refuses a translation within the tolerance of two fractions;
+  - `siteSymmetryOf`, `siteSymmetry`, `wyckoffPosition` and `orbitOf` check the orthogonality of
+    the operations with their tolerance, at most 0.1 (was the tolerance for directions, up to 1).
 
 ### Removed
 
@@ -187,7 +190,10 @@ All notable changes to symcrys are recorded here. The format follows
   them, were accepted and gave too many free parameters (13 instead of 6 for the piezoelectric
   tensor of `3`), without an error. The operations are now closed into a group within the
   tolerance and made exact first, and the form is that of the exact group; `allowsPropertyOf` and
-  `allowedPropertiesOf` read them in the same way (docs/conventions.md, "Tolerances").
+  `allowedPropertiesOf` read them in the same way (docs/conventions.md, "Tolerances"). Such
+  operations need a `tolerance` of about ten times their rounding (10⁻⁵ for 6 decimals): with the
+  default they now throw a RangeError that says so, where they gave an answer before, with too many
+  free parameters for a tensor form; the same holds for `isCentrosymmetricOf`.
 - **Site symmetry of a grey group at a large tolerance** (#133; wrong since 0.6.0, which brought the grey groups): the products of
   the fixing operations were looked up by their matrix alone, so the copy without time reversal
   was always found, and the result could be no subgroup (15 of the 24 operations of `6mm1'` at

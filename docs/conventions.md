@@ -469,25 +469,31 @@ when they differ by less than the tolerance, in the metric of their kind:
 | the metric tensor G of a cell (W ᵀGW = G) | per entry, relative to the largest entry of G           | 1     | `residualOperations`                                                                                                                                                                     |
 
 - **One check.** A tolerance is a finite number above 0 and below the bound of its kind, beyond
-  which it says nothing: entries of the matrices of the point groups differ by at least 2 − √3 ≈
-  0.27, two unit vectors are at most 2 apart, two points modulo the lattice at most 1/2 per
-  coordinate. Anything else, `null` included, is a RangeError with one message; only a missing
-  tolerance takes the default. A function that compares directions also checks the orthogonality
-  of the operations with its tolerance (per entry of RᵀR, at least `EPSILON`).
+  which it says nothing: two distinct operations of a crystallographic point group differ in some
+  matrix entry by at least √2/3 ≈ 0.47 in any orthonormal frame (‖A − B‖ = ‖1 − A⁻¹B‖ ≥ √2, the
+  least for a sixfold rotation), two unit vectors are at most 2 apart, two points modulo the lattice
+  at most 1/2 per coordinate. Anything else, `null` included, is a RangeError with one message; only
+  a missing tolerance takes the default. A function that compares directions checks the
+  orthogonality of the operations with its tolerance, at most 0.1 (per entry of RᵀR, at least
+  `EPSILON`). The translations read by `describeOperationsOf` of `symcrys/plane` are compared per
+  coordinate; one that lies within the tolerance of two fractions with denominators up to 12
+  (which can be 1/132 apart) is refused.
 - **Operations of a caller are made exact.** `tensorFormOf`, `isCentrosymmetricOf`,
   `allowsPropertyOf` and `allowedPropertiesOf` close the list into a group within the tolerance and
   replace it by the exact group nearest to it before they compute anything: each matrix f(x) by
   the mean of f(xy)·f(y)⁻¹ over the group, repeated until it settles, which turns matrices that are
   a group within a small error into an exact representation nearby, then made orthogonal by its
-  invariant metric. The rank of a tensor form is then exact, and its free
-  parameters are sought first among components larger than ten times the distance between the
-  caller's matrices and the exact group, so that a component of the order of that error is not
+  invariant metric. The rank of a tensor form is the trace of the group average of the exact
+  group, exact in any frame, and its free parameters are sought first among components larger
+  than ten times the distance between the caller's matrices and the exact group, so that a component of the order of that error is not
   taken for an independent one (#89). Operations rounded to 4, 5 or 6 decimals give the form of
   the exact group for every class in every setting, and its number of free parameters in a general
-  orientation (`tensors/tolerance.test.ts`).
+  orientation, for all 122 groups (`tensors/tolerance.test.ts`). `isCentrosymmetricOf` only closes
+  the list within the tolerance and seeks the inversion in it.
 - **The tolerance must exceed the errors of the products.** Closing a list multiplies its
   matrices, and their errors add up: matrices rounded to n decimals need a tolerance of about
-  10^(1−n), not 10^(−n).
+  10^(1−n), not 10^(−n). With the default, matrices rounded to 6 decimals in a hexagonal or
+  trigonal group generate no finite group, and the error says to pass a larger tolerance.
 - **The exact group is near the caller's, not necessarily the textbook one.** Matrices rounded to 4
   decimals give an exact group within their errors (√3/2 written as 0.866 fixes the orientation of
   a hexagonal group about z only to a few 10⁻⁵), so a form computed from them has entries within

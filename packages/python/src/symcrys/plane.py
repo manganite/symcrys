@@ -198,8 +198,9 @@ def describe_operations_of(
     is ``{ matrix, translation }`` as ``operations`` gives it. Each matrix must have integer entries
     (within the tolerance, per entry) and be the linear part of a crystallographic plane point group
     (determinant ±1, order 1, 2, 3, 4 or 6); each component of a translation is read as the fraction
-    with the smallest denominator, at most 12, within the tolerance (1/3 from 0.333…), as the
-    translations of ``operations`` and their products are. Raises SymcrysError otherwise.
+    with a denominator of at most 12 within the tolerance (1/3 from 0.333…), as the translations of
+    ``operations`` and their products are. Raises SymcrysError otherwise, also for a component
+    within the tolerance of two such fractions (which can lie 1/132 apart).
 
     Parameters
     ----------

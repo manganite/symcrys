@@ -9,6 +9,7 @@
 
 import { det, inverse, multiply, snap, trace, transpose, type Mat3 } from './linalg.js';
 import type { CartesianOperation } from './operations.js';
+import { IDEAL_PASSES, IDEAL_SETTLED, IDEAL_SNAP, IDEAL_UNSETTLED, PRODUCT_MATCH } from './tolerances.js';
 
 const IDENTITY: CartesianOperation = {
   cartesian: [
@@ -77,6 +78,20 @@ export function closeWithin(
   return group;
 }
 
+/**
+ * The group the operations generate within `tolerance` (`closeWithin`); throws a RangeError if it
+ * has more than `MAX_GROUP_ORDER` elements.
+ */
+export function closedGroup(operations: readonly CartesianOperation[], tolerance: number): CartesianOperation[] {
+  const group = closeWithin(operations, tolerance);
+  if (!group) {
+    throw new RangeError(
+      `The operations generate no finite point group within the tolerance ${tolerance} (more than ${MAX_GROUP_ORDER} elements): matrices with errors too large for the tolerance (pass a larger one, about ten times their rounding), or a rotation by an angle that is not 360°/n`,
+    );
+  }
+  return group;
+}
+
 /** The largest difference of two matrix entries. */
 function distance(a: Mat3, b: Mat3): number {
   let d = 0;
@@ -95,13 +110,13 @@ const scale = (a: Mat3, s: number): Mat3 => a.map((row) => row.map((v) => v * s)
 function squareRoots(m: Mat3): [Mat3, Mat3] {
   let y = m;
   let z = IDENTITY.cartesian;
-  for (let pass = 0; pass < 60; pass++) {
+  for (let pass = 0; pass < IDEAL_PASSES; pass++) {
     const nextY = scale(add(y, inverse(z)), 0.5);
     const nextZ = scale(add(z, inverse(y)), 0.5);
     const change = distance(nextY, y);
     y = nextY;
     z = nextZ;
-    if (change < 1e-16) break;
+    if (change < IDEAL_SETTLED) break;
   }
   return [y, z];
 }
@@ -124,32 +139,40 @@ export interface IdealGroup {
  * elements or do not settle into a group (a tolerance too large or too small for their errors).
  */
 export function idealGroup(operations: readonly CartesianOperation[], tolerance: number): IdealGroup {
-  const group = closeWithin(operations, tolerance);
-  if (!group) {
-    throw new RangeError(
-      `The operations generate no finite point group within the tolerance ${tolerance} (more than ${MAX_GROUP_ORDER} elements): a rotation by an angle that is not 360°/n, or matrices too far from exact for the tolerance`,
-    );
-  }
+  const group = closedGroup(operations, tolerance);
   const n = group.length;
-  // The product table: the element nearest to each product, of the same time reversal.
+  // The product table: the element nearest to each product, of the same time reversal, sought
+  // among the elements of its kind first and among all if none of them is near enough.
+  const byKind = new Map<string, number[]>();
+  group.forEach((g, k) => {
+    const list = byKind.get(kindOf(g));
+    if (list) list.push(k);
+    else byKind.set(kindOf(g), [k]);
+  });
+  const all = group.map((_, k) => k);
+  const nearest = (product: CartesianOperation, candidates: readonly number[]) => {
+    let best = -1;
+    let bestDistance = Infinity;
+    for (const k of candidates) {
+      if (group[k].timeReversal !== product.timeReversal) continue;
+      const d = distance(group[k].cartesian, product.cartesian);
+      if (d < bestDistance) {
+        best = k;
+        bestDistance = d;
+      }
+    }
+    return bestDistance < PRODUCT_MATCH ? best : -1;
+  };
   const table = group.map((a) =>
     group.map((b) => {
-      const m = multiply(a.cartesian, b.cartesian);
-      const tr = a.timeReversal !== b.timeReversal;
-      let best = -1;
-      let bestDistance = Infinity;
-      group.forEach((g, k) => {
-        if (g.timeReversal !== tr) return;
-        const d = distance(g.cartesian, m);
-        if (d < bestDistance) {
-          best = k;
-          bestDistance = d;
-        }
-      });
-      if (!(bestDistance < 0.25)) {
-        throw new RangeError(`The operations do not form a group within the tolerance ${tolerance}`);
-      }
-      return best;
+      const product: CartesianOperation = {
+        cartesian: multiply(a.cartesian, b.cartesian),
+        timeReversal: a.timeReversal !== b.timeReversal,
+      };
+      let k = nearest(product, byKind.get(kindOf(product)) ?? []);
+      if (k < 0) k = nearest(product, all);
+      if (k < 0) throw new RangeError(`The operations do not form a group within the tolerance ${tolerance}`);
+      return k;
     }),
   );
   let f: Mat3[] = group.map((g) => g.cartesian);
@@ -169,9 +192,9 @@ export function idealGroup(operations: readonly CartesianOperation[], tolerance:
     });
     const change = Math.max(...next.map((m, k) => distance(m, f[k])));
     f = next;
-    if (change < 1e-15) break;
-    if (pass >= 50) {
-      if (change < 1e-12) break;
+    if (change < IDEAL_SETTLED) break;
+    if (pass >= IDEAL_PASSES) {
+      if (change < IDEAL_UNSETTLED) break;
       throw new RangeError(`The operations do not settle into a group within the tolerance ${tolerance}`);
     }
   }
@@ -183,7 +206,7 @@ export function idealGroup(operations: readonly CartesianOperation[], tolerance:
   f = f.map((m) => multiply(multiply(root, m), inverseRoot));
   // Only rounding of the last bits is snapped: a group turned by a small angle has entries near the
   // exact values that are not equal to them.
-  const exact = f.map((m, k) => ({ cartesian: snap(m, 1e-12), timeReversal: group[k].timeReversal }));
+  const exact = f.map((m, k) => ({ cartesian: snap(m, IDEAL_SNAP), timeReversal: group[k].timeReversal }));
   return {
     operations: exact,
     deviation: Math.max(...exact.map((op, k) => distance(op.cartesian, group[k].cartesian))),

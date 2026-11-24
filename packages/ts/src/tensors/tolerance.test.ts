@@ -9,6 +9,7 @@
 import { describe, expect, it } from 'vitest';
 import { type Mat3 } from '../linalg.js';
 import { POINT_GROUP_KEYS, operations, settings } from '../pointGroups/pointGroups.js';
+import { MAGNETIC_POINT_GROUP_KEYS } from '../pointGroups/keys.js';
 import { TENSOR_PROPERTY_NAMES } from './propertyTable.js';
 import { tensorForm, tensorFormOf, type TensorSpec } from './tensorForm.js';
 import { allowedPropertiesOf, allowedProperties } from './tensorProperties.js';
@@ -55,7 +56,7 @@ describe('rounded operations give the form of the exact group (#89)', () => {
   }
 });
 
-describe('rounded operations in a general orientation give the number of free parameters (#89)', () => {
+describe('rounded operations of the 122 groups in a general orientation give the number of free parameters (#89)', () => {
   const c = Math.cos(0.7);
   const s = Math.sin(0.7);
   const r: Mat3 = [
@@ -64,17 +65,24 @@ describe('rounded operations in a general orientation give the number of free pa
     [s * 0.8, c * 0.8, 0.6],
   ];
   const rt = r.map((_, i) => r.map((row) => row[i])) as unknown as Mat3;
-  for (const key of POINT_GROUP_KEYS) {
-    it(`${key}: rounded to 6 decimals after a rotation`, () => {
-      const ops = operations(key).map((op) => ({
-        cartesian: round(mul(mul(r, op.cartesian), rt), 6),
-        timeReversal: false,
-      }));
-      for (const spec of SPECS) {
-        expect(tensorFormOf(ops, spec, { tolerance: 1e-5 }).parameters.length, label(spec)).toBe(
-          tensorForm(key, spec).parameters.length,
-        );
-      }
-    });
+  // Every setting: the review of #89 found wrong counts for mm2 settings 2 and 3 at 5 decimals,
+  // when the rank was read off the pivots instead of the trace of the projection.
+  for (const key of MAGNETIC_POINT_GROUP_KEYS) {
+    for (const s of settings(key)) {
+      it(`${key}, setting ${s.index}: rounded to 4, 5 and 6 decimals after a rotation`, () => {
+        for (const decimals of [4, 5, 6]) {
+          const ops = operations(key, { setting: s.index }).map((op) => ({
+            cartesian: round(mul(mul(r, op.cartesian), rt), decimals),
+            timeReversal: op.timeReversal,
+          }));
+          for (const spec of SPECS) {
+            expect(
+              tensorFormOf(ops, spec, { tolerance: 10 ** (1 - decimals) }).parameters.length,
+              `${decimals} decimals, ${label(spec)}`,
+            ).toBe(tensorForm(key, spec, { setting: s.index }).parameters.length);
+          }
+        }
+      });
+    }
   }
 });

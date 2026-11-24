@@ -470,8 +470,9 @@ The conventions themselves are in `docs/conventions.md`; here, what was decided 
   compares G and not the operations; the bounds are 0.1 (operations), 1 (directions), 1/2 (points),
   1 (metric); `rotateTensor` and the plane `describeOperationsOf` take the tolerance too. #89 is
   fixed by making the caller's group exact before the projection (averaging over the group table,
-  `closure.ts`), so that the rank is exact, and by seeking the pivots relative to the distance of
-  the caller's matrices from that group; the pivot threshold relative to the tolerance alone, as
+  `closure.ts`), taking the rank from the trace of the group average, and seeking the pivots
+  relative to the distance of the caller's matrices from that group (the rank read off the pivots
+  failed in a general orientation, review of the step); the pivot threshold relative to the tolerance alone, as
   #137 proposed, failed for tolerances well above the actual errors and for small genuine pivots in a
   general orientation (tested before the choice). One tolerant closure (`closeWithin`) serves these
   functions and `pointGroupOf`.

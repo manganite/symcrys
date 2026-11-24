@@ -235,7 +235,9 @@ describe('siteSymmetry', () => {
     // Found by a scan of the review of #91: before, this returned 10 of the 24 operations of 6221',
     // which are no subgroup, and the direction not projected. Since #133 compares whole operations
     // in the products, the closure fixes no common direction there, which throws as well.
-    expect(() => siteSymmetryOf(operations("6221'"), [-0.655, 0.766, 0.415], { tolerance: 0.99 })).toThrow(RangeError);
+    expect(() => siteSymmetryOf(operations("6221'"), [-0.655, 0.766, 0.415], { tolerance: 0.99 })).toThrow(
+      /does not settle|No common fixed direction/,
+    );
   });
 
   it('rejects a zero vector and an invalid tolerance', () => {
