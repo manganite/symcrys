@@ -35,6 +35,17 @@ _F = ("f",)
 
 PlaneSystem = Literal["oblique", "rectangular", "square", "hexagonal"]
 """A crystal system of the plane, as ITA names it."""
+PlaneOperationKind = Literal[
+    "identity",
+    "translation",
+    "rotation",
+    "reflection",
+    "glide-reflection",
+]
+"""What an operation of a plane group or plane point group is, as ITA names the operations (ITA 2016
+Table 2.1.2.1, p. 145): ``'reflection'`` (in a line, as ``'reflection'`` of the point groups) and
+``'glide-reflection'``.
+"""
 
 
 @final
@@ -162,7 +173,7 @@ class Setting(TypedDict):
 class OperationDescription(TypedDict):
     """What an operation is, geometrically, as ITA describes it under "Symmetry operations"."""
 
-    kind: Literal["identity", "rotation", "reflection", "translation", "glide-reflection"]
+    kind: PlaneOperationKind
     """``'identity'``, ``'translation'``, ``'rotation'``, ``'reflection'`` (in a line) or
     ``'glide-reflection'``, as ITA names the operations (ITA 2016 Table 2.1.2.1, p. 145).
     """
@@ -433,6 +444,7 @@ __all__ = [
     "PlaneGroup",
     "PlaneGroupFound",
     "PlaneOperation",
+    "PlaneOperationKind",
     "PlaneSystem",
     "PointGroup",
     "PointGroupInSetting",

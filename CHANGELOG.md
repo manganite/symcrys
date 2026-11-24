@@ -14,6 +14,8 @@ All notable changes to symcrys are recorded here. The format follows
   gives `{ key: '3m', setting: 2 }`), as in the other entry points; `{ setting }` takes the symbol of
   a setting too (`{ setting: '31m' }`). Python: `is_plane_group_key`, `is_point_group_key`,
   `plane_groups`, `point_groups`, `find_plane_group`, `find_point_group` in `symcrys.plane`.
+- The type `PlaneOperationKind` of `symcrys/plane` (Python `symcrys.plane.PlaneOperationKind`), the
+  `kind` of a plane operation description, named as `OperationKind` is in the other entry points.
 
 ### Fixed
 

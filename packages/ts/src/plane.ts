@@ -11,7 +11,7 @@
  */
 
 import { TOLERANCE_KEYS, checkOptions, shown } from './checks.js';
-import { describePlaneOperation } from './spaceGroups/describe.js';
+import { describePlaneOperation, type PlaneOperationKind } from './spaceGroups/describe.js';
 import { planeAsymmetricUnit, planeElements, planeElementsInBox } from './spaceGroups/cell.js';
 import { toPlain, type ExactOperation } from './spaceGroups/affine.js';
 import { type PlaneSystem } from './spaceGroups/planeGroupData.js';
@@ -46,6 +46,7 @@ export { EPSILON, type ToleranceOptions } from './tolerances.js';
 import { toleranceOf, type ToleranceOptions } from './tolerances.js';
 import { compactSymbol } from './notation.js';
 export type { PlaneSystem } from './spaceGroups/planeGroupData.js';
+export type { PlaneOperationKind } from './spaceGroups/describe.js';
 
 /** The short symbol of a plane group, e.g. `'p2mg'`. */
 export type PlaneGroupKey =
@@ -158,7 +159,7 @@ export interface OperationDescription {
    * `'identity'`, `'translation'`, `'rotation'`, `'reflection'` (in a line) or `'glide-reflection'`,
    * as ITA names the operations (ITA 2016 Table 2.1.2.1, p. 145).
    */
-  readonly kind: 'identity' | 'translation' | 'rotation' | 'reflection' | 'glide-reflection';
+  readonly kind: PlaneOperationKind;
   /** The n of the linear part (an n-fold rotation): 1 for the identity and a translation, 2 for a reflection or glide reflection. */
   readonly n: number;
   /** For a rotation of order 3 or more: `'+'` if it turns a towards b, `'-'` otherwise. */
