@@ -970,14 +970,14 @@ while implementing gets its own note here.
   general point inside, each line the element of an operation, the lines mapped onto themselves
   (`cell.reference.test.ts`).
 - **Elements and the asymmetric unit as data** (#137 F2, F3, decided by Thomas on 2026-11-22; see
-    also #110 items 12, 13; #121 step 10b): `symmetryElements(key, { box })` gives each element once
-    modulo the lattice (rotation points in [0, 1)²; lines as a point and a direction), with `box` all
-    translates that meet a box, the lines not clipped; `asymmetricUnit` gives all printed
-    inequalities in printed order and the polygon with, per edge, the index of the inequality that
-    holds it. Chosen while implementing: the point of a line is where it crosses y = 0 (x = 0 for a
-    line along a), as in the descriptions of the operations, and of a class the translate whose point
-    lies in [0, 1/|d_y|); a box is its two corners [[x₀, y₀], [x₁, y₁]]. The ITC baseline pins keep
-    the old shape through the box [0, 1]² clipped in the test, so they stay unchanged.
+  also #110 items 12 and 13, and #121 step 10b): `symmetryElements(key, { box })` gives each element
+  once modulo the lattice (rotation points in [0, 1)²; lines as a point and a direction), with `box`
+  all translates that meet a box, the lines not clipped; `asymmetricUnit` gives all printed
+  inequalities in printed order and the polygon with, per edge, the index of the inequality that
+  holds it. Chosen while implementing: the point of a line is where it crosses y = 0 (x = 0 for a
+  line along a), as in the descriptions of the operations, and of a class the translate whose point
+  lies nearest to 0 from above; a box is its two corners. The ITC baseline pins keep the old shape
+  through the box of the cell, clipped in the test, so they stay unchanged.
 - **No frieze, layer or magnetic plane groups for now** (#31 question 3): no consumer needs them;
   the dimension-generic module keeps them possible (idea in #74).
 - **Entry point `symcrys/plane`, later `symcrys/space`** (#31 question 4), as `symcrys/magnetic`
