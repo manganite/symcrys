@@ -43,8 +43,8 @@ Jahn (1949) writes [V²]² and [[V²]²] for the two rank-4 symmetries. The symb
 optical tensors with a star ([V²]\*), whose behaviour under time reversal follows from Onsager's
 theorem rather than from a time parity, are not in symcrys.
 
-Up to 0.10 the fields were `parity` and `'i'`/`'c'`, and the index symmetries `'ij'`, `'jk'`,
-`'ij_kl'`, `'voigt'`; a specification with these names is an error that names the new ones.
+A specification with the names of Birss and of symcrys before 0.11 (`parity`, `'i'`/`'c'`, `'ij'`,
+`'jk'`, `'ij_kl'`, `'voigt'`) is an error that names the current ones.
 
 Second-harmonic generation, for example, is `{ rank: 3, kind: 'polar', intrinsic: 'symmetric-last-pair' }`:
 χ<sub>ijk</sub> = χ<sub>ikj</sub>. The index symmetries are explained in the reference
