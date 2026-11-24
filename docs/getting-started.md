@@ -67,7 +67,7 @@ op["matrix"], op["cartesian"]  # ITA's W in the lattice basis, and the Cartesian
 ```
 
 ```{code-cell} ipython3
-SHG = {"rank": 3, "parity": "polar", "intrinsic": "jk"}
+SHG = {"rank": 3, "kind": "polar", "intrinsic": "symmetric-last-pair"}
 form = symcrys.tensor_form("mm2", SHG)
 form["parameters"]  # the free components as index lists: xxz, yyz, zxx, zyy, zzz
 ```

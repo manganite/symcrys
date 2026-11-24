@@ -463,6 +463,15 @@ The conventions themselves are in `docs/conventions.md`; here, what was decided 
   birss-app rests; adding them is additive, and the first real consumer tests the API early. **Magnetic groups and group properties in three PRs** (maintainer, 2026-11-19, #13, #41):
   data, symbols and operations; then the `'c'`-tensors and the named tensor properties; then the
   fixed properties of a class as fields of `pointGroup()`; released together as one MINOR.
+- **The tensor specification** (#137 E1, E2, decided by Thomas on 2026-11-22; #117; #121 step 9a):
+  `{ rank, kind, timeParity, intrinsic }` with `kind` `'polar'`/`'axial'` (ITC's "parity" is the
+  behaviour under inversion, under which a polar vector is odd) and `timeParity` `'even'`/`'odd'`
+  (ITC Vol. D's terms, replacing Birss's `'i'`/`'c'`); `intrinsic` descriptive, each value with its
+  Jahn symbol in the TSDoc: `'symmetric-first-pair'`, `'symmetric-last-pair'`, `'symmetric-pairs'`,
+  `'symmetric-pairs-exchangeable'` (were `'ij'`, `'jk'`, `'ij_kl'`, `'voigt'`), and new
+  `'antisymmetric'` (rank 2) and `'totally-symmetric'`. Chosen while implementing: a specification
+  with the names of 0.10 is a RangeError that names the new ones; `'totally-symmetric'` from rank 2;
+  an antisymmetric index symmetry is computed with signed orbits of the index permutations.
 - **Error types** (#137 D2, decided by Thomas on 2026-11-22; #92; #121 step 8b): wrong input is a
   `RangeError` in TypeScript, a plain `Error` (or a `TypeError`) only a fault of symcrys; in Python
   `SymcrysError` (a `ValueError`) for a `RangeError` and `SymcrysInternalError` (a `RuntimeError`)
@@ -659,7 +668,7 @@ operations }`; `undefined`, never `null` (`zoneAxis`); every result frozen and `
   reversal at all (operations `{ matrix, cartesian }` since #121 step 6d, no time parity, no `type`, the time-even properties
   only), and a question that involves time reversal is an error that names the magnetic API,
   because a wrong reading should fail, not answer. Chosen while implementing _(under review, #110
-  item 8)_: `timeParity: 'i'` and
+  item 8)_: `timeParity: 'i'` _(`'even'` since #121 step 9a)_ and
   `timeReversal: false` are accepted in what a caller passes in, so that data of the magnetic API
   without time reversal can be handed on; for the same reason, in the other direction, the
   magnetic API refuses an operation that does not say whether it is combined with time reversal
@@ -760,7 +769,7 @@ The conventions are in `docs/conventions.md` ("Tensors"); here, what was decided
   through a dot without ending there and without a bridge (44 in the diagrams of 3, -3), the printed
   count and the dot's own links decide, and the reading is noted in the transcription
   (`references/itc/vol-d-1.1.4.10.6-rank-4-forms.md`).
-- **Names** _(The field names taken from birss-app are under review, #117.)_
+- **Names** _(The field names taken from birss-app are replaced by those of ITC since #121 step 9a, #137 E1, E2: "The tensor specification" below.)_
   (maintainer, 2026-11-19): `tensorForm(key, spec, options)`,
   `tensorFormOf(operations, spec)`, `rotateTensor(tensor, rotation, spec)`; in the magnetic API
   `TensorSpec` with birss-app's fields (`rank`, `parity`, `timeParity`, `intrinsic`), so birss-app

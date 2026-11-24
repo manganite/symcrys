@@ -15,7 +15,7 @@ import { settings, type PointGroupKey } from '../pointGroups/pointGroups.js';
 import { YARIV_PANELS, basisScheme, cellsOf, printedScheme, type YarivPanel } from '../testUtils/yariv.js';
 import { tensorForm, type TensorSpec } from './tensorForm.js';
 
-const SHG: TensorSpec = { rank: 3, parity: 'polar', timeParity: 'i', intrinsic: 'jk' };
+const SHG: TensorSpec = { rank: 3, kind: 'polar', timeParity: 'even', intrinsic: 'symmetric-last-pair' };
 
 const schemeAt = (key: string, setting: number) =>
   basisScheme(tensorForm(key as PointGroupKey, SHG, { setting }).basis);

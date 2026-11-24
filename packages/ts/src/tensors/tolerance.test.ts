@@ -21,12 +21,12 @@ const mul = (a: Mat3, b: Mat3): Mat3 =>
 
 const SPECS: readonly (TensorSpec | (typeof TENSOR_PROPERTY_NAMES)[number])[] = [
   ...TENSOR_PROPERTY_NAMES,
-  { rank: 2, parity: 'polar', timeParity: 'i', intrinsic: 'none' },
-  { rank: 3, parity: 'axial', timeParity: 'i', intrinsic: 'none' },
-  { rank: 4, parity: 'polar', timeParity: 'i', intrinsic: 'none' },
-  { rank: 4, parity: 'polar', timeParity: 'i', intrinsic: 'voigt' },
+  { rank: 2, kind: 'polar', timeParity: 'even', intrinsic: 'none' },
+  { rank: 3, kind: 'axial', timeParity: 'even', intrinsic: 'none' },
+  { rank: 4, kind: 'polar', timeParity: 'even', intrinsic: 'none' },
+  { rank: 4, kind: 'polar', timeParity: 'even', intrinsic: 'symmetric-pairs-exchangeable' },
 ];
-const label = (s: (typeof SPECS)[number]) => (typeof s === 'string' ? s : `rank ${s.rank} ${s.parity} ${s.intrinsic}`);
+const label = (s: (typeof SPECS)[number]) => (typeof s === 'string' ? s : `rank ${s.rank} ${s.kind} ${s.intrinsic}`);
 
 describe('rounded operations give the form of the exact group (#89)', () => {
   for (const key of POINT_GROUP_KEYS) {

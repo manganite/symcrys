@@ -12,8 +12,8 @@ import symcrys
 from symcrys import _engine, magnetic, plane
 from symcrys._convert import camel, snake
 
-SHG = {"rank": 3, "parity": "polar", "intrinsic": "jk"}
-MAGNETIC_SHG = {**SHG, "time_parity": "i"}
+SHG = {"rank": 3, "kind": "polar", "intrinsic": "symmetric-last-pair"}
+MAGNETIC_SHG = {**SHG, "time_parity": "even"}
 TYPES = {"SymcrysError", "SymcrysInternalError", "TensorForm", "TensorSpec"}
 
 
@@ -103,7 +103,7 @@ def test_the_crystallographic_api_refuses_time_reversal() -> None:
     with pytest.raises(symcrys.SymcrysError, match="time-odd tensor.*" + use_magnetic):
         symcrys.allows_property("3", "ferromagnetic")  # type: ignore[arg-type]
     with pytest.raises(symcrys.SymcrysError, match="time-odd tensor.*" + use_magnetic):
-        symcrys.tensor_form("3", {"rank": 1, "parity": "axial", "time_parity": "c", "intrinsic": "none"})
+        symcrys.tensor_form("3", {"rank": 1, "kind": "axial", "time_parity": "odd", "intrinsic": "none"})
     with pytest.raises(symcrys.SymcrysError, match="Operation 6 is combined with time reversal.*" + use_magnetic):
         symcrys.tensor_form_of(magnetic.operations("321'"), "piezoelectric")
     with pytest.raises(symcrys.SymcrysError, match="timeReversal must be false or absent"):
@@ -174,7 +174,7 @@ def test_tensor_form_arrays_have_fixed_shapes_also_when_empty() -> None:
     assert f["basis"].shape == (5, 27) and f["relations"].shape == (22, 27) and f["parameters"].shape == (5, 3)
     zero = symcrys.tensor_form("m-3m", SHG)
     assert zero["basis"].shape == (0, 27) and zero["parameters"].shape == (0, 3) and zero["relations"].shape == (27, 27)
-    scalar = symcrys.tensor_form("1", {"rank": 0, "parity": "polar", "intrinsic": "none"})
+    scalar = symcrys.tensor_form("1", {"rank": 0, "kind": "polar", "intrinsic": "none"})
     assert scalar["basis"].shape == (1, 1) and scalar["parameters"].shape == (1, 0)
 
 
@@ -186,7 +186,7 @@ def test_operations_go_back_into_the_library_unchanged() -> None:
 
 
 def test_camel_case_keys_are_accepted_in_a_spec() -> None:
-    spec = {"rank": 3, "parity": "polar", "timeParity": "i", "intrinsic": "jk"}
+    spec = {"rank": 3, "kind": "polar", "timeParity": "even", "intrinsic": "symmetric-last-pair"}
     assert np.array_equal(magnetic.tensor_form("4mm", spec)["basis"], magnetic.tensor_form("4mm", MAGNETIC_SHG)["basis"])
     assert np.array_equal(magnetic.tensor_form("4mm", spec)["basis"], symcrys.tensor_form("4mm", SHG)["basis"])
 
@@ -254,9 +254,9 @@ def test_library_errors_are_value_errors_with_the_message() -> None:
         symcrys.operations("7")
     assert isinstance(e.value, ValueError) and e.value.js_name == "RangeError"
     with pytest.raises(ValueError, match="needs rank 4"):
-        symcrys.tensor_form("2", {"rank": 3, "parity": "polar", "intrinsic": "voigt"})
+        symcrys.tensor_form("2", {"rank": 3, "kind": "polar", "intrinsic": "symmetric-pairs-exchangeable"})
     with pytest.raises(ValueError, match="not an orthogonal"):
-        symcrys.rotate_tensor([1, 0, 0], np.diag([2.0, 1.0, 1.0]), {"rank": 1, "parity": "polar", "intrinsic": "none"})
+        symcrys.rotate_tensor([1, 0, 0], np.diag([2.0, 1.0, 1.0]), {"rank": 1, "kind": "polar", "intrinsic": "none"})
 
 
 def test_nan_and_wrong_shapes_give_readable_errors() -> None:
@@ -407,8 +407,8 @@ def test_one_tolerance_contract() -> None:
     assert symcrys.allowed_properties_of(rounded, tolerance=1e-3) == symcrys.allowed_properties("6/mmm")
     assert not symcrys.allows_property_of(rounded, "pyroelectric", tolerance=1e-3)
     # Rounded operations give the form of the exact group (#89).
-    exact = symcrys.tensor_form("6/mmm", {"rank": 4, "parity": "polar", "intrinsic": "none"})
-    form = symcrys.tensor_form_of(rounded, {"rank": 4, "parity": "polar", "intrinsic": "none"}, tolerance=1e-3)
+    exact = symcrys.tensor_form("6/mmm", {"rank": 4, "kind": "polar", "intrinsic": "none"})
+    form = symcrys.tensor_form_of(rounded, {"rank": 4, "kind": "polar", "intrinsic": "none"}, tolerance=1e-3)
     assert form["parameters"].tolist() == exact["parameters"].tolist()
     r = np.round(symcrys.operations("6/mmm")[1]["cartesian"], 4)
     assert symcrys.rotate_tensor([1.0, 0, 0], r, "pyroelectric", tolerance=1e-3).shape == (3,)

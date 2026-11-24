@@ -30,43 +30,43 @@ const property = (spec: TensorSpec, description: string, source: string): Tensor
 export const TENSOR_PROPERTIES = Object.freeze({
   /** Spontaneous polarization: a time-even polar vector. */
   pyroelectric: property(
-    { rank: 1, parity: 'polar', timeParity: 'i', intrinsic: 'none' },
+    { rank: 1, kind: 'polar', timeParity: 'even', intrinsic: 'none' },
     'Spontaneous electric polarization, which changes with temperature: a polar vector p_i.',
     'ITC Vol. D (2013), § 1.1.4.4.2, p. 12; classes: ITA (2016) Table 3.2.2.1, p. 738',
   ),
   /** Ferroaxial order: a time-even axial vector. */
   ferroaxial: property(
-    { rank: 1, parity: 'axial', timeParity: 'i', intrinsic: 'none' },
+    { rank: 1, kind: 'axial', timeParity: 'even', intrinsic: 'none' },
     'Ferroaxial (ferro-rotational) order, e.g. a net rotation of structural units about an axis: an axial vector A_i.',
     'Hlinka, Privratska, Ondrejkovic & Janovec, Phys. Rev. Lett. 116, 177602 (2016); classes: Birss (1966), Tables 4a and 4c, pp. 56–58',
   ),
   /** The piezoelectric effect (and second-harmonic generation, which has the same tensor): polar, rank 3, symmetric in j, k. */
   piezoelectric: property(
-    { rank: 3, parity: 'polar', timeParity: 'i', intrinsic: 'jk' },
+    { rank: 3, kind: 'polar', timeParity: 'even', intrinsic: 'symmetric-last-pair' },
     'Electric polarization linear in stress, P_i = d_ijk T_jk: a polar tensor of rank 3, symmetric in j, k.',
     'ITC Vol. D (2013), § 1.1.4.4.3, p. 12, and § 1.1.4.10.1, eqs. (1.1.4.5), (1.1.4.7), p. 24; classes: ITA (2016) Table 3.2.2.1, p. 738',
   ),
   /** Optical activity: the symmetric axial tensor of rank 2. */
   gyrotropic: property(
-    { rank: 2, parity: 'axial', timeParity: 'i', intrinsic: 'ij' },
+    { rank: 2, kind: 'axial', timeParity: 'even', intrinsic: 'symmetric-first-pair' },
     'Optical activity (optical rotation), G = g_ij α_i α_j: the symmetric part of the axial gyration tensor of rank 2.',
     'ITC Vol. D (2013), § 1.1.4.10.7.2, p. 30; classes: ITA (2016) Table 3.2.2.1, p. 738',
   ),
   /** Spontaneous magnetization: a time-odd axial vector (magnetic API only). */
   ferromagnetic: property(
-    { rank: 1, parity: 'axial', timeParity: 'c', intrinsic: 'none' },
+    { rank: 1, kind: 'axial', timeParity: 'odd', intrinsic: 'none' },
     'Spontaneous magnetization M_s (ferromagnets, ferrimagnets, weak ferromagnets): an axial vector that changes sign under time reversal.',
     'ITC Vol. D (2013), § 1.5.2.1 with Table 1.5.2.4, p. 113',
   ),
   /** The linear magnetoelectric effect: a time-odd axial tensor of rank 2 (magnetic API only). */
   magnetoelectric: property(
-    { rank: 2, parity: 'axial', timeParity: 'c', intrinsic: 'none' },
+    { rank: 2, kind: 'axial', timeParity: 'odd', intrinsic: 'none' },
     'Linear magnetoelectric effect, P_i = α_ij H_j: an axial tensor of rank 2 that changes sign under time reversal.',
     'ITC Vol. D (2013), § 1.5.8, eqs. (1.5.8.2), (1.5.8.3), p. 139, and § 1.5.8.1 with Table 1.5.8.1, pp. 139–140',
   ),
   /** The piezomagnetic effect: a time-odd axial tensor of rank 3, symmetric in j, k (magnetic API only). */
   piezomagnetic: property(
-    { rank: 3, parity: 'axial', timeParity: 'c', intrinsic: 'jk' },
+    { rank: 3, kind: 'axial', timeParity: 'odd', intrinsic: 'symmetric-last-pair' },
     'Magnetization linear in stress, M_i = Λ_ijk T_jk: an axial tensor of rank 3, symmetric in j, k, that changes sign under time reversal.',
     'ITC Vol. D (2013), § 1.5.7, eq. (1.5.7.2), and § 1.5.7.1 with Table 1.5.7.1, pp. 134–135',
   ),
@@ -83,7 +83,7 @@ export function specOf(specOrName: TensorSpec | TensorPropertyName): TensorSpec 
   if (typeof specOrName !== 'string') {
     if (typeof specOrName !== 'object' || specOrName === null || Array.isArray(specOrName)) {
       throw new RangeError(
-        `A tensor is given by its specification { rank, parity, intrinsic } or the name of a property, not ${shown(specOrName)}`,
+        `A tensor is given by its specification { rank, kind, timeParity, intrinsic } or the name of a property, not ${shown(specOrName)}`,
       );
     }
     return specOrName;

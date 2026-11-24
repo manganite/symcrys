@@ -189,7 +189,7 @@ describe('the crystallographic API returns nothing about time reversal', () => {
   });
 
   it('the named properties are those of time-even tensors, their specifications without time parity', () => {
-    const timeEven = Object.entries(magnetic.TENSOR_PROPERTIES).filter(([, p]) => p.spec.timeParity === 'i');
+    const timeEven = Object.entries(magnetic.TENSOR_PROPERTIES).filter(([, p]) => p.spec.timeParity === 'even');
     expect(Object.keys(classes.TENSOR_PROPERTIES)).toEqual(timeEven.map(([name]) => name));
     expect(Object.keys(classes.TENSOR_PROPERTIES)).toEqual([
       'pyroelectric',
@@ -265,16 +265,16 @@ describe('the crystallographic API refuses what involves time reversal', () => {
     );
   });
 
-  it("a time-odd tensor specification; time parity 'i' is accepted", () => {
-    const vector = { rank: 1, parity: 'axial', intrinsic: 'none' } as const;
-    const odd = { ...vector, timeParity: 'c' } as classes.TensorSpec;
-    const even = { ...vector, timeParity: 'i' } as classes.TensorSpec;
+  it("a time-odd tensor specification; time parity 'even' is accepted", () => {
+    const vector = { rank: 1, kind: 'axial', intrinsic: 'none' } as const;
+    const odd = { ...vector, timeParity: 'odd' } as classes.TensorSpec;
+    const even = { ...vector, timeParity: 'even' } as classes.TensorSpec;
     expect(() => classes.tensorForm('3', odd)).toThrow(MAGNETIC_API);
     expect(() => classes.tensorFormOf(classes.operations('3'), odd)).toThrow(MAGNETIC_API);
     expect(() => classes.rotateTensor([0, 0, 1], classes.operations('3')[1].cartesian, odd)).toThrow(MAGNETIC_API);
     expect(classes.tensorForm('3', even)).toBe(classes.tensorForm('3', vector));
     expect(() => classes.tensorForm('3', { ...vector, timeParity: 'x' } as classes.TensorSpec)).toThrow(
-      /Unknown time parity: "x"/,
+      /The time parity of a tensor is 'even' or 'odd', not "x"/,
     );
     expect(() => classes.tensorForm('3', null as unknown as classes.TensorSpec)).toThrow(/Not a tensor specification/);
   });
@@ -505,8 +505,8 @@ describe('the types keep the two entry points apart', () => {
     // @ts-expect-error the name of a time-odd property
     attempt(() => classes.allowsProperty('32', 'magnetoelectric'));
     // @ts-expect-error a time-odd specification
-    attempt(() => classes.tensorForm('32', { rank: 1, parity: 'axial', timeParity: 'c', intrinsic: 'none' }));
-    const magneticSpec: magnetic.TensorSpec = { rank: 1, parity: 'polar', timeParity: 'i', intrinsic: 'none' };
+    attempt(() => classes.tensorForm('32', { rank: 1, kind: 'axial', timeParity: 'odd', intrinsic: 'none' }));
+    const magneticSpec: magnetic.TensorSpec = { rank: 1, kind: 'polar', timeParity: 'even', intrinsic: 'none' };
     // @ts-expect-error a specification of the magnetic API, whose time parity may be 'c'
     attempt(() => classes.tensorForm('32', magneticSpec));
     // @ts-expect-error operations of the magnetic API, which may be combined with time reversal
@@ -514,7 +514,7 @@ describe('the types keep the two entry points apart', () => {
     // @ts-expect-error also for the site symmetry
     attempt(() => classes.siteSymmetryOf(magnetic.operations('32'), [0, 0, 1]));
     // Accepted: time parity 'i' and no time reversal, stated.
-    attempt(() => classes.tensorForm('32', { rank: 1, parity: 'polar', timeParity: 'i', intrinsic: 'none' }));
+    attempt(() => classes.tensorForm('32', { rank: 1, kind: 'polar', timeParity: 'even', intrinsic: 'none' }));
     attempt(() =>
       classes.tensorFormOf([{ cartesian: classes.operations('1')[0].cartesian, timeReversal: false }], 'pyroelectric'),
     );
@@ -524,7 +524,7 @@ describe('the types keep the two entry points apart', () => {
     // @ts-expect-error operations of the crystallographic API do not say whether they have time reversal
     attempt(() => magnetic.tensorFormOf(classes.operations('32'), 'piezoelectric'));
     // @ts-expect-error a specification without time parity
-    attempt(() => magnetic.tensorForm('32', { rank: 1, parity: 'polar', intrinsic: 'none' }));
+    attempt(() => magnetic.tensorForm('32', { rank: 1, kind: 'polar', intrinsic: 'none' }));
     // @ts-expect-error the Wyckoff positions are crystallographic
     attempt(() => magnetic.wyckoffPositions('32'));
   });
@@ -534,8 +534,8 @@ describe('a time-even question has one answer: class, white group and grey group
   const grey = (key: classes.PointGroupKey) => `${key}1'` as magnetic.PointGroupKey;
   const SPECS: classes.TensorSpec[] = [
     ...Object.values(classes.TENSOR_PROPERTIES).map((p) => p.spec),
-    { rank: 2, parity: 'polar', intrinsic: 'ij' },
-    { rank: 3, parity: 'axial', intrinsic: 'none' },
+    { rank: 2, kind: 'polar', intrinsic: 'symmetric-first-pair' },
+    { rank: 3, kind: 'axial', intrinsic: 'none' },
   ];
 
   it('forms of time-even tensors, in every setting', { timeout: 60_000 }, () => {
@@ -543,7 +543,7 @@ describe('a time-even question has one answer: class, white group and grey group
       for (const { index: setting } of classes.settings(key)) {
         for (const spec of SPECS) {
           const form = classes.tensorForm(key, spec, { setting });
-          const magneticSpec = { ...spec, timeParity: 'i' } as const;
+          const magneticSpec = { ...spec, timeParity: 'even' } as const;
           expect(form).toBe(magnetic.tensorForm(key, magneticSpec, { setting }));
           expect(form).toEqual(magnetic.tensorForm(grey(key), magneticSpec, { setting }));
           expect(classes.tensorFormOf(classes.operations(key, { setting }), spec)).toEqual(form);

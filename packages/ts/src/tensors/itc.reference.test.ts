@@ -27,9 +27,9 @@ import { tensorForm, type TensorSpec } from './tensorForm.js';
 /** The fixed properties of a group, read from its record. */
 const isCentrosymmetric = (key: MagneticPointGroupKey) => pointGroup(key).centrosymmetric;
 
-const PYRO: TensorSpec = { rank: 1, parity: 'polar', timeParity: 'i', intrinsic: 'none' };
-const PIEZO: TensorSpec = { rank: 3, parity: 'polar', timeParity: 'i', intrinsic: 'jk' };
-const GYRATION: TensorSpec = { rank: 2, parity: 'axial', timeParity: 'i', intrinsic: 'ij' };
+const PYRO: TensorSpec = { rank: 1, kind: 'polar', timeParity: 'even', intrinsic: 'none' };
+const PIEZO: TensorSpec = { rank: 3, kind: 'polar', timeParity: 'even', intrinsic: 'symmetric-last-pair' };
+const GYRATION: TensorSpec = { rank: 2, kind: 'axial', timeParity: 'even', intrinsic: 'symmetric-first-pair' };
 
 const rows = tableRows(readReference('itc/vol-a-table-3.2.2.1.md'));
 expectHeader(rows, [

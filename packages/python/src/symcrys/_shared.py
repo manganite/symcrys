@@ -10,8 +10,16 @@ from numpy.typing import NDArray
 from . import _engine
 from ._convert import from_js, to_js
 
-TensorParity = Literal["polar", "axial"]
-IntrinsicSymmetry = Literal["none", "ij", "jk", "ij_kl", "voigt"]
+TensorKind = Literal["polar", "axial"]
+IntrinsicSymmetry = Literal[
+    "none",
+    "symmetric-first-pair",
+    "symmetric-last-pair",
+    "symmetric-pairs",
+    "symmetric-pairs-exchangeable",
+    "antisymmetric",
+    "totally-symmetric",
+]
 
 MAGNETIC = "magnetic."
 """Prefix of the names of the magnetic API at the boundary to the library (``magnetic.tensorForm``)."""

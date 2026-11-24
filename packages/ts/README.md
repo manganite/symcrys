@@ -13,7 +13,7 @@ import { operations, symbol, tensorForm } from 'symcrys';
 
 symbol('32'); // '321': ITC short symbol of the default setting
 operations('-3m'); // 12 operations: W in the lattice basis (matrix) and Cartesian (cartesian); x ∥ a, z ∥ c
-tensorForm('mm2', { rank: 3, parity: 'polar', intrinsic: 'jk' }).parameters;
+tensorForm('mm2', { rank: 3, kind: 'polar', intrinsic: 'symmetric-last-pair' }).parameters;
 // [[0,0,2], [1,1,2], [2,0,0], [2,1,1], [2,2,2]]: xxz, yyz, zxx, zyy, zzz
 ```
 

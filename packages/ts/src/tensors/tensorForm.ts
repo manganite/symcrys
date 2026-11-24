@@ -33,29 +33,50 @@ import { deepFreeze } from '../freeze.js';
 /** Rank of a tensor: 0 (scalar) to 4. */
 export type TensorRank = 0 | 1 | 2 | 3 | 4;
 
-/** `'polar'`: transforms with R; `'axial'`: with det(R)·R (pseudotensor). */
-export type TensorParity = 'polar' | 'axial';
-
-/** `'i'`: time-even (invariant under time reversal); `'c'`: time-odd (changes sign). */
-export type TimeParity = 'i' | 'c';
+/**
+ * How the tensor behaves under an improper operation: `'polar'` transforms with R, `'axial'` with
+ * det(R)·R (a pseudotensor). ITC calls the behaviour under inversion "parity", under which a polar
+ * vector is odd, so the field is named `kind`.
+ */
+export type TensorKind = 'polar' | 'axial';
 
 /**
- * Symmetry of the tensor under permutation of its own indices, independent of the crystal:
- * `'none'`; `'ij'`: the first two indices are interchangeable; `'jk'`: the last two (for rank 3 the
- * index symmetry of second-harmonic generation and the piezoelectric effect); `'ij_kl'` (rank 4):
- * each of the two pairs symmetric, the pairs not interchangeable (e.g. electric-quadrupole SHG,
- * photoelasticity); `'voigt'` (rank 4): `'ij_kl'` and the pairs interchangeable (elastic
- * stiffness). At rank 2, `'ij'` and `'jk'` both mean a symmetric tensor.
+ * How the tensor behaves under time reversal (ITC Vol. D: time-even, time-odd or
+ * time-antisymmetric): `'even'` unchanged, `'odd'` changes sign.
  */
-export type IntrinsicSymmetry = 'none' | 'ij' | 'jk' | 'ij_kl' | 'voigt';
+export type TimeParity = 'even' | 'odd';
 
-/** The kind of tensor, as in birss-app. */
+/**
+ * Symmetry of the tensor under permutation of its own indices, independent of the crystal, with its
+ * Jahn symbol (ITC Vol. D § 1.1.4.10):
+ * - `'none'`: no index symmetry, Vⁿ;
+ * - `'symmetric-first-pair'` (rank 2 and above): the first two indices are interchangeable, [V²]V…;
+ * - `'symmetric-last-pair'` (rank 2 and above): the last two, V…[V²] (at rank 3 second-harmonic
+ *   generation and the piezoelectric effect); at rank 2 both mean a symmetric tensor, [V²];
+ * - `'symmetric-pairs'` (rank 4): each of the two pairs symmetric, the pairs not interchangeable,
+ *   [V²]² (e.g. electric-quadrupole SHG, photoelasticity);
+ * - `'symmetric-pairs-exchangeable'` (rank 4): in addition the pairs interchangeable, [[V²]²]
+ *   (elastic stiffness, the symmetry Voigt's notation uses);
+ * - `'antisymmetric'` (rank 2): t_ij = −t_ji, {V²};
+ * - `'totally-symmetric'` (rank 2 and above): every index interchangeable, [Vⁿ] (e.g. second-harmonic
+ *   generation under Kleinman's condition).
+ */
+export type IntrinsicSymmetry =
+  | 'none'
+  | 'symmetric-first-pair'
+  | 'symmetric-last-pair'
+  | 'symmetric-pairs'
+  | 'symmetric-pairs-exchangeable'
+  | 'antisymmetric'
+  | 'totally-symmetric';
+
+/** The kind of tensor (#137 E1, E2). */
 export interface TensorSpec {
   /** Number of indices, 0 to 4. */
   readonly rank: TensorRank;
   /** `'polar'` or `'axial'`: whether an improper operation changes the sign (factor det R). */
-  readonly parity: TensorParity;
-  /** `'i'` (time-even) or `'c'` (time-odd): whether time reversal changes the sign. */
+  readonly kind: TensorKind;
+  /** `'even'` or `'odd'`: whether time reversal changes the sign. */
   readonly timeParity: TimeParity;
   /** The index symmetry of the tensor. */
   readonly intrinsic: IntrinsicSymmetry;
@@ -91,30 +112,76 @@ export interface TensorForm {
 
 const RANKS: readonly number[] = [0, 1, 2, 3, 4];
 
-/** Checks a specification and returns the index permutations that generate its intrinsic symmetry. */
-function checkSpec(spec: TensorSpec): number[][] {
-  const { rank, parity, timeParity, intrinsic } = spec;
+/** A permutation of the indices of a tensor (`out[k] = in[perm[k]]`) with the sign it gives. */
+export interface SignedPermutation {
+  readonly perm: readonly number[];
+  readonly sign: 1 | -1;
+}
+
+/** The names of the fields and values up to 0.10, with those that replace them (#137 E1, E2). */
+const RENAMED_INTRINSIC: Readonly<Record<string, IntrinsicSymmetry>> = {
+  ij: 'symmetric-first-pair',
+  jk: 'symmetric-last-pair',
+  ij_kl: 'symmetric-pairs',
+  voigt: 'symmetric-pairs-exchangeable',
+};
+const RENAMED_TIME_PARITY: Readonly<Record<string, TimeParity>> = { i: 'even', c: 'odd' };
+
+/** Checks a specification and returns the signed index permutations that generate its intrinsic symmetry. */
+function checkSpec(spec: TensorSpec): SignedPermutation[] {
+  const { rank, kind, timeParity, intrinsic } = spec;
+  if ('parity' in spec) {
+    throw new RangeError(
+      `The field parity of a tensor specification is named kind since symcrys 0.11 ('polar' or 'axial'), not parity`,
+    );
+  }
   if (!RANKS.includes(rank)) throw new RangeError(`Tensor rank must be 0 to 4, not ${shown(rank)}`);
-  if (parity !== 'polar' && parity !== 'axial') throw new RangeError(`Unknown tensor parity: ${shown(parity)}`);
-  if (timeParity !== 'i' && timeParity !== 'c') throw new RangeError(`Unknown time parity: ${shown(timeParity)}`);
-  const swap = (a: number, b: number) => {
-    const p = Array.from({ length: rank }, (_, k) => k);
-    [p[a], p[b]] = [p[b], p[a]];
-    return p;
+  if (kind !== 'polar' && kind !== 'axial') {
+    throw new RangeError(`The kind of a tensor is 'polar' or 'axial', not ${shown(kind)}`);
+  }
+  if (timeParity !== 'even' && timeParity !== 'odd') {
+    const renamed = typeof timeParity === 'string' ? RENAMED_TIME_PARITY[timeParity] : undefined;
+    throw new RangeError(
+      `The time parity of a tensor is 'even' or 'odd', not ${shown(timeParity)}` +
+        (renamed ? ` ('${timeParity}' up to symcrys 0.10 is '${renamed}')` : ''),
+    );
+  }
+  const swap = (a: number, b: number, sign: 1 | -1 = 1): SignedPermutation => {
+    const perm = Array.from({ length: rank }, (_, k) => k);
+    [perm[a], perm[b]] = [perm[b], perm[a]];
+    return { perm, sign };
+  };
+  const needs = (condition: boolean, what: string) => {
+    if (!condition) throw new RangeError(`Intrinsic symmetry '${intrinsic}' needs ${what}, not rank ${rank}`);
   };
   switch (intrinsic) {
     case 'none':
       return [];
-    case 'ij':
-    case 'jk':
-      if (rank < 2) throw new RangeError(`Intrinsic symmetry '${intrinsic}' needs rank 2 or more, not ${rank}`);
-      return [intrinsic === 'ij' ? swap(0, 1) : swap(rank - 2, rank - 1)];
-    case 'ij_kl':
-    case 'voigt':
-      if (rank !== 4) throw new RangeError(`Intrinsic symmetry '${intrinsic}' needs rank 4, not ${rank}`);
-      return intrinsic === 'ij_kl' ? [swap(0, 1), swap(2, 3)] : [swap(0, 1), swap(2, 3), [2, 3, 0, 1]];
-    default:
-      throw new RangeError(`Unknown intrinsic symmetry: ${shown(intrinsic)}`);
+    case 'symmetric-first-pair':
+      needs(rank >= 2, 'rank 2 or more');
+      return [swap(0, 1)];
+    case 'symmetric-last-pair':
+      needs(rank >= 2, 'rank 2 or more');
+      return [swap(rank - 2, rank - 1)];
+    case 'symmetric-pairs':
+      needs(rank === 4, 'rank 4');
+      return [swap(0, 1), swap(2, 3)];
+    case 'symmetric-pairs-exchangeable':
+      needs(rank === 4, 'rank 4');
+      return [swap(0, 1), swap(2, 3), { perm: [2, 3, 0, 1], sign: 1 }];
+    case 'antisymmetric':
+      needs(rank === 2, 'rank 2');
+      return [swap(0, 1, -1)];
+    case 'totally-symmetric':
+      needs(rank >= 2, 'rank 2 or more');
+      return Array.from({ length: rank - 1 }, (_, k) => swap(k, k + 1));
+    default: {
+      const renamed = typeof intrinsic === 'string' ? RENAMED_INTRINSIC[intrinsic] : undefined;
+      throw new RangeError(
+        `Unknown intrinsic symmetry: ${shown(intrinsic)}` +
+          (renamed ? ` ('${intrinsic as string}' up to symcrys 0.10 is '${renamed}')` : ''),
+      );
+    }
   }
 }
 
@@ -131,23 +198,36 @@ function digits(rank: number): readonly (readonly number[])[] {
   return table;
 }
 
-/** The flat indices reached from `flat` by the index permutations (`out[k] = in[perm[k]]`). */
-function orbit(flat: number, rank: number, perms: readonly number[][]): number[] {
+/**
+ * The flat indices reached from `flat` by the signed index permutations (`out[k] = in[perm[k]]`),
+ * each with the product of the signs on the way; undefined if one is reached with both signs (the
+ * seed of an antisymmetric tensor with two equal indices, which vanishes).
+ */
+function orbit(
+  flat: number,
+  rank: number,
+  perms: readonly SignedPermutation[],
+): { flat: number; sign: 1 | -1 }[] | undefined {
   const d = digits(rank);
-  const seen = new Set([flat]);
+  const seen = new Map<number, 1 | -1>([[flat, 1]]);
   const stack = [flat];
   while (stack.length > 0) {
     const cur = stack.pop()!;
-    for (const p of perms) {
+    const curSign = seen.get(cur)!;
+    for (const { perm, sign } of perms) {
       let next = 0;
-      for (let k = 0; k < rank; k++) next = next * 3 + d[cur][p[k]];
-      if (!seen.has(next)) {
-        seen.add(next);
+      for (let k = 0; k < rank; k++) next = next * 3 + d[cur][perm[k]];
+      const nextSign = (curSign * sign) as 1 | -1;
+      const known = seen.get(next);
+      if (known === undefined) {
+        seen.set(next, nextSign);
         stack.push(next);
+      } else if (known !== nextSign) {
+        return undefined;
       }
     }
   }
-  return [...seen];
+  return [...seen].map(([f, sign]) => ({ flat: f, sign }));
 }
 
 function freezeRows(rows: readonly (readonly number[])[]): readonly (readonly number[])[] {
@@ -159,15 +239,20 @@ function freezeRows(rows: readonly (readonly number[])[]): readonly (readonly nu
  * (a unit tensor on one orbit of the intrinsic symmetry) projects it onto the invariant subspace;
  * the projections span it, and the reduced row echelon form makes the basis minimal and canonical.
  */
-function project(group: readonly CartesianOperation[], spec: TensorSpec, perms: number[][], deviation = 0): TensorForm {
+function project(
+  group: readonly CartesianOperation[],
+  spec: TensorSpec,
+  perms: readonly SignedPermutation[],
+  deviation = 0,
+): TensorForm {
   const { rank } = spec;
   const dim = 3 ** rank;
   const d = digits(rank);
   const ops = group.map((op) => ({
     m: op.cartesian.flat(),
     sign:
-      (spec.parity === 'axial' ? Math.sign(det(op.cartesian)) : 1) *
-      (spec.timeParity === 'c' && op.timeReversal ? -1 : 1),
+      (spec.kind === 'axial' ? Math.sign(det(op.cartesian)) : 1) *
+      (spec.timeParity === 'odd' && op.timeReversal ? -1 : 1),
   }));
 
   const spanning: number[][] = [];
@@ -177,15 +262,15 @@ function project(group: readonly CartesianOperation[], spec: TensorSpec, perms: 
   let trace = 0;
   for (let seed = 0; seed < dim; seed++) {
     const members = orbit(seed, rank, perms);
-    if (seed !== Math.min(...members)) continue;
+    if (!members || seed !== Math.min(...members.map((m) => m.flat))) continue;
     const averaged = new Array<number>(dim).fill(0);
     for (const { m, sign } of ops) {
       for (let out = 0; out < dim; out++) {
         const o = d[out];
         let acc = 0;
         for (const s of members) {
-          const i = d[s];
-          let p = 1;
+          const i = d[s.flat];
+          let p = s.sign;
           for (let r = 0; r < rank; r++) p *= m[o[r] * 3 + i[r]];
           acc += p;
         }
@@ -193,7 +278,7 @@ function project(group: readonly CartesianOperation[], spec: TensorSpec, perms: 
       }
     }
     for (let k = 0; k < dim; k++) averaged[k] /= ops.length;
-    trace += members.reduce((sum, s) => sum + averaged[s], 0) / members.length;
+    trace += members.reduce((sum, s) => sum + s.sign * averaged[s.flat], 0) / members.length;
     if (averaged.some((x) => Math.abs(x) >= EPSILON)) spanning.push(averaged);
   }
 
@@ -253,7 +338,7 @@ function snapEntry(x: number): number {
 }
 
 function specKey(spec: TensorSpec): string {
-  return `${spec.rank}:${spec.parity}:${spec.timeParity}:${spec.intrinsic}`;
+  return `${spec.rank}:${spec.kind}:${spec.timeParity}:${spec.intrinsic}`;
 }
 
 const formCache = new Map<string, TensorForm>();
@@ -320,12 +405,15 @@ export function callerGroup(operations: readonly CartesianOperation[], options?:
 }
 
 /** The form of a tensor (checked specification and its permutations) under a group made exact. */
-export function formOfGroup(group: IdealGroup, spec: TensorSpec, perms: number[][]): TensorForm {
+export function formOfGroup(group: IdealGroup, spec: TensorSpec, perms: readonly SignedPermutation[]): TensorForm {
   return project(group.operations, spec, perms, group.deviation);
 }
 
 /** The specification of a tensor given by its specification or name, checked, with its permutations. */
-export function checkedSpec(spec: TensorSpec | TensorPropertyName): { spec: TensorSpec; perms: number[][] } {
+export function checkedSpec(spec: TensorSpec | TensorPropertyName): {
+  spec: TensorSpec;
+  perms: readonly SignedPermutation[];
+} {
   const resolved = specOf(spec);
   return { spec: resolved, perms: checkSpec(resolved) };
 }
@@ -359,7 +447,7 @@ export function rotateTensor(
   checkNumbers(tensor, dim, 'The tensor');
   const d = digits(rank);
   const m = rotation.flat();
-  const f = spec.parity === 'axial' ? Math.sign(det(rotation)) : 1;
+  const f = spec.kind === 'axial' ? Math.sign(det(rotation)) : 1;
   const out = new Array<number>(dim).fill(0);
   for (let o = 0; o < dim; o++) {
     let acc = 0;

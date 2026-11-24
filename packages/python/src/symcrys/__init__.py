@@ -28,7 +28,7 @@ from numpy.typing import ArrayLike, NDArray
 from . import _shared
 from ._convert import from_js
 from ._engine import SymcrysError, SymcrysInternalError
-from ._shared import IntrinsicSymmetry, SiteSymmetry, TensorForm, TensorParity
+from ._shared import IntrinsicSymmetry, SiteSymmetry, TensorForm, TensorKind
 
 TensorPropertyName = Literal["pyroelectric", "ferroaxial", "piezoelectric", "gyrotropic"]
 
@@ -37,7 +37,7 @@ class TensorSpec(TypedDict):
     """The kind of tensor."""
 
     rank: int
-    parity: TensorParity
+    kind: TensorKind
     intrinsic: IntrinsicSymmetry
 
 

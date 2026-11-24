@@ -34,6 +34,9 @@ All notable changes to symcrys are recorded here. The format follows
   (`C₃ᵥ`, `C_{3v}`). The option `setting` reads the same spellings. A symbol that names several
   groups is a RangeError. Up to 0.10 a Schoenflies symbol, `m3m` or `Oh` gave `undefined`.
 
+- `intrinsic: 'antisymmetric'` (rank 2, Jahn symbol {V²}) and `intrinsic: 'totally-symmetric'` (rank
+  2 and above, [Vⁿ], e.g. SHG under Kleinman's condition) (#137 E2).
+
 ### Changed
 
 - **The settings are numbered by ITC's rule** (#137 A4, #121 step 6b): the ITC default is setting 1;
@@ -178,6 +181,14 @@ All notable changes to symcrys are recorded here. The format follows
     complex numbers for a vector, a list for a mapping, an object JSON cannot write) raise a
     `SymcrysError` that names the argument, where NumPy's or Python's own error came before, and
     so does NaN.
+
+- **The tensor specification in ITC's terms** (#137 E1, E2, #117, #121 step 9a):
+  `{ rank, kind, timeParity, intrinsic }`; `kind` (`'polar'`, `'axial'`) replaces `parity`, and
+  `timeParity` takes `'even'`/`'odd'` (were Birss's `'i'`/`'c'`); `intrinsic` takes
+  `'symmetric-first-pair'`, `'symmetric-last-pair'`, `'symmetric-pairs'` and
+  `'symmetric-pairs-exchangeable'` (were `'ij'`, `'jk'`, `'ij_kl'`, `'voigt'`). The type
+  `TensorParity` is `TensorKind`. A specification with the names of 0.10 is a RangeError that
+  names the new ones. Python: the keys `kind` and `time_parity`, and the same values.
 
 ### Removed
 

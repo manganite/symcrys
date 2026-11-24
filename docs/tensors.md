@@ -15,14 +15,29 @@ operations, for instance the site symmetry of a surface normal.
 
 A tensor is given by its specification:
 
-| Field        | Values                                         | Meaning                                                               |
-| ------------ | ---------------------------------------------- | --------------------------------------------------------------------- |
-| `rank`       | 0 to 4                                         | number of indices                                                     |
-| `parity`     | `'polar'`, `'axial'`                           | an axial tensor changes sign under improper operations (factor det R) |
-| `timeParity` | `'i'`, `'c'` (magnetic API only)               | a `'c'`-tensor changes sign under time reversal                       |
-| `intrinsic`  | `'none'`, `'ij'`, `'jk'`, `'ij_kl'`, `'voigt'` | the index symmetry                                                    |
+| Field        | Values                                | Meaning                                                               |
+| ------------ | ------------------------------------- | --------------------------------------------------------------------- |
+| `rank`       | 0 to 4                                | number of indices                                                     |
+| `kind`       | `'polar'`, `'axial'`                  | an axial tensor changes sign under improper operations (factor det R) |
+| `timeParity` | `'even'`, `'odd'` (magnetic API only) | a time-odd tensor changes sign under time reversal                    |
+| `intrinsic`  | see below                             | the index symmetry                                                    |
 
-Second-harmonic generation, for example, is `{ rank: 3, parity: 'polar', intrinsic: 'jk' }`:
+The index symmetries, with their Jahn symbols (ITC Vol. D § 1.1.4.10):
+
+| `intrinsic`                      | Ranks | Jahn symbol | Index symmetry                                               |
+| -------------------------------- | ----- | ----------- | ------------------------------------------------------------ |
+| `'none'`                         | 0–4   | Vⁿ          | none                                                         |
+| `'symmetric-first-pair'`         | 2–4   | [V²]V…      | the first two indices interchangeable                        |
+| `'symmetric-last-pair'`          | 2–4   | V…[V²]      | the last two interchangeable (piezoelectric effect, SHG)     |
+| `'symmetric-pairs'`              | 4     | [V²]²       | each pair symmetric (photoelasticity, quadrupole SHG)        |
+| `'symmetric-pairs-exchangeable'` | 4     | [[V²]²]     | each pair symmetric and the pairs interchangeable (elastic)  |
+| `'antisymmetric'`                | 2     | {V²}        | t<sub>ij</sub> = −t<sub>ji</sub>                             |
+| `'totally-symmetric'`            | 2–4   | [Vⁿ]        | every index interchangeable (SHG under Kleinman's condition) |
+
+Up to 0.10 the fields were `parity` and `'i'`/`'c'`, and the index symmetries `'ij'`, `'jk'`,
+`'ij_kl'`, `'voigt'`; a specification with these names is an error that names the new ones.
+
+Second-harmonic generation, for example, is `{ rank: 3, kind: 'polar', intrinsic: 'symmetric-last-pair' }`:
 χ<sub>ijk</sub> = χ<sub>ikj</sub>. The index symmetries are explained in the reference
 (`IntrinsicSymmetry`) and in [Conventions, "Tensors"](conventions.md#tensors).
 
@@ -40,7 +55,7 @@ A form has
 ```{code-cell} ipython3
 import symcrys
 
-form = symcrys.tensor_form("3m", {"rank": 3, "parity": "polar", "intrinsic": "jk"})
+form = symcrys.tensor_form("3m", {"rank": 3, "kind": "polar", "intrinsic": "symmetric-last-pair"})
 form["parameters"]
 ```
 
@@ -48,7 +63,7 @@ The components depend on the frame, so on the **setting**: the default setting o
 setting 2 is `31m`, turned by 30° about z. The free components differ:
 
 ```{code-cell} ipython3
-SHG = {"rank": 3, "parity": "polar", "intrinsic": "jk"}
+SHG = {"rank": 3, "kind": "polar", "intrinsic": "symmetric-last-pair"}
 [symcrys.tensor_form("3m", SHG, setting=s)["parameters"][0] for s in ("3m1", "31m")]
 ```
 

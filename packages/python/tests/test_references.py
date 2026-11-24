@@ -13,11 +13,11 @@ import symcrys
 from symcrys import magnetic
 from conftest import reference, section, table_rows
 
-SHG = {"rank": 3, "parity": "polar", "intrinsic": "jk"}
+SHG = {"rank": 3, "kind": "polar", "intrinsic": "symmetric-last-pair"}
 
 
-def spec(rank: int, parity: str = "polar", intrinsic: str = "none") -> dict[str, object]:
-    return {"rank": rank, "parity": parity, "intrinsic": intrinsic}
+def spec(rank: int, kind: str = "polar", intrinsic: str = "none") -> dict[str, object]:
+    return {"rank": rank, "kind": kind, "intrinsic": intrinsic}
 
 
 def count(cell: str) -> int:
@@ -47,7 +47,7 @@ def test_ita_3221_counts(row: list[str]) -> None:
     key = row[2].replace("-62m", "-6m2")
     assert len(symcrys.tensor_form(key, spec(1))["basis"]) == count(row[3])
     assert len(symcrys.tensor_form(key, SHG)["basis"]) == count(row[4])
-    assert len(symcrys.tensor_form(key, spec(2, "axial", "ij"))["basis"]) == count(row[6])
+    assert len(symcrys.tensor_form(key, spec(2, "axial", "symmetric-first-pair"))["basis"]) == count(row[6])
 
 
 def test_ita_3221_piezoelectric_classes() -> None:
@@ -65,8 +65,8 @@ def test_itc_vol_d_rank_4_counts(row: list[str]) -> None:
     misprint = {"3m": "m-3"} if row[0].startswith("1.1.4.10.6.7") else {}
     for printed in (g.strip() for g in row[1].split(",")):
         key = misprint.get(printed, ABBREVIATION.get(printed, printed))
-        assert len(symcrys.tensor_form(key, spec(4, intrinsic="ij_kl"))["basis"]) == int(row[2]), key
-        assert len(symcrys.tensor_form(key, spec(4, intrinsic="voigt"))["basis"]) == int(row[3]), key
+        assert len(symcrys.tensor_form(key, spec(4, intrinsic="symmetric-pairs"))["basis"]) == int(row[2]), key
+        assert len(symcrys.tensor_form(key, spec(4, intrinsic="symmetric-pairs-exchangeable"))["basis"]) == int(row[3]), key
 
 
 YARIV = {r[0]: r for r in table_rows(reference("yariv/table-16.1.md"))[1:]}

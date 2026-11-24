@@ -19,7 +19,7 @@ import { matrixRank, satisfies } from '../testUtils/rank.js';
 import { tensorForm, type TensorSpec } from './tensorForm.js';
 
 const DIM = 81;
-const EQ: TensorSpec = { rank: 4, parity: 'polar', timeParity: 'i', intrinsic: 'ij_kl' };
+const EQ: TensorSpec = { rank: 4, kind: 'polar', timeParity: 'even', intrinsic: 'symmetric-pairs' };
 
 const idx = (s: string): number => {
   if (!/^[xyz]{4}$/.test(s)) throw new Error(`Hoshi: component ${s}`);

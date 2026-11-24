@@ -29,10 +29,10 @@ import {
 } from '../testUtils/birssTensorTables.js';
 import { tensorToBirssFrame } from '../testUtils/birssFrame.js';
 import { matrixRank, satisfies } from '../testUtils/rank.js';
-import { tensorForm, type TensorParity, type TensorRank } from './tensorForm.js';
+import { tensorForm, type TensorKind, type TensorRank } from './tensorForm.js';
 
 const RANKS: TensorRank[] = [0, 1, 2, 3, 4];
-const PARITIES: TensorParity[] = ['polar', 'axial'];
+const PARITIES: TensorKind[] = ['polar', 'axial'];
 
 function printedRelations(rank: TensorRank, letter: string): Relation[] {
   if (rank === 3) return relations4e(letter);
@@ -41,8 +41,8 @@ function printedRelations(rank: TensorRank, letter: string): Relation[] {
 }
 
 /** The form of the ITC default setting: its basis carried into Birss's frame. */
-const birssForm = (key: string, rank: TensorRank, parity: TensorParity, timeParity: 'i' | 'c' = 'i') => {
-  const form = tensorForm(key as PointGroupKey, { rank, parity, timeParity, intrinsic: 'none' });
+const birssForm = (key: string, rank: TensorRank, parity: TensorKind, timeParity: 'even' | 'odd' = 'even') => {
+  const form = tensorForm(key as PointGroupKey, { rank, kind: parity, timeParity, intrinsic: 'none' });
   return { ...form, basis: form.basis.map((b) => tensorToBirssFrame(key, b, rank)) };
 };
 
@@ -84,8 +84,8 @@ describe("Birss Tables 4b–4f: tensor forms of the ITC default setting, in Birs
     for (const row of CLASS_ROWS) {
       for (const rank of RANKS) {
         for (const parity of PARITIES) {
-          expect(birssForm(row.key, rank, parity, 'c'), `${row.key} rank ${rank} ${parity}`).toEqual(
-            birssForm(row.key, rank, parity, 'i'),
+          expect(birssForm(row.key, rank, parity, 'odd'), `${row.key} rank ${rank} ${parity}`).toEqual(
+            birssForm(row.key, rank, parity, 'even'),
           );
         }
       }

@@ -30,7 +30,7 @@ import type { Uvw } from './symmetryDirections.js';
 import { TENSOR_PROPERTIES as ALL_TENSOR_PROPERTIES } from './tensors/propertyTable.js';
 import type { TensorPropertyName as MagneticTensorPropertyName } from './tensors/propertyTable.js';
 import * as tensors from './tensors/tensorForm.js';
-import type { IntrinsicSymmetry, TensorForm, TensorParity, TensorRank } from './tensors/tensorForm.js';
+import type { IntrinsicSymmetry, TensorForm, TensorKind, TensorRank } from './tensors/tensorForm.js';
 import { deepFreeze } from './freeze.js';
 import type { ToleranceOptions } from './tolerances.js';
 
@@ -92,7 +92,7 @@ export interface TensorSpec {
   /** Number of indices, 0 to 4. */
   readonly rank: TensorRank;
   /** `'polar'` or `'axial'`: whether an improper operation changes the sign (factor det R). */
-  readonly parity: TensorParity;
+  readonly kind: TensorKind;
   /** The index symmetry of the tensor. */
   readonly intrinsic: IntrinsicSymmetry;
 }
@@ -117,10 +117,10 @@ type CellOperationArgument = cell.CellOperation & {
   readonly timeReversal?: false;
 };
 
-/** A tensor specification as a caller may pass it; `timeParity: 'i'` is accepted, `'c'` refused. */
+/** A tensor specification as a caller may pass it; `timeParity: 'even'` is accepted, `'odd'` refused. */
 type TensorSpecArgument = TensorSpec & {
-  /** Accepted if `'i'`; a time-odd tensor belongs to the magnetic API. */
-  readonly timeParity?: 'i';
+  /** Accepted if `'even'`; a time-odd tensor belongs to the magnetic API. */
+  readonly timeParity?: 'even';
 };
 
 /** A named property: the tensor that describes it, what it is and where it is defined. */
@@ -147,11 +147,11 @@ export type TensorPropertyName = Extract<
 export const TENSOR_PROPERTIES = Object.freeze(
   Object.fromEntries(
     Object.entries(ALL_TENSOR_PROPERTIES)
-      .filter(([, p]) => p.spec.timeParity === 'i')
+      .filter(([, p]) => p.spec.timeParity === 'even')
       .map(([name, { spec, description, source }]) => [
         name,
         Object.freeze({
-          spec: Object.freeze({ rank: spec.rank, parity: spec.parity, intrinsic: spec.intrinsic }),
+          spec: Object.freeze({ rank: spec.rank, kind: spec.kind, intrinsic: spec.intrinsic }),
           description,
           source,
         }),
@@ -190,11 +190,13 @@ function timeEven(specOrName: TensorSpecArgument | TensorPropertyName): tensors.
     throw new RangeError(`Not a tensor specification: ${shown(specOrName)}`);
   }
   const timeParity = (specOrName as { readonly timeParity?: unknown }).timeParity;
-  if (timeParity === 'c') throw new RangeError(`A time-odd tensor (timeParity 'c'): ${USE_MAGNETIC}`);
-  if (timeParity !== undefined && timeParity !== 'i') {
-    throw new RangeError(`Unknown time parity: ${shown(timeParity)}`);
+  if (timeParity === 'odd') throw new RangeError(`A time-odd tensor (timeParity 'odd'): ${USE_MAGNETIC}`);
+  if (timeParity !== undefined && timeParity !== 'even') {
+    // The shared check names the values and the names up to 0.10 ('i', 'c').
+    return { ...specOrName, timeParity: timeParity as never };
   }
-  return { rank: specOrName.rank, parity: specOrName.parity, timeParity: 'i', intrinsic: specOrName.intrinsic };
+  // The other fields are passed on as they are, so that the shared check reports a field of 0.10 (parity).
+  return { ...specOrName, timeParity: 'even' };
 }
 
 /** Checks a list of operations of a caller: an operation with time reversal is an error. */

@@ -101,11 +101,11 @@ description of an operation has no `timeReversal`, a point group has no `type`, 
 specification has no time parity, and `TENSOR_PROPERTIES` holds the properties of time-even
 tensors (`'pyroelectric'`, `'ferroaxial'`, `'piezoelectric'`, `'gyrotropic'`). A question that involves time
 reversal is a `RangeError` that names the magnetic API: the key of a magnetic point group, the name
-of a time-odd property (`'ferromagnetic'`), a tensor specification with `timeParity: 'c'`, and an
-operation with `timeReversal: true` in a list of operations. `timeParity: 'i'` and
+of a time-odd property (`'ferromagnetic'`), a tensor specification with `timeParity: 'odd'`, and an
+operation with `timeReversal: true` in a list of operations. `timeParity: 'even'` and
 `timeReversal: false` are accepted at run time, so that data of the magnetic API without time
 reversal can be passed on from JavaScript and Python; the TypeScript types take a value whose time
-parity may be `'c'` or whose `timeReversal` may be `true` only after it is narrowed.
+parity may be `'odd'` or whose `timeReversal` may be `true` only after it is narrowed.
 
 **The magnetic API** takes all 122 keys; operations carry `timeReversal`, a tensor specification
 its `timeParity`, and `TENSOR_PROPERTIES` holds all seven properties. For a crystal without magnetic
@@ -893,16 +893,22 @@ into a group first), e.g. the site symmetry of a surface normal from `siteSymmet
 `spec`, both take the name of a property ("Named properties" below). Moved from birss-app (`tensorForms.ts`,
 `tensorProjection.ts`, `linalg.ts`, revision 2be5fe3).
 
-**Kind of tensor** (`TensorSpec`, as in birss-app): rank 0 to 4; `'polar'` (transforms with R) or
-`'axial'` (with det(R)·R); in the magnetic API `'i'` (time-even) or `'c'` (time-odd: changes sign
-under an operation with time reversal), while a specification of the crystallographic API has no
-time parity and means a time-even tensor ("Two entry points"); and the symmetry of the tensor under permutation of its own indices,
-independent of the crystal: `'none'`, `'ij'` (first two indices), `'jk'` (last two; the index
-symmetry of SHG and of the piezoelectric tensor), and at rank 4 `'ij_kl'` (both pairs symmetric, the
-pairs not interchangeable: electric-quadrupole SHG, photoelasticity) and `'voigt'` (`'ij_kl'` and the
-pairs interchangeable: elastic stiffness). An index symmetry that does not apply at the rank
-(`'ij'`, `'jk'` below rank 2; `'ij_kl'`, `'voigt'` other than at rank 4) is an error; birss-app
-ignores it.
+**Kind of tensor** (`TensorSpec`, #137 E1, E2): `rank` 0 to 4; `kind` `'polar'` (transforms with
+R) or `'axial'` (with det(R)·R; ITC calls the behaviour under inversion "parity", under which a polar
+vector is odd, so the field is not named `parity`); in the magnetic API `timeParity` `'even'` or
+`'odd'` (ITC Vol. D: time-even, time-odd; a time-odd tensor changes sign under an operation with
+time reversal), while a specification of the crystallographic API has no time parity and means a
+time-even tensor ("Two entry points"); and `intrinsic`, the symmetry of the tensor under
+permutation of its own indices, independent of the crystal, named descriptively with its Jahn
+symbol (ITC Vol. D § 1.1.4.10) in the TSDoc of `IntrinsicSymmetry`: `'none'`,
+`'symmetric-first-pair'`, `'symmetric-last-pair'` (the index symmetry of SHG and of the
+piezoelectric tensor; at rank 2 both mean a symmetric tensor), at rank 4 `'symmetric-pairs'` (both
+pairs symmetric, not interchangeable: electric-quadrupole SHG, photoelasticity) and
+`'symmetric-pairs-exchangeable'` (the pairs interchangeable too: elastic stiffness, the symmetry
+Voigt's notation uses), at rank 2 `'antisymmetric'`, and from rank 2 `'totally-symmetric'` (SHG
+under Kleinman's condition). An index symmetry that does not apply at the rank is an error. Up to
+0.10 the names were Birss's and birss-app's (`parity`, `'i'`/`'c'`, `'ij'`, `'jk'`, `'ij_kl'`,
+`'voigt'`); a specification with them is an error that names the new ones.
 
 **Components** are numbered by a flat index: indices (i₁, …, iₙ) with x, y, z = 0, 1, 2 give
 i₁·3ⁿ⁻¹ + … + iₙ, the first index varying slowest (the order of a NumPy array of shape (3,)·n in C
@@ -941,10 +947,10 @@ magnetic properties are discussed, a non-magnetic crystal be given the grey symb
 m3m1′, low quartz 321′), to avoid confusion with the magnetic group of the same class.
 In a black-and-white group the `'i'`-forms are those of the crystal class in the same frame, and
 the `'c'`-forms are those of two other crystal classes, possibly in a rotated frame, which Birss's
-Table 7 names (pp. 109–110): polar `'c'`-tensors of odd rank and axial ones of even rank have the
-form of the `'i'`-tensors of his group A (eq. (3.24): the operations without time reversal and
-those with time reversal times the inversion), the others that of the `'i'`-tensors of opposite
-parity of his group B. The
+Table 7 names (pp. 109–110): polar time-odd (Birss's `c`) tensors of odd rank and axial ones of even rank have the
+form of the time-even (`i`) tensors of his group A (eq. (3.24): the operations without time reversal and
+those with time reversal times the inversion), the others that of the time-even tensors of the
+other kind of his group B. The
 table prints a symbol class in parentheses where the frame is rotated.
 
 **Named properties.** A physical property that a group allows if and only if a tensor of a certain
@@ -990,7 +996,7 @@ vector lies along that symmetry direction (any direction in `1` and `-1`). Seven
 Rev. Lett._ **116**, 177602 (2016); ITC Vol. D does not tabulate the property, so the print anchor
 of the classes is Birss: Table 4a (pp. 56–57) gives each class its form of an axial tensor of odd
 rank, Table 4c (p. 58) that form at rank 1. The name is `'ferroaxial'` and not "axial" (maintainer,
-2026-11-20): "axial" already names the parity of a tensor (`parity: 'axial'`), and five of the
+2026-11-20): "axial" already names the kind of a tensor (`kind: 'axial'`), and five of the
 seven properties have an axial tensor.
 
 **Rotation.** `rotateTensor(tensor, R, spec)` gives the components in a frame rotated by the
@@ -1011,15 +1017,15 @@ print check: the forms of the ITC default setting carried into Birss's frame
 (`testUtils/birssFrame.ts`). ITC convention: ITA Table 3.2.2.1 (counts of three tensors and the direction
 of the pyroelectric vector, in the ITC default setting); ITC Vol. D § 1.1.4.10.7 (the full forms of
 axial tensors of rank 2, general and symmetric, in the ITC default setting and, for the monoclinic
-classes, also with the axis along z); ITC Vol. D § 1.1.4.10.6 (`'ij_kl'` and `'voigt'` tensors of
+classes, also with the axis along z); ITC Vol. D § 1.1.4.10.6 (`'symmetric-pairs'` and `'symmetric-pairs-exchangeable'` tensors of
 rank 4 in the ITC default setting: the numbers of independent components and the full forms of the
 6 × 6 matrices of p, π, Q, c and s, 29 diagrams for the classes, with the factors 2 and 4 that the two-index notation
 gives π, Q and s, and the element 66 of the trigonal and hexagonal classes, ⊗, as ½(p₁₁ − p₁₂),
 π₁₁ − π₁₂, 2(Q₁₁ − Q₁₂), ½(c₁₁ − c₁₂), 2(s₁₁ − s₁₂)). ITC Vol. D § 1.1.4.10.6.7 (i) prints the cubic class m-3 as
 `3m`, a misprint. Index symmetries: Yariv's Table 16.1 (rank 3,
-`'jk'`, all 21 noncentrosymmetric classes; it prints d_ijk without the Voigt factor 2, so its 3×6
+`'symmetric-last-pair'`, all 21 noncentrosymmetric classes; it prints d_ijk without the Voigt factor 2, so its 3×6
 grid is the tensor itself; the panels Yariv calls the standard orientation are the ITC default
-settings), Hoshi et al. (1995) (rank 4, `'ij_kl'`, 6/mmm and 6mm, with Hoshi's tracelessness Q_ii = 0
+settings), Hoshi et al. (1995) (rank 4, `'symmetric-pairs'`, 6/mmm and 6mm, with Hoshi's tracelessness Q_ii = 0
 added to the form). The surface use case of #30 is checked against Yariv: an m-3m crystal has no SHG in
 the bulk, its (001), (110) and (111) surfaces have the forms of 4mm, mm2 and 3m with 3, 5 and 4
 independent components.
@@ -1134,9 +1140,9 @@ the determination of the plane group of a pattern (a later MINOR, #31).
 | tensor forms, second print check: ITC forms carried into Birss's frame                                                                       | Birss Tables 4a–4f (pp. 56–66): `references/birss/table-4a.md` … `table-4f.md`                                                                                                                                                                                                                                    | `tensors/birss.reference.test.ts`                                                                       |
 | tensor forms, ITC convention: counts, pyroelectric direction, piezoelectric classes                                                          | ITA Table 3.2.2.1 (p. 738)                                                                                                                                                                                                                                                                                        | `tensors/itc.reference.test.ts`                                                                         |
 | ferroaxial classes (axial vector, time-even)                                                                                                 | Birss Table 4a (pp. 56–57) with Table 4c (p. 58): `references/birss/`; the term: Hlinka, Privratska, Ondrejkovic & Janovec, _Phys. Rev. Lett._ **116**, 177602 (2016)                                                                                                                                             | `tensors/tensorProperties.test.ts`                                                                      |
-| rank 3, `'jk'` (SHG, piezoelectric d_ijk): cells, classes, signs; the forms at m-3m surfaces                                                 | Yariv, _Quantum Electronics_, 2nd ed. (Wiley, 1975), Table 16.1 (pp. 410–411): `references/yariv/table-16.1.md`                                                                                                                                                                                                   | `tensors/yariv.reference.test.ts`, `tensors/tensorForm.test.ts`                                         |
-| rank 4, `'ij_kl'` (electric-quadrupole SHG) for 6/mmm, 6mm                                                                                   | Hoshi et al., Phys. Rev. B 52, 12355 (1995), Eqs. (11)–(12): `references/hoshi/eqs-11-12.md`                                                                                                                                                                                                                      | `tensors/hoshi.reference.test.ts`                                                                       |
-| ITC: axial tensors of rank 2 (forms); rank 4 `'ij_kl'`, `'voigt'` (counts and forms)                                                         | ITC Vol. D (2013) § 1.1.4.10.7 (pp. 29–31), § 1.1.4.10.6 (pp. 27–29): `references/itc/vol-d-*.md`                                                                                                                                                                                                                 | `tensors/itcVolD.reference.test.ts`                                                                     |
+| rank 3, `'symmetric-last-pair'` (SHG, piezoelectric d_ijk): cells, classes, signs; the forms at m-3m surfaces                                | Yariv, _Quantum Electronics_, 2nd ed. (Wiley, 1975), Table 16.1 (pp. 410–411): `references/yariv/table-16.1.md`                                                                                                                                                                                                   | `tensors/yariv.reference.test.ts`, `tensors/tensorForm.test.ts`                                         |
+| rank 4, `'symmetric-pairs'` (electric-quadrupole SHG) for 6/mmm, 6mm                                                                         | Hoshi et al., Phys. Rev. B 52, 12355 (1995), Eqs. (11)–(12): `references/hoshi/eqs-11-12.md`                                                                                                                                                                                                                      | `tensors/hoshi.reference.test.ts`                                                                       |
+| ITC: axial tensors of rank 2 (forms); rank 4 `'symmetric-pairs'`, `'symmetric-pairs-exchangeable'` (counts and forms)                        | ITC Vol. D (2013) § 1.1.4.10.7 (pp. 29–31), § 1.1.4.10.6 (pp. 27–29): `references/itc/vol-d-*.md`                                                                                                                                                                                                                 | `tensors/itcVolD.reference.test.ts`                                                                     |
 | tensor forms of the magnetic groups, second print check (ITC forms in Birss's frame): i- and c-tensors, ranks 0 to 4; associated groups A, B | Birss Table 7 (pp. 103–108): `references/birss/table-7.md`, with Tables 4a–4f; grey groups: p. 102                                                                                                                                                                                                                | `tensors/birssMagnetic.reference.test.ts`                                                               |
 | ferromagnetic, piezomagnetic, magnetoelectric: the groups and the forms, ITC convention                                                      | ITC Vol. D (2013) Table 1.5.2.4 (p. 113), Table 1.5.7.1 (p. 135, conventions p. 134), Table 1.5.8.1 (p. 139, text p. 140): `references/itc/vol-d-table-1.5.*.md`                                                                                                                                                  | `tensors/itcMagnetic.reference.test.ts`                                                                 |
 | orthorhombic settings: one for every orientation of the axes; the six orientations of `2'm'm`                                                | counted by hand; Paufler (1986) Table A 6, rows 12–20 (p. 316): `references/paufler/table-a6-orthorhombic.md`; the symbols of `2'm'm` in Birss Table 6, ITC Vol. D Tables 1.5.2.3, 1.5.2.4, 1.5.7.1, 1.5.8.1 and Paufler                                                                                          | `pointGroups/magnetic.reference.test.ts`, `tensors/itcMagnetic.reference.test.ts`                       |
