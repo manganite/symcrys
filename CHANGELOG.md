@@ -15,6 +15,14 @@ All notable changes to symcrys are recorded here. The format follows
   a setting too (`{ setting: '31m' }`). Python: `is_plane_group_key`, `is_point_group_key`,
   `plane_groups`, `point_groups`, `find_plane_group`, `find_point_group` in `symcrys.plane`.
 
+### Fixed
+
+- **Python: the key of a plane point group is `str`**, as every key in the three modules: the fields
+  `PointGroup.key`, `PlaneGroup.point_group` (and the new `PointGroupInSetting.key`) of
+  `symcrys.plane` were annotated as a `Literal` of the ten keys, in TypeScript's order, since 0.11.0
+  (the TypeScript type was derived from the list of keys, and the declarations expand such a type).
+  The values were right; a test now checks the annotation of every key.
+
 ## [0.11.0] - 2026-11-24
 
 symcrys follows ITC only (#106, #121): the Birss convention is gone, the data are stored in the ITC

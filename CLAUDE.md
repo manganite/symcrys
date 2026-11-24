@@ -280,7 +280,10 @@ Carried over from birss-app, where the calculations come from.
   has its own TypedDicts (a `PointGroup` of `symcrys.magnetic` has `type`); an optional field is
   `NotRequired` and every TypedDict `@final`, so that a type checker narrows a union by a key; a
   number not listed as int or float, an array field not listed as float64 or int64, a type the
-  generator cannot read and an entry of `api.json` no module uses are errors of the generator.
+  generator cannot read and an entry of `api.json` no module uses are errors of the generator. A
+  key of a group is `str` in every field and parameter (tested, `test_api.py`), so a key type is
+  written out in TypeScript, not derived from a list: the declarations expand a derived type to
+  its values, and the generator reads a key by the name of its type (#97, review).
 - **Operations in Python** (#137 H1, decided by Thomas on 2026-11-22, the type, a bare array in
   `symcrys.magnetic` and the access per operation on 2026-11-24; #121 step 12b): `operations`,
   `generators` and `residual_operations` give `Operations`, a frozen dataclass of read-only arrays,

@@ -100,7 +100,7 @@ class PlaneGroup(TypedDict):
     """The short symbol, e.g. ``'p2mg'``."""
     number: int
     """The number of the plane group, 1 to 17."""
-    point_group: Literal["1", "2", "3", "4", "6", "m", "4mm", "3m", "6mm", "2mm"]
+    point_group: str
     """The plane point group."""
     point_group_setting: int
     """The setting of the point group: 2 for ``p31m``, otherwise 1."""
@@ -120,7 +120,7 @@ class PlaneGroup(TypedDict):
 class PointGroup(TypedDict):
     """A plane point group."""
 
-    key: Literal["1", "2", "3", "4", "6", "m", "4mm", "3m", "6mm", "2mm"]
+    key: str
     """The key, e.g. ``'2mm'``."""
     crystal_system: PlaneSystem
     """The crystal system."""
@@ -140,7 +140,7 @@ class PlaneGroupFound(TypedDict):
 class PointGroupInSetting(TypedDict):
     """A plane point group in a setting, as ``find_point_group`` finds it."""
 
-    key: Literal["1", "2", "3", "4", "6", "m", "4mm", "3m", "6mm", "2mm"]
+    key: str
     """The key of the plane point group."""
     setting: int
     """The 1-based index of the setting."""
