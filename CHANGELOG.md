@@ -6,6 +6,79 @@ All notable changes to symcrys are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-11-24
+
+symcrys follows ITC only (#106, #121): the Birss convention is gone, the data are stored in the ITC
+frame, and the API uses ITA's terms. Almost every application has to adapt its calls; the table
+below lists every removed or renamed function, type, field and option, then the results that change
+without a change of the call. The sections after it give each change with its reason.
+
+### Migrating from 0.10
+
+**Calls, types and fields** (TypeScript and JavaScript; the same in `symcrys/magnetic` where it has
+the function):
+
+| Up to 0.10                                                                                                      | From 0.11                                                                                     |
+| --------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| option `convention` (`{ convention: 'itc' }`), type `Convention`                                                | drop it; `convention: 'birss'` is gone (#125)                                                 |
+| `settings(key, 'itc')`, `findPointGroup(symbol, 'itc')`                                                         | `settings(key)`, `findPointGroup(symbol, { axes, uniqueAxis })`                               |
+| `{ setting: 2 }` (index)                                                                                        | `{ setting: '312' }` (symbol; the indices changed, "Changed" below), or the index             |
+| `operations(key)[i].matrix` (Cartesian)                                                                         | `operations(key)[i].cartesian`                                                                |
+| `latticeOperations(key)[i].matrix`                                                                              | `operations(key)[i].matrix`                                                                   |
+| `tensorFormOf([{ matrix: R }], …)`, also the other `…Of`                                                        | `tensorFormOf([{ cartesian: R }], …)`                                                         |
+| `siteSymmetry(operations, direction)`                                                                           | `siteSymmetryOf(operations, direction)`; `siteSymmetry(key, direction, options)` is new       |
+| `wyckoffPositionOf(key, x)`, also in `symcrys/plane`                                                            | `wyckoffPosition(key, x)`                                                                     |
+| `pointGroup(key).chiral`, `isChiralOf`                                                                          | `pointGroup(key).enantiomorphic`, `isEnantiomorphicOf`                                        |
+| `holohedry('trigonal')`, `holohedry(crystalFamily(system))`                                                     | `holohedry(latticeSystem)`: `'hexagonal'` or `'rhombohedral'`; `latticeSystems(key)`          |
+| `wyckoffPositions(key)[i].coordinates` (first triplet)                                                          | `coordinates[0]` (the list of all printed triplets)                                           |
+| `representative` of a Wyckoff position or crystal form                                                          | `faceNormal(basis, millerIndices(printed, { h, k, l }))`                                      |
+| `zoneAxis(…) === null`                                                                                          | `zoneAxis(…) === undefined`                                                                   |
+| description: `order`, kind `'mirror'`                                                                           | `n`, kind `'reflection'`                                                                      |
+| tensor `{ parity, timeParity: 'i' \| 'c', intrinsic: 'ij' }`, type `TensorParity`                               | `{ kind, timeParity: 'even' \| 'odd', intrinsic: 'symmetric-first-pair' }`, type `TensorKind` |
+| `intrinsic` `'jk'`, `'ij_kl'`, `'voigt'`                                                                        | `'symmetric-last-pair'`, `'symmetric-pairs'`, `'symmetric-pairs-exchangeable'`                |
+| `SiteSymmetryOptions`, `OrbitOptions`, `PointGroupOfOptions`, `ResidualOperationsOptions`, plane `PointOptions` | `ToleranceOptions`                                                                            |
+| `WyckoffOptions`                                                                                                | `SettingOptions & ToleranceOptions`                                                           |
+| plane: `snapToWyckoffPosition(key, point)`, `SnappedPosition`                                                   | `wyckoffDistances(key, point, { basis })`, the snapping in the application                    |
+| plane: `planeGroup(key).fullSymbol`, `.order`                                                                   | `symbol(key, { form: 'full' })` (`p 1 m 1`), `operations(key).length`                         |
+| plane: setting `default`                                                                                        | `isDefault`                                                                                   |
+| plane: description kind `'mirror'`, `'glide'`; `order`; `normal`                                                | `'reflection'`, `'glide-reflection'`; `n`; `axis`                                             |
+| plane: `symmetryElements(key).rotations` (`RotationCentre`, `{ order, point }`)                                 | `rotationPoints` (`RotationPoint`, `{ n, point }`)                                            |
+| plane: line `normal`, `segment`                                                                                 | `axis`, `point` (the line is not clipped; `{ box }` gives the translates)                     |
+| plane: `asymmetricUnit(key).inequalities` (those of the edges)                                                  | `inequalities[e]` for `e` of `edges`; `inequalities` is the printed list                      |
+| plane: `orbit(key, point)` (the points)                                                                         | `orbit(key, point).map((e) => e.point)`                                                       |
+
+**Python** (besides the names above in snake_case):
+
+| Up to 0.10                                                               | From 0.11                                                                                                         |
+| ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------- |
+| keyword `convention=`                                                    | drop it (a `TypeError` now)                                                                                       |
+| `lattice_from_parameters({"a": …, …})`, `is_valid_cell({"alpha": …, …})` | `lattice_from_parameters(a, b, c, alpha, beta, gamma)`, `is_valid_cell(alpha, beta, gamma)`                       |
+| `orbit(key, {"hkl": h})`                                                 | `orbit(key, hkl=h)` (or `uvw=`)                                                                                   |
+| `operations(key)`: a list of dicts, `matrix` float64 Cartesian           | `Operations`: `ops.cartesian` (n, 3, 3), `ops.matrix` (n, 3, 3) int64; `ops[i]` a dict                            |
+| `lattice_operations(key)`                                                | `operations(key).matrix`                                                                                          |
+| `tensor_form(…)["basis"]` (p, 3**rank)                                   | (p, 3, …, 3); `.reshape(p, -1)` gives the old rows                                                                |
+| `rotate_tensor(t, r, spec)`, always flat                                 | keeps the shape of `t` (flat or (3, …, 3)), takes stacks                                                          |
+| `except SymcrysError` for every error                                    | `SymcrysError` (a `ValueError`) for wrong input, `SymcrysInternalError` (a `RuntimeError`) for a fault of symcrys |
+| `symcrys.plane.Operation`                                                | `symcrys.plane.PlaneOperation`                                                                                    |
+
+**Results that change for the same call:**
+
+- the indices of settings (`2`, `m`, `2/m`, `32`, `3m`, `-3m`, `-6m2`, `mm'm'`, `2'm'm` and the
+  magnetic groups whose default was setting 2): the ITC default is setting 1;
+- symbols of the magnetic API: eight short symbols (`32'`, not `32'1`; `321'`, not `3211'`), and
+  Schoenflies `S6` instead of `C3i`;
+- the axis of an operation in the hexagonal family: [1, 1, 0] and [2, 1, 0] (were their
+  negatives), the sign of the Seitz symbol;
+- `findPointGroup` of `mm'm'` or `6'/mmm'`: the ITC default setting (was Birss's reading);
+- plane groups: `wyckoffPosition`, `siteSymmetry` and `orbit` near an element within about the
+  tolerance; `symmetryElements` gives each element once modulo the lattice; `asymmetricUnit` all
+  printed inequalities;
+- wrong input throws a `RangeError` (was partly a `TypeError`, partly answered), also for an
+  unknown option key; a tolerance of 0 or `null` is refused;
+- every result is frozen;
+- tensor forms of operations with rounding errors and the site symmetry of a grey group at a large
+  tolerance are fixed ("Fixed").
+
 ### Added
 
 - `FaceIndices` and `DirectionIndices`: the types of the face and the direction that `orbit` takes
@@ -757,7 +830,8 @@ k=None, l=None)` (new in this version).
 - Project scaffold: TypeScript build to `dist/` (ES modules with type declarations), tests, lint,
   format check, CI and release workflow. The only export so far is `VERSION`.
 
-[Unreleased]: https://github.com/manganite/symcrys/compare/v0.10.1...HEAD
+[Unreleased]: https://github.com/manganite/symcrys/compare/v0.11.0...HEAD
+[0.11.0]: https://github.com/manganite/symcrys/compare/v0.10.1...v0.11.0
 [0.10.1]: https://github.com/manganite/symcrys/compare/v0.10.0...v0.10.1
 [0.10.0]: https://github.com/manganite/symcrys/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/manganite/symcrys/compare/v0.8.1...v0.9.0

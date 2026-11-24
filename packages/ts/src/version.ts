@@ -3,4 +3,4 @@
  *
  * @remarks Kept equal to `version` in package.json (checked by version.test.ts).
  */
-export const VERSION = '0.10.1';
+export const VERSION = '0.11.0';
