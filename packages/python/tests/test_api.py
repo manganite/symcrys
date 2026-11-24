@@ -63,19 +63,25 @@ def test_every_key_of_a_group_is_a_str() -> None:
     # The fixed reading of api.json, "types": a key is `str` in every module, in the fields of the
     # TypedDicts and in the parameters, never a Literal of the keys (which a TypeScript type derived
     # from a list would give, since the declarations expand it).
+    # The annotations as written (the modules use `from __future__ import annotations`, and
+    # NotRequired exists at run time only from Python 3.11), so they are read as text.
+    def written(a: object) -> str:
+        return a.__forward_arg__ if isinstance(a, typing.ForwardRef) else str(a)
+
+    checked = 0
     for module in (symcrys, magnetic, plane):
         for name in module.__all__:
             obj = getattr(module, name)
             if typing.is_typeddict(obj):
-                hints = typing.get_type_hints(obj)
-                fields = {f: hints[f] for f in hints if f in KEY_FIELDS}
+                fields = {f: a for f, a in obj.__annotations__.items() if f in KEY_FIELDS}
             elif callable(obj) and not isinstance(obj, type) and not (name[0].isupper() and not name.isupper()):
-                hints = typing.get_type_hints(obj)
-                fields = {f: hints[f] for f in hints if f == "key"}
+                fields = {f: a for f, a in getattr(obj, "__annotations__", {}).items() if f == "key"}
             else:
                 continue
             for field, hint in fields.items():
-                assert hint is str, f"{module.__name__}.{name}.{field}: {hint}"
+                checked += 1
+                assert written(hint) in ("str", "NotRequired[str]"), f"{module.__name__}.{name}.{field}: {written(hint)}"
+    assert checked > 50
 
 
 def test_the_two_modules_have_the_same_names() -> None:
