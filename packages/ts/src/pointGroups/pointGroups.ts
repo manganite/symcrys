@@ -4,6 +4,7 @@
  * operations, generators and symbols, as ITC gives them (CLAUDE.md, "Pure ITC").
  */
 
+import { SETTING_KEYS, checkOptions } from '../checks.js';
 import { INVERSION, det, inverse, matricesEqual, multiply, type Mat3 } from '../linalg.js';
 import { EPSILON } from '../tolerances.js';
 import { compactSymbol } from '../notation.js';
@@ -136,14 +137,7 @@ export interface SettingOptions extends AxesOptions {
 function criteriaArgument(arg: unknown): AxesOptions | undefined {
   if (arg === undefined) return undefined;
   if (typeof arg === 'string') rejectConventionArgument(2);
-  if (typeof arg !== 'object' || arg === null) {
-    throw new RangeError(`findPointGroup takes the options { axes, uniqueAxis }, not ${JSON.stringify(arg)}`);
-  }
-  rejectConvention(arg);
-  const unknown = Object.keys(arg).filter((k) => k !== 'axes' && k !== 'uniqueAxis');
-  if (unknown.length > 0) {
-    throw new RangeError(`findPointGroup takes the options axes and uniqueAxis, not ${unknown.join(', ')}`);
-  }
+  checkOptions(arg, ['axes', 'uniqueAxis'], 'findPointGroup');
   // The values are checked here, before a group is found, so that a wrong value is an error also
   // for a symbol that names no group.
   const { axes, uniqueAxis } = arg as AxesOptions;
@@ -253,18 +247,6 @@ function data(key: string): GroupData {
 }
 
 /**
- * Throws for the option `convention`, removed in 0.11.0 with the Birss convention, so that a caller
- * that still asks for Birss's presentation is not answered in ITC's without notice.
- */
-function rejectConvention(options: object | undefined): void {
-  if (options !== undefined && options !== null && 'convention' in options) {
-    throw new RangeError(
-      'The option convention was removed in symcrys 0.11.0: symcrys follows ITC only (CHANGELOG.md, 0.11.0)',
-    );
-  }
-}
-
-/**
  * Throws for a second argument of `settings` or `findPointGroup`, which took a convention up to
  * 0.10 (`settings('32', 'birss')`): TypeScript refuses it, plain JavaScript would ignore it and
  * answer for the ITC frame. Internal.
@@ -364,7 +346,6 @@ function choose(
 
 /** The requested setting index, checked; the ITC default if none is given. */
 function settingIndex(d: GroupData, options?: SettingOptions): number {
-  rejectConvention(options);
   const criteria = criteriaOf(d, options);
   const requested = options?.setting;
   if (requested !== undefined && requested !== null && typeof requested !== 'number' && typeof requested !== 'string') {
@@ -716,6 +697,7 @@ const recordCache = new Map<string, readonly Operation[]>();
  * "Operations").
  */
 export function operations(key: MagneticPointGroupKey, options?: SettingOptions): readonly Operation[] {
+  checkOptions(options, SETTING_KEYS, 'operations');
   const d = data(key);
   const index = settingIndex(d, options);
   const cacheKey = `${d.key}#${index}`;
@@ -736,6 +718,7 @@ export function operations(key: MagneticPointGroupKey, options?: SettingOptions)
  * have in the group, for a grey group followed by `1'`.
  */
 export function generators(key: MagneticPointGroupKey, options?: SettingOptions): readonly Operation[] {
+  checkOptions(options, SETTING_KEYS, 'generators');
   const d = data(key);
   const index = settingIndex(d, options);
   const cacheKey = `${d.key}#${index}#generators`;
@@ -768,6 +751,7 @@ export function itaSchoenflies(key: PointGroupKey): string {
  * (`S6`, `D3d(S6)`; docs/conventions.md, "Symbols").
  */
 export function symbol(key: MagneticPointGroupKey, options?: SymbolOptions): string {
+  checkOptions(options, [...SETTING_KEYS, 'form'], 'symbol');
   const d = data(key);
   const form = options?.form ?? 'short';
   const s = settingSymbols(d, settingIndex(d, options));

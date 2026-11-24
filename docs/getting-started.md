@@ -92,7 +92,9 @@ from symcrys import plane
 plane.wyckoff_position("p6mm", [1 / 3, 2 / 3]), plane.asymmetric_unit("p6mm")["vertices"]
 ```
 
-An error of the library raises `symcrys.SymcrysError`, a subclass of `ValueError`:
+Wrong input (an unknown key, a vector of the wrong length, an unknown option) raises
+`symcrys.SymcrysError`, a subclass of `ValueError`; a fault of symcrys itself raises
+`symcrys.SymcrysInternalError`, a `RuntimeError`, so that `except ValueError` does not hide it:
 
 ```{code-cell} ipython3
 try:

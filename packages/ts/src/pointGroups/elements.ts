@@ -5,6 +5,7 @@
  * left to the applications (docs/conventions.md, "Symmetry directions and elements").
  */
 
+import { SETTING_KEYS, checkOptions } from '../checks.js';
 import { det, trace, type Mat3, type Vec3 } from '../linalg.js';
 import { crystalFamily } from '../lattice.js';
 import type { CartesianOperation } from '../operations.js';
@@ -222,6 +223,7 @@ export function describeOperations(
   key: MagneticPointGroupKey,
   options?: SettingOptions,
 ): readonly OperationDescription[] {
+  checkOptions(options, SETTING_KEYS, 'describeOperations');
   return analysis(key, options).descriptions;
 }
 
@@ -233,5 +235,6 @@ export function describeOperations(
  * the axis of `describeOperations` along it, so match the two by value.
  */
 export function symmetryDirections(key: MagneticPointGroupKey, options?: SettingOptions): readonly SymmetryDirection[] {
+  checkOptions(options, SETTING_KEYS, 'symmetryDirections');
   return analysis(key, options).directions;
 }

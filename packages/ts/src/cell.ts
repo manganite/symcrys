@@ -4,6 +4,7 @@
  * coordinates, as `latticeBasis` gives it; lengths in any unit, angles in degrees.
  */
 
+import { TOLERANCE_KEYS, checkObject, checkOptions } from './checks.js';
 import { apply, inverse, isSingular, multiply, transpose, type Mat3, type Vec3 } from './linalg.js';
 import { checkTimeReversal, type CartesianOperation as MagneticOperation } from './operations.js';
 import { toleranceOf, type ToleranceOptions } from './tolerances.js';
@@ -80,6 +81,8 @@ function anglesOk({ alpha, beta, gamma }: CellAngles): boolean {
  * number from 0 to 1.
  */
 export function isValidCell(angles: CellAngles, options?: IsValidCellOptions): boolean {
+  checkOptions(options, ['minVolumeRatio'], 'isValidCell');
+  checkObject(angles, 'isValidCell takes the angles { alpha, beta, gamma }');
   if (!anglesOk(angles)) return false;
   const min = options?.minVolumeRatio ?? 0;
   if (!(typeof min === 'number' && min >= 0 && min <= 1))
@@ -89,7 +92,9 @@ export function isValidCell(angles: CellAngles, options?: IsValidCellOptions): b
   return Math.sqrt(r) >= min;
 }
 
-function checkEdges({ a, b, c }: LatticeParameters): void {
+function checkEdges(p: LatticeParameters): void {
+  checkObject(p, 'latticeFromParameters takes the parameters { a, b, c, alpha, beta, gamma }');
+  const { a, b, c } = p;
   for (const [name, x] of [
     ['a', a],
     ['b', b],
@@ -220,6 +225,7 @@ export function residualOperations<T extends CellOperation>(
   basis: Mat3,
   options?: ToleranceOptions,
 ): readonly T[] {
+  checkOptions(options, TOLERANCE_KEYS, 'residualOperations');
   const g = metricTensor(basis);
   const tolerance = toleranceOf(options, 'metric');
   if (!Array.isArray(operations)) throw new RangeError('residualOperations: operations must be a list');

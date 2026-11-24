@@ -4,6 +4,7 @@
  * (docs/conventions.md, "Crystal forms").
  */
 
+import { SETTING_KEYS, checkOptions } from '../checks.js';
 import type { Vec3 } from '../linalg.js';
 import type { PointGroupKey, SettingOptions } from './pointGroups.js';
 import { ITA_FORMS, ITA_FORM_TYPES, type FormRow } from './crystalFormsData.js';
@@ -105,6 +106,7 @@ const cache = new Map<string, readonly CrystalForm[]>();
  * setting 1 carried into their frame.
  */
 export function crystalForms(key: PointGroupKey, options?: SettingOptions): readonly CrystalForm[] {
+  checkOptions(options, SETTING_KEYS, 'crystalForms');
   const setting = tableSetting(key, options, 'Crystal forms');
   const cacheKey = `${key}#${setting}`;
   let result = cache.get(cacheKey);

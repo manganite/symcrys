@@ -11,6 +11,7 @@
  * comes in and leaves time reversal out of what goes back.
  */
 
+import { TOLERANCE_KEYS, checkOptions } from './checks.js';
 import type { CrystalSystem } from './lattice.js';
 import type { Mat3, Vec3 } from './linalg.js';
 import type { CartesianOperation as MagneticOperation, Operation as MagneticRecord } from './operations.js';
@@ -654,6 +655,7 @@ export function allowsPropertyOf(
   name: TensorPropertyName,
   options?: ToleranceOptions,
 ): boolean {
+  checkOptions(options, TOLERANCE_KEYS, 'allowsPropertyOf');
   const checked = propertyName(name);
   const { spec, perms } = tensors.checkedSpec(checked);
   return tensors.formOfGroup(tensors.callerGroup(unitary(operations), options), spec, perms).basis.length > 0;
@@ -664,6 +666,7 @@ export function allowedPropertiesOf(
   operations: readonly OperationArgument[],
   options?: ToleranceOptions,
 ): readonly TensorPropertyName[] {
+  checkOptions(options, TOLERANCE_KEYS, 'allowedPropertiesOf');
   const group = tensors.callerGroup(unitary(operations), options);
   return deepFreeze(
     TENSOR_PROPERTY_NAMES.filter((name) => {

@@ -102,10 +102,11 @@ export function checkCartesianOperations(
  * returns them) would be composed as if it had it in every second product.
  */
 export function checkTimeReversal(operations: readonly CartesianOperation[]): void {
+  if (!Array.isArray(operations)) throw new RangeError('The operations must be an array');
   operations.forEach((op, i) => {
-    if (typeof op.timeReversal !== 'boolean') {
+    if (typeof (op as Partial<CartesianOperation> | null)?.timeReversal !== 'boolean') {
       throw new RangeError(
-        `Operation ${i}: timeReversal must be true or false, not ${JSON.stringify(op.timeReversal)}; an operation of the magnetic API says whether it is combined with time reversal`,
+        `Operation ${i}: timeReversal must be true or false, not ${JSON.stringify((op as Partial<CartesianOperation> | null)?.timeReversal)}; an operation of the magnetic API says whether it is combined with time reversal`,
       );
     }
   });

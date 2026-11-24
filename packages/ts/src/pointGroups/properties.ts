@@ -6,6 +6,7 @@
  * (tensors/tensorProperties.ts).
  */
 
+import { TOLERANCE_KEYS, checkOptions } from '../checks.js';
 import type { CrystalSystem } from '../lattice.js';
 import { INVERSION, det } from '../linalg.js';
 import { checkCartesianOperations, checkTimeReversal, type CartesianOperation } from '../operations.js';
@@ -21,6 +22,7 @@ import type { PointGroupKey } from './keys.js';
  * RangeError as `tensorFormOf`.
  */
 export function isCentrosymmetricOf(operations: readonly CartesianOperation[], options?: ToleranceOptions): boolean {
+  checkOptions(options, TOLERANCE_KEYS, 'isCentrosymmetricOf');
   const tolerance = toleranceOf(options, 'operations');
   checkCartesianOperations(operations, tolerance);
   checkTimeReversal(operations);
@@ -36,6 +38,7 @@ export function isCentrosymmetricOf(operations: readonly CartesianOperation[], o
  * tolerance) and for an operation that does not say whether it is combined with time reversal.
  */
 export function isEnantiomorphicOf(operations: readonly CartesianOperation[], options?: ToleranceOptions): boolean {
+  checkOptions(options, TOLERANCE_KEYS, 'isEnantiomorphicOf');
   checkCartesianOperations(operations, toleranceOf(options, 'operations'));
   checkTimeReversal(operations);
   return operations.every((op) => det(op.cartesian) > 0);

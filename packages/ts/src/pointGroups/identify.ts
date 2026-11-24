@@ -4,6 +4,7 @@
  * group of a list of operations"). Shared by both entry points.
  */
 
+import { TOLERANCE_KEYS, checkOptions } from '../checks.js';
 import { det, trace, type Mat3, type Vec3 } from '../linalg.js';
 import { closeWithin, sameWithin } from '../closure.js';
 import { checkCartesianOperations, checkTimeReversal, type CartesianOperation } from '../operations.js';
@@ -111,6 +112,7 @@ export function pointGroupOf(
   operations: readonly CartesianOperation[],
   options?: ToleranceOptions,
 ): IdentifiedPointGroup | undefined {
+  checkOptions(options, TOLERANCE_KEYS, 'pointGroupOf');
   const tolerance = toleranceOf(options, 'operations');
   checkCartesianOperations(operations, tolerance);
   checkTimeReversal(operations);
@@ -172,6 +174,7 @@ export function describeOperationsOf(
   operations: readonly CartesianOperation[],
   options?: ToleranceOptions,
 ): readonly CartesianOperationDescription[] {
+  checkOptions(options, TOLERANCE_KEYS, 'describeOperationsOf');
   const tolerance = toleranceOf(options, 'operations');
   checkCartesianOperations(operations, tolerance);
   checkTimeReversal(operations);

@@ -10,6 +10,7 @@
  * `tensorProjection.ts`, `linalg.ts`, revision 2be5fe3).
  */
 
+import { SETTING_KEYS, TOLERANCE_KEYS, checkNumbers, checkOptions, shown } from '../checks.js';
 import { det, type Mat3 } from '../linalg.js';
 import {
   checkCartesianOperations,
@@ -270,6 +271,7 @@ export function tensorForm(
   spec: TensorSpec | TensorPropertyName,
   options?: SettingOptions,
 ): TensorForm {
+  checkOptions(options, SETTING_KEYS, 'tensorForm');
   const resolved = specOf(spec);
   const perms = checkSpec(resolved);
   const ops = operations(key, options); // checks key and setting
@@ -301,6 +303,7 @@ export function tensorFormOf(
   spec: TensorSpec | TensorPropertyName,
   options?: ToleranceOptions,
 ): TensorForm {
+  checkOptions(options, TOLERANCE_KEYS, 'tensorFormOf');
   const resolved = specOf(spec);
   const perms = checkSpec(resolved);
   return formOfGroup(callerGroup(operations, options), resolved, perms);
@@ -343,13 +346,19 @@ export function rotateTensor(
   specOrName: TensorSpec | TensorPropertyName,
   options?: ToleranceOptions,
 ): readonly number[] {
+  checkOptions(options, TOLERANCE_KEYS, 'rotateTensor');
   const spec = specOf(specOrName);
   checkSpec(spec);
+  if (!Array.isArray(rotation) || rotation.length !== 3) {
+    throw new RangeError(`The rotation must be a 3 × 3 matrix, not ${shown(rotation)}`);
+  }
+  rotation.forEach((row, i) => checkNumbers(row, 3, `Row ${i} of the rotation`));
   checkOrthogonalWithin(rotation, 'The rotation', toleranceOf(options, 'operations'));
   const { rank } = spec;
   const dim = 3 ** rank;
-  if (tensor.length !== dim)
-    throw new RangeError(`A tensor of rank ${rank} has ${dim} components, not ${tensor.length}`);
+  if (!Array.isArray(tensor) || tensor.length !== dim)
+    throw new RangeError(`A tensor of rank ${rank} has ${dim} components, not ${shown(tensor)}`);
+  checkNumbers(tensor, dim, 'The tensor');
   const d = digits(rank);
   const m = rotation.flat();
   const f = spec.parity === 'axial' ? Math.sign(det(rotation)) : 1;

@@ -17,7 +17,7 @@ from numpy.typing import ArrayLike, NDArray
 
 from . import _shared
 from ._convert import from_js
-from ._engine import SymcrysError
+from ._engine import SymcrysError, SymcrysInternalError
 from ._shared import MAGNETIC, IntrinsicSymmetry, SiteSymmetry, TensorForm, TensorParity
 
 TimeParity = Literal["i", "c"]
@@ -48,6 +48,7 @@ __all__ = [
     "EPSILON",
     "VERSION",
     "SymcrysError",
+    "SymcrysInternalError",
     "TensorForm",
     "TensorSpec",
     "allowed_properties",

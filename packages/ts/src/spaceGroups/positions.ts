@@ -46,7 +46,7 @@ function tolerance(options?: ToleranceOptions): number {
 }
 
 function checkPoint(point: readonly number[]): void {
-  if (point.length !== 2 || !point.every(Number.isFinite)) {
+  if (!Array.isArray(point) || point.length !== 2 || !point.every((x) => typeof x === 'number' && Number.isFinite(x))) {
     throw new RangeError(`A point of the plane has two finite coordinates, not ${JSON.stringify(point)}`);
   }
 }

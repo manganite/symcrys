@@ -15,7 +15,7 @@ import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
 from . import _shared
-from ._engine import SymcrysError
+from ._engine import SymcrysError, SymcrysInternalError
 
 PLANE = "plane."
 """Prefix of the names of the plane API at the boundary to the library (``plane.operations``)."""
@@ -33,6 +33,7 @@ __all__ = [
     "VERSION",
     "Operation",
     "SymcrysError",
+    "SymcrysInternalError",
     "asymmetric_unit",
     "describe_operations",
     "describe_operations_of",

@@ -14,7 +14,7 @@ from symcrys._convert import camel, snake
 
 SHG = {"rank": 3, "parity": "polar", "intrinsic": "jk"}
 MAGNETIC_SHG = {**SHG, "time_parity": "i"}
-TYPES = {"SymcrysError", "TensorForm", "TensorSpec"}
+TYPES = {"SymcrysError", "SymcrysInternalError", "TensorForm", "TensorSpec"}
 
 
 def test_every_export_of_the_library_has_its_python_name() -> None:
@@ -27,7 +27,7 @@ def test_every_export_of_the_library_has_its_python_name() -> None:
         extra = (
             TYPES | {"magnetic", "plane"}
             if module is symcrys
-            else {"SymcrysError", "Operation"} if module is plane else TYPES
+            else {"SymcrysError", "SymcrysInternalError", "Operation"} if module is plane else TYPES
         )
         assert set(module.__all__) == expected | extra, module.__name__
         for name in expected:
@@ -423,3 +423,26 @@ def test_one_tolerance_contract() -> None:
     with pytest.raises(symcrys.SymcrysError):
         plane.describe_operations_of(shifted)
     assert len(plane.describe_operations_of(shifted, tolerance=1e-3)) == 8
+
+
+def test_wrong_input_is_a_symcrys_error_and_a_fault_of_symcrys_is_not_a_value_error() -> None:
+    # #137 D2, #92: only a RangeError of the library is SymcrysError (a ValueError); anything else is
+    # SymcrysInternalError (a RuntimeError), so that ``except ValueError`` does not hide a bug.
+    with pytest.raises(symcrys.SymcrysError, match="takes the options setting, axes, uniqueAxis") as e:
+        _engine.invoke("operations", "32", {"uniqueaxis": "a"})
+    assert e.value.js_name == "RangeError"
+    with pytest.raises(symcrys.SymcrysError, match="A direction must be 3 finite numbers"):
+        symcrys.site_symmetry_of(symcrys.operations("4mm"), [0, 1])
+    assert issubclass(symcrys.SymcrysInternalError, RuntimeError)
+    assert not issubclass(symcrys.SymcrysInternalError, ValueError)
+    assert symcrys.SymcrysInternalError is magnetic.SymcrysInternalError is plane.SymcrysInternalError
+
+
+def test_an_error_of_the_library_other_than_a_range_error_is_internal(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(_engine, "call", lambda name, args: '{"error": {"name": "TypeError", "message": "x is undefined"}}')
+    with pytest.raises(symcrys.SymcrysInternalError, match="x is undefined.*internal error of symcrys") as e:
+        symcrys.point_group("32")
+    assert e.value.js_name == "TypeError"
+    monkeypatch.setattr(_engine, "call", lambda name, args: '{"error": {"name": "RangeError", "message": "bad"}}')
+    with pytest.raises(symcrys.SymcrysError, match="bad"):
+        symcrys.point_group("32")

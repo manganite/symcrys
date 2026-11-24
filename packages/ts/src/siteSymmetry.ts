@@ -3,6 +3,7 @@
  * fixed (docs/conventions.md, "Site symmetry and Wyckoff positions").
  */
 
+import { TOLERANCE_KEYS, checkNumbers, checkOptions } from './checks.js';
 import { apply, multiply, type Vec3 } from './linalg.js';
 import { checkCartesianOperations, type CartesianOperation } from './operations.js';
 import { EPSILON, TOLERANCE_BOUND, toleranceOf, type ToleranceOptions } from './tolerances.js';
@@ -27,6 +28,7 @@ export interface SiteSymmetry {
 }
 
 function unit(v: Vec3): Vec3 {
+  checkNumbers(v, 3, 'A direction');
   const n = Math.hypot(v[0], v[1], v[2]);
   if (!(n > 0) || !Number.isFinite(n)) throw new RangeError(`Not a direction: ${JSON.stringify(v)}`);
   return [v[0] / n, v[1] / n, v[2] / n];
@@ -127,6 +129,7 @@ export function siteSymmetryOf(
   direction: Vec3,
   options?: ToleranceOptions,
 ): SiteSymmetry {
+  checkOptions(options, TOLERANCE_KEYS, 'siteSymmetryOf');
   const tolerance = siteTolerance(options);
   // Operations are checked in their own metric, at most with the bound for operations.
   checkCartesianOperations(operations, Math.min(tolerance, TOLERANCE_BOUND.operations));

@@ -4,6 +4,7 @@
  * Wyckoff position of any direction (docs/conventions.md, "Site symmetry and Wyckoff positions").
  */
 
+import { SETTING_KEYS, TOLERANCE_KEYS, checkOptions, pick } from '../checks.js';
 import { apply, inverse, transpose, type Mat3, type Vec3 } from '../linalg.js';
 import { crystalFamily } from '../lattice.js';
 import { itcBasis, itcClass, itcSetting as itcClassSetting } from './itcData.js';
@@ -230,7 +231,7 @@ export function tableSetting(key: PointGroupKey, options?: SettingOptions, what 
     );
   }
   const index = settingIndexOf(key, options);
-  operations(key, options); // validates the setting index
+  operations(key, pick(options, SETTING_KEYS)); // validates the setting index
   return index;
 }
 
@@ -242,6 +243,7 @@ export function tableSetting(key: PointGroupKey, options?: SettingOptions, what 
  * of setting 1 carried into their frame.
  */
 export function wyckoffPositions(key: PointGroupKey, options?: SettingOptions): readonly WyckoffPosition[] {
+  checkOptions(options, SETTING_KEYS, 'wyckoffPositions');
   const setting = tableSetting(key, options);
   const cacheKey = `${key}#${setting}`;
   let result = cache.get(cacheKey);
@@ -289,7 +291,8 @@ export function siteSymmetry(
   direction: Vec3,
   options?: SettingOptions & ToleranceOptions,
 ): SiteSymmetry {
-  return siteSymmetryOf(operations(key, options), direction, options);
+  checkOptions(options, [...SETTING_KEYS, ...TOLERANCE_KEYS], 'siteSymmetry');
+  return siteSymmetryOf(operations(key, pick(options, SETTING_KEYS)), direction, pick(options, TOLERANCE_KEYS));
 }
 
 const sortedKey = (list: readonly number[]): string => [...list].sort((a, b) => a - b).join(',');
@@ -305,6 +308,7 @@ export function wyckoffPosition(
   direction: Vec3,
   options?: SettingOptions & ToleranceOptions,
 ): WyckoffPosition {
+  checkOptions(options, [...SETTING_KEYS, ...TOLERANCE_KEYS], 'wyckoffPosition');
   const tolerance = siteTolerance(options);
   const setting = tableSetting(key, options);
   const ops = operations(key, { setting });

@@ -14,17 +14,28 @@ from typing import Any
 
 import quickjs  # type: ignore[import-untyped]
 
-__all__ = ["SymcrysError", "call", "exports", "value"]
+__all__ = ["SymcrysError", "SymcrysInternalError", "call", "exports", "value"]
 
 
 class SymcrysError(ValueError):
-    """An error raised by symcrys (e.g. an unknown key, setting or tensor specification).
+    """Wrong input to symcrys (e.g. an unknown key, setting or tensor specification, a vector of the
+    wrong length, an unknown option): the ``RangeError`` of the TypeScript library, or a check of
+    the Python layer. ``js_name`` is the name of the JavaScript error, ``RangeError``.
+    """
 
-    ``js_name`` is the name of the JavaScript error (``RangeError``, ``TypeError``, ``Error``).
+    def __init__(self, message: str, js_name: str = "RangeError") -> None:
+        super().__init__(message)
+        self.js_name = js_name
+
+
+class SymcrysInternalError(RuntimeError):
+    """A fault of symcrys itself, not of its input: any error of the library other than a
+    ``RangeError``. It is not a ``ValueError``, so that ``except ValueError`` does not hide it (#92);
+    please report it. ``js_name`` is the name of the JavaScript error (``TypeError``, ``Error``).
     """
 
     def __init__(self, message: str, js_name: str = "Error") -> None:
-        super().__init__(message)
+        super().__init__(f"{message} (an internal error of symcrys; please report it)")
         self.js_name = js_name
 
 
@@ -55,7 +66,9 @@ def call(name: str, args_json: str) -> str:
 
 
 def invoke(name: str, *args: Any) -> Any:
-    """Calls ``name`` with JSON-compatible arguments; returns the decoded result or raises SymcrysError."""
+    """Calls ``name`` with JSON-compatible arguments; returns the decoded result. Raises SymcrysError for
+    a RangeError of the library (wrong input) and SymcrysInternalError for any other error.
+    """
     try:
         args_json = json.dumps(args, allow_nan=False)
     except ValueError as e:
@@ -66,7 +79,9 @@ def invoke(name: str, *args: Any) -> Any:
     answer = json.loads(call(name, args_json))
     if "error" in answer:
         error = answer["error"]
-        raise SymcrysError(error["message"], error["name"])
+        if error["name"] == "RangeError":
+            raise SymcrysError(error["message"], error["name"])
+        raise SymcrysInternalError(error["message"], error["name"])
     return answer.get("result")
 
 
