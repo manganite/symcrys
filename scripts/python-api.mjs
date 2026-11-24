@@ -881,6 +881,7 @@ async function generate(name, cfg) {
             if (f.required) params.push(`${snake(f.name)}: ${ann}`);
             else keywords.push({ py: snake(f.name), ann: `Optional[${ann}]`, expr: '' });
           }
+          if (objectParam) throw new Error(`${where}: two object parameters, which the overloads do not handle`);
           objectParam = { tsIndex: i, fields, alts };
           args.push(`_shared.options(${fields.map((f) => `${snake(f.name)}=${snake(f.name)}`).join(', ')})`);
           continue;
@@ -954,6 +955,11 @@ async function generate(name, cfg) {
           );
         }
       }
+      // Every Python parameter name once (an object field must not take the name of another
+      // parameter or option).
+      const names = [...params.map((x) => x.split(':')[0]), ...keywords.map((k) => k.py)];
+      const twice = names.filter((n, k) => names.indexOf(n) !== k);
+      if (twice.length) throw new Error(`${where}: the Python parameter ${twice[0]} twice`);
       const signature = [
         ...params,
         ...(keywords.length ? ['*', ...keywords.map((k) => `${k.py}: ${k.ann} = None`)] : []),
@@ -976,6 +982,7 @@ async function generate(name, cfg) {
         // A function with a body of its own in _shared.py (rotateTensor: shapes and stacks), given
         // the library call and the arguments as the caller passed them, options converted.
         used.add(`functions.${d.name}.body`);
+        if (objectParam) throw new Error(`${where}: a body of its own with an object parameter`);
         const parameters = sig.parameters ?? [];
         const raw = parameters.map((/** @type {Json} */ p, /** @type {number} */ k) =>
           isOptions(p) ? args[k] : snake(p.name),

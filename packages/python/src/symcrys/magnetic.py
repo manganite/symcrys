@@ -490,25 +490,27 @@ class TensorProperty(TypedDict):
 @final
 class TensorForm(TypedDict):
     """The form of a tensor under a point group: the subspace of tensors invariant under every
-    operation and with the requested index symmetry. Every entry is a plain number; a vector of
-    components has length 3^rank (flat index, see the module documentation).
+    operation and with the requested index symmetry. Every entry is a plain number; a component is
+    named by its flat index, the first index slowest (see the module documentation).
     """
 
     rank: int
     """The rank of the tensor."""
     basis: NDArray[np.float64]
-    """A basis of the allowed tensors in reduced row echelon form: one row per free parameter, with 1 at
-    the parameter's own component and 0 at every other parameter's component. Every allowed tensor is Σₖ
-    pₖ·basis[k], where pₖ is the value of its component ``parameters[k]``. Empty if the tensor vanishes.
+    """A basis of the allowed tensors in reduced row echelon form: one tensor per free parameter, with 1
+    at the parameter's own component and 0 at every other parameter's component. Every allowed tensor is
+    Σₖ pₖ·basis[k], where pₖ is the value of its component ``parameters[k]``. Empty if the tensor
+    vanishes.
     """
     parameters: NDArray[np.int64]
     """The free parameters, as the index lists of their components (e.g. ``[0, 1, 1]`` for xyy), one per
-    basis row and in its order: each is the lowest component independent of those before it.
+    basis tensor and in its order: each is the lowest component independent of those before it.
     """
     relations: NDArray[np.float64]
     """The constraints: one row r per component that is not a parameter, in ascending flat index, with
-    r·t = 0 for every allowed tensor t. Row c reads t_c − Σₖ basis[k][c]·t_{parameters[k]} = 0; a row
-    with a single 1 says that the component vanishes.
+    r·t = 0 for every allowed tensor t, both by flat index. Row c reads t_c − Σₖ
+    b_{k,c}·t_{parameters[k]} = 0, with b_{k,c} the component c of basis[k]; a row with a single 1 says
+    that the component vanishes.
     """
 
 
@@ -1840,12 +1842,12 @@ def rotate_tensor(
     *,
     tolerance: Optional[float] = None,
 ) -> NDArray[np.float64]:
-    """The components of ``tensor`` (length 3^rank, flat index) in a frame rotated by the orthogonal
-    matrix ``rotation``: t′_{i…} = f·Σ R_{ia}…R_{…}·t_{a…}, with f = det(R) for an axial tensor and
-    1 for a polar one. To express a tensor in the frame of a surface, pass the matrix whose rows are
-    the new axes in the old frame. Time parity plays no part. The kind of tensor is given by its
-    specification or by the name of a property in ``TENSOR_PROPERTIES``. Raises SymcrysError for a
-    rotation that is not orthogonal within the tolerance (per matrix entry of RᵀR).
+    """The tensor ``tensor`` in a frame rotated by the orthogonal matrix ``rotation``: t′_{i…} = f·Σ
+    R_{ia}…R_{…}·t_{a…}, with f = det(R) for an axial tensor and 1 for a polar one. To express a
+    tensor in the frame of a surface, pass the matrix whose rows are the new axes in the old frame.
+    Time parity plays no part. The kind of tensor is given by its specification or by the name of a
+    property in ``TENSOR_PROPERTIES``. Raises SymcrysError for a rotation that is not orthogonal
+    within the tolerance (per matrix entry of RᵀR).
 
     Parameters
     ----------
@@ -1857,10 +1859,11 @@ def rotate_tensor(
     Returns
     -------
     numpy.ndarray
-        A float64 array of the shape of ``tensor`` (shape (3, …, 3), or flat (3**rank,)), with the
-        stacks of ``tensor`` and ``rotation`` (leading axes, broadcast as in NumPy) in front: a
-        rotation of shape (k, 3, 3) rotates the tensor k times, a stack of tensors (m, 3, …, 3) is
-        rotated each.
+        A float64 array of the shape of ``tensor``: a tensor has the shape (3, …, 3) or the flat
+        (3**rank,), where the structured shape is read first (at rank 1 a (3, 3) array is three
+        vectors). Leading axes of ``tensor`` and of ``rotation`` (…, 3, 3) are stacks, broadcast as
+        in NumPy: a rotation of shape (k, 3, 3) gives the tensor rotated by each of the k rotations,
+        a stack of tensors (m, 3, …, 3) each tensor rotated.
     """
     result: NDArray[np.float64] = _shared.rotate_tensor(
         _call,

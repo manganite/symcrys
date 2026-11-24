@@ -58,7 +58,7 @@ A form has
   the first index slowest (xyz of rank 3 is 5); in TypeScript rows of length 3<sup>rank</sup>, in
   Python each tensor an array of shape (3, …, 3). Every allowed tensor is
   Σ<sub>k</sub> p<sub>k</sub> · basis[k];
-- `parameters`: the free components as index lists, one per row of `basis`, each the lowest
+- `parameters`: the free components as index lists, one per entry of `basis`, each the lowest
   component independent of those before it;
 - `relations`: rows r with r · t = 0 for every allowed tensor t, its components by flat index.
 

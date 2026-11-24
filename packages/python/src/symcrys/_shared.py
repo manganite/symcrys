@@ -209,6 +209,9 @@ def rotate_tensor(call: Any, value: Any, tensor: Any, rotation: Any, spec_or_nam
         rank = value("TENSOR_PROPERTIES").get(given, {}).get("spec", {}).get("rank")
     else:
         rank = given.get("rank")
+        # A rank the library takes: an integer of any type, also a whole float (JSON makes it one).
+        if isinstance(rank, (np.integer, np.floating, float)) and not isinstance(rank, bool) and float(rank).is_integer():
+            rank = int(rank)
     if not isinstance(rank, int) or isinstance(rank, bool) or not 0 <= rank <= 4:
         # An unknown name or a wrong specification: the library says what is wrong.
         return np.asarray(call("rotateTensor", t.reshape(-1), r, given, options), dtype=np.float64)
@@ -232,6 +235,11 @@ def rotate_tensor(call: Any, value: Any, tensor: Any, rotation: Any, spec_or_nam
         ) from None
     tensors = np.broadcast_to(t, lead + core).reshape(-1, 3**rank)
     rotations = np.broadcast_to(r, lead + (3, 3)).reshape(-1, 3, 3)
+    if len(tensors) == 0:
+        # An empty stack: one call with a zero tensor, so that a wrong rotation or specification is
+        # still refused.
+        given_rotations = r.reshape(-1, 3, 3)
+        call("rotateTensor", np.zeros(3**rank), given_rotations[0] if len(given_rotations) else np.eye(3), given, options)
     out = [call("rotateTensor", tt, rr, given, options) for tt, rr in zip(tensors, rotations)]
     return np.asarray(out, dtype=np.float64).reshape(lead + core)
 

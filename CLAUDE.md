@@ -303,7 +303,8 @@ Carried over from birss-app, where the calculations come from.
   TypeScript type (`_convert.convert`), so the two languages cannot drift, and the gate `docs`
   fails on a stale module, not only on a stale docstring. Hand-written are `packages/python/api.json`
   (how TypeScript types become Python types where the types do not say it: the dtype of an array
-  field, int or float for a number, a function's own argument, the fields of `Operations`; the
+  field, int or float for a number, a function's own argument or body in `_shared.py`, the fields
+  of `Operations`; the
   module docstrings),
   `packages/python/docstrings.json` (the Returns sections), and the modules `_shared.py`,
   `_convert.py`, `_engine.py`. Chosen while implementing: the names of the TypedDicts are those of

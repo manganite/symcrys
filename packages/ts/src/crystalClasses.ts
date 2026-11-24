@@ -625,7 +625,7 @@ export function tensorFormOf(
 }
 
 /**
- * The components of `tensor` (length 3^rank, flat index) in a frame rotated by the orthogonal
+ * The tensor `tensor` in a frame rotated by the orthogonal
  * matrix `rotation`: t′_{i…} = f·Σ R_{ia}…R_{…}·t_{a…}, with f = det(R) for an axial tensor and 1
  * for a polar one. To express a tensor in the frame of a surface, pass the matrix whose rows are
  * the new axes in the old frame. The kind of tensor is given by its specification or by the name

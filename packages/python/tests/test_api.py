@@ -288,6 +288,13 @@ def test_rotate_tensor_takes_arrays_of_any_shape() -> None:
     with pytest.raises(symcrys.SymcrysError, match="rank 1 has the shape"):
         symcrys.rotate_tensor([1, 2], rz, "pyroelectric")
     assert magnetic.rotate_tensor([1.0, 0, 0], rotations, "ferromagnetic").shape == (4, 3)
+    # Review of #121 step 12c: a rank of any integer type keeps the shape; an empty stack still
+    # checks the rotation.
+    for rank in (np.int64(2), 2.0):
+        spec = {"rank": rank, "kind": "polar", "intrinsic": "none"}
+        assert symcrys.rotate_tensor(np.eye(3), rotations, spec).shape == (4, 3, 3)  # type: ignore[arg-type]
+    with pytest.raises(symcrys.SymcrysError, match="orthogonal"):
+        symcrys.rotate_tensor(np.zeros((0, 3, 3, 3)), 2 * np.eye(3), SHG)
 
 
 def test_library_errors_are_value_errors_with_the_message() -> None:

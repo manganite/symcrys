@@ -40,7 +40,7 @@
     },
     "rotate_tensor": {
       "type": "numpy.ndarray",
-      "doc": "A float64 array of the shape of ``tensor`` (shape (3, …, 3), or flat (3**rank,)), with the stacks of ``tensor`` and ``rotation`` (leading axes, broadcast as in NumPy) in front: a rotation of shape (k, 3, 3) rotates the tensor k times, a stack of tensors (m, 3, …, 3) is rotated each."
+      "doc": "A float64 array of the shape of ``tensor``: a tensor has the shape (3, …, 3) or the flat (3**rank,), where the structured shape is read first (at rank 1 a (3, 3) array is three vectors). Leading axes of ``tensor`` and of ``rotation`` (…, 3, 3) are stacks, broadcast as in NumPy: a rotation of shape (k, 3, 3) gives the tensor rotated by each of the k rotations, a stack of tensors (m, 3, …, 3) each tensor rotated."
     },
     "orbit": {
       "type": "list of dict",
@@ -103,7 +103,7 @@
     },
     "rotate_tensor": {
       "type": "numpy.ndarray",
-      "doc": "A float64 array of the shape of ``tensor`` (shape (3, …, 3), or flat (3**rank,)), with the stacks of ``tensor`` and ``rotation`` (leading axes, broadcast as in NumPy) in front: a rotation of shape (k, 3, 3) rotates the tensor k times, a stack of tensors (m, 3, …, 3) is rotated each."
+      "doc": "A float64 array of the shape of ``tensor``: a tensor has the shape (3, …, 3) or the flat (3**rank,), where the structured shape is read first (at rank 1 a (3, 3) array is three vectors). Leading axes of ``tensor`` and of ``rotation`` (…, 3, 3) are stacks, broadcast as in NumPy: a rotation of shape (k, 3, 3) gives the tensor rotated by each of the k rotations, a stack of tensors (m, 3, …, 3) each tensor rotated."
     },
     "orbit": {
       "type": "list of dict",
