@@ -97,7 +97,7 @@ const CALLS: Record<string, [Record<string, unknown>, Record<string, Call>]> = {
       planeGroup: call(['p4']),
       pointGroup: call(['4mm']),
       settings: call(['3m']),
-      symbol: call(['3m'], ['setting']),
+      symbol: call(['3m'], ['setting', 'form']),
       operations: call(['p4'], ['setting']),
       generators: call(['p4'], ['setting']),
       describeOperations: call(['p4'], ['setting']),

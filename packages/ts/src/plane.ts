@@ -81,6 +81,12 @@ export interface SettingOptions {
   readonly setting?: number;
 }
 
+/** Options of `symbol`: the setting, and the form of a plane group's symbol. */
+export interface SymbolOptions extends SettingOptions {
+  /** `'short'` (default): the symbol as one word, the key; `'full'`: the full symbol, positions separated by spaces (`'p 1 m 1'` for `pm`). */
+  readonly form?: 'short' | 'full';
+}
+
 /** An operation (W, w) in the lattice basis: x ↦ W·x + w. */
 export interface PlaneOperation {
   /** The linear part W, a 2 × 2 matrix with integer entries, rows first. */
@@ -95,8 +101,6 @@ export interface PlaneGroup {
   readonly key: PlaneGroupKey;
   /** The number of the plane group, 1 to 17. */
   readonly number: number;
-  /** The full symbol as ITA prints it, e.g. `'p2mg'` or `'p1m1'`. */
-  readonly fullSymbol: string;
   /** The plane point group. */
   readonly pointGroup: PointGroupKey;
   /** The setting of the point group: 2 for `p31m`, otherwise 1. */
@@ -391,7 +395,6 @@ export function planeGroup(key: PlaneGroupKey): PlaneGroup {
   return Object.freeze({
     key: entry.symbol as PlaneGroupKey,
     number: entry.number,
-    fullSymbol: entry.fullSymbol,
     pointGroup: point.key,
     pointGroupSetting: point.setting,
     crystalSystem: entry.system,
@@ -421,10 +424,32 @@ export function settings(key: PointGroupKey): readonly Setting[] {
   );
 }
 
-/** The symbol of a plane point group in a setting: `'3m1'` or `'31m'` for `3m`, otherwise the key. */
-export function symbol(key: PointGroupKey, options?: SettingOptions): string {
-  checkOptions(options, ['setting'], 'symbol');
-  return planePointGroupSymbol(pointKey(key, 'symbol'), settingOf(options));
+/**
+ * The symbol of a plane group or a plane point group (#137 F4). In the short form (the default) the
+ * Hermann–Mauguin symbol as one word: for a plane group the key (`'p2mg'`, `'pm'`), for a plane
+ * point group in a setting `'3m1'` or `'31m'` for `3m`, otherwise the key. In the form `'full'`
+ * the full symbol with its positions separated by spaces, as in the other entry points: `'p 1 m 1'`
+ * for `pm` (ITA prints `p1m1`), `'p 2 m g'`, `'3 m 1'`; ITA prints no other full symbol for a plane
+ * point group (Ch. 3.2, p. 721, and Table 3.2.3.1). A plane group has setting 1 only. Throws a
+ * RangeError for an unknown key, setting or form.
+ */
+export function symbol(key: PlaneGroupKey | PointGroupKey, options?: SymbolOptions): string {
+  checkOptions(options, ['setting', 'form'], 'symbol');
+  const form = options?.form ?? 'short';
+  if (form !== 'short' && form !== 'full') {
+    throw new RangeError(`Unknown symbol form: ${shown(form)} (short or full)`);
+  }
+  // Every position of a plane symbol is one character, the lattice letter included.
+  const spaced = (text: string) => (form === 'full' ? [...text].join(' ') : text);
+  if (isPlaneGroupKey(key)) {
+    const setting = settingOf(options);
+    if (setting !== undefined && setting !== 1) {
+      throw new RangeError(`The plane group ${key} has no setting ${shown(setting)}`);
+    }
+    return spaced(form === 'full' ? planeGroupEntry(key).fullSymbol : key);
+  }
+  if (!isPlanePointGroupKey(key)) return unknownKey(key);
+  return spaced(planePointGroupSymbol(key, settingOf(options)));
 }
 
 /**

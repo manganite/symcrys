@@ -225,7 +225,16 @@ All notable changes to symcrys are recorded here. The format follows
   - Python: `symmetry_elements(key, box=…)`, the line field `point`; `asymmetric_unit` with
     `edges`.
 
+- **`symbol` for plane groups** (#137 F4, #97, #121 step 10c): `symbol(key, { form })` of
+  `symcrys/plane` takes the key of a plane group too, the short symbol (the key) or in the form
+  `'full'` the full symbol with its positions separated by spaces (`p 1 m 1` for `pm`, as the
+  other entry points write full symbols); a plane point group gives `3 m 1` in that form. Python:
+  `plane.symbol(key, form=…)`.
+
 ### Removed
+
+- The field `fullSymbol` of `planeGroup` (`symcrys/plane`; Python `plane_group(key)["full_symbol"]`)
+  (#137 F4, #121 step 10c): the full symbol is `symbol(key, { form: 'full' })`, with spaces.
 
 - `snapToWyckoffPosition` of `symcrys/plane` (Python `snap_to_wyckoff_position`) and its result type
   `SnappedPosition` (#137 F1, #108): replaced by `wyckoffDistances(key, point, { basis })`, which

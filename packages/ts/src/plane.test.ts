@@ -43,6 +43,16 @@ describe('plane point groups', () => {
     expect(plane.symbol('3m', { setting: 2 })).toBe('31m');
     expect(plane.symbol('2mm')).toBe('2mm');
     expect(plane.symbol('m')).toBe('m');
+    // Plane groups too (#137 F4): the short symbol is the key, the full one as ITA prints it.
+    expect(plane.symbol('pm')).toBe('pm');
+    expect(plane.symbol('pm', { form: 'full' })).toBe('p 1 m 1');
+    expect(plane.symbol('cm', { form: 'full' })).toBe('c 1 m 1');
+    expect(plane.symbol('p2mg', { form: 'full' })).toBe('p 2 m g');
+    expect(plane.symbol('3m', { setting: 2, form: 'full' })).toBe('3 1 m');
+    expect(plane.symbol('m', { form: 'full' })).toBe('m');
+    expect(() => plane.symbol('p7' as plane.PlaneGroupKey)).toThrow(/Unknown plane group or plane point group/);
+    expect(() => plane.symbol('pm', { setting: 2 })).toThrow(RangeError);
+    expect(() => plane.symbol('pm', { form: 'long' as never })).toThrow(RangeError);
     expect(plane.pointGroup('3m')).toEqual({ key: '3m', crystalSystem: 'hexagonal', order: 6 });
     expect(plane.pointGroup('4mm')).toEqual({ key: '4mm', crystalSystem: 'square', order: 8 });
     expect(plane.settings('3m')).toEqual([
@@ -93,7 +103,6 @@ describe('plain numbers at the API', () => {
     expect(plane.planeGroup('c2mm')).toEqual({
       key: 'c2mm',
       number: 9,
-      fullSymbol: 'c2mm',
       pointGroup: '2mm',
       pointGroupSetting: 1,
       crystalSystem: 'rectangular',
@@ -460,7 +469,7 @@ describe('errors', () => {
     expect(() => plane.planeGroup(9 as unknown as plane.PlaneGroupKey)).toThrow(RangeError);
     expect(() => plane.planeGroup('2mm' as plane.PlaneGroupKey)).toThrow(/plane group, not of the point group 2mm/);
     expect(() => plane.pointGroup('p2' as plane.PointGroupKey)).toThrow(/planeGroup/);
-    expect(() => plane.symbol('p2' as plane.PointGroupKey)).toThrow(RangeError);
+    expect(() => plane.symbol('p7' as plane.PointGroupKey)).toThrow(RangeError);
     for (const f of [plane.wyckoffPositions, plane.asymmetricUnit, plane.symmetryElements]) {
       expect(() => f('4mm' as plane.PlaneGroupKey)).toThrow(RangeError);
     }

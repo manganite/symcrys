@@ -980,6 +980,14 @@ while implementing gets its own note here.
   lies nearest to 0 from above; a box is its two corners, a line or a point allowed, at most a million
   rotation points. The ITC baseline pins keep the old shape
   through the box of the cell, clipped in the test, so they stay unchanged.
+- **The symbol of a plane group** (#137 F4, the part for 0.11, decided by Thomas on 2026-11-22;
+  see also #97 and #121 step 10c): `symbol(key, { form: 'short' | 'full' })` of `symcrys/plane` takes
+  the key of a plane group too, and the field `fullSymbol` of `planeGroup` goes, so that a symbol
+  is asked for in one way in every entry point. The full symbol has its positions separated by
+  spaces, as in the other entry points (Thomas, 2026-11-24: `p 1 m 1`, and later `P 1 21/c 1` for
+  the space groups). Chosen while implementing: a plane point group, for which ITA prints no other
+  full symbol (Ch. 3.2, p. 721; Table 3.2.3.1), gives its symbol spaced (`3 m 1`). `isPlaneGroupKey`, `findPlaneGroup` and
+  the lists come in 0.12.
 - **No frieze, layer or magnetic plane groups for now** (#31 question 3): no consumer needs them;
   the dimension-generic module keeps them possible (idea in #74).
 - **Entry point `symcrys/plane`, later `symcrys/space`** (#31 question 4), as `symcrys/magnetic`
@@ -996,7 +1004,7 @@ while implementing gets its own note here.
   (`-x,y`); a test checks that every plane group's linear parts are its point group.
 - **The API of `symcrys/plane`** (Thomas, 2026-11-22, #31, asked with proposals and a
   recommendation): **`planeGroup(key)`** names the function that gives a plane group (number,
-  symbols, point group, system, centring), not `spaceGroup` as recommended (one name for plane and
+  symbols _(the full one by `symbol` since #121 step 10c)_, point group, system, centring), not `spaceGroup` as recommended (one name for plane and
   space): a name that says what it is serves teaching and the apps; `symcrys/space` will have
   `spaceGroup`. The other names come from the other entry points (`operations`, `generators`,
   `wyckoffPositions`, `siteSymmetry`, `orbit`, `describeOperations`) and take the key of a plane

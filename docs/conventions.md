@@ -1082,7 +1082,13 @@ in the order of Table 3.2.1.1. The two sets do not overlap: a plane group's symb
 lattice letter. `3m` has two settings, `3m1` (setting 1, the default) and `31m` (setting 2), as ITA
 describes the trigonal groups with hexagonal axes in two orientations and says so for the plane
 point group (Ch. 3.2, p. 721, item (d)); the other groups have one. `settings(key)` lists them,
-`symbol(key, { setting })` gives the symbol of one.
+`symbol(key, { setting })` gives the symbol of one. `symbol` takes the key of a plane group too
+(#137 F4): its short symbol, the key, or in the form `'full'` the full symbol with its positions
+separated by spaces, as the other entry points write full symbols (Thomas, 2026-11-24): `p 1 m 1`
+for `pm`, where ITA prints `p1m1`, and `p 2 m g`. ITA prints no other full symbol for a plane point
+group ("The full Hermann–Mauguin symbol, if different, is given below the short symbol", Ch. 3.2,
+p. 721; Table 3.2.3.1 gives none), so its full form is its symbol with the positions spaced:
+`3 m 1`, `2 m m`.
 
 **Lattice basis.** Everything is in the basis a, b of the conventional cell: an operation is
 `{ matrix, translation }` with x ↦ W·x + w, W a 2 × 2 matrix with integer entries; a point, a vertex
