@@ -102,8 +102,8 @@ function groupData(key: string): GroupData {
 const plainOperations = (key: string): readonly PlainOperation[] => groupData(key).ops;
 
 /**
- * The orbit of a point under a plane group: the images of the point set onto its site symmetry
- * (`planeSiteSymmetry`), each in [0, 1), in the order of the operations that first produce them,
+ * The orbit of a point under a plane group: the images of the point set onto its Wyckoff position
+ * (`planeSiteOfPosition`), each in [0, 1), in the order of the operations that first produce them,
  * with the operations that map the point there: one entry per coset of the site symmetry.
  */
 export function planeOrbit(
@@ -111,10 +111,10 @@ export function planeOrbit(
   point: readonly number[],
   options?: ToleranceOptions,
 ): { point: number[]; operations: number[] }[] {
-  // The point is first set onto its site symmetry, as planeSiteSymmetry does, so that the images of
-  // one coset coincide exactly: merging images within the tolerance pairwise is not transitive, and
-  // near an element it could put operations together that form no coset (review of #153).
-  const site = planeSiteSymmetry(key, point, options);
+  // The point is first set onto its Wyckoff position (#137 F1), so that the images of one coset
+  // coincide exactly: merging images within the tolerance pairwise is not transitive, and near an
+  // element it could put operations together that form no coset (review of #153).
+  const site = planeSiteOfPosition(key, point, options);
   const out: { point: number[]; operations: number[] }[] = [];
   plainOperations(key).forEach((op, i) => {
     const q = image(op, site.point).map(mod1);
@@ -205,63 +205,165 @@ function parsed(expression: string): PlainOperation {
   return op;
 }
 
-/**
- * True if some parameters x, y make the printed coordinate expression (e.g. `x,2x`, `-x+1/2,y`) give
- * the point modulo the lattice within `tol`: least squares over the nearby lattice translations.
- */
-function onExpression(expression: string, p: readonly number[], tol: number): boolean {
-  const { matrix, translation } = parsed(expression);
-  const c = translation;
-  const ex = [matrix[0][0], matrix[1][0]];
-  const ey = [matrix[0][1], matrix[1][1]];
-  for (let i = -2; i <= 2; i++) {
-    for (let j = -2; j <= 2; j++) {
-      const r = [p[0] - c[0] - i, p[1] - c[1] - j];
-      // Solve min |a·ex + b·ey − r| over the columns that are not zero.
-      const cols = [ex, ey].filter((v) => v[0] !== 0 || v[1] !== 0);
-      let fit = [0, 0];
-      if (cols.length === 1) {
-        const v = cols[0];
-        const t = (v[0] * r[0] + v[1] * r[1]) / (v[0] * v[0] + v[1] * v[1]);
-        fit = [t * v[0], t * v[1]];
-      } else if (cols.length === 2) {
-        const det = ex[0] * ey[1] - ex[1] * ey[0];
-        if (Math.abs(det) < 1e-12) {
-          const v = ex;
-          const t = (v[0] * r[0] + v[1] * r[1]) / (v[0] * v[0] + v[1] * v[1]);
-          fit = [t * v[0], t * v[1]];
-        } else {
-          fit = r;
-        }
-      }
-      if (Math.abs(fit[0] - r[0]) < tol && Math.abs(fit[1] - r[1]) < tol) return true;
-    }
-  }
-  return false;
+/** The 2 × 2 Cartesian basis of a plane lattice (columns a, b), checked; undefined for none. */
+export type PlaneBasis = readonly (readonly number[])[];
+
+/** The distance of a point to one printed Wyckoff position, and the nearest point of the position. */
+export interface PositionDistance {
+  /** The index of the position in the printed order (`entry.wyckoff`). */
+  readonly row: number;
+  /** The nearest point of the position's point set, in [0, 1). */
+  readonly point: number[];
+  /** The distance: per lattice coordinate without a basis, Euclidean with one. */
+  readonly distance: number;
+}
+
+/** The free directions of a printed coordinate expression (the columns of W that are not zero, independent ones). */
+function freeDirections(op: PlainOperation): number[][] {
+  const cols = [0, 1].map((k) => [op.matrix[0][k], op.matrix[1][k]]).filter((v) => v[0] !== 0 || v[1] !== 0);
+  if (cols.length === 2 && Math.abs(cols[0][0] * cols[1][1] - cols[0][1] * cols[1][0]) < 1e-12) return [cols[0]];
+  return cols;
 }
 
 /**
- * The Wyckoff position of a point under a plane group, as ITA prints it: the point is first set
- * onto the fixed space of its site symmetry (`planeSiteSymmetry`), then found among the printed
- * coordinates of the positions with its multiplicity, the centring included.
+ * The smallest distance of r to a multiple of v, and the multiple: in the metric G (Euclidean with
+ * a basis, by projection) or per coordinate (the largest of the two components; the minimum over t
+ * of max(|r₁ − t v₁|, |r₂ − t v₂|) lies where a component vanishes or the two are equal).
+ */
+function nearestOnLine(r: readonly number[], v: readonly number[], g: Mat2 | undefined): { t: number; d: number } {
+  if (g) {
+    const gv = [g[0][0] * v[0] + g[0][1] * v[1], g[1][0] * v[0] + g[1][1] * v[1]];
+    const t = (r[0] * gv[0] + r[1] * gv[1]) / (v[0] * gv[0] + v[1] * gv[1]);
+    return { t, d: norm([r[0] - t * v[0], r[1] - t * v[1]], g) };
+  }
+  const candidates: number[] = [];
+  if (v[0] !== 0) candidates.push(r[0] / v[0]);
+  if (v[1] !== 0) candidates.push(r[1] / v[1]);
+  if (v[0] !== v[1]) candidates.push((r[0] - r[1]) / (v[0] - v[1]));
+  if (v[0] !== -v[1]) candidates.push((r[0] + r[1]) / (v[0] + v[1]));
+  let best = { t: 0, d: Infinity };
+  for (const t of candidates) {
+    const d = norm([r[0] - t * v[0], r[1] - t * v[1]], undefined);
+    if (d < best.d) best = { t, d };
+  }
+  return best;
+}
+
+type Mat2 = readonly (readonly number[])[];
+
+/** The length of a vector of lattice coordinates: per coordinate (the larger component) or in the metric G. */
+function norm(r: readonly number[], g: Mat2 | undefined): number {
+  if (!g) return Math.max(Math.abs(r[0]), Math.abs(r[1]));
+  return Math.sqrt(Math.max(0, r[0] * (g[0][0] * r[0] + g[0][1] * r[1]) + r[1] * (g[1][0] * r[0] + g[1][1] * r[1])));
+}
+
+/** The metric tensor G = BᵀB of a basis (columns a, b), checked: two rows of two finite numbers, not singular. */
+export function planeMetric(basis: unknown): Mat2 {
+  const ok =
+    Array.isArray(basis) &&
+    basis.length === 2 &&
+    basis.every(
+      (row) => Array.isArray(row) && row.length === 2 && row.every((x) => typeof x === 'number' && Number.isFinite(x)),
+    );
+  const b = basis as Mat2;
+  const det = ok ? b[0][0] * b[1][1] - b[0][1] * b[1][0] : 0;
+  const scale = ok ? Math.hypot(b[0][0], b[1][0]) * Math.hypot(b[0][1], b[1][1]) : 0;
+  if (!ok || !(Math.abs(det) > 1e-9 * scale)) {
+    throw new RangeError(
+      `The basis of a plane lattice is a non-singular 2 × 2 matrix (columns a, b), not ${shown(basis)}`,
+    );
+  }
+  const col = (k: number) => [b[0][k], b[1][k]];
+  const dot = (u: number[], w: number[]) => u[0] * w[0] + u[1] * w[1];
+  return [
+    [dot(col(0), col(0)), dot(col(0), col(1))],
+    [dot(col(1), col(0)), dot(col(1), col(1))],
+  ];
+}
+
+/**
+ * The distance of a point (lattice basis) to every printed Wyckoff position of a plane group, in
+ * printed order, with the nearest point of each: the point set of a position is the union of its
+ * printed coordinate expressions with every centring and lattice translation, a point, a line or
+ * the plane. Without a metric the distance is the larger of the two coordinate differences, with
+ * one (G = BᵀB) Euclidean.
+ */
+export function planeWyckoffDistances(key: string, point: readonly number[], g?: Mat2): PositionDistance[] {
+  checkPoint(point);
+  const entry = planeGroupEntry(key);
+  const centrings = [[0, 0], ...entry.centring.map((t) => parsed(t).translation)];
+  return entry.wyckoff.map(([, , , coordinates], row) => {
+    let best = { point: [...point], distance: Infinity };
+    for (const expression of coordinates) {
+      const op = parsed(expression);
+      const free = freeDirections(op);
+      for (const shift of centrings) {
+        const c = [op.translation[0] + shift[0], op.translation[1] + shift[1]];
+        if (free.length === 2) {
+          best = { point: [...point], distance: 0 };
+          continue;
+        }
+        const base = [Math.round(point[0] - c[0]), Math.round(point[1] - c[1])];
+        for (let i = -2; i <= 2; i++) {
+          for (let j = -2; j <= 2; j++) {
+            const origin = [c[0] + base[0] + i, c[1] + base[1] + j];
+            const r = [point[0] - origin[0], point[1] - origin[1]];
+            const { t, d } = free.length === 1 ? nearestOnLine(r, free[0], g) : { t: 0, d: norm(r, g) };
+            if (d < best.distance) {
+              const v = free.length === 1 ? free[0] : [0, 0];
+              best = { point: [origin[0] + t * v[0], origin[1] + t * v[1]], distance: d };
+            }
+          }
+        }
+      }
+    }
+    return { row, point: best.point.map(mod1), distance: best.distance };
+  });
+}
+
+/**
+ * The Wyckoff position a point lies on within the tolerance (#137 F1): the most special printed
+ * position (the smallest multiplicity) whose point set lies within the tolerance of the point,
+ * measured per coordinate modulo the lattice, the nearest among positions of equal multiplicity;
+ * the general position always holds the point. Returns the row and the nearest point on it.
+ */
+export function planePosition(key: string, point: readonly number[], options?: ToleranceOptions): PositionDistance {
+  const tol = tolerance(options);
+  const entry = planeGroupEntry(key);
+  const within = planeWyckoffDistances(key, point).filter((d) => d.distance < tol);
+  within.sort((a, b) => entry.wyckoff[a.row][0] - entry.wyckoff[b.row][0] || a.distance - b.distance);
+  return within[0];
+}
+
+/**
+ * The site symmetry of a point under a plane group, as one notion with its Wyckoff position
+ * (#137 F1): the point is set onto the position it lies on within the tolerance (`planePosition`),
+ * and the site symmetry is that of the point there.
+ */
+export function planeSiteOfPosition(
+  key: string,
+  point: readonly number[],
+  options?: ToleranceOptions,
+): PlaneSiteSymmetry {
+  const { row, point: onPosition } = planePosition(key, point, options);
+  const site = planeSiteSymmetry(key, onPosition, { tolerance: 1e-9 });
+  const multiplicity = planeGroupEntry(key).wyckoff[row][0];
+  if (site.multiplicity !== multiplicity) {
+    throw new Error(`${key}: the point ${shown(onPosition)} of position ${row} has multiplicity ${site.multiplicity}`);
+  }
+  return site;
+}
+
+/**
+ * The Wyckoff position of a point under a plane group, as ITA prints it: the position it lies on
+ * within the tolerance (`planePosition`).
  */
 export function planeWyckoffPositionOf(
   key: string,
   point: readonly number[],
   options?: ToleranceOptions,
 ): PlaneWyckoffPosition {
-  const tol = tolerance(options);
-  const site = planeSiteSymmetry(key, point, options);
-  const entry = planeGroupEntry(key);
-  const centrings = [[0, 0], ...entry.centring.map((t) => parsed(t).translation)];
-  for (const [multiplicity, letter, siteSymmetry, coordinates] of entry.wyckoff) {
-    if (multiplicity !== site.multiplicity) continue;
-    for (const t of centrings) {
-      const shifted = [site.point[0] - t[0], site.point[1] - t[1]];
-      if (coordinates.some((expression) => onExpression(expression, shifted, tol))) {
-        return { letter, multiplicity, siteSymmetry };
-      }
-    }
-  }
-  throw new RangeError(`No Wyckoff position of ${entry.symbol} holds the point ${shown(point)}`);
+  const { row } = planePosition(key, point, options);
+  const [multiplicity, letter, siteSymmetry] = planeGroupEntry(key).wyckoff[row];
+  return { letter, multiplicity, siteSymmetry };
 }

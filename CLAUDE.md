@@ -930,7 +930,7 @@ while implementing gets its own note here.
   oriented symbol come from print, not from a rule of symcrys. Checked: every printed point of every
   Wyckoff position of the 17 groups, displaced by about 3·10⁻⁸ in both directions, gives its printed letter, multiplicity,
   symbol and printed orbit (`positions.reference.test.ts`).
-- **Snapping onto a Wyckoff position** _(Under review, #108; not to be extended.)_
+- **Snapping onto a Wyckoff position** _(Replaced in #121 step 10a by `wyckoffDistances`, #137 F1: "Distance to a Wyckoff position" below.)_
   (`snapToWyckoffPosition`, decided by Thomas on 2026-11-22,
   #85; chosen while implementing, PR #104; `src/spaceGroups/snap.ts`): the criterion of plane-groups
   (`lage`, `einrasten`), the distance of the point to the point set of a position, not of its images:
@@ -941,6 +941,16 @@ while implementing gets its own note here.
   where the nearer line is the better answer. The least-squares point is not always the nearest in
   the per-coordinate measure (on `x,2x` it reaches 0.8 of the tolerance), as in the app. Checked:
   every printed point of every Wyckoff position snaps onto its letter (`snap.reference.test.ts`).
+- **Distance to a Wyckoff position** (#137 F1, decided by Thomas on 2026-11-22 and, the two open
+  points, on 2026-11-24; #108; #121 step 10a): `wyckoffDistances(key, point, { basis })` replaces
+  `snapToWyckoffPosition`: for every printed position the nearest point of its point set and the
+  distance, per lattice coordinate (the larger of |Δx|, |Δy| modulo the lattice, the metric of the
+  tolerance for points) without a basis, Euclidean with one. `wyckoffPosition` decides by that
+  distance (the most special position within the tolerance, the nearest among equal
+  multiplicities), and `siteSymmetry` and `orbit` set the point onto that position: one notion.
+  The snapping policy belongs to the applications. Chosen while implementing: the nearest point
+  of a line per coordinate is found where a component vanishes or the two are equal (the
+  minimum of the larger of two linear functions); the basis has the columns a, b.
 - **Asymmetric unit and elements in the cell** _(Under review, #110 items 12 and 13; not to be extended.)_
   (chosen while implementing, PR #80;
   `src/spaceGroups/cell.ts`): exact rationals inside, as the rest of the module. The asymmetric unit

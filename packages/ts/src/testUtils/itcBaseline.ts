@@ -440,9 +440,6 @@ function planeGroupPins(add: (id: string, f: () => unknown) => void, key: plane.
       add(`${key}: wyckoffPositionOf (${p}) tolerance ${tolerance}`, () =>
         plane.wyckoffPosition(key, p, { tolerance }),
       );
-      add(`${key}: snapToWyckoffPosition (${p}) tolerance ${tolerance}`, () =>
-        plane.snapToWyckoffPosition(key, p, { tolerance }),
-      );
     }
   }
 }

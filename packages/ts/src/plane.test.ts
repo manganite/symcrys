@@ -205,18 +205,42 @@ describe('plain numbers at the API', () => {
   });
 });
 
-describe('snapToWyckoffPosition', () => {
-  it('gives the printed position with the snapped point, frozen', () => {
-    const s = plane.snapToWyckoffPosition('p6mm', [0.34, 0.66], { tolerance: 0.02 });
-    expect(s).toEqual({ ...plane.wyckoffPositions('p6mm').find((w) => w.letter === 'b'), point: [1 / 3, 2 / 3] });
-    expect(Object.isFrozen(s) && Object.isFrozen(s.point)).toBe(true);
-    expect(plane.snapToWyckoffPosition('p2', [0.3, 0.4]).letter).toBe('e');
+describe('wyckoffDistances', () => {
+  it('gives every printed position in printed order with its nearest point and distance, frozen', () => {
+    const all = plane.wyckoffDistances('p6mm', [0.34, 0.66]);
+    expect(all.map((d) => d.letter)).toEqual(plane.wyckoffPositions('p6mm').map((w) => w.letter));
+    const b = all.find((d) => d.letter === 'b')!;
+    expect(b).toEqual({
+      ...plane.wyckoffPositions('p6mm').find((w) => w.letter === 'b'),
+      point: [1 / 3, 2 / 3],
+      distance: b.distance,
+    });
+    expect(b.distance).toBeCloseTo(0.34 - 1 / 3, 12); // per coordinate: max(|0.34 − 1/3|, |0.66 − 2/3|)
+    expect(all[0].distance).toBe(0); // the general position, printed first, holds every point
+    expect(Object.isFrozen(all) && Object.isFrozen(b) && Object.isFrozen(b.point)).toBe(true);
   });
 
-  it('refuses a point group, a bad point or tolerance', () => {
-    expect(() => plane.snapToWyckoffPosition('4mm' as plane.PlaneGroupKey, [0, 0])).toThrow(RangeError);
-    expect(() => plane.snapToWyckoffPosition('p2', 'x' as unknown as number[])).toThrow(RangeError);
-    expect(() => plane.snapToWyckoffPosition('p2', [0, 0], { tolerance: 0.6 })).toThrow(RangeError);
+  it('with a basis: Euclidean distances in its unit', () => {
+    // pm, rectangular cell a = 2, b = 1: the point (0.1, 0.3) is 0.1 · 2 = 0.2 from the line x = 0.
+    const a = plane.wyckoffDistances('pm', [0.1, 0.3], { basis: [[2, 0], [0, 1]] }).find((d) => d.letter === 'a')!; // prettier-ignore
+    expect(a.distance).toBeCloseTo(0.2, 12);
+    expect(a.point[0]).toBe(0);
+    expect(a.point[1]).toBeCloseTo(0.3, 12);
+  });
+
+  it('agrees with wyckoffPosition and siteSymmetry: one notion (#137 F1)', () => {
+    // 0.012 from the mirror line of pm; its image is 0.024 away, beyond the tolerance 0.02.
+    expect(plane.wyckoffPosition('pm', [0.012, 0.3], { tolerance: 0.02 }).letter).toBe('a');
+    const site = plane.siteSymmetry('pm', [0.012, 0.3], { tolerance: 0.02 });
+    expect(site.multiplicity).toBe(1);
+    expect(site.general).toBe(false);
+    expect(site.point[0]).toBe(0);
+  });
+
+  it('refuses a point group, a bad point or basis', () => {
+    expect(() => plane.wyckoffDistances('4mm' as plane.PlaneGroupKey, [0, 0])).toThrow(RangeError);
+    expect(() => plane.wyckoffDistances('p2', 'x' as unknown as number[])).toThrow(RangeError);
+    expect(() => plane.wyckoffDistances('p2', [0, 0], { basis: [[1, 2], [2, 4]] })).toThrow(RangeError); // prettier-ignore
   });
 });
 

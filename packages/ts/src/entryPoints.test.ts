@@ -720,7 +720,7 @@ describe('every result is frozen, nested values included (#137 C4)', () => {
     wyckoffPositions: ['p4'],
     siteSymmetry: ['p4', [0, 0]],
     wyckoffPosition: ['p4', [0, 0]],
-    snapToWyckoffPosition: ['p4', [0.01, 0]],
+    wyckoffDistances: ['p4', [0.01, 0]],
     orbit: ['p4', [0.1, 0.2]],
     asymmetricUnit: ['p4'],
     symmetryElements: ['p4gm'],
@@ -839,7 +839,6 @@ describe('one tolerance contract (#137 D1, #93)', () => {
     'symcrys/plane siteSymmetry': [(o) => plane.siteSymmetry('p4', [0.1, 0.2], o as never), 0.5],
     'symcrys/plane wyckoffPosition': [(o) => plane.wyckoffPosition('p4', [0.1, 0.2], o as never), 0.5],
     'symcrys/plane orbit': [(o) => plane.orbit('p4', [0.1, 0.2], o as never), 0.5],
-    'symcrys/plane snapToWyckoffPosition': [(o) => plane.snapToWyckoffPosition('p4', [0.1, 0.2], o as never), 0.5],
   };
 
   it('EPSILON is 10⁻⁶ and exported by all three entry points', () => {

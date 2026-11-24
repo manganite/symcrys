@@ -44,9 +44,9 @@ __all__ = [
     "point_group",
     "settings",
     "site_symmetry",
-    "snap_to_wyckoff_position",
     "symbol",
     "symmetry_elements",
+    "wyckoff_distances",
     "wyckoff_position",
     "wyckoff_positions",
 ]
@@ -243,10 +243,11 @@ def wyckoff_positions(key: str) -> list[dict[str, Any]]:
 
 
 def site_symmetry(key: str, point: ArrayLike, *, tolerance: Optional[float] = None) -> dict[str, Any]:
-    """The site symmetry of a point (lattice basis) under a plane group: the operations that map it
-    onto itself modulo the lattice within the tolerance, closed into a group, and the point set onto
-    their fixed space. Raises SymcrysError for an unknown key, a point that is not two finite
-    numbers, or a tolerance outside (0, 1/2).
+    """The site symmetry of a point (lattice basis) under a plane group, as one notion with its
+    Wyckoff position (#137 F1): the point is set onto the position it lies on within the tolerance
+    (``wyckoff_position``), and the site symmetry is that of the point there; ``point`` is the point
+    on the position. Raises SymcrysError for an unknown key, a point that is not two finite numbers,
+    or a tolerance outside (0, 1/2).
 
     Parameters
     ----------
@@ -269,8 +270,10 @@ def site_symmetry(key: str, point: ArrayLike, *, tolerance: Optional[float] = No
 
 def wyckoff_position(key: str, point: ArrayLike, *, tolerance: Optional[float] = None) -> dict[str, Any]:
     """The Wyckoff position of a point (lattice basis) under a plane group, as ``wyckoff_positions``
-    gives it: the printed position of the point's multiplicity whose coordinates, with the centring,
-    reach the point set onto its site symmetry. Raises SymcrysError as ``site_symmetry``.
+    gives it: the most special printed position whose point set lies within the tolerance of the
+    point, measured per coordinate modulo the lattice, and among positions of equal multiplicity the
+    nearest (the distance of ``wyckoff_distances``); the general position always holds the point.
+    Raises SymcrysError as ``site_symmetry``.
 
     Parameters
     ----------
@@ -282,41 +285,45 @@ def wyckoff_position(key: str, point: ArrayLike, *, tolerance: Optional[float] =
     return dict(_call("wyckoffPosition", key, _point(point), _shared.options(tolerance=tolerance)))
 
 
-def snap_to_wyckoff_position(key: str, point: ArrayLike, *, tolerance: Optional[float] = None) -> dict[str, Any]:
-    """Snaps a point (lattice basis) onto the most special Wyckoff position of a plane group that
-    lies within the tolerance of it, measured per coordinate modulo the lattice: a position without
-    a free parameter (a point) before one with one (a line), before the general position, which
-    always holds the point; among positions of the same kind the nearest. Returns the position, as
-    ``wyckoff_positions`` gives it, and the nearest point on it, in [0, 1). Unlike
-    ``wyckoff_position``, which asks whether the images of the point lie within the tolerance of it,
-    this asks whether the point lies within the tolerance of the position: an application that drags
-    a point and lets it snap passes a tolerance such as 10⁻². The point on a line is found by least
-    squares in the lattice coordinates. Raises SymcrysError as ``site_symmetry``.
+def wyckoff_distances(key: str, point: ArrayLike, *, basis: Optional[ArrayLike] = None) -> list[dict[str, Any]]:
+    """The distance of a point (lattice basis) to every Wyckoff position of a plane group, in the
+    printed order of ``wyckoff_positions``, each with the nearest point of the position (#137 F1,
+    #108). The point set of a position is the union of its printed coordinates with every centring
+    and lattice translation: a point, a line or the plane. Without a basis the distance is the
+    larger of the two coordinate differences modulo the lattice, the metric of the tolerance of
+    ``wyckoff_position``; with a basis (columns a, b) it is Euclidean, and the nearest point is the
+    Euclidean nearest one. How to snap a dragged point onto a position (which position wins, within
+    which radius) is the application's choice; this gives the numbers for it. Raises SymcrysError
+    for an unknown key, a point that is not two finite numbers, and a basis that is not a
+    non-singular 2 × 2 matrix.
 
     Parameters
     ----------
-    tolerance : keyword-only, optional
-        Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁶). It is measured per
-        matrix entry for operations, as the distance of unit vectors for directions and per
-        coordinate modulo the lattice for points (docs/conventions.md, "Tolerances").
+    basis : keyword-only, optional
+        The Cartesian basis of the lattice, a 2 × 2 matrix whose columns are a and b; with it the
+        distances are Euclidean, without it they are measured per lattice coordinate.
 
     Returns
     -------
-    dict
-        ``letter``, ``multiplicity``, ``site_symmetry``, ``coordinates`` as in
-        ``wyckoff_positions``, and ``point`` a float64 array of shape (2,).
+    list of dict
+        One per Wyckoff position, in the order of ``wyckoff_positions``: ``letter``,
+        ``multiplicity``, ``site_symmetry``, ``coordinates`` as there, ``point`` a float64 array of
+        shape (2,) and ``distance`` a float.
     """
-    result = dict(_call("snapToWyckoffPosition", key, _point(point), _shared.options(tolerance=tolerance)))
-    result["point"] = _floats(result["point"], 2)
-    return result
+    options = _shared.options(basis=None if basis is None else _shared.array(basis, "basis", np.float64))
+    return [
+        {**dict(d), "point": _floats(d["point"], 2), "distance": float(d["distance"])}
+        for d in _call("wyckoffDistances", key, _point(point), options)
+    ]
 
 
 def orbit(key: str, point: ArrayLike, *, tolerance: Optional[float] = None) -> list[dict[str, Any]]:
     """The orbit of a point (lattice basis) under a plane group: the images of the point set onto
-    its site symmetry (as ``site_symmetry`` sets it), each in [0, 1), in the order of the operations
-    that first give them, each with the indices of the operations that map the point there (as the
-    entries of the orbits of the point groups): one entry per coset of the site symmetry, so the
-    first entry holds the operations of ``site_symmetry``. Raises SymcrysError as ``site_symmetry``.
+    its Wyckoff position (as ``site_symmetry`` sets it), each in [0, 1), in the order of the
+    operations that first give them, each with the indices of the operations that map the point
+    there (as the entries of the orbits of the point groups): one entry per coset of the site
+    symmetry, so the first entry holds the operations of ``site_symmetry``. Raises SymcrysError as
+    ``site_symmetry``.
 
     Parameters
     ----------

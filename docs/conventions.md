@@ -475,7 +475,7 @@ when they differ by less than the tolerance, in the metric of their kind:
 | ----------------------------------------- | ------------------------------------------------------- | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | operations                                | per matrix entry                                        | 0.1   | `pointGroupOf`, `describeOperationsOf` (also in `symcrys/plane`), `tensorFormOf`, `isCentrosymmetricOf`, `isEnantiomorphicOf`, `allowsPropertyOf`, `allowedPropertiesOf`, `rotateTensor` |
 | directions                                | Euclidean distance of the unit vectors                  | 1     | `siteSymmetryOf`, `siteSymmetry`, `wyckoffPosition`, `orbitOf`                                                                                                                           |
-| points of the plane                       | per coordinate in the lattice basis, modulo the lattice | 1/2   | `siteSymmetry`, `wyckoffPosition`, `orbit`, `snapToWyckoffPosition` of `symcrys/plane`                                                                                                   |
+| points of the plane                       | per coordinate in the lattice basis, modulo the lattice | 1/2   | `siteSymmetry`, `wyckoffPosition`, `orbit` of `symcrys/plane`                                                                                                                            |
 | the metric tensor G of a cell (W ᵀGW = G) | per entry, relative to the largest entry of G           | 1     | `residualOperations`                                                                                                                                                                     |
 
 - **One check.** A tolerance is a finite number above 0 and below the bound of its kind, beyond
@@ -1119,19 +1119,23 @@ part of a plane point group (maintainer, 2026-11-22, #84).
 
 **Points.** `siteSymmetry`, `wyckoffPosition` and `orbit` take the key of a plane group and a point
 in the lattice basis (`orbit` gives each image as `{ point, operations }`, with the indices of the
-operations that map the point there, as the orbits of the point groups do; #137 C4), with an optional `tolerance` measured per coordinate modulo the lattice
-(default 10⁻⁶, below 1/2). The operations that fix the point within the tolerance are closed into a
-group and the point set onto their fixed space, so a rounded point gives the exact site symmetry.
-The Wyckoff position is the printed row of the point's multiplicity whose printed coordinates, with
-the centring, reach the point: letter and oriented symbol are ITA's. `snapToWyckoffPosition` answers another
-question, for a point that is dragged: onto which position should it snap? It measures the distance
-of the point to the point set of a position (per coordinate, modulo the lattice), not the distance of
-its images, takes the most special position within the tolerance (points, then lines, then the
-general position) and, among positions of the same kind, the nearest; it returns the position and the
-point on it found by least squares in the lattice coordinates (maintainer, 2026-11-22, #85). At a mirror line the two criteria differ by a
-factor of 2 (the image of a point at distance d lies 2d away); at a rotation point the factor depends
-on the order and on the direction of the offset, and in a hexagonal basis the point on a line is not
-where the mean of the images lies.
+operations that map the point there, as the orbits of the point groups do; #137 C4), with an
+optional `tolerance` measured per coordinate modulo the lattice (default 10⁻⁶, below 1/2). They
+answer one question with one criterion (#137 F1, #108; Thomas, 2026-11-24): on which Wyckoff
+position does the point lie? `wyckoffDistances(key, point, { basis })` gives the numbers: for every
+printed position, in printed order, the nearest point of its point set (the printed coordinates with
+every centring and lattice translation: a point, a line or the plane) and the distance to it, per
+lattice coordinate (the larger of |Δx| and |Δy| modulo the lattice, the metric of the tolerance)
+without a basis, Euclidean with a basis (columns a, b). `wyckoffPosition` is the most special
+position within the tolerance (the smallest multiplicity), the nearest among positions of equal
+multiplicity; the general position always holds the point, so letter and oriented symbol are ITA's.
+`siteSymmetry` sets the point onto that position and gives its site symmetry there, and `orbit` the
+images of that point, so the three never disagree. The distance to a position, not the distance of
+the images, decides: at a mirror line the two differ by a factor of 2 (the image of a point at
+distance d lies 2d away), so a point 0.012 from the mirror of pm lies on it at the tolerance 0.02,
+although its image is 0.024 away. Snapping a dragged point (which position wins, within which radius
+on screen) is a policy of the application, built on `wyckoffDistances`; `snapToWyckoffPosition`
+(0.10) is gone.
 
 **The cell.** `asymmetricUnit` is the polygon of ITA's printed block "Asymmetric unit": its
 vertices, counter-clockwise from the lowest, and per edge the printed inequality a·x + b·y ≤ c that
