@@ -4,9 +4,7 @@ Source: _International Tables for Crystallography_, Vol. A, 6th edition (2016), 
 (General introduction to space groups), Table 1.3.4.1, printed p. 39 (Zotero `RAC6PA2Y`, PDF page
 18). Transcribed from the page image at 300 and 600 dpi on 2026-11-24.
 
-Transcription conventions: a leading minus sign is an overbar (`-1`, `-3m`, `m-3m`). Short rules
-that the PDF draws below single characters (under the `6` of `6/mmm` and the `m` of `-3m`) are not
-transcribed; the text (§ 1.3.4.4.2) gives the holohedries as `6/mmm` and `-3m`.
+Transcription conventions: a leading minus sign is an overbar (`-1`, `-3m`, `m-3m`).
 
 | Lattice system | Bravais types of lattices | Holohedry |
 |----------------|---------------------------|-----------|

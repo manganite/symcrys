@@ -199,7 +199,7 @@ describe('ITA Table 1.3.4.1: lattice systems and their holohedries (#137 G1)', (
     // the trigonal classes act on the hP lattice of 6/mmm too (§ 1.3.4.4.2).
     for (const system of SYSTEMS) {
       const ofSystem = latticeSystemsOfSystem(system).map((l) => holohedry(l));
-      expect(ofSystem, system).toContain(printed.get(system));
+      expect(ofSystem, system).toEqual(system === 'trigonal' ? ['6/mmm', printed.get(system)] : [printed.get(system)]);
     }
   });
 
@@ -244,10 +244,17 @@ describe('ITA Table 1.3.4.1: lattice systems and their holohedries (#137 G1)', (
         expect(pointGroup(key).order, key).toBeLessThanOrEqual(pointGroup(h).order);
       }
     }
-    // 6/mmm does not keep the rhombohedral lattice: the two lattice systems are distinct.
+    // In the hexagonal family, a class belongs to the rhombohedral lattice system exactly if it keeps
+    // the hR lattice: the trigonal classes do, no class of the hexagonal system does.
     const toR = inverse(bases.rhombohedral);
-    const sixfold = operations('6').find((op) => Math.abs(op.cartesian[0][0] - 0.5) < 1e-9);
-    const w = multiply(multiply(toR, sixfold!.cartesian), bases.rhombohedral);
-    expect(w.flat().every((x) => Math.abs(x - Math.round(x)) < 1e-9)).toBe(false);
+    const keepsR = (key: PointGroupKey) =>
+      operations(key).every((op) =>
+        multiply(multiply(toR, op.cartesian), bases.rhombohedral)
+          .flat()
+          .every((x) => Math.abs(x - Math.round(x)) < 1e-9),
+      );
+    const family = POINT_GROUP_KEYS.filter((k) => ['trigonal', 'hexagonal'].includes(pointGroup(k).crystalSystem));
+    expect(family).toHaveLength(12);
+    for (const key of family) expect(latticeSystems(key).includes('rhombohedral'), key).toBe(keepsR(key));
   });
 });

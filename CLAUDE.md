@@ -518,7 +518,7 @@ operations }`; `undefined`, never `null` (`zoneAxis`); every result frozen and `
   `isCentrosymmetricOf(operations)` and `isChiralOf(operations)`, named like `tensorFormOf` and
   asking of the list what it asks (orthogonal matrices; in the magnetic API `timeReversal`); polar
   is there `allowsPropertyOf(operations, 'pyroelectric')`, and a Laue class needs the group
-  identified first. _(Under review, #113.)_ **`holohedry(system)` is a function of the crystal system** _(replaced
+  identified first. **`holohedry(system)` is a function of the crystal system** _(replaced
   in #121 step 11a, #137 G1: "Holohedry by lattice system" below)_, not a field:
   the holohedry depends on the group only through its system, and both readings for the trigonal
   classes have a consumer (birss-app shows `-3m`, the holohedry of the trigonal system;

@@ -534,8 +534,8 @@ Polar is there the named property: `allowsPropertyOf(operations, 'pyroelectric')
 § 1.3.4.4.2 and Table 1.3.4.1, p. 39; #137 G1): `holohedry(latticeSystem)` gives the point symmetry
 of the lattices of one of the seven lattice systems, `-1`, `2/m`, `mmm`, `4/mmm`, `6/mmm`
 (`'hexagonal'`, hP), `-3m` (`'rhombohedral'`, hR) and `m-3m`. Lattice systems classify lattices,
-not point groups: a trigonal class acts on the hP lattice (hexagonal axes) or on the hR lattice
-(rhombohedral axes), so `latticeSystems(key)` gives `['hexagonal', 'rhombohedral']` for a trigonal
+not point groups: a trigonal class acts on a primitive hexagonal (hP) or on a rhombohedrally centred
+(hR) lattice, so `latticeSystems(key)` gives `['hexagonal', 'rhombohedral']` for a trigonal
 class and the one lattice system of its name for every other class. A crystal system is not a
 lattice system: `holohedry('trigonal')` is an error that names the two. A magnetic point group has
 the lattice systems of its crystal class.
