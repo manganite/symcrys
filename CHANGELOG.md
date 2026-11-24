@@ -37,6 +37,13 @@ All notable changes to symcrys are recorded here. The format follows
 - `intrinsic: 'antisymmetric'` (rank 2, Jahn symbol {V²}) and `intrinsic: 'totally-symmetric'` (rank
   2 and above, [Vⁿ], e.g. SHG under Kleinman's condition) (#137 E2).
 
+- The named property `'ferrotoroidic'` (#137 E4, #118), in the magnetic API: a spontaneous toroidal
+  moment, a time-odd polar vector (Jahn symbol aV), allowed in 31 magnetic point groups, those for
+  which ITC Vol. D (§ 1.5.8.1, footnote 3, p. 140) says that the magnetoelectric tensor need not be
+  symmetric. `allowedProperties` of these groups lists it between `'ferromagnetic'` and
+  `'magnetoelectric'`. The `source` of `'ferroaxial'` says that the term is not from ITC and cites
+  Gallego et al. (2019) as well.
+
 ### Changed
 
 - **The settings are numbered by ITC's rule** (#137 A4, #121 step 6b): the ITC default is setting 1;

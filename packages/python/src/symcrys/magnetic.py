@@ -22,7 +22,14 @@ from ._shared import MAGNETIC, IntrinsicSymmetry, SiteSymmetry, TensorForm, Tens
 
 TimeParity = Literal["even", "odd"]
 TensorPropertyName = Literal[
-    "pyroelectric", "ferroaxial", "piezoelectric", "gyrotropic", "ferromagnetic", "magnetoelectric", "piezomagnetic"
+    "pyroelectric",
+    "ferroaxial",
+    "piezoelectric",
+    "gyrotropic",
+    "ferromagnetic",
+    "ferrotoroidic",
+    "magnetoelectric",
+    "piezomagnetic",
 ]
 
 

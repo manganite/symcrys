@@ -197,7 +197,7 @@ describe('the crystallographic API returns nothing about time reversal', () => {
       'piezoelectric',
       'gyrotropic',
     ]);
-    expect(Object.keys(magnetic.TENSOR_PROPERTIES)).toHaveLength(7);
+    expect(Object.keys(magnetic.TENSOR_PROPERTIES)).toHaveLength(8);
     for (const [name, p] of timeEven) {
       const { timeParity: _timeParity, ...spec } = p.spec;
       const own = classes.TENSOR_PROPERTIES[name as classes.TensorPropertyName];
@@ -242,7 +242,7 @@ describe('the crystallographic API refuses what involves time reversal', () => {
 
   it('the property of a time-odd tensor', () => {
     const ops = classes.operations('3');
-    for (const name of ['ferromagnetic', 'magnetoelectric', 'piezomagnetic']) {
+    for (const name of ['ferromagnetic', 'ferrotoroidic', 'magnetoelectric', 'piezomagnetic']) {
       const odd = name as classes.TensorPropertyName;
       const calls = [
         () => classes.allowsProperty('3', odd),

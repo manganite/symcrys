@@ -34,11 +34,11 @@ export const TENSOR_PROPERTIES = Object.freeze({
     'Spontaneous electric polarization, which changes with temperature: a polar vector p_i.',
     'ITC Vol. D (2013), § 1.1.4.4.2, p. 12; classes: ITA (2016) Table 3.2.2.1, p. 738',
   ),
-  /** Ferroaxial order: a time-even axial vector. */
+  /** Ferroaxial order: a time-even axial vector (not a term of ITC). */
   ferroaxial: property(
     { rank: 1, kind: 'axial', timeParity: 'even', intrinsic: 'none' },
-    'Ferroaxial (ferro-rotational) order, e.g. a net rotation of structural units about an axis: an axial vector A_i.',
-    'Hlinka, Privratska, Ondrejkovic & Janovec, Phys. Rev. Lett. 116, 177602 (2016); classes: Birss (1966), Tables 4a and 4c, pp. 56–58',
+    'Ferroaxial (ferro-rotational) order, e.g. a net rotation of structural units about an axis: an axial vector A_i, the axial toroidal moment (Jahn symbol eV).',
+    'Not in ITC: Hlinka, Privratska, Ondrejkovic & Janovec, Phys. Rev. Lett. 116, 177602 (2016); Gallego et al., Acta Cryst. A75, 438 (2019), p. 440 (axial toroidal moment, type eV); classes: Birss (1966), Tables 4a and 4c, pp. 56–58',
   ),
   /** The piezoelectric effect (and second-harmonic generation, which has the same tensor): polar, rank 3, symmetric in j, k. */
   piezoelectric: property(
@@ -57,6 +57,12 @@ export const TENSOR_PROPERTIES = Object.freeze({
     { rank: 1, kind: 'axial', timeParity: 'odd', intrinsic: 'none' },
     'Spontaneous magnetization M_s (ferromagnets, ferrimagnets, weak ferromagnets): an axial vector that changes sign under time reversal.',
     'ITC Vol. D (2013), § 1.5.2.1 with Table 1.5.2.4, p. 113',
+  ),
+  /** A spontaneous toroidal moment: a time-odd polar vector (magnetic API only). */
+  ferrotoroidic: property(
+    { rank: 1, kind: 'polar', timeParity: 'odd', intrinsic: 'none' },
+    'Spontaneous toroidal moment T_i (ferrotoroidic order): a polar vector that changes sign under time reversal (Jahn symbol aV); allowed exactly where the magnetoelectric tensor need not be symmetric.',
+    'ITC Vol. D (2013), § 1.5.8.1, footnote 3, p. 140 (the 31 groups of Table 1.5.8.1 whose magnetoelectric tensor need not be symmetric); Gallego et al., Acta Cryst. A75, 438 (2019), p. 440 (polar toroidal moment, type aV)',
   ),
   /** The linear magnetoelectric effect: a time-odd axial tensor of rank 2 (magnetic API only). */
   magnetoelectric: property(

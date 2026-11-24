@@ -751,6 +751,15 @@ The conventions are in `docs/conventions.md` ("Tensors"); here, what was decided
   `'antisymmetric'` (rank 2) and `'totally-symmetric'`. Chosen while implementing: a specification
   with the names of 0.10 is a RangeError that names the new ones; `'totally-symmetric'` from rank 2;
   an antisymmetric index symmetry is computed with signed orbits of the index permutations.
+- **Named properties and parameters in ITC's terms** (#137 E3, E4, decided by Thomas on 2026-11-22;
+  #118; #121 step 9b): `'ferrotoroidic'` (rank 1, polar, time-odd) as the eighth property, anchored
+  in ITC Vol. D § 1.5.8.1, footnote 3, p. 140 (its 31 groups are those whose printed
+  magnetoelectric matrix in Table 1.5.8.1 is not symmetric) and in Gallego et al. (2019), p. 440
+  (polar toroidal moment, aV); `'gyrotropic'` stays, with ITA's "optical activity"; `'ferroaxial'`
+  stays, marked in `source` and the docs as not from ITC, with Gallego et al. (axial toroidal
+  moment, eV) beside Hlinka et al. The free parameters keep symcrys's rule (the lowest independent
+  component), documented as not ITC's choice; numeric `toVoigt`/`fromVoigt` come in 0.12, with
+  their convention named, since ITC and Gallego et al. differ in the factors.
 - **Gallego et al. (2019) as the model of the tensor notation** (Thomas, 2026-11-24): the extended
   Jahn symbols of Gallego et al. (MTENSOR of the Bilbao Crystallographic Server; prefix e axial,
   a time-odd, square and curly brackets for symmetric and antisymmetric indices) are the model for
@@ -822,7 +831,7 @@ The conventions are in `docs/conventions.md` ("Tensors"); here, what was decided
   ferroaxial materials beside chiral ones (NiTiO₃, class `-3`) and asked for a query for "axial".
   It is a named property like the others, a time-even axial vector, in both APIs; Thomas agreed to
   the name `'ferroaxial'` rather than "axial", because `'axial'` already is the parity of a tensor
-  and five of the seven properties have an axial tensor. Not a field of `pointGroup()`: a question
+  and five of the seven properties (then) have an axial tensor. Not a field of `pointGroup()`: a question
   whether a tensor is allowed is a named property (above), which also serves a list of operations.
   ITC Vol. D does not tabulate the property; the term is cited from Hlinka et al., _Phys. Rev.
   Lett._ **116**, 177602 (2016) (in Zotero without PDF, so the 13 classes are not checked against

@@ -227,6 +227,23 @@ describe('ITC Vol. D Table 1.5.8.1: linear magnetoelectric effect', () => {
   });
 });
 
+describe('ITC Vol. D § 1.5.8.1, footnote 3: the toroidal moment', () => {
+  it('is allowed in exactly the 31 groups whose printed magnetoelectric tensor need not be symmetric', () => {
+    // The print anchor of 'ferrotoroidic' (#137 E4): "Table 1.5.8.1 shows that the tensor α_ij ...
+    // does not need to be symmetric for 31 of the 58 point groups. ... These 31 groups coincide with
+    // those that admit a spontaneous toroidal moment" (p. 140). A printed matrix is symmetric if
+    // every cell is printed as its mirror cell (a12 and a12; not a12 and a21, nor a12 and -a12).
+    const content = readReference('itc/vol-d-table-1.5.8.1.md');
+    const matrices = printedMatrices(content);
+    const symmetric = (m: string[][]) => m.every((row, i) => row.every((cell, j) => cell === m[j][i]));
+    const nonSymmetric = printedGroups(content)
+      .filter((g) => !symmetric(matrices.get(g.block)!))
+      .map((g) => orientation(g.symbols[0])!.key);
+    expect(nonSymmetric).toHaveLength(31);
+    expect([...nonSymmetric].sort()).toEqual(GROUPS.filter((k) => allowsProperty(k, 'ferrotoroidic')).sort());
+  });
+});
+
 describe('ITC Vol. D § 1.5.8.1: the trigonal orientations the text names', () => {
   const content = readReference('itc/vol-d-table-1.5.8.1.md');
   const rows = tableRows(section(content, '## Trigonal orientations with the same form')).slice(1);
