@@ -14,7 +14,8 @@ time-odd property. Operations carry ``time_reversal``, a tensor specification ``
 from __future__ import annotations
 
 import sys
-from typing import TYPE_CHECKING, Any, Literal, Mapping, Optional, Sequence, TypedDict, Union, final
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Any, Iterator, Literal, Mapping, Optional, Sequence, TypedDict, Union, final, overload
 
 if sys.version_info >= (3, 11):
     from typing import NotRequired
@@ -124,20 +125,65 @@ TensorPropertyName = Literal[
 
 @final
 class Operation(TypedDict):
-    """A point operation of a magnetic point group in a setting: ITA's matrix W in the lattice basis
-    of the setting (``matrix``, integer, acting on the coordinates of a lattice direction [uvw]; the
-    coordinate triplets of ITA's general position are its rows) and the same operation as an
-    orthogonal Cartesian matrix (``cartesian``, R = B·W·B⁻¹ with the basis B of the setting),
-    combined with time reversal if ``time_reversal`` is ``True`` (a primed operation).
-    docs/conventions.md, "Operations".
-    """
+    """One operation of ``Operations`` (``ops[i]``, ``for op in ops``)."""
 
+    matrix: NDArray[np.int64]
+    """ITA's matrix W in the lattice basis of the setting, integer, rows first."""
     cartesian: NDArray[np.float64]
     """The orthogonal Cartesian 3×3 matrix, rows first."""
     time_reversal: bool
     """``True`` if the operation is combined with time reversal (a primed operation)."""
-    matrix: NDArray[np.float64]
-    """ITA's matrix W in the lattice basis of the setting, integer, rows first."""
+
+
+@dataclass(frozen=True, eq=False)
+class Operations:
+    """The operations of a magnetic point group as arrays, one row per operation, in the order of
+    ``operations`` (#137 H1): what ``operations``, ``generators`` and ``residual_operations``
+    return, and what every function that takes operations accepts, beside a list of dicts
+    ``{"cartesian", "time_reversal"}``. An array of matrices alone is refused here, since it does
+    not say which operations carry time reversal. Frozen, its arrays read-only; ``len(ops)`` is the
+    number of operations.
+    """
+
+    matrix: NDArray[np.int64]
+    """int64 array of shape (n, 3, 3), one row per operation. ITA's matrix W in the lattice basis of the
+    setting, integer, rows first.
+    """
+    cartesian: NDArray[np.float64]
+    """float64 array of shape (n, 3, 3), one row per operation. The orthogonal Cartesian 3×3 matrix,
+    rows first.
+    """
+    time_reversal: NDArray[np.bool_]
+    """bool array of shape (n,), one row per operation. ``True`` if the operation is combined with time
+    reversal (a primed operation).
+    """
+
+    _symcrys_operations = True
+
+    def __post_init__(self) -> None:
+        _shared.freeze(self, _OPERATION_FIELDS)
+
+    def __reduce__(self) -> tuple[Any, ...]:
+        # A copy or a pickle is built anew, so its arrays are checked and read-only too.
+        return (type(self), tuple(getattr(self, name) for name in _OPERATION_FIELDS))
+
+    def __len__(self) -> int:
+        return len(self.matrix)
+
+    def __iter__(self) -> Iterator[Operation]:
+        return (self[i] for i in range(len(self)))
+
+    @overload
+    def __getitem__(self, index: int | np.integer[Any]) -> Operation: ...
+
+    @overload
+    def __getitem__(self, index: slice | Sequence[int] | NDArray[Any]) -> Operations: ...
+
+    def __getitem__(self, index: int | np.integer[Any] | slice | Sequence[int] | NDArray[Any]) -> Operation | Operations:
+        """One operation as a dict ``{"matrix", "cartesian", "time_reversal"}`` for an integer, otherwise
+        the ``Operations`` of the selected rows (a slice, a list of indices, a boolean mask)."""
+        result: Operation | Operations = _shared.operation_at(self, index)
+        return result
 
 
 @final
@@ -466,14 +512,8 @@ class TensorForm(TypedDict):
     """
 
 
-_S_Operation = (
-    "d",
-    {
-        "cartesian": ("a", np.float64, None),
-        "timeReversal": _V,
-        "matrix": ("a", np.float64, None),
-    },
-)
+_OPERATION_FIELDS = {"matrix": (np.int64, (3, 3)), "cartesian": (np.float64, (3, 3)), "time_reversal": (np.bool_, ())}
+_S_Operations = ("ops", Operations, {"matrix": (np.int64, (3, 3)), "cartesian": (np.float64, (3, 3)), "timeReversal": (np.bool_, ())})
 _S_LatticeParameters = ("d", {"a": _F, "b": _F, "c": _F, "alpha": _F, "beta": _F, "gamma": _F})
 _S_AxisChange = ("d", {"direction": ("a", np.float64, None), "plane": ("a", np.float64, None)})
 _S_Axis = ("d", {"lattice": ("a", np.int64, None), "cartesian": ("a", np.float64, None)})
@@ -591,6 +631,7 @@ __all__ = [
     "Operation",
     "OperationDescription",
     "OperationKind",
+    "Operations",
     "OrbitPole",
     "PointGroup",
     "PointGroupInSetting",
@@ -693,11 +734,11 @@ and its print source. ``'gyrotropic'`` is optical activity.
 
 
 def residual_operations(
-    operations: Sequence[Mapping[str, Any]],
+    operations: Operations | Sequence[Mapping[str, Any]],
     basis: ArrayLike,
     *,
     tolerance: Optional[float] = None,
-) -> list[Operation]:
+) -> Operations:
     """The operations of a list that keep the metric of a cell: W with WᵀGW = G, G the metric tensor
     of ``basis``. The operations are read by ``matrix``, the integer matrix W on lattice
     coordinates, as ``operations`` gives them; the list is taken as it is and the kept operations
@@ -712,16 +753,21 @@ def residual_operations(
         Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁶). It is measured per
         matrix entry for operations, as the distance of unit vectors for directions and per
         coordinate modulo the lattice for points (docs/conventions.md, "Tolerances").
+
+    Returns
+    -------
+    Operations
+        The kept operations of the caller, in their order.
     """
-    result: list[Operation] = _shared.convert(
-        _call(
-            "residualOperations",
-            _shared.operation_list(operations, ("matrix",)),
-            _shared.array(basis, "basis", np.float64),
-            _shared.options(tolerance=tolerance),
-        ),
-        ("l", _S_Operation),
+    given = _shared.operation_list(operations, ("matrix",))
+    kept = _call(
+        "residualOperations",
+        [{**op, "index": i} for i, op in enumerate(given)],
+        _shared.array(basis, "basis", np.float64),
+        _shared.options(tolerance=tolerance),
     )
+    ops = operations if isinstance(operations, Operations) else _shared.operations_of(given, Operations)
+    result: Operations = _shared.select(ops, kept)
     return result
 
 
@@ -1078,7 +1124,7 @@ def symmetry_directions(
 
 
 def point_group_of(
-    operations: Sequence[Mapping[str, Any]],
+    operations: Operations | Sequence[Mapping[str, Any]],
     *,
     tolerance: Optional[float] = None,
 ) -> Optional[IdentifiedPointGroup]:
@@ -1103,7 +1149,7 @@ def point_group_of(
     result: Optional[IdentifiedPointGroup] = _shared.convert(
         _call(
             "pointGroupOf",
-            _shared.operation_list(operations),
+            _shared.operation_list(operations, ("cartesian", "time_reversal")),
             _shared.options(tolerance=tolerance),
         ),
         ("o", _S_IdentifiedPointGroup),
@@ -1112,7 +1158,7 @@ def point_group_of(
 
 
 def describe_operations_of(
-    operations: Sequence[Mapping[str, Any]],
+    operations: Operations | Sequence[Mapping[str, Any]],
     *,
     tolerance: Optional[float] = None,
 ) -> list[CartesianOperationDescription]:
@@ -1141,7 +1187,7 @@ def describe_operations_of(
     result: list[CartesianOperationDescription] = _shared.convert(
         _call(
             "describeOperationsOf",
-            _shared.operation_list(operations),
+            _shared.operation_list(operations, ("cartesian", "time_reversal")),
             _shared.options(tolerance=tolerance),
         ),
         ("l", _S_CartesianOperationDescription),
@@ -1200,7 +1246,7 @@ def orbit(
 
 
 def orbit_of(
-    operations: Sequence[Mapping[str, Any]],
+    operations: Operations | Sequence[Mapping[str, Any]] | ArrayLike,
     direction: ArrayLike,
     *,
     tolerance: Optional[float] = None,
@@ -1230,7 +1276,7 @@ def orbit_of(
     result: list[OrbitPole] = _shared.convert(
         _call(
             "orbitOf",
-            _shared.operation_list(operations),
+            _shared.operation_list(operations, ("cartesian",), bare="cartesian"),
             _shared.array(direction, "direction"),
             _shared.options(tolerance=tolerance),
         ),
@@ -1287,7 +1333,7 @@ def operations(
     axes: Optional[Literal["hexagonal", "rhombohedral"]] = None,
     unique_axis: Optional[Literal["a", "b", "c"]] = None,
     setting: Optional[Union[int, str]] = None,
-) -> list[Operation]:
+) -> Operations:
     """All operations of the point group in the requested setting (default: the ITC default
     setting), in ITA's order: identity first, then as ITA numbers the general position of the
     crystal class; an operation of a magnetic group has the number it has in the class, and a grey
@@ -1313,18 +1359,18 @@ def operations(
 
     Returns
     -------
-    list of dict
-        Dicts ``{"matrix", "cartesian", "time_reversal"}``; ``matrix`` is a float64 array of shape
-        (3, 3) holding integers (the fixed rule for matrices), ``cartesian`` a float64 array of
-        shape (3, 3).
+    Operations
+        ``matrix`` an int64 array of shape (n, 3, 3), ``cartesian`` a float64 array of shape (n, 3,
+        3), ``time_reversal`` a bool array of shape (n,); ``ops[i]`` and ``for op in ops`` give one
+        operation as a dict.
     """
-    result: list[Operation] = _shared.convert(
+    result: Operations = _shared.convert(
         _call(
             "operations",
             key,
             _shared.options(axes=axes, unique_axis=unique_axis, setting=setting),
         ),
-        ("l", _S_Operation),
+        _S_Operations,
     )
     return result
 
@@ -1335,7 +1381,7 @@ def generators(
     axes: Optional[Literal["hexagonal", "rhombohedral"]] = None,
     unique_axis: Optional[Literal["a", "b", "c"]] = None,
     setting: Optional[Union[int, str]] = None,
-) -> list[Operation]:
+) -> Operations:
     """Generators of the point group in the requested setting (docs/conventions.md, "Generators"):
     ITA's selected generators in printed order, without the identity and ITA's lattice translations,
     so the list is empty for ``1``; for the settings ITA does not print (``mm2`` settings 2 and 3,
@@ -1360,18 +1406,18 @@ def generators(
 
     Returns
     -------
-    list of dict
-        Dicts ``{"matrix", "cartesian", "time_reversal"}``; ``matrix`` is a float64 array of shape
-        (3, 3) holding integers (the fixed rule for matrices), ``cartesian`` a float64 array of
-        shape (3, 3).
+    Operations
+        ``matrix`` an int64 array of shape (n, 3, 3), ``cartesian`` a float64 array of shape (n, 3,
+        3), ``time_reversal`` a bool array of shape (n,); ``ops[i]`` and ``for op in ops`` give one
+        operation as a dict.
     """
-    result: list[Operation] = _shared.convert(
+    result: Operations = _shared.convert(
         _call(
             "generators",
             key,
             _shared.options(axes=axes, unique_axis=unique_axis, setting=setting),
         ),
-        ("l", _S_Operation),
+        _S_Operations,
     )
     return result
 
@@ -1463,7 +1509,7 @@ def find_point_group(
 
 
 def is_centrosymmetric_of(
-    operations: Sequence[Mapping[str, Any]],
+    operations: Operations | Sequence[Mapping[str, Any]],
     *,
     tolerance: Optional[float] = None,
 ) -> bool:
@@ -1483,7 +1529,7 @@ def is_centrosymmetric_of(
     result: bool = _shared.convert(
         _call(
             "isCentrosymmetricOf",
-            _shared.operation_list(operations),
+            _shared.operation_list(operations, ("cartesian", "time_reversal")),
             _shared.options(tolerance=tolerance),
         ),
         _V,
@@ -1492,7 +1538,7 @@ def is_centrosymmetric_of(
 
 
 def is_enantiomorphic_of(
-    operations: Sequence[Mapping[str, Any]],
+    operations: Operations | Sequence[Mapping[str, Any]],
     *,
     tolerance: Optional[float] = None,
 ) -> bool:
@@ -1513,7 +1559,7 @@ def is_enantiomorphic_of(
     result: bool = _shared.convert(
         _call(
             "isEnantiomorphicOf",
-            _shared.operation_list(operations),
+            _shared.operation_list(operations, ("cartesian", "time_reversal")),
             _shared.options(tolerance=tolerance),
         ),
         _V,
@@ -1573,7 +1619,7 @@ def site_symmetry(
 
 
 def site_symmetry_of(
-    operations: Sequence[Mapping[str, Any]],
+    operations: Operations | Sequence[Mapping[str, Any]] | ArrayLike,
     direction: ArrayLike,
     *,
     tolerance: Optional[float] = None,
@@ -1606,7 +1652,7 @@ def site_symmetry_of(
     result: SiteSymmetry = _shared.convert(
         _call(
             "siteSymmetryOf",
-            _shared.operation_list(operations),
+            _shared.operation_list(operations, ("cartesian",), bare="cartesian"),
             _shared.array(direction, "direction"),
             _shared.options(tolerance=tolerance),
         ),
@@ -1663,7 +1709,7 @@ def tensor_form(
 
 
 def tensor_form_of(
-    operations: Sequence[Mapping[str, Any]],
+    operations: Operations | Sequence[Mapping[str, Any]],
     spec: TensorSpec | Mapping[str, Any] | TensorPropertyName,
     *,
     tolerance: Optional[float] = None,
@@ -1697,7 +1743,7 @@ def tensor_form_of(
     result: TensorForm = _shared.convert(
         _call(
             "tensorFormOf",
-            _shared.operation_list(operations),
+            _shared.operation_list(operations, ("cartesian", "time_reversal")),
             _shared.spec(spec),
             _shared.options(tolerance=tolerance),
         ),
@@ -1762,7 +1808,7 @@ def allowed_properties(key: str) -> list[TensorPropertyName]:
 
 
 def allows_property_of(
-    operations: Sequence[Mapping[str, Any]],
+    operations: Operations | Sequence[Mapping[str, Any]],
     name: TensorPropertyName,
     *,
     tolerance: Optional[float] = None,
@@ -1782,7 +1828,7 @@ def allows_property_of(
     result: bool = _shared.convert(
         _call(
             "allowsPropertyOf",
-            _shared.operation_list(operations),
+            _shared.operation_list(operations, ("cartesian", "time_reversal")),
             name,
             _shared.options(tolerance=tolerance),
         ),
@@ -1792,7 +1838,7 @@ def allows_property_of(
 
 
 def allowed_properties_of(
-    operations: Sequence[Mapping[str, Any]],
+    operations: Operations | Sequence[Mapping[str, Any]],
     *,
     tolerance: Optional[float] = None,
 ) -> list[TensorPropertyName]:
@@ -1809,7 +1855,7 @@ def allowed_properties_of(
     result: list[TensorPropertyName] = _shared.convert(
         _call(
             "allowedPropertiesOf",
-            _shared.operation_list(operations),
+            _shared.operation_list(operations, ("cartesian", "time_reversal")),
             _shared.options(tolerance=tolerance),
         ),
         ("l", _V),

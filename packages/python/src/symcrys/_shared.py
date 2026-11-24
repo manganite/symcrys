@@ -3,6 +3,8 @@ into the library (scripts/python-api.mjs, #99)."""
 
 from __future__ import annotations
 
+import dataclasses
+import operator
 from typing import Any, Mapping
 
 import numpy as np
@@ -18,27 +20,51 @@ def options(**kwargs: Any) -> dict[str, Any]:
     return result
 
 
-def operation_list(operations: Any, keys: tuple[str, ...] = ("cartesian",)) -> list[Any]:
-    """A list of operations as the library takes it, checked: a sequence of mappings with ``keys``.
+def _is_operations(x: Any) -> bool:
+    """True for an instance of the ``Operations`` of a module (they carry ``_symcrys_operations``)."""
+    return not isinstance(x, type) and getattr(type(x), "_symcrys_operations", False) is True
+
+
+def operation_list(operations: Any, keys: tuple[str, ...] = ("cartesian",), bare: str | None = None) -> list[Any]:
+    """A list of operations as the library takes it, checked: the ``Operations`` of a module (#137 H1),
+    a sequence of mappings with ``keys``, or, where ``bare`` names the field (``"cartesian"``), an
+    array of matrices of shape (n, 3, 3).
 
     Without the check, an array of matrices reached the library and failed there with "cannot read
     property '0' of undefined" (#92).
     """
+    if _is_operations(operations):
+        return records(operations)
     shape = "{" + ", ".join(f'"{k}"' for k in keys) + "}"
-    numeric_array = isinstance(operations, np.ndarray) and operations.dtype != object
-    if numeric_array or isinstance(operations, (Mapping, str, bytes)) or not hasattr(operations, "__iter__"):
+    wanted = f"Operations, as operations() returns them, or a list of operations {shape}"
+    if isinstance(operations, (Mapping, str, bytes, type)) or not hasattr(operations, "__iter__"):
+        raise _engine.SymcrysError(f"operations must be {wanted}, not {type(operations).__name__}", "RangeError")
+    ops = list(operations)
+    if not all(isinstance(op, Mapping) for op in ops):
+        # An array of matrices, or a list of them.
+        matrices = None
+        if not any(isinstance(op, Mapping) for op in ops):
+            try:
+                matrices = np.asarray(ops, dtype=np.float64)
+            except (TypeError, ValueError):
+                pass
+        if matrices is not None and matrices.ndim >= 2:
+            if bare is None:
+                hint = " (each says whether it carries time reversal)" if "time_reversal" in keys else ""
+                raise _engine.SymcrysError(
+                    f"an array of matrices does not say what the operations are here: pass {wanted}{hint}", "RangeError"
+                )
+            if matrices.ndim != 3 or matrices.shape[1:] != (3, 3):
+                raise _engine.SymcrysError(
+                    f"an array of {bare} matrices must have the shape (n, 3, 3), not {matrices.shape}", "RangeError"
+                )
+            return [{bare: m} for m in matrices]
+        bad = next(i for i, op in enumerate(ops) if not isinstance(op, Mapping))
         raise _engine.SymcrysError(
-            f"operations must be a list of operations {shape}, as operations() returns them, "
-            f"not {type(operations).__name__}",
+            f"operation {bad} must be a mapping {shape}, as in a list of operations, not {type(ops[bad]).__name__}",
             "RangeError",
         )
-    ops = list(operations)
     for i, op in enumerate(ops):
-        if not isinstance(op, Mapping):
-            raise _engine.SymcrysError(
-                f"operation {i} must be a mapping {shape}, as operations() returns it, not {type(op).__name__}",
-                "RangeError",
-            )
         missing = [k for k in keys if k not in op]
         if missing:
             hint = (
@@ -47,12 +73,128 @@ def operation_list(operations: Any, keys: tuple[str, ...] = ("cartesian",)) -> l
                 else ""
             )
             raise _engine.SymcrysError(
-                f"operation {i} has no key {', '.join(repr(k) for k in missing)}: it must be a mapping {shape}, "
-                f"as operations() returns it{hint}",
+                f"operation {i} has no key {', '.join(repr(k) for k in missing)}: it must be a mapping {shape}{hint}",
                 "RangeError",
             )
     # Plain dicts, which the conversion to JSON takes (a Mapping such as MappingProxyType it does not).
     return [dict(op) for op in ops]
+
+
+def records(operations: Any) -> list[dict[str, Any]]:
+    """The ``Operations`` of a module as a list of records, one per operation."""
+    fields = [f.name for f in dataclasses.fields(operations)]
+    return [{name: getattr(operations, name)[i] for name in fields} for i in range(len(operations))]
+
+
+def operations_of(given: list[dict[str, Any]], cls: Any) -> Any:
+    """The ``Operations`` of the class ``cls`` from checked records (``operation_list``) with every field."""
+    fields = [f.name for f in dataclasses.fields(cls)]
+    for i, op in enumerate(given):
+        missing = [f for f in fields if f not in op]
+        if missing:
+            raise _engine.SymcrysError(
+                f"operation {i} has no key {', '.join(repr(k) for k in missing)}: the result keeps the operations, "
+                f"so each needs {', '.join(repr(f) for f in fields)}",
+                "RangeError",
+            )
+    columns = {}
+    for f in fields:
+        try:
+            columns[f] = np.asarray([op[f] for op in given])
+        except (TypeError, ValueError) as e:
+            raise _engine.SymcrysError(f"the operations' {f} are not arrays of one shape ({e})", "RangeError") from None
+    return cls(**columns)
+
+
+def select(operations: Any, kept: list[dict[str, Any]]) -> Any:
+    """The operations at the indices the library kept (``index`` of each record it returned)."""
+    return operation_at(operations, np.asarray([k["index"] for k in kept], dtype=np.int64))
+
+
+def operation_at(operations: Any, index: Any) -> Any:
+    """``ops[index]``: for an integer one operation as a dict (a bool for a field of one value per
+    operation), otherwise the ``Operations`` of the rows that ``index`` selects (a slice, a sequence
+    of integers, a boolean mask of length n)."""
+    fields = [f.name for f in dataclasses.fields(operations)]
+    n = len(operations)
+    if index is None or isinstance(index, (bool, np.bool_)):
+        raise TypeError(f"Operations cannot be indexed by {index!r}")
+    if not isinstance(index, (slice, np.ndarray, list, tuple)) or (isinstance(index, np.ndarray) and index.ndim == 0):
+        try:
+            i = operator.index(index)
+        except TypeError:
+            raise TypeError(f"Operations cannot be indexed by {type(index).__name__}") from None
+        if not -n <= i < n:
+            raise IndexError(f"operation {i} of {n}")
+        row = {name: getattr(operations, name)[i] for name in fields}
+        return {name: (v.item() if v.ndim == 0 else v) for name, v in row.items()}
+    if not isinstance(index, slice):
+        selection = np.asarray(index)
+        if selection.size == 0:
+            selection = selection.astype(np.int64)
+        if selection.ndim != 1 or selection.dtype.kind not in "biu":
+            raise IndexError(f"Operations are indexed by an integer, a slice, a list of integers or a mask, not {index!r}")
+        if selection.dtype.kind == "b" and len(selection) != n:
+            raise IndexError(f"a mask of {len(selection)} values for {n} operations")
+        index = selection
+    try:
+        return type(operations)(**{name: getattr(operations, name)[index] for name in fields})
+    except IndexError as e:
+        raise IndexError(f"Operations[{index!r}]: {e}") from None
+
+
+def _checked(name: str, value: Any, dtype: Any, shape: tuple[int, ...]) -> NDArray[Any]:
+    """One field of ``Operations``: an array of shape (n, …) of the dtype, checked (#137 H1)."""
+
+    def error(what: str) -> _engine.SymcrysError:
+        return _engine.SymcrysError(f"Operations.{name} {what}", "RangeError")
+
+    try:
+        a = np.asarray(value)
+    except (TypeError, ValueError) as e:
+        raise error(f"must be an array ({e})") from None
+    if a.size == 0:
+        a = np.zeros((0, *shape), dtype=dtype)
+    kind = a.dtype.kind
+    if dtype is np.bool_:
+        if kind == "b":
+            pass
+        elif kind in "iuf" and np.all((a == 0) | (a == 1)):
+            a = a.astype(np.bool_)
+        else:
+            raise error("must hold True or False")
+    elif dtype is np.int64:
+        if kind in "iu":
+            if a.size and (int(a.max()) > np.iinfo(np.int64).max or int(a.min()) < np.iinfo(np.int64).min):
+                raise error("must hold 64-bit integers")
+        elif kind == "f":
+            if not (np.all(np.isfinite(a)) and np.all(np.mod(a, 1) == 0) and np.all(np.abs(a) <= 2**53)):
+                raise error("must hold integers")
+        else:
+            raise error(f"must hold integers, not {a.dtype}")
+    elif kind not in "iuf":
+        raise error(f"must hold real numbers, not {a.dtype}")
+    a = np.array(a, dtype=dtype)
+    if a.ndim != len(shape) + 1 or a.shape[1:] != shape:
+        dims = ", ".join(["n", *map(str, shape)]) + ("," if not shape else "")
+        raise error(f"must have the shape ({dims}), not {a.shape}")
+    return a
+
+
+def freeze(operations: Any, fields: Mapping[str, tuple[Any, tuple[int, ...]]]) -> None:
+    """Checks and freezes the arrays of ``Operations``: dtype, shape (n, …) with one n for all, and no
+    writes (#137 H1): each is a read-only view of a read-only copy, which numpy does not let anyone
+    make writable again."""
+    n = None
+    for name, (dtype, shape) in fields.items():
+        base = _checked(name, getattr(operations, name), dtype, shape)
+        if n is not None and len(base) != n:
+            raise _engine.SymcrysError(f"Operations: {name} has {len(base)} operations, the others {n}", "RangeError")
+        n = len(base)
+        base.flags.writeable = False
+        view = base.view()
+        view.flags.writeable = False
+        object.__setattr__(operations, name, view)
 
 
 def value(name: str) -> Any:

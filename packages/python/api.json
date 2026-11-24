@@ -42,18 +42,17 @@
   "arrays": {
     "//": "The dtype of an array of numbers in a result, by the name of its field: float64 or int64. A field of arrays not listed is an error of the generator. symcrys.plane has its own list, since there `direction` is a lattice direction.",
     "symcrys": {
-      "float64": ["matrix", "cartesian", "direction", "basis", "relations", "plane"],
+      "float64": ["cartesian", "direction", "basis", "relations", "plane"],
       "int64": ["lattice", "hkl", "uvw", "operations", "parameters", "siteSymmetryOperations"]
     },
     "symcrys.plane": {
-      "float64": ["matrix", "translation", "location", "glide", "point", "vertices", "centring"],
+      "float64": ["translation", "location", "glide", "point", "vertices", "centring"],
       "int64": ["direction", "axis", "operations", "edges", "inequalities"]
     }
   },
   "shapes": {
     "//": "The shape of an array field where the nested lists may be empty (-1: any length).",
     "symcrys.plane": {
-      "matrix": [2, 2],
       "translation": [2],
       "location": [2],
       "glide": [2],
@@ -97,7 +96,7 @@
     ]
   },
   "functions": {
-    "//": "What a function's TypeScript type does not say: the dtype of an array it returns, the keys an operation must have, an argument converted otherwise.",
+    "//": "What a function's TypeScript type does not say: the dtype of an array it returns, the keys an operation must have, an argument converted otherwise; operationKeys and bare may be given per module (siteSymmetryOf and orbitOf do not depend on time reversal, docs/conventions.md).",
     "faceNormal": {
       "returns": "float64"
     },
@@ -143,13 +142,30 @@
     },
     "residualOperations": {
       "operationKeys": ["matrix"],
-      "listOf": "Operation"
+      "listOf": "Operation",
+      "selects": true
     },
     "tensorForm": {
       "custom": "tensor_form"
     },
     "tensorFormOf": {
       "custom": "tensor_form"
+    },
+    "siteSymmetryOf": {
+      "operationKeys": {
+        "symcrys.magnetic": ["cartesian"]
+      },
+      "bare": {
+        "symcrys.magnetic": "cartesian"
+      }
+    },
+    "orbitOf": {
+      "operationKeys": {
+        "symcrys.magnetic": ["cartesian"]
+      },
+      "bare": {
+        "symcrys.magnetic": "cartesian"
+      }
     }
   },
   "constants": {
@@ -159,7 +175,38 @@
     }
   },
   "plane": {
-    "operationKeys": ["matrix", "translation"],
     "point": "_shared.plane_point(point)"
+  },
+  "operations": {
+    "//": "The record of arrays that stands for a list of operations in Python (#137 H1, #121 step 12b): the TypeScript record of one operation, and per field its dtype and the shape of one entry. `bare`: the field a bare array of matrices (n, 3, 3) is read as; none in symcrys.magnetic (it does not say whether an operation carries time reversal, Thomas 2026-11-24) and symcrys.plane (no Cartesian matrices).",
+    "symcrys": {
+      "record": "Operation",
+      "bare": "cartesian",
+      "fields": {
+        "matrix": ["int64", [3, 3]],
+        "cartesian": ["float64", [3, 3]]
+      },
+      "doc": "The operations of a point group as arrays, one row per operation, in the order of ``operations`` (#137 H1): what ``operations``, ``generators`` and ``residual_operations`` return, and what every function that takes operations accepts, beside a list of dicts ``{\"cartesian\"}`` and an array of Cartesian matrices of shape (n, 3, 3). Frozen, its arrays read-only; ``len(ops)`` is the number of operations.",
+      "keys": ["cartesian"]
+    },
+    "symcrys.magnetic": {
+      "record": "Operation",
+      "fields": {
+        "matrix": ["int64", [3, 3]],
+        "cartesian": ["float64", [3, 3]],
+        "timeReversal": ["bool", []]
+      },
+      "doc": "The operations of a magnetic point group as arrays, one row per operation, in the order of ``operations`` (#137 H1): what ``operations``, ``generators`` and ``residual_operations`` return, and what every function that takes operations accepts, beside a list of dicts ``{\"cartesian\", \"time_reversal\"}``. An array of matrices alone is refused here, since it does not say which operations carry time reversal. Frozen, its arrays read-only; ``len(ops)`` is the number of operations.",
+      "keys": ["cartesian", "time_reversal"]
+    },
+    "symcrys.plane": {
+      "record": "PlaneOperation",
+      "fields": {
+        "matrix": ["int64", [2, 2]],
+        "translation": ["float64", [2]]
+      },
+      "doc": "The operations of a plane group or plane point group as arrays, one row per operation, in the order of ``operations`` (#137 H1): what ``operations`` and ``generators`` return, and what ``describe_operations_of`` accepts, beside a list of dicts ``{\"matrix\", \"translation\"}``. Frozen, its arrays read-only; ``len(ops)`` is the number of operations.",
+      "keys": ["matrix", "translation"]
+    }
   }
 }

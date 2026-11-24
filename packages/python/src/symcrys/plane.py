@@ -13,7 +13,8 @@ line is an int64 array of shape (2,) (docs/conventions.md, "Plane groups").
 from __future__ import annotations
 
 import sys
-from typing import TYPE_CHECKING, Any, Literal, Mapping, Optional, Sequence, TypedDict, final
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Any, Iterator, Literal, Mapping, Optional, Sequence, TypedDict, final, overload
 
 if sys.version_info >= (3, 11):
     from typing import NotRequired
@@ -34,6 +35,61 @@ _F = ("f",)
 
 PlaneSystem = Literal["oblique", "rectangular", "square", "hexagonal"]
 """A crystal system of the plane, as ITA names it."""
+
+
+@final
+class PlaneOperation(TypedDict):
+    """One operation of ``Operations`` (``ops[i]``, ``for op in ops``)."""
+
+    matrix: NDArray[np.int64]
+    """The linear part W, a 2 × 2 matrix with integer entries, rows first."""
+    translation: NDArray[np.float64]
+    """The translation part w; for a plane group in [0, 1), for a point group zero."""
+
+
+@dataclass(frozen=True, eq=False)
+class Operations:
+    """The operations of a plane group or plane point group as arrays, one row per operation, in the
+    order of ``operations`` (#137 H1): what ``operations`` and ``generators`` return, and what
+    ``describe_operations_of`` accepts, beside a list of dicts ``{"matrix", "translation"}``.
+    Frozen, its arrays read-only; ``len(ops)`` is the number of operations.
+    """
+
+    matrix: NDArray[np.int64]
+    """int64 array of shape (n, 2, 2), one row per operation. The linear part W, a 2 × 2 matrix with
+    integer entries, rows first.
+    """
+    translation: NDArray[np.float64]
+    """float64 array of shape (n, 2), one row per operation. The translation part w; for a plane group
+    in [0, 1), for a point group zero.
+    """
+
+    _symcrys_operations = True
+
+    def __post_init__(self) -> None:
+        _shared.freeze(self, _OPERATION_FIELDS)
+
+    def __reduce__(self) -> tuple[Any, ...]:
+        # A copy or a pickle is built anew, so its arrays are checked and read-only too.
+        return (type(self), tuple(getattr(self, name) for name in _OPERATION_FIELDS))
+
+    def __len__(self) -> int:
+        return len(self.matrix)
+
+    def __iter__(self) -> Iterator[PlaneOperation]:
+        return (self[i] for i in range(len(self)))
+
+    @overload
+    def __getitem__(self, index: int | np.integer[Any]) -> PlaneOperation: ...
+
+    @overload
+    def __getitem__(self, index: slice | Sequence[int] | NDArray[Any]) -> Operations: ...
+
+    def __getitem__(self, index: int | np.integer[Any] | slice | Sequence[int] | NDArray[Any]) -> PlaneOperation | Operations:
+        """One operation as a dict ``{"matrix", "translation"}`` for an integer, otherwise
+        the ``Operations`` of the selected rows (a slice, a list of indices, a boolean mask)."""
+        result: PlaneOperation | Operations = _shared.operation_at(self, index)
+        return result
 
 
 @final
@@ -82,16 +138,6 @@ class Setting(TypedDict):
     """Its symbol: ``'3m1'`` or ``'31m'`` for ``3m``, otherwise the key."""
     is_default: bool
     """True for the default setting (setting 1)."""
-
-
-@final
-class PlaneOperation(TypedDict):
-    """An operation (W, w) in the lattice basis: x ↦ W·x + w."""
-
-    matrix: NDArray[np.float64]
-    """The linear part W, a 2 × 2 matrix with integer entries, rows first."""
-    translation: NDArray[np.float64]
-    """The translation part w; for a plane group in [0, 1), for a point group zero."""
 
 
 @final
@@ -266,6 +312,8 @@ class SymmetryElements(TypedDict):
     """
 
 
+_OPERATION_FIELDS = {"matrix": (np.int64, (2, 2)), "translation": (np.float64, (2,))}
+_S_Operations = ("ops", Operations, {"matrix": (np.int64, (2, 2)), "translation": (np.float64, (2,))})
 _S_PlaneGroup = (
     "d",
     {
@@ -280,13 +328,6 @@ _S_PlaneGroup = (
 )
 _S_PointGroup = ("d", {"key": _V, "crystalSystem": _V, "order": _I})
 _S_Setting = ("d", {"index": _I, "symbol": _V, "isDefault": _V})
-_S_PlaneOperation = (
-    "d",
-    {
-        "matrix": ("a", np.float64, (2, 2)),
-        "translation": ("a", np.float64, (2,)),
-    },
-)
 _S_OperationDescription = (
     "d",
     {
@@ -366,6 +407,7 @@ __all__ = [
     "SymcrysInternalError",
     "AsymmetricUnit",
     "OperationDescription",
+    "Operations",
     "PlaneGroup",
     "PlaneOperation",
     "PlaneSystem",
@@ -473,7 +515,7 @@ def symbol(
     return result
 
 
-def operations(key: str, *, setting: Optional[int] = None) -> list[PlaneOperation]:
+def operations(key: str, *, setting: Optional[int] = None) -> Operations:
     """The operations of a plane group or a plane point group, in ITA's order, identity first. A
     plane group: one per coset of the integer translations, translations in [0, 1), the general
     position as numbered, then for a centred group the same sequence with the centring added (the
@@ -489,17 +531,18 @@ def operations(key: str, *, setting: Optional[int] = None) -> list[PlaneOperatio
 
     Returns
     -------
-    list of dict
-        Dicts ``{"matrix", "translation"}``: float64 arrays of shape (2, 2) and (2,).
+    Operations
+        ``matrix`` an int64 array of shape (n, 2, 2), ``translation`` a float64 array of shape (n,
+        2); ``ops[i]`` and ``for op in ops`` give one operation as a dict.
     """
-    result: list[PlaneOperation] = _shared.convert(
+    result: Operations = _shared.convert(
         _call("operations", key, _shared.options(setting=setting)),
-        ("l", _S_PlaneOperation),
+        _S_Operations,
     )
     return result
 
 
-def generators(key: str, *, setting: Optional[int] = None) -> list[PlaneOperation]:
+def generators(key: str, *, setting: Optional[int] = None) -> Operations:
     """ITA's selected generators, in printed order, without the identity and the integer
     translations: for a centred plane group the centring translation first. A point group: the
     linear parts of the generators of its symmorphic plane group. Raises SymcrysError for an unknown
@@ -513,12 +556,13 @@ def generators(key: str, *, setting: Optional[int] = None) -> list[PlaneOperatio
 
     Returns
     -------
-    list of dict
-        Dicts ``{"matrix", "translation"}``: float64 arrays of shape (2, 2) and (2,).
+    Operations
+        ``matrix`` an int64 array of shape (n, 2, 2), ``translation`` a float64 array of shape (n,
+        2); ``ops[i]`` and ``for op in ops`` give one operation as a dict.
     """
-    result: list[PlaneOperation] = _shared.convert(
+    result: Operations = _shared.convert(
         _call("generators", key, _shared.options(setting=setting)),
-        ("l", _S_PlaneOperation),
+        _S_Operations,
     )
     return result
 
@@ -548,7 +592,7 @@ def describe_operations(key: str, *, setting: Optional[int] = None) -> list[Oper
 
 
 def describe_operations_of(
-    operations: Sequence[Mapping[str, Any]],
+    operations: Operations | Sequence[Mapping[str, Any]],
     *,
     tolerance: Optional[float] = None,
 ) -> list[OperationDescription]:
