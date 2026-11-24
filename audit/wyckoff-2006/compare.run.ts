@@ -4,7 +4,8 @@
  *
  * An additional, independent check of the transcription, not its anchor (the anchor is the 2016
  * print; CLAUDE.md, "Correctness and provenance"). Reads js/formen.js and the second settings of
- * js/sitesym.js from the sibling checkout ../stereography and writes report.md next to this file.
+ * js/sitesym.js of the sibling checkout ../stereography at the revision of `../stereography-2006.ts`
+ * (its last own transcription of ITA 2006) and writes report.md next to this file.
  * Run by hand: npm run audit:wyckoff-2006. Not part of the build, the tests or CI.
  *
  * Compared per Wyckoff position: letter, multiplicity, oriented site-symmetry symbol. The catalogue
@@ -12,15 +13,13 @@
  * monoclinic groups with unique axis c, sitesym.js lists letters and symbols (ALT_SETTINGS) without
  * multiplicities.
  */
-import { readFileSync, writeFileSync } from 'node:fs';
-import { execFileSync } from 'node:child_process';
+import { writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { it } from 'vitest';
-import { FORMEN } from '../../../stereography/js/formen.js';
 import { POINT_GROUP_KEYS, settings, wyckoffPositions } from '../../packages/ts/src/index.js';
+import { revisionLine, stereographyFile, stereographyModule } from '../stereography-2006.js';
 
 const here = fileURLToPath(new URL('.', import.meta.url));
-const stereo = new URL('../../../stereography/', import.meta.url);
 
 /** stereography's id of a catalogue group → the ITC short symbol and unique axis in symcrys. */
 function settingFor(id: string) {
@@ -28,7 +27,7 @@ function settingFor(id: string) {
   const symbol = mono ? mono[1] : id;
   const axis = mono?.[2];
   for (const key of POINT_GROUP_KEYS) {
-    for (const s of settings(key, 'itc')) {
+    for (const s of settings(key)) {
       if (s.symbol === symbol && (axis === undefined || s.uniqueAxis === axis)) return { key, setting: s.index };
     }
   }
@@ -37,7 +36,7 @@ function settingFor(id: string) {
 
 /** ALT_SETTINGS of sitesym.js for the monoclinic unique axis c: letter → symbol (read from the source text). */
 function monoclinicC(): Record<string, Record<string, string>> {
-  const text = readFileSync(new URL('js/sitesym.js', stereo), 'utf8');
+  const text = stereographyFile('js/sitesym.js');
   const out: Record<string, Record<string, string>> = {};
   for (const m of text.matchAll(/'(2c|mc|2\/mc)': \{ std: '[^']+', fs: \{([^}]*)\} \}/g)) {
     out[m[1]] = Object.fromEntries([...m[2].matchAll(/(\w): '([^']+)'/g)].map((x) => [x[1], x[2]]));
@@ -45,7 +44,8 @@ function monoclinicC(): Record<string, Record<string, string>> {
   return out;
 }
 
-it('compares symcrys with the 2006 catalogue', () => {
+it('compares symcrys with the 2006 catalogue', async () => {
+  const { FORMEN } = await stereographyModule('js/formen.js');
   const lines: string[] = [];
   let compared = 0;
   const diffs: string[] = [];
@@ -76,9 +76,7 @@ it('compares symcrys with the 2006 catalogue', () => {
         diffs.push(`| ${id} | ${letter} ${site} | ${w ? `${w.letter} ${w.siteSymmetry}` : 'missing'} |`);
     }
   }
-  const rev = execFileSync('git', ['-C', fileURLToPath(stereo), 'log', '-1', '--format=%h %cs'], {
-    encoding: 'utf8',
-  }).trim();
+  const rev = revisionLine();
   lines.push(
     '# Wyckoff positions: symcrys (ITA 2016) vs stereography (ITA 2006)',
     '',
@@ -93,7 +91,7 @@ it('compares symcrys with the 2006 catalogue', () => {
   if (diffs.length) lines.push('| stereography | 2006 | 2016 (symcrys) |', '|---|---|---|', ...diffs, '');
   lines.push(
     'Not compared: the point in the origin (letter o), which the 2016 table prints and the catalogue,',
-    'listing faces only, leaves out; representatives (the catalogue chooses its own numbers).',
+    "listing faces only, leaves out; the catalogue's faces with numbers (symcrys gives the printed faces only).",
     '',
   );
   writeFileSync(`${here}report.md`, lines.join('\n'));
