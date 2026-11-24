@@ -934,9 +934,8 @@ order). For rank 3, xyz is 0·9 + 1·3 + 2 = 5.
 Relation strings (`\chi_{xxx} = -\chi_{xyy}`), Voigt matrices, Nye diagrams and LaTeX are
 presentation and stay in the applications; they follow from these numbers. Numeric conversions to
 and from the abbreviated (Voigt) notation, `toVoigt` and `fromVoigt`, are planned for 0.12 (#137
-E3); the factors differ between sources (ITC Vol. D eq. (1.5.7.4) and § 1.1.4.10 halve or double
-some components, Gallego et al. (2019, p. 440) take unity factors throughout), so the conversion
-will name its convention.
+E3), with ITC's factors (ITC Vol. D eq. (1.5.7.4) and § 1.1.4.10, which halve or double some
+components), not with the unity factors that Gallego et al. (2019, p. 440) take throughout.
 
 **Settings.** A tensor form is Cartesian, so it depends on the setting (above, "Settings"): for `2`
 the polar vector lies along y in the default setting (unique axis b) and along z in setting 2 (unique axis c).
@@ -1003,7 +1002,8 @@ type V (`'pyroelectric'`), M of type aeV (`'ferromagnetic'`), the polar toroidal
 (`'ferrotoroidic'`) and the axial toroidal moment A of type eV (`'ferroaxial'`).
 
 **Ferrotoroidic.** A spontaneous toroidal moment is a polar vector that changes sign under time
-reversal. ITC Vol. D does not tabulate it, but footnote 3 of § 1.5.8.1 (p. 140) names its groups:
+reversal; ITC Vol. D uses the word for its domains ("ferrotoroidic domains", § 1.5.4.3, p. 128).
+ITC Vol. D does not tabulate it, but footnote 3 of § 1.5.8.1 (p. 140) names its groups:
 the magnetoelectric tensor "does not need to be symmetric for 31 of the 58 point groups" of Table
 1.5.8.1, and "these 31 groups coincide with those that admit a spontaneous toroidal moment". Its
 antisymmetric part is the dual of a time-odd polar vector, so the two agree by construction; the

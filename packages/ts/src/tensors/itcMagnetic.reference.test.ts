@@ -2,7 +2,8 @@
  * The magnetic tensor properties in the ITC convention against ITC Vol. D, Chapter 1.5 (fixture
  * class (a)), re-parsed from references/itc/: Table 1.5.2.4 (ferromagnetism: 31 groups and the
  * direction of M_s), Table 1.5.7.1 (piezomagnetism: 66 groups, the form of Λ_iα) and Table 1.5.8.1
- * (linear magnetoelectric effect: 58 groups, the form of α_ij, and the 11 groups the text names).
+ * (linear magnetoelectric effect: 58 groups, the form of α_ij, and the 11 groups the text names),
+ * with footnote 3 of § 1.5.8.1 (the 31 groups with a non-symmetric α_ij admit a toroidal moment).
  *
  * A printed form belongs to the orientation its Hermann–Mauguin symbol names (§ 1.5.7.1, p. 134),
  * so each printed symbol, the alternatives in square brackets included, is looked up among the ITC

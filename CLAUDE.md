@@ -758,8 +758,9 @@ The conventions are in `docs/conventions.md` ("Tensors"); here, what was decided
   (polar toroidal moment, aV); `'gyrotropic'` stays, with ITA's "optical activity"; `'ferroaxial'`
   stays, marked in `source` and the docs as not from ITC, with Gallego et al. (axial toroidal
   moment, eV) beside Hlinka et al. The free parameters keep symcrys's rule (the lowest independent
-  component), documented as not ITC's choice; numeric `toVoigt`/`fromVoigt` come in 0.12, with
-  their convention named, since ITC and Gallego et al. differ in the factors.
+  component), documented as not ITC's choice; numeric `toVoigt`/`fromVoigt` come in 0.12 with ITC's
+  factors (ITC Vol. D eq. (1.5.7.4) and § 1.1.4.10), as E3 (a) says, not with Gallego's unity
+  factors.
 - **Gallego et al. (2019) as the model of the tensor notation** (Thomas, 2026-11-24): the extended
   Jahn symbols of Gallego et al. (MTENSOR of the Bilbao Crystallographic Server; prefix e axial,
   a time-odd, square and curly brackets for symmetric and antisymmetric indices) are the model for
@@ -824,7 +825,7 @@ The conventions are in `docs/conventions.md` ("Tensors"); here, what was decided
   property and does not say the crystal has it; names as adjectives (`'pyroelectric'`,
   `'piezoelectric'`, `'gyrotropic'` for optical activity, `'ferromagnetic'`, `'magnetoelectric'`,
   `'piezomagnetic'`; the three time-odd ones in the magnetic API only, #47); these six and no more
-  for now (`'ferroaxial'` came as the seventh, below); `allowedProperties` returns the names only (the
+  for now (`'ferroaxial'` came as the seventh, `'ferrotoroidic'` as the eighth, both below); `allowedProperties` returns the names only (the
   form is one `tensorForm` call away); one name per kind of tensor, so second-harmonic generation,
   which has the tensor of `'piezoelectric'`, gets no name of its own.
 - **`'ferroaxial'`, the seventh property** (maintainer, 2026-11-20, #41): Thomas' group works on

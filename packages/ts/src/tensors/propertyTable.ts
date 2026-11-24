@@ -62,7 +62,7 @@ export const TENSOR_PROPERTIES = Object.freeze({
   ferrotoroidic: property(
     { rank: 1, kind: 'polar', timeParity: 'odd', intrinsic: 'none' },
     'Spontaneous toroidal moment T_i (ferrotoroidic order): a polar vector that changes sign under time reversal (Jahn symbol aV); allowed exactly where the magnetoelectric tensor need not be symmetric.',
-    'ITC Vol. D (2013), § 1.5.8.1, footnote 3, p. 140 (the 31 groups of Table 1.5.8.1 whose magnetoelectric tensor need not be symmetric); Gallego et al., Acta Cryst. A75, 438 (2019), p. 440 (polar toroidal moment, type aV)',
+    'ITC Vol. D (2013), § 1.5.4.3, p. 128 (the term), and § 1.5.8.1, footnote 3, p. 140 (the 31 groups of Table 1.5.8.1 whose magnetoelectric tensor need not be symmetric); Gallego et al., Acta Cryst. A75, 438 (2019), p. 440 (polar toroidal moment, type aV)',
   ),
   /** The linear magnetoelectric effect: a time-odd axial tensor of rank 2 (magnetic API only). */
   magnetoelectric: property(

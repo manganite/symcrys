@@ -42,7 +42,7 @@ All notable changes to symcrys are recorded here. The format follows
   which ITC Vol. D (§ 1.5.8.1, footnote 3, p. 140) says that the magnetoelectric tensor need not be
   symmetric. `allowedProperties` of these groups lists it between `'ferromagnetic'` and
   `'magnetoelectric'`. The `source` of `'ferroaxial'` says that the term is not from ITC and cites
-  Gallego et al. (2019) as well.
+  Gallego et al. (2019) as well; its `description` names the vector the axial toroidal moment.
 
 ### Changed
 
