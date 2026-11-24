@@ -26,7 +26,7 @@
  *   twofold axis parallel to Ox₁; group 3m: mirror perpendicular to Ox₁), as recorded on #6;
  * - -3m1: a consistency choice, not a print statement: the Laue class of 321 and 3m1, in the same
  *   frame. ITC Vol. D Table 1.5.2.3 prints its full symbol -3 2/m 1 for D3d;
- * - -6m2: ITC Vol. D Table 1.5.2.3, the key decision on #13 and birss-app (decision on #17); ITA
+ * - -6m2: ITC Vol. D Table 1.5.2.3 and the key decision on #13 (#17); ITA
  *   lists it first (§ 3.2.1.2.1 (b), p. 721; Table 3.2.3.2, p. 762), its class tables print -62m.
  */
 
@@ -37,6 +37,8 @@ export interface ItcSettingFixture {
   /** Full symbol, written as in the source (positions may run together, as in `321`). */
   readonly full: string;
   readonly uniqueAxis?: 'a' | 'b' | 'c';
+  /** The setting with rhombohedral axes (ITA Table 3.2.3.2, pp. 753–759). */
+  readonly rhombohedral?: true;
   readonly standard: boolean;
   readonly shortSource: Source;
   readonly fullSource: Source;
@@ -53,12 +55,22 @@ const printed = (short: string, full: string = short, standard = true, standardS
     ? { short, full, standard, shortSource: A3232, fullSource: A3232, standardSource }
     : { short, full, standard, shortSource: A3232, fullSource: A3232 };
 
+/** The entry of a trigonal class with rhombohedral axes, as Table 3.2.3.2 prints it. */
+const rhombohedral = (short: string, full: string = short): ItcSettingFixture => ({
+  ...printed(short, full, false),
+  rhombohedral: true,
+});
+
 const B_UNIQUE = 'ITA (6th ed.) § 2.1.3.15, p. 171';
 const VOL_D_1_1_4 = 'ITC Vol. D § 1.1.4.10.4.4 (#6)';
-const D3H_DEFAULT = 'ITC Vol. D Table 1.5.2.3; birss-app (decision on #17)';
+const D3H_DEFAULT = 'ITC Vol. D Table 1.5.2.3 (#17)';
 const LAUE_OF_321 = 'consistency: Laue class of 321 and 3m1, same frame';
 
-function monoclinic(short: string, fullB: string, fullC: string): ItcSettingFixture[] {
+/**
+ * Unique axis b, c and a. The full symbol of unique axis a (`2 1 1`) is derived by the rule above;
+ * ITC Vol. D prints it (Table 1.2.3.1, p. 49; § 1.5.7.1, p. 134; references/itc/orientations.md).
+ */
+function monoclinic(short: string, fullB: string, fullC: string, fullA: string): ItcSettingFixture[] {
   return [
     {
       short,
@@ -70,20 +82,22 @@ function monoclinic(short: string, fullB: string, fullC: string): ItcSettingFixt
       standardSource: B_UNIQUE,
     },
     { short, full: fullC, uniqueAxis: 'c', standard: false, shortSource: A3232, fullSource: DERIVED },
+    // ITA Table 3.2.3.2 prints unique axes b and c only.
+    { short, full: fullA, uniqueAxis: 'a', standard: false, shortSource: DERIVED, fullSource: DERIVED },
   ];
 }
 
 export const ITC_SETTINGS: Record<string, ItcSettingFixture[]> = {
   '1': [printed('1')],
   '-1': [printed('-1')],
-  '2': monoclinic('2', '121', '112'),
-  m: monoclinic('m', '1m1', '11m'),
-  '2/m': monoclinic('2/m', '1 2/m 1', '1 1 2/m'),
+  '2': monoclinic('2', '121', '112', '211'),
+  m: monoclinic('m', '1m1', '11m', 'm11'),
+  '2/m': monoclinic('2/m', '1 2/m 1', '1 1 2/m', '2/m 1 1'),
   '222': [printed('222')],
   mm2: [
-    { ...printed('mm2'), uniqueAxis: 'c' },
-    { short: '2mm', full: '2mm', uniqueAxis: 'a', standard: false, shortSource: DERIVED, fullSource: DERIVED },
-    { short: 'm2m', full: 'm2m', uniqueAxis: 'b', standard: false, shortSource: DERIVED, fullSource: DERIVED },
+    printed('mm2'),
+    { short: '2mm', full: '2mm', standard: false, shortSource: DERIVED, fullSource: DERIVED },
+    { short: 'm2m', full: 'm2m', standard: false, shortSource: DERIVED, fullSource: DERIVED },
   ],
   mmm: [printed('mmm', '2/m 2/m 2/m')],
   '4': [printed('4')],
@@ -93,11 +107,15 @@ export const ITC_SETTINGS: Record<string, ItcSettingFixture[]> = {
   '4mm': [printed('4mm')],
   '-42m': [printed('-42m'), printed('-4m2', '-4m2', false)],
   '4/mmm': [printed('4/mmm', '4/m 2/m 2/m')],
-  '3': [printed('3')],
-  '-3': [printed('-3')],
-  '32': [printed('321', '321', true, VOL_D_1_1_4), printed('312', '312', false)],
-  '3m': [printed('3m1', '3m1', true, VOL_D_1_1_4), printed('31m', '31m', false)],
-  '-3m': [printed('-3m1', '-3 2/m 1', true, LAUE_OF_321), printed('-31m', '-3 1 2/m', false)],
+  '3': [printed('3'), rhombohedral('3')],
+  '-3': [printed('-3'), rhombohedral('-3')],
+  '32': [printed('321', '321', true, VOL_D_1_1_4), printed('312', '312', false), rhombohedral('32')],
+  '3m': [printed('3m1', '3m1', true, VOL_D_1_1_4), printed('31m', '31m', false), rhombohedral('3m')],
+  '-3m': [
+    printed('-3m1', '-3 2/m 1', true, LAUE_OF_321),
+    printed('-31m', '-3 1 2/m', false),
+    rhombohedral('-3m', '-3 2/m'),
+  ],
   '6': [printed('6')],
   '-6': [printed('-6')],
   '6/m': [printed('6/m')],

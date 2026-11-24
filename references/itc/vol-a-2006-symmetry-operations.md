@@ -1,12 +1,18 @@
-# ITA space-group tables: symmetry operations of the symmorphic P space groups
+# ITA space-group tables: symmetry operations of the symmorphic P space groups (and R groups, rhombohedral axes)
 
 Source: _International Tables for Crystallography_, Vol. A, 5th edition (2006), ed. Th. Hahn,
 Part 7 (space-group tables), the block "Symmetry operations" of the symmorphic space group with
 a primitive lattice for each crystallographic point group: one entry per ITC setting that ITA
 lists, unique axis b and c for the monoclinic classes, hexagonal axes for the trigonal ones
-(`mm2` in its only printed setting `Pmm2`). The printed page of the block is given in each
-heading. Transcribed 2026-11-18 from the PDF in Thomas' Zotero (item 3SDKZZFX); every entry checked
-against the rendered page. Symbols as defined in ITA § 11.1.2, pp. 810–811: `n+` / `n-` is a
+(`mm2` in its only printed setting `Pmm2`); for the five trigonal classes that ITA also gives
+with rhombohedral axes, in addition the symmorphic R group with rhombohedral axes (R3, R-3, R32,
+R3m, R-3m; Nos. 146, 148, 155, 160, 166), whose cell is primitive in those axes. The printed page
+of the block is given in each heading. Transcribed 2026-11-18 from the PDF in Thomas' Zotero (item
+3SDKZZFX); every entry checked against the rendered page. The five R entries were added
+2026-11-23 from the page images of the same PDF (attachment `PPFFWAZC`, PDF pages 635–636, 641–642,
+657–658, 669–670, 686; printed page = PDF page − 139), read at 400–500 dpi, and checked a second
+time against the text layer, which keeps the overbars as separate characters (the rendered overbars
+of this PDF are displaced and can look like underlines of the line above). Symbols as defined in ITA § 11.1.2, pp. 810–811: `n+` / `n-` is a
 rotation by +360°/n / −360°/n, positive (counter-clockwise) when viewed along the axis in the
 direction of decreasing values of the parameter that describes it; for a rotoinversion, angle and
 sense refer to the pure rotation, followed by the inversion through the point after the
@@ -20,8 +26,8 @@ are left out.
 Transcription conventions: a leading minus sign is an overbar (`-4+` for 4̄⁺, `-1` for 1̄, `-x`
 for x̄); superscripts `+` and `-` follow the number; each line is `(n) symbol location`, with the
 location as printed (axis or plane; for a rotoinversion also the inversion point after `; `).
-In a symmorphic P group with origin at the point-group site, all locations pass through the
-origin, so each line names one point operation.
+In a symmorphic P group with origin at the point-group site, and in a symmorphic R group with
+rhombohedral axes, all locations pass through the origin, so each line names one point operation.
 
 ## 1 — No. 1, P1, p. 112
 
@@ -225,6 +231,14 @@ Generators selected (p. 491): (2)
 (2) 3+ 0,0,z
 (3) 3- 0,0,z
 
+## 3, rhombohedral axes — No. 146, R3, p. 496
+
+Generators selected (p. 497): (2)
+
+(1) 1
+(2) 3+ x,x,x
+(3) 3- x,x,x
+
 ## -3 — No. 147, P-3, p. 498
 
 Generators selected (p. 499): (2); (4)
@@ -235,6 +249,17 @@ Generators selected (p. 499): (2); (4)
 (4) -1 0,0,0
 (5) -3+ 0,0,z; 0,0,0
 (6) -3- 0,0,z; 0,0,0
+
+## -3, rhombohedral axes — No. 148, R-3, p. 502
+
+Generators selected (p. 503): (2); (4)
+
+(1) 1
+(2) 3+ x,x,x
+(3) 3- x,x,x
+(4) -1 0,0,0
+(5) -3+ x,x,x; 0,0,0
+(6) -3- x,x,x; 0,0,0
 
 ## 312 — No. 149, P312, p. 504
 
@@ -258,6 +283,17 @@ Generators selected (p. 507): (2); (4)
 (5) 2 x,0,0
 (6) 2 0,y,0
 
+## 32, rhombohedral axes — No. 155, R32, p. 518
+
+Generators selected (p. 519): (2); (4)
+
+(1) 1
+(2) 3+ x,x,x
+(3) 3- x,x,x
+(4) 2 -x,0,x
+(5) 2 x,-x,0
+(6) 2 0,y,-y
+
 ## 3m1 — No. 156, P3m1, p. 520
 
 Generators selected (p. 521): (2); (4)
@@ -279,6 +315,17 @@ Generators selected (p. 523): (2); (4)
 (4) m x,x,z
 (5) m x,0,z
 (6) m 0,y,z
+
+## 3m, rhombohedral axes — No. 160, R3m, p. 530
+
+Generators selected (p. 531): (2); (4)
+
+(1) 1
+(2) 3+ x,x,x
+(3) 3- x,x,x
+(4) m x,y,x
+(5) m x,x,z
+(6) m x,y,y
 
 ## -31m — No. 162, P-31m, p. 536
 
@@ -313,6 +360,23 @@ Generators selected (p. 541): (2); (4); (7)
 (10) m x,-x,z
 (11) m x,2x,z
 (12) m 2x,x,z
+
+## -3m, rhombohedral axes — No. 166, R-3m, p. 547
+
+Generators selected (p. 547): (2); (4); (7)
+
+(1) 1
+(2) 3+ x,x,x
+(3) 3- x,x,x
+(4) 2 -x,0,x
+(5) 2 x,-x,0
+(6) 2 0,y,-y
+(7) -1 0,0,0
+(8) -3+ x,x,x; 0,0,0
+(9) -3- x,x,x; 0,0,0
+(10) m x,y,x
+(11) m x,x,z
+(12) m x,y,y
 
 ## 6 — No. 168, P6, p. 552
 

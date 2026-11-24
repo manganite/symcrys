@@ -15,14 +15,38 @@ operations, for instance the site symmetry of a surface normal.
 
 A tensor is given by its specification:
 
-| Field        | Values                                         | Meaning                                                               |
-| ------------ | ---------------------------------------------- | --------------------------------------------------------------------- |
-| `rank`       | 0 to 4                                         | number of indices                                                     |
-| `parity`     | `'polar'`, `'axial'`                           | an axial tensor changes sign under improper operations (factor det R) |
-| `timeParity` | `'i'`, `'c'` (magnetic API only)               | a `'c'`-tensor changes sign under time reversal                       |
-| `intrinsic`  | `'none'`, `'ij'`, `'jk'`, `'ij_kl'`, `'voigt'` | the index symmetry                                                    |
+| Field        | Values                                | Meaning                                                               |
+| ------------ | ------------------------------------- | --------------------------------------------------------------------- |
+| `rank`       | 0 to 4                                | number of indices                                                     |
+| `kind`       | `'polar'`, `'axial'`                  | an axial tensor changes sign under improper operations (factor det R) |
+| `timeParity` | `'even'`, `'odd'` (magnetic API only) | a time-odd tensor changes sign under time reversal                    |
+| `intrinsic`  | see below                             | the index symmetry                                                    |
 
-Second-harmonic generation, for example, is `{ rank: 3, parity: 'polar', intrinsic: 'jk' }`:
+A specification is a Jahn symbol in words. Gallego et al. (_Acta Cryst._ A75, 438 (2019), pp.
+439–440) write the kind of tensor after Jahn (1949) as a prefix e (axial) and a (magnetic, i.e.
+time-odd) before the index part, square brackets for symmetric and curly brackets for antisymmetric
+indices: the magnetoelectric tensor is aeV², the piezomagnetic tensor aeV[V²], the elastic tensor
+[[V²][V²]]. `kind: 'axial'` is the e, `timeParity: 'odd'` the a, and `intrinsic` the index part
+(ITC Vol. D § 1.9.2, p. 232, names Jahn's nomenclature as well):
+
+| `intrinsic`                      | Ranks | Jahn symbol | Index symmetry                                               |
+| -------------------------------- | ----- | ----------- | ------------------------------------------------------------ |
+| `'none'`                         | 0–4   | Vⁿ          | none                                                         |
+| `'symmetric-first-pair'`         | 2–4   | [V²]V…      | the first two indices interchangeable                        |
+| `'symmetric-last-pair'`          | 2–4   | V…[V²]      | the last two interchangeable (piezoelectric effect, SHG)     |
+| `'symmetric-pairs'`              | 4     | [V²][V²]    | each pair symmetric (photoelasticity, quadrupole SHG)        |
+| `'symmetric-pairs-exchangeable'` | 4     | [[V²][V²]]  | each pair symmetric and the pairs interchangeable (elastic)  |
+| `'antisymmetric'`                | 2     | {V²}        | t<sub>ij</sub> = −t<sub>ji</sub>                             |
+| `'totally-symmetric'`            | 2–4   | [Vⁿ]        | every index interchangeable (SHG under Kleinman's condition) |
+
+Jahn (1949) writes [V²]² and [[V²]²] for the two rank-4 symmetries. The symbols for transport and
+optical tensors with a star ([V²]\*), whose behaviour under time reversal follows from Onsager's
+theorem rather than from a time parity, are not in symcrys.
+
+A specification with the names of Birss and of symcrys before 0.11 (`parity`, `'i'`/`'c'`, `'ij'`,
+`'jk'`, `'ij_kl'`, `'voigt'`) is an error that names the current ones.
+
+Second-harmonic generation, for example, is `{ rank: 3, kind: 'polar', intrinsic: 'symmetric-last-pair' }`:
 χ<sub>ijk</sub> = χ<sub>ikj</sub>. The index symmetries are explained in the reference
 (`IntrinsicSymmetry`) and in [Conventions, "Tensors"](conventions.md#tensors).
 
@@ -30,31 +54,30 @@ Second-harmonic generation, for example, is `{ rank: 3, parity: 'polar', intrins
 
 A form has
 
-- `basis`: the allowed tensors as rows of length 3<sup>rank</sup>, in reduced row echelon form,
-  components by flat index with the first index slowest (xyz of rank 3 is 5). Every allowed tensor
-  is Σ<sub>k</sub> p<sub>k</sub> · basis[k];
-- `parameters`: the free components as index lists, one per row of `basis`, each the lowest
+- `basis`: the allowed tensors, in reduced row echelon form of their components by flat index with
+  the first index slowest (xyz of rank 3 is 5); in TypeScript rows of length 3<sup>rank</sup>, in
+  Python each tensor an array of shape (3, …, 3). Every allowed tensor is
+  Σ<sub>k</sub> p<sub>k</sub> · basis[k];
+- `parameters`: the free components as index lists, one per entry of `basis`, each the lowest
   component independent of those before it;
-- `relations`: rows r with r · t = 0 for every allowed tensor t.
+- `relations`: rows r with r · t = 0 for every allowed tensor t, its components by flat index.
 
 ```{code-cell} ipython3
 import symcrys
 
-form = symcrys.tensor_form("3m", {"rank": 3, "parity": "polar", "intrinsic": "jk"})
+form = symcrys.tensor_form("3m", {"rank": 3, "kind": "polar", "intrinsic": "symmetric-last-pair"})
 form["parameters"]
 ```
 
-The components depend on the frame, so on the **setting** and on the **convention**: the default
-setting of `3m` is `3m1` in the ITC convention and setting 1 in the Birss convention, which Birss
-writes `3m` and ITC `31m`. The free components differ:
+The components depend on the frame, so on the **setting**: the default setting of `3m` is `3m1`,
+setting 2 is `31m`, turned by 30° about z. The free components differ:
 
 ```{code-cell} ipython3
-SHG = {"rank": 3, "parity": "polar", "intrinsic": "jk"}
-[symcrys.tensor_form("3m", SHG, convention=c)["parameters"][0] for c in ("itc", "birss")]
+SHG = {"rank": 3, "kind": "polar", "intrinsic": "symmetric-last-pair"}
+[symcrys.tensor_form("3m", SHG, setting=s)["parameters"][0] for s in ("3m1", "31m")]
 ```
 
-The same setting index gives the same form in both conventions; only the default differs. Settings
-and frames: [Conventions, "Settings"](conventions.md#settings) and
+Settings and frames: [Conventions, "Settings"](conventions.md#settings) and
 [Conventions, "Cartesian frame"](conventions.md#cartesian-frame).
 
 ## Named properties

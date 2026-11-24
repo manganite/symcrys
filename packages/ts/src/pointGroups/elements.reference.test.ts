@@ -16,7 +16,13 @@
 
 import { describe, expect, it } from 'vitest';
 import { I3, inverse, mirrorNormal, mul, neg, rotationAbout, sameM, type M } from '../testUtils/independentGroups.js';
-import { expectHeader, readReference, tableRows } from '../testUtils/references.js';
+import {
+  expectHeader,
+  readReference,
+  tableRows,
+  sameAxes,
+  RHOMBOHEDRAL_IN_HEXAGONAL,
+} from '../testUtils/references.js';
 import { describeOperations } from './elements.js';
 import { findPointGroup, generators, operations, pointGroup, settings, type PointGroupKey } from './pointGroups.js';
 
@@ -26,8 +32,11 @@ const HEXAGONAL: M = [
   [0, Math.sqrt(3) / 2, 0],
   [0, 0, 1],
 ];
-const basis = (key: PointGroupKey): M =>
-  ['trigonal', 'hexagonal'].includes(pointGroup(key).crystalSystem) ? HEXAGONAL : I3;
+const basis = (key: PointGroupKey, setting: number): M => {
+  if (!['trigonal', 'hexagonal'].includes(pointGroup(key).crystalSystem)) return I3;
+  const s = settings(key).find((x) => x.index === setting)!;
+  return sameAxes('rhombohedral axes', s) ? mul(HEXAGONAL, RHOMBOHEDRAL_IN_HEXAGONAL) : HEXAGONAL;
+};
 const times = (m: M, v: number[]): number[] =>
   mul(
     m,
@@ -55,6 +64,8 @@ interface PrintedOperation {
 interface Entry {
   cls: string;
   axis?: 'b' | 'c';
+  /** The R group in rhombohedral axes. */
+  rhombohedral?: true;
   heading: string;
   /** Numbers of the operations ITA selects as generators, in printed order. */
   generators: number[];
@@ -65,11 +76,12 @@ const ENTRIES: Entry[] = (() => {
   const text = readReference('itc/vol-a-2006-symmetry-operations.md');
   const entries: Entry[] = [];
   for (const line of text.split('\n')) {
-    const h = /^## (\S+)(?:, unique axis (b|c))? — No\. \d+, \S+, p\. \d+$/.exec(line);
+    const h = /^## (\S+)(?:, unique axis (b|c)|, (rhombohedral) axes)? — No\. \d+, \S+, p\. \d+$/.exec(line);
     if (h) {
       entries.push({
         cls: h[1],
         ...(h[2] ? { axis: h[2] as 'b' | 'c' } : {}),
+        ...(h[3] ? { rhombohedral: true as const } : {}),
         heading: line.slice(3),
         generators: [],
         ops: [],
@@ -90,6 +102,12 @@ const ENTRIES: Entry[] = (() => {
 
 /** The ITC setting an entry describes. */
 function settingOf(e: Entry): { key: PointGroupKey; setting: number } {
+  if (e.rhombohedral) {
+    const key = e.cls as PointGroupKey;
+    const s = settings(key).find((x) => x.axes === 'rhombohedral');
+    if (!s) throw new Error(`${e.heading}: no setting with rhombohedral axes`);
+    return { key, setting: s.index };
+  }
   if (e.axis) {
     const key = e.cls as PointGroupKey;
     const s = settings(key).find((x) => x.uniqueAxis === e.axis);
@@ -141,7 +159,7 @@ function expected(p: PrintedOperation, b: M): Expected {
     const v = parameterVectors(axisPart);
     expect(v).toHaveLength(2);
     const normal = unit(cross(times(b, v[0]), times(b, v[1])));
-    return { matrix: mirrorNormal(normal), kind: 'mirror', order: 2, cartesian: normal };
+    return { matrix: mirrorNormal(normal), kind: 'reflection', order: 2, cartesian: normal };
   }
   const s = /^(-?)([2346])([+-]?)$/.exec(p.symbol);
   if (!s) throw new Error(`Unreadable symbol ${p.symbol}`);
@@ -184,8 +202,8 @@ function tripletMatrix(t: string): M {
 }
 
 function generalPosition(e: Entry): M[] {
-  const axes = e.axis ? `unique axis ${e.axis}` : '';
-  const row = GENERAL.find((r) => r[0] === e.cls && (r[1] === axes || r[1] === 'hexagonal axes'));
+  const axes = e.axis ? `unique axis ${e.axis}` : e.rhombohedral ? 'rhombohedral axes' : '';
+  const row = GENERAL.find((r) => r[0] === e.cls && (r[1] === axes || (!e.rhombohedral && r[1] === 'hexagonal axes')));
   if (!row) throw new Error(`${e.heading}: not in Table 3.2.3.2`);
   return row[4].split(' ').map(tripletMatrix);
 }
@@ -193,14 +211,14 @@ function generalPosition(e: Entry): M[] {
 // --- Tests ----------------------------------------------------------------------------------------
 
 describe('describeOperations against the symmetry operations printed in ITA', () => {
-  it('covers every ITC setting that ITA lists, 40 entries', () => {
-    expect(ENTRIES).toHaveLength(40);
-    expect(new Set(ENTRIES.map((e) => JSON.stringify(settingOf(e)))).size).toBe(40);
+  it('covers every ITC setting that ITA lists, 45 entries (5 with rhombohedral axes)', () => {
+    expect(ENTRIES).toHaveLength(45);
+    expect(new Set(ENTRIES.map((e) => JSON.stringify(settingOf(e)))).size).toBe(45);
   });
 
   it.each(ENTRIES.map((e) => [e.heading, e] as const))('%s', (_h, e) => {
     const { key, setting } = settingOf(e);
-    const b = basis(key);
+    const b = basis(key, setting);
     const ops = operations(key, { setting });
     const descriptions = describeOperations(key, { setting });
     expect(e.ops.map((p) => p.n)).toEqual(ops.map((_, i) => i + 1));
@@ -213,23 +231,22 @@ describe('describeOperations against the symmetry operations printed in ITA', ()
       // line (n) is the n-th triplet of the general position (W in lattice coordinates)
       expect(sameM(x.matrix, mul(mul(b, general[i]), inverse(b)))).toBe(true);
       // and exactly one operation of the setting, the n-th: operations() keeps ITA's numbering
-      const hits = ops.map((o, k) => (sameM(x.matrix, o.matrix) ? k : -1)).filter((k) => k >= 0);
+      const hits = ops.map((o, k) => (sameM(x.matrix, o.cartesian) ? k : -1)).filter((k) => k >= 0);
       expect(hits).toEqual([i]);
       expect(used.has(hits[0])).toBe(false);
       used.add(hits[0]);
 
       const d = descriptions[hits[0]];
-      expect([d.kind, d.order, d.sense]).toEqual([x.kind, x.order, x.sense]);
+      expect([d.kind, d.n, d.sense]).toEqual([x.kind, x.order, x.sense]);
       if (x.cartesian) expect(parallel(d.axis!.cartesian, x.cartesian)).toBe(true);
       if (x.direction && x.order > 2) expect([...d.axis!.lattice]).toEqual(x.direction);
       else if (x.direction) expect(parallel(d.axis!.lattice, x.direction)).toBe(true);
     });
     expect(used.size).toBe(ops.length);
 
-    // generators() in the ITC convention gives ITA's selected generators, line (n) of each printed
-    // n, in printed order (the Birss convention gives birss-app's: birssApp.pins.test.ts)
+    // generators() gives ITA's selected generators, line (n) of each printed n, in printed order
     const g = generators(key, { setting });
     expect(g).toHaveLength(e.generators.length);
-    e.generators.forEach((n, j) => expect(sameM(mul(mul(b, general[n - 1]), inverse(b)), g[j].matrix)).toBe(true));
+    e.generators.forEach((n, j) => expect(sameM(mul(mul(b, general[n - 1]), inverse(b)), g[j].cartesian)).toBe(true));
   });
 });

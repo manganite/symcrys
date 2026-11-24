@@ -2,7 +2,8 @@
  * The magnetic tensor properties in the ITC convention against ITC Vol. D, Chapter 1.5 (fixture
  * class (a)), re-parsed from references/itc/: Table 1.5.2.4 (ferromagnetism: 31 groups and the
  * direction of M_s), Table 1.5.7.1 (piezomagnetism: 66 groups, the form of Λ_iα) and Table 1.5.8.1
- * (linear magnetoelectric effect: 58 groups, the form of α_ij, and the 11 groups the text names).
+ * (linear magnetoelectric effect: 58 groups, the form of α_ij, and the 11 groups the text names),
+ * with footnote 3 of § 1.5.8.1 (the 31 groups with a non-symmetric α_ij admit a toroidal moment).
  *
  * A printed form belongs to the orientation its Hermann–Mauguin symbol names (§ 1.5.7.1, p. 134),
  * so each printed symbol, the alternatives in square brackets included, is looked up among the ITC
@@ -37,14 +38,30 @@ interface Orientation {
 /** Groups without time reversal as an element of its own: the 90 groups of ITC Vol. D Chapter 1.5. */
 const GROUPS = MAGNETIC_POINT_GROUP_KEYS.filter((k) => pointGroup(k).type !== 'II');
 const compact = (s: string) => s.replace(/\s+/g, '');
-/** The tables of Chapter 1.5 print S6 where symcrys has C3i, the symbol of ITA. */
-const schoenflies = (key: MagneticPointGroupKey) => symbol(key, { form: 'schoenflies' }).replace('C3i', 'S6');
+/** The magnetic API writes Schoenflies symbols as ITC Vol. D does (`S6`, #137 B3). */
+const schoenflies = (key: MagneticPointGroupKey) => symbol(key, { form: 'schoenflies' });
+
+/**
+ * The short symbol with all three positions, read from the full symbol by ITA's rule (the first
+ * position as it stands, every other one by its element after the `/`): `-3 2'/m' 1` → `-3m'1`. The
+ * tables print it beside the key (`-3m' (= -3m'1)`), and since #137 B2 the default setting of a
+ * magnetic group has the key as its short symbol.
+ */
+const threePositions = (full: string) =>
+  full
+    .split(' ')
+    .map((t, i) => (i > 0 && t.includes('/') ? t.split('/')[1] : t))
+    .join('');
 
 const BY_SYMBOL = new Map<string, Orientation[]>();
 const DEFAULT = new Map<string, Orientation>();
 for (const key of GROUPS) {
-  for (const s of settings(key, 'itc')) {
-    for (const name of new Set([s.symbol, compact(s.fullSymbol)])) {
+  // A setting with rhombohedral axes has the Cartesian operations, so the tensor forms, of setting 1;
+  // its symbol (`32`) is the key, which the tables of Chapter 1.5 use for the default setting.
+  for (const s of settings(key).filter((x) => x.axes !== 'rhombohedral')) {
+    const trigonal = pointGroup(key).crystalSystem === 'trigonal';
+    const names = [s.symbol, compact(s.fullSymbol), ...(trigonal ? [threePositions(s.fullSymbol)] : [])];
+    for (const name of new Set(names)) {
       BY_SYMBOL.set(name, [...(BY_SYMBOL.get(name) ?? []), { key, setting: s.index }]);
     }
     if (s.isDefault) DEFAULT.set(key, { key, setting: s.index });
@@ -203,11 +220,28 @@ describe('ITC Vol. D Table 1.5.8.1: linear magnetoelectric effect', () => {
     // reversal); of the remaining 69, the 11 named ones are left out: 58 remain.
     const centre = (k: MagneticPointGroupKey) =>
       operations(k).some(
-        (op) => !op.timeReversal && op.matrix.every((r, i) => r.every((x, j) => x === (i === j ? -1 : 0))),
+        (op) => !op.timeReversal && op.cartesian.every((r, i) => r.every((x, j) => x === (i === j ? -1 : 0))),
       );
     expect(GROUPS.filter(centre)).toHaveLength(21);
     expect(GROUPS.filter((k) => centre(k) && allowsProperty(k, 'magnetoelectric'))).toEqual([]);
     expect([...named].sort()).toEqual(GROUPS.filter((k) => !centre(k) && !allowsProperty(k, 'magnetoelectric')).sort());
+  });
+});
+
+describe('ITC Vol. D § 1.5.8.1, footnote 3: the toroidal moment', () => {
+  it('is allowed in exactly the 31 groups whose printed magnetoelectric tensor need not be symmetric', () => {
+    // The print anchor of 'ferrotoroidic' (#137 E4): "Table 1.5.8.1 shows that the tensor α_ij ...
+    // does not need to be symmetric for 31 of the 58 point groups. ... These 31 groups coincide with
+    // those that admit a spontaneous toroidal moment" (p. 140). A printed matrix is symmetric if
+    // every cell is printed as its mirror cell (a12 and a12; not a12 and a21, nor a12 and -a12).
+    const content = readReference('itc/vol-d-table-1.5.8.1.md');
+    const matrices = printedMatrices(content);
+    const symmetric = (m: string[][]) => m.every((row, i) => row.every((cell, j) => cell === m[j][i]));
+    const nonSymmetric = printedGroups(content)
+      .filter((g) => !symmetric(matrices.get(g.block)!))
+      .map((g) => orientation(g.symbols[0])!.key);
+    expect(nonSymmetric).toHaveLength(31);
+    expect([...nonSymmetric].sort()).toEqual(GROUPS.filter((k) => allowsProperty(k, 'ferrotoroidic')).sort());
   });
 });
 
@@ -260,12 +294,12 @@ describe('ITC Vol. D Table 1.5.2.4: ferromagnetism', () => {
     const axes: number[][] = [];
     for (const op of ops) {
       const d = Math.round(
-        op.matrix[0][0] * (op.matrix[1][1] * op.matrix[2][2] - op.matrix[1][2] * op.matrix[2][1]) -
-          op.matrix[0][1] * (op.matrix[1][0] * op.matrix[2][2] - op.matrix[1][2] * op.matrix[2][0]) +
-          op.matrix[0][2] * (op.matrix[1][0] * op.matrix[2][1] - op.matrix[1][1] * op.matrix[2][0]),
+        op.cartesian[0][0] * (op.cartesian[1][1] * op.cartesian[2][2] - op.cartesian[1][2] * op.cartesian[2][1]) -
+          op.cartesian[0][1] * (op.cartesian[1][0] * op.cartesian[2][2] - op.cartesian[1][2] * op.cartesian[2][0]) +
+          op.cartesian[0][2] * (op.cartesian[1][0] * op.cartesian[2][1] - op.cartesian[1][1] * op.cartesian[2][0]),
       );
       if (d < 0 !== improper || op.timeReversal !== (m[3] !== '')) continue;
-      const r = op.matrix.map((row) => row.map((x) => d * x)); // the rotation part
+      const r = op.cartesian.map((row) => row.map((x) => d * x)); // the rotation part
       const trace = r[0][0] + r[1][1] + r[2][2];
       if (Math.abs(trace - (1 + 2 * Math.cos((2 * Math.PI) / order))) > 1e-9) continue;
       // The axis spans the symmetric part of r minus its trace part: r + rᵀ − (trace − 1)·1 = 2(1 − cos)·n nᵀ.
@@ -304,20 +338,20 @@ describe('the tensors these tables are compared with', () => {
   it('are those of TENSOR_PROPERTIES: axial, time-odd, of rank 1, 3 (symmetric in j, k) and 2', () => {
     expect(TENSOR_PROPERTIES.ferromagnetic.spec).toEqual({
       rank: 1,
-      parity: 'axial',
-      timeParity: 'c',
+      kind: 'axial',
+      timeParity: 'odd',
       intrinsic: 'none',
     });
     expect(TENSOR_PROPERTIES.piezomagnetic.spec).toEqual({
       rank: 3,
-      parity: 'axial',
-      timeParity: 'c',
-      intrinsic: 'jk',
+      kind: 'axial',
+      timeParity: 'odd',
+      intrinsic: 'symmetric-last-pair',
     });
     expect(TENSOR_PROPERTIES.magnetoelectric.spec).toEqual({
       rank: 2,
-      parity: 'axial',
-      timeParity: 'c',
+      kind: 'axial',
+      timeParity: 'odd',
       intrinsic: 'none',
     });
   });

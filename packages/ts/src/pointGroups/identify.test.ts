@@ -9,7 +9,7 @@ import { describe, expect, it } from 'vitest';
 import { groupOfSymbol } from '../testUtils/hermannMauguin.js';
 import { mul, rotationAbout, type M } from '../testUtils/independentGroups.js';
 import type { Mat3 } from '../linalg.js';
-import type { Operation } from '../operations.js';
+import type { CartesianOperation } from '../operations.js';
 import { describeOperations } from './elements.js';
 import { describeOperationsOf, pointGroupOf } from './identify.js';
 import {
@@ -85,7 +85,10 @@ describe('pointGroupOf', () => {
   it('identifies the 32 classes built from their symbols, in a general orientation, without a setting', () => {
     expect(CLASSES).toHaveLength(32);
     for (const [hm, dirs, key] of CLASSES) {
-      const ops: Operation[] = groupOfSymbol(hm, dirs).map((g) => ({ matrix: turned(g.m), timeReversal: g.t }));
+      const ops: CartesianOperation[] = groupOfSymbol(hm, dirs).map((g) => ({
+        cartesian: turned(g.m),
+        timeReversal: g.t,
+      }));
       // 1 and -1 have no orientation: their one setting is every orientation.
       expect(pointGroupOf(ops), hm).toEqual(key === '1' || key === '-1' ? { key, setting: 1 } : { key });
     }
@@ -94,11 +97,11 @@ describe('pointGroupOf', () => {
   for (const key of MAGNETIC_POINT_GROUP_KEYS) {
     it(`identifies ${key} in every setting with its setting, from all operations and from the generators`, () => {
       for (const s of settings(key)) {
-        for (const convention of ['itc', 'birss'] as const) {
-          const options = { convention, setting: s.index };
-          expect(pointGroupOf(operations(key, options)), `#${s.index}`).toEqual({ key, setting: s.index });
-          expect(pointGroupOf(generators(key, options)), `#${s.index} gen`).toEqual({ key, setting: s.index });
-        }
+        const options = { setting: s.index };
+        // Rhombohedral axes have the Cartesian operations of setting 1 (hexagonal axes): the same frame.
+        const expected = { key, setting: s.axes === 'rhombohedral' ? 1 : s.index };
+        expect(pointGroupOf(operations(key, options)), `#${s.index}`).toEqual(expected);
+        expect(pointGroupOf(generators(key, options)), `#${s.index} gen`).toEqual(expected);
       }
     });
   }
@@ -106,7 +109,7 @@ describe('pointGroupOf', () => {
   it('identifies magnetic groups in a general orientation', () => {
     for (const key of ["4'/mmm'", "321'", "m'm'2", "-6'm2'", "m-3m'"] as MagneticPointGroupKey[]) {
       const ops = operations(key).map((op) => ({
-        matrix: turned(op.matrix as unknown as M),
+        cartesian: turned(op.cartesian as unknown as M),
         timeReversal: op.timeReversal,
       }));
       expect(pointGroupOf(ops), key).toEqual({ key });
@@ -115,7 +118,7 @@ describe('pointGroupOf', () => {
 
   it('takes a tolerance for matrices with rounding errors', () => {
     const noisy = operations('6mm').map((op) => ({
-      matrix: op.matrix.map((row) => row.map((v) => v + 3e-6)) as unknown as Mat3,
+      cartesian: op.cartesian.map((row) => row.map((v) => v + 3e-6)) as unknown as Mat3,
       timeReversal: false,
     }));
     expect(pointGroupOf(noisy, { tolerance: 1e-4 })).toEqual({ key: '6mm', setting: 1 });
@@ -123,9 +126,9 @@ describe('pointGroupOf', () => {
 
   it('returns undefined for operations that generate no point group', () => {
     const fivefold = rotationAbout(Z, 1 / 5) as unknown as Mat3;
-    expect(pointGroupOf([{ matrix: fivefold, timeReversal: false }])).toBeUndefined();
+    expect(pointGroupOf([{ cartesian: fivefold, timeReversal: false }])).toBeUndefined();
     const odd = rotationAbout(Z, 0.1234) as unknown as Mat3;
-    expect(pointGroupOf([{ matrix: odd, timeReversal: false }])).toBeUndefined();
+    expect(pointGroupOf([{ cartesian: odd, timeReversal: false }])).toBeUndefined();
   });
 
   it('refuses a matrix that is not orthogonal and an operation that does not say whether it has time reversal', () => {
@@ -134,8 +137,8 @@ describe('pointGroupOf', () => {
       [1, -1, 0],
       [0, 0, 1],
     ];
-    expect(() => pointGroupOf([{ matrix: lattice, timeReversal: false }])).toThrow(RangeError);
-    expect(() => pointGroupOf([{ matrix: operations('2')[1].matrix } as Operation])).toThrow(RangeError);
+    expect(() => pointGroupOf([{ cartesian: lattice, timeReversal: false }])).toThrow(RangeError);
+    expect(() => pointGroupOf([{ cartesian: operations('2')[1].cartesian } as CartesianOperation])).toThrow(RangeError);
     expect(() => pointGroupOf(operations('2'), { tolerance: 0 })).toThrow(RangeError);
   });
 
@@ -151,7 +154,7 @@ describe('pointGroupOf', () => {
 
   it('takes a larger tolerance for matrices with larger errors (the trace is checked within it)', () => {
     const scaled = operations('mmm').map((op) => ({
-      matrix: op.matrix.map((row) => row.map((v) => v * (1 - 4e-4))) as unknown as Mat3,
+      cartesian: op.cartesian.map((row) => row.map((v) => v * (1 - 4e-4))) as unknown as Mat3,
       timeReversal: false,
     }));
     expect(() => pointGroupOf(scaled)).toThrow(/not an orthogonal/);
@@ -175,11 +178,7 @@ describe('describeOperationsOf', () => {
         const plain = describeOperationsOf(operations(key, { setting: s.index }));
         plain.forEach((d, i) => {
           const n = named[i];
-          expect([d.kind, d.order, d.timeReversal], `${key} #${s.index} ${i}`).toEqual([
-            n.kind,
-            n.order,
-            n.timeReversal,
-          ]);
+          expect([d.kind, d.n, d.timeReversal], `${key} #${s.index} ${i}`).toEqual([n.kind, n.n, n.timeReversal]);
           if (!n.axis || !d.axis) {
             expect(d.axis).toBe(n.axis);
             return;
@@ -197,9 +196,11 @@ describe('describeOperationsOf', () => {
   it('refuses an operation that is not crystallographic, also one whose angle rounds to 360°/n', () => {
     for (const turns of [1 / 5, 100 / 360, 110 / 360, 150 / 360, 170 / 360]) {
       const matrix = rotationAbout(Z, turns) as unknown as Mat3;
-      expect(() => describeOperationsOf([{ matrix, timeReversal: false }]), `${turns * 360}°`).toThrow(RangeError);
+      expect(() => describeOperationsOf([{ cartesian: matrix, timeReversal: false }]), `${turns * 360}°`).toThrow(
+        RangeError,
+      );
       const improper = matrix.map((row) => row.map((v) => -v)) as unknown as Mat3;
-      expect(() => describeOperationsOf([{ matrix: improper, timeReversal: false }])).toThrow(RangeError);
+      expect(() => describeOperationsOf([{ cartesian: improper, timeReversal: false }])).toThrow(RangeError);
     }
   });
 
@@ -209,8 +210,8 @@ describe('describeOperationsOf', () => {
       return [0, 1, 2].map((i) => [0, 1, 2].map((j) => (i === j ? 1 : 0) - 2 * n[i] * n[j])) as unknown as Mat3;
     };
     const axes = describeOperationsOf([
-      { matrix: tilted(1e-7), timeReversal: false },
-      { matrix: tilted(-1e-7), timeReversal: false },
+      { cartesian: tilted(1e-7), timeReversal: false },
+      { cartesian: tilted(-1e-7), timeReversal: false },
     ]).map((d) => d.axis?.cartesian[2]);
     expect(axes.every((z) => (z ?? 0) > 0)).toBe(true);
   });

@@ -1,7 +1,7 @@
 # symcrys for Python
 
 Crystallographic symmetry calculations: the 32 crystal classes and the 122 magnetic point groups
-with their settings (ITC and Birss conventions), symbols, symmetry elements, site symmetry and the
+with their settings as ITC gives them, symbols, symmetry elements, site symmetry and the
 forms of property tensors of rank 0 to 4 they allow, and for the crystal classes Wyckoff positions
 and crystal forms; the 17 plane groups with their operations, Wyckoff positions, asymmetric unit
 and symmetry elements; checked against print (ITC, Birss, Yariv).
@@ -19,11 +19,11 @@ pip install symcrys
 import symcrys
 from symcrys import magnetic
 
-SHG = {"rank": 3, "parity": "polar", "intrinsic": "jk"}
+SHG = {"rank": 3, "kind": "polar", "intrinsic": "symmetric-last-pair"}
 symcrys.tensor_form("mm2", SHG)["parameters"]   # the free components: xxz, yyz, zxx, zyy, zzz
 symcrys.allowed_properties("32")               # ['piezoelectric', 'gyrotropic']: quartz
 magnetic.allowed_properties("321'")            # the same: quartz is the grey group in the magnetic API
-magnetic.allowed_properties("m'm'2")           # six of the seven names, 'ferromagnetic' among them
+magnetic.allowed_properties("m'm'2")           # six of the eight names, 'ferromagnetic' among them
 ```
 
 `symcrys` is the crystallographic API (the 32 crystal classes, without time reversal),

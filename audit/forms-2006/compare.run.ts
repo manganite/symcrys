@@ -3,8 +3,9 @@
  * catalogue (ITA 5th ed., 2006, Tables 10.1.2.2 and 10.1.2.3), symcrys#24 item 2.
  *
  * An additional, independent check of the transcription, not its anchor (the anchor is the 2016
- * print; CLAUDE.md, "Correctness and provenance"). Reads js/formen.js from the sibling checkout
- * ../stereography and writes report.md next to this file. Run by hand: npm run audit:forms-2006. Not
+ * print; CLAUDE.md, "Correctness and provenance"). Reads js/formen.js of the sibling checkout
+ * ../stereography at the revision of `../stereography-2006.ts` (its last own transcription of ITA
+ * 2006) and writes report.md next to this file. Run by hand: npm run audit:forms-2006. Not
  * part of the build, the tests or CI.
  *
  * Compared: the 47 forms (number, number of faces, eigensymmetry; the catalogue's names are German
@@ -13,14 +14,12 @@
  * has the monoclinic groups with unique axis b only and no limiting forms.
  */
 import { writeFileSync } from 'node:fs';
-import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { it } from 'vitest';
-import { FACE_COUNT, FORMEN, FORM_TYPES } from '../../../stereography/js/formen.js';
 import { CRYSTAL_FORM_TYPES, POINT_GROUP_KEYS, crystalForms, settings } from '../../packages/ts/src/index.js';
+import { revisionLine, stereographyModule } from '../stereography-2006.js';
 
 const here = fileURLToPath(new URL('.', import.meta.url));
-const stereo = new URL('../../../stereography/', import.meta.url);
 
 /** stereography's id of a catalogue group → the ITC short symbol and unique axis in symcrys. */
 function settingFor(id: string) {
@@ -28,7 +27,7 @@ function settingFor(id: string) {
   const symbol = mono ? mono[1] : id;
   const axis = mono?.[2];
   for (const key of POINT_GROUP_KEYS) {
-    for (const s of settings(key, 'itc')) {
+    for (const s of settings(key)) {
       if (s.symbol === symbol && (axis === undefined || s.uniqueAxis === axis)) return { key, setting: s.index };
     }
   }
@@ -44,7 +43,12 @@ const catalogueIndices = (sym: string): string => sym.replace(/\s+/g, '');
 const symcrysIndices = (miller: string, condition: string | undefined): string =>
   miller.replace(/,/g, '') + (condition ? `(${condition.replace(/\|/g, '')})` : '');
 
-it('compares symcrys with the 2006 catalogue', () => {
+it('compares symcrys with the 2006 catalogue', async () => {
+  const { FACE_COUNT, FORMEN, FORM_TYPES } = (await stereographyModule('js/formen.js')) as {
+    FACE_COUNT: unknown;
+    FORMEN: unknown[];
+    FORM_TYPES: unknown;
+  };
   const diffs: string[] = [];
   let formsCompared = 0;
   for (const t of CRYSTAL_FORM_TYPES) {
@@ -67,9 +71,7 @@ it('compares symcrys with the 2006 catalogue', () => {
     rowsCompared += cat.length;
     if (JSON.stringify(lib) !== JSON.stringify(cat)) diffs.push(`| ${id} | ${cat.join('; ')} | ${lib.join('; ')} |`);
   }
-  const rev = execFileSync('git', ['-C', fileURLToPath(stereo), 'log', '-1', '--format=%h %cs'], {
-    encoding: 'utf8',
-  }).trim();
+  const rev = revisionLine();
   const lines = [
     '# Crystal forms: symcrys (ITA 2016) vs stereography (ITA 2006)',
     '',
@@ -84,8 +86,8 @@ it('compares symcrys with the 2006 catalogue', () => {
   if (diffs.length) lines.push('| What | 2006 (stereography) | 2016 (symcrys) |', '|---|---|---|', ...diffs, '');
   lines.push(
     'Not compared: the names (German in the catalogue), the limiting forms (not in the catalogue), the',
-    'monoclinic groups with unique axis c (not in the catalogue), the numeric representatives (the',
-    'catalogue chooses its own numbers).',
+    "monoclinic groups with unique axis c (not in the catalogue), the catalogue's faces with numbers",
+    '(symcrys gives the printed faces only).',
     '',
   );
   writeFileSync(`${here}report.md`, lines.join('\n'));

@@ -5,7 +5,9 @@ groups and crystal classes), Table 3.2.3.2, printed pp. 745–769. Transcribed 2
 page images of the chapter PDF (Zotero item `7NZ258UB`, attachment `Y6Z8P8NR`, PDF pages 26–50),
 overbars included. Wyckoff letters, multiplicities and site symmetries of the same entries:
 `vol-a-table-3.2.3.2-wyckoff-positions.md`; names, numbers of faces and eigensymmetries of the 47
-forms: `vol-a-table-3.2.1.3-crystal-forms.md`.
+forms: `vol-a-table-3.2.1.3-crystal-forms.md`. The five entries with rhombohedral axes (3, -3, 32,
+3m, -3m; pp. 753, 753, 755, 756, 759) were added 2026-11-23 from the page images of the same PDF
+(PDF pages 34, 36, 37, 40; printed page = PDF page + 719), read at 300–500 dpi.
 
 One row per face form printed in the fifth column ("face forms (in roman type)"), in printed order:
 the Wyckoff letter of the row it belongs to, whether it is the first entry of that row (`basic`) or
@@ -15,12 +17,13 @@ of the first face of the last column, and the condition printed with the name. W
 brackets two forms with a condition on the same faces (cubic (hhl)), both belong to the row the
 bracket stands on: on the row of the Wyckoff letter both are basic (-43m c, m-3m e), below the
 first entry both are limiting (23, m-3, 432). The point forms (italics) and the point in the origin
-(letter o) are not transcribed, nor are the five entries with rhombohedral axes, as for the
-Wyckoff positions.
+(letter o) are not transcribed.
 
 Transcription conventions: as in `vol-a-table-3.2.3.2-wyckoff-positions.md`: a leading minus sign
 is an overbar; indices separated by commas; Bravais–Miller indices (hkil) with four components for
-hexagonal axes. Where the print offers two faces with "or", the first is transcribed. A condition
+hexagonal axes, Miller indices (hkl) with three for rhombohedral axes. An index printed as an
+expression is written out: `h,k,-h-k` for (hk(h+k)) with the overbar over h+k, `h,k,2k-h` for
+(hk(2k−h)). Where the print offers two faces with "or", the first is transcribed. A condition
 `abs(h)<abs(l)` is the printed "(for |h| < |l|)".
 
 | Short | Axes | Page | Letter | Form | Name | Miller indices | Condition |
@@ -113,9 +116,15 @@ hexagonal axes. Where the print offers two faces with "or", the first is transcr
 | 3 | hexagonal axes | 752 | b | basic | Trigonal pyramid | h,k,i,l |  |
 | 3 | hexagonal axes | 752 | b | limiting | Trigonal prism | h,k,i,0 |  |
 | 3 | hexagonal axes | 752 | a | basic | Pedion or monohedron | 0,0,0,1 |  |
+| 3 | rhombohedral axes | 753 | b | basic | Trigonal pyramid | h,k,l |  |
+| 3 | rhombohedral axes | 753 | b | limiting | Trigonal prism | h,k,-h-k |  |
+| 3 | rhombohedral axes | 753 | a | basic | Pedion or monohedron | 1,1,1 |  |
 | -3 | hexagonal axes | 753 | b | basic | Rhombohedron | h,k,i,l |  |
 | -3 | hexagonal axes | 753 | b | limiting | Hexagonal prism | h,k,i,0 |  |
 | -3 | hexagonal axes | 753 | a | basic | Pinacoid or parallelohedron | 0,0,0,1 |  |
+| -3 | rhombohedral axes | 753 | b | basic | Rhombohedron | h,k,l |  |
+| -3 | rhombohedral axes | 753 | b | limiting | Hexagonal prism | h,k,-h-k |  |
+| -3 | rhombohedral axes | 753 | a | basic | Pinacoid or parallelohedron | 1,1,1 |  |
 | 312 | hexagonal axes | 754 | c | basic | Trigonal trapezohedron | h,k,i,l |  |
 | 312 | hexagonal axes | 754 | c | limiting | Ditrigonal prism | h,k,i,0 |  |
 | 312 | hexagonal axes | 754 | c | limiting | Trigonal dipyramid | h,0,-h,l |  |
@@ -130,6 +139,13 @@ hexagonal axes. Where the print offers two faces with "or", the first is transcr
 | 321 | hexagonal axes | 754 | c | limiting | Hexagonal prism | 1,0,-1,0 |  |
 | 321 | hexagonal axes | 754 | b | basic | Trigonal prism | 1,1,-2,0 |  |
 | 321 | hexagonal axes | 754 | a | basic | Pinacoid or parallelohedron | 0,0,0,1 |  |
+| 32 | rhombohedral axes | 755 | c | basic | Trigonal trapezohedron | h,k,l |  |
+| 32 | rhombohedral axes | 755 | c | limiting | Ditrigonal prism | h,k,-h-k |  |
+| 32 | rhombohedral axes | 755 | c | limiting | Trigonal dipyramid | h,k,2k-h |  |
+| 32 | rhombohedral axes | 755 | c | limiting | Rhombohedron | h,h,l |  |
+| 32 | rhombohedral axes | 755 | c | limiting | Hexagonal prism | 1,1,-2 |  |
+| 32 | rhombohedral axes | 755 | b | basic | Trigonal prism | 0,1,-1 |  |
+| 32 | rhombohedral axes | 755 | a | basic | Pinacoid or parallelohedron | 1,1,1 |  |
 | 3m1 | hexagonal axes | 755 | c | basic | Ditrigonal pyramid | h,k,i,l |  |
 | 3m1 | hexagonal axes | 755 | c | limiting | Ditrigonal prism | h,k,i,0 |  |
 | 3m1 | hexagonal axes | 755 | c | limiting | Hexagonal pyramid | h,h,-2h,l |  |
@@ -144,6 +160,13 @@ hexagonal axes. Where the print offers two faces with "or", the first is transcr
 | 31m | hexagonal axes | 756 | b | basic | Trigonal pyramid | h,h,-2h,l |  |
 | 31m | hexagonal axes | 756 | b | limiting | Trigonal prism | 1,1,-2,0 |  |
 | 31m | hexagonal axes | 756 | a | basic | Pedion or monohedron | 0,0,0,1 |  |
+| 3m | rhombohedral axes | 756 | c | basic | Ditrigonal pyramid | h,k,l |  |
+| 3m | rhombohedral axes | 756 | c | limiting | Ditrigonal prism | h,k,-h-k |  |
+| 3m | rhombohedral axes | 756 | c | limiting | Hexagonal pyramid | h,k,2k-h |  |
+| 3m | rhombohedral axes | 756 | c | limiting | Hexagonal prism | 0,1,-1 |  |
+| 3m | rhombohedral axes | 756 | b | basic | Trigonal pyramid | h,h,l |  |
+| 3m | rhombohedral axes | 756 | b | limiting | Trigonal prism | 1,1,-2 |  |
+| 3m | rhombohedral axes | 756 | a | basic | Pedion or monohedron | 1,1,1 |  |
 | -31m | hexagonal axes | 757 | d | basic | Ditrigonal scalenohedron or hexagonal scalenohedron | h,k,i,l |  |
 | -31m | hexagonal axes | 757 | d | limiting | Dihexagonal prism | h,k,i,0 |  |
 | -31m | hexagonal axes | 757 | d | limiting | Hexagonal dipyramid | h,0,-h,l |  |
@@ -158,6 +181,13 @@ hexagonal axes. Where the print offers two faces with "or", the first is transcr
 | -3m1 | hexagonal axes | 758 | c | limiting | Hexagonal prism | 1,0,-1,0 |  |
 | -3m1 | hexagonal axes | 758 | b | basic | Hexagonal prism | 1,1,-2,0 |  |
 | -3m1 | hexagonal axes | 758 | a | basic | Pinacoid or parallelohedron | 0,0,0,1 |  |
+| -3m | rhombohedral axes | 759 | d | basic | Ditrigonal scalenohedron or hexagonal scalenohedron | h,k,l |  |
+| -3m | rhombohedral axes | 759 | d | limiting | Dihexagonal prism | h,k,-h-k |  |
+| -3m | rhombohedral axes | 759 | d | limiting | Hexagonal dipyramid | h,k,2k-h |  |
+| -3m | rhombohedral axes | 759 | c | basic | Rhombohedron | h,h,l |  |
+| -3m | rhombohedral axes | 759 | c | limiting | Hexagonal prism | 1,1,-2 |  |
+| -3m | rhombohedral axes | 759 | b | basic | Hexagonal prism | 0,1,-1 |  |
+| -3m | rhombohedral axes | 759 | a | basic | Pinacoid or parallelohedron | 1,1,1 |  |
 | 6 |  | 760 | b | basic | Hexagonal pyramid | h,k,i,l |  |
 | 6 |  | 760 | b | limiting | Hexagonal prism | h,k,i,0 |  |
 | 6 |  | 760 | a | basic | Pedion or monohedron | 0,0,0,1 |  |

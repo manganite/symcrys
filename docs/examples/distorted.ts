@@ -6,8 +6,8 @@ const along111 = (m: readonly (readonly number[])[]) => {
   const v = m.map((row) => row[0] + row[1] + row[2]);
   return v.every((x) => Math.abs(x - v[0]) < 1e-9) && Math.abs(Math.abs(v[0]) - 1) < 1e-9;
 };
-const kept = operations('m-3m').filter((op) => along111(op.matrix));
+const kept = operations('m-3m').filter((op) => along111(op.cartesian));
 console.log(kept.length, 'operations:', pointGroupOf(kept));
-for (const d of describeOperationsOf(kept).filter((x) => x.order === 3)) {
-  console.log(d.kind, d.order, d.sense, d.axis?.cartesian.map((x) => x.toFixed(3)).join(' '));
+for (const d of describeOperationsOf(kept).filter((x) => x.n === 3)) {
+  console.log(d.kind, d.n, d.sense, d.axis?.cartesian.map((x) => x.toFixed(3)).join(' '));
 }

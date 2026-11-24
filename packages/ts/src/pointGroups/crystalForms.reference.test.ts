@@ -20,9 +20,18 @@
  * library's data file must equal the transcriptions, and its crystal forms must agree with them.
  */
 
+import { millerIndices } from '../indices.js';
+import { representativeFace } from './wyckoff.js';
 import { describe, expect, it } from 'vitest';
 import { close, inverse, mul, sameM, type M, type RefOp } from '../testUtils/independentGroups.js';
-import { expectHeader, readReference, section, tableRows } from '../testUtils/references.js';
+import {
+  expectHeader,
+  readReference,
+  section,
+  tableRows,
+  sameAxes,
+  RHOMBOHEDRAL_IN_HEXAGONAL,
+} from '../testUtils/references.js';
 import { crystalForms } from './crystalForms.js';
 import { ITA_FORMS, ITA_FORM_TYPES } from './crystalFormsData.js';
 import { POINT_GROUP_KEYS, settings, type PointGroupKey } from './pointGroups.js';
@@ -119,11 +128,16 @@ function coefficients(expr: string): number[] {
 
 /** Printed Miller indices with the given h, k, l (four indices for hexagonal axes, i = −(h + k)). */
 function hklOf(miller: string, value: Record<string, number>): number[] {
+  // An index is a sum of terms (`-h-k`, `2k-h` for rhombohedral axes).
   const parts = miller.split(',').map((c) => {
-    const m = /^(-?)(\d*)([hkil]?)$/.exec(c);
-    if (!m || (m[2] === '' && m[3] === '')) throw new Error(`Unreadable index: ${c}`);
-    const v = m[3] === 'i' ? -(value.h + value.k) : m[3] ? value[m[3]] : 1;
-    return (m[1] ? -1 : 1) * (m[2] === '' ? 1 : Number(m[2])) * v;
+    const terms = c.match(/[+-]?\d*[hkil]?/g)!.filter((t) => t !== '');
+    if (terms.join('') !== c) throw new Error(`Unreadable index: ${c}`);
+    return terms.reduce((sum, t) => {
+      const m = /^([+-]?)(\d*)([hkil]?)$/.exec(t);
+      if (!m || (m[2] === '' && m[3] === '')) throw new Error(`Unreadable index: ${c}`);
+      const v = m[3] === 'i' ? -(value.h + value.k) : m[3] ? value[m[3]] : 1;
+      return sum + (m[1] === '-' ? -1 : 1) * (m[2] === '' ? 1 : Number(m[2])) * v;
+    }, 0);
   });
   if (parts.length === 4) {
     expect(parts[2] + parts[0] + parts[1], `i = -(h+k) in ${miller}`).toBe(0);
@@ -133,8 +147,16 @@ function hklOf(miller: string, value: Record<string, number>): number[] {
 }
 
 /** h, k, l of the representative: 3, 2, 1, or 1, 2, 3 where the printed condition is |h| < |l|. */
-const valuesFor = (condition: string): Record<string, number> =>
-  condition === 'abs(h)<abs(l)' ? { h: 1, k: 2, l: 3 } : { h: 3, k: 2, l: 1 };
+/**
+ * The values of the representative: h = 1, l = 3 under the condition; otherwise h = 3, k = 2, l = 1,
+ * and for rhombohedral axes h = 5, since (321) lies there on the limiting form (h,k,2k-h).
+ */
+const valuesFor = (condition: string, axes = ''): Record<string, number> =>
+  condition === 'abs(h)<abs(l)'
+    ? { h: 1, k: 2, l: 3 }
+    : axes === 'rhombohedral axes'
+      ? { h: 5, k: 2, l: 1 }
+      : { h: 3, k: 2, l: 1 };
 
 const faceNormal = (basis: M, hkl: number[]): number[] => unit(apply(transpose(inverse(basis)), hkl));
 
@@ -157,7 +179,12 @@ const ENTRIES: Entry[] = generalRows.slice(1).map((g) => {
   const headline = headlineRows.find((h) => h[1] === g[0] && h[4] === g[1]);
   if (!headline) throw new Error(`No headline for ${g[0]} ${g[1]}`);
   const family = familyOf(headline[0].toLowerCase());
-  const basis = family === 'hexagonal' ? HEXAGONAL : ORTHONORMAL;
+  const basis =
+    g[1] === 'rhombohedral axes'
+      ? mul(HEXAGONAL, RHOMBOHEDRAL_IN_HEXAGONAL)
+      : family === 'hexagonal'
+        ? HEXAGONAL
+        : ORTHONORMAL;
   const bInv = inverse(basis);
   const group = g[4].split(/\s+/).map((t) => ({ m: mul(mul(basis, t.split(',').map(coefficients)), bInv), t: false }));
   return {
@@ -330,8 +357,8 @@ describe('ITA Table 3.2.3.2: face forms', () => {
     expect(fromData).toEqual(fromPrint);
   });
 
-  it('has forms for each of the 40 printed entries, on the page and with the letters of its Wyckoff positions', () => {
-    expect(ENTRIES).toHaveLength(40);
+  it('has forms for each of the 45 printed entries, on the page and with the letters of its Wyckoff positions', () => {
+    expect(ENTRIES).toHaveLength(45);
     for (const e of ENTRIES) {
       const label = `${e.short} ${e.axes}`;
       for (const r of e.forms) expect(Number(r[2]), label).toBe(e.page);
@@ -344,21 +371,39 @@ describe('ITA Table 3.2.3.2: face forms', () => {
 
   it('agrees with the generating point groups of Table 3.2.1.3 (both ways, with the errata applied)', () => {
     /** Entries of Table 3.2.3.2 a class symbol of Table 3.2.1.3 stands for. */
-    const entriesFor = (cls: string): Entry[] => {
-      const exact = ENTRIES.filter((e) => e.short === cls);
-      if (exact.length) return exact;
+    // A form and class whose rhombohedral description Table 3.2.1.3 prints in a row of its own (the
+    // braces of 32, 3m, -3m); where it does not (3, -3, and forms such as the pedion of 3m), one row
+    // serves both axes.
+    const ownRhombohedralRow = new Set(
+      generatingRows
+        .slice(1)
+        .filter((r) => r[2] === 'rhombohedral')
+        .map((r) => `${r[0]}|${r[1]}`),
+    );
+    const entriesFor = (no: string, cls: string, rhombohedral: boolean): Entry[] => {
+      const candidates = ENTRIES.filter(
+        (e) =>
+          (e.axes === 'rhombohedral axes') === rhombohedral ||
+          (!rhombohedral && e.axes === 'rhombohedral axes' && !ownRhombohedralRow.has(`${no}|${e.short}`)),
+      );
+      // A symbol of a setting with the axes of the row stands for that setting (`321`, `-42m`); a
+      // class key that is no such symbol for every setting of the class (`3m` of the pedion, also with
+      // rhombohedral axes, whose symbol `3m` is the key).
+      // (Where one row serves both axes, the entry with rhombohedral axes of the same symbol, `3`, too.)
+      if (candidates.some((e) => e.short === cls && (e.axes === 'rhombohedral axes') === rhombohedral)) {
+        return candidates.filter((e) => e.short === cls);
+      }
       const key = POINT_GROUP_KEYS.find((k) => k === cls);
       if (!key) throw new Error(`Unknown class ${cls}`);
-      const symbols = settings(key, 'itc').map((s) => s.symbol);
-      return ENTRIES.filter((e) => symbols.includes(e.short));
+      const symbols = settings(key).map((s) => s.symbol);
+      return candidates.filter((e) => symbols.includes(e.short));
     };
     const dotless = (s: string): string => s.replace(/\./g, '');
     const printed = generatingRows
       .slice(1)
       .map(corrected)
-      .filter((r) => r[2] !== 'rhombohedral')
-      .flatMap(([no, cls, , syms, type]) =>
-        entriesFor(cls).flatMap((e) =>
+      .flatMap(([no, cls, axes, syms, type]) =>
+        entriesFor(no, cls, axes === 'rhombohedral').flatMap((e) =>
           syms.split(', ').map((s) => ({ key: `${e.short} ${e.axes}`, no, sym: s, type })),
         ),
       );
@@ -413,7 +458,7 @@ describe('ITA Table 3.2.3.2: face forms', () => {
       const n = numberOfName(name);
       const faces = Number(typeRows[n][2]);
       it(`${label}, ${letter}: ${name} (${miller}${condition ? `, ${condition}` : ''})`, () => {
-        const values = valuesFor(condition);
+        const values = valuesFor(condition, e.axes);
         if (condition) {
           const [h, , l] = [values.h, values.k, values.l].map(Math.abs);
           expect(condition === 'abs(h)<abs(l)' ? h < l : h > l, 'the representative meets the condition').toBe(true);
@@ -426,7 +471,7 @@ describe('ITA Table 3.2.3.2: face forms', () => {
         const position = e.positions.find((p) => p[4] === letter);
         if (!position) throw new Error(`No position ${letter}`);
         expect(Number(position[3])).toBe(faces);
-        const siteOfPosition = stabilizerOf(e.group, faceNormal(e.basis, hklOf(position[7], { h: 3, k: 2, l: 1 })));
+        const siteOfPosition = stabilizerOf(e.group, faceNormal(e.basis, hklOf(position[7], valuesFor('', e.axes))));
         expect(conjugate(e.group, stabilizerOf(e.group, normal), siteOfPosition), 'same Wyckoff position').toBe(true);
         // Open or closed: the face normals of a prism (and of a form of one or two faces) lie in one
         // plane, those of every other form do not. This tells apart forms with the same number of
@@ -458,8 +503,8 @@ describe('ITA Table 3.2.3.2: face forms', () => {
     it(`${label}: the library gives the printed forms`, () => {
       const axis = /^unique axis (b|c)$/.exec(e.axes)?.[1];
       const found = POINT_GROUP_KEYS.flatMap((key: PointGroupKey) =>
-        settings(key, 'itc')
-          .filter((s) => s.symbol === e.short && (axis === undefined || s.uniqueAxis === axis))
+        settings(key)
+          .filter((s) => s.symbol === e.short && (axis === undefined || s.uniqueAxis === axis) && sameAxes(e.axes, s))
           .map((s) => ({ key, index: s.index })),
       );
       expect(found).toHaveLength(1);
@@ -472,7 +517,11 @@ describe('ITA Table 3.2.3.2: face forms', () => {
         const position = e.positions.find((p) => p[4] === r[3]);
         expect([f.multiplicity, f.siteSymmetry]).toEqual([Number(position?.[3]), position?.[5]]);
         expect(f.condition ?? '').toBe(r[7].replace(/abs\((\w)\)/g, '|$1|'));
-        expect(sameV(f.representative.cartesian, faceNormal(e.basis, hklOf(r[6], valuesFor(r[7]))))).toBe(true);
+        const printed = hklOf(r[6], valuesFor(r[7], e.axes));
+        // The public millerIndices gives the face the test reads from print (#137 G3).
+        expect(millerIndices(f.millerIndices, valuesFor(r[7], e.axes))).toEqual(printed);
+        const face = representativeFace(found[0].key, found[0].index, f.millerIndices, f.condition);
+        expect(sameV(face.cartesian, faceNormal(e.basis, printed))).toBe(true);
       });
     });
   }

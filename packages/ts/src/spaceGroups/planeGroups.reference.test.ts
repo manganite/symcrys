@@ -9,6 +9,7 @@
  * the multiplicity implies.
  */
 
+import * as plane from '../plane.js';
 import { describe, expect, it } from 'vitest';
 import { readReference } from '../testUtils/references.js';
 import {
@@ -78,6 +79,16 @@ describe('plane groups: transcription', () => {
   it('has the 17 groups, plane group n on p. 175 + n', () => {
     expect(PRINT.map((g) => g.number)).toEqual(Array.from({ length: 17 }, (_, i) => i + 1));
     for (const g of PRINT) expect(g.page).toBe(175 + g.number);
+  });
+
+  it("gives symbol(key) and symbol(key, { form: 'full' }) of symcrys/plane as printed (#137 F4)", () => {
+    for (const g of PRINT) {
+      expect(plane.symbol(g.symbol as plane.PlaneGroupKey)).toBe(g.symbol);
+      // The full symbol with its positions separated by spaces (Thomas, 2026-11-24).
+      expect(plane.symbol(g.symbol as plane.PlaneGroupKey, { form: 'full' })).toBe(
+        [...g.fields['Full symbol']].join(' '),
+      );
+    }
   });
 
   it('equals the data file', () => {

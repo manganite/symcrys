@@ -9,6 +9,8 @@
  * Wyckoff positions must agree with these independent results.
  */
 
+import { millerIndices } from '../indices.js';
+import { representativeFace } from './wyckoff.js';
 import { describe, expect, it } from 'vitest';
 import {
   close,
@@ -23,7 +25,13 @@ import {
   type RefOp,
 } from '../testUtils/independentGroups.js';
 import { groupOfSymbol } from '../testUtils/hermannMauguin.js';
-import { expectHeader, readReference, tableRows } from '../testUtils/references.js';
+import {
+  expectHeader,
+  readReference,
+  tableRows,
+  sameAxes,
+  RHOMBOHEDRAL_IN_HEXAGONAL,
+} from '../testUtils/references.js';
 import { POINT_GROUP_KEYS, operations, settings, type PointGroupKey } from './pointGroups.js';
 import { wyckoffPositions } from './wyckoff.js';
 import { ITA_WYCKOFF } from './wyckoffData.js';
@@ -45,6 +53,14 @@ const HEXAGONAL: M = [
  * symbol: primary, secondary, tertiary. Monoclinic: the unique axis only.
  */
 const DIRECTIONS: Record<string, number[][][]> = {
+  rhombohedral: [
+    [[1, 1, 1]],
+    [
+      [1, -1, 0],
+      [0, 1, -1],
+      [-1, 0, 1],
+    ],
+  ],
   orthorhombic: [[[1, 0, 0]], [[0, 1, 0]], [[0, 0, 1]]],
   tetragonal: [
     [[0, 0, 1]],
@@ -141,6 +157,8 @@ interface Entry {
   page: number;
   /** The printed general position, as Cartesian operations. */
   group: RefOp[];
+  /** The printed general position, as matrices on the lattice coordinates, in printed order. */
+  lattice: M[];
   basis: M;
   rows: string[][];
 }
@@ -151,23 +169,32 @@ const ENTRIES: Entry[] = generalRows.slice(1).map((g) => {
   const headline = headlineRows.find((h) => h[1] === g[0] && h[4] === g[1]);
   if (!headline) throw new Error(`No headline for ${g[0]} ${g[1]}`);
   const family = familyOf(headline[0].toLowerCase());
-  const basis = family === 'hexagonal' ? HEXAGONAL : ORTHONORMAL;
+  const basis =
+    g[1] === 'rhombohedral axes'
+      ? mul(HEXAGONAL, RHOMBOHEDRAL_IN_HEXAGONAL)
+      : family === 'hexagonal'
+        ? HEXAGONAL
+        : ORTHONORMAL;
   const bInv = inverse(basis);
-  const group = g[4].split(/\s+/).map((t) => ({ m: mul(mul(basis, t.split(',').map(coefficients)), bInv), t: false }));
+  const lattice = g[4].split(/\s+/).map((t) => t.split(',').map(coefficients));
+  const group = lattice.map((w) => ({ m: mul(mul(basis, w), bInv), t: false }));
   return {
     short: g[0],
     axes: g[1],
     family,
     page: Number(g[2]),
     group,
+    lattice,
     basis,
     rows: wyckoffRows.slice(1).filter((r) => r[0] === g[0] && r[1] === g[1]),
   };
 });
 
 /** Printed Miller indices (`h,h,-2h,l`, `0,1,0`; four for hexagonal axes) with h = 3, k = 2, l = 1. */
-function hklOf(miller: string): number[] {
-  const value: Record<string, number> = { h: 3, k: 2, l: 1, i: -5 };
+/** h = 3, k = 2, l = 1; for rhombohedral axes h = 5, since (321) lies there on the limiting form (h,k,2k-h). */
+function hklOf(miller: string, axes = ''): number[] {
+  const value: Record<string, number> =
+    axes === 'rhombohedral axes' ? { h: 5, k: 2, l: 1, i: -7 } : { h: 3, k: 2, l: 1, i: -5 };
   const parts = miller.split(',').map((c) => {
     const m = /^(-?)(\d*)([hkil]?)$/.exec(c);
     if (!m || (m[2] === '' && m[3] === '')) throw new Error(`Unreadable index: ${c}`);
@@ -182,6 +209,17 @@ function hklOf(miller: string): number[] {
 
 /** Face normal of (hkl): the reciprocal basis B⁻ᵀ applied to hkl. */
 const faceNormal = (basis: M, hkl: number[]): number[] => unit(apply(transpose(inverse(basis)), hkl));
+/** A printed triplet (`x,-x+y,z`) as the matrix of its coefficients of x, y, z, one row per coordinate. */
+const triplet = (coords: string): M => coords.split(',').map(coefficients);
+/** The images W·t of a triplet t under the operations, the first of each distinct image, in order. */
+function distinctImages(operations: readonly M[], t: M): M[] {
+  const out: M[] = [];
+  for (const w of operations) {
+    const image = mul(w, t);
+    if (!out.some((u) => sameM(u, image))) out.push(image);
+  }
+  return out;
+}
 /** Point of a coordinate pattern with x = 3, y = 2, z = 1 (lattice basis), Cartesian. */
 const point = (basis: M, coords: string): number[] =>
   unit(apply(basis, apply(coords.split(',').map(coefficients), [3, 2, 1])));
@@ -243,7 +281,8 @@ function symbolGroups(
   }
   const sets = DIRECTIONS[family].map((set) => set.map((d) => unit(apply(basis, d))));
   const results: RefOp[][] = [];
-  for (const split of splits(tokens, 3)) {
+  // Three positions, two for rhombohedral axes (ITA Table 2.1.3.1).
+  for (const split of splits(tokens, sets.length)) {
     // For each position, every assignment of its tokens to distinct directions whose elements fix v.
     const perPosition: M[][][] = split.map((group, p) => {
       if (group[0] === '.') return [[]];
@@ -261,7 +300,7 @@ function symbolGroups(
       return assign(0, []);
     });
     const combine = (p: number, acc: M[]): void => {
-      if (p === 3) {
+      if (p === sets.length) {
         results.push(close(acc.map((m) => ({ m, t: false }))));
         return;
       }
@@ -276,8 +315,8 @@ function symbolGroups(
 function settingOf(e: Entry): { key: PointGroupKey; index: number } {
   const axis = /^unique axis (b|c)$/.exec(e.axes)?.[1];
   const found = POINT_GROUP_KEYS.flatMap((key) =>
-    settings(key, 'itc')
-      .filter((s) => s.symbol === e.short && (axis === undefined || s.uniqueAxis === axis))
+    settings(key)
+      .filter((s) => s.symbol === e.short && (axis === undefined || s.uniqueAxis === axis) && sameAxes(e.axes, s))
       .map((s) => ({ key, index: s.index })),
   );
   if (found.length !== 1) throw new Error(`No unique setting for ${e.short} ${e.axes}`);
@@ -293,22 +332,24 @@ describe('ITA Table 3.2.3.2: Wyckoff positions', () => {
         e.symbol,
         e.uniqueAxis
           ? `unique axis ${e.uniqueAxis}`
-          : ['3', '-3', '312', '321', '3m1', '31m', '-31m', '-3m1'].includes(e.symbol)
-            ? 'hexagonal axes'
-            : '',
+          : e.axes === 'rhombohedral'
+            ? 'rhombohedral axes'
+            : ['3', '-3', '312', '321', '3m1', '31m', '-31m', '-3m1'].includes(e.symbol)
+              ? 'hexagonal axes'
+              : '',
         String(e.page),
         String(r[1]),
         r[0],
         r[2],
-        r[3],
+        r[3].join(' '),
         r[4],
       ]),
     );
     expect(fromData).toEqual(wyckoffRows.slice(1));
   });
 
-  it('has Wyckoff positions for each of the 40 printed entries, on the page of the entry', () => {
-    expect(ENTRIES).toHaveLength(40);
+  it('has Wyckoff positions for each of the 45 printed entries, on the page of the entry', () => {
+    expect(ENTRIES).toHaveLength(45);
     for (const e of ENTRIES) {
       expect(e.rows.length, `${e.short} ${e.axes}`).toBeGreaterThan(0);
       for (const r of e.rows) expect(Number(r[2]), `${e.short} ${e.axes}`).toBe(e.page);
@@ -336,21 +377,23 @@ describe('ITA Table 3.2.3.2: Wyckoff positions', () => {
 
     for (const r of e.rows.filter((x) => x[4] !== 'o')) {
       it(`${label}, ${r[3]}${r[4]} ${r[5]}: face and point lie in the position the symbol describes`, () => {
-        const n = faceNormal(e.basis, hklOf(r[7]));
+        const n = faceNormal(e.basis, hklOf(r[7], e.axes));
         const stab = stabilizerOf(e.group, n);
         expect(stab.length * Number(r[3]), 'order of the site symmetry × multiplicity').toBe(order);
-        const readings = symbolGroups(r[5], e.family, e.basis, uniqueAxis, n);
+        // Rhombohedral axes: the symmetry directions of ITA Table 2.1.3.1 for them.
+        const family = e.axes === 'rhombohedral axes' ? 'rhombohedral' : e.family;
+        const readings = symbolGroups(r[5], family, e.basis, uniqueAxis, n);
         expect(
           readings.some((h) =>
             sameGroup(
               h,
-              stab.map((s) => ({ matrix: s.m, timeReversal: false })),
+              stab.map((s) => ({ cartesian: s.m, timeReversal: false })),
             ),
           ),
           `site symmetry ${r[5]} read along ITA Table 2.1.3.1`,
         ).toBe(true);
         // The representative point has a conjugate site symmetry (same Wyckoff position).
-        const p = point(e.basis, r[6]);
+        const p = point(e.basis, r[6].split(' ')[0]);
         const conj = e.group.some((g) => {
           const q = apply(g.m, p);
           const s = stabilizerOf(e.group, q);
@@ -358,12 +401,18 @@ describe('ITA Table 3.2.3.2: Wyckoff positions', () => {
         });
         expect(conj, `point ${r[6]} in the same position`).toBe(true);
       });
+
+      it(`${label}, ${r[3]}${r[4]}: the printed points are the images of the first under the general position, in its order`, () => {
+        const printed = r[6].split(' ').map(triplet);
+        expect(printed, 'one point per equivalent direction').toHaveLength(Number(r[3]));
+        expect(printed).toEqual(distinctImages(e.lattice, printed[0]));
+      });
     }
 
     it(`${label}: different letters are different positions (site symmetries not conjugate)`, () => {
       const stabs = e.rows
         .filter((x) => x[4] !== 'o')
-        .map((x) => stabilizerOf(e.group, faceNormal(e.basis, hklOf(x[7]))));
+        .map((x) => stabilizerOf(e.group, faceNormal(e.basis, hklOf(x[7], e.axes))));
       for (let i = 0; i < stabs.length; i++) {
         for (let j = i + 1; j < stabs.length; j++) {
           const conjugate = e.group.some((g) => {
@@ -382,11 +431,14 @@ describe('ITA Table 3.2.3.2: Wyckoff positions', () => {
       const ops = operations(key, { setting: index });
       const faces = e.rows.filter((x) => x[4] !== 'o');
       expect(
-        lib.map((w) => [w.letter, String(w.multiplicity), w.siteSymmetry, w.coordinates, w.millerIndices]),
+        lib.map((w) => [w.letter, String(w.multiplicity), w.siteSymmetry, w.coordinates.join(' '), w.millerIndices]),
       ).toEqual(faces.map((x) => [x[4], x[3], x[5], x[6], x[7]]));
       lib.forEach((w, i) => {
-        const n = faceNormal(e.basis, hklOf(faces[i][7]));
-        expect(sameV(w.representative.cartesian, n)).toBe(true);
+        const n = faceNormal(e.basis, hklOf(faces[i][7], e.axes));
+        // The public millerIndices with these values gives the face the test reads from print (#137 G3).
+        const values = e.axes === 'rhombohedral axes' ? { h: 5, k: 2, l: 1 } : { h: 3, k: 2, l: 1 };
+        expect(millerIndices(w.millerIndices, values)).toEqual(hklOf(faces[i][7], e.axes));
+        expect(sameV(representativeFace(key, index, w.millerIndices).cartesian, n)).toBe(true);
         const stab = stabilizerOf(e.group, n).map((s) => ({ m: s.m, t: false }));
         expect(
           sameGroup(
@@ -399,15 +451,31 @@ describe('ITA Table 3.2.3.2: Wyckoff positions', () => {
   }
 });
 
+describe('Wyckoff coordinates of every setting, unprinted ones included', () => {
+  // Printed settings are checked against print above; this pins the order for all settings: the
+  // images of the first point under the operations of the setting, in their order (the order
+  // printed for setting 1, carried into the frame of an unprinted setting).
+  for (const key of POINT_GROUP_KEYS) {
+    for (const s of settings(key)) {
+      it(`${key}, setting ${s.index}: each position lists the images of its first point, in the order of the operations`, () => {
+        const lattice = operations(key, { setting: s.index }).map((op) => op.matrix.map((r) => [...r]));
+        for (const w of wyckoffPositions(key, { setting: s.index })) {
+          expect(w.coordinates.map(triplet), `${w.letter}`).toEqual(distinctImages(lattice, triplet(w.coordinates[0])));
+        }
+      });
+    }
+  }
+});
+
 describe('Settings ITA does not print: mm2 as 2mm and m2m', () => {
-  for (const s of settings('mm2', 'itc').filter((x) => x.symbol === '2mm' || x.symbol === 'm2m')) {
+  for (const s of settings('mm2').filter((x) => x.symbol === '2mm' || x.symbol === 'm2m')) {
     it(`${s.symbol}: every position read along x, y, z gives the site symmetry of its representative`, () => {
       const group = groupOfSymbol(s.symbol, ORTHONORMAL);
       const lib = wyckoffPositions('mm2', { setting: s.index });
       expect(lib.map((w) => w.letter)).toEqual(['d', 'c', 'b', 'a']);
       for (const w of lib) {
         const n = faceNormal(ORTHONORMAL, hklOf(w.millerIndices));
-        expect(sameV(w.representative.cartesian, n)).toBe(true);
+        expect(sameV(representativeFace('mm2', s.index, w.millerIndices).cartesian, n)).toBe(true);
         const stab = stabilizerOf(group, n);
         expect(stab.length * w.multiplicity).toBe(4);
         const readings = symbolGroups(w.siteSymmetry, 'orthorhombic', ORTHONORMAL, undefined, n);
@@ -415,11 +483,62 @@ describe('Settings ITA does not print: mm2 as 2mm and m2m', () => {
           readings.some((h) =>
             sameGroup(
               h,
-              stab.map((x) => ({ matrix: x.m, timeReversal: false })),
+              stab.map((x) => ({ cartesian: x.m, timeReversal: false })),
             ),
           ),
         ).toBe(true);
-        const p = point(ORTHONORMAL, w.coordinates);
+        const p = point(ORTHONORMAL, w.coordinates[0]);
+        // The carried points are the images of the first under the group read from the symbol.
+        const images = distinctImages(
+          group.map((g) => g.m),
+          triplet(w.coordinates[0]),
+        );
+        expect(w.coordinates).toHaveLength(w.multiplicity);
+        expect(new Set(w.coordinates.map((c) => JSON.stringify(triplet(c))))).toEqual(
+          new Set(images.map((m) => JSON.stringify(m))),
+        );
+        const conj = group.some((g) => {
+          const s2 = stabilizerOf(group, apply(g.m, p));
+          return s2.length === stab.length && s2.every((x) => stab.some((y) => sameM(x.m, y.m)));
+        });
+        expect(conj, `point ${w.coordinates} in the same position`).toBe(true);
+      }
+    });
+  }
+});
+
+describe('Settings ITA does not print: monoclinic unique axis a', () => {
+  for (const key of ['2', 'm', '2/m'] as const) {
+    const s = settings(key).find((x) => x.uniqueAxis === 'a')!;
+    it(`${key} ${s.fullSymbol}: every position read along x gives the site symmetry of its representative`, () => {
+      // The full symbol read along a, b, c = x, y, z; the unique axis a is x.
+      const group = groupOfSymbol(s.fullSymbol, ORTHONORMAL);
+      const lib = wyckoffPositions(key, { setting: s.index });
+      expect(lib.map((w) => w.letter)).toEqual(wyckoffPositions(key, { setting: 1 }).map((w) => w.letter));
+      for (const w of lib) {
+        const n = faceNormal(ORTHONORMAL, hklOf(w.millerIndices));
+        expect(sameV(representativeFace(key, s.index, w.millerIndices).cartesian, n)).toBe(true);
+        const stab = stabilizerOf(group, n);
+        expect(stab.length * w.multiplicity).toBe(group.length);
+        const readings = symbolGroups(w.siteSymmetry, 'monoclinic', ORTHONORMAL, [1, 0, 0], n);
+        expect(
+          readings.some((h) =>
+            sameGroup(
+              h,
+              stab.map((x) => ({ cartesian: x.m, timeReversal: false })),
+            ),
+          ),
+        ).toBe(true);
+        const p = point(ORTHONORMAL, w.coordinates[0]);
+        // The carried points are the images of the first under the group read from the symbol.
+        const images = distinctImages(
+          group.map((g) => g.m),
+          triplet(w.coordinates[0]),
+        );
+        expect(w.coordinates).toHaveLength(w.multiplicity);
+        expect(new Set(w.coordinates.map((c) => JSON.stringify(triplet(c))))).toEqual(
+          new Set(images.map((m) => JSON.stringify(m))),
+        );
         const conj = group.some((g) => {
           const s2 = stabilizerOf(group, apply(g.m, p));
           return s2.length === stab.length && s2.every((x) => stab.some((y) => sameM(x.m, y.m)));

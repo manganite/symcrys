@@ -9,7 +9,13 @@
 
 import { describe, expect, it } from 'vitest';
 import { close, inverse, mul, sameGroup, sameM, type M, type RefOp } from '../testUtils/independentGroups.js';
-import { expectHeader, readReference, tableRows } from '../testUtils/references.js';
+import {
+  expectHeader,
+  readReference,
+  tableRows,
+  sameAxes,
+  RHOMBOHEDRAL_IN_HEXAGONAL,
+} from '../testUtils/references.js';
 import { POINT_GROUP_KEYS, operations, settings, type PointGroupKey } from './pointGroups.js';
 
 /**
@@ -78,7 +84,12 @@ const ENTRIES: Entry[] = positionRows.slice(1).map((r) => {
 });
 
 function cartesian(e: Entry): RefOp[] {
-  const b = e.system === 'trigonal' || e.system === 'hexagonal' ? HEXAGONAL : ORTHONORMAL;
+  const b =
+    e.axes === 'rhombohedral axes'
+      ? mul(HEXAGONAL, RHOMBOHEDRAL_IN_HEXAGONAL)
+      : e.system === 'trigonal' || e.system === 'hexagonal'
+        ? HEXAGONAL
+        : ORTHONORMAL;
   const bInv = inverse(b);
   return e.triplets.map((t) => ({ m: mul(mul(b, latticeMatrix(t)), bInv), t: false }));
 }
@@ -87,23 +98,23 @@ function cartesian(e: Entry): RefOp[] {
 function settingOf(e: Entry): { key: PointGroupKey; index: number }[] {
   const axis = /^unique axis (b|c)$/.exec(e.axes)?.[1];
   return POINT_GROUP_KEYS.flatMap((key) =>
-    settings(key, 'itc')
-      .filter((s) => s.symbol === e.short && (axis === undefined || s.uniqueAxis === axis))
+    settings(key)
+      .filter((s) => s.symbol === e.short && (axis === undefined || s.uniqueAxis === axis) && sameAxes(e.axes, s))
       .map((s) => ({ key, index: s.index })),
   );
 }
 
 describe('ITA Table 3.2.3.2: general positions', () => {
-  it('has the 40 entries with hexagonal or no special axes, each once', () => {
-    expect(ENTRIES).toHaveLength(40);
-    expect(new Set(ENTRIES.map((e) => `${e.short}|${e.axes}`)).size).toBe(40);
+  it('has the 45 entries, each once (5 with rhombohedral axes)', () => {
+    expect(ENTRIES).toHaveLength(45);
+    expect(new Set(ENTRIES.map((e) => `${e.short}|${e.axes}`)).size).toBe(45);
   });
 
-  it('covers every ITC setting of symcrys except 2mm and m2m, which ITA does not list', () => {
+  it('covers every ITC setting of symcrys except 2mm, m2m and unique axis a, which ITA does not list', () => {
     const covered = new Set(ENTRIES.flatMap((e) => settingOf(e).map((s) => `${s.key}#${s.index}`)));
     const all = POINT_GROUP_KEYS.flatMap((key) =>
-      settings(key, 'itc')
-        .filter((s) => s.symbol !== '2mm' && s.symbol !== 'm2m')
+      settings(key)
+        .filter((s) => s.symbol !== '2mm' && s.symbol !== 'm2m' && s.uniqueAxis !== 'a')
         .map((s) => `${key}#${s.index}`),
     );
     expect([...covered].sort()).toEqual(all.sort());
@@ -126,7 +137,7 @@ describe('ITA Table 3.2.3.2: general positions', () => {
     it(`${label}: the printed operations are those of the ITC setting`, () => {
       const matches = settingOf(e);
       expect(matches).toHaveLength(1);
-      const ops = operations(matches[0].key, { convention: 'itc', setting: matches[0].index });
+      const ops = operations(matches[0].key, { setting: matches[0].index });
       expect(sameGroup(cartesian(e), ops)).toBe(true);
     });
   }

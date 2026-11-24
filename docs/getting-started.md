@@ -58,15 +58,16 @@ symcrys.point_group("32")
 ```
 
 ```{code-cell} ipython3
-symcrys.symbol("32"), symcrys.symbol("32", convention="birss"), symcrys.symbol("32", form="schoenflies")
+symcrys.symbol("32"), symcrys.symbol("32", setting=2), symcrys.symbol("32", form="schoenflies")
 ```
 
 ```{code-cell} ipython3
-symcrys.operations("32")[1]["matrix"]
+ops = symcrys.operations("32")  # one record of arrays: ops.matrix, ops.cartesian, len(ops) == 6
+ops.matrix[1], ops.cartesian[1]  # ITA's W in the lattice basis, and the Cartesian matrix
 ```
 
 ```{code-cell} ipython3
-SHG = {"rank": 3, "parity": "polar", "intrinsic": "jk"}
+SHG = {"rank": 3, "kind": "polar", "intrinsic": "symmetric-last-pair"}
 form = symcrys.tensor_form("mm2", SHG)
 form["parameters"]  # the free components as index lists: xxz, yyz, zxx, zyy, zzz
 ```
@@ -88,10 +89,12 @@ The plane API is the module `symcrys.plane`:
 ```{code-cell} ipython3
 from symcrys import plane
 
-plane.wyckoff_position_of("p6mm", [1 / 3, 2 / 3]), plane.asymmetric_unit("p6mm")["vertices"]
+plane.wyckoff_position("p6mm", [1 / 3, 2 / 3]), plane.asymmetric_unit("p6mm")["vertices"]
 ```
 
-An error of the library raises `symcrys.SymcrysError`, a subclass of `ValueError`:
+Wrong input (an unknown key, a vector of the wrong length, an argument of the wrong type) raises
+`symcrys.SymcrysError`, a subclass of `ValueError`; a fault of symcrys itself raises
+`symcrys.SymcrysInternalError`, a `RuntimeError`, so that `except ValueError` does not hide it:
 
 ```{code-cell} ipython3
 try:
@@ -108,7 +111,7 @@ once, then compute with NumPy.
 
 - Which key to use for a material, crystal class or magnetic group:
   [Two readings of a key](readings.md).
-- Which setting and which convention, and why the components of a tensor depend on them:
+- Which setting, and why the components of a tensor depend on it:
   [Conventions](conventions.md), in particular "Settings" and "Cartesian frame".
 - How a tensor form is given (basis, parameters, relations): [Tensors](tensors.md).
 - The crystal forms of a class, basic and limiting, and orbits of faces:

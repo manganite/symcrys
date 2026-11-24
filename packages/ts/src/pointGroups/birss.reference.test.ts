@@ -1,24 +1,20 @@
 /**
- * Birss convention against its print source (fixture class (a)): Birss Table 3 (printed pp. 36–38)
- * and the generating matrices σ(N) of equation (2.17) (printed pp. 48–49), re-parsed from references/.
- * For every crystal class, the printed generators, closed with the independent algebra of
- * testUtils, must give exactly the operations of symcrys in the Birss default setting; the short
- * symbol, Schoenflies symbol, crystal system and order must match the print.
+ * The crystal classes against Birss's print (fixture class (a)), an independent second print check
+ * of the ITC output: Birss Table 3 (printed pp. 36–38) and the generating matrices σ(N) of equation
+ * (2.17) (printed pp. 48–49), re-parsed from references/. For every crystal class, the printed
+ * generators, closed with the independent algebra of testUtils and carried from Birss's frame into
+ * the ITC frame (testUtils/birssFrame.ts), must give exactly the operations of symcrys in the ITC
+ * default setting; Birss's printed symbol, read along Birss's directions, must generate the printed
+ * group; Schoenflies symbol, crystal system and order must match the print.
  */
 
 import { describe, expect, it } from 'vitest';
-import { groupOfSymbol, hmTokens } from '../testUtils/hermannMauguin.js';
+import { groupOfSymbol } from '../testUtils/hermannMauguin.js';
+import { BIRSS_DIRECTIONS, toItcFrame } from '../testUtils/birssFrame.js';
 import { close, sameGroup, type M, type RefOp } from '../testUtils/independentGroups.js';
 import { expectHeader, readReference, section, tableRows } from '../testUtils/references.js';
-import {
-  POINT_GROUP_KEYS,
-  isPointGroupKey,
-  operations,
-  pointGroup,
-  settings,
-  symbol,
-  type PointGroupKey,
-} from './pointGroups.js';
+import { symbol as itaSymbol } from '../crystalClasses.js';
+import { findPointGroup, isPointGroupKey, operations, pointGroup, type PointGroupKey } from './pointGroups.js';
 
 // --- σ(0)–σ(9) ---------------------------------------------------------------------------------
 
@@ -99,7 +95,14 @@ const TABLE3: Table3Row[] = rows.slice(1).map((r) => {
   };
 });
 
-describe('Birss Table 3 (printed pp. 36–38) against symcrys, Birss convention', () => {
+describe('Birss Table 3 (printed pp. 36–38) against symcrys, in the ITC frame', () => {
+  it("findPointGroup reads Birss's printed symbols and Schoenflies symbols as the classes they are (#96)", () => {
+    for (const row of TABLE3) {
+      expect(findPointGroup(row.printedSymbol)?.key, row.printedSymbol).toBe(row.key);
+      expect(findPointGroup(row.schoenflies)?.key, row.schoenflies).toBe(row.key);
+    }
+  });
+
   it('lists the 32 crystal classes, each once, and the σ pool has ten matrices', () => {
     expect(TABLE3).toHaveLength(32);
     expect(new Set(TABLE3.map((r) => r.key)).size).toBe(32);
@@ -112,59 +115,25 @@ describe('Birss Table 3 (printed pp. 36–38) against symcrys, Birss convention'
 
   for (const row of TABLE3) {
     describe(row.key, () => {
-      it('operations of the Birss default setting = closure of the printed σ generators', () => {
+      it('operations of the ITC default setting = closure of the printed σ generators, in the ITC frame', () => {
         const ref = close(row.generators);
         expect(ref).toHaveLength(row.order);
-        expect(sameGroup(ref, operations(row.key, { convention: 'birss' }))).toBe(true);
+        const inItcFrame = ref.map((op) => ({ ...op, m: toItcFrame(row.key, op.m) }));
+        expect(sameGroup(inItcFrame, operations(row.key))).toBe(true);
       });
 
-      it('the Birss default is setting 1, the stored frame', () => {
-        expect(settings(row.key, 'birss').find((s) => s.isDefault)?.index).toBe(1);
+      it('the printed symbol, read along Birss directions, generates the printed group', () => {
+        // Birss reads the unique axis of a monoclinic class along z (Table 4a, p. 56: `2//z`; σ(3) of `2` is a rotation about z).
+        const printedGroup = close(row.generators).map((op) => ({ cartesian: op.m, timeReversal: op.t }));
+        expect(sameGroup(groupOfSymbol(row.printedSymbol, BIRSS_DIRECTIONS[row.system]), printedGroup)).toBe(true);
       });
 
-      it('order, crystal system, Schoenflies and short symbol as printed', () => {
+      it('order, crystal system and Schoenflies symbol as printed', () => {
         expect(pointGroup(row.key).order).toBe(row.order);
         expect(pointGroup(row.key).crystalSystem).toBe(row.system);
-        expect(symbol(row.key, { form: 'schoenflies' })).toBe(row.schoenflies);
-        expect(symbol(row.key, { convention: 'birss' })).toBe(row.key);
+        // Birss writes C3i, as ITA does and the crystallographic API (#137 B3).
+        expect(itaSymbol(row.key, { form: 'schoenflies' })).toBe(row.schoenflies);
       });
     });
-  }
-});
-
-/**
- * Birss symbols of every setting, read along Birss's directions (fixture class (b)). Birss prints
- * short symbols for the default orientation only (Table 3) and full symbols only for mmm, 4/mmm,
- * -3m, 6/mmm, m3 and m3m (Table 3's "Full" column), so the other symbols are derived: positions
- * as in ITC, except that in the hexagonal family position 2 is y (Birss Table 4a, printed pp. 56–57:
- * `32: 2//y`, `3m: -2//y`, `-6m2: -2//y`) and position 3 is x (derived, as birss-app reads them;
- * #17).
- */
-describe('Birss symbols of every setting generate its operations along Birss directions', () => {
-  const X = [1, 0, 0];
-  const Y = [0, 1, 0];
-  const Z = [0, 0, 1];
-  const DIRECTIONS: Record<string, number[][]> = {
-    triclinic: [Z],
-    monoclinic: [X, Y, Z],
-    orthorhombic: [X, Y, Z],
-    tetragonal: [Z, X, [1, -1, 0]],
-    trigonal: [Z, Y, X],
-    hexagonal: [Z, Y, X],
-    cubic: [X, [1, 1, 1], [1, -1, 0]],
-  };
-  const AXIS: Record<string, number[]> = { a: X, b: Y, c: Z };
-
-  for (const key of POINT_GROUP_KEYS) {
-    for (const s of settings(key, 'birss')) {
-      it(`${key}, setting ${s.index}: ${s.symbol} (${s.fullSymbol})`, () => {
-        const system = pointGroup(key).crystalSystem;
-        const ops = operations(key, { setting: s.index });
-        const shortDirections =
-          system === 'monoclinic' && hmTokens(s.symbol).length === 1 ? [AXIS[s.uniqueAxis!]] : DIRECTIONS[system];
-        expect(sameGroup(groupOfSymbol(s.symbol, shortDirections), ops)).toBe(true);
-        expect(sameGroup(groupOfSymbol(s.fullSymbol, DIRECTIONS[system]), ops)).toBe(true);
-      });
-    }
   }
 });

@@ -1,21 +1,26 @@
 /**
- * Wyckoff positions of the crystal classes for directions (face normals), in the ITC convention:
- * ITA's letters, multiplicities and oriented site-symmetry symbols, a representative face, and the
+ * Wyckoff positions of the crystal classes for directions (face normals), as ITA gives them:
+ * ITA's letters, multiplicities, oriented site-symmetry symbols, coordinates and faces as printed, and the
  * Wyckoff position of any direction (docs/conventions.md, "Site symmetry and Wyckoff positions").
  */
 
+import { checkOptions, pick, SETTING_KEYS, shown, TOLERANCE_KEYS } from '../checks.js';
 import { apply, inverse, transpose, type Mat3, type Vec3 } from '../linalg.js';
-import { crystalFamily, latticeBasis } from '../lattice.js';
-import { POINT_GROUP_DATA } from './data.js';
+import { crystalFamily } from '../lattice.js';
+import { substituteMillerIndices } from '../indices.js';
+import { itcBasis, itcClass, itcSetting as itcClassSetting } from './itcData.js';
 import {
+  settingIndexOf,
   isMagneticPointGroupKey,
   isPointGroupKey,
   operations,
   settings,
+  type MagneticPointGroupKey,
   type PointGroupKey,
   type SettingOptions,
 } from './pointGroups.js';
-import { siteSymmetry, siteTolerance, type SiteSymmetryOptions } from '../siteSymmetry.js';
+import { siteSymmetryOf, siteTolerance, type SiteSymmetry } from '../siteSymmetry.js';
+import type { ToleranceOptions } from '../tolerances.js';
 import { ITA_WYCKOFF, type WyckoffRow } from './wyckoffData.js';
 
 /** A face (hkl): three Miller indices in the conventional basis (for hexagonal axes without i = −(h + k)). */
@@ -29,50 +34,45 @@ export interface WyckoffPosition {
   readonly multiplicity: number;
   /** Oriented site-symmetry symbol as ITA prints it, e.g. `..m`, `4m.m`, `1`. */
   readonly siteSymmetry: string;
-  /** ITA's representative point as printed, e.g. `x,x,z` (a leading `-` is an overbar). */
-  readonly coordinates: string;
+  /**
+   * ITA's coordinate triplets of the position as printed, in printed order, the first being the
+   * representative point, e.g. `['x,x,z', '-x,-x,z', …]` (a leading `-` is an overbar); one per
+   * equivalent direction, as in `symcrys/plane`.
+   */
+  readonly coordinates: readonly string[];
   /**
    * ITA's representative face as printed, components separated by commas, e.g. `h,h,l`, or
-   * `h,h,-2h,l` (Bravais–Miller indices) for hexagonal axes.
+   * `h,h,-2h,l` (Bravais–Miller indices) for hexagonal axes. `millerIndices(printed, { h, k, l })` gives
+   * a face with numbers, `faceNormal(basis, hkl)` its normal in a cell.
    */
   readonly millerIndices: string;
-  /** A representative face with numbers: `millerIndices` with h = 3, k = 2, l = 1. */
-  readonly representative: {
-    /** The Miller indices (hkl) of the face. */
-    readonly hkl: Hkl;
-    /**
-     * Its face normal, a Cartesian unit vector. Monoclinic and triclinic: the normal for a, b, c along
-     * x, y, z (no cell angles), exact for the unique axis only, but with the correct site symmetry.
-     */
-    readonly cartesian: Vec3;
-  };
-  /** Indices into `operations` (same setting, ITC convention) of the site symmetry of the representative. */
+  /**
+   * Indices into `operations` (same setting) of the site symmetry of the position: of the operations
+   * that fix its first printed face for values of h, k, l that keep the face in the position.
+   */
   readonly siteSymmetryOperations: readonly number[];
 }
-
-/** Convention and setting (`SettingOptions`) and the tolerance of `siteSymmetry` (`SiteSymmetryOptions`). */
-export type WyckoffOptions = SettingOptions & SiteSymmetryOptions;
 
 /** The values substituted into ITA's Miller indices for the numeric representative. */
 export const REPRESENTATIVE_VALUES: Readonly<Record<'h' | 'k' | 'l', number>> = { h: 3, k: 2, l: 1 };
 
-/** One printed index (`h`, `-2h`, `0`, `1`) as a number. */
-function index(component: string, values: Readonly<Record<'h' | 'k' | 'l', number>>): number {
-  const m = /^(-?)(\d*)([hkil]?)$/.exec(component);
-  if (!m || (m[2] === '' && m[3] === '')) throw new Error(`Unreadable Miller index: ${component}`);
-  const sign = m[1] ? -1 : 1;
-  const factor = m[2] === '' ? 1 : Number(m[2]);
-  if (m[3] === '') return sign * factor;
-  if (m[3] === 'i') return sign * factor * -(values.h + values.k);
-  return sign * factor * values[m[3] as 'h' | 'k' | 'l'];
+/**
+ * The values for rhombohedral axes: h = 5, k = 2, l = 1. With 3, 2, 1 the face (h,k,l) would lie on
+ * the limiting form (h,k,2k-h) that ITA prints there (Table 3.2.3.2, 32, 3m and -3m with rhombohedral
+ * axes, pp. 755–759): (321) is (116) in hexagonal axes. (521), (318) in hexagonal axes, lies on no
+ * printed limiting form, and every printed face with these values is in lowest terms ((5,2,-7),
+ * (5,2,-1), (5,5,1)); h = 4 would give (4,2,-6) and (4,2,0).
+ */
+export const RHOMBOHEDRAL_VALUES: Readonly<Record<'h' | 'k' | 'l', number>> = { h: 5, k: 2, l: 1 };
+
+/** The values of h, k, l for the representative faces of a setting. */
+export function representativeValues(key: PointGroupKey, setting: number): Readonly<Record<'h' | 'k' | 'l', number>> {
+  return itcClassSetting(key, setting).axes === 'rhombohedral' ? RHOMBOHEDRAL_VALUES : REPRESENTATIVE_VALUES;
 }
 
 /** Printed Miller indices (three, or four for hexagonal axes) as three numbers, with the given values of h, k, l. */
 export function numericHkl(miller: string, values = REPRESENTATIVE_VALUES): Hkl {
-  const parts = miller.split(',').map((c) => index(c, values));
-  if (parts.length === 3) return [parts[0], parts[1], parts[2]];
-  if (parts.length === 4 && parts[2] === -(parts[0] + parts[1])) return [parts[0], parts[1], parts[3]];
-  throw new Error(`Unreadable Miller indices: ${miller}`);
+  return substituteMillerIndices(miller, values, (m) => new Error(m));
 }
 
 export const IDENTITY: Mat3 = [
@@ -121,45 +121,44 @@ function permuteSymbol(symbolText: string, r: Mat3): string {
   return [0, 1, 2].map((i) => symbolText[[0, 1, 2].find((k) => Math.abs(r[i][k]) === 1) ?? -1]).join('');
 }
 
-function isSignedPermutation(r: Mat3): boolean {
-  return r.every(
-    (row) => row.filter((v) => Math.abs(v) > 1e-9).length === 1 && row.some((v) => Math.abs(Math.abs(v) - 1) < 1e-9),
-  );
-}
-
 /**
- * The signed permutation r that carries setting 1 of a class into `setting` (new axis i = r[i][j] ×
- * old axis j), for the settings ITA does not print (`mm2` settings 2 and 3). Throws if the frame of
- * the setting is not a permutation of that of setting 1.
+ * The permutation r that carries setting 1 of a class into `setting` (new axis i = r[i][j] × old
+ * axis j), for the settings ITA does not print (`mm2` settings 2 and 3, monoclinic unique axis a):
+ * the transpose of the change
+ * of basis P of the ITC class data ((a′, b′, c′) = (a, b, c)·P, itcData.ts). Coordinates (P⁻¹·x)
+ * and Miller indices (h·P) are carried by the same r only because P is a signed permutation
+ * (P⁻¹ = Pᵀ); throws for a setting that is not carried from setting 1 by one.
  */
 export function permutationFromSetting1(key: PointGroupKey, setting: number): Mat3 {
-  const d = POINT_GROUP_DATA.find((x) => x.key === key);
-  if (!d) throw new RangeError(`Unknown point group key: ${JSON.stringify(key)}`);
-  const f1 = d.settings[0].frame;
-  const fk = d.settings[setting - 1].frame;
-  const raw = fk.map((row) => [0, 1, 2].map((j) => row[0] * f1[j][0] + row[1] * f1[j][1] + row[2] * f1[j][2]));
-  const r = raw.map((row) => row.map((v) => Math.round(v))) as unknown as Mat3;
-  if (
-    !isSignedPermutation(raw as unknown as Mat3) ||
-    !raw.every((row, i) => row.every((v, j) => Math.abs(v - r[i][j]) < 1e-9))
-  ) {
-    throw new Error(`Point group ${key}, setting ${setting}: frame is not a permutation of setting 1`);
-  }
-  return r;
+  const from = itcClassSetting(key, setting).from;
+  if (from?.index !== 1) throw new Error(`Point group ${key}, setting ${setting}: not carried from setting 1`);
+  const p = from.basis;
+  const signedPermutation = [0, 1, 2].every(
+    (i) =>
+      p[i].filter((v) => v !== 0).length === 1 &&
+      p[i].every((v) => v === 0 || Math.abs(v) === 1) &&
+      p.filter((row) => row[i] !== 0).length === 1,
+  );
+  if (!signedPermutation)
+    throw new Error(`Point group ${key}, setting ${setting}: not a signed permutation of setting 1`);
+  return [0, 1, 2].map((i) => [0, 1, 2].map((j) => p[j][i])) as unknown as Mat3;
 }
 
 /**
  * The entry of a table printed per setting (Wyckoff positions, face forms) for a setting of a class:
- * the one with the ITC short symbol (and unique axis) of the setting, or undefined if ITA does not
+ * the one with the ITC short symbol (and unique axis or axes) of the setting, or undefined if ITA does not
  * print the setting.
  */
-export function printedEntry<E extends { readonly symbol: string; readonly uniqueAxis?: 'b' | 'c' }>(
-  table: readonly E[],
-  key: PointGroupKey,
-  setting: number,
-): E | undefined {
-  const s = settings(key, 'itc')[setting - 1];
-  return table.find((e) => e.symbol === s.symbol && (e.uniqueAxis === undefined || e.uniqueAxis === s.uniqueAxis));
+export function printedEntry<
+  E extends { readonly symbol: string; readonly uniqueAxis?: 'b' | 'c'; readonly axes?: 'rhombohedral' },
+>(table: readonly E[], key: PointGroupKey, setting: number): E | undefined {
+  const s = settings(key)[setting - 1];
+  return table.find(
+    (e) =>
+      e.symbol === s.symbol &&
+      (e.uniqueAxis === undefined || e.uniqueAxis === s.uniqueAxis) &&
+      (e.axes === 'rhombohedral') === (s.axes === 'rhombohedral'),
+  );
 }
 
 /** The printed rows of a setting; for a setting ITA does not print, those of setting 1 carried into its frame. */
@@ -168,69 +167,80 @@ function printedRows(key: PointGroupKey, setting: number): readonly WyckoffRow[]
   if (entry) return entry.rows;
   if (setting === 1) throw new Error(`Point group ${key}: no printed Wyckoff positions for setting 1`);
   const r = permutationFromSetting1(key, setting);
+  // A monoclinic site symmetry (`2`, `m`, `2/m`) names the element on the unique axis, not a position.
+  const oriented = crystalFamily(itcClass(key).crystalSystem) !== 'monoclinic';
   return printedRows(key, 1).map(([letter, mult, site, coords, miller]) => [
     letter,
     mult,
-    permuteSymbol(site, r),
-    permutePattern(coords, r, XYZ),
+    oriented ? permuteSymbol(site, r) : site,
+    coords.map((c) => permutePattern(c, r, XYZ)),
     miller === '' ? '' : permutePattern(miller, r, HKL),
   ]);
 }
 
 /**
- * The lattice basis in which the Cartesian normals of the representatives are computed; monoclinic
- * and triclinic: a, b, c along x, y, z (docs/conventions.md, "Site symmetry and Wyckoff positions").
+ * The lattice basis in which the Cartesian normals of the representatives are computed, that of the
+ * setting (itcData.ts, `itcBasis`): monoclinic and triclinic a, b, c along x, y, z; rhombohedral
+ * axes in the hexagonal cell of `latticeBasis` (docs/conventions.md, "Site symmetry and Wyckoff
+ * positions").
  */
-export function faceBasis(key: PointGroupKey): Mat3 {
-  const d = POINT_GROUP_DATA.find((x) => x.key === key);
-  if (!d) throw new RangeError(`Unknown point group key: ${JSON.stringify(key)}`);
-  const family = crystalFamily(d.crystalSystem);
-  return family === 'monoclinic' || family === 'triclinic' ? IDENTITY : latticeBasis(family);
+export function faceBasis(key: PointGroupKey, setting: number): Mat3 {
+  return itcBasis(key, setting);
+}
+
+/** h, k, l of a representative face under the printed condition |h| < |l| (cubic forms (hhl)). */
+export const SMALL_H: Readonly<Record<'h' | 'k' | 'l', number>> = Object.freeze({ h: 1, k: 2, l: 3 });
+
+/**
+ * A face of a position or form with numbers, internal (#137 G3: the API gives the printed indices
+ * only): h, k, l = 3, 2, 1 (rhombohedral axes: 5, 2, 1; 1, 2, 3 under the condition |h| < |l|), and
+ * its normal in the basis of the setting (`faceBasis`; monoclinic and triclinic a, b, c along x, y,
+ * z, which gives the correct site symmetry but not the pole of a real cell, #137 G4).
+ */
+export function representativeFace(
+  key: PointGroupKey,
+  setting: number,
+  miller: string,
+  condition?: string,
+): { readonly hkl: Hkl; readonly cartesian: Vec3 } {
+  const hkl = numericHkl(miller, condition === '|h|<|l|' ? SMALL_H : representativeValues(key, setting));
+  return { hkl, cartesian: normal(faceBasis(key, setting), hkl) };
 }
 
 const cache = new Map<string, readonly WyckoffPosition[]>();
 
 /**
- * The setting index for a table that exists for the crystal classes in the ITC convention only
- * (`what`: 'Wyckoff positions', 'Crystal forms'); throws a RangeError for a magnetic point group
- * with time reversal and for another convention.
+ * The setting index for a table that exists for the crystal classes only (`what`: 'Wyckoff
+ * positions', 'Crystal forms'); throws a RangeError for a magnetic point group with time reversal.
  */
-export function itcSetting(key: PointGroupKey, options?: SettingOptions, what = 'Wyckoff positions'): number {
+export function tableSetting(key: PointGroupKey, options?: SettingOptions, what = 'Wyckoff positions'): number {
   if (isMagneticPointGroupKey(key) && !isPointGroupKey(key)) {
-    throw new RangeError(
-      `${what} are given for the 32 crystal classes only; ${JSON.stringify(key)} is a magnetic point group`,
-    );
+    throw new RangeError(`${what} are given for the 32 crystal classes only; ${shown(key)} is a magnetic point group`);
   }
-  if ((options?.convention ?? 'itc') !== 'itc') {
-    throw new RangeError(`${what} exist in the ITC convention only (convention 'itc')`);
-  }
-  const list = settings(key, 'itc');
-  const index = options?.setting ?? list.find((s) => s.isDefault)?.index ?? 1;
-  operations(key, { convention: 'itc', setting: index }); // validates the setting index
+  const index = settingIndexOf(key, options);
+  operations(key, pick(options, SETTING_KEYS)); // validates the setting index
   return index;
 }
 
 /**
  * The Wyckoff positions of a point group for directions, in ITA's printed order (general position
- * first), for the 32 crystal classes and in the ITC convention only (throws a RangeError for a
- * magnetic point group with time reversal and for `'birss'`). The point at the origin
- * (letter o) is not a direction and is left out. For `mm2` settings 2 and 3 (`2mm`, `m2m`), which
- * ITA does not print, the positions of setting 1 carried into their frame.
+ * first), for the 32 crystal classes only (throws a RangeError for a magnetic point group with
+ * time reversal). The point at the origin
+ * (letter o) is not a direction and is left out. For the settings ITA does not print (`mm2` settings 2 and 3, monoclinic unique axis a), the positions
+ * of setting 1 carried into their frame.
  */
 export function wyckoffPositions(key: PointGroupKey, options?: SettingOptions): readonly WyckoffPosition[] {
-  const setting = itcSetting(key, options);
+  checkOptions(options, SETTING_KEYS, 'wyckoffPositions');
+  const setting = tableSetting(key, options);
   const cacheKey = `${key}#${setting}`;
   let result = cache.get(cacheKey);
   if (!result) {
-    const ops = operations(key, { convention: 'itc', setting });
-    const basis = faceBasis(key);
+    const ops = operations(key, { setting });
     result = Object.freeze(
       printedRows(key, setting)
         .filter(([letter]) => letter !== 'o')
         .map(([letter, multiplicity, site, coordinates, millerIndices]) => {
-          const hkl = numericHkl(millerIndices);
-          const cartesian = normal(basis, hkl);
-          const stab = siteSymmetry(ops, cartesian);
+          const stab = siteSymmetryOf(ops, representativeFace(key, setting, millerIndices).cartesian);
           if (stab.multiplicity !== multiplicity) {
             throw new Error(
               `Point group ${key}, setting ${setting}, position ${letter}: multiplicity differs from print`,
@@ -240,12 +250,8 @@ export function wyckoffPositions(key: PointGroupKey, options?: SettingOptions): 
             letter,
             multiplicity,
             siteSymmetry: site,
-            coordinates,
+            coordinates: Object.freeze([...coordinates]),
             millerIndices,
-            representative: Object.freeze({
-              hkl: Object.freeze(hkl) as Hkl,
-              cartesian: Object.freeze(cartesian) as Vec3,
-            }),
             siteSymmetryOperations: stab.operations,
           });
         }),
@@ -255,27 +261,46 @@ export function wyckoffPositions(key: PointGroupKey, options?: SettingOptions): 
   return result;
 }
 
+/**
+ * The site symmetry of a direction (any non-zero Cartesian vector) under a point group in a
+ * setting: `siteSymmetryOf` applied to `operations(key, options)`, so the indices refer to those
+ * operations (#137 C1). Time reversal is ignored. Throws a RangeError as `siteSymmetryOf` does.
+ */
+export function siteSymmetry(
+  key: MagneticPointGroupKey,
+  direction: Vec3,
+  options?: SettingOptions & ToleranceOptions,
+): SiteSymmetry {
+  checkOptions(options, [...SETTING_KEYS, ...TOLERANCE_KEYS], 'siteSymmetry');
+  return siteSymmetryOf(operations(key, pick(options, SETTING_KEYS)), direction, pick(options, TOLERANCE_KEYS));
+}
+
 const sortedKey = (list: readonly number[]): string => [...list].sort((a, b) => a - b).join(',');
 
 /**
- * The Wyckoff position of a direction (any non-zero Cartesian vector) in a point group, ITC
- * convention only: the position whose representative has a site symmetry conjugate to that of the
- * direction (ITA's definition). `tolerance` as for `siteSymmetry`; throws a RangeError if the
+ * The Wyckoff position of a direction (any non-zero Cartesian vector) in a crystal class: the
+ * position whose printed face has a site symmetry conjugate to that of the
+ * direction (ITA's definition). `tolerance` as for `siteSymmetryOf`; throws a RangeError if the
  * operations found within it do not match any position (a tolerance too large).
  */
-export function wyckoffPositionOf(key: PointGroupKey, direction: Vec3, options?: WyckoffOptions): WyckoffPosition {
+export function wyckoffPosition(
+  key: PointGroupKey,
+  direction: Vec3,
+  options?: SettingOptions & ToleranceOptions,
+): WyckoffPosition {
+  checkOptions(options, [...SETTING_KEYS, ...TOLERANCE_KEYS], 'wyckoffPosition');
   const tolerance = siteTolerance(options);
-  const setting = itcSetting(key, options);
-  const ops = operations(key, { convention: 'itc', setting });
-  const rows = wyckoffPositions(key, { convention: 'itc', setting });
-  const site = siteSymmetry(ops, direction, { tolerance });
+  const setting = tableSetting(key, options);
+  const ops = operations(key, { setting });
+  const rows = wyckoffPositions(key, { setting });
+  const site = siteSymmetryOf(ops, direction, { tolerance });
   const candidates = rows.filter((r) => r.siteSymmetryOperations.length === site.operations.length);
   for (const g of ops) {
-    const k = sortedKey(siteSymmetry(ops, apply(g.matrix, site.direction), { tolerance }).operations);
+    const k = sortedKey(siteSymmetryOf(ops, apply(g.cartesian, site.direction), { tolerance }).operations);
     const row = candidates.find((r) => sortedKey(r.siteSymmetryOperations) === k);
     if (row) return row;
   }
   throw new RangeError(
-    `Point group ${key}, setting ${setting}: no Wyckoff position for ${JSON.stringify(direction)} (tolerance too large?)`,
+    `Point group ${key}, setting ${setting}: no Wyckoff position for ${shown(direction)} (tolerance too large?)`,
   );
 }

@@ -12,8 +12,8 @@
 
 /** What the labels need of a described operation (`describeOperations`). */
 export interface LabelledOperation {
-  readonly kind: 'identity' | 'inversion' | 'rotation' | 'rotoinversion' | 'mirror';
-  readonly order: number;
+  readonly kind: 'identity' | 'inversion' | 'rotation' | 'rotoinversion' | 'reflection';
+  readonly n: number;
   readonly axis?: { readonly cartesian: readonly [number, number, number] };
   readonly timeReversal: boolean;
 }
@@ -40,7 +40,7 @@ export function operationLabel(system: string, d: LabelledOperation): string {
   const prime = d.timeReversal ? "'" : '';
   if (d.kind === 'identity') return `1${prime}`;
   if (d.kind === 'inversion') return `-1${prime}`;
-  const base = d.kind === 'mirror' ? 'm' : d.kind === 'rotoinversion' ? `-${d.order}` : `${d.order}`;
+  const base = d.kind === 'reflection' ? 'm' : d.kind === 'rotoinversion' ? `-${d.n}` : `${d.n}`;
   return `${base}${prime}${axisLabel(system, d.axis!.cartesian)}`;
 }
 

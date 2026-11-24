@@ -4,8 +4,8 @@ import {
   angleBetweenPlanes,
   directionToFourIndices,
   latticeFromParameters,
-  latticeOperations,
   metricTensor,
+  operations,
   residualOperations,
 } from 'symcrys';
 
@@ -18,7 +18,8 @@ console.log(
 console.log('(100) to (010):', angleBetweenPlanes(basis, [1, 0, 0], [0, 1, 0]).toFixed(4), 'degrees');
 console.log('[110] in four indices:', directionToFourIndices([1, 1, 0]));
 
-const operations = latticeOperations('6/mmm');
+// residualOperations reads the matrix W in the lattice basis (`matrix`) of each operation.
+const ops = operations('6/mmm');
 const distorted = latticeFromParameters({ ...hexagonal, gamma: 121 });
-console.log('operations kept at gamma = 120:', residualOperations(operations, basis).length);
-console.log('operations kept at gamma = 121:', residualOperations(operations, distorted).length);
+console.log('operations kept at gamma = 120:', residualOperations(ops, basis).length);
+console.log('operations kept at gamma = 121:', residualOperations(ops, distorted).length);

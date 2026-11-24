@@ -51,3 +51,20 @@ export function expectHeader(rows: string[][], expected: string[]): void {
     );
   }
 }
+
+/**
+ * True if a printed entry of ITA Table 3.2.3.2 (its `Axes` column) and a setting of symcrys have the
+ * same axes: rhombohedral for both, or hexagonal or none for both.
+ */
+export const sameAxes = (printed: string, setting: { readonly axes?: string }): boolean =>
+  (printed === 'rhombohedral axes') === (setting.axes === 'rhombohedral');
+
+/**
+ * The rhombohedral basis in the hexagonal one, obverse (ITA 2016 Table 1.5.1.1, p. 78, the matrix Q of R₁ obverse): the columns
+ * a_R = (2a + b + c)/3, b_R = (−a + b + c)/3, c_R = (−a − 2b + c)/3; typed here independently of src/.
+ */
+export const RHOMBOHEDRAL_IN_HEXAGONAL: number[][] = [
+  [2 / 3, -1 / 3, -1 / 3],
+  [1 / 3, 1 / 3, -2 / 3],
+  [1 / 3, 1 / 3, 1 / 3],
+];

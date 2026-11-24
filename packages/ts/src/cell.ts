@@ -4,9 +4,11 @@
  * coordinates, as `latticeBasis` gives it; lengths in any unit, angles in degrees.
  */
 
+import { checkObject, checkOptions, shown, TOLERANCE_KEYS } from './checks.js';
 import { apply, inverse, isSingular, multiply, transpose, type Mat3, type Vec3 } from './linalg.js';
-import { checkTimeReversal, type Operation as MagneticOperation } from './operations.js';
-import { EPSILON } from './tolerances.js';
+import { checkTimeReversal, type CartesianOperation as MagneticOperation } from './operations.js';
+import { toleranceOf, type ToleranceOptions } from './tolerances.js';
+import { deepFreeze } from './freeze.js';
 
 /** The lattice parameters of a cell: edge lengths and angles in degrees (α between b and c, β between a and c, γ between a and b). */
 export interface LatticeParameters {
@@ -34,9 +36,9 @@ export interface CellAngles {
   readonly gamma: number;
 }
 
-/** An operation of a list given to `residualOperations`: at least its matrix; other fields are kept. */
+/** An operation of a list given to `residualOperations`: at least its matrix W; other fields are kept. */
 export interface CellOperation {
-  /** The 3×3 matrix W acting on lattice coordinates. */
+  /** The integer 3×3 matrix W acting on lattice coordinates (the `matrix` of an operation). */
   readonly matrix: Mat3;
 }
 
@@ -48,12 +50,6 @@ export interface IsValidCellOptions {
    * `isValidCell` otherwise accepts. A ratio near 0 is a nearly flat cell.
    */
   readonly minVolumeRatio?: number;
-}
-
-/** Options of `residualOperations`. */
-export interface ResidualOperationsOptions {
-  /** The largest accepted deviation of WᵀGW from G, relative to the largest entry of G; default `EPSILON`. */
-  readonly tolerance?: number;
 }
 
 const DEG = Math.PI / 180;
@@ -85,6 +81,15 @@ function anglesOk({ alpha, beta, gamma }: CellAngles): boolean {
  * number from 0 to 1.
  */
 export function isValidCell(angles: CellAngles, options?: IsValidCellOptions): boolean {
+  checkOptions(options, ['minVolumeRatio'], 'isValidCell');
+  checkObject(angles, 'isValidCell takes the angles { alpha, beta, gamma }');
+  // Numbers out of range are no cell (false); anything else is wrong input.
+  for (const name of ['alpha', 'beta', 'gamma'] as const) {
+    const x = (angles as Partial<CellAngles>)[name];
+    if (!(typeof x === 'number' && Number.isFinite(x))) {
+      throw new RangeError(`The angle ${name} must be a finite number of degrees, not ${shown(x)}`);
+    }
+  }
   if (!anglesOk(angles)) return false;
   const min = options?.minVolumeRatio ?? 0;
   if (!(typeof min === 'number' && min >= 0 && min <= 1))
@@ -94,14 +99,16 @@ export function isValidCell(angles: CellAngles, options?: IsValidCellOptions): b
   return Math.sqrt(r) >= min;
 }
 
-function checkEdges({ a, b, c }: LatticeParameters): void {
+function checkEdges(p: LatticeParameters): void {
+  checkObject(p, 'latticeFromParameters takes the parameters { a, b, c, alpha, beta, gamma }');
+  const { a, b, c } = p;
   for (const [name, x] of [
     ['a', a],
     ['b', b],
     ['c', c],
   ] as const) {
     if (typeof x !== 'number' || !Number.isFinite(x) || x <= 0) {
-      throw new RangeError(`latticeFromParameters: edge ${name} must be a positive number, not ${JSON.stringify(x)}`);
+      throw new RangeError(`latticeFromParameters: edge ${name} must be a positive number, not ${shown(x)}`);
     }
   }
 }
@@ -114,24 +121,26 @@ function checkEdges({ a, b, c }: LatticeParameters): void {
  * axis b, b lies along y (docs/conventions.md, "Cell, metric and indices"). The basis is
  * right-handed. Throws a RangeError for an edge that is not positive and for angles that give no cell.
  */
-export function latticeFromParameters(p: LatticeParameters): Mat3 {
-  checkEdges(p);
-  if (!isValidCell(p)) {
-    throw new RangeError(`latticeFromParameters: angles ${p.alpha}°, ${p.beta}°, ${p.gamma}° give no cell`);
+export function latticeFromParameters(parameters: LatticeParameters): Mat3 {
+  checkEdges(parameters);
+  if (!isValidCell(parameters)) {
+    throw new RangeError(
+      `latticeFromParameters: angles ${parameters.alpha}°, ${parameters.beta}°, ${parameters.gamma}° give no cell`,
+    );
   }
-  const ca = cosDeg(p.alpha);
-  const cb = cosDeg(p.beta);
-  const cg = cosDeg(p.gamma);
+  const ca = cosDeg(parameters.alpha);
+  const cb = cosDeg(parameters.beta);
+  const cg = cosDeg(parameters.gamma);
   const sg = Math.sqrt(1 - cg * cg);
-  const volumeRatio = Math.sqrt(radicand(p));
+  const volumeRatio = Math.sqrt(radicand(parameters));
   // columns: a = (a, 0, 0), b = (b cos γ, b sin γ, 0), c = (c cos β, c (cos α − cos β cos γ)/sin γ, c V/(abc sin γ))
-  const cy = (p.c * (ca - cb * cg)) / sg;
-  const cz = (p.c * volumeRatio) / sg;
-  return [
-    [p.a + 0, p.b * cg + 0, p.c * cb + 0],
-    [0, p.b * sg + 0, cy + 0],
+  const cy = (parameters.c * (ca - cb * cg)) / sg;
+  const cz = (parameters.c * volumeRatio) / sg;
+  return deepFreeze([
+    [parameters.a + 0, parameters.b * cg + 0, parameters.c * cb + 0],
+    [0, parameters.b * sg + 0, cy + 0],
     [0, 0, cz + 0],
-  ];
+  ]);
 }
 
 function columns(basis: Mat3): [Vec3, Vec3, Vec3] {
@@ -164,13 +173,13 @@ export function latticeParameters(basis: Mat3): LatticeParameters {
     const cross: Vec3 = [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]];
     return Math.atan2(norm(cross), dot(u, v)) / DEG + 0;
   };
-  return { a: norm(a), b: norm(b), c: norm(c), alpha: angle(b, c), beta: angle(a, c), gamma: angle(a, b) };
+  return deepFreeze({ a: norm(a), b: norm(b), c: norm(c), alpha: angle(b, c), beta: angle(a, c), gamma: angle(a, b) });
 }
 
 /** The metric tensor G = AᵀA of a basis A (columns a, b, c): g_ij = a_i · a_j, in the unit of the edge lengths squared. */
 export function metricTensor(basis: Mat3): Mat3 {
   checkBasis(basis, 'metricTensor');
-  return multiply(transpose(basis), basis);
+  return deepFreeze(multiply(transpose(basis), basis));
 }
 
 /**
@@ -179,7 +188,7 @@ export function metricTensor(basis: Mat3): Mat3 {
  */
 export function reciprocalBasis(basis: Mat3): Mat3 {
   checkBasis(basis, 'reciprocalBasis');
-  return transpose(inverse(basis));
+  return deepFreeze(transpose(inverse(basis)));
 }
 
 function vector(v: Vec3, name: string): Vec3 {
@@ -196,9 +205,9 @@ function angleOf(u: Vec3, v: Vec3): number {
 }
 
 /** The angle in degrees between two lattice directions [uvw] (coordinates in the basis, columns a, b, c), 0° to 180°. Throws a RangeError for a zero vector. */
-export function angleBetweenDirections(basis: Mat3, u: Vec3, v: Vec3): number {
+export function angleBetweenDirections(basis: Mat3, direction1: Vec3, direction2: Vec3): number {
   checkBasis(basis, 'angleBetweenDirections');
-  return angleOf(apply(basis, vector(u, 'u')), apply(basis, vector(v, 'v')));
+  return angleOf(apply(basis, vector(direction1, 'direction1')), apply(basis, vector(direction2, 'direction2')));
 }
 
 /**
@@ -206,15 +215,28 @@ export function angleBetweenDirections(basis: Mat3, u: Vec3, v: Vec3): number {
  * reciprocal vectors h·a* + k·b* + l·c*. For two faces this is 180° minus the interior dihedral
  * angle. Throws a RangeError for a zero vector.
  */
-export function angleBetweenPlanes(basis: Mat3, h: Vec3, k: Vec3): number {
+export function angleBetweenPlanes(basis: Mat3, plane1: Vec3, plane2: Vec3): number {
   checkBasis(basis, 'angleBetweenPlanes');
   const b = reciprocalBasis(basis);
-  return angleOf(apply(b, vector(h, 'h')), apply(b, vector(k, 'k')));
+  return angleOf(apply(b, vector(plane1, 'plane1')), apply(b, vector(plane2, 'plane2')));
 }
 
 /**
- * The operations that leave the metric of a cell unchanged: those W (integer matrices on the
- * coordinates of a lattice direction, as `latticeOperations` gives them) with WᵀGW = G, G the metric
+ * The unit normal of a plane (hkl) in a cell, a Cartesian vector: h·a* + k·b* + l·c* normalised, the
+ * pole of the face (#137 G4). With `latticeBasis(family)` for a family with fixed cell angles, or
+ * `latticeFromParameters` for a real cell; Miller indices of hexagonal axes are three, without i.
+ * Throws a RangeError for a basis that is not a regular 3 × 3 matrix and for a zero vector.
+ */
+export function faceNormal(basis: Mat3, hkl: Vec3): Vec3 {
+  checkBasis(basis, 'faceNormal');
+  const v = apply(reciprocalBasis(basis), vector(hkl, 'hkl'));
+  const n = norm(v);
+  return Object.freeze(v.map((x) => x / n + 0)) as unknown as Vec3;
+}
+
+/**
+ * The operations that leave the metric of a cell unchanged: those W (`matrix`, the integer matrices
+ * on the coordinates of a lattice direction, as `operations` gives them) with WᵀGW = G, G the metric
  * tensor of `basis`. It is the point symmetry of a distorted lattice among the operations of a group;
  * the list is taken as it is, not closed into a group, and the kept operations are the ones of the
  * list, in its order. The deviation counts relative to the largest entry of G (`tolerance`, default
@@ -223,15 +245,11 @@ export function angleBetweenPlanes(basis: Mat3, h: Vec3, k: Vec3): number {
 export function residualOperations<T extends CellOperation>(
   operations: readonly T[],
   basis: Mat3,
-  options?: ResidualOperationsOptions,
-): T[] {
+  options?: ToleranceOptions,
+): readonly T[] {
+  checkOptions(options, TOLERANCE_KEYS, 'residualOperations');
   const g = metricTensor(basis);
-  const tolerance = options?.tolerance ?? EPSILON;
-  if (typeof tolerance !== 'number' || !Number.isFinite(tolerance) || tolerance < 0) {
-    throw new RangeError(
-      `residualOperations: tolerance must be a non-negative number, not ${JSON.stringify(tolerance)}`,
-    );
-  }
+  const tolerance = toleranceOf(options, 'metric');
   if (!Array.isArray(operations)) throw new RangeError('residualOperations: operations must be a list');
   operations.forEach((op, i) => {
     const m = (op as { readonly matrix?: unknown } | null)?.matrix;
@@ -240,12 +258,21 @@ export function residualOperations<T extends CellOperation>(
       m.length === 3 &&
       m.every((r) => Array.isArray(r) && r.length === 3 && r.every((x) => typeof x === 'number' && Number.isFinite(x)));
     if (!ok) throw new RangeError(`residualOperations: operation ${i} has no 3×3 matrix of finite numbers`);
+    // W is an integer matrix; a Cartesian matrix (±√3/2) passed as `matrix` would give a wrong answer.
+    if (!(m as number[][]).every((r) => r.every((x) => Math.abs(x - Math.round(x)) <= 1e-9))) {
+      throw new RangeError(
+        `residualOperations: the matrix of operation ${i} is not an integer matrix in the lattice basis (the field matrix of an operation, not cartesian): ${shown(m)}`,
+      );
+    }
   });
   const scale = Math.max(...g.flat().map(Math.abs));
-  return operations.filter((op) => {
-    const m = multiply(multiply(transpose(op.matrix), g), op.matrix);
-    return m.every((row, i) => row.every((x, j) => Math.abs(x - g[i][j]) <= tolerance * scale));
-  });
+  // The list is frozen, not the operations in it, which are the caller's.
+  return Object.freeze(
+    operations.filter((op) => {
+      const m = multiply(multiply(transpose(op.matrix), g), op.matrix);
+      return m.every((row, i) => row.every((x, j) => Math.abs(x - g[i][j]) < tolerance * scale));
+    }),
+  );
 }
 
 /** An operation of the magnetic API passed to `residualOperations`: its matrix and whether it is combined with time reversal. */
@@ -256,8 +283,8 @@ export interface MagneticCellOperation extends CellOperation {
 
 /**
  * The operations of a list that keep the metric of a cell: W with WᵀGW = G, G the metric tensor
- * of `basis`. The operations are integer matrices on lattice coordinates, as `latticeOperations`
- * gives them; the list is taken as it is and the kept operations are the ones of the list, in its
+ * of `basis`. The operations are read by `matrix`, the integer matrix W on lattice coordinates, as
+ * `operations` gives them; the list is taken as it is and the kept operations are the ones of the list, in its
  * order. The deviation counts relative to the largest entry of G (`tolerance`, default `EPSILON`).
  * Every operation must say whether it is combined with time reversal (`timeReversal`), which is
  * kept; one that does not (an operation of the crystallographic API) is a RangeError.
@@ -265,8 +292,8 @@ export interface MagneticCellOperation extends CellOperation {
 export function residualMagneticOperations<T extends MagneticCellOperation>(
   operations: readonly T[],
   basis: Mat3,
-  options?: ResidualOperationsOptions,
-): T[] {
+  options?: ToleranceOptions,
+): readonly T[] {
   if (Array.isArray(operations)) checkTimeReversal(operations as unknown as readonly MagneticOperation[]);
   return residualOperations(operations, basis, options);
 }

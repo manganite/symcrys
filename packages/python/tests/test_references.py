@@ -13,11 +13,11 @@ import symcrys
 from symcrys import magnetic
 from conftest import reference, section, table_rows
 
-SHG = {"rank": 3, "parity": "polar", "intrinsic": "jk"}
+SHG = {"rank": 3, "kind": "polar", "intrinsic": "symmetric-last-pair"}
 
 
-def spec(rank: int, parity: str = "polar", intrinsic: str = "none") -> dict[str, object]:
-    return {"rank": rank, "parity": parity, "intrinsic": intrinsic}
+def spec(rank: int, kind: str = "polar", intrinsic: str = "none") -> dict[str, object]:
+    return {"rank": rank, "kind": kind, "intrinsic": intrinsic}
 
 
 def count(cell: str) -> int:
@@ -47,7 +47,7 @@ def test_ita_3221_counts(row: list[str]) -> None:
     key = row[2].replace("-62m", "-6m2")
     assert len(symcrys.tensor_form(key, spec(1))["basis"]) == count(row[3])
     assert len(symcrys.tensor_form(key, SHG)["basis"]) == count(row[4])
-    assert len(symcrys.tensor_form(key, spec(2, "axial", "ij"))["basis"]) == count(row[6])
+    assert len(symcrys.tensor_form(key, spec(2, "axial", "symmetric-first-pair"))["basis"]) == count(row[6])
 
 
 def test_ita_3221_piezoelectric_classes() -> None:
@@ -65,8 +65,8 @@ def test_itc_vol_d_rank_4_counts(row: list[str]) -> None:
     misprint = {"3m": "m-3"} if row[0].startswith("1.1.4.10.6.7") else {}
     for printed in (g.strip() for g in row[1].split(",")):
         key = misprint.get(printed, ABBREVIATION.get(printed, printed))
-        assert len(symcrys.tensor_form(key, spec(4, intrinsic="ij_kl"))["basis"]) == int(row[2]), key
-        assert len(symcrys.tensor_form(key, spec(4, intrinsic="voigt"))["basis"]) == int(row[3]), key
+        assert len(symcrys.tensor_form(key, spec(4, intrinsic="symmetric-pairs"))["basis"]) == int(row[2]), key
+        assert len(symcrys.tensor_form(key, spec(4, intrinsic="symmetric-pairs-exchangeable"))["basis"]) == int(row[3]), key
 
 
 YARIV = {r[0]: r for r in table_rows(reference("yariv/table-16.1.md"))[1:]}
@@ -95,12 +95,12 @@ def printed_cells(row: list[str]) -> list[str]:
 def test_shg_at_m3m_surfaces_is_yarivs_form(normal: list[int], x: list[int], panel: str) -> None:
     assert symcrys.tensor_form("m-3m", SHG)["basis"].shape[0] == 0
     ops = symcrys.operations("m-3m")
-    site = symcrys.site_symmetry(ops, normal)
+    site = symcrys.site_symmetry_of(ops, normal)
     form = symcrys.tensor_form_of([ops[i] for i in site["operations"]], SHG)
     z = np.array(normal, float) / np.linalg.norm(normal)
     xa = np.array(x, float) / np.linalg.norm(x)
     frame = np.array([xa, np.cross(z, xa), z])
-    basis = np.array([symcrys.rotate_tensor(b, frame, SHG) for b in form["basis"]])
+    basis = np.array([symcrys.rotate_tensor(b, frame, SHG) for b in form["basis"]]).reshape(len(form["basis"]), -1)
     row = YARIV[panel]
     assert len(basis) == int(row[3])
     assert cells(basis) == printed_cells(row)
@@ -138,7 +138,7 @@ def test_itc_vol_d_1523_symbols_and_order(row: list[str]) -> None:
     assert group["crystal_system"] == system.lower()
     assert group["order"] == printed_count(operators)
     assert magnetic.symbol(key, form="full") == full
-    assert magnetic.symbol(key, form="schoenflies") == schoenflies.replace("S6", "C3i")
+    assert magnetic.symbol(key, form="schoenflies") == schoenflies  # as printed, S6 included (#137 B3)
     ops = magnetic.operations(key)
     primed = sum(1 for o in ops if o["time_reversal"])
     assert primed == (len(ops) // 2 if "(" in schoenflies else 0)
@@ -199,7 +199,7 @@ def test_itc_vol_d_magnetic_forms(file: str, name: str, count: int, shape: tuple
         assert any(found), cell
         for where in filter(None, found):
             form = magnetic.tensor_form(where["key"], name, setting=where["setting"])
-            assert same_space(form["basis"], printed), cell
+            assert same_space(form["basis"].reshape(len(form["basis"]), -1), printed), cell
         keys.append(next(filter(None, found))["key"])
     assert len(keys) == count
     assert sorted(keys) == sorted(k for k in NOT_GREY if magnetic.allows_property(k, name))
@@ -246,11 +246,14 @@ def test_ita_3213_the_47_forms() -> None:
 
 def _setting(short: str, axes: str) -> tuple[str, int]:
     axis = axes[-1] if axes.startswith("unique axis") else None
+    rhombohedral = axes == "rhombohedral axes"
     found = [
         (key, s["index"])
         for key in symcrys.POINT_GROUP_KEYS
         for s in symcrys.settings(key)
-        if s["symbol"] == short and (axis is None or s.get("unique_axis") == axis)
+        if s["symbol"] == short
+        and (axis is None or s.get("unique_axis") == axis)
+        and (s.get("axes") == "rhombohedral") == rhombohedral
     ]
     assert len(found) == 1, (short, axes)
     return found[0]
@@ -273,8 +276,7 @@ def test_ita_3232_face_forms(entry: tuple[str, str]) -> None:
         printed
     )
     for f in forms:
-        assert f["representative"]["hkl"].dtype == np.int64 and f["representative"]["hkl"].shape == (3,)
-        assert f["representative"]["cartesian"].dtype == np.float64
+        assert "representative" not in f
         faces = symcrys.CRYSTAL_FORM_TYPES[f["form_type"] - 1]["faces"]
         assert f["multiplicity"] == faces
 
@@ -297,26 +299,36 @@ def _coefficients(expr: str) -> list[int]:
 
 
 @pytest.mark.parametrize("row", GENERAL[1:], ids=[f"{r[0]} {r[1]}".strip() for r in GENERAL[1:]])
-def test_ita_3232_lattice_operations_and_orbit(row: list[str]) -> None:
+def test_ita_3232_operations_in_the_lattice_basis_and_orbit(row: list[str]) -> None:
     assert GENERAL[0] == ["Short", "Axes", "Page", "Multiplicity", "General position"]
     key, setting = _setting(row[0], row[1])
     printed = [[_coefficients(c) for c in t.split(",")] for t in row[4].split()]
-    ops = symcrys.lattice_operations(key, setting=setting)
+    ops = symcrys.operations(key, setting=setting)
     assert [op["matrix"].tolist() for op in ops] == printed
-    uvw = [e["uvw"].tolist() for e in symcrys.orbit(key, {"uvw": [3, 2, 1]}, setting=setting)]
+    uvw = [e["uvw"].tolist() for e in symcrys.orbit(key, uvw=[3, 2, 1], setting=setting)]
     assert uvw == [(np.array(w) @ [3, 2, 1]).tolist() for w in printed]
 
 
-@pytest.mark.parametrize("row", GENERAL_FACES[1:], ids=[r[0] for r in GENERAL_FACES[1:]])
-def test_ita_3232_general_faces_hexagonal(row: list[str]) -> None:
+@pytest.mark.parametrize("row", GENERAL_FACES[1:], ids=[f"{r[0]} {r[1]}".strip() for r in GENERAL_FACES[1:]])
+def test_ita_3232_general_faces(row: list[str]) -> None:
     assert GENERAL_FACES[0] == ["Short", "Axes", "Page", "Faces"]
     value = {"h": 3, "k": 2, "i": -5, "l": 1}
     expected = []
     for face in row[3].split():
         v = [(-1 if c.startswith("-") else 1) * value[c.lstrip("-")] for c in face.split(",")]
-        expected.append([v[0], v[1], v[3]])
+        expected.append(v if len(v) == 3 else [v[0], v[1], v[3]])
     key, setting = _setting(row[0], row[1])
-    computed = [e["hkl"].tolist() for e in symcrys.orbit(key, {"hkl": [3, 2, 1]}, setting=setting)]
-    if row[0] in ("6/m", "6mm"):  # two rows printed in the other order (see the transcription, "Order")
+    computed = [e["hkl"].tolist() for e in symcrys.orbit(key, hkl=[3, 2, 1], setting=setting)]
+    # The printed order (see the transcription, "Order"): 6/m and 6mm print two rows the other way
+    # round; 32, 3m and -3m with rhombohedral axes the row of the second coset shifted by one.
+    if row[0] in ("6/m", "6mm"):
         computed = computed[:6] + computed[9:] + computed[6:9]
+    elif row[1] == "rhombohedral axes" and row[0] in ("32", "3m", "-3m"):
+        def shift(r: int) -> list[list[int]]:
+            return [computed[r + 1], computed[r + 2], computed[r]]
+
+        reordered = computed[:3] + shift(3)
+        if row[0] == "-3m":
+            reordered += computed[6:9] + shift(9)
+        computed = reordered
     assert computed == expected

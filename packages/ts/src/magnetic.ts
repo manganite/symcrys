@@ -10,19 +10,22 @@
  * allows no time-odd property (docs/conventions.md, "Two entry points").
  */
 export { VERSION } from './version.js';
+export { EPSILON, type ToleranceOptions } from './tolerances.js';
 
 export type { Mat3, Vec3 } from './linalg.js';
-export type { Operation } from './operations.js';
+export type { CartesianOperation, Operation } from './operations.js';
 export {
   crystalFamily,
   latticeBasis,
   type CrystalFamily,
   type CrystalSystem,
   type FixedAngleFamily,
+  type LatticeSystem,
 } from './lattice.js';
 export {
   angleBetweenDirections,
   angleBetweenPlanes,
+  faceNormal,
   isValidCell,
   latticeFromParameters,
   latticeParameters,
@@ -32,7 +35,6 @@ export {
   type CellOperation,
   type IsValidCellOptions,
   type LatticeParameters,
-  type ResidualOperationsOptions,
 } from './cell.js';
 export {
   changeOfAxes,
@@ -40,10 +42,12 @@ export {
   directionToFourIndices,
   planeFromFourIndices,
   planeToFourIndices,
+  millerIndices,
   reduceIndices,
   zoneAxis,
   type AxisChange,
   type FourIndices,
+  type MillerValues,
 } from './indices.js';
 
 import type {
@@ -70,18 +74,19 @@ export {
   findMagneticPointGroup as findPointGroup,
   generators,
   isMagneticPointGroupKey as isPointGroupKey,
+  latticeSystems,
   magneticPointGroups as pointGroups,
   operations,
   pointGroup,
   settings,
   symbol,
-  type Convention,
   type PointGroupType,
   type Setting,
+  type AxesOptions,
   type SettingOptions,
   type SymbolOptions,
 } from './pointGroups/pointGroups.js';
-export { holohedry, isCentrosymmetricOf, isChiralOf } from './pointGroups/properties.js';
+export { holohedry, isCentrosymmetricOf, isEnantiomorphicOf } from './pointGroups/properties.js';
 export { LATTICE_SYMMETRY_DIRECTIONS, type Uvw } from './symmetryDirections.js';
 export {
   describeOperations,
@@ -93,22 +98,22 @@ export {
   type SymmetryDirection,
 } from './pointGroups/elements.js';
 export { residualMagneticOperations as residualOperations, type MagneticCellOperation } from './cell.js';
-export { siteSymmetry, type SiteSymmetry, type SiteSymmetryOptions } from './siteSymmetry.js';
+export { siteSymmetryOf, type SiteSymmetry } from './siteSymmetry.js';
+export { siteSymmetry } from './pointGroups/wyckoff.js';
 export {
   describeOperationsOf,
   pointGroupOf,
   type CartesianAxis,
   type CartesianOperationDescription,
   type IdentifiedPointGroup,
-  type PointGroupOfOptions,
 } from './pointGroups/identify.js';
 export {
-  latticeOperations,
   orbit,
   orbitOf,
+  type DirectionIndices,
   type DirectionOrbitEntry,
+  type FaceIndices,
   type FaceOrbitEntry,
-  type OrbitOptions,
   type OrbitPole,
 } from './pointGroups/orbits.js';
 export {
@@ -117,7 +122,7 @@ export {
   tensorFormOf,
   type IntrinsicSymmetry,
   type TensorForm,
-  type TensorParity,
+  type TensorKind,
   type TensorRank,
   type TensorSpec,
   type TimeParity,

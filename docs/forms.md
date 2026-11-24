@@ -10,7 +10,7 @@ kernelspec:
 A crystal form is a set of faces that a point group makes equivalent. ITA (6th ed.) lists, for every
 crystal class and every Wyckoff position, the forms that occur there: the **basic** form and the
 **limiting** forms, which have the same face symmetry but a higher eigensymmetry. symcrys gives these
-lists, in the ITC convention, together with ITA's table of the 47 forms (number, English name,
+lists, together with ITA's table of the 47 forms (number, English name,
 number of faces, eigensymmetry). The rules and the print anchors are in
 [Conventions](conventions.md), "Crystal forms" and "Site symmetry and Wyckoff positions".
 
@@ -33,18 +33,21 @@ for f in symcrys.crystal_forms("-43m"):
     print(f["letter"], f["basic"], f["miller_indices"], f.get("condition", ""), form["name"])
 ```
 
-Each form has a representative face with numbers, its Miller indices and its Cartesian unit normal
-in the frame of the setting, e.g. to draw its pole or to compute its site symmetry:
+The Miller indices of a form are printed with letters. `miller_indices` substitutes values of your
+choice, and `face_normal` gives the pole of that face in a cell, e.g. to draw it or to compute its
+site symmetry (the cell decides the pole: for monoclinic and triclinic crystals give the real cell,
+`lattice_from_parameters`):
 
 ```{code-cell} ipython3
-f = symcrys.crystal_forms("-43m")[2]
-f["representative"]["hkl"], f["representative"]["cartesian"]
+f = symcrys.crystal_forms("-43m")[2]  # h,h,l with |h| < |l|, the trigon-tritetrahedron
+hkl = symcrys.miller_indices(f["miller_indices"], h=1, l=3)
+hkl, symcrys.face_normal(symcrys.lattice_basis("cubic"), hkl)
 ```
 
 ## Orbits and the lattice basis
 
 The faces of a form are the orbit of one face. `orbit` computes it exactly, in integers, from the
-operations in the lattice basis (`latticeOperations`); `orbitOf` computes it for a Cartesian
+matrices W of the operations in the lattice basis (`matrix` of each operation); `orbitOf` computes it for a Cartesian
 direction under any list of operations, for instance those left after distorting a crystal. In
 hexagonal axes a face transforms otherwise than a lattice direction
 ([Conventions](conventions.md), "Lattice basis and orbits").
@@ -54,11 +57,11 @@ hexagonal axes a face transforms otherwise than a lattice direction
 ```
 
 ```{code-cell} ipython3
-[f["hkl"] for f in symcrys.orbit("-3m", {"hkl": [1, 0, 1]})]
+[f["hkl"] for f in symcrys.orbit("-3m", hkl=[1, 0, 1])]
 ```
 
 ```{code-cell} ipython3
-symcrys.lattice_operations("3")[1]["matrix"]  # integers, as a float64 array
+symcrys.operations("3").matrix[1]  # W in the lattice basis, an int64 array
 ```
 
 ## A distorted crystal
@@ -74,7 +77,8 @@ Cartesian axes ([Conventions](conventions.md), "Point group of a list of operati
 ```{code-cell} ipython3
 import numpy as np
 
-kept = [op for op in symcrys.operations("m-3m") if np.allclose(op["matrix"] @ [1, 1, 1], [1, 1, 1])
-        or np.allclose(op["matrix"] @ [1, 1, 1], [-1, -1, -1])]
+ops = symcrys.operations("m-3m")
+image = ops.cartesian @ [1, 1, 1]  # the image of [111] under every operation at once
+kept = ops[np.isclose(np.abs(image.sum(axis=1)), 3)]  # those that keep the line [111]: ±[111]
 symcrys.point_group_of(kept)
 ```

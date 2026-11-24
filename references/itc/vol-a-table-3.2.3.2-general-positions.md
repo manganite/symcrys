@@ -3,12 +3,16 @@
 Source: _International Tables for Crystallography_, Vol. A, 6th edition (2016), Chapter 3.2 (Point
 groups and crystal classes), Table 3.2.3.2, printed pp. 745–769. Transcribed 2026-11-09 from the
 chapter PDF provided by Thomas; every row checked triplet by triplet against the rendered pages.
+The five entries with rhombohedral axes (3, -3, 32, 3m, -3m; pp. 753, 753, 755, 756, 759) were
+added 2026-11-23 from the page images of the chapter PDF (Zotero item `7NZ258UB`, attachment
+`Y6Z8P8NR`, PDF pages 34, 36, 37, 40; printed page = PDF page + 719), read at 300–500 dpi, and
+checked a second time against the text layer of the same pages, which keeps the overbars.
 Headlines of the same entries: `vol-a-table-3.2.3.2-headlines.md`.
 
 Each row is the general position (the first Wyckoff position, site symmetry 1) of one entry: the
 coordinate triplets x̃, ỹ, z̃ of the images of a point x, y, z, in the basis of the conventional
-coordinate system (hexagonal axes for the trigonal groups; the five entries with rhombohedral axes
-are not transcribed). The order of the triplets is that of the print, row by row.
+coordinate system (for the trigonal groups hexagonal axes, and rhombohedral axes in the five
+entries so marked). The order of the triplets is that of the print, row by row.
 
 Transcription conventions: a leading minus sign is an overbar (`-x` for x̄); the components of a
 triplet are separated by commas and the triplets by single spaces; `-x+y` is x̄ + y.
@@ -35,13 +39,18 @@ triplet are separated by commas and the triplets by single spaces; `-x+y` is x̄
 | -4m2 |  | 751 | 8 | x,y,z -x,-y,z y,-x,-z -y,x,-z x,-y,z -x,y,z y,x,-z -y,-x,-z |
 | 4/mmm |  | 752 | 16 | x,y,z -x,-y,z -y,x,z y,-x,z -x,y,-z x,-y,-z y,x,-z -y,-x,-z -x,-y,-z x,y,-z y,-x,-z -y,x,-z x,-y,z -x,y,z -y,-x,z y,x,z |
 | 3 | hexagonal axes | 752 | 3 | x,y,z -y,x-y,z -x+y,-x,z |
+| 3 | rhombohedral axes | 753 | 3 | x,y,z z,x,y y,z,x |
 | -3 | hexagonal axes | 753 | 6 | x,y,z -y,x-y,z -x+y,-x,z -x,-y,-z y,-x+y,-z x-y,x,-z |
+| -3 | rhombohedral axes | 753 | 6 | x,y,z z,x,y y,z,x -x,-y,-z -z,-x,-y -y,-z,-x |
 | 312 | hexagonal axes | 754 | 6 | x,y,z -y,x-y,z -x+y,-x,z -y,-x,-z -x+y,y,-z x,x-y,-z |
 | 321 | hexagonal axes | 754 | 6 | x,y,z -y,x-y,z -x+y,-x,z y,x,-z x-y,-y,-z -x,-x+y,-z |
+| 32 | rhombohedral axes | 755 | 6 | x,y,z z,x,y y,z,x -z,-y,-x -y,-x,-z -x,-z,-y |
 | 3m1 | hexagonal axes | 755 | 6 | x,y,z -y,x-y,z -x+y,-x,z -y,-x,z -x+y,y,z x,x-y,z |
 | 31m | hexagonal axes | 756 | 6 | x,y,z -y,x-y,z -x+y,-x,z y,x,z x-y,-y,z -x,-x+y,z |
+| 3m | rhombohedral axes | 756 | 6 | x,y,z z,x,y y,z,x z,y,x y,x,z x,z,y |
 | -31m | hexagonal axes | 757 | 12 | x,y,z -y,x-y,z -x+y,-x,z -y,-x,-z -x+y,y,-z x,x-y,-z -x,-y,-z y,-x+y,-z x-y,x,-z y,x,z x-y,-y,z -x,-x+y,z |
 | -3m1 | hexagonal axes | 758 | 12 | x,y,z -y,x-y,z -x+y,-x,z y,x,-z x-y,-y,-z -x,-x+y,-z -x,-y,-z y,-x+y,-z x-y,x,-z -y,-x,z -x+y,y,z x,x-y,z |
+| -3m | rhombohedral axes | 759 | 12 | x,y,z z,x,y y,z,x -z,-y,-x -y,-x,-z -x,-z,-y -x,-y,-z -z,-x,-y -y,-z,-x z,y,x y,x,z x,z,y |
 | 6 |  | 760 | 6 | x,y,z -y,x-y,z -x+y,-x,z -x,-y,z y,-x+y,z x-y,x,z |
 | -6 |  | 760 | 6 | x,y,z -y,x-y,z -x+y,-x,z x,y,-z -y,x-y,-z -x+y,-x,-z |
 | 6/m |  | 760 | 12 | x,y,z -y,x-y,z -x+y,-x,z -x,-y,z y,-x+y,z x-y,x,z -x,-y,-z y,-x+y,-z x-y,x,-z x,y,-z -y,x-y,-z -x+y,-x,-z |

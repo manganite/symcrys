@@ -1,15 +1,15 @@
 /**
  * The tensor API: what a form is (invariance, index symmetry, row echelon form, relations), how it
- * behaves under rotation and with settings and conventions, arbitrary operations, input checks, and
+ * behaves under rotation and with settings, arbitrary operations, input checks, and
  * the use case of #30: the form of the SHG tensor at a surface, from the site symmetry of the
  * surface normal, compared with Yariv's Table 16.1 (print) for the site-symmetry groups.
  */
 
 import { describe, expect, it } from 'vitest';
 import { det, type Mat3, type Vec3 } from '../linalg.js';
-import { operation, type Operation } from '../operations.js';
+import { operation, type CartesianOperation } from '../operations.js';
 import { POINT_GROUP_KEYS, generators, operations, settings, type PointGroupKey } from '../pointGroups/pointGroups.js';
-import { siteSymmetry } from '../siteSymmetry.js';
+import { siteSymmetryOf } from '../siteSymmetry.js';
 import { matrixRank, satisfies } from '../testUtils/rank.js';
 import { YARIV_PANELS, basisScheme, printedScheme } from '../testUtils/yariv.js';
 import {
@@ -17,17 +17,17 @@ import {
   tensorForm,
   tensorFormOf,
   type IntrinsicSymmetry,
-  type TensorParity,
+  type TensorKind,
   type TensorRank,
   type TensorSpec,
 } from './tensorForm.js';
 
 const spec = (
   rank: TensorRank,
-  parity: TensorParity = 'polar',
+  kind: TensorKind = 'polar',
   intrinsic: IntrinsicSymmetry = 'none',
-  timeParity: 'i' | 'c' = 'i',
-): TensorSpec => ({ rank, parity, timeParity, intrinsic });
+  timeParity: 'even' | 'odd' = 'even',
+): TensorSpec => ({ rank, kind, timeParity, intrinsic });
 
 const SPECS: TensorSpec[] = [
   spec(0),
@@ -35,11 +35,11 @@ const SPECS: TensorSpec[] = [
   spec(1),
   spec(1, 'axial'),
   spec(2),
-  spec(2, 'axial', 'ij'),
-  spec(3, 'polar', 'jk'),
-  spec(3, 'axial', 'ij'),
-  spec(4, 'polar', 'voigt'),
-  spec(4, 'axial', 'ij_kl'),
+  spec(2, 'axial', 'symmetric-first-pair'),
+  spec(3, 'polar', 'symmetric-last-pair'),
+  spec(3, 'axial', 'symmetric-first-pair'),
+  spec(4, 'polar', 'symmetric-pairs-exchangeable'),
+  spec(4, 'axial', 'symmetric-pairs'),
 ];
 
 /** Indices of every flat index at a rank, first index first. */
@@ -78,9 +78,9 @@ describe('a tensor form', () => {
         for (const sp of SPECS) {
           tensorForm(key, sp, { setting: s.index }).basis.forEach((b, k) => {
             for (const op of ops) {
-              const sign = sp.parity === 'axial' ? Math.sign(det(op.matrix)) : 1;
-              if (!close(transform(b, op.matrix, sp.rank, sign), b))
-                failures.push(`setting ${s.index} rank ${sp.rank} ${sp.parity} row ${k}`);
+              const sign = sp.kind === 'axial' ? Math.sign(det(op.cartesian)) : 1;
+              if (!close(transform(b, op.cartesian, sp.rank, sign), b))
+                failures.push(`setting ${s.index} rank ${sp.rank} ${sp.kind} row ${k}`);
             }
           });
         }
@@ -96,10 +96,10 @@ describe('a tensor form', () => {
         return b[perm.map((p) => i[p]).reduce((a, x) => a * 3 + x, 0)];
       });
     const cases: [IntrinsicSymmetry, TensorRank, number[][]][] = [
-      ['ij', 3, [[1, 0, 2]]],
-      ['jk', 3, [[0, 2, 1]]],
+      ['symmetric-first-pair', 3, [[1, 0, 2]]],
+      ['symmetric-last-pair', 3, [[0, 2, 1]]],
       [
-        'ij_kl',
+        'symmetric-pairs',
         4,
         [
           [1, 0, 2, 3],
@@ -107,7 +107,7 @@ describe('a tensor form', () => {
         ],
       ],
       [
-        'voigt',
+        'symmetric-pairs-exchangeable',
         4,
         [
           [1, 0, 2, 3],
@@ -169,40 +169,33 @@ describe('a tensor form', () => {
     }
   });
 
-  it('is the same for a setting index in both conventions; the convention picks only the default', () => {
-    for (const key of POINT_GROUP_KEYS) {
-      for (const s of settings(key)) {
-        for (const sp of SPECS) {
-          expect(tensorForm(key, sp, { setting: s.index, convention: 'itc' })).toEqual(
-            tensorForm(key, sp, { setting: s.index, convention: 'birss' }),
-          );
-        }
-      }
-    }
-    // Class 2: ITC default unique axis b, Birss unique axis c (docs/conventions.md, "Settings").
+  it('is that of the requested setting, the ITC default without one', () => {
+    // Class 2: ITC default unique axis b (setting 1), setting 2 unique axis c (docs/conventions.md, "Settings").
     expect(tensorForm('2', spec(1)).parameters).toEqual([[1]]);
-    expect(tensorForm('2', spec(1), { convention: 'birss' }).parameters).toEqual([[2]]);
+    expect(tensorForm('2', spec(1), { setting: 2 }).parameters).toEqual([[2]]);
+    expect(tensorForm('2', spec(1), { setting: '1 1 2' }).parameters).toEqual([[2]]);
+    expect(() => tensorForm('2', spec(1), { convention: 'birss' } as never)).toThrow(/option convention was removed/);
   });
 
-  it('c-tensors equal i-tensors for the 32 classes, which have no time reversal', () => {
+  it('time-odd tensors equal time-even ones for the 32 classes, which have no time reversal', () => {
     for (const key of POINT_GROUP_KEYS) {
-      for (const sp of SPECS) expect(tensorForm(key, { ...sp, timeParity: 'c' })).toEqual(tensorForm(key, sp));
+      for (const sp of SPECS) expect(tensorForm(key, { ...sp, timeParity: 'odd' })).toEqual(tensorForm(key, sp));
     }
   });
 
-  it('time reversal: a primed operation changes the sign of a c-tensor', () => {
-    // 1' (grey group of 1): every c-tensor vanishes, every i-tensor is free.
-    const greyOne: Operation[] = [
+  it('time reversal: a primed operation changes the sign of a time-odd tensor', () => {
+    // 1' (grey group of 1): every time-odd tensor vanishes, every time-even one is free.
+    const greyOne: CartesianOperation[] = [
       {
-        matrix: operation([
+        cartesian: operation([
           [1, 0, 0],
           [0, 1, 0],
           [0, 0, 1],
-        ]).matrix,
+        ]).cartesian,
         timeReversal: true,
       },
     ];
-    expect(tensorFormOf(greyOne, spec(1, 'polar', 'none', 'c')).basis).toHaveLength(0);
+    expect(tensorFormOf(greyOne, spec(1, 'polar', 'none', 'odd')).basis).toHaveLength(0);
     expect(tensorFormOf(greyOne, spec(1)).basis).toHaveLength(3);
   });
 });
@@ -211,17 +204,168 @@ describe('index symmetries, counts for class 1 and between symmetries', () => {
   const n = (key: PointGroupKey, rank: TensorRank, intrinsic: IntrinsicSymmetry) =>
     tensorForm(key, spec(rank, 'polar', intrinsic)).basis.length;
 
-  it('class 1: rank 3 ij 18, rank 4 ij_kl 36, voigt 21, rank 2 ij and jk 6', () => {
-    expect([n('1', 3, 'ij'), n('1', 4, 'ij_kl'), n('1', 4, 'voigt'), n('1', 2, 'ij'), n('1', 2, 'jk')]).toEqual([
-      18, 36, 21, 6, 6,
-    ]);
+  it('class 1: rank 3 symmetric-first-pair 18, rank 4 symmetric-pairs 36, -exchangeable 21, rank 2 symmetric 6', () => {
+    expect([
+      n('1', 3, 'symmetric-first-pair'),
+      n('1', 4, 'symmetric-pairs'),
+      n('1', 4, 'symmetric-pairs-exchangeable'),
+      n('1', 2, 'symmetric-first-pair'),
+      n('1', 2, 'symmetric-last-pair'),
+    ]).toEqual([18, 36, 21, 6, 6]);
   });
 
-  it('rank 3: ij and jk give equal counts for every class; rank 4: voigt ≤ ij_kl ≤ none', () => {
+  it('rank 3: the first and the last pair give equal counts for every class; rank 4: exchangeable ≤ pairs ≤ none', () => {
     for (const key of POINT_GROUP_KEYS) {
-      expect(n(key, 3, 'ij'), key).toBe(n(key, 3, 'jk'));
-      expect(n(key, 4, 'voigt') <= n(key, 4, 'ij_kl') && n(key, 4, 'ij_kl') <= n(key, 4, 'none'), key).toBe(true);
+      expect(n(key, 3, 'symmetric-first-pair'), key).toBe(n(key, 3, 'symmetric-last-pair'));
+      expect(
+        n(key, 4, 'symmetric-pairs-exchangeable') <= n(key, 4, 'symmetric-pairs') &&
+          n(key, 4, 'symmetric-pairs') <= n(key, 4, 'none'),
+        key,
+      ).toBe(true);
     }
+  });
+});
+
+describe("the index symmetries 'antisymmetric' and 'totally-symmetric' (#137 E2)", () => {
+  const MAGNETIC = [...POINT_GROUP_KEYS, "4'mm'", "6'/m'mm'", "mm'm'", "-3'm", "2221'", "m-3m1'"] as const;
+  const count = (key: string, s: TensorSpec, setting = 1) =>
+    tensorForm(key as PointGroupKey, s, { setting }).parameters.length;
+
+  it('counts for class 1: an antisymmetric rank-2 tensor has 3, a totally symmetric one 6, 10, 15', () => {
+    expect(count('1', spec(2, 'polar', 'antisymmetric'))).toBe(3);
+    expect(count('1', spec(2, 'polar', 'totally-symmetric'))).toBe(6);
+    expect(count('1', spec(3, 'polar', 'totally-symmetric'))).toBe(10);
+    expect(count('1', spec(4, 'polar', 'totally-symmetric'))).toBe(15);
+  });
+
+  it('an antisymmetric polar (axial) rank-2 tensor is the dual of an axial (polar) vector, in every setting', () => {
+    // t_ij = ε_ijk v_k: ε is an axial tensor, so the kind changes; the time parity does not.
+    for (const key of MAGNETIC) {
+      for (const s of settings(key as PointGroupKey)) {
+        for (const timeParity of ['even', 'odd'] as const) {
+          for (const [k2, k1] of [
+            ['polar', 'axial'],
+            ['axial', 'polar'],
+          ] as const) {
+            const form = tensorForm(key as PointGroupKey, spec(2, k2, 'antisymmetric', timeParity), {
+              setting: s.index,
+            });
+            const vector = tensorForm(key as PointGroupKey, spec(1, k1, 'none', timeParity), { setting: s.index });
+            expect(form.parameters.length, `${key} #${s.index} ${k2} ${timeParity}`).toBe(vector.parameters.length);
+            // Each row is ε_ijk v_k for a v of the vector form.
+            for (const row of form.basis) {
+              const v = [row[5], row[6], row[1]]; // t_yz = v_x, t_zx = v_y, t_xy = v_z
+              expect(
+                row.map((x, f) => x + row[3 * (f % 3) + Math.floor(f / 3)]).every((x) => Math.abs(x) < 1e-12),
+              ).toBe(true);
+              expect(satisfies([v], vector.relations), `${key} #${s.index}`).toBe(true);
+            }
+          }
+        }
+      }
+    }
+  });
+
+  it('a totally symmetric tensor is symmetric in every pair of indices and lies in the forms with fewer symmetries', () => {
+    const permute = (b: readonly number[], rank: number, perm: number[]) =>
+      b.map((_, f) => {
+        const i = INDICES[rank][f];
+        return b[perm.map((p) => i[p]).reduce((a, x) => a * 3 + x, 0)];
+      });
+    for (const key of MAGNETIC) {
+      for (const rank of [2, 3, 4] as const) {
+        const total = tensorForm(key as PointGroupKey, spec(rank, 'polar', 'totally-symmetric'));
+        const last = tensorForm(key as PointGroupKey, spec(rank, 'polar', 'symmetric-last-pair'));
+        for (const row of total.basis) {
+          for (let k = 0; k + 1 < rank; k++) {
+            const perm = Array.from({ length: rank }, (_, j) => (j === k ? k + 1 : j === k + 1 ? k : j));
+            expect(permute(row, rank, perm), `${key} rank ${rank}`).toEqual(row);
+          }
+          expect(satisfies([row], last.relations), `${key} rank ${rank}`).toBe(true);
+        }
+        expect(total.parameters.length).toBeLessThanOrEqual(last.parameters.length);
+      }
+    }
+  });
+
+  it('their numbers of parameters equal the rank of the group average times the symmetriser, built here independently', () => {
+    // The tensor representation as Kronecker powers of the matrices, the index symmetry as the mean
+    // of the permutation matrices (with signs for 'antisymmetric'): rank(P·S) is the dimension of the
+    // invariant tensors with that symmetry. Independent of the signed orbits of the library.
+    const kron = (a: number[][], b: number[][]) =>
+      a.flatMap((ra) => b.map((rb) => ra.flatMap((x) => rb.map((y) => x * y))));
+    const permutations = (n: number): number[][] =>
+      n === 1
+        ? [[0]]
+        : permutations(n - 1).flatMap((p) =>
+            Array.from({ length: n }, (_, k) => [...p.slice(0, k), n - 1, ...p.slice(k)]),
+          );
+    const parity = (p: number[]) => {
+      let s = 1;
+      for (let i = 0; i < p.length; i++) for (let j = i + 1; j < p.length; j++) if (p[i] > p[j]) s = -s;
+      return s;
+    };
+    for (const key of ['1', '2/m', 'mm2', '-42m', '3m', '6/mmm', '23', 'm-3m', "4'mm'", "-3'm", "m-3m1'"] as const) {
+      const ops = operations(key as PointGroupKey);
+      for (const [rank, intrinsic] of [
+        [2, 'antisymmetric'],
+        [2, 'totally-symmetric'],
+        [3, 'totally-symmetric'],
+        [4, 'totally-symmetric'],
+      ] as const) {
+        const dim = 3 ** rank;
+        const signed = intrinsic === 'antisymmetric';
+        const sym = Array.from({ length: dim }, () => new Array<number>(dim).fill(0));
+        const perms = permutations(rank);
+        for (const p of perms) {
+          for (let f = 0; f < dim; f++) {
+            const g = p.map((k) => INDICES[rank][f][k]).reduce((acc, x) => acc * 3 + x, 0);
+            sym[g][f] += (signed ? parity(p) : 1) / perms.length;
+          }
+        }
+        for (const kind of ['polar', 'axial'] as const) {
+          for (const timeParity of ['even', 'odd'] as const) {
+            const avg = Array.from({ length: dim }, () => new Array<number>(dim).fill(0));
+            for (const op of ops) {
+              let m: number[][] = [[1]];
+              for (let r = 0; r < rank; r++)
+                m = kron(
+                  m,
+                  op.cartesian.map((row) => [...row]),
+                );
+              const sign =
+                (kind === 'axial' ? Math.sign(det(op.cartesian)) : 1) *
+                (timeParity === 'odd' && op.timeReversal ? -1 : 1);
+              for (let i = 0; i < dim; i++) for (let j = 0; j < dim; j++) avg[i][j] += (sign * m[i][j]) / ops.length;
+            }
+            const product = avg.map((row) => sym[0].map((_, j) => row.reduce((acc, x, k) => acc + x * sym[k][j], 0)));
+            expect(
+              count(key, spec(rank, kind, intrinsic, timeParity)),
+              `${key} rank ${rank} ${intrinsic} ${kind} ${timeParity}`,
+            ).toBe(matrixRank(product, dim));
+          }
+        }
+      }
+    }
+  });
+
+  it('refuses them at ranks where they do not apply', () => {
+    expect(() => tensorForm('1', spec(3, 'polar', 'antisymmetric'))).toThrow(/needs rank 2/);
+    expect(() => tensorForm('1', spec(1, 'polar', 'totally-symmetric'))).toThrow(/needs rank 2 or more/);
+  });
+});
+
+describe('the names of a tensor specification up to 0.10 (#137 E1, E2)', () => {
+  it('are refused with the names that replace them', () => {
+    const old = { rank: 3, parity: 'polar', timeParity: 'i', intrinsic: 'jk' } as unknown as TensorSpec;
+    expect(() => tensorForm('1', old)).toThrow(/named kind since symcrys 0.11/);
+    expect(() => tensorForm('1', { ...spec(3), timeParity: 'c' as never })).toThrow(/'c' up to symcrys 0.10 is 'odd'/);
+    expect(() => tensorForm('1', { ...spec(3), intrinsic: 'jk' as never })).toThrow(
+      /'jk' up to symcrys 0.10 is 'symmetric-last-pair'/,
+    );
+    expect(() => tensorForm('1', { ...spec(4), intrinsic: 'voigt' as never })).toThrow(
+      /'symmetric-pairs-exchangeable'/,
+    );
   });
 });
 
@@ -264,8 +408,8 @@ describe('rotateTensor', () => {
     for (const key of ['3m', '-42m', 'm-3', '6/m'] as const) {
       for (const sp of SPECS) {
         const rotatedOps = operations(key).map((op) => ({
-          matrix: product(
-            product(R1, op.matrix),
+          cartesian: product(
+            product(R1, op.cartesian),
             [0, 1, 2].map((i) => [0, 1, 2].map((j) => R1[j][i])) as unknown as Mat3,
           ),
           timeReversal: op.timeReversal,
@@ -292,8 +436,8 @@ describe('tensorFormOf', () => {
     // Noise below the orthogonality check leaves entries in the basis that are too small to be a
     // pivot; before #88 the parameters were read as the first non-zero entry of each row, and
     // 4mm with a noise of 1e-9 gave the parameters xxx, zxx, zzz instead of xxz, zxx, zzz.
-    const noisy = (ops: readonly Operation[], eps: number): Operation[] =>
-      ops.map((op) => ({ ...op, matrix: op.matrix.map((row) => row.map((x) => x + eps)) as unknown as Mat3 }));
+    const noisy = (ops: readonly CartesianOperation[], eps: number): CartesianOperation[] =>
+      ops.map((op) => ({ ...op, cartesian: op.cartesian.map((row) => row.map((x) => x + eps)) as unknown as Mat3 }));
     for (const key of POINT_GROUP_KEYS) {
       for (const sp of SPECS) {
         const form = tensorFormOf(noisy(operations(key), 1e-9), sp);
@@ -304,7 +448,7 @@ describe('tensorFormOf', () => {
         expect(matrixRank(form.relations, dim)).toBe(dim - form.basis.length);
       }
     }
-    expect(tensorFormOf(noisy(operations('4mm'), 2e-8), spec(3, 'polar', 'jk')).parameters).toEqual([
+    expect(tensorFormOf(noisy(operations('4mm'), 2e-8), spec(3, 'polar', 'symmetric-last-pair')).parameters).toEqual([
       [0, 0, 2],
       [2, 0, 0],
       [2, 2, 2],
@@ -312,19 +456,21 @@ describe('tensorFormOf', () => {
   });
 
   it('an empty list is the group 1', () => {
-    expect(tensorFormOf([], spec(3, 'polar', 'jk'))).toEqual(tensorForm('1', spec(3, 'polar', 'jk')));
+    expect(tensorFormOf([], spec(3, 'polar', 'symmetric-last-pair'))).toEqual(
+      tensorForm('1', spec(3, 'polar', 'symmetric-last-pair')),
+    );
   });
 });
 
 describe('input checks', () => {
   it('rejects unknown keys, settings, ranks, parities and index symmetries that do not apply', () => {
     expect(() => tensorForm('7' as PointGroupKey, spec(1))).toThrow(RangeError);
-    expect(() => tensorForm('2', spec(1), { setting: 3 })).toThrow(RangeError);
+    expect(() => tensorForm('2', spec(1), { setting: 4 })).toThrow(RangeError);
     expect(() => tensorForm('2', { ...spec(1), rank: 5 as TensorRank })).toThrow(RangeError);
-    expect(() => tensorForm('2', { ...spec(1), parity: 'odd' as TensorParity })).toThrow(RangeError);
-    expect(() => tensorForm('2', { ...spec(1), timeParity: 'x' as 'i' })).toThrow(RangeError);
-    expect(() => tensorForm('2', spec(1, 'polar', 'ij'))).toThrow(RangeError);
-    expect(() => tensorForm('2', spec(3, 'polar', 'voigt'))).toThrow(RangeError);
+    expect(() => tensorForm('2', { ...spec(1), kind: 'odd' as TensorKind })).toThrow(RangeError);
+    expect(() => tensorForm('2', { ...spec(1), timeParity: 'x' as 'even' })).toThrow(RangeError);
+    expect(() => tensorForm('2', spec(1, 'polar', 'symmetric-first-pair'))).toThrow(RangeError);
+    expect(() => tensorForm('2', spec(3, 'polar', 'symmetric-pairs-exchangeable'))).toThrow(RangeError);
     expect(() => tensorForm('2', spec(3, 'polar', 'kl' as IntrinsicSymmetry))).toThrow(RangeError);
     expect(() =>
       rotateTensor(
@@ -338,7 +484,7 @@ describe('input checks', () => {
       ),
     ).toThrow(RangeError);
     // Not Cartesian: a threefold axis in the lattice basis, a stretch.
-    const threefold: Operation = operation([
+    const threefold: CartesianOperation = operation([
       [0, -1, 0],
       [1, -1, 0],
       [0, 0, 1],
@@ -358,14 +504,14 @@ describe('input checks', () => {
   });
 
   it('returns frozen results', () => {
-    const f = tensorForm('mm2', spec(3, 'polar', 'jk'));
+    const f = tensorForm('mm2', spec(3, 'polar', 'symmetric-last-pair'));
     expect(Object.isFrozen(f) && Object.isFrozen(f.basis) && f.basis.every((r) => Object.isFrozen(r))).toBe(true);
     expect(Object.isFrozen(f.parameters) && Object.isFrozen(f.relations)).toBe(true);
   });
 });
 
 describe('use case of #30: SHG at the surfaces of an m-3m crystal, against Yariv Table 16.1', () => {
-  const SHG = spec(3, 'polar', 'jk');
+  const SHG = spec(3, 'polar', 'symmetric-last-pair');
   const unit = (v: Vec3): Vec3 => v.map((c) => c / Math.hypot(...v)) as unknown as Vec3;
   const cross = (a: Vec3, b: Vec3): Vec3 => [
     a[1] * b[2] - a[2] * b[1],
@@ -390,7 +536,7 @@ describe('use case of #30: SHG at the surfaces of an m-3m crystal, against Yariv
   for (const c of cases) {
     it(`${c.surface}: the form at the surface is Yariv's ${c.panel.replace('class-', '')}`, () => {
       const ops = operations('m-3m');
-      const site = siteSymmetry(ops, c.normal).operations.map((i) => ops[i]);
+      const site = siteSymmetryOf(ops, c.normal).operations.map((i) => ops[i]);
       expect(site).toHaveLength(c.order);
       const z = unit(c.normal);
       const x = unit(c.x);
@@ -408,11 +554,9 @@ describe('use case of #30: SHG at the surfaces of an m-3m crystal, against Yariv
 
 describe('magnetic point groups', () => {
   it('tensorForm takes magnetic keys and agrees with tensorFormOf of their operations', () => {
-    const spec = { rank: 1, parity: 'axial', timeParity: 'c', intrinsic: 'none' } as const;
+    const spec = { rank: 1, kind: 'axial', timeParity: 'odd', intrinsic: 'none' } as const;
     for (const key of ["m'm'2", "2221'", "-6'2m'"] as const) {
-      for (const convention of ['itc', 'birss'] as const) {
-        expect(tensorForm(key, spec, { convention })).toEqual(tensorFormOf(operations(key, { convention }), spec));
-      }
+      expect(tensorForm(key, spec)).toEqual(tensorFormOf(operations(key), spec));
     }
     expect(tensorForm("m'm'2", spec).basis).toHaveLength(1);
     expect(tensorForm("2221'", spec).basis).toHaveLength(0);
@@ -422,8 +566,8 @@ describe('magnetic point groups', () => {
   it('tensorFormOf takes their operations: a grey group allows no time-odd tensor', () => {
     // Time reversal alone changes the sign of a time-odd tensor, so it must vanish.
     for (const rank of [1, 2, 3] as const) {
-      for (const parity of ['polar', 'axial'] as const) {
-        const spec = { rank, parity, timeParity: 'c', intrinsic: 'none' } as const;
+      for (const kind of ['polar', 'axial'] as const) {
+        const spec = { rank, kind, timeParity: 'odd', intrinsic: 'none' } as const;
         expect(tensorFormOf(operations("mm21'"), spec).basis).toHaveLength(0);
         expect(tensorFormOf(operations("11'"), spec).basis).toHaveLength(0);
       }

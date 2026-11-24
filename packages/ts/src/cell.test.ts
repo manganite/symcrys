@@ -7,6 +7,7 @@
 
 import { describe, expect, it } from 'vitest';
 import {
+  faceNormal,
   angleBetweenDirections,
   angleBetweenPlanes,
   isValidCell,
@@ -18,7 +19,7 @@ import {
   residualOperations,
 } from './cell.js';
 import { latticeBasis } from './lattice.js';
-import { latticeOperations } from './pointGroups/orbits.js';
+import { operations } from './pointGroups/pointGroups.js';
 import type { Mat3 } from './linalg.js';
 
 const DEG = Math.PI / 180;
@@ -197,7 +198,9 @@ describe('isValidCell', () => {
     expect(isValidCell({ alpha: 60, beta: 60, gamma: 120 })).toBe(false); // exactly flat
     expect(isValidCell({ alpha: 90, beta: 90, gamma: 180 })).toBe(false);
     expect(isValidCell({ alpha: 0, beta: 90, gamma: 90 })).toBe(false);
-    expect(isValidCell({ alpha: Number.NaN, beta: 90, gamma: 90 })).toBe(false);
+    // A value that is no finite number is wrong input, not a cell that does not exist (#137 D2).
+    expect(() => isValidCell({ alpha: Number.NaN, beta: 90, gamma: 90 })).toThrow(RangeError);
+    expect(() => isValidCell({ alpha: '90' as never, beta: 90, gamma: 90 })).toThrow(RangeError);
   });
 
   it('minVolumeRatio refuses nearly flat cells: V / (abc) = sin γ here', () => {
@@ -303,14 +306,14 @@ describe('residualOperations: the operations that keep the metric', () => {
     latticeFromParameters({ alpha: 90, beta: 90, gamma: 90, ...p });
 
   it('keeps all 16 operations of 4/mmm for a = b, and the 8 of mmm for a ≠ b', () => {
-    const ops = latticeOperations('4/mmm');
+    const ops = operations('4/mmm');
     expect(ops).toHaveLength(16);
     expect(residualOperations(ops, cell({ a: 2, b: 2, c: 3 }))).toHaveLength(16);
     expect(residualOperations(ops, cell({ a: 2, b: 2.1, c: 3 }))).toHaveLength(8);
   });
 
   it('m-3m: 48 for a cube, 16 (4/mmm) for a = b ≠ c, 2 (-1) for a general triclinic cell', () => {
-    const ops = latticeOperations('m-3m');
+    const ops = operations('m-3m');
     expect(ops).toHaveLength(48);
     expect(residualOperations(ops, cell({ a: 1, b: 1, c: 1 }))).toHaveLength(48);
     expect(residualOperations(ops, cell({ a: 1, b: 1, c: 1.3 }))).toHaveLength(16);
@@ -320,13 +323,13 @@ describe('residualOperations: the operations that keep the metric', () => {
   });
 
   it('hexagonal axes: 6/mmm keeps 24 operations for γ = 120°; for a = b and γ = 121° the swap a ↔ b remains, so 8 (mmm)', () => {
-    const ops = latticeOperations('6/mmm');
+    const ops = operations('6/mmm');
     expect(residualOperations(ops, cell({ a: 1, b: 1, c: 1.6, gamma: 120 }))).toHaveLength(24);
     expect(residualOperations(ops, cell({ a: 1, b: 1, c: 1.6, gamma: 121 }))).toHaveLength(8);
   });
 
   it('takes the tolerance relative to the largest entry of G, so that units do not matter', () => {
-    const ops = latticeOperations('4/mmm');
+    const ops = operations('4/mmm');
     const small = residualOperations(ops, cell({ a: 1, b: 1 + 1e-9, c: 2 }));
     const big = residualOperations(ops, cell({ a: 1e3, b: 1e3 * (1 + 1e-9), c: 2e3 }));
     expect(small).toHaveLength(16);
@@ -336,7 +339,7 @@ describe('residualOperations: the operations that keep the metric', () => {
   });
 
   it('keeps the order of the operations and returns them as they came', () => {
-    const ops = latticeOperations('4/mmm');
+    const ops = operations('4/mmm');
     const kept = residualOperations(ops, cell({ a: 2, b: 2.1, c: 3 }));
     expect(kept.every((op) => ops.includes(op))).toBe(true);
     expect(kept.map((op) => ops.indexOf(op))).toEqual([...kept.map((op) => ops.indexOf(op))].sort((x, y) => x - y));
@@ -360,8 +363,11 @@ describe('input checks and edge cases', () => {
       ),
     ).toThrow(RangeError);
     expect(() => residualOperations([{} as never], basis)).toThrow(RangeError);
-    expect(() => residualOperations(latticeOperations('4/mmm'), basis, { tolerance: Number.NaN })).toThrow(RangeError);
-    expect(() => residualOperations(latticeOperations('4/mmm'), basis, { tolerance: -1 })).toThrow(RangeError);
+    // The Cartesian matrices of 6/mmm (±√3/2) passed as `matrix` are refused, not filtered (#94).
+    const cartesianAsMatrix = operations('6/mmm').map((op) => ({ matrix: op.cartesian }));
+    expect(() => residualOperations(cartesianAsMatrix, basis)).toThrow(/not an integer matrix in the lattice basis/);
+    expect(() => residualOperations(operations('4/mmm'), basis, { tolerance: Number.NaN })).toThrow(RangeError);
+    expect(() => residualOperations(operations('4/mmm'), basis, { tolerance: -1 })).toThrow(RangeError);
   });
   it('isValidCell refuses a minVolumeRatio that is not a number from 0 to 1 with a RangeError', () => {
     const cube = { alpha: 90, beta: 90, gamma: 90 };
@@ -387,8 +393,44 @@ describe('input checks and edge cases', () => {
 describe('residualMagneticOperations', () => {
   const cell = latticeFromParameters({ a: 2, b: 2.1, c: 3, alpha: 90, beta: 90, gamma: 90 });
   it('keeps timeReversal and refuses an operation that does not say whether it has it', () => {
-    const ops = latticeOperations('4/mmm');
+    const ops = operations('4/mmm');
     expect(residualMagneticOperations(ops, cell)).toHaveLength(8);
     expect(() => residualMagneticOperations(ops.map((o) => ({ matrix: o.matrix })) as never, cell)).toThrow(RangeError);
+  });
+});
+
+describe('faceNormal (#137 G4)', () => {
+  const close = (u: readonly number[], v: readonly number[]) => u.every((x, i) => Math.abs(x - v[i]) < 1e-12);
+
+  it('is the unit vector h·a* + k·b* + l·c*', () => {
+    // Cubic: (111) along the body diagonal.
+    const cube = latticeFromParameters({ a: 4, b: 4, c: 4, alpha: 90, beta: 90, gamma: 90 });
+    expect(close(faceNormal(cube, [1, 1, 1]), [1 / Math.sqrt(3), 1 / Math.sqrt(3), 1 / Math.sqrt(3)])).toBe(true);
+    // Hexagonal, a along x, b at 120°: a* is normal to b and c, (√3/2, 1/2, 0).
+    const hex = latticeFromParameters({ a: 3, b: 3, c: 5, alpha: 90, beta: 90, gamma: 120 });
+    expect(close(faceNormal(hex, [1, 0, 0]), [Math.sqrt(3) / 2, 0.5, 0])).toBe(true);
+    expect(Object.isFrozen(faceNormal(hex, [1, 0, 0]))).toBe(true);
+  });
+
+  it('is normal to the lattice directions in the plane, for a monoclinic cell too', () => {
+    const mono = latticeFromParameters({ a: 5, b: 6, c: 7, alpha: 90, beta: 104, gamma: 90 });
+    const column = (j: number) => [mono[0][j], mono[1][j], mono[2][j]];
+    const dot = (u: readonly number[], v: readonly number[]) => u.reduce((s, x, i) => s + x * v[i], 0);
+    // (001) contains a and b; (101) contains b and a − c.
+    const n001 = faceNormal(mono, [0, 0, 1]);
+    expect(Math.abs(dot(n001, column(0))) + Math.abs(dot(n001, column(1)))).toBeLessThan(1e-12);
+    const n101 = faceNormal(mono, [1, 0, 1]);
+    const aMinusC = column(0).map((x, i) => x - column(2)[i]);
+    expect(Math.abs(dot(n101, column(1))) + Math.abs(dot(n101, aMinusC))).toBeLessThan(1e-12);
+    expect(Math.hypot(...n101)).toBeCloseTo(1, 14);
+    // The angle between two normals is angleBetweenPlanes.
+    const angle = (Math.acos(dot(n001, n101)) * 180) / Math.PI;
+    expect(angle).toBeCloseTo(angleBetweenPlanes(mono, [0, 0, 1], [1, 0, 1]), 10);
+  });
+
+  it('rejects a zero vector and a singular basis', () => {
+    const cube = latticeFromParameters({ a: 1, b: 1, c: 1, alpha: 90, beta: 90, gamma: 90 });
+    expect(() => faceNormal(cube, [0, 0, 0])).toThrow(RangeError);
+    expect(() => faceNormal([[1, 0, 0], [0, 1, 0], [0, 0, 0]], [1, 0, 0])).toThrow(RangeError); // prettier-ignore
   });
 });

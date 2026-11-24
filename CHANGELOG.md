@@ -6,6 +6,426 @@ All notable changes to symcrys are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-11-24
+
+symcrys follows ITC only (#106, #121): the Birss convention is gone, the data are stored in the ITC
+frame, and the API uses ITA's terms. Almost every application has to adapt its calls; the table
+below lists every removed or renamed function, type, field and option, then the results that change
+without a change of the call. The sections after it give each change with its reason.
+
+### Migrating from 0.10
+
+**Calls, types and fields** (TypeScript and JavaScript; the same in `symcrys/magnetic` where it has
+the function):
+
+| Up to 0.10                                                                                                      | From 0.11                                                                                     |
+| --------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| option `convention` (`{ convention: 'itc' }`), type `Convention`                                                | drop it; `convention: 'birss'` is gone (#125)                                                 |
+| `settings(key, 'itc')`, `findPointGroup(symbol, 'itc')`                                                         | `settings(key)`, `findPointGroup(symbol)`                                                     |
+| `findPointGroup("m'm'm", 'birss')`, Birss's reading of `mm'm'`, `6'/mmm'`                                       | gone: a symbol names an ITC setting                                                           |
+| `settings(key)[i].uniqueAxis` of an orthorhombic setting (`mm2`, `2'm'm`, `mm'm'`, …)                           | its `symbol` (`uniqueAxis` is only for the monoclinic settings)                               |
+| `{ setting: 2 }` (index)                                                                                        | `{ setting: '312' }` (symbol; the indices changed, "Changed" below), or the index             |
+| `operations(key)[i].matrix` (Cartesian)                                                                         | `operations(key)[i].cartesian`                                                                |
+| `latticeOperations(key)[i].matrix`                                                                              | `operations(key)[i].matrix`                                                                   |
+| `tensorFormOf([{ matrix: R }], …)`, also the other `…Of`                                                        | `tensorFormOf([{ cartesian: R }], …)`                                                         |
+| `siteSymmetry(operations, direction)`                                                                           | `siteSymmetryOf(operations, direction)`; `siteSymmetry(key, direction, options)` is new       |
+| `wyckoffPositionOf(key, x)`, also in `symcrys/plane`                                                            | `wyckoffPosition(key, x)`                                                                     |
+| `pointGroup(key).chiral`, `isChiralOf`                                                                          | `pointGroup(key).enantiomorphic`, `isEnantiomorphicOf`                                        |
+| `holohedry('trigonal')`, `holohedry(crystalFamily(system))`                                                     | `holohedry(latticeSystem)`: `'hexagonal'` or `'rhombohedral'`; `latticeSystems(key)`          |
+| `wyckoffPositions(key)[i].coordinates` (first triplet)                                                          | `coordinates[0]` (the list of all printed triplets)                                           |
+| `representative` of a Wyckoff position or crystal form                                                          | `faceNormal(basis, millerIndices(printed, { h, k, l }))`                                      |
+| `zoneAxis(…) === null`                                                                                          | `zoneAxis(…) === undefined`                                                                   |
+| description: `order`, kind `'mirror'`                                                                           | `n`, kind `'reflection'`                                                                      |
+| tensor `{ parity, timeParity: 'i' \| 'c', intrinsic: 'ij' }`, type `TensorParity`                               | `{ kind, timeParity: 'even' \| 'odd', intrinsic: 'symmetric-first-pair' }`, type `TensorKind` |
+| `intrinsic` `'jk'`, `'ij_kl'`, `'voigt'`                                                                        | `'symmetric-last-pair'`, `'symmetric-pairs'`, `'symmetric-pairs-exchangeable'`                |
+| `SiteSymmetryOptions`, `OrbitOptions`, `PointGroupOfOptions`, `ResidualOperationsOptions`, plane `PointOptions` | `ToleranceOptions`                                                                            |
+| `WyckoffOptions`                                                                                                | `SettingOptions & ToleranceOptions`                                                           |
+| plane: `snapToWyckoffPosition(key, point)`, `SnappedPosition`                                                   | `wyckoffDistances(key, point, { basis })`, the snapping in the application                    |
+| plane: `planeGroup(key).fullSymbol`, `.order`                                                                   | `symbol(key, { form: 'full' })` (`p 1 m 1`), `operations(key).length`                         |
+| plane: setting `default`                                                                                        | `isDefault`                                                                                   |
+| plane: description kind `'mirror'`, `'glide'`; `order`; `normal`                                                | `'reflection'`, `'glide-reflection'`; `n`; `axis`                                             |
+| plane: `symmetryElements(key).rotations` (`RotationCentre`, `{ order, point }`)                                 | `rotationPoints` (`RotationPoint`, `{ n, point }`)                                            |
+| plane: line `normal`, `segment`                                                                                 | `axis`, `point` (the line is not clipped; `{ box }` gives the translates)                     |
+| plane: `asymmetricUnit(key).inequalities` (those of the edges)                                                  | `inequalities[e]` for `e` of `edges`; `inequalities` is the printed list                      |
+| plane: `orbit(key, point)` (the points)                                                                         | `orbit(key, point).map((e) => e.point)`                                                       |
+
+**Python** (besides the names above in snake_case):
+
+| Up to 0.10                                                                           | From 0.11                                                                                                         |
+| ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------- |
+| keyword `convention=`                                                                | drop it (a `TypeError` now)                                                                                       |
+| `lattice_from_parameters({"a": …, …})`, `is_valid_cell({"alpha": …, …})`             | `lattice_from_parameters(a, b, c, alpha, beta, gamma)`, `is_valid_cell(alpha, beta, gamma)`                       |
+| `orbit(key, {"hkl": h})`                                                             | `orbit(key, hkl=h)` (or `uvw=`)                                                                                   |
+| `operations(key)`: a list of dicts, `matrix` float64 Cartesian                       | `Operations`: `ops.cartesian` (n, 3, 3), `ops.matrix` (n, 3, 3) int64; `ops[i]` a dict                            |
+| `lattice_operations(key)`                                                            | `operations(key).matrix`                                                                                          |
+| `tensor_form(…)["basis"]` (p, 3**rank)                                               | (p, 3, …, 3); `.reshape(p, -1)` gives the old rows                                                                |
+| `rotate_tensor(t, r, spec)`, always flat                                             | keeps the shape of `t` (flat or (3, …, 3)), takes stacks                                                          |
+| `except SymcrysError` for every error                                                | `SymcrysError` (a `ValueError`) for wrong input, `SymcrysInternalError` (a `RuntimeError`) for a fault of symcrys |
+| `symcrys.plane.Operation`                                                            | `symcrys.plane.PlaneOperation`                                                                                    |
+| keyword arguments `find_point_group(hm=…)`, `holohedry(system=…)`                    | `symbol=`, `lattice_system=`                                                                                      |
+| `angle_between_directions(basis, u=…, v=…)`, `angle_between_planes(basis, h=…, k=…)` | `direction1=`, `direction2=`; `plane1=`, `plane2=`                                                                |
+
+**Results that change for the same call:**
+
+- the indices of settings (`2`, `m`, `2/m`, `32`, `3m`, `-3m`, `-6m2`, `mm'm'`, `2'm'm` and the
+  magnetic groups whose default was setting 2): the ITC default is setting 1;
+- symbols of the magnetic API: eight short symbols (`32'`, not `32'1`; `321'`, not `3211'`), and
+  Schoenflies `S6` instead of `C3i`;
+- the axis of an operation in the hexagonal family: [1, 1, 0] and [2, 1, 0] (were their
+  negatives), the sign of the Seitz symbol;
+- plane groups: `wyckoffPosition`, `siteSymmetry` and `orbit` near an element within about the
+  tolerance; `symmetryElements` gives each element once modulo the lattice; `asymmetricUnit` all
+  printed inequalities; `planeGroup(key).origin` spaced as printed (`'at 2 1 g'`, was `'at 21g'`);
+  the plane `describeOperationsOf` reads within 10⁻⁶ by default (was 10⁻⁹);
+- `findPointGroup` reads more spellings (`m3m`, Schoenflies symbols) that gave `undefined`;
+- wrong input throws a `RangeError` (was partly a `TypeError`, partly answered), also for an
+  unknown option key; a tolerance of 0 or `null` is refused, and the orthogonality of operations
+  is checked within at most 0.1;
+- every result is frozen;
+- tensor forms of operations with rounding errors and the site symmetry of a grey group at a large
+  tolerance are fixed ("Fixed").
+
+### Added
+
+- `FaceIndices` and `DirectionIndices`: the types of the face and the direction that `orbit` takes
+  (#121 step 12c), so that their fields are documented.
+
+- **Faces with numbers** (#137 G3, G4, #110, #115, #121 step 11b): `millerIndices(printed,
+{ h, k, l })` substitutes values into the Miller indices ITA prints (`'h,h,-2h,l'` with h = 3,
+  l = 1 gives (3, 3, 1); i dropped for hexagonal axes), and `faceNormal(basis, hkl)` gives the unit
+  normal of a face in a cell; in both entry points and in Python (`miller_indices`, `face_normal`).
+
+- **Lattice systems** (#137 G1, #113, #121 step 11a): the type `LatticeSystem` with ITA's seven
+  lattice systems (ITA 2016 Table 1.3.4.1, p. 39) and `latticeSystems(key)`, the lattice systems a
+  class acts on: `['hexagonal', 'rhombohedral']` for a trigonal class, one otherwise; in both entry
+  points and in Python (`lattice_systems`).
+
+- `wyckoffDistances(key, point, { basis })` in `symcrys/plane` (Python `plane.wyckoff_distances`)
+  (#137 F1, #108): the distance of a point to every Wyckoff position of a plane group, with the
+  nearest point of each.
+
+- **Monoclinic unique axis a** (#137 A5, #121 step 6c): the monoclinic classes and their grey and
+  black-and-white groups get a third setting, unique axis a (`2 1 1`, `m 1 1`, `2/m 1 1`,
+  `2' 1 1`, …), as ITC Vol. D prints it; its operations come from unique axis b by a′ = b, b′ = c, c′ = a
+  (the column abc of unique axis a in ITA 2016 Table 1.5.4.4 is unique axis b so carried: C121 →
+  B211), its Wyckoff positions and crystal forms likewise.
+- **Rhombohedral axes** (#111, #121 step 6c): every trigonal group gets a setting with rhombohedral
+  axes, as the last setting: `3` and `-3` (setting 2), `32`, `3m`, `-3m` (setting 3, symbols `32`,
+  `3m`, `-3m`, full `3 2`, `3 m`, `-3 2/m`), their grey groups, and the black-and-white groups `-3'`,
+  `32'`, `3m'`, `-3m'`, `-3'm'`, `-3'm` (Thomas, 2026-11-23). The operations are numbered as ITA prints
+  them for rhombohedral axes (from the selected generators of R3, R-3, R32, R3m, R-3m); the lattice
+  operations, orbits, symmetry directions ([111]; [1-10], [01-1], [-101]), Wyckoff positions and
+  crystal forms are those of ITA Table 3.2.3.2 for rhombohedral axes (pp. 753–759). The axes are the
+  obverse ones in the hexagonal cell of setting 1 (ITA 2016 Table 1.5.1.1, p. 78, the matrix Q of R₁ obverse), so the Cartesian
+  operations equal those of setting 1: `pointGroupOf` names them setting 1. `findPointGroup('32')`
+  gives the default, since `32` is the key; choose the setting by its index or by the axes,
+  `{ axes: 'rhombohedral' }` (#96, below).
+
+- **Tolerant reading of symbols** (#96, #121 step 7b): `findPointGroup` (Python `find_point_group`)
+  in both entry points reads every symbol `symbol()` writes, Schoenflies symbols included (`Oh`,
+  `D4h(D2h)`, `C3i` and `S6` alike; they give the default setting), Birss's cubic symbols (`m3m`,
+  `m'3m`), and the spellings of print and pasted text: the overbar as `−`, a combining overbar,
+  `¯` after the digit, `bar3` or `\bar{3}`, the prime as `′`, `ʹ` or `’`, Unicode or LaTeX subscripts
+  (`C₃ᵥ`, `C_{3v}`). The option `setting` reads the same spellings. A symbol that names several
+  groups is a RangeError. Up to 0.10 a Schoenflies symbol, `m3m` or `Oh` gave `undefined`.
+
+- `intrinsic: 'antisymmetric'` (rank 2, Jahn symbol {V²}) and `intrinsic: 'totally-symmetric'` (rank
+  2 and above, [Vⁿ], e.g. SHG under Kleinman's condition) (#137 E2).
+
+- The named property `'ferrotoroidic'` (#137 E4, #118), in the magnetic API: a spontaneous toroidal
+  moment, a time-odd polar vector (Jahn symbol aV), allowed in 31 magnetic point groups, those for
+  which ITC Vol. D (§ 1.5.8.1, footnote 3, p. 140) says that the magnetoelectric tensor need not be
+  symmetric. `allowedProperties` of these groups lists it between `'ferromagnetic'` and
+  `'magnetoelectric'`. The `source` of `'ferroaxial'` says that the term is not from ITC and cites
+  Gallego et al. (2019) as well; its `description` names the vector the axial toroidal moment.
+
+### Changed
+
+- **The axis of an operation has the sign of its Seitz symbol** (#114, #107, #121): in
+  `describeOperations` of `symcrys` and `symcrys/magnetic` the axis takes the direction of the
+  operation's Seitz symbol (ITA 2016 Tables 1.4.2.1–1.4.2.3), as ITA names the operations. This
+  changes the hexagonal family: the twofold axes and mirror normals 2₁₁₀, m₁₁₀ and 2₂₁₀, m₂₁₀ are
+  [1, 1, 0] and [2, 1, 0] (were [−1, −1, 0] and [−2, −1, 0], the representatives of ITA Table
+  2.1.3.1), with their Cartesian vectors. `symmetryDirections` keeps Table 2.1.3.1, so an axis and
+  its direction may be opposite. The plane groups already had the Seitz signs; now tested.
+
+- **Python: keyword arguments and tensor shapes** (#137 H2, #98, #121 step 12c): an object parameter
+  is now its fields as arguments: `lattice_from_parameters(a, b, c, alpha, beta, gamma)`,
+  `is_valid_cell(alpha, beta, gamma, *, min_volume_ratio=None)`, `orbit(key, *, hkl=None, uvw=None,
+…)` (with typed overloads), where each took a dict, and so `miller_indices(printed, *, h=None,
+k=None, l=None)` (new in this version).
+  `tensor_form` and `tensor_form_of` give `basis` as (p, 3, …, 3), one tensor per parameter (was
+  (p, 3**rank)), a scalar (rank 0) as (p,); `rotate_tensor` keeps the shape of the tensor, (3, …, 3)
+  or flat (was always flat; a scalar comes back as `()`), and takes stacks of tensors and of
+  rotations, broadcast as in NumPy; other shapes with 3**rank entries, such as (3, 9) at rank 3,
+  which it took before, are refused.
+
+- **Python: operations as a record of arrays** (#137 H1, #98, #121 step 12b): `operations`,
+  `generators` and `residual_operations` return `Operations`, a frozen dataclass with `matrix`
+  (n, 3, 3) int64 (was float64), `cartesian` (n, 3, 3) float64 and in `symcrys.magnetic`
+  `time_reversal` (n,) bool; in `symcrys.plane` `matrix` (n, 2, 2) int64 and `translation` (n, 2).
+  `ops[i]` and `for op in ops` give one operation as a dict, as the list did. Functions that take
+  operations accept `Operations`, a list of dicts, and in `symcrys` an array of Cartesian matrices
+  (n, 3, 3), which `symcrys.magnetic` refuses (it does not say which operations carry time
+  reversal), except `site_symmetry_of` and `orbit_of`, which do not depend on time reversal. In
+  `symcrys.magnetic` a dict without `time_reversal` is refused by the Python layer (there too, the
+  two functions excepted), and `residual_operations` needs every field of the operations it keeps.
+
+- **Python: the modules are generated from the TypeScript API** (#99, #137 H2, #121 step 12a):
+  `symcrys`, `symcrys.magnetic` and `symcrys.plane` are written by `scripts/python-api.mjs`, with a
+  TypedDict for every record a function returns (`PointGroup`, `WyckoffPosition`, `SiteSymmetry`,
+  …) and a Literal type for every named union of strings (`CrystalSystem`, `LatticeSystem`, …), all
+  in `__all__`. The values are as before (type, dtype and shape of every result checked over all
+  keys and settings). Renamed: `symcrys.plane.Operation` is `PlaneOperation`, as in TypeScript.
+
+- **`holohedry` takes a lattice system** (#137 G1, #113, #121 step 11a), not a crystal system, as
+  ITA defines the holohedry: `holohedry('hexagonal')` is `6/mmm`, `holohedry('rhombohedral')` is
+  `-3m`, and `holohedry('trigonal')` is an error. Before, `holohedry('trigonal')` gave `-3m` and the
+  symmetry of the hexagonal lattice was read as `holohedry(crystalFamily('trigonal'))`, a crystal
+  family passed as a crystal system.
+
+- **The settings are numbered by ITC's rule** (#137 A4, #121 step 6b): the ITC default is setting 1;
+  then, for the monoclinic groups, unique axis c; for the orthorhombic groups the further
+  orientations in the column order of ITA (2016) Table 1.5.4.4 (abc, ba-c, cab, -cba, bca, a-cb);
+  otherwise the other orientation. Up to 0.10 the numbers came from Birss's frame. The operations,
+  symbols and tensor forms of a setting are unchanged; only its index is.
+
+  | Groups                                                                                    | Up to 0.10                                           | From 0.11                                            |
+  | ----------------------------------------------------------------------------------------- | ---------------------------------------------------- | ---------------------------------------------------- |
+  | `2`, `m`, `2/m` and their grey and black-and-white groups                                 | 1 unique axis c, 2 unique axis b (default)           | 1 unique axis b (default), 2 unique axis c           |
+  | `32`, `3m`, `-3m` and theirs                                                              | 1 `312`, 2 `321` (default)                           | 1 `321` (default), 2 `312`                           |
+  | `-6m2` and its grey group                                                                 | 1 `-62m`, 2 `-6m2` (default)                         | 1 `-6m2` (default), 2 `-62m`                         |
+  | `mm'm'`                                                                                   | 1 `m'm'm`, 2 `mm'm'` (default), 3 `m'mm'`            | 1 `mm'm'`, 2 `m'mm'`, 3 `m'm'm`                      |
+  | `2'm'm`                                                                                   | `2'm'm`, `m2'm'`, `m'm2'`, `m'2'm`, `mm'2'`, `2'mm'` | `2'm'm`, `m'2'm`, `m2'm'`, `mm'2'`, `m'm2'`, `2'mm'` |
+  | the other groups with two settings whose default was setting 2 (`32'`, `3m'`, `6'22'`, …) | default 2                                            | default 1, the other 2                               |
+
+  Code that names a setting by its index should name it by its symbol, which does not change:
+  `{ setting: '312' }`.
+
+- **A setting can be given by its ITC symbol** (#123): `{ setting }` takes the index or the short or
+  full symbol, spaces ignored; a symbol that several settings share gives the standard setting, and
+  the options `axes` and `uniqueAxis` choose another (below).
+- **The record of a setting** (#137 A3, C4): `uniqueAxis` only for the monoclinic settings (it
+  went for `mm2` and the orthorhombic magnetic groups, where a setting is identified by its symbol),
+  and `axes` (`'hexagonal'` or `'rhombohedral'`) for the trigonal settings.
+
+- **An operation is `{ matrix, cartesian }`** (#137 A2, #94, #121 step 6d): `operations` and
+  `generators` give each operation as ITA's matrix W in the lattice basis of the setting (`matrix`,
+  integer; the coordinate triplets of ITA's general position are its rows) together with the
+  orthogonal Cartesian matrix (`cartesian`), in the magnetic API with `timeReversal`. `matrix` so
+  means W in every entry point, as in `symcrys/plane`. Up to 0.10 `matrix` was the Cartesian matrix.
+  The functions that take operations from a caller and compute with Cartesian matrices
+  (`pointGroupOf`, `describeOperationsOf`, `siteSymmetry`, `orbitOf`, `isCentrosymmetricOf`,
+  `isChiralOf`, `tensorFormOf`, `allowsPropertyOf`, `allowedPropertiesOf`) read `cartesian` and
+  refuse a record without it, with a hint if it has `matrix`; a record of `operations` passes as it
+  is. `residualOperations` reads `matrix` and refuses a matrix that is not integer, which before gave
+  a wrong answer without an error for a Cartesian matrix (#94). The values themselves are unchanged.
+  `symcrys/magnetic` exports the type `CartesianOperation` (`{ cartesian, timeReversal }`), what the
+  functions for a list of operations read.
+
+  | Up to 0.10                                                      | From 0.11                                                        |
+  | --------------------------------------------------------------- | ---------------------------------------------------------------- |
+  | `operations(key)[i].matrix` (Cartesian)                         | `operations(key)[i].cartesian`                                   |
+  | `latticeOperations(key)[i].matrix`                              | `operations(key)[i].matrix`                                      |
+  | `tensorFormOf([{ matrix: R }], spec)`, also for the other `…Of` | `tensorFormOf([{ cartesian: R }], spec)`                         |
+  | `residualOperations(latticeOperations(key), basis)`             | `residualOperations(operations(key), basis)`                     |
+  | Python: `op["matrix"]`, `symcrys.lattice_operations(key)`       | `op["cartesian"]`, `symcrys.operations(key)` with `op["matrix"]` |
+
+- **Symbols of the magnetic API as ITC Vol. D prints them** (#137 B2, B3, #121 step 7a):
+  - the default setting of a grey or black-and-white group has its key as short symbol (for a
+    black-and-white group as Vol. D Table 1.5.2.3 prints it): `symbol("32'")` is `32'`, not `32'1`;
+    `symbol("321'")` is `321'`, not `3211'`. Eight groups change: `321'`, `3m1'`, `-3m1'`, `32'`,
+    `3m'`, `-3m'`, `-3'm'`, `-3'm`, and their `settings`. The other settings keep their symbols, and
+    the old ones still select the default setting. Their rhombohedral setting has the same short
+    symbol, which selects the default; `{ axes: 'rhombohedral' }` selects it (#96, below);
+  - Schoenflies symbols in `S6` instead of `C3i` (`S6(C3)`, `D3d(S6)`, `C6h(S6)`, `S6R`), as Vol. D
+    writes them; the crystallographic API keeps ITA's `C3i`.
+
+- **A symbol that several settings share gives the standard setting; `axes` and `uniqueAxis`
+  choose another** (#96, #121 step 7b; Thomas, 2026-11-23): `{ setting: '2' }` gives unique axis b,
+  `{ setting: '2', uniqueAxis: 'c' }` or
+  `{ uniqueAxis: 'c' }` unique axis c; `{ axes: 'rhombohedral' }` the setting with rhombohedral axes.
+  The new options `axes` (`'hexagonal'`, `'rhombohedral'`) and `uniqueAxis` (`'a'`, `'b'`, `'c'`), as
+  ITA's headlines name the settings, are taken by every function with the option `setting` and by
+  `findPointGroup` (Python `axes=`, `unique_axis=`). Spaces in a symbol carry no meaning.
+
+- **Names of ITA** (#137 C1, C2, #121 step 7c):
+
+  | Up to 0.10                                                          | From 0.11                                                                  |
+  | ------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+  | `siteSymmetry(operations, direction)` (Python `site_symmetry`)      | `siteSymmetryOf(operations, direction)` (`site_symmetry_of`)               |
+  | (none)                                                              | `siteSymmetry(key, direction, { setting, axes, uniqueAxis, tolerance })`   |
+  | `wyckoffPositionOf(key, x)`, also in `symcrys/plane`                | `wyckoffPosition(key, x)`                                                  |
+  | description `order`, kind `'mirror'`, plane kind `'glide'`          | `n`, `'reflection'`, `'glide-reflection'` (ITA 2016 Table 2.1.2.1, p. 145) |
+  | `pointGroup(key).chiral`, `isChiralOf`                              | `enantiomorphic`, `isEnantiomorphicOf` (ITA § 3.2.2.1.3)                   |
+  | plane `symmetryElements(key).rotations`, entries `{ order, point }` | `rotationPoints`, entries `{ n, point }`                                   |
+
+  The lines of `symmetryElements` keep `kind: 'mirror' | 'glide'`, the names of the elements. The
+  values are unchanged. Python follows by its fixed rules: `site_symmetry_of`, `site_symmetry`,
+  `wyckoff_position`, `is_enantiomorphic_of`, the keys `enantiomorphic`, `n`, `rotation_points`.
+
+- **One name for the axis, and smaller uniformity** (#137 C3, C4, #121 step 7d):
+  - `symcrys/plane`: a reflection or glide reflection gives its axis, the normal of its line, as
+    `axis` (was `normal`), in the descriptions and in the lines of `symmetryElements`, as the axis
+    of an operation is named in the point groups; settings have `isDefault` (was `default`);
+    `orbit` gives `{ point, operations }` per image (was the bare points); the `origin` of a plane
+    group has its positions spaced as printed: `'at 2 1 g'` (was `'at 21g'`), `'at 2 m m'`, …;
+  - `zoneAxis` gives `undefined` for parallel planes (was `null`);
+  - every result is frozen, nested values included, and typed `readonly`: up to 0.10 the lists of
+    `pointGroups`, `settings`, `allowedProperties`, `allowedPropertiesOf`, `residualOperations`, the
+    results of `findPointGroup`, `rotateTensor`, the cell and the index functions could be changed
+    by a caller;
+  - parameter names: `angleBetweenDirections(basis, direction1, direction2)`,
+    `angleBetweenPlanes(basis, plane1, plane2)`, `findPointGroup(symbol)`, also in Python.
+
+- **Wyckoff coordinates as printed in full** (#137 C4, #121 step 7d): `coordinates` of a Wyckoff
+  position of a crystal class (`wyckoffPositions`, `wyckoffPosition`) is the list of all coordinate
+  triplets ITA prints for the position (Table 3.2.3.2), in printed order, as in `symcrys/plane`; up
+  to 0.10 it was the first triplet as a string, which is now `coordinates[0]`. In Python a list of
+  strings.
+
+- **One tolerance contract** (#137 D1, #93, #121 step 8a):
+  - one option type, `ToleranceOptions` (`{ tolerance }`), for every function that compares numbers
+    a caller passes in; it replaces `SiteSymmetryOptions`, `OrbitOptions`, `PointGroupOfOptions`,
+    `WyckoffOptions` (now `SettingOptions & ToleranceOptions`), `ResidualOperationsOptions` and the
+    plane `PointOptions`; `EPSILON` (10⁻⁶) is exported by all three entry points (Python
+    `symcrys.EPSILON`, `symcrys.magnetic.EPSILON`, `symcrys.plane.EPSILON`);
+  - `tensorFormOf`, `isCentrosymmetricOf`, `isEnantiomorphicOf`, `allowsPropertyOf`,
+    `allowedPropertiesOf`, `rotateTensor` and the plane `describeOperationsOf` take a `tolerance`
+    (Python: the keyword `tolerance`); the plane `describeOperationsOf` reads translations and
+    integer matrices within it, default 10⁻⁶ (was a fixed 10⁻⁹);
+  - one check of the tolerance everywhere, with one message: a finite number above 0 and below 0.1
+    (operations), 1 (directions), 1/2 (points) or 1 (`residualOperations`); `residualOperations`
+    refused only negative values and took 0, now 0 is refused; `null` is refused everywhere (it
+    took the default in some functions); comparisons are strict (`<`) everywhere;
+  - the plane `describeOperationsOf` refuses a translation within the tolerance of two fractions;
+  - `siteSymmetryOf`, `siteSymmetry`, `wyckoffPosition` and `orbitOf` check the orthogonality of
+    the operations with their tolerance, at most 0.1 (was the tolerance for directions, up to 1).
+
+- **Error types** (#137 D2, #92, #121 step 8b):
+  - wrong input is a `RangeError` in every function of the three entry points, also where it was a
+    `TypeError` from inside the library up to 0.10 (`null` or a number for a direction, a tensor
+    specification, the parameters of a cell, a rotation or the options);
+  - an options argument that is not a plain object (also a `Map`), and an option a function does
+    not know (e.g. `{ uniqueaxis: 'a' }` for `uniqueAxis`), are RangeErrors; up to 0.10 an unknown
+    option was ignored without notice;
+  - wrong input that was answered is a RangeError: `findPointGroup` with a value that is not a
+    string (was "not found"), `crystalFamily` with a value that is not a crystal system (returned
+    the value), `isValidCell` with an angle that is not a finite number (was `false`; a finite angle
+    outside (0°, 180°) still gives `false`), `siteSymmetryOf` and `orbitOf` with an empty list (gave
+    multiplicity 0);
+  - a direction, point, rotation or tensor must be an array of numbers; a typed array such as
+    `Float64Array`, which the types never allowed, is refused;
+  - a value in an error message is shown as it is (`NaN`, `1n`), and a BigInt or a value that
+    contains itself no longer makes the message itself fail with a TypeError;
+  - Python: `SymcrysError` (a `ValueError`) is raised for a `RangeError` of the library and for
+    wrong input found by the Python layer; any other error of the library raises the new
+    `symcrys.SymcrysInternalError` (a `RuntimeError`, also in `symcrys.magnetic` and
+    `symcrys.plane`), so that `except ValueError` does not hide a fault of symcrys; `js_name` of a
+    `SymcrysError` is `'RangeError'`; arguments of the wrong type (a ragged array, a string or
+    complex numbers for a vector, a list for a mapping, an object JSON cannot write) raise a
+    `SymcrysError` that names the argument, where NumPy's or Python's own error came before, and
+    so does NaN.
+
+- **The tensor specification in ITC's terms** (#137 E1, E2, #117, #121 step 9a):
+  `{ rank, kind, timeParity, intrinsic }`; `kind` (`'polar'`, `'axial'`) replaces `parity`, and
+  `timeParity` takes `'even'`/`'odd'` (were Birss's `'i'`/`'c'`); `intrinsic` takes
+  `'symmetric-first-pair'`, `'symmetric-last-pair'`, `'symmetric-pairs'` and
+  `'symmetric-pairs-exchangeable'` (were `'ij'`, `'jk'`, `'ij_kl'`, `'voigt'`). The type
+  `TensorParity` is `TensorKind`. A specification with the names of 0.10 is a RangeError that
+  names the new ones. Python: the keys `kind` and `time_parity`, and the same values.
+
+- **One criterion for the position of a point in a plane group** (#137 F1, #108, #121 step 10a):
+  `wyckoffPosition` of `symcrys/plane` decides by the distance of the point to a Wyckoff position,
+  per lattice coordinate (up to 0.10 by the distance of its images, half as far at a mirror line),
+  the most special position within the tolerance; `siteSymmetry` and `orbit` set the point onto
+  that position and give its site symmetry and images, so the three agree. Results change for points
+  whose distance to an element is comparable to the tolerance (the old criterion reached from about
+  a third of it to beyond it, depending on the element), and the set point (`siteSymmetry().point`,
+  `orbit`) changes near lines of the hexagonal groups, where it is now the nearest point of the line
+  per coordinate rather than the mean of the images.
+
+- **Symmetry elements and asymmetric unit of the plane groups as data** (#137 F2, F3, #110 items
+  12, 13, #121 step 10b):
+  - `symmetryElements(key)` gives each element once modulo the lattice, the centring included
+    (p2: four twofold points, was nine, those in the closed cell [0, 1]²; cm: the lines 0,y and
+    1/4,y), lines as a `point` and a direction; the field
+    `segment`, the part of a line in the cell, is gone. `symmetryElements(key, { box })` gives all
+    lattice translates that meet a box, the lines not clipped.
+  - `asymmetricUnit(key)` gives all printed inequalities in printed order, also those that hold no
+    edge (p3: x ≤ 2/3, y ≤ 2/3; up to 0.10 left out), the vertices, and the new field `edges`, per
+    edge the index of the inequality that holds it (up to 0.10 `inequalities` was that list of
+    edge inequalities).
+  - Python: `symmetry_elements(key, box=…)`, the line field `point`; `asymmetric_unit` with
+    `edges`.
+
+- **`symbol` for plane groups** (#137 F4, #97, #121 step 10c): `symbol(key, { form })` of
+  `symcrys/plane` takes the key of a plane group too, the short symbol (the key) or in the form
+  `'full'` the full symbol with its positions separated by spaces (`p 1 m 1` for `pm`, as the
+  other entry points write full symbols); a plane point group gives `3 m 1` in that form. Python:
+  `plane.symbol(key, form=…)`.
+
+### Removed
+
+- The field `representative` of `wyckoffPositions`, `wyckoffPosition` and `crystalForms` (#137 G3,
+  G4, #121 step 11b): the face with h, k, l = 3, 2, 1 (1, 2, 3 for the cubic forms with the condition
+  |h| < |l|) and its Cartesian normal. Its normal was that of a, b, c along x, y, z for the
+  monoclinic and triclinic classes, not the pole of any real cell with free angles. Now
+  `faceNormal(basis, millerIndices(printed, values))` with the caller's cell and values; values
+  that meet a printed condition are the caller's to choose.
+
+- The field `fullSymbol` of `planeGroup` (`symcrys/plane`; Python `plane_group(key)["full_symbol"]`)
+  (#137 F4, #121 step 10c): the full symbol is `symbol(key, { form: 'full' })`, with spaces.
+
+- `snapToWyckoffPosition` of `symcrys/plane` (Python `snap_to_wyckoff_position`) and its result type
+  `SnappedPosition` (#137 F1, #108): replaced by `wyckoffDistances(key, point, { basis })`, which
+  gives for every Wyckoff position the nearest point and the distance (per lattice coordinate, or
+  Euclidean with a basis), on which an application builds its own snapping, e.g. the most special
+  position within a radius.
+
+- **`latticeOperations`** (Python `lattice_operations`), in both entry points (#121 step 6d): its
+  matrices are the `matrix` of `operations`, index for index.
+- **`planeGroup(key).order`** in `symcrys/plane` (#137 C2, #121 step 7c): it was the number of
+  `operations` (the multiplicity of the general position), not the order of a group; use
+  `operations(key).length`.
+
+- **The Birss convention** (#110, #121 step 5): symcrys follows ITC only. The option `convention`
+  goes from every function (`operations`, `generators`, `symbol`, `describeOperations`,
+  `symmetryDirections`, `latticeOperations`, `orbit`, `tensorForm`, `wyckoffPositions`,
+  `wyckoffPositionOf`, `crystalForms`), and so do the second argument of `settings` and
+  `findPointGroup` and the type `Convention`; in Python the keyword and argument `convention`. In
+  TypeScript and JavaScript an options object that still has `convention`, or a second argument of
+  `settings` or `findPointGroup`, throws a RangeError that names this change, so that a caller
+  asking for Birss's presentation is not answered in ITC's without notice; in Python the removed
+  keyword raises a `TypeError`. Results in the ITC convention are unchanged. The behavioural pins of
+  the Birss convention against birss-app last exist in 0.10.1 (`birssApp.pins.json`), for birss-app
+  to take over (#125).
+
+  | Up to 0.10                                                                                                                             | From 0.11                                                                                                                                            |
+  | -------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+  | `operations(key, { convention: 'itc' })`, also for the other functions                                                                 | `operations(key)`: drop the option                                                                                                                   |
+  | `settings(key, 'itc')`, `findPointGroup(hm, 'itc')`                                                                                    | `settings(key)`, `findPointGroup(hm)`                                                                                                                |
+  | `import type { Convention } from 'symcrys'`                                                                                            | drop the import                                                                                                                                      |
+  | Python: `symcrys.operations(key, convention="itc")`, `symcrys.settings(key, "itc")`                                                    | `symcrys.operations(key)`, `symcrys.settings(key)`                                                                                                   |
+  | `convention: 'birss'` (Python `convention="birss"`): Birss's default setting, symbols, order of the operations, generators, axis signs | gone; Birss's presentation is the application's (birss-app, #125). The frames of the two books: docs/conventions.md, "Birss as a second print check" |
+  | `findPointGroup("m'm'm", 'birss')` and the reading of `mm'm'`, `6'/mmm'` as Birss symbols (#46)                                        | gone: a key gives the ITC default setting                                                                                                            |
+
+### Fixed
+
+- **Tensor forms of operations with rounding errors** (#89; wrong since 0.4.0, when `tensorFormOf`
+  came): operations rounded to 6 decimals (√3/2 as 0.866025), as files and other programs give
+  them, were accepted and gave too many free parameters (13 instead of 6 for the piezoelectric
+  tensor of `3`), without an error. The operations are now closed into a group within the
+  tolerance and made exact first, and the form is that of the exact group; `allowsPropertyOf` and
+  `allowedPropertiesOf` read them in the same way (docs/conventions.md, "Tolerances"). Such
+  operations need a `tolerance` of about ten times their rounding (10⁻⁵ for 6 decimals): with the
+  default they now throw a RangeError that says so, where they gave an answer before, with too many
+  free parameters for a tensor form; the same holds for `isCentrosymmetricOf`.
+- **Site symmetry of a grey group at a large tolerance** (#133; wrong since 0.6.0, which brought the grey groups): the products of
+  the fixing operations were looked up by their matrix alone, so the copy without time reversal
+  was always found, and the result could be no subgroup (15 of the 24 operations of `6mm1'` at
+  tolerance 0.7). Products are now whole operations.
+
 ## [0.10.1] - 2026-11-22
 
 ### Fixed
@@ -416,7 +836,8 @@ All notable changes to symcrys are recorded here. The format follows
 - Project scaffold: TypeScript build to `dist/` (ES modules with type declarations), tests, lint,
   format check, CI and release workflow. The only export so far is `VERSION`.
 
-[Unreleased]: https://github.com/manganite/symcrys/compare/v0.10.1...HEAD
+[Unreleased]: https://github.com/manganite/symcrys/compare/v0.11.0...HEAD
+[0.11.0]: https://github.com/manganite/symcrys/compare/v0.10.1...v0.11.0
 [0.10.1]: https://github.com/manganite/symcrys/compare/v0.10.0...v0.10.1
 [0.10.0]: https://github.com/manganite/symcrys/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/manganite/symcrys/compare/v0.8.1...v0.9.0

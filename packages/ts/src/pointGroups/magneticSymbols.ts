@@ -2,22 +2,20 @@
  * Hermann–Mauguin symbols of the black-and-white point groups. The symbol of such a group in a
  * given frame is the symbol of its crystal class in that frame, each position carrying a prime if
  * the operation it names is combined with time reversal (ITC Vol. D, § 1.5.2.1, Table 1.5.2.3).
- * So no symbols are stored for these groups: they follow from the symbols of the class
- * (data.ts) and the operations (docs/conventions.md, "Symbols").
+ * The ITC symbols of these groups are stored (itcMagneticData.ts); this module writes the symbol a
+ * group has with given operations, from which the time reversal of the operations is derived
+ * (docs/conventions.md, "Symbols").
  */
 
+import { shown } from '../checks.js';
 import { matricesEqual, type Mat3, type Vec3 } from '../linalg.js';
 import { crystalFamily, latticeBasis, type CrystalFamily, type CrystalSystem } from '../lattice.js';
-import type { Operation } from '../operations.js';
+import type { CartesianOperation } from '../operations.js';
 import { LATTICE_SYMMETRY_DIRECTIONS } from '../symmetryDirections.js';
 
 /** The Cartesian direction of the first symmetry direction of each position of the full symbol. */
-function positionDirections(family: CrystalFamily, convention: 'itc' | 'birss'): readonly Vec3[] {
+function positionDirections(family: CrystalFamily): readonly Vec3[] {
   const positions = LATTICE_SYMMETRY_DIRECTIONS[family];
-  // Birss reads position 2 of the hexagonal family along y and position 3 along x
-  // (docs/conventions.md, "Where ITC and Birss differ").
-  const ordered =
-    convention === 'birss' && family === 'hexagonal' ? [positions[0], positions[2], positions[1]] : positions;
   // Monoclinic: a, b, c along x, y, z, exact for the unique axis, the only one with an element.
   const b: Mat3 =
     family === 'monoclinic' || family === 'triclinic'
@@ -27,7 +25,7 @@ function positionDirections(family: CrystalFamily, convention: 'itc' | 'birss'):
           [0, 0, 1],
         ]
       : latticeBasis(family);
-  return ordered.map(([uvw]) => [
+  return positions.map(([uvw]) => [
     b[0][0] * uvw[0] + b[0][1] * uvw[1] + b[0][2] * uvw[2],
     b[1][0] * uvw[0] + b[1][1] * uvw[1] + b[1][2] * uvw[2],
     b[2][0] * uvw[0] + b[2][1] * uvw[1] + b[2][2] * uvw[2],
@@ -51,17 +49,17 @@ function rotation(u: Vec3, n: number, sign: 1 | -1): Mat3 {
 }
 
 /** `'` if the operation with this matrix is combined with time reversal in `ops`, otherwise ``. */
-function prime(ops: readonly Operation[], matrix: Mat3, what: string): string {
-  const op = ops.find((x) => matricesEqual(x.matrix, matrix));
+function prime(ops: readonly CartesianOperation[], matrix: Mat3, what: string): string {
+  const op = ops.find((x) => matricesEqual(x.cartesian, matrix));
   if (!op) throw new Error(`${what}: the group does not contain the operation its symbol names`);
   return op.timeReversal ? "'" : '';
 }
 
 /** One position (`N`, `-N`, `N/m`, `m`, `1`) with the primes of the operations along `u`. */
-function primedToken(token: string, u: Vec3 | undefined, ops: readonly Operation[], what: string): string {
+function primedToken(token: string, u: Vec3 | undefined, ops: readonly CartesianOperation[], what: string): string {
   if (token === '1') return token;
   const parts = /^(?:(-?)([1-6]))?(\/?m)?$/.exec(token);
-  if (!parts || token === '') throw new Error(`${what}: unreadable position ${JSON.stringify(token)}`);
+  if (!parts || token === '') throw new Error(`${what}: unreadable position ${shown(token)}`);
   const [, bar, n, mirror] = parts;
   let result = '';
   if (n) {
@@ -88,17 +86,20 @@ function shortTokens(symbol: string): string[] {
 
 /**
  * The symbols of a black-and-white group in one frame: the short and the full symbol of its
- * crystal class in that frame, in the given convention, with primes taken from `ops`, the
+ * crystal class in that frame, with primes taken from `ops`, the
  * operations of the group in that frame.
  */
 export function primedSymbols(
   classSymbols: { readonly short: string; readonly full: string },
   system: CrystalSystem,
-  convention: 'itc' | 'birss',
-  ops: readonly Operation[],
+  ops: readonly CartesianOperation[],
 ): { short: string; full: string } {
   const family = crystalFamily(system);
-  const directions = positionDirections(family, convention);
+  // The positions of the family, also for a setting with rhombohedral axes: their Cartesian
+  // directions are those of [111] and [1-10] in the obverse rhombohedral cell, the c and a axes of
+  // the hexagonal cell (docs/conventions.md, "Cartesian frame"), and its symbol has only these two
+  // positions, so reading it along the first two hexagonal positions gives the same primes.
+  const directions = positionDirections(family);
   const what = `Symbol ${classSymbols.short}`;
   const fullTokens = classSymbols.full.split(' ');
   const full = fullTokens.map((t, i) => primedToken(t, directions[i], ops, what)).join(' ');

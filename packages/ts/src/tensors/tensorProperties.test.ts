@@ -14,7 +14,7 @@ import {
   type MagneticPointGroupKey,
   type PointGroupKey,
 } from '../pointGroups/pointGroups.js';
-import { siteSymmetry } from '../siteSymmetry.js';
+import { siteSymmetryOf } from '../siteSymmetry.js';
 import { TENSOR_PROPERTIES, TENSOR_PROPERTY_NAMES, type TensorPropertyName } from './propertyTable.js';
 import type { Mat3 } from '../linalg.js';
 import { CLASS_ROWS, T4C, symbolClass } from '../testUtils/birssTensorTables.js';
@@ -23,31 +23,33 @@ import { allowedProperties, allowedPropertiesOf, allowsProperty, allowsPropertyO
 
 /** The fixed properties of a group, read from its record. */
 const isCentrosymmetric = (key: MagneticPointGroupKey) => pointGroup(key).centrosymmetric;
-const isChiral = (key: MagneticPointGroupKey) => pointGroup(key).chiral;
+const isChiral = (key: MagneticPointGroupKey) => pointGroup(key).enantiomorphic;
 const isPolar = (key: MagneticPointGroupKey) => pointGroup(key).polar;
 
 const count = (name: TensorPropertyName, type: 'I' | 'II' | 'III') =>
   MAGNETIC_POINT_GROUP_KEYS.filter((k) => pointGroup(k).type === type && allowsProperty(k, name)).length;
 
 describe('TENSOR_PROPERTIES', () => {
-  it('names seven properties, each with a specification, a description and a print source', () => {
+  it('names eight properties, each with a specification, a description and a print source', () => {
     expect(TENSOR_PROPERTY_NAMES).toEqual([
       'pyroelectric',
       'ferroaxial',
       'piezoelectric',
       'gyrotropic',
       'ferromagnetic',
+      'ferrotoroidic',
       'magnetoelectric',
       'piezomagnetic',
     ]);
     for (const name of TENSOR_PROPERTY_NAMES) {
       const p = TENSOR_PROPERTIES[name];
-      expect(Object.keys(p.spec).sort(), name).toEqual(['intrinsic', 'parity', 'rank', 'timeParity']);
+      expect(Object.keys(p.spec).sort(), name).toEqual(['intrinsic', 'kind', 'rank', 'timeParity']);
       expect(p.description.length, name).toBeGreaterThan(20);
-      // Ferroaxial order is not in ITC Vol. D; its classes follow from Birss's tables of tensor forms.
+      // Ferroaxial order is not in ITC (#137 E4), and its source says so; its classes follow from
+      // Birss's tables of tensor forms.
       expect(p.source, name).toMatch(
         name === 'ferroaxial'
-          ? /Phys\. Rev\. Lett\. 116, 177602 \(2016\); classes: Birss \(1966\), Tables 4a and 4c, pp\. 56–58/
+          ? /^Not in ITC: .*Phys\. Rev\. Lett\. 116, 177602 \(2016\).*classes: Birss \(1966\), Tables 4a and 4c, pp\. 56–58/
           : /ITC Vol\. D \(2013\), § 1\.\d.*p+\. \d+/,
       );
     }
@@ -56,7 +58,7 @@ describe('TENSOR_PROPERTIES', () => {
   it('is frozen, and no two names share a tensor', () => {
     expect(Object.isFrozen(TENSOR_PROPERTIES)).toBe(true);
     expect(Object.isFrozen(TENSOR_PROPERTIES.piezoelectric.spec)).toBe(true);
-    expect(new Set(TENSOR_PROPERTY_NAMES.map((n) => JSON.stringify(TENSOR_PROPERTIES[n].spec))).size).toBe(7);
+    expect(new Set(TENSOR_PROPERTY_NAMES.map((n) => JSON.stringify(TENSOR_PROPERTIES[n].spec))).size).toBe(8);
   });
 });
 
@@ -66,9 +68,10 @@ describe('allowsProperty and allowedProperties', () => {
     expect(count('pyroelectric', 'I')).toBe(10);
     expect(count('piezoelectric', 'I')).toBe(20);
     expect(count('gyrotropic', 'I')).toBe(15);
-    for (const name of ['ferromagnetic', 'magnetoelectric', 'piezomagnetic'] as const)
+    for (const name of ['ferromagnetic', 'ferrotoroidic', 'magnetoelectric', 'piezomagnetic'] as const)
       expect(count(name, 'II')).toBe(0);
     expect(count('ferromagnetic', 'I') + count('ferromagnetic', 'III')).toBe(31);
+    expect(count('ferrotoroidic', 'I') + count('ferrotoroidic', 'III')).toBe(31);
     expect(count('magnetoelectric', 'I') + count('magnetoelectric', 'III')).toBe(58);
     expect(count('piezomagnetic', 'I') + count('piezomagnetic', 'III')).toBe(66);
     // The time-even properties of a magnetic group are those of its class: 11, 26 and 17 of the 58
@@ -88,9 +91,11 @@ describe('allowsProperty and allowedProperties', () => {
     }).map((row) => row.key);
     expect(printed).toEqual(['1', '-1', '2', 'm', '2/m', '4', '-4', '4/m', '3', '-3', '6', '-6', '6/m']);
     expect(POINT_GROUP_KEYS.filter((key) => allowsProperty(key, 'ferroaxial'))).toEqual(printed);
-    // The axial vector lies along the unique axis (z in setting 1); any direction in 1 and -1.
+    // The axial vector lies along the unique axis (z: unique axis c, the setting Birss prints); any
+    // direction in 1 and -1.
     for (const row of CLASS_ROWS.filter((r) => printed.includes(r.key))) {
-      const form = tensorForm(row.key as PointGroupKey, 'ferroaxial', { setting: 1 });
+      const setting = ['2', 'm', '2/m'].includes(row.key) ? 2 : 1;
+      const form = tensorForm(row.key as PointGroupKey, 'ferroaxial', { setting });
       const cells = T4C.get(symbolClass(row, 1, 'axial')!)!;
       expect(
         form.parameters.map(([i]) => i),
@@ -132,7 +137,7 @@ describe('allowsProperty and allowedProperties', () => {
     for (const key of MAGNETIC_POINT_GROUP_KEYS.filter((k) => pointGroup(k).type === 'II')) {
       const crystalClass = key.slice(0, -2) as PointGroupKey;
       expect(allowedProperties(key), key).toEqual(
-        allowedProperties(crystalClass).filter((n) => TENSOR_PROPERTIES[n].spec.timeParity === 'i'),
+        allowedProperties(crystalClass).filter((n) => TENSOR_PROPERTIES[n].spec.timeParity === 'even'),
       );
     }
   });
@@ -142,37 +147,43 @@ describe('allowsProperty and allowedProperties', () => {
     expect(allowedProperties('m-3m')).toEqual([]);
     expect(allowedProperties('432')).toEqual(['gyrotropic', 'magnetoelectric']);
     expect(allowedProperties("2'")).toEqual(TENSOR_PROPERTY_NAMES);
-    expect(allowedProperties("m'm'2")).toEqual(TENSOR_PROPERTY_NAMES.filter((name) => name !== 'ferroaxial'));
-    expect(allowedProperties("-1'")).toEqual(['ferroaxial', 'magnetoelectric']);
+    // m'm'2: a time-odd polar vector T is reversed by the 2 (T_x, T_y) or by m' (T_z: the mirror keeps
+    // it, time reversal changes its sign), so neither ferroaxial nor ferrotoroidic order.
+    expect(allowedProperties("m'm'2")).toEqual(
+      TENSOR_PROPERTY_NAMES.filter((name) => name !== 'ferroaxial' && name !== 'ferrotoroidic'),
+    );
+    // -1': the inversion reverses a polar vector and time reversal reverses it back: T is allowed.
+    expect(allowedProperties("-1'")).toEqual(['ferroaxial', 'ferrotoroidic', 'magnetoelectric']);
     expect(allowedProperties("mm21'")).toEqual(['pyroelectric', 'piezoelectric', 'gyrotropic']);
   });
 
   it('do not depend on the setting, and agree with the functions for operations', () => {
-    // A setting holds the same operations in both conventions (docs/conventions.md, "Settings"), so
-    // the settings of one convention are all frames there are.
     for (const key of MAGNETIC_POINT_GROUP_KEYS) {
       const allowed = allowedProperties(key);
       for (const s of settings(key)) {
         const ops = operations(key, { setting: s.index });
         expect(allowedPropertiesOf(ops), `${key} setting ${s.index}`).toEqual(allowed);
       }
-      const birss = operations(key, { convention: 'birss' });
-      for (const name of ['ferromagnetic', 'magnetoelectric'] as const) {
-        expect(allowsPropertyOf(birss, name), `${key} ${name}`).toBe(allowed.includes(name));
-      }
     }
   }, 30_000); // closes and projects about 180 groups without the cache
 
   it('take any operations: the site symmetry of the threefold axis of m-3m is polar, the group is not', () => {
     const ops = operations('m-3m');
-    const site = siteSymmetry(ops, [1, 1, 1]).operations.map((i) => ops[i]);
+    const site = siteSymmetryOf(ops, [1, 1, 1]).operations.map((i) => ops[i]);
     // The site symmetry is 3m.
     expect(allowedPropertiesOf(site)).toEqual(allowedProperties('3m'));
-    expect(allowedPropertiesOf(site)).toEqual(['pyroelectric', 'piezoelectric', 'magnetoelectric', 'piezomagnetic']);
+    // Without time reversal a time-odd polar vector has the form of a polar one: T along the threefold axis.
+    expect(allowedPropertiesOf(site)).toEqual([
+      'pyroelectric',
+      'piezoelectric',
+      'ferrotoroidic',
+      'magnetoelectric',
+      'piezomagnetic',
+    ]);
     expect(allowsProperty('m-3m', 'pyroelectric')).toBe(false);
     expect(allowsPropertyOf(site, 'pyroelectric')).toBe(true);
     // Generators are enough: the list is closed first.
-    expect(allowedPropertiesOf([{ matrix: [[-1, 0, 0], [0, -1, 0], [0, 0, 1]], timeReversal: true }])).toEqual(allowedProperties("2'")); // prettier-ignore
+    expect(allowedPropertiesOf([{ cartesian: [[-1, 0, 0], [0, -1, 0], [0, 0, 1]], timeReversal: true }])).toEqual(allowedProperties("2'")); // prettier-ignore
   });
 
   it('throw a RangeError for an unknown key or name', () => {
@@ -191,11 +202,9 @@ describe('tensorForm and tensorFormOf with the name of a property', () => {
   it('give the form of the tensor the table names', () => {
     for (const name of TENSOR_PROPERTY_NAMES) {
       for (const key of ['1', '-6m2', "4'/mmm'", "2221'"] as const) {
-        for (const convention of ['itc', 'birss'] as const) {
-          const byName = tensorForm(key, name, { convention });
-          expect(byName, `${key} ${name}`).toEqual(tensorForm(key, TENSOR_PROPERTIES[name].spec, { convention }));
-          expect(tensorFormOf(operations(key, { convention }), name)).toEqual(byName);
-        }
+        const byName = tensorForm(key, name);
+        expect(byName, `${key} ${name}`).toEqual(tensorForm(key, TENSOR_PROPERTIES[name].spec));
+        expect(tensorFormOf(operations(key), name)).toEqual(byName);
       }
     }
   });

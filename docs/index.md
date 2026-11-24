@@ -3,9 +3,9 @@
 Crystallographic symmetry calculations: the 32 crystal classes and the 122 magnetic point groups,
 with their settings, symbols, symmetry elements, site symmetry, Wyckoff positions and crystal forms,
 and the forms of the property tensors (rank 0 to 4) they allow; the 17 plane groups with their
-operations, Wyckoff positions, asymmetric unit and symmetry elements in the cell. The results are checked against print, the
-_International Tables for Crystallography_ (ITC) and Birss, _Symmetry and Magnetism_ (1966), and,
-where print leaves a choice open, against birss-app.
+operations, Wyckoff positions, asymmetric unit and symmetry elements. The results are checked against print, the
+_International Tables for Crystallography_ (ITC), whose conventions symcrys follows, and, as a second
+check, Birss, _Symmetry and Magnetism_ (1966).
 
 One implementation, two packages of the same version:
 
@@ -23,13 +23,13 @@ Where to start:
 - [Getting started](getting-started.md): the first calls, in both languages.
 - [Two readings of a key](readings.md): crystal class or magnetic point group, `symcrys` or
   `symcrys/magnetic`.
-- [Conventions](conventions.md): ITC and Birss, settings, the Cartesian frame. Which convention and
-  which setting you need decides which tensor components you get.
+- [Conventions](conventions.md): settings, the Cartesian frame, symbols and sources. Which setting
+  you need decides which tensor components you get.
 - [Crystal forms, orbits and distorted crystals](forms.md): the basic and limiting forms of each
   crystal class, as ITA lists them, the orbits of faces and directions, and the point group of a
   list of operations.
 - [Cells, metric, angles and indices](cells.md): the cell from lattice parameters, metric tensor,
-  angles between directions and faces, the operations a distortion leaves, Miller–Bravais indices,
+  angles between directions and faces, the operations a distortion leaves, Bravais–Miller indices,
   the zone law and the change of axes.
 - [Tensors and named properties](tensors.md): forms of property tensors, and the named properties
   such as piezoelectric or ferromagnetic.

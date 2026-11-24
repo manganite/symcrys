@@ -10,8 +10,9 @@
  * `tolerance` (docs/conventions.md, "Plane groups").
  */
 
+import { TOLERANCE_KEYS, checkOptions, shown } from './checks.js';
 import { describePlaneOperation } from './spaceGroups/describe.js';
-import { planeAsymmetricUnit, planeCellElements } from './spaceGroups/cell.js';
+import { planeAsymmetricUnit, planeElements, planeElementsInBox } from './spaceGroups/cell.js';
 import { toPlain, type ExactOperation } from './spaceGroups/affine.js';
 import { type PlaneSystem } from './spaceGroups/planeGroupData.js';
 import {
@@ -31,11 +32,18 @@ import {
   planePointGroupSystem,
   type PlanePointGroupKey,
 } from './spaceGroups/planePointGroups.js';
-import { planeOrbit, planeSiteSymmetry, planeWyckoffPositionOf } from './spaceGroups/positions.js';
-import { planeSnapToWyckoffPosition } from './spaceGroups/snap.js';
+import {
+  planeMetric,
+  planeOrbit,
+  planeSiteOfPosition,
+  planeWyckoffDistances,
+  planeWyckoffPositionOf,
+} from './spaceGroups/positions.js';
 import { parseRational, rational, toNumber, type Rational } from './spaceGroups/rational.js';
 
 export { VERSION } from './version.js';
+export { EPSILON, type ToleranceOptions } from './tolerances.js';
+import { toleranceOf, type ToleranceOptions } from './tolerances.js';
 export type { PlaneSystem } from './spaceGroups/planeGroupData.js';
 
 /** The short symbol of a plane group, e.g. `'p2mg'`. */
@@ -73,13 +81,10 @@ export interface SettingOptions {
   readonly setting?: number;
 }
 
-/** Options of the functions that take a point. */
-export interface PointOptions {
-  /**
-   * Two points count as the same, modulo the lattice, if each coordinate (lattice basis) differs
-   * by less than this from an integer. Default 10⁻⁶; must be below 1/2.
-   */
-  readonly tolerance?: number;
+/** Options of `symbol`: the setting, and the form of a plane group's symbol. */
+export interface SymbolOptions extends SettingOptions {
+  /** `'short'` (default): the symbol as one word, the key; `'full'`: the full symbol, positions separated by spaces (`'p 1 m 1'` for `pm`). */
+  readonly form?: 'short' | 'full';
 }
 
 /** An operation (W, w) in the lattice basis: x ↦ W·x + w. */
@@ -96,8 +101,6 @@ export interface PlaneGroup {
   readonly key: PlaneGroupKey;
   /** The number of the plane group, 1 to 17. */
   readonly number: number;
-  /** The full symbol as ITA prints it, e.g. `'p2mg'` or `'p1m1'`. */
-  readonly fullSymbol: string;
   /** The plane point group. */
   readonly pointGroup: PointGroupKey;
   /** The setting of the point group: 2 for `p31m`, otherwise 1. */
@@ -106,10 +109,8 @@ export interface PlaneGroup {
   readonly crystalSystem: PlaneSystem;
   /** The centring translations besides (0, 0): `[[0.5, 0.5]]` for `cm` and `c2mm`, otherwise none. */
   readonly centring: readonly (readonly number[])[];
-  /** The block "Origin" as ITA prints it, e.g. `'at 2mm'`. */
+  /** The block "Origin" as ITA prints it, its positions spaced as printed, e.g. `'at 2 m m'`, `'at 2 1 g'`. */
   readonly origin: string;
-  /** The order of the group modulo the lattice: the number of `operations`. */
-  readonly order: number;
 }
 
 /** A plane point group. */
@@ -129,15 +130,18 @@ export interface Setting {
   /** Its symbol: `'3m1'` or `'31m'` for `3m`, otherwise the key. */
   readonly symbol: string;
   /** True for the default setting (setting 1). */
-  readonly default: boolean;
+  readonly isDefault: boolean;
 }
 
 /** What an operation is, geometrically, as ITA describes it under "Symmetry operations". */
 export interface OperationDescription {
-  /** `'identity'`, `'translation'`, `'rotation'`, `'mirror'` (a reflection in a line) or `'glide'` (a glide reflection). */
-  readonly kind: 'identity' | 'translation' | 'rotation' | 'mirror' | 'glide';
-  /** The order of the linear part: 1 for the identity and a translation, 2 for a mirror or glide. */
-  readonly order: number;
+  /**
+   * `'identity'`, `'translation'`, `'rotation'`, `'reflection'` (in a line) or `'glide-reflection'`,
+   * as ITA names the operations (ITA 2016 Table 2.1.2.1, p. 145).
+   */
+  readonly kind: 'identity' | 'translation' | 'rotation' | 'reflection' | 'glide-reflection';
+  /** The n of the linear part (an n-fold rotation): 1 for the identity and a translation, 2 for a reflection or glide reflection. */
+  readonly n: number;
   /** For a rotation of order 3 or more: `'+'` if it turns a towards b, `'-'` otherwise. */
   readonly sense?: '+' | '-';
   /** For a translation: the translation vector. */
@@ -150,12 +154,14 @@ export interface OperationDescription {
   /** For a mirror or glide: the direction of its line, the shortest integer vector, first non-zero component positive. */
   readonly direction?: readonly number[];
   /**
-   * For a mirror or glide: the normal of its line in the lattice basis, its symmetry direction as in
-   * ITA Table 2.1.3.1: the shortest integer vector along the columns of W − I, first non-zero
-   * component positive. Without a metric it is not the perpendicular of `direction`: in a hexagonal
+   * For a reflection or glide reflection: its axis, the normal of its line in the lattice basis (as
+   * the `axis` of a reflection of the point groups is the normal of its plane, #137 C3), its symmetry
+   * direction with the sign of its Seitz symbol (ITA 2016 Tables 1.4.2.4, 1.4.2.5, p. 53: `m₁₀`, `m₁₂`,
+   * #107, #114): the shortest integer vector along the columns of W − I, first non-zero component
+   * positive, which is the Seitz direction for every plane group (tested). Without a metric it is not the perpendicular of `direction`: in a hexagonal
    * basis the normal of a line along [1,0] is [1,2].
    */
-  readonly normal?: readonly number[];
+  readonly axis?: readonly number[];
   /** For a glide: the glide vector (w + W·w)/2, not reduced modulo the lattice. */
   readonly glide?: readonly number[];
 }
@@ -172,17 +178,34 @@ export interface WyckoffPosition {
   readonly coordinates: readonly string[];
 }
 
-/** A point snapped onto a Wyckoff position: the position, as `wyckoffPositions` gives it, and the point on it. */
-export interface SnappedPosition extends WyckoffPosition {
-  /** The point on the position nearest to the given one, modulo the lattice, in [0, 1). */
+/** The distance of a point to a Wyckoff position: the position, as `wyckoffPositions` gives it, the nearest point of it, and the distance. */
+export interface WyckoffDistance extends WyckoffPosition {
+  /** The point of the position nearest to the given one (lattice basis), modulo the lattice, in [0, 1). */
   readonly point: readonly number[];
+  /**
+   * The distance of the given point to the position: without a basis the larger of the two
+   * coordinate differences modulo the lattice, with a basis Euclidean in its unit.
+   */
+  readonly distance: number;
+}
+
+/** Options of `wyckoffDistances`. */
+export interface WyckoffDistanceOptions {
+  /**
+   * The Cartesian basis of the lattice, a 2 × 2 matrix whose columns are a and b; with it the
+   * distances are Euclidean, without it they are measured per lattice coordinate.
+   */
+  readonly basis?: readonly (readonly number[])[];
 }
 
 /** The site symmetry of a point under a plane group. */
 export interface SiteSymmetry {
   /** Indices into `operations` of those that map the point onto itself modulo the lattice, ascending: a subgroup. */
   readonly operations: readonly number[];
-  /** The point set onto the fixed space of its site symmetry, in [0, 1), which removes rounding errors within the tolerance. */
+  /**
+   * The point set onto the Wyckoff position it lies on (the nearest point of the position, as
+   * `wyckoffDistances` gives it), in [0, 1).
+   */
   readonly point: readonly number[];
   /** The number of points in the conventional cell equivalent to it. */
   readonly multiplicity: number;
@@ -190,42 +213,57 @@ export interface SiteSymmetry {
   readonly general: boolean;
 }
 
-/** The asymmetric unit of a plane group, a convex polygon in the lattice basis. */
+/** The asymmetric unit of a plane group: the printed inequalities, and the convex polygon they bound (lattice basis). */
 export interface AsymmetricUnit {
-  /** Its vertices, counter-clockwise (a towards b), starting at the lowest (smallest y, then x). */
-  readonly vertices: readonly (readonly number[])[];
-  /** Per edge, the inequality [a, b, c] for a·x + b·y ≤ c (integers, no common factor); entry i holds the edge from vertex i to vertex i + 1. */
+  /**
+   * The inequalities as ITA prints them, in printed order, each [a, b, c] for a·x + b·y ≤ c
+   * (integers, no common factor), also those that hold no edge of the polygon (p3: x ≤ 2/3).
+   */
   readonly inequalities: readonly (readonly number[])[];
+  /** The vertices of the polygon, counter-clockwise (a towards b), starting at the lowest (smallest y, then x). */
+  readonly vertices: readonly (readonly number[])[];
+  /** Per edge, from vertex i to vertex i + 1, the index into `inequalities` of the inequality that holds it. */
+  readonly edges: readonly number[];
 }
 
-/** A rotation centre in the cell. */
-export interface RotationCentre {
-  /** The highest order of a rotation about it. */
-  readonly order: number;
-  /** Its position in [0, 1]². */
+/** A rotation point (ITA 2016 Table 2.1.2.1, p. 145: the symmetry element of a rotation in the plane). */
+export interface RotationPoint {
+  /** The highest n of an n-fold rotation about it. */
+  readonly n: number;
+  /** Its location, lattice basis. */
   readonly point: readonly number[];
 }
 
-/** A mirror or glide line: the part of it in the cell. */
+/** A mirror or glide line, as a point and a direction (lattice basis). */
 export interface SymmetryLine {
   /** `'mirror'` or `'glide'`. */
   readonly kind: 'mirror' | 'glide';
   /** The direction of the line, the shortest integer vector, first non-zero component positive. */
   readonly direction: readonly number[];
-  /** The normal of the line in the lattice basis, as in `describeOperations`. */
-  readonly normal: readonly number[];
+  /** The normal of the line in the lattice basis, its symmetry direction, as `axis` in `describeOperations`. */
+  readonly axis: readonly number[];
   /** For a glide line its glide vector s·direction, 0 < s < 1; for a mirror line (0, 0). */
   readonly glide: readonly number[];
-  /** The two ends of the segment of the line in the cell [0, 1]², in the order of `direction`. */
-  readonly segment: readonly (readonly number[])[];
+  /** A point of the line: its intersection with y = 0, or with x = 0 for a line along a. */
+  readonly point: readonly number[];
 }
 
-/** The symmetry elements of a plane group in its conventional cell [0, 1]², boundary included. */
+/** Symmetry elements of a plane group. */
 export interface SymmetryElements {
-  /** The rotation centres, by descending order, then by y and x. */
-  readonly rotations: readonly RotationCentre[];
-  /** The mirror and glide lines that cross the cell, by direction, then by the start of the segment (y, then x). */
+  /** The rotation points, by descending n, then by y and x. */
+  readonly rotationPoints: readonly RotationPoint[];
+  /** The mirror and glide lines, by direction, then by their point (x on y = 0, or y on x = 0), mirror before glide. */
   readonly lines: readonly SymmetryLine[];
+}
+
+/** Options of `symmetryElements`. */
+export interface SymmetryElementsOptions {
+  /**
+   * A box of the plane, lattice basis, as its lower left and its upper right corner (x₀ ≤ x₁,
+   * y₀ ≤ y₁; a line or a point of the plane also): all lattice translates of the elements that meet
+   * it, boundary included, the lines not clipped.
+   */
+  readonly box?: readonly (readonly number[])[];
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -237,7 +275,7 @@ function isPlaneGroupKey(key: unknown): key is PlaneGroupKey {
 }
 
 function unknownKey(key: unknown, what = 'plane group or plane point group'): never {
-  throw new RangeError(`Unknown ${what}: ${JSON.stringify(key)}`);
+  throw new RangeError(`Unknown ${what}: ${shown(key)}`);
 }
 
 /** The plane group of a key; throws for a point group or an unknown key. */
@@ -290,44 +328,49 @@ function describe(op: ExactOperation): OperationDescription {
   const d = describePlaneOperation(op);
   return Object.freeze({
     kind: d.kind,
-    order: d.order,
+    n: d.n,
     ...(d.sense ? { sense: d.sense } : {}),
     ...(d.translation ? { translation: Object.freeze(numbers(d.translation)) } : {}),
     ...(d.location ? { location: Object.freeze(numbers(d.location)) } : {}),
     ...(d.direction ? { direction: Object.freeze([...d.direction]) } : {}),
-    ...(d.normal ? { normal: Object.freeze([...d.normal]) } : {}),
+    ...(d.axis ? { axis: Object.freeze([...d.axis]) } : {}),
     ...(d.glide ? { glide: Object.freeze(numbers(d.glide)) } : {}),
   });
 }
 
 /** Tolerance for reading an integer or a fraction from a double. */
-const READ_TOLERANCE = 1e-9;
 /** The largest denominator of a translation that `describeOperationsOf` reads. */
 const MAX_DENOMINATOR = 12;
 
-function fractionOf(value: unknown): Rational {
+/**
+ * The fraction with a denominator of at most `MAX_DENOMINATOR` within `tolerance` of the value.
+ * Two such fractions can lie as close as 1/132 (1/11 and 1/12): a value within the tolerance of two
+ * different ones is refused, not read as either.
+ */
+function fractionOf(value: unknown, tolerance: number): Rational {
   if (typeof value === 'number' && Number.isFinite(value)) {
+    const found: Rational[] = [];
     for (let d = 1; d <= MAX_DENOMINATOR; d++) {
-      const n = Math.round(value * d);
-      if (Math.abs(value * d - n) < READ_TOLERANCE * d) return rational(n, d);
+      for (const n of [Math.floor(value * d), Math.ceil(value * d)]) {
+        if (Math.abs(value - n / d) >= tolerance) continue;
+        const r = rational(n, d);
+        if (!found.some((f) => f[0] === r[0] && f[1] === r[1])) found.push(r);
+      }
+    }
+    if (found.length === 1) return found[0];
+    if (found.length > 1) {
+      throw new RangeError(
+        `The translation ${shown(value)} lies within ${tolerance} of ${found.map((f) => `${f[0]}/${f[1]}`).join(' and ')}: pass a smaller tolerance`,
+      );
     }
   }
   throw new RangeError(
-    `Not within 10⁻⁹ of a translation with a denominator of at most ${MAX_DENOMINATOR}: ${shown(value)}`,
+    `Not within ${tolerance} of a translation with a denominator of at most ${MAX_DENOMINATOR}: ${shown(value)}`,
   );
 }
 
-/** A value for an error message; never throws (BigInt, circular objects). */
-function shown(value: unknown): string {
-  try {
-    return JSON.stringify(value) ?? String(value);
-  } catch {
-    return String(value);
-  }
-}
-
 /** An operation from a caller as an exact operation; throws a RangeError unless it has the shape of a plane operation. */
-function exactOf(op: unknown): ExactOperation {
+function exactOf(op: unknown, tolerance: number): ExactOperation {
   const o = op as Partial<PlaneOperation> | null;
   const m = o?.matrix;
   const t = o?.translation;
@@ -337,13 +380,13 @@ function exactOf(op: unknown): ExactOperation {
   }
   const matrix = m.map((row) =>
     row.map((v) => {
-      if (!(typeof v === 'number' && Math.abs(v - Math.round(v)) < READ_TOLERANCE)) {
+      if (!(typeof v === 'number' && Math.abs(v - Math.round(v)) < tolerance)) {
         throw new RangeError(`The matrix of a plane operation has integer entries, not ${shown(m)}`);
       }
       return Math.round(v) + 0;
     }),
   );
-  return { matrix, translation: t.map(fractionOf) };
+  return { matrix, translation: t.map((v) => fractionOf(v, tolerance)) };
 }
 
 /** The plane group with this key (short symbol). Throws a RangeError for an unknown key. */
@@ -353,7 +396,6 @@ export function planeGroup(key: PlaneGroupKey): PlaneGroup {
   return Object.freeze({
     key: entry.symbol as PlaneGroupKey,
     number: entry.number,
-    fullSymbol: entry.fullSymbol,
     pointGroup: point.key,
     pointGroupSetting: point.setting,
     crystalSystem: entry.system,
@@ -361,7 +403,6 @@ export function planeGroup(key: PlaneGroupKey): PlaneGroup {
       entry.centring.map((t) => Object.freeze(t.split(',').map((c) => toNumber(parseRational(c))))),
     ),
     origin: entry.origin,
-    order: planeGroupOperations(entry.symbol).length,
   });
 }
 
@@ -379,14 +420,37 @@ export function settings(key: PointGroupKey): readonly Setting[] {
   const k = pointKey(key, 'settings');
   return Object.freeze(
     Array.from({ length: planePointGroupSettingCount(k) }, (_, i) =>
-      Object.freeze({ index: i + 1, symbol: planePointGroupSymbol(k, i + 1), default: i === 0 }),
+      Object.freeze({ index: i + 1, symbol: planePointGroupSymbol(k, i + 1), isDefault: i === 0 }),
     ),
   );
 }
 
-/** The symbol of a plane point group in a setting: `'3m1'` or `'31m'` for `3m`, otherwise the key. */
-export function symbol(key: PointGroupKey, options?: SettingOptions): string {
-  return planePointGroupSymbol(pointKey(key, 'symbol'), settingOf(options));
+/**
+ * The symbol of a plane group or a plane point group (#137 F4). In the short form (the default) the
+ * Hermann–Mauguin symbol as one word: for a plane group the key (`'p2mg'`, `'pm'`), for a plane
+ * point group in a setting `'3m1'` or `'31m'` for `3m`, otherwise the key. In the form `'full'`
+ * the full symbol with its positions separated by spaces, as in the other entry points: `'p 1 m 1'`
+ * for `pm` (ITA prints `p1m1`), `'p 2 m g'`, `'3 m 1'`; ITA prints no other full symbol for a plane
+ * point group (Ch. 3.2, p. 721, and Table 3.2.3.1). A plane group has setting 1 only. Throws a
+ * RangeError for an unknown key, setting or form.
+ */
+export function symbol(key: PlaneGroupKey | PointGroupKey, options?: SymbolOptions): string {
+  checkOptions(options, ['setting', 'form'], 'symbol');
+  const form = options?.form ?? 'short';
+  if (form !== 'short' && form !== 'full') {
+    throw new RangeError(`Unknown symbol form: ${shown(form)} (short or full)`);
+  }
+  // Every position of a plane symbol is one character, the lattice letter included.
+  const spaced = (text: string) => (form === 'full' ? [...text].join(' ') : text);
+  if (isPlaneGroupKey(key)) {
+    const setting = settingOf(options);
+    if (setting !== undefined && setting !== 1) {
+      throw new RangeError(`The plane group ${key} has no setting ${shown(setting)}`);
+    }
+    return spaced(form === 'full' ? planeGroupEntry(key).fullSymbol : key);
+  }
+  if (!isPlanePointGroupKey(key)) return unknownKey(key);
+  return spaced(planePointGroupSymbol(key, settingOf(options)));
 }
 
 /**
@@ -398,6 +462,7 @@ export function symbol(key: PointGroupKey, options?: SettingOptions): string {
  * or setting.
  */
 export function operations(key: PlaneGroupKey | PointGroupKey, options?: SettingOptions): readonly PlaneOperation[] {
+  checkOptions(options, ['setting'], 'operations');
   return Object.freeze(exact(key, options, false).map(plain));
 }
 
@@ -407,18 +472,20 @@ export function operations(key: PlaneGroupKey | PointGroupKey, options?: Setting
  * generators of its symmorphic plane group. Throws a RangeError for an unknown key or setting.
  */
 export function generators(key: PlaneGroupKey | PointGroupKey, options?: SettingOptions): readonly PlaneOperation[] {
+  checkOptions(options, ['setting'], 'generators');
   return Object.freeze(exact(key, options, true).map(plain));
 }
 
 /**
  * Each operation of `operations` (same key and setting) described geometrically, index for index:
- * what it is, its order and sense, where its symmetry element lies, its glide part. Throws a
+ * what it is, its n and sense, where its symmetry element lies, its glide part. Throws a
  * RangeError for an unknown key or setting.
  */
 export function describeOperations(
   key: PlaneGroupKey | PointGroupKey,
   options?: SettingOptions,
 ): readonly OperationDescription[] {
+  checkOptions(options, ['setting'], 'describeOperations');
   return Object.freeze(exact(key, options, false).map(describe));
 }
 
@@ -427,16 +494,22 @@ export function describeOperations(
  * `describeOperations` describes those of a group: for instance a product of operations, an
  * operation shifted by a lattice translation, or the operations of a site symmetry. Each operation is
  * `{ matrix, translation }` as `operations` gives it. Each matrix must have integer entries (within
- * 10⁻⁹) and be the linear part of a crystallographic plane point group (determinant ±1, order 1,
- * 2, 3, 4 or 6); each translation must lie within 10⁻⁹ of a fraction with a denominator of at most
- * 12 (1/3 as 0.333…), as the translations of `operations` and their products do. Throws a
- * RangeError otherwise.
+ * the tolerance, per entry) and be the linear part of a crystallographic plane point group
+ * (determinant ±1, order 1, 2, 3, 4 or 6); each component of a translation is read as the fraction
+ * with a denominator of at most 12 within the tolerance (1/3 from 0.333…), as the translations of
+ * `operations` and their products are. Throws a RangeError otherwise, also for a component within
+ * the tolerance of two such fractions (which can lie 1/132 apart).
  */
-export function describeOperationsOf(operations: readonly PlaneOperation[]): readonly OperationDescription[] {
+export function describeOperationsOf(
+  operations: readonly PlaneOperation[],
+  options?: ToleranceOptions,
+): readonly OperationDescription[] {
+  checkOptions(options, TOLERANCE_KEYS, 'describeOperationsOf');
+  const tolerance = toleranceOf(options, 'operations');
   if (!Array.isArray(operations)) {
     throw new RangeError('describeOperationsOf takes a list of operations { matrix, translation }');
   }
-  return Object.freeze(operations.map((op) => describe(exactOf(op))));
+  return Object.freeze(operations.map((op) => describe(exactOf(op, tolerance))));
 }
 
 /**
@@ -454,13 +527,15 @@ export function wyckoffPositions(key: PlaneGroupKey): readonly WyckoffPosition[]
 }
 
 /**
- * The site symmetry of a point (lattice basis) under a plane group: the operations that map it
- * onto itself modulo the lattice within the tolerance, closed into a group, and the point set onto
- * their fixed space. Throws a RangeError for an unknown key, a point that is not two finite
- * numbers, or a tolerance outside (0, 1/2).
+ * The site symmetry of a point (lattice basis) under a plane group, as one notion with its Wyckoff
+ * position (#137 F1): the point is set onto the position it lies on within the tolerance
+ * (`wyckoffPosition`), and the site symmetry is that of the point there; `point` is the point on the
+ * position. Throws a RangeError for an unknown key, a point that is not two finite numbers, or a
+ * tolerance outside (0, 1/2).
  */
-export function siteSymmetry(key: PlaneGroupKey, point: readonly number[], options?: PointOptions): SiteSymmetry {
-  const site = planeSiteSymmetry(groupKey(key, 'siteSymmetry'), point, options);
+export function siteSymmetry(key: PlaneGroupKey, point: readonly number[], options?: ToleranceOptions): SiteSymmetry {
+  checkOptions(options, TOLERANCE_KEYS, 'siteSymmetry');
+  const site = planeSiteOfPosition(groupKey(key, 'siteSymmetry'), point, options);
   return Object.freeze({
     operations: Object.freeze([...site.operations]),
     point: Object.freeze([...site.point]),
@@ -471,15 +546,18 @@ export function siteSymmetry(key: PlaneGroupKey, point: readonly number[], optio
 
 /**
  * The Wyckoff position of a point (lattice basis) under a plane group, as `wyckoffPositions` gives
- * it: the printed position of the point's multiplicity whose coordinates, with the centring, reach
- * the point set onto its site symmetry. Throws a RangeError as `siteSymmetry`.
+ * it: the most special printed position whose point set lies within the tolerance of the point,
+ * measured per coordinate modulo the lattice, and among positions of equal multiplicity the nearest
+ * (the distance of `wyckoffDistances`); the general position always holds the point. Throws a
+ * RangeError as `siteSymmetry`.
  */
-export function wyckoffPositionOf(
+export function wyckoffPosition(
   key: PlaneGroupKey,
   point: readonly number[],
-  options?: PointOptions,
+  options?: ToleranceOptions,
 ): WyckoffPosition {
-  const k = groupKey(key, 'wyckoffPositionOf');
+  checkOptions(options, TOLERANCE_KEYS, 'wyckoffPosition');
+  const k = groupKey(key, 'wyckoffPosition');
   const { letter } = planeWyckoffPositionOf(k, point, options);
   const found = wyckoffPositions(k).find((w) => w.letter === letter);
   if (!found) throw new Error(`No Wyckoff position ${letter} in ${k}`);
@@ -487,74 +565,122 @@ export function wyckoffPositionOf(
 }
 
 /**
- * Snaps a point (lattice basis) onto the most special Wyckoff position of a plane group that lies
- * within the tolerance of it, measured per coordinate modulo the lattice: a position without a free
- * parameter (a point) before one with one (a line), before the general position, which always holds
- * the point; among positions of the same kind the nearest. Returns the position, as
- * `wyckoffPositions` gives it, and the nearest point on it, in [0, 1). Unlike `wyckoffPositionOf`,
- * which asks whether the images of the point lie within the tolerance of it, this asks whether the
- * point lies within the tolerance of the position: an application that drags a point and lets it
- * snap passes a tolerance such as 10⁻². The point on a line is found by least squares in the
- * lattice coordinates. Throws a RangeError as `siteSymmetry`.
+ * The distance of a point (lattice basis) to every Wyckoff position of a plane group, in the
+ * printed order of `wyckoffPositions`, each with the nearest point of the position (#137 F1, #108).
+ * The point set of a position is the union of its printed coordinates with every centring and
+ * lattice translation: a point, a line or the plane. Without a basis the distance is the larger of
+ * the two coordinate differences modulo the lattice, the metric of the tolerance of
+ * `wyckoffPosition`; with a basis (columns a, b) it is Euclidean, and the nearest point is the
+ * Euclidean nearest one; per coordinate the nearest point of a line need not be unique (on x,0 every x
+ * within the distance is as near), and then it is one of them. The basis should be a reduced cell,
+ * such as the conventional one: the nearest lattice translate is sought near the rounded
+ * coordinates. How to snap a dragged point onto a position (which position wins, within
+ * which radius) is the application's choice; this gives the numbers for it. Throws a RangeError for
+ * an unknown key, a point that is not two finite numbers, and a basis that is not a non-singular
+ * 2 × 2 matrix.
  */
-export function snapToWyckoffPosition(
+export function wyckoffDistances(
   key: PlaneGroupKey,
   point: readonly number[],
-  options?: PointOptions,
-): SnappedPosition {
-  const k = groupKey(key, 'snapToWyckoffPosition');
-  if (!Array.isArray(point)) {
-    throw new RangeError(`A point of the plane has two finite coordinates, not ${JSON.stringify(point)}`);
-  }
-  const snapped = planeSnapToWyckoffPosition(k, point, options?.tolerance);
-  const position = wyckoffPositions(k)[snapped.row];
-  return Object.freeze({ ...position, point: Object.freeze([...snapped.point]) });
+  options?: WyckoffDistanceOptions,
+): readonly WyckoffDistance[] {
+  checkOptions(options, ['basis'], 'wyckoffDistances');
+  const k = groupKey(key, 'wyckoffDistances');
+  const g = options?.basis === undefined ? undefined : planeMetric(options.basis);
+  const positions = wyckoffPositions(k);
+  return Object.freeze(
+    planeWyckoffDistances(k, point, g).map((d) =>
+      Object.freeze({ ...positions[d.row], point: Object.freeze([...d.point]), distance: d.distance }),
+    ),
+  );
+}
+
+/** One point of the orbit of a point. */
+export interface PointOrbitEntry {
+  /** The image, in the lattice basis, in [0, 1). */
+  readonly point: readonly number[];
+  /** Indices into `operations` of the operations that map the given point here (modulo the lattice), ascending. */
+  readonly operations: readonly number[];
 }
 
 /**
- * The orbit of a point (lattice basis) under a plane group: its distinct images in the
- * conventional cell, each in [0, 1), in the order of the operations that first give them; images
- * that coincide within the tolerance are merged. Throws a RangeError as `siteSymmetry`.
+ * The orbit of a point (lattice basis) under a plane group: the images of the point set onto its
+ * Wyckoff position (as `siteSymmetry` sets it), each in [0, 1), in the order of the operations that
+ * first give them, each with the indices of the operations that map the point there (as the
+ * entries of the orbits of the point groups): one entry per coset of the site symmetry, so the
+ * first entry holds the operations of `siteSymmetry`. Throws a RangeError as `siteSymmetry`.
  */
 export function orbit(
   key: PlaneGroupKey,
   point: readonly number[],
-  options?: PointOptions,
-): readonly (readonly number[])[] {
-  return Object.freeze(planeOrbit(groupKey(key, 'orbit'), point, options).map((p) => Object.freeze(p)));
+  options?: ToleranceOptions,
+): readonly PointOrbitEntry[] {
+  checkOptions(options, TOLERANCE_KEYS, 'orbit');
+  return Object.freeze(
+    planeOrbit(groupKey(key, 'orbit'), point, options).map((e) =>
+      Object.freeze({ point: Object.freeze(e.point), operations: Object.freeze(e.operations) }),
+    ),
+  );
 }
 
 /**
- * The asymmetric unit of a plane group as ITA prints it: a convex polygon given by its vertices and,
- * per edge, the printed inequality that holds it. Throws a RangeError for an unknown key.
+ * The asymmetric unit of a plane group as ITA prints it (#137 F3): the printed inequalities, all of
+ * them in printed order (a double inequality and a `min` give one each), and the convex polygon
+ * they bound, with its vertices and, per edge, the index of the inequality that holds it. Throws a
+ * RangeError for an unknown key.
  */
 export function asymmetricUnit(key: PlaneGroupKey): AsymmetricUnit {
   const unit = planeAsymmetricUnit(groupKey(key, 'asymmetricUnit'));
   return Object.freeze({
-    vertices: Object.freeze(unit.vertices.map((v) => Object.freeze(numbers(v)))),
     inequalities: Object.freeze(unit.inequalities.map((q) => Object.freeze([...q]))),
+    vertices: Object.freeze(unit.vertices.map((v) => Object.freeze(numbers(v)))),
+    edges: Object.freeze([...unit.edges]),
   });
 }
 
 /**
- * The symmetry elements of a plane group in its conventional cell [0, 1]², boundary included:
- * every rotation centre with the highest order of a rotation about it, and every mirror and glide
- * line that crosses the cell, with the segment inside it. Throws a RangeError for an unknown key.
+ * The symmetry elements of a plane group (#137 F2). Without a box, each element once modulo the
+ * lattice translations, the centring (1/2, 1/2) included, as ITA describes them (cm: the mirror line
+ * 0,y and the glide line 1/4,y): every rotation point in [0, 1)² with the highest n of a rotation
+ * about it, and every mirror and glide line, as a point in [0, 1)² and a direction. With a box, all
+ * their lattice translates that meet it, boundary included; the lines are not clipped, since
+ * clipping is drawing. Throws a RangeError for an unknown key, a box that is not two corners of
+ * finite numbers, the first not above or right of the second, and a box with more than a million
+ * rotation points.
  */
-export function symmetryElements(key: PlaneGroupKey): SymmetryElements {
-  const e = planeCellElements(groupKey(key, 'symmetryElements'));
+export function symmetryElements(key: PlaneGroupKey, options?: SymmetryElementsOptions): SymmetryElements {
+  checkOptions(options, ['box'], 'symmetryElements');
+  const k = groupKey(key, 'symmetryElements');
+  const box = options?.box;
+  let e;
+  if (box === undefined) e = planeElements(k);
+  else {
+    const ok =
+      Array.isArray(box) &&
+      box.length === 2 &&
+      box.every(
+        (c) => Array.isArray(c) && c.length === 2 && c.every((v) => typeof v === 'number' && Number.isFinite(v)),
+      );
+    if (!ok || !(box[0][0] <= box[1][0] && box[0][1] <= box[1][1])) {
+      throw new RangeError(`A box is two corners [[x0, y0], [x1, y1]] with x0 <= x1 and y0 <= y1, not ${shown(box)}`);
+    }
+    e = planeElementsInBox(k, [
+      [box[0][0], box[0][1]],
+      [box[1][0], box[1][1]],
+    ]);
+  }
   return Object.freeze({
-    rotations: Object.freeze(
-      e.rotations.map((r) => Object.freeze({ order: r.order, point: Object.freeze(numbers(r.point)) })),
+    rotationPoints: Object.freeze(
+      e.rotationPoints.map((r) => Object.freeze({ n: r.n, point: Object.freeze(numbers(r.point)) })),
     ),
     lines: Object.freeze(
       e.lines.map((l) =>
         Object.freeze({
           kind: l.kind,
           direction: Object.freeze([...l.direction]),
-          normal: Object.freeze([...l.normal]),
+          axis: Object.freeze([...l.axis]),
           glide: Object.freeze(numbers(l.glide)),
-          segment: Object.freeze(l.segment.map((p) => Object.freeze(numbers(p)))),
+          point: Object.freeze(numbers(l.point)),
         }),
       ),
     ),

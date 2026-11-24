@@ -19,7 +19,7 @@ import { matrixRank, satisfies } from '../testUtils/rank.js';
 import { tensorForm, type TensorSpec } from './tensorForm.js';
 
 const DIM = 81;
-const EQ: TensorSpec = { rank: 4, parity: 'polar', timeParity: 'i', intrinsic: 'ij_kl' };
+const EQ: TensorSpec = { rank: 4, kind: 'polar', timeParity: 'even', intrinsic: 'symmetric-pairs' };
 
 const idx = (s: string): number => {
   if (!/^[xyz]{4}$/.test(s)) throw new Error(`Hoshi: component ${s}`);
@@ -121,10 +121,7 @@ describe('Hoshi et al. (1995), Eqs. (11)–(12)', () => {
     });
   }
 
-  it('6/mmm and 6mm have the same form, in both conventions', () => {
-    const forms = (['itc', 'birss'] as const).flatMap((convention) =>
-      (['6/mmm', '6mm'] as const).map((k) => tensorForm(k, EQ, { convention }).basis),
-    );
-    for (const f of forms) expect(f).toEqual(forms[0]);
+  it('6/mmm and 6mm have the same form', () => {
+    expect(tensorForm('6/mmm', EQ).basis).toEqual(tensorForm('6mm', EQ).basis);
   });
 });

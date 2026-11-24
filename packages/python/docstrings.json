@@ -1,14 +1,14 @@
 {
-  "//": "What only Python has, added to the docstrings that scripts/python-docstrings.mjs writes from the TSDoc comments (#29): the shapes and dtypes of the NumPy arrays. Keys are the Python names; a function gets {type, doc} as its Returns section, a constant a string as its last paragraph.",
+  "//": "What only Python has, added to the docstrings that scripts/python-api.mjs writes from the TSDoc comments (#29): the shapes and dtypes of the NumPy arrays. Keys are the Python names; a function gets {type, doc} as its Returns section, a constant a string as its last paragraph.",
   "symcrys": {
     "LATTICE_SYMMETRY_DIRECTIONS": "In Python: family → one int64 array of shape (n, 3) per position, the n directions [uvw] as rows.",
     "operations": {
-      "type": "list of dict",
-      "doc": "Dicts ``{\"matrix\"}``; each matrix is a float64 array of shape (3, 3)."
+      "type": "Operations",
+      "doc": "``matrix`` an int64 array of shape (n, 3, 3), ``cartesian`` a float64 array of shape (n, 3, 3); ``ops[i]`` and ``for op in ops`` give one operation as a dict."
     },
     "generators": {
-      "type": "list of dict",
-      "doc": "Dicts ``{\"matrix\"}``; each matrix is a float64 array of shape (3, 3)."
+      "type": "Operations",
+      "doc": "``matrix`` an int64 array of shape (n, 3, 3), ``cartesian`` a float64 array of shape (n, 3, 3); ``ops[i]`` and ``for op in ops`` give one operation as a dict."
     },
     "lattice_basis": {
       "type": "numpy.ndarray",
@@ -28,35 +28,23 @@
     },
     "wyckoff_positions": {
       "type": "list of dict",
-      "doc": "In each, ``representative`` has ``hkl`` (int64, shape (3,)) and ``cartesian`` (float64, shape (3,)), ``site_symmetry_operations`` is an int64 array of shape (n,)."
-    },
-    "wyckoff_position_of": {
-      "type": "dict",
-      "doc": "``representative`` has ``hkl`` (int64, shape (3,)) and ``cartesian`` (float64, shape (3,)), ``site_symmetry_operations`` is an int64 array of shape (n,)."
-    },
-    "crystal_forms": {
-      "type": "list of dict",
-      "doc": "In each, ``representative`` has ``hkl`` (int64, shape (3,)) and ``cartesian`` (float64, shape (3,))."
+      "doc": "In each, ``site_symmetry_operations`` is an int64 array of shape (n,)."
     },
     "tensor_form": {
       "type": "dict",
-      "doc": "``basis`` float64 array of shape (p, 3**rank), ``parameters`` int64 array of shape (p, rank), ``relations`` float64 array of shape (3**rank - p, 3**rank), ``rank``; p is the number of free parameters. A row of ``basis`` reshaped to ``(3,) * rank`` is a tensor."
+      "doc": "``basis`` float64 array of shape (p, 3, …, 3), each allowed tensor with its rank axes; ``parameters`` int64 array of shape (p, rank); ``relations`` float64 array of shape (3**rank - p, 3**rank), rows r with r @ t.reshape(-1) == 0 for every allowed tensor t; ``rank``. p is the number of free parameters."
     },
     "tensor_form_of": {
       "type": "dict",
-      "doc": "``basis`` float64 array of shape (p, 3**rank), ``parameters`` int64 array of shape (p, rank), ``relations`` float64 array of shape (3**rank - p, 3**rank), ``rank``; p is the number of free parameters."
+      "doc": "``basis`` float64 array of shape (p, 3, …, 3), each allowed tensor with its rank axes; ``parameters`` int64 array of shape (p, rank); ``relations`` float64 array of shape (3**rank - p, 3**rank), rows r with r @ t.reshape(-1) == 0 for every allowed tensor t; ``rank``. p is the number of free parameters."
     },
     "rotate_tensor": {
       "type": "numpy.ndarray",
-      "doc": "A float64 array of shape (3**rank,); ``tensor`` may have any shape with 3**rank entries (it is flattened in C order)."
-    },
-    "lattice_operations": {
-      "type": "list of dict",
-      "doc": "Dicts ``{\"matrix\"}``; each matrix is a float64 array of shape (3, 3) holding integers (the fixed rule for matrices)."
+      "doc": "A float64 array of the shape of ``tensor``: a tensor has the shape (3, …, 3) or the flat (3**rank,), where the structured shape is read first (at rank 1 a (3, 3) array is three vectors). Leading axes of ``tensor`` and of ``rotation`` (…, 3, 3) are stacks, broadcast as in NumPy: a rotation of shape (k, 3, 3) gives the tensor rotated by each of the k rotations, a stack of tensors (m, 3, …, 3) each tensor rotated."
     },
     "orbit": {
       "type": "list of dict",
-      "doc": "In each, ``hkl`` (or ``uvw``) is an int64 array of shape (3,) and ``operations`` an int64 array of shape (n,); ``indices`` is a dict ``{\"hkl\": ...}`` or ``{\"uvw\": ...}``."
+      "doc": "In each, ``hkl`` (or ``uvw``) is an int64 array of shape (3,) and ``operations`` an int64 array of shape (n,). Give ``hkl=`` for a face or ``uvw=`` for a lattice direction."
     },
     "orbit_of": {
       "type": "list of dict",
@@ -65,17 +53,29 @@
     "describe_operations_of": {
       "type": "list of dict",
       "doc": "In each, ``axis`` (if present) has ``cartesian`` (float64, shape (3,))."
+    },
+    "wyckoff_position": {
+      "type": "dict",
+      "doc": "``site_symmetry_operations`` is an int64 array of shape (n,)."
+    },
+    "site_symmetry_of": {
+      "type": "dict",
+      "doc": "``operations`` int64 array of shape (n,), ``direction`` float64 array of shape (3,), ``multiplicity``, ``general``."
+    },
+    "residual_operations": {
+      "type": "Operations",
+      "doc": "The kept operations of the caller, in their order."
     }
   },
   "symcrys.magnetic": {
     "LATTICE_SYMMETRY_DIRECTIONS": "In Python: family → one int64 array of shape (n, 3) per position, the n directions [uvw] as rows.",
     "operations": {
-      "type": "list of dict",
-      "doc": "Dicts ``{\"matrix\", \"time_reversal\"}``; each matrix is a float64 array of shape (3, 3)."
+      "type": "Operations",
+      "doc": "``matrix`` an int64 array of shape (n, 3, 3), ``cartesian`` a float64 array of shape (n, 3, 3), ``time_reversal`` a bool array of shape (n,); ``ops[i]`` and ``for op in ops`` give one operation as a dict."
     },
     "generators": {
-      "type": "list of dict",
-      "doc": "Dicts ``{\"matrix\", \"time_reversal\"}``; each matrix is a float64 array of shape (3, 3)."
+      "type": "Operations",
+      "doc": "``matrix`` an int64 array of shape (n, 3, 3), ``cartesian`` a float64 array of shape (n, 3, 3), ``time_reversal`` a bool array of shape (n,); ``ops[i]`` and ``for op in ops`` give one operation as a dict."
     },
     "lattice_basis": {
       "type": "numpy.ndarray",
@@ -95,23 +95,19 @@
     },
     "tensor_form": {
       "type": "dict",
-      "doc": "``basis`` float64 array of shape (p, 3**rank), ``parameters`` int64 array of shape (p, rank), ``relations`` float64 array of shape (3**rank - p, 3**rank), ``rank``; p is the number of free parameters. A row of ``basis`` reshaped to ``(3,) * rank`` is a tensor."
+      "doc": "``basis`` float64 array of shape (p, 3, …, 3), each allowed tensor with its rank axes; ``parameters`` int64 array of shape (p, rank); ``relations`` float64 array of shape (3**rank - p, 3**rank), rows r with r @ t.reshape(-1) == 0 for every allowed tensor t; ``rank``. p is the number of free parameters."
     },
     "tensor_form_of": {
       "type": "dict",
-      "doc": "``basis`` float64 array of shape (p, 3**rank), ``parameters`` int64 array of shape (p, rank), ``relations`` float64 array of shape (3**rank - p, 3**rank), ``rank``; p is the number of free parameters."
+      "doc": "``basis`` float64 array of shape (p, 3, …, 3), each allowed tensor with its rank axes; ``parameters`` int64 array of shape (p, rank); ``relations`` float64 array of shape (3**rank - p, 3**rank), rows r with r @ t.reshape(-1) == 0 for every allowed tensor t; ``rank``. p is the number of free parameters."
     },
     "rotate_tensor": {
       "type": "numpy.ndarray",
-      "doc": "A float64 array of shape (3**rank,); ``tensor`` may have any shape with 3**rank entries (it is flattened in C order)."
-    },
-    "lattice_operations": {
-      "type": "list of dict",
-      "doc": "Dicts ``{\"matrix\", \"time_reversal\"}``; each matrix is a float64 array of shape (3, 3) holding integers (the fixed rule for matrices)."
+      "doc": "A float64 array of the shape of ``tensor``: a tensor has the shape (3, …, 3) or the flat (3**rank,), where the structured shape is read first (at rank 1 a (3, 3) array is three vectors). Leading axes of ``tensor`` and of ``rotation`` (…, 3, 3) are stacks, broadcast as in NumPy: a rotation of shape (k, 3, 3) gives the tensor rotated by each of the k rotations, a stack of tensors (m, 3, …, 3) each tensor rotated."
     },
     "orbit": {
       "type": "list of dict",
-      "doc": "In each, ``hkl`` (or ``uvw``) is an int64 array of shape (3,) and ``operations`` an int64 array of shape (n,); ``indices`` is a dict ``{\"hkl\": ...}`` or ``{\"uvw\": ...}``."
+      "doc": "In each, ``hkl`` (or ``uvw``) is an int64 array of shape (3,) and ``operations`` an int64 array of shape (n,). Give ``hkl=`` for a face or ``uvw=`` for a lattice direction."
     },
     "orbit_of": {
       "type": "list of dict",
@@ -120,6 +116,14 @@
     "describe_operations_of": {
       "type": "list of dict",
       "doc": "In each, ``axis`` (if present) has ``cartesian`` (float64, shape (3,))."
+    },
+    "site_symmetry_of": {
+      "type": "dict",
+      "doc": "``operations`` int64 array of shape (n,), ``direction`` float64 array of shape (3,), ``multiplicity``, ``general``."
+    },
+    "residual_operations": {
+      "type": "Operations",
+      "doc": "The kept operations of the caller, in their order."
     }
   },
   "symcrys.plane": {
@@ -128,40 +132,40 @@
       "doc": "``centring`` is a float64 array of shape (n, 2), n = 0 or 1."
     },
     "operations": {
-      "type": "list of dict",
-      "doc": "Dicts ``{\"matrix\", \"translation\"}``: float64 arrays of shape (2, 2) and (2,)."
+      "type": "Operations",
+      "doc": "``matrix`` an int64 array of shape (n, 2, 2), ``translation`` a float64 array of shape (n, 2); ``ops[i]`` and ``for op in ops`` give one operation as a dict."
     },
     "generators": {
-      "type": "list of dict",
-      "doc": "Dicts ``{\"matrix\", \"translation\"}``: float64 arrays of shape (2, 2) and (2,)."
+      "type": "Operations",
+      "doc": "``matrix`` an int64 array of shape (n, 2, 2), ``translation`` a float64 array of shape (n, 2); ``ops[i]`` and ``for op in ops`` give one operation as a dict."
     },
     "describe_operations": {
       "type": "list of dict",
-      "doc": "``translation``, ``location`` and ``glide`` (where present) are float64 arrays of shape (2,), ``direction`` and ``normal`` int64 arrays of shape (2,)."
+      "doc": "``translation``, ``location`` and ``glide`` (where present) are float64 arrays of shape (2,), ``direction`` and ``axis`` int64 arrays of shape (2,)."
     },
     "describe_operations_of": {
       "type": "list of dict",
-      "doc": "As ``describe_operations``: ``translation``, ``location`` and ``glide`` (where present) float64 arrays of shape (2,), ``direction`` and ``normal`` int64 arrays of shape (2,)."
+      "doc": "As ``describe_operations``: ``translation``, ``location`` and ``glide`` (where present) float64 arrays of shape (2,), ``direction`` and ``axis`` int64 arrays of shape (2,)."
     },
     "site_symmetry": {
       "type": "dict",
       "doc": "``operations`` int64 array of shape (n,), ``point`` float64 array of shape (2,), ``multiplicity``, ``general``."
     },
-    "snap_to_wyckoff_position": {
-      "type": "dict",
-      "doc": "``letter``, ``multiplicity``, ``site_symmetry``, ``coordinates`` as in ``wyckoff_positions``, and ``point`` a float64 array of shape (2,)."
+    "wyckoff_distances": {
+      "type": "list of dict",
+      "doc": "One per Wyckoff position, in the order of ``wyckoff_positions``: ``letter``, ``multiplicity``, ``site_symmetry``, ``coordinates`` as there, ``point`` a float64 array of shape (2,) and ``distance`` a float."
     },
     "orbit": {
-      "type": "numpy.ndarray",
-      "doc": "A float64 array of shape (n, 2), the images as rows."
+      "type": "list of dict",
+      "doc": "In each, ``point`` is a float64 array of shape (2,) and ``operations`` an int64 array of shape (n,)."
     },
     "asymmetric_unit": {
       "type": "dict",
-      "doc": "``vertices`` a float64 array of shape (n, 2), ``inequalities`` an int64 array of shape (n, 3)."
+      "doc": "``inequalities`` an int64 array of shape (m, 3), ``vertices`` a float64 array of shape (n, 2), ``edges`` an int64 array of shape (n,), indices into ``inequalities``."
     },
     "symmetry_elements": {
       "type": "dict",
-      "doc": "``rotations``: dicts ``{\"order\", \"point\"}``, point a float64 array of shape (2,); ``lines``: dicts ``{\"kind\", \"direction\", \"normal\", \"glide\", \"segment\"}``, direction and normal int64 of shape (2,), glide float64 of shape (2,), segment float64 of shape (2, 2), the two ends as rows."
+      "doc": "``rotation_points``: dicts ``{\"n\", \"point\"}``, point a float64 array of shape (2,); ``lines``: dicts ``{\"kind\", \"direction\", \"axis\", \"glide\", \"point\"}``, direction and axis int64 of shape (2,), glide and point float64 of shape (2,)."
     }
   }
 }

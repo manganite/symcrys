@@ -23,19 +23,19 @@ symcrys holds calculations, not presentation. It has:
 
 1. Point groups: the 32 crystallographic and the 122 magnetic point groups as data (generators),
    group generation, settings, Hermann–Mauguin and Schoenflies symbols, derived properties
-   (centrosymmetric, polar, chiral, the named tensor properties), site symmetry, Wyckoff positions,
+   (centrosymmetric, polar, enantiomorphic, the named tensor properties), site symmetry, Wyckoff positions,
    crystal forms, orbits, and the point group of any list of operations.
 2. Plane groups and plane point groups (`symcrys/plane`).
 
 Planned: space groups (`symcrys/space`).
 
 Property tensors: the symmetry-reduced form of a tensor of rank 0 to 4 under a point group or any
-set of operations, from birss-app; results are numbers (coefficient matrices). Rendering (LaTeX,
+set of operations; results are numbers (coefficient matrices). Rendering (LaTeX,
 SVG, relation strings, view models) and translated display names stay in the applications that use
 symcrys.
 
-**Conventions.** Point groups follow the _International Tables for Crystallography_ by default;
-the convention of Birss, _Symmetry and Magnetism_ (1966), is an option. **Two entry points:**
+**Conventions.** Point groups follow the _International Tables for Crystallography_ (ITC);
+Birss, _Symmetry and Magnetism_ (1966), is a second print check. **Two entry points:**
 `symcrys` for the 32 crystal classes, `symcrys/magnetic` for the 122 magnetic point groups, under the
 same function names; the import decides how a key such as `'32'` is read. A third, `symcrys/plane`,
 holds the plane groups and plane point groups.
@@ -43,8 +43,7 @@ holds the plane groups and plane point groups.
 symcrys is the computational core of the crystallography teaching apps
 ([stereography](https://github.com/manganite/stereography),
 [plane-groups](https://github.com/manganite/plane-groups)) and of
-[birss-app](https://github.com/manganite/birss-app); its calculations start from those of
-birss-app.
+[birss-app](https://github.com/manganite/birss-app).
 
 ## Documentation
 
@@ -58,14 +57,14 @@ which the site includes.
 import { allowedProperties, symbol, tensorForm } from 'symcrys';
 
 symbol('32'); // '321': ITC short symbol of the default setting
-tensorForm('mm2', { rank: 3, parity: 'polar', intrinsic: 'jk' }).parameters; // xxz, yyz, zxx, zyy, zzz
+tensorForm('mm2', { rank: 3, kind: 'polar', intrinsic: 'symmetric-last-pair' }).parameters; // xxz, yyz, zxx, zyy, zzz
 allowedProperties('32'); // ['piezoelectric', 'gyrotropic']: quartz
 ```
 
 ```python
 import symcrys
 
-symcrys.tensor_form("mm2", {"rank": 3, "parity": "polar", "intrinsic": "jk"})["parameters"]
+symcrys.tensor_form("mm2", {"rank": 3, "kind": "polar", "intrinsic": "symmetric-last-pair"})["parameters"]
 symcrys.magnetic.allowed_properties("321'")  # ['piezoelectric', 'gyrotropic']: quartz, the grey group
 ```
 
@@ -109,18 +108,19 @@ npm run docs:linkcheck # external links (CI: workflow Links, not a gate)
 ```
 
 The docstrings of the Python package are written from the TSDoc comments: after changing a TSDoc
-comment, run `npm run docs:python` and commit the result (`scripts/python-docstrings.mjs`;
-what only Python has, the shapes of the NumPy arrays, is in `packages/python/docstrings.json`).
+comment or an export, run `npm run build && npm run docs:python` and commit the result (the
+generator reads the build for the values of literal types): `scripts/python-api.mjs`
+writes the Python modules `symcrys`, `symcrys.magnetic` and `symcrys.plane` from the TypeScript
+entry points; what the types do not say is in `packages/python/api.json` and
+`packages/python/docstrings.json`.
 
-Audits under `audit/` compare the code bases symcrys draws on. They are run by hand, with
-[birss-app](https://github.com/manganite/birss-app) and
-[stereography](https://github.com/manganite/stereography) checked out next to this repository:
-`npm run audit:point-groups` writes `audit/point-groups/report.md`; `npm run audit:wyckoff-2006`,
-`audit:forms-2006` and `audit:plane-groups-2006` compare with the 5th edition of ITA as transcribed
-in stereography and in [plane-groups](https://github.com/manganite/plane-groups) (checked out next to
-this repository as well); and `npm run audit:birss-app`
-captures the pins of the Birss convention as JSON (`packages/ts/src/pointGroups/birssApp.pins.json`
-for the operations of all 122 magnetic point groups, `packages/ts/src/tensors/birssApp.pins.json` for the tensor forms).
+Audits under `audit/` are run by hand. `npm run audit:wyckoff-2006`, `audit:forms-2006` and
+`audit:plane-groups-2006` compare with the 5th edition of ITA as transcribed in
+[stereography](https://github.com/manganite/stereography) and
+[plane-groups](https://github.com/manganite/plane-groups), checked out next to this repository.
+stereography now takes these data from symcrys, so the two audits of its catalogue read its own
+transcription at a fixed revision (`audit/stereography-2006.ts`); a full clone is needed.
+`npm run audit:itc-baseline` captures the ITC baseline pins (CLAUDE.md, "Tests").
 
 CI runs these seven gates on every pull request, on Node 22 and 24, the gate `python` (bundle,
 build sdist and wheel, install the wheel, `mypy`, `pytest`) on Python 3.10 and the newest, and the
