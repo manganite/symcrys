@@ -24,6 +24,56 @@ describe('keys', () => {
   });
 });
 
+describe('keys, lists and finding by symbol (#97)', () => {
+  it('isPlaneGroupKey and isPointGroupKey answer for the keys and nothing else', () => {
+    for (const k of plane.PLANE_GROUP_KEYS) {
+      expect(plane.isPlaneGroupKey(k)).toBe(true);
+      expect(plane.isPointGroupKey(k)).toBe(false);
+    }
+    for (const k of plane.POINT_GROUP_KEYS) {
+      expect(plane.isPointGroupKey(k)).toBe(true);
+      expect(plane.isPlaneGroupKey(k)).toBe(false);
+    }
+    for (const k of ['', 'p1m1', 'P2', '3m1', 'mm2', 'p 2']) {
+      expect(plane.isPlaneGroupKey(k), k).toBe(false);
+      expect(plane.isPointGroupKey(k), k).toBe(false);
+    }
+  });
+
+  it('planeGroups and pointGroups are the records of the keys, in order, frozen', () => {
+    expect(plane.planeGroups()).toEqual(plane.PLANE_GROUP_KEYS.map((k) => plane.planeGroup(k)));
+    expect(plane.pointGroups()).toEqual(plane.POINT_GROUP_KEYS.map((k) => plane.pointGroup(k)));
+    expect(Object.isFrozen(plane.planeGroups())).toBe(true);
+  });
+
+  it('findPointGroup reads the key and the symbol of a setting, spaces ignored', () => {
+    expect(plane.findPointGroup('3m')).toEqual({ key: '3m', setting: 1 });
+    expect(plane.findPointGroup('3m1')).toEqual({ key: '3m', setting: 1 });
+    expect(plane.findPointGroup('3 1 m')).toEqual({ key: '3m', setting: 2 });
+    expect(plane.findPointGroup(' 2 m m ')).toEqual({ key: '2mm', setting: 1 });
+    for (const k of plane.POINT_GROUP_KEYS) {
+      for (const s of plane.settings(k)) expect(plane.findPointGroup(s.symbol)).toEqual({ key: k, setting: s.index });
+    }
+    for (const text of ['mm2', 'p3m1', '4/m', '']) expect(plane.findPointGroup(text), text).toBeUndefined();
+    expect(plane.findPlaneGroup('3m1')).toBeUndefined();
+    expect(plane.findPlaneGroup('P2mg')).toBeUndefined();
+    expect(() => plane.findPlaneGroup(1 as never)).toThrow(RangeError);
+    expect(() => plane.findPointGroup(null as never)).toThrow(RangeError);
+  });
+
+  it('a setting is chosen by its index or its symbol (#123)', () => {
+    expect(plane.operations('3m', { setting: '31m' })).toEqual(plane.operations('3m', { setting: 2 }));
+    expect(plane.operations('3m', { setting: '3 m 1' })).toEqual(plane.operations('3m', { setting: 1 }));
+    expect(plane.operations('3m', { setting: '3m' })).toEqual(plane.operations('3m'));
+    expect(plane.symbol('3m', { setting: '31m', form: 'full' })).toBe('3 1 m');
+    expect(plane.generators('m', { setting: 'm' })).toEqual(plane.generators('m'));
+    expect(plane.operations('pm', { setting: 'p1m1' })).toEqual(plane.operations('pm'));
+    expect(plane.describeOperations('p2mg', { setting: 'p2mg' })).toEqual(plane.describeOperations('p2mg'));
+    expect(() => plane.operations('3m', { setting: '3m2' })).toThrow(/settings: 3m1, 31m/);
+    expect(() => plane.operations('pm', { setting: 'pg' })).toThrow(RangeError);
+  });
+});
+
 describe('plane point groups', () => {
   it('are the linear parts of every plane group with that point group (cm and pg as pm, p4gm as p4mm, …)', () => {
     for (const k of plane.PLANE_GROUP_KEYS) {

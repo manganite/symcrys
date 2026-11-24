@@ -931,8 +931,12 @@ while implementing gets its own note here.
   symbol is asked for in one way in every entry point. The full symbol has its positions separated by
   spaces, as in the other entry points (Thomas, 2026-11-24: `p 1 m 1`, and later `P 1 21/c 1` for
   the space groups). Chosen while implementing: a plane point group, for which ITA prints no other
-  full symbol (Ch. 3.2, p. 721; Table 3.2.3.1), gives its symbol spaced (`3 m 1`). `isPlaneGroupKey`, `findPlaneGroup` and
-  the lists come in 0.12.
+  full symbol (Ch. 3.2, p. 721; Table 3.2.3.1), gives its symbol spaced (`3 m 1`). The lookups and
+  lists (#97, 0.12): `isPlaneGroupKey`, `isPointGroupKey`, `findPlaneGroup`, `findPointGroup`, `planeGroups()`, `pointGroups()`; `findPlaneGroup` gives `{ key }` (Thomas,
+  2026-11-24), the shape of `findPointGroup` without a setting, which a plane group does not have.
+  Chosen while implementing: they read the key and the full symbol, spaces ignored, the lattice
+  letter in lower case only (an upper-case letter begins a space-group symbol); `{ setting }` takes
+  the symbol of a setting too, as in the other entry points (#123).
 - **No frieze, layer or magnetic plane groups for now** (#31 question 3): no consumer needs them;
   the dimension-generic module keeps them possible (idea in #74).
 - **Entry point `symcrys/plane`, later `symcrys/space`** (#31 question 4), as `symcrys/magnetic`

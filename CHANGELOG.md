@@ -6,6 +6,15 @@ All notable changes to symcrys are recorded here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- **`symcrys/plane`: lookups and lists** (#97, #137 F4): `isPlaneGroupKey`, `isPointGroupKey`,
+  `planeGroups()`, `pointGroups()`, `findPlaneGroup(symbol)` (the key or the full symbol, spaces
+  ignored: `findPlaneGroup('p 1 m 1')` gives `{ key: 'pm' }`) and `findPointGroup(symbol)` (`'31m'`
+  gives `{ key: '3m', setting: 2 }`), as in the other entry points; `{ setting }` takes the symbol of
+  a setting too (`{ setting: '31m' }`). Python: `is_plane_group_key`, `is_point_group_key`,
+  `plane_groups`, `point_groups`, `find_plane_group`, `find_point_group` in `symcrys.plane`.
+
 ## [0.11.0] - 2026-11-24
 
 symcrys follows ITC only (#106, #121): the Birss convention is gone, the data are stored in the ITC

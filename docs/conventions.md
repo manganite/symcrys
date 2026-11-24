@@ -435,7 +435,12 @@ normalisation before the comparison (#96; decided by Thomas on 2026-11-22 and 20
   with the same rule: a symbol of several settings gives the standard, unless `axes` or
   `uniqueAxis` chooses another. A Schoenflies symbol names no setting and is not read here.
 
-`symcrys/plane` has no lookup by symbol yet (#97).
+`symcrys/plane` reads its symbols in the same way (#97, 0.12): `findPlaneGroup` the key or the full
+symbol of a plane group (`'pm'`, `'p1m1'`, `'p 1 m 1'`) and gives `{ key }`; `findPointGroup` the key
+or the symbol of a setting of a plane point group (`'31m'`, `'3 1 m'`) and gives `{ key, setting }`,
+the key `'3m'` its default setting; `{ setting }` takes the index or the symbol of a setting. The
+lattice letter is lower case, as ITA prints it: `'P2mg'` names no plane group, so that a symbol of a
+space group is not read as one of a plane group.
 
 ## Results
 
