@@ -197,7 +197,10 @@ export interface WyckoffDistanceOptions {
 export interface SiteSymmetry {
   /** Indices into `operations` of those that map the point onto itself modulo the lattice, ascending: a subgroup. */
   readonly operations: readonly number[];
-  /** The point set onto the fixed space of its site symmetry, in [0, 1), which removes rounding errors within the tolerance. */
+  /**
+   * The point set onto the Wyckoff position it lies on (the nearest point of the position, as
+   * `wyckoffDistances` gives it), in [0, 1).
+   */
   readonly point: readonly number[];
   /** The number of points in the conventional cell equivalent to it. */
   readonly multiplicity: number;
@@ -527,7 +530,10 @@ export function wyckoffPosition(
  * lattice translation: a point, a line or the plane. Without a basis the distance is the larger of
  * the two coordinate differences modulo the lattice, the metric of the tolerance of
  * `wyckoffPosition`; with a basis (columns a, b) it is Euclidean, and the nearest point is the
- * Euclidean nearest one. How to snap a dragged point onto a position (which position wins, within
+ * Euclidean nearest one; per coordinate the nearest point of a line need not be unique (on x,0 every x
+ * within the distance is as near), and then it is one of them. The basis should be a reduced cell,
+ * such as the conventional one: the nearest lattice translate is sought near the rounded
+ * coordinates. How to snap a dragged point onto a position (which position wins, within
  * which radius) is the application's choice; this gives the numbers for it. Throws a RangeError for
  * an unknown key, a point that is not two finite numbers, and a basis that is not a non-singular
  * 2 × 2 matrix.

@@ -111,16 +111,18 @@ export function planeOrbit(
   point: readonly number[],
   options?: ToleranceOptions,
 ): { point: number[]; operations: number[] }[] {
-  // The point is first set onto its Wyckoff position (#137 F1), so that the images of one coset
-  // coincide exactly: merging images within the tolerance pairwise is not transitive, and near an
-  // element it could put operations together that form no coset (review of #153).
+  // The point is first set onto its Wyckoff position (#137 F1), and the entries are the left cosets
+  // g·H of its site symmetry H: merging images by a distance is not transitive and depends on a
+  // threshold (reviews of #153 and of step 10a).
   const site = planeSiteOfPosition(key, point, options);
+  const { ops, table } = groupData(key);
+  const done = new Set<number>();
   const out: { point: number[]; operations: number[] }[] = [];
-  plainOperations(key).forEach((op, i) => {
-    const q = image(op, site.point).map(mod1);
-    const entry = out.find((r) => sameModLattice(r.point, q, 1e-9));
-    if (entry) entry.operations.push(i);
-    else out.push({ point: q, operations: [i] });
+  ops.forEach((op, i) => {
+    if (done.has(i)) return;
+    const coset = [...new Set(site.operations.map((h) => table[i][h]))].sort((a, b) => a - b);
+    for (const j of coset) done.add(j);
+    out.push({ point: image(op, site.point).map(mod1), operations: coset });
   });
   return out;
 }
@@ -205,9 +207,6 @@ function parsed(expression: string): PlainOperation {
   return op;
 }
 
-/** The 2 × 2 Cartesian basis of a plane lattice (columns a, b), checked; undefined for none. */
-export type PlaneBasis = readonly (readonly number[])[];
-
 /** The distance of a point to one printed Wyckoff position, and the nearest point of the position. */
 export interface PositionDistance {
   /** The index of the position in the printed order (`entry.wyckoff`). */
@@ -266,9 +265,12 @@ export function planeMetric(basis: unknown): Mat2 {
       (row) => Array.isArray(row) && row.length === 2 && row.every((x) => typeof x === 'number' && Number.isFinite(x)),
     );
   const b = basis as Mat2;
-  const det = ok ? b[0][0] * b[1][1] - b[0][1] * b[1][0] : 0;
-  const scale = ok ? Math.hypot(b[0][0], b[1][0]) * Math.hypot(b[0][1], b[1][1]) : 0;
-  if (!ok || !(Math.abs(det) > 1e-9 * scale)) {
+  // Singular if V/(ab) is below 10⁻⁹, computed with the columns scaled to unit length so that no
+  // product overflows or underflows (review of step 10a).
+  const na = ok ? Math.hypot(b[0][0], b[1][0]) : 0;
+  const nb = ok ? Math.hypot(b[0][1], b[1][1]) : 0;
+  const ratio = na > 0 && nb > 0 ? (b[0][0] / na) * (b[1][1] / nb) - (b[0][1] / nb) * (b[1][0] / na) : 0;
+  if (!ok || !(Math.abs(ratio) > 1e-9)) {
     throw new RangeError(
       `The basis of a plane lattice is a non-singular 2 × 2 matrix (columns a, b), not ${shown(basis)}`,
     );
@@ -288,8 +290,10 @@ export function planeMetric(basis: unknown): Mat2 {
  * the plane. Without a metric the distance is the larger of the two coordinate differences, with
  * one (G = BᵀB) Euclidean.
  */
-export function planeWyckoffDistances(key: string, point: readonly number[], g?: Mat2): PositionDistance[] {
-  checkPoint(point);
+export function planeWyckoffDistances(key: string, given: readonly number[], g?: Mat2): PositionDistance[] {
+  checkPoint(given);
+  // Modulo the lattice first, so that large coordinates keep their digits (review of step 10a).
+  const point = given.map(mod1);
   const entry = planeGroupEntry(key);
   const centrings = [[0, 0], ...entry.centring.map((t) => parsed(t).translation)];
   return entry.wyckoff.map(([, , , coordinates], row) => {
@@ -346,12 +350,30 @@ export function planeSiteOfPosition(
   options?: ToleranceOptions,
 ): PlaneSiteSymmetry {
   const { row, point: onPosition } = planePosition(key, point, options);
-  const site = planeSiteSymmetry(key, onPosition, { tolerance: 1e-9 });
   const multiplicity = planeGroupEntry(key).wyckoff[row][0];
-  if (site.multiplicity !== multiplicity) {
-    throw new Error(`${key}: the point ${shown(onPosition)} of position ${row} has multiplicity ${site.multiplicity}`);
+  // The site symmetry follows from the position, not from a second tolerance (review of step 10a):
+  // the point lies on it, so its |G|/multiplicity operations are those whose images of the point
+  // lie nearest to it (all of them at rounding distance).
+  const ops = plainOperations(key);
+  const order = ops.length / multiplicity;
+  const offset = (op: PlainOperation) =>
+    Math.max(
+      ...image(op, onPosition).map((v, k) => {
+        const d = v - onPosition[k];
+        return Math.abs(d - Math.round(d));
+      }),
+    );
+  const indices = ops
+    .map((op, i) => ({ i, d: offset(op) }))
+    .sort((a, b) => a.d - b.d || a.i - b.i)
+    .slice(0, order)
+    .map((e) => e.i)
+    .sort((a, b) => a - b);
+  const { table } = groupData(key);
+  if (!indices.every((a) => indices.every((b) => indices.includes(table[a][b])))) {
+    throw new Error(`${key}: the operations nearest to fixing ${shown(onPosition)} on position ${row} form no group`);
   }
-  return site;
+  return { operations: indices, fixing: fixingOperations(ops, indices, onPosition), point: onPosition, multiplicity };
 }
 
 /**

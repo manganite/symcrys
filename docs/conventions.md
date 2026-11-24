@@ -1134,8 +1134,9 @@ images of that point, so the three never disagree. The distance to a position, n
 the images, decides: at a mirror line the two differ by a factor of 2 (the image of a point at
 distance d lies 2d away), so a point 0.012 from the mirror of pm lies on it at the tolerance 0.02,
 although its image is 0.024 away. Snapping a dragged point (which position wins, within which radius
-on screen) is a policy of the application, built on `wyckoffDistances`; `snapToWyckoffPosition`
-(0.10) is gone.
+on screen) is a policy of the application, built on `wyckoffDistances`. "Most special" means the
+smallest multiplicity, so at a large tolerance a line can win against a point of the same
+multiplicity (c2mm: 4c, a point, against 4d and 4e, lines).
 
 **The cell.** `asymmetricUnit` is the polygon of ITA's printed block "Asymmetric unit": its
 vertices, counter-clockwise from the lowest, and per edge the printed inequality a·x + b·y ≤ c that

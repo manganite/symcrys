@@ -102,7 +102,7 @@ describe('every printed Wyckoff position', () => {
 });
 
 describe('the position of a point within the tolerance: order, metric and errors', () => {
-  it('a point before a line before the general position', () => {
+  it('the most special position within the tolerance: here a point, a line, the general position', () => {
     // Near 1/2,1/2 of p4mm (1b, 4mm), also within reach of the mirror lines x,1/2 and x,x.
     const at = (p: number[], t: number) => wyckoffLetter('p4mm', planePosition('p4mm', p, { tolerance: t }).row);
     expect(at([0.49, 0.505], 0.02)).toBe('b');
@@ -139,6 +139,8 @@ describe('the position of a point within the tolerance: order, metric and errors
     )!;
     expect(euclid.point[0]).toBeCloseTo(0.175, 12);
     expect(euclid.point[1]).toBeCloseTo(0.35, 12);
+    // The residual (0.025, 0) has the length 0.025 in G (G₁₁ = 1).
+    expect(euclid.distance).toBeCloseTo(0.025, 12);
     expect(() =>
       planeMetric([
         [1, 0],

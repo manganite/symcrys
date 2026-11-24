@@ -237,10 +237,35 @@ describe('wyckoffDistances', () => {
     expect(site.point[0]).toBe(0);
   });
 
+  it('agree at tolerances below 10⁻⁹ and for large coordinates (review of step 10a)', () => {
+    // Before, the site symmetry was recomputed at 10⁻⁹ and the point not reduced modulo the
+    // lattice first: both threw a plain Error, and 1e16 lay at distance 0 from 1/4,y of p2mg.
+    const cases: [plane.PlaneGroupKey, number[], number, string][] = [
+      ['p2', [3e-10, 1e-10], 1e-12, 'e'],
+      ['p4mm', [0.3, 3e-10], 1e-12, 'g'],
+      ['p3m1', [1 / 3 + 2e-10, 2 / 3 + 1e-10], 1e-12, 'd'],
+      ['p2mg', [1e16, 0.3], 1e-6, 'd'],
+      ['p4mm', [1e10 + 0.3, 0.2], 0.1, 'f'],
+    ];
+    for (const [k, p, tolerance, letter] of cases) {
+      const w = plane.wyckoffPosition(k, p, { tolerance });
+      const site = plane.siteSymmetry(k, p, { tolerance });
+      const orbit = plane.orbit(k, p, { tolerance });
+      expect(w.letter, `${k} ${p}`).toBe(letter);
+      expect(site.multiplicity, `${k} ${p}`).toBe(w.multiplicity);
+      expect(orbit, `${k} ${p}`).toHaveLength(w.multiplicity);
+      expect(orbit[0].operations).toEqual(site.operations);
+    }
+    expect(plane.wyckoffDistances('p2mg', [1e16, 0.3]).find((d) => d.letter === 'c')!.distance).toBeCloseTo(0.25, 12);
+  });
+
   it('refuses a point group, a bad point or basis', () => {
     expect(() => plane.wyckoffDistances('4mm' as plane.PlaneGroupKey, [0, 0])).toThrow(RangeError);
     expect(() => plane.wyckoffDistances('p2', 'x' as unknown as number[])).toThrow(RangeError);
     expect(() => plane.wyckoffDistances('p2', [0, 0], { basis: [[1, 2], [2, 4]] })).toThrow(RangeError); // prettier-ignore
+    // Bases of extreme scale are not singular (the test scales the columns first).
+    expect(plane.wyckoffDistances('p2', [0, 0], { basis: [[1e200, 0], [0, 1e200]] })).toHaveLength(5); // prettier-ignore
+    expect(plane.wyckoffDistances('p2', [0, 0], { basis: [[1e-200, 0], [0, 1e-200]] })).toHaveLength(5); // prettier-ignore
   });
 });
 

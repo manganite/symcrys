@@ -205,8 +205,11 @@ All notable changes to symcrys are recorded here. The format follows
   `wyckoffPosition` of `symcrys/plane` decides by the distance of the point to a Wyckoff position,
   per lattice coordinate (up to 0.10 by the distance of its images, half as far at a mirror line),
   the most special position within the tolerance; `siteSymmetry` and `orbit` set the point onto
-  that position and give its site symmetry and images, so the three agree. Results change only for
-  points between half the tolerance and the tolerance from an element.
+  that position and give its site symmetry and images, so the three agree. Results change for points
+  whose distance to an element is comparable to the tolerance (the old criterion reached from about
+  a third of it to beyond it, depending on the element), and the set point (`siteSymmetry().point`,
+  `orbit`) changes near lines of the hexagonal groups, where it is now the nearest point of the line
+  per coordinate rather than the mean of the images.
 
 ### Removed
 

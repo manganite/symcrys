@@ -292,7 +292,10 @@ def wyckoff_distances(key: str, point: ArrayLike, *, basis: Optional[ArrayLike] 
     and lattice translation: a point, a line or the plane. Without a basis the distance is the
     larger of the two coordinate differences modulo the lattice, the metric of the tolerance of
     ``wyckoff_position``; with a basis (columns a, b) it is Euclidean, and the nearest point is the
-    Euclidean nearest one. How to snap a dragged point onto a position (which position wins, within
+    Euclidean nearest one; per coordinate the nearest point of a line need not be unique (on x,0
+    every x within the distance is as near), and then it is one of them. The basis should be a
+    reduced cell, such as the conventional one: the nearest lattice translate is sought near the
+    rounded coordinates. How to snap a dragged point onto a position (which position wins, within
     which radius) is the application's choice; this gives the numbers for it. Raises SymcrysError
     for an unknown key, a point that is not two finite numbers, and a basis that is not a
     non-singular 2 × 2 matrix.

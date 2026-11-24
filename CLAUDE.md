@@ -918,7 +918,7 @@ while implementing gets its own note here.
   (`describe.reference.test.ts`); invariants that do not depend on the computation (a centre is
   fixed, a point of the line moves by the glide vector) cover the operations shifted by lattice
   translations, where print has no centres of order ≥ 3 away from the origin.
-- **Points: orbit, site symmetry, Wyckoff position** (chosen while implementing, PR #79;
+- **Points: orbit, site symmetry, Wyckoff position** _(The criterion is replaced in #121 step 10a by the distance to a position, #137 F1: "Distance to a Wyckoff position" below.)_ (chosen while implementing, PR #79;
   `src/spaceGroups/positions.ts`): a point from a caller has floating-point coordinates in the
   lattice basis, so these functions work in floating point on the exact operations, with the
   `tolerance` of #31 measured per coordinate modulo the lattice (default `EPSILON`), as
@@ -947,7 +947,9 @@ while implementing gets its own note here.
   distance, per lattice coordinate (the larger of |Δx|, |Δy| modulo the lattice, the metric of the
   tolerance for points) without a basis, Euclidean with one. `wyckoffPosition` decides by that
   distance (the most special position within the tolerance, the nearest among equal
-  multiplicities), and `siteSymmetry` and `orbit` set the point onto that position: one notion.
+  multiplicities), and `siteSymmetry` and `orbit` set the point onto that position: one notion,
+  the site symmetry the |G|/multiplicity operations nearest to fixing the set point, the orbit its
+  cosets (no second tolerance; review of the step).
   The snapping policy belongs to the applications. Chosen while implementing: the nearest point
   of a line per coordinate is found where a component vanishes or the two are equal (the
   minimum of the larger of two linear functions); the basis has the columns a, b.
