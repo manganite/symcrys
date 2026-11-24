@@ -108,9 +108,8 @@ convention or the process updates this file (or the `docs/` file) in the same PR
 Decided by Thomas on 2026-11-22 (#106, #110), after a review of 0.10.0 and an audit of the API
 against ITC: earlier decisions had led to special solutions for the existing apps, which is not a
 good way. symcrys is efficient, logically structured, user-friendly and **strictly ITC**; an
-application adapts to symcrys, not the other way round. The ITC migration (#121, 0.11) brings the
-code to this state; one decision of this section is not yet in the code, the signs of axes (#114,
-#107), which says so.
+application adapts to symcrys, not the other way round. The ITC migration (#121, 0.11) brought the
+code to this state; the decisions below follow it.
 
 - **One convention, ITC.** There is no option `convention` and no Birss output mode, and birss-app's
   order of the operations, its generators and its axis signs are not API behaviour. The conversion
@@ -158,8 +157,13 @@ code to this state; one decision of this section is not yet in the code, the sig
   Birss's cubic symbols too, but no Schoenflies symbol, which names no setting.
 - **Signs of axes:** the axis of an operation (for a reflection, its normal) carries the sign of its
   Seitz symbol (ITA 6th ed., Tables 1.4.2.1/1.4.2.2), in every entry point; Table 2.1.3.1 stays the
-  anchor of the lattice symmetry directions (#114; for the plane groups, #107). _Not yet in the code:
-  the axes have the signs of Table 2.1.3.1 until #114 and #107 are implemented._
+  anchor of the lattice symmetry directions (#114; for the plane groups, #107). Chosen while
+  implementing (#121, the last step): the axis takes the direction of the Seitz symbol of its matrix
+  W, transcribed from ITA 2016 Tables 1.4.2.1–1.4.2.3 (`pointGroups/seitzData.ts`), since neither
+  rule at hand gives the printed directions: "first non-zero component positive" fails on `2₋₁₀₁`
+  and `m₋₁₀₁` of the cubic table, the sign of Table 2.1.3.1 on `2₁₁₀` of the hexagonal one; in the plane the shortest normal with its first non-zero
+  component positive is the Seitz direction of Tables 1.4.2.4 and 1.4.2.5 for every operation, so
+  the plane groups keep that rule (tested against the tables).
 - **Reference edition:** ITA 6th ed. (2016). Exception, until there is another solution: what comes
   from the space-group tables (Ch. 2.3) keeps the 5th ed. (2006, Part 7) as anchor, because
   transcribing and checking the 230 space groups from as many separate PDFs of the 2016 edition is
@@ -538,9 +542,8 @@ operations }`; `undefined`, never `null` (`zoneAxis`); every result frozen and `
   operation (`describeOperations`: kind, n, axis, sense, and in the magnetic API time reversal) and
   the elements along each symmetry direction (`symmetryDirections`); strings such as `4⁺ 0,0,z` or
   `2_z` stay in the applications, which also translate them. An axis is given both as a lattice
-  direction [uvw] and as a Cartesian unit vector, with the sign of ITA Table 2.1.3.1, which fixes
-  what the sense refers to and reproduces ITA's printed operation symbols (to become the sign of
-  the Seitz symbol, "Pure ITC", #114); the symmetry directions follow ITA Table 2.1.3.1
+  direction [uvw] and as a Cartesian unit vector, with the sign of its Seitz symbol ("Pure ITC",
+  #114), which fixes what the sense refers to; the symmetry directions follow ITA Table 2.1.3.1
   (`docs/conventions.md`, "Symmetry directions and elements").
 - **Operations in ITA's order, ITA's generators** (maintainer, 2026-11-18,
   crystallography-common#99; #25, #27): `operations` returns the operations as ITA numbers them,
@@ -619,8 +622,9 @@ operations }`; `undefined`, never `null` (`zoneAxis`); every result frozen and `
   and time reversal occurs, which differs for all 122 groups (tested) and so names any point group
   in any orientation; `describeOperationsOf` signs its Cartesian axes so that the first non-zero
   component is positive, since no lattice names them (`docs/conventions.md`, "Point group of a list
-  of operations"). _Open: #110 puts this rule, birss-app's, among what goes, without a successor; to
-  be decided with the Seitz anchor (#114)._
+  of operations"); a Seitz symbol needs a lattice. #110 had put the rule, birss-app's, among what
+  goes; Thomas kept it on 2026-11-24 as symcrys's own rule for a list without a lattice, the
+  Cartesian analogue of a fixed axis with the sense given against it.
 - **Rhombohedral axes** (#111, #121 step 6c; the setting itself decided by Thomas on 2026-11-23,
   "Pure ITC" above): the obverse axes in the hexagonal cell of setting 1 (ITA 2016 Table 1.5.1.1,
   p. 78), so the Cartesian operations are those of setting 1. Chosen while implementing, recorded on

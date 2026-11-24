@@ -8,9 +8,11 @@
 import { SETTING_KEYS, checkOptions } from '../checks.js';
 import { det, trace, type Mat3, type Vec3 } from '../linalg.js';
 import { crystalFamily } from '../lattice.js';
-import type { CartesianOperation } from '../operations.js';
+import type { Operation } from '../operations.js';
 import type { Uvw } from '../symmetryDirections.js';
-import { itcBasis, itcSymmetryDirections } from './itcData.js';
+import type { IntMat3 } from './itaOrder.js';
+import { itcBasis, itcSetting, itcSymmetryDirections } from './itcData.js';
+import { seitzOf, type SeitzTable } from './seitzData.js';
 import {
   classSettingOf,
   operations,
@@ -27,7 +29,9 @@ export type OperationKind = 'identity' | 'inversion' | 'rotation' | 'rotoinversi
 /** A symmetry direction: as a lattice direction [uvw] and as a Cartesian unit vector. */
 export interface Axis {
   /**
-   * Integer coordinates in the conventional basis, with the sign of ITA Table 2.1.3.1.
+   * Integer coordinates in the conventional basis: for the axis of an operation with the sign of its
+   * Seitz symbol (ITA Tables 1.4.2.1–1.4.2.3), for a symmetry direction with the sign of ITA Table
+   * 2.1.3.1.
    */
   readonly lattice: Uvw;
   /**
@@ -145,15 +149,39 @@ function findAxis(axes: readonly Axis[], u: Vec3, what: string): Axis {
   return a;
 }
 
-function describe(op: CartesianOperation, axes: readonly Axis[], what: string): OperationDescription {
+const parallel = (a: Vec3, b: Vec3): boolean => Math.abs(Math.abs(dot(a, b)) - 1) < AXIS_TOLERANCE;
+
+/**
+ * An operation described geometrically. Its axis lies along a symmetry direction of the setting and
+ * carries the sign of the operation's Seitz symbol (ITA 2016 Tables 1.4.2.1–1.4.2.3; "Pure ITC",
+ * #114), which for n ≥ 3 fixes what the sense refers to; the sense, computed from the matrix, is
+ * checked against the printed one.
+ */
+function describe(
+  op: Operation,
+  axes: readonly Axis[],
+  basis: Mat3,
+  table: SeitzTable,
+  what: string,
+): OperationDescription {
   const proper = det(op.cartesian) > 0;
   const { r, n } = rotationPart(op.cartesian);
   const timeReversal = op.timeReversal;
   if (n === 1) return Object.freeze({ kind: proper ? 'identity' : 'inversion', n: 1, timeReversal });
-  const axis = findAxis(axes, rotationAxis(r, n), what);
+  const direction = findAxis(axes, rotationAxis(r, n), what);
+  const seitz = seitzOf(table, op.matrix as unknown as IntMat3);
+  if (!seitz?.axis) throw new Error(`${what}: no Seitz symbol for the matrix ${JSON.stringify(op.matrix)}`);
+  // A frozen copy: the result must not share the table's array (every result frozen, #137 C4).
+  const signed = axisOf(basis, Object.freeze([...seitz.axis]) as unknown as Uvw);
+  if (!parallel(signed.cartesian, direction.cartesian)) {
+    throw new Error(`${what}: the Seitz direction [${seitz.axis.join(',')}] is not along the axis of the operation`);
+  }
+  // The object of the symmetry direction where the signs agree, so that the two match by identity there.
+  const axis = dot(signed.cartesian, direction.cartesian) > 0 ? direction : signed;
   const kind: OperationKind = proper ? 'rotation' : n === 2 ? 'reflection' : 'rotoinversion';
   if (n === 2) return Object.freeze({ kind, n: 2, axis, timeReversal });
   const sense = dot(axialVector(r), axis.cartesian) > 0 ? '+' : '-';
+  if (sense !== seitz.sense) throw new Error(`${what}: the sense ${sense} differs from the Seitz symbol's`);
   return Object.freeze({ kind, n, axis, sense, timeReversal });
 }
 
@@ -180,7 +208,13 @@ function analysis(key: MagneticPointGroupKey, options?: SettingOptions): Analysi
   const positions = itcSymmetryDirections(c.key, c.index).map((dirs) => dirs.map((d) => axisOf(basis, d)));
   const all = positions.flat();
   const what = `Point group ${key}`;
-  const descriptions = Object.freeze(ops.map((op) => describe(op, all, what)));
+  const table: SeitzTable =
+    family !== 'hexagonal'
+      ? 'cubic'
+      : itcSetting(c.key, c.index).axes === 'rhombohedral'
+        ? 'rhombohedral'
+        : 'hexagonal';
+  const descriptions = Object.freeze(ops.map((op) => describe(op, all, basis, table, what)));
 
   // The full symbol of a grey group ends in 1', which is no position of the symbol.
   const tokens =
@@ -192,7 +226,7 @@ function analysis(key: MagneticPointGroupKey, options?: SettingOptions): Analysi
   const directions = Object.freeze(
     positions.map((axes, i) => {
       const elements = axes.map((a) => {
-        const on = descriptions.filter((d) => d.axis === a);
+        const on = descriptions.filter((d) => d.axis !== undefined && parallel(d.axis.cartesian, a.cartesian));
         const max = (kind: OperationKind, none: number) =>
           on.filter((d) => d.kind === kind).reduce((m, d) => Math.max(m, d.n), none);
         return Object.freeze({
@@ -216,8 +250,10 @@ function analysis(key: MagneticPointGroupKey, options?: SettingOptions): Analysi
 
 /**
  * Each operation of the point group described geometrically, in the order of `operations` for
- * the same key and options. Axes are named by the symmetry direction they lie along, with the sign
- * of ITA Table 2.1.3.1; the sign fixes what the sense refers to.
+ * the same key and options. An axis lies along a symmetry direction and has the sign of the
+ * operation's Seitz symbol (ITA 6th ed., Tables 1.4.2.1–1.4.2.3, p. 52), e.g. [1, 1, 0] for 2₁₁₀ in
+ * the hexagonal family, where ITA Table 2.1.3.1 lists [1̄, 1̄, 0]; for n ≥ 3 the sign fixes what the
+ * sense refers to.
  */
 export function describeOperations(
   key: MagneticPointGroupKey,
@@ -231,8 +267,9 @@ export function describeOperations(
  * The positions of the full Hermann–Mauguin symbol in the requested setting, each with its
  * symmetry directions (ITA Table 2.1.3.1) and the symmetry elements along them. All positions of the
  * crystal family are listed (for rhombohedral axes the two of that row of the table), also those the
- * symbol of the class leaves out (then without `symbol`); the triclinic family has none. A direction carries the same `lattice` and `cartesian` vectors as
- * the axis of `describeOperations` along it, so match the two by value.
+ * symbol of the class leaves out (then without `symbol`); the triclinic family has none. A direction
+ * has the sign of ITA Table 2.1.3.1, the axis of an operation along it that of its Seitz symbol, so
+ * the two are parallel and may be opposite: match them by direction, up to sign.
  */
 export function symmetryDirections(key: MagneticPointGroupKey, options?: SettingOptions): readonly SymmetryDirection[] {
   checkOptions(options, SETTING_KEYS, 'symmetryDirections');

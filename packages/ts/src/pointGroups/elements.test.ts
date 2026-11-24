@@ -96,8 +96,10 @@ describe('describeOperations', () => {
         const table = rhombohedral(key, setting)
           ? RHOMBOHEDRAL_DIRECTIONS
           : LATTICE_SYMMETRY_DIRECTIONS[familyOf(key)].flat().map((u) => [...u]);
-        // the sign of ITA Table 2.1.3.1, also for twofold axes and mirror normals
-        expect(table).toContainEqual([...d.axis!.lattice]);
+        // along a direction of ITA Table 2.1.3.1, with the sign of the Seitz symbol (#114), which may
+        // be the opposite one (seitz.reference.test.ts checks the sign against print)
+        const u = [...d.axis!.lattice];
+        expect(table.some((t) => t.every((x, k) => x === u[k]) || t.every((x, k) => x === -u[k]))).toBe(true);
       }
       expect(d.sense !== undefined).toBe(d.n >= 3);
     });

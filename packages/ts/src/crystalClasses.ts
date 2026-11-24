@@ -415,8 +415,10 @@ export function describeOperationsOf(
 
 /**
  * Each operation of the crystal class described geometrically, in the order of `operations` for
- * the same key and options. Axes are named by the symmetry direction they lie along, with the sign
- * of ITA Table 2.1.3.1; the sign fixes what the sense refers to.
+ * the same key and options. An axis lies along a symmetry direction and has the sign of the
+ * operation's Seitz symbol (ITA 6th ed., Tables 1.4.2.1–1.4.2.3, p. 52), e.g. [1, 1, 0] for 2₁₁₀ in
+ * the hexagonal family, where ITA Table 2.1.3.1 lists [1̄, 1̄, 0]; for n ≥ 3 the sign fixes what the
+ * sense refers to.
  */
 export function describeOperations(key: PointGroupKey, options?: SettingOptions): readonly OperationDescription[] {
   const described = elements.describeOperations(classKey(key), options);
@@ -436,8 +438,9 @@ export function describeOperations(key: PointGroupKey, options?: SettingOptions)
  * The positions of the full Hermann–Mauguin symbol in the requested setting, each with its
  * symmetry directions (ITA Table 2.1.3.1) and the symmetry elements along them. All positions of the
  * crystal family are listed (for rhombohedral axes the two of that row of the table), also those the
- * symbol of the class leaves out (then without `symbol`); the triclinic family has none. A direction carries the same `lattice` and `cartesian` vectors as
- * the axis of `describeOperations` along it, so match the two by value.
+ * symbol of the class leaves out (then without `symbol`); the triclinic family has none. A direction
+ * has the sign of ITA Table 2.1.3.1, the axis of an operation along it that of its Seitz symbol, so
+ * the two are parallel and may be opposite: match them by direction, up to sign.
  */
 export function symmetryDirections(
   key: PointGroupKey,

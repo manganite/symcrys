@@ -601,9 +601,17 @@ perpendicular.
 | `timeReversal` | magnetic API: as in the operation                                                                                                                                          |
 
 - **Axis.** Every axis and mirror normal of a crystal class lies along one of its symmetry
-  directions; the axis is that direction, as [uvw] with the sign of Table 2.1.3.1 and as a
-  Cartesian unit vector in the frame of
-  the setting. For the monoclinic family, which has no fixed
+  directions; the axis is that direction, as [uvw] and as a Cartesian unit vector in the frame of
+  the setting, with the sign of the operation's **Seitz symbol** (ITA 6th ed., Tables 1.4.2.1–1.4.2.3,
+  p. 52; "Pure ITC", #114): the direction its subscript names, for every matrix W of the setting.
+  Where Table 2.1.3.1 lists the opposite representative, the two differ in sign: in the hexagonal
+  family the twofold axes and mirror normals 2₁₁₀, m₁₁₀ and 2₂₁₀, m₂₁₀ are [1, 1, 0] and [2, 1, 0],
+  where the table lists [1̄, 1̄, 0] and [2̄, 1̄, 0]; for the other families and for n ≥ 3 the two
+  agree. `symmetryDirections` keeps the sign of Table 2.1.3.1, so match an axis with a direction up
+  to sign. Tested against the printed tables for every operation of every setting
+  (`seitz.reference.test.ts`), with the printed entries checked against their own matrices (axis,
+  normal, sense); Table 1.4.2.1 prints No. 32 without the overbar of its type (erratum in the
+  transcription). For the monoclinic family, which has no fixed
   basis, a, b, c are taken along x, y, z; this is exact for the unique axis, the only direction
   that carries an element.
 - **Sense** follows ITA § 11.1.2 (5th ed., pp. 810–811): `+` if the rotation is counter-clockwise
@@ -799,8 +807,9 @@ the 122 groups (a list of white operations is the white group, as everywhere in 
 
 `describeOperationsOf(operations, { tolerance })` describes each operation of any list as `describeOperations`
 does for a key (kind, n, sense), but with the axis as a Cartesian unit vector only, because the
-list need not belong to a setting whose lattice directions could name it. The axis is signed so
-that its first non-zero component, in the order x, y, z, is positive, and the sense refers to that sign; a component smaller than the tolerance
+list need not belong to a setting whose lattice directions could name it, and a Seitz symbol needs
+a lattice. The axis is signed so that its first non-zero component, in the order x, y, z, is positive,
+symcrys's own rule for a list without a lattice (Thomas, 2026-11-24), and the sense refers to that sign; a component smaller than the tolerance
 counts as zero, so that a matrix with rounding errors keeps the sign of its axis. A matrix that is
 not orthogonal, or whose rotation part does not turn by 360°/n with n = 1, 2, 3, 4, 6 (its trace
 1 + 2 cos θ not an integer), is a RangeError, both within `tolerance` as for `pointGroupOf`.
@@ -1110,10 +1119,12 @@ operations": its kind (`'identity'`, `'translation'`, `'rotation'`, `'reflection
 `'glide-reflection'`, as ITA names the operations in Table 2.1.2.1, p. 145), the n and sense of a rotation, the centre of a rotation, the direction of a line and one point of
 it (on y = 0, or on x = 0 for a line along a), and the glide vector (w + W·w)/2. An operation whose
 glide vector is a non-zero lattice vector is a glide, as it is geometrically. A reflection or glide
-reflection also carries its `axis`, the normal of its line, its symmetry direction in the sense of
-ITA Table 2.1.3.1 (p. 151), under the name the axis of an operation has in the point groups (#137 C3,
-where the `axis` of a reflection is the normal of its plane): the
-shortest integer vector along W − I, first non-zero component positive. Without a metric it is not
+reflection also carries its `axis`, the normal of its line, a symmetry direction of ITA Table 2.1.3.1
+(p. 151), under the name the axis of an operation has in the point groups (#137 C3, where the `axis`
+of a reflection is the normal of its plane), with the sign of its Seitz symbol (ITA 2016 Tables
+1.4.2.4, 1.4.2.5, p. 53: m₁₀, m₁₂, m₂₁; #107, #114): the shortest integer vector along W − I, first
+non-zero component positive, which gives the printed Seitz direction for every operation of the 17
+groups (tested). Without a metric it is not
 the perpendicular of the direction: in a hexagonal basis the line along [10] has the normal [12]. The
 normals of a group are the printed symmetry directions at the positions where its full symbol has
 `m` or `g` (tested for all 17), so they say to which position of the symbol a line belongs; the lines
@@ -1173,6 +1184,7 @@ the determination of the plane group of a pattern (a later MINOR, #31).
 | ITC default settings                                                                                                                         | see "Settings" above                                                                                                                                                                                                                                                                                              | `itcSettings.fixtures.ts`                                                                               |
 | centrosymmetric, polar, enantiomorphic, Laue class, holohedry, lattice systems, Schoenflies                                                  | ITA Table 1.3.4.1 (p. 39, lattice systems and holohedries), Table 2.1.1.1 (p. 143, Laue groups and holohedries), Table 3.2.2.1 (p. 738), Table 3.2.3.2                                                                                                                                                            | `properties.reference.test.ts`, `itc.reference.test.ts`                                                 |
 | symmetry directions                                                                                                                          | ITA Table 2.1.3.1 (p. 151)                                                                                                                                                                                                                                                                                        | `symmetryDirections.reference.test.ts`                                                                  |
+| signs of the axes of operations (Seitz symbols)                                                                                              | ITA 6th ed. Tables 1.4.2.1–1.4.2.5 (pp. 52–53): `references/itc/vol-a-2016-tables-1.4.2-seitz.md`                                                                                                                                                                                                                 | `seitz.reference.test.ts`                                                                               |
 | ITC: order of the operations, generators                                                                                                     | ITA's selected generators, ITA 5th ed. (2006), Part 7 (pages in `references/itc/vol-a-2006-symmetry-operations.md`), § 2.2.11 (iv) p. 27, § 8.3.5 p. 737, giving the numbering of Table 3.2.3.2                                                                                                                   | `elements.reference.test.ts`                                                                            |
 | Magnetic groups, ITC: keys, crystal system, Schoenflies and full symbols, operators of the default setting                                   | ITC Vol. D (2013) Table 1.5.2.3 (pp. 111–112): `references/itc/vol-d-table-1.5.2.3.md`; grey groups: eq. (1.5.2.1), p. 110                                                                                                                                                                                        | `magnetic.reference.test.ts`                                                                            |
 | Magnetic groups, second print check: operations of the ITC default setting in the ITC frame, classical subgroup, Birss's symbols             | Birss Table 6 (pp. 91–98) with the generating matrices of eq. (2.17) (pp. 48–49): `references/birss/table-6.md`                                                                                                                                                                                                   | `magnetic.reference.test.ts`                                                                            |
