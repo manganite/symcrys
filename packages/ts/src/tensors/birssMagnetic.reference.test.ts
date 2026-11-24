@@ -38,7 +38,7 @@ import { groupOfSymbol } from '../testUtils/hermannMauguin.js';
 import { sameGroup, type M } from '../testUtils/independentGroups.js';
 import { matrixRank, satisfies } from '../testUtils/rank.js';
 import { expectHeader, readReference, tableRows } from '../testUtils/references.js';
-import { tensorForm, tensorFormOf, type TensorParity, type TensorRank, type TimeParity } from './tensorForm.js';
+import { tensorForm, tensorFormOf, type TensorKind, type TensorRank, type TimeParity } from './tensorForm.js';
 
 const rows = tableRows(readReference('birss/table-7.md'));
 expectHeader(rows, [
@@ -109,9 +109,9 @@ const ROWS: Row[] = rows.slice(1).map((r) => {
 });
 
 const RANKS: TensorRank[] = [0, 1, 2, 3, 4];
-/** Columns 5–8 (i) and 9–12 (c) of the print, as indices of the cells. */
-const COLUMNS: { column: number; timeParity: TimeParity; parity: TensorParity; even: boolean }[] = (
-  ['i', 'c'] as const
+/** Columns 5–8 (Birss's i, time-even) and 9–12 (c, time-odd) of the print, as indices of the cells. */
+const COLUMNS: { column: number; timeParity: TimeParity; parity: TensorKind; even: boolean }[] = (
+  ['even', 'odd'] as const
 ).flatMap((timeParity, t) =>
   (
     [
@@ -175,7 +175,7 @@ function rotatedFrames(system: string): M[] {
  */
 function holds(key: MagneticPointGroupKey, frame: M, c: (typeof COLUMNS)[number], letter: string | null) {
   return RANKS.filter((rank) => (rank % 2 === 0) === c.even).every((rank) => {
-    const spec = { rank, parity: c.parity, timeParity: c.timeParity, intrinsic: 'none' } as const;
+    const spec = { rank, kind: c.parity, timeParity: c.timeParity, intrinsic: 'none' } as const;
     const basis = tensorForm(key, spec).basis.map((b) =>
       rotateComponents(tensorToBirssFrame(key, b, rank), rank, frame),
     );
@@ -312,9 +312,9 @@ describe('Birss Table 7: parentheses of column 2, and time-even forms', () => {
 
   it('a time-even form is the form under the operations with time reversal dropped, index symmetries included', () => {
     const specs = [
-      { rank: 2, parity: 'axial', timeParity: 'i', intrinsic: 'ij' },
-      { rank: 3, parity: 'polar', timeParity: 'i', intrinsic: 'jk' },
-      { rank: 4, parity: 'polar', timeParity: 'i', intrinsic: 'voigt' },
+      { rank: 2, kind: 'axial', timeParity: 'even', intrinsic: 'symmetric-first-pair' },
+      { rank: 3, kind: 'polar', timeParity: 'even', intrinsic: 'symmetric-last-pair' },
+      { rank: 4, kind: 'polar', timeParity: 'even', intrinsic: 'symmetric-pairs-exchangeable' },
     ] as const;
     for (const { key } of magnetic) {
       for (const s of settings(key)) {
@@ -338,10 +338,10 @@ describe('Groups with time reversal itself (Birss p. 102)', () => {
       expect(POINT_GROUP_KEYS, key).toContain(crystalClass);
       for (const rank of RANKS) {
         for (const parity of ['polar', 'axial'] as const) {
-          const spec = { rank, parity, intrinsic: 'none' } as const;
-          expect(tensorForm(key, { ...spec, timeParity: 'c' }).basis, `${key} rank ${rank} ${parity}`).toEqual([]);
-          expect(tensorForm(key, { ...spec, timeParity: 'i' })).toEqual(
-            tensorForm(crystalClass, { ...spec, timeParity: 'i' }),
+          const spec = { rank, kind: parity, intrinsic: 'none' } as const;
+          expect(tensorForm(key, { ...spec, timeParity: 'odd' }).basis, `${key} rank ${rank} ${parity}`).toEqual([]);
+          expect(tensorForm(key, { ...spec, timeParity: 'even' })).toEqual(
+            tensorForm(crystalClass, { ...spec, timeParity: 'even' }),
           );
         }
       }

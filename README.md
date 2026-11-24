@@ -58,14 +58,14 @@ which the site includes.
 import { allowedProperties, symbol, tensorForm } from 'symcrys';
 
 symbol('32'); // '321': ITC short symbol of the default setting
-tensorForm('mm2', { rank: 3, parity: 'polar', intrinsic: 'jk' }).parameters; // xxz, yyz, zxx, zyy, zzz
+tensorForm('mm2', { rank: 3, kind: 'polar', intrinsic: 'symmetric-last-pair' }).parameters; // xxz, yyz, zxx, zyy, zzz
 allowedProperties('32'); // ['piezoelectric', 'gyrotropic']: quartz
 ```
 
 ```python
 import symcrys
 
-symcrys.tensor_form("mm2", {"rank": 3, "parity": "polar", "intrinsic": "jk"})["parameters"]
+symcrys.tensor_form("mm2", {"rank": 3, "kind": "polar", "intrinsic": "symmetric-last-pair"})["parameters"]
 symcrys.magnetic.allowed_properties("321'")  # ['piezoelectric', 'gyrotropic']: quartz, the grey group
 ```
 

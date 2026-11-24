@@ -82,7 +82,12 @@ describe('ITC Vol. D § 1.1.4.10.7: axial tensors of rank 2', () => {
   });
 
   for (const p of PANELS) {
-    const spec: TensorSpec = { rank: 2, parity: 'axial', timeParity: 'i', intrinsic: p.symmetric ? 'ij' : 'none' };
+    const spec: TensorSpec = {
+      rank: 2,
+      kind: 'axial',
+      timeParity: 'even',
+      intrinsic: p.symmetric ? 'symmetric-first-pair' : 'none',
+    };
     const title = `${p.section} ${p.groups.join(', ')}${p.frame ? ` (${p.frame})` : ''}`;
     it(`${title}: cells, links and signs`, () => {
       for (const key of p.groups) {
@@ -130,10 +135,10 @@ describe('ITC Vol. D § 1.1.4.10.6: fourth-rank tensors, numbers of independent 
 
   it.each(ROWS4.map((r) => [`${r.section} ${r.groups.join(', ')}`, r] as const))('%s', (_t, r) => {
     for (const key of r.groups) {
-      const n = (intrinsic: 'ij_kl' | 'voigt') =>
-        tensorForm(key, { rank: 4, parity: 'polar', timeParity: 'i', intrinsic }).basis.length;
-      expect(n('ij_kl'), `${key}: p, π, Q`).toBe(r.p);
-      expect(n('voigt'), `${key}: c, s`).toBe(r.c);
+      const n = (intrinsic: 'symmetric-pairs' | 'symmetric-pairs-exchangeable') =>
+        tensorForm(key, { rank: 4, kind: 'polar', timeParity: 'even', intrinsic }).basis.length;
+      expect(n('symmetric-pairs'), `${key}: p, π, Q`).toBe(r.p);
+      expect(n('symmetric-pairs-exchangeable'), `${key}: c, s`).toBe(r.c);
     }
   });
 });
@@ -288,9 +293,9 @@ describe('ITC Vol. D § 1.1.4.10.6: fourth-rank tensors, forms of the matrices',
       .map((g) => keyOf(g.trim(), d.section.startsWith('1.1.4.10.6.7') ? CUBIC_MISPRINT : {}));
     for (const tensor of d.tensors) {
       it(`${d.section} ${groups.join(', ')}: ${tensor}`, () => {
-        const intrinsic = tensor === 'c' || tensor === 's' ? 'voigt' : 'ij_kl';
+        const intrinsic = tensor === 'c' || tensor === 's' ? 'symmetric-pairs-exchangeable' : 'symmetric-pairs';
         for (const key of groups) {
-          const basis = tensorForm(key, { rank: 4, parity: 'polar', timeParity: 'i', intrinsic }).basis;
+          const basis = tensorForm(key, { rank: 4, kind: 'polar', timeParity: 'even', intrinsic }).basis;
           expectDiagram(d, tensor, basis, key);
         }
       });
@@ -315,7 +320,7 @@ describe('ITC Vol. D § 1.1.4.10.6: fourth-rank tensors, forms of the matrices',
       [t * x * y + s * z, t * y * y + c, t * y * z - s * x],
       [t * x * z - s * y, t * y * z + s * x, t * z * z + c],
     ] as const;
-    const spec = { rank: 4, parity: 'polar', timeParity: 'i', intrinsic: 'ij_kl' } as const;
+    const spec = { rank: 4, kind: 'polar', timeParity: 'even', intrinsic: 'symmetric-pairs' } as const;
     for (const tensor of isotropic) {
       rotateTensor(tensor, rotation, spec).forEach((v, n) => expect(v).toBeCloseTo(tensor[n], 9));
     }

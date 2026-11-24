@@ -18,9 +18,9 @@ from numpy.typing import ArrayLike, NDArray
 from . import _shared
 from ._convert import from_js
 from ._engine import SymcrysError, SymcrysInternalError
-from ._shared import MAGNETIC, IntrinsicSymmetry, SiteSymmetry, TensorForm, TensorParity
+from ._shared import MAGNETIC, IntrinsicSymmetry, SiteSymmetry, TensorForm, TensorKind
 
-TimeParity = Literal["i", "c"]
+TimeParity = Literal["even", "odd"]
 TensorPropertyName = Literal[
     "pyroelectric", "ferroaxial", "piezoelectric", "gyrotropic", "ferromagnetic", "magnetoelectric", "piezomagnetic"
 ]
@@ -30,7 +30,7 @@ class TensorSpec(TypedDict):
     """The kind of tensor (keys also accepted in camelCase, e.g. ``timeParity``)."""
 
     rank: int
-    parity: TensorParity
+    kind: TensorKind
     time_parity: TimeParity
     intrinsic: IntrinsicSymmetry
 

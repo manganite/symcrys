@@ -42,7 +42,7 @@ describe('TENSOR_PROPERTIES', () => {
     ]);
     for (const name of TENSOR_PROPERTY_NAMES) {
       const p = TENSOR_PROPERTIES[name];
-      expect(Object.keys(p.spec).sort(), name).toEqual(['intrinsic', 'parity', 'rank', 'timeParity']);
+      expect(Object.keys(p.spec).sort(), name).toEqual(['intrinsic', 'kind', 'rank', 'timeParity']);
       expect(p.description.length, name).toBeGreaterThan(20);
       // Ferroaxial order is not in ITC Vol. D; its classes follow from Birss's tables of tensor forms.
       expect(p.source, name).toMatch(
@@ -134,7 +134,7 @@ describe('allowsProperty and allowedProperties', () => {
     for (const key of MAGNETIC_POINT_GROUP_KEYS.filter((k) => pointGroup(k).type === 'II')) {
       const crystalClass = key.slice(0, -2) as PointGroupKey;
       expect(allowedProperties(key), key).toEqual(
-        allowedProperties(crystalClass).filter((n) => TENSOR_PROPERTIES[n].spec.timeParity === 'i'),
+        allowedProperties(crystalClass).filter((n) => TENSOR_PROPERTIES[n].spec.timeParity === 'even'),
       );
     }
   });

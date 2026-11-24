@@ -320,20 +320,20 @@ describe('the tensors these tables are compared with', () => {
   it('are those of TENSOR_PROPERTIES: axial, time-odd, of rank 1, 3 (symmetric in j, k) and 2', () => {
     expect(TENSOR_PROPERTIES.ferromagnetic.spec).toEqual({
       rank: 1,
-      parity: 'axial',
-      timeParity: 'c',
+      kind: 'axial',
+      timeParity: 'odd',
       intrinsic: 'none',
     });
     expect(TENSOR_PROPERTIES.piezomagnetic.spec).toEqual({
       rank: 3,
-      parity: 'axial',
-      timeParity: 'c',
-      intrinsic: 'jk',
+      kind: 'axial',
+      timeParity: 'odd',
+      intrinsic: 'symmetric-last-pair',
     });
     expect(TENSOR_PROPERTIES.magnetoelectric.spec).toEqual({
       rank: 2,
-      parity: 'axial',
-      timeParity: 'c',
+      kind: 'axial',
+      timeParity: 'odd',
       intrinsic: 'none',
     });
   });

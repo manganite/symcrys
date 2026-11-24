@@ -77,8 +77,7 @@ class TensorProperties(SphinxDirective):
         for name, prop in magnetic.TENSOR_PROPERTIES.items():
             spec = prop["spec"]
             kind = (
-                f"rank {spec['rank']}, {spec['parity']}, "
-                f"time-{'even' if spec['time_parity'] == 'i' else 'odd'} ({spec['time_parity']}), "
+                f"rank {spec['rank']}, {spec['kind']}, time-{spec['time_parity']}, "
                 f"intrinsic {spec['intrinsic']}"
             )
             here = "yes" if name in symcrys.TENSOR_PROPERTIES else "no (magnetic API only)"

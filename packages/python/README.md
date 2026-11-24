@@ -19,7 +19,7 @@ pip install symcrys
 import symcrys
 from symcrys import magnetic
 
-SHG = {"rank": 3, "parity": "polar", "intrinsic": "jk"}
+SHG = {"rank": 3, "kind": "polar", "intrinsic": "symmetric-last-pair"}
 symcrys.tensor_form("mm2", SHG)["parameters"]   # the free components: xxz, yyz, zxx, zyy, zzz
 symcrys.allowed_properties("32")               # ['piezoelectric', 'gyrotropic']: quartz
 magnetic.allowed_properties("321'")            # the same: quartz is the grey group in the magnetic API

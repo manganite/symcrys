@@ -49,7 +49,7 @@ export type { Hkl, WyckoffPosition } from './pointGroups/wyckoff.js';
 export type { CrystalForm, CrystalFormType } from './pointGroups/crystalForms.js';
 export type { DirectionOrbitEntry, FaceOrbitEntry, OrbitPole } from './pointGroups/orbits.js';
 export type { CartesianAxis } from './pointGroups/identify.js';
-export type { IntrinsicSymmetry, TensorForm, TensorParity, TensorRank } from './tensors/tensorForm.js';
+export type { IntrinsicSymmetry, TensorForm, TensorKind, TensorRank } from './tensors/tensorForm.js';
 
 export {
   CRYSTAL_FORM_TYPES,

@@ -109,7 +109,7 @@ export {
   tensorFormOf,
   type IntrinsicSymmetry,
   type TensorForm,
-  type TensorParity,
+  type TensorKind,
   type TensorRank,
   type TensorSpec,
   type TimeParity,

@@ -14,6 +14,6 @@ const threefold = operations('32')[1];
 console.log(operations('32').length, threefold.matrix, threefold.cartesian);
 
 // The form of a tensor: by its specification, or by the name of a property.
-const SHG = { rank: 3, parity: 'polar', intrinsic: 'jk' } as const;
+const SHG = { rank: 3, kind: 'polar', intrinsic: 'symmetric-last-pair' } as const;
 console.log(tensorForm('mm2', SHG).parameters); // the free components as index lists: xxz, yyz, zxx, zyy, zzz
 console.log(allowedProperties('32'));

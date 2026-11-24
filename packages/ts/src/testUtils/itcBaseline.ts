@@ -117,10 +117,10 @@ function errorPins(add: (id: string, f: () => unknown) => void): void {
   add('error: classes.operations setting 9', () => classes.operations('mm2', { setting: 9 }));
   add('error: magnetic.operations setting 0', () => magnetic.operations('2', { setting: 0 }));
   add('error: classes.tensorForm time-odd', () =>
-    classes.tensorForm('4mm', { rank: 1, parity: 'axial', intrinsic: 'none', timeParity: 'c' } as never),
+    classes.tensorForm('4mm', { rank: 1, kind: 'axial', intrinsic: 'none', timeParity: 'odd' } as never),
   );
   add('error: classes.tensorForm voigt at rank 3', () =>
-    classes.tensorForm('4mm', { rank: 3, parity: 'polar', intrinsic: 'voigt' }),
+    classes.tensorForm('4mm', { rank: 3, kind: 'polar', intrinsic: 'symmetric-pairs-exchangeable' }),
   );
   add('error: classes.allowsProperty time-odd name', () => classes.allowsProperty('4mm', 'ferromagnetic' as never));
   add('error: classes.siteSymmetry zero vector', () => classes.siteSymmetryOf(classes.operations('4mm'), [0, 0, 0]));
@@ -292,8 +292,8 @@ function pointGroupPins(add: (id: string, f: () => unknown) => void, key: Magnet
   }
 }
 
-/** Index symmetries per rank, as `tensorForm` accepts them. */
-const INTRINSIC_BY_RANK: Readonly<Record<number, readonly TensorSpec['intrinsic'][]>> = {
+/** Index symmetries per rank, by the names of the pins (up to #121 step 9a, #137 E2). */
+const INTRINSIC_BY_RANK: Readonly<Record<number, readonly string[]>> = {
   0: ['none'],
   1: ['none'],
   2: ['none', 'ij', 'jk'],
@@ -301,15 +301,43 @@ const INTRINSIC_BY_RANK: Readonly<Record<number, readonly TensorSpec['intrinsic'
   4: ['none', 'ij', 'jk', 'ij_kl', 'voigt'],
 };
 
-/** Every tensor specification at the given time parity. */
-const specs = (timeParity: 'i' | 'c'): TensorSpec[] =>
+/** The names of the pins and the names since #121 step 9a (#137 E1, E2). */
+const NEW_INTRINSIC: Readonly<Record<string, TensorSpec['intrinsic']>> = {
+  none: 'none',
+  ij: 'symmetric-first-pair',
+  jk: 'symmetric-last-pair',
+  ij_kl: 'symmetric-pairs',
+  voigt: 'symmetric-pairs-exchangeable',
+};
+const OLD_INTRINSIC: Readonly<Record<string, string>> = Object.fromEntries(
+  Object.entries(NEW_INTRINSIC).map(([old, now]) => [now, old]),
+);
+const NEW_TIME_PARITY = { i: 'even', c: 'odd' } as const;
+const OLD_TIME_PARITY: Readonly<Record<string, string>> = { even: 'i', odd: 'c' };
+
+/** A specification in the shape of the pins: parity, 'i'/'c', the index symmetries by their old names. */
+const oldSpec = ({ kind, timeParity, intrinsic, ...rest }: Partial<TensorSpec>) => ({
+  ...rest,
+  parity: kind,
+  ...(timeParity === undefined ? {} : { timeParity: OLD_TIME_PARITY[timeParity] }),
+  intrinsic: intrinsic === undefined ? undefined : OLD_INTRINSIC[intrinsic],
+});
+/** A table of named properties in the shape of the pins. */
+const oldProperties = (table: Readonly<Record<string, { readonly spec: Partial<TensorSpec> }>>) =>
+  Object.fromEntries(Object.entries(table).map(([name, p]) => [name, { ...p, spec: oldSpec(p.spec) }]));
+
+/** Every tensor specification at the given time parity, with its label in the names of the pins. */
+const specs = (timeParity: 'i' | 'c'): { label: string; spec: TensorSpec }[] =>
   [0, 1, 2, 3, 4].flatMap((rank) =>
-    (['polar', 'axial'] as const).flatMap((parity) =>
+    (['polar', 'axial'] as const).flatMap((kind) =>
       INTRINSIC_BY_RANK[rank].map((intrinsic) => ({
-        rank: rank as TensorSpec['rank'],
-        parity,
-        timeParity,
-        intrinsic,
+        label: `${rank} ${kind} ${timeParity} ${intrinsic}`,
+        spec: {
+          rank: rank as TensorSpec['rank'],
+          kind,
+          timeParity: NEW_TIME_PARITY[timeParity],
+          intrinsic: NEW_INTRINSIC[intrinsic],
+        },
       })),
     ),
   );
@@ -333,8 +361,7 @@ const formPin = (form: magnetic.TensorForm) => ({
  */
 function tensorPins(add: (id: string, f: () => unknown) => void, key: MagneticPointGroupKey, timeParity: 'i' | 'c') {
   for (const s of magnetic.settings(key)) {
-    for (const spec of specs(timeParity)) {
-      const label = `${spec.rank} ${spec.parity} ${spec.timeParity} ${spec.intrinsic}`;
+    for (const { label, spec } of specs(timeParity)) {
       add(`${key} | ${settingName(s)}: ${label}`, () => formPin(magnetic.tensorForm(key, spec, { setting: s.index })));
     }
   }
@@ -350,7 +377,7 @@ function tensorFunctionPins(add: (id: string, f: () => unknown) => void): void {
   add('rotateTensor axial rank 2 by a mirror', () =>
     classes.rotateTensor([1, 2, 3, 4, 5, 6, 7, 8, 9], classes.operations('m')[1].cartesian, {
       rank: 2,
-      parity: 'axial',
+      kind: 'axial',
       intrinsic: 'none',
     }),
   );
@@ -453,8 +480,8 @@ function generalPins(add: (id: string, f: () => unknown) => void): void {
   add('classes.isPointGroupKey', () => ['32', "321'", '-62m', 'x'].map((k) => classes.isPointGroupKey(k)));
   add('magnetic.isPointGroupKey', () => ['32', "321'", '-62m', 'x'].map((k) => magnetic.isPointGroupKey(k)));
   add('CRYSTAL_FORM_TYPES', () => classes.CRYSTAL_FORM_TYPES);
-  add('magnetic.TENSOR_PROPERTIES', () => magnetic.TENSOR_PROPERTIES);
-  add('classes.TENSOR_PROPERTIES', () => classes.TENSOR_PROPERTIES);
+  add('magnetic.TENSOR_PROPERTIES', () => oldProperties(magnetic.TENSOR_PROPERTIES));
+  add('classes.TENSOR_PROPERTIES', () => oldProperties(classes.TENSOR_PROPERTIES));
   add('LATTICE_SYMMETRY_DIRECTIONS', () => classes.LATTICE_SYMMETRY_DIRECTIONS);
   for (const symbol of SEARCHED_SYMBOLS) {
     add(`classes.findPointGroup ${JSON.stringify(symbol)}`, () => classes.findPointGroup(symbol));
