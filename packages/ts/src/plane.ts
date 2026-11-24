@@ -32,8 +32,13 @@ import {
   planePointGroupSystem,
   type PlanePointGroupKey,
 } from './spaceGroups/planePointGroups.js';
-import { planeOrbit, planeSiteSymmetry, planeWyckoffPositionOf } from './spaceGroups/positions.js';
-import { planeSnapToWyckoffPosition } from './spaceGroups/snap.js';
+import {
+  planeMetric,
+  planeOrbit,
+  planeSiteOfPosition,
+  planeWyckoffDistances,
+  planeWyckoffPositionOf,
+} from './spaceGroups/positions.js';
 import { parseRational, rational, toNumber, type Rational } from './spaceGroups/rational.js';
 
 export { VERSION } from './version.js';
@@ -168,17 +173,34 @@ export interface WyckoffPosition {
   readonly coordinates: readonly string[];
 }
 
-/** A point snapped onto a Wyckoff position: the position, as `wyckoffPositions` gives it, and the point on it. */
-export interface SnappedPosition extends WyckoffPosition {
-  /** The point on the position nearest to the given one, modulo the lattice, in [0, 1). */
+/** The distance of a point to a Wyckoff position: the position, as `wyckoffPositions` gives it, the nearest point of it, and the distance. */
+export interface WyckoffDistance extends WyckoffPosition {
+  /** The point of the position nearest to the given one (lattice basis), modulo the lattice, in [0, 1). */
   readonly point: readonly number[];
+  /**
+   * The distance of the given point to the position: without a basis the larger of the two
+   * coordinate differences modulo the lattice, with a basis Euclidean in its unit.
+   */
+  readonly distance: number;
+}
+
+/** Options of `wyckoffDistances`. */
+export interface WyckoffDistanceOptions {
+  /**
+   * The Cartesian basis of the lattice, a 2 × 2 matrix whose columns are a and b; with it the
+   * distances are Euclidean, without it they are measured per lattice coordinate.
+   */
+  readonly basis?: readonly (readonly number[])[];
 }
 
 /** The site symmetry of a point under a plane group. */
 export interface SiteSymmetry {
   /** Indices into `operations` of those that map the point onto itself modulo the lattice, ascending: a subgroup. */
   readonly operations: readonly number[];
-  /** The point set onto the fixed space of its site symmetry, in [0, 1), which removes rounding errors within the tolerance. */
+  /**
+   * The point set onto the Wyckoff position it lies on (the nearest point of the position, as
+   * `wyckoffDistances` gives it), in [0, 1).
+   */
   readonly point: readonly number[];
   /** The number of points in the conventional cell equivalent to it. */
   readonly multiplicity: number;
@@ -464,14 +486,15 @@ export function wyckoffPositions(key: PlaneGroupKey): readonly WyckoffPosition[]
 }
 
 /**
- * The site symmetry of a point (lattice basis) under a plane group: the operations that map it
- * onto itself modulo the lattice within the tolerance, closed into a group, and the point set onto
- * their fixed space. Throws a RangeError for an unknown key, a point that is not two finite
- * numbers, or a tolerance outside (0, 1/2).
+ * The site symmetry of a point (lattice basis) under a plane group, as one notion with its Wyckoff
+ * position (#137 F1): the point is set onto the position it lies on within the tolerance
+ * (`wyckoffPosition`), and the site symmetry is that of the point there; `point` is the point on the
+ * position. Throws a RangeError for an unknown key, a point that is not two finite numbers, or a
+ * tolerance outside (0, 1/2).
  */
 export function siteSymmetry(key: PlaneGroupKey, point: readonly number[], options?: ToleranceOptions): SiteSymmetry {
   checkOptions(options, TOLERANCE_KEYS, 'siteSymmetry');
-  const site = planeSiteSymmetry(groupKey(key, 'siteSymmetry'), point, options);
+  const site = planeSiteOfPosition(groupKey(key, 'siteSymmetry'), point, options);
   return Object.freeze({
     operations: Object.freeze([...site.operations]),
     point: Object.freeze([...site.point]),
@@ -482,8 +505,10 @@ export function siteSymmetry(key: PlaneGroupKey, point: readonly number[], optio
 
 /**
  * The Wyckoff position of a point (lattice basis) under a plane group, as `wyckoffPositions` gives
- * it: the printed position of the point's multiplicity whose coordinates, with the centring, reach
- * the point set onto its site symmetry. Throws a RangeError as `siteSymmetry`.
+ * it: the most special printed position whose point set lies within the tolerance of the point,
+ * measured per coordinate modulo the lattice, and among positions of equal multiplicity the nearest
+ * (the distance of `wyckoffDistances`); the general position always holds the point. Throws a
+ * RangeError as `siteSymmetry`.
  */
 export function wyckoffPosition(
   key: PlaneGroupKey,
@@ -499,29 +524,34 @@ export function wyckoffPosition(
 }
 
 /**
- * Snaps a point (lattice basis) onto the most special Wyckoff position of a plane group that lies
- * within the tolerance of it, measured per coordinate modulo the lattice: a position without a free
- * parameter (a point) before one with one (a line), before the general position, which always holds
- * the point; among positions of the same kind the nearest. Returns the position, as
- * `wyckoffPositions` gives it, and the nearest point on it, in [0, 1). Unlike `wyckoffPosition`,
- * which asks whether the images of the point lie within the tolerance of it, this asks whether the
- * point lies within the tolerance of the position: an application that drags a point and lets it
- * snap passes a tolerance such as 10⁻². The point on a line is found by least squares in the
- * lattice coordinates. Throws a RangeError as `siteSymmetry`.
+ * The distance of a point (lattice basis) to every Wyckoff position of a plane group, in the
+ * printed order of `wyckoffPositions`, each with the nearest point of the position (#137 F1, #108).
+ * The point set of a position is the union of its printed coordinates with every centring and
+ * lattice translation: a point, a line or the plane. Without a basis the distance is the larger of
+ * the two coordinate differences modulo the lattice, the metric of the tolerance of
+ * `wyckoffPosition`; with a basis (columns a, b) it is Euclidean, and the nearest point is the
+ * Euclidean nearest one; per coordinate the nearest point of a line need not be unique (on x,0 every x
+ * within the distance is as near), and then it is one of them. The basis should be a reduced cell,
+ * such as the conventional one: the nearest lattice translate is sought near the rounded
+ * coordinates. How to snap a dragged point onto a position (which position wins, within
+ * which radius) is the application's choice; this gives the numbers for it. Throws a RangeError for
+ * an unknown key, a point that is not two finite numbers, and a basis that is not a non-singular
+ * 2 × 2 matrix.
  */
-export function snapToWyckoffPosition(
+export function wyckoffDistances(
   key: PlaneGroupKey,
   point: readonly number[],
-  options?: ToleranceOptions,
-): SnappedPosition {
-  checkOptions(options, TOLERANCE_KEYS, 'snapToWyckoffPosition');
-  const k = groupKey(key, 'snapToWyckoffPosition');
-  if (!Array.isArray(point)) {
-    throw new RangeError(`A point of the plane has two finite coordinates, not ${shown(point)}`);
-  }
-  const snapped = planeSnapToWyckoffPosition(k, point, options?.tolerance);
-  const position = wyckoffPositions(k)[snapped.row];
-  return Object.freeze({ ...position, point: Object.freeze([...snapped.point]) });
+  options?: WyckoffDistanceOptions,
+): readonly WyckoffDistance[] {
+  checkOptions(options, ['basis'], 'wyckoffDistances');
+  const k = groupKey(key, 'wyckoffDistances');
+  const g = options?.basis === undefined ? undefined : planeMetric(options.basis);
+  const positions = wyckoffPositions(k);
+  return Object.freeze(
+    planeWyckoffDistances(k, point, g).map((d) =>
+      Object.freeze({ ...positions[d.row], point: Object.freeze([...d.point]), distance: d.distance }),
+    ),
+  );
 }
 
 /** One point of the orbit of a point. */
@@ -534,7 +564,7 @@ export interface PointOrbitEntry {
 
 /**
  * The orbit of a point (lattice basis) under a plane group: the images of the point set onto its
- * site symmetry (as `siteSymmetry` sets it), each in [0, 1), in the order of the operations that
+ * Wyckoff position (as `siteSymmetry` sets it), each in [0, 1), in the order of the operations that
  * first give them, each with the indices of the operations that map the point there (as the
  * entries of the orbits of the point groups): one entry per coset of the site symmetry, so the
  * first entry holds the operations of `siteSymmetry`. Throws a RangeError as `siteSymmetry`.

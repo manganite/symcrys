@@ -8,6 +8,10 @@ All notable changes to symcrys are recorded here. The format follows
 
 ### Added
 
+- `wyckoffDistances(key, point, { basis })` in `symcrys/plane` (Python `plane.wyckoff_distances`)
+  (#137 F1, #108): the distance of a point to every Wyckoff position of a plane group, with the
+  nearest point of each.
+
 - **Monoclinic unique axis a** (#137 A5, #121 step 6c): the monoclinic classes and their grey and
   black-and-white groups get a third setting, unique axis a (`2 1 1`, `m 1 1`, `2/m 1 1`,
   `2' 1 1`, …), as ITC Vol. D prints it; its operations come from unique axis b by a′ = b, b′ = c, c′ = a
@@ -197,7 +201,23 @@ All notable changes to symcrys are recorded here. The format follows
   `TensorParity` is `TensorKind`. A specification with the names of 0.10 is a RangeError that
   names the new ones. Python: the keys `kind` and `time_parity`, and the same values.
 
+- **One criterion for the position of a point in a plane group** (#137 F1, #108, #121 step 10a):
+  `wyckoffPosition` of `symcrys/plane` decides by the distance of the point to a Wyckoff position,
+  per lattice coordinate (up to 0.10 by the distance of its images, half as far at a mirror line),
+  the most special position within the tolerance; `siteSymmetry` and `orbit` set the point onto
+  that position and give its site symmetry and images, so the three agree. Results change for points
+  whose distance to an element is comparable to the tolerance (the old criterion reached from about
+  a third of it to beyond it, depending on the element), and the set point (`siteSymmetry().point`,
+  `orbit`) changes near lines of the hexagonal groups, where it is now the nearest point of the line
+  per coordinate rather than the mean of the images.
+
 ### Removed
+
+- `snapToWyckoffPosition` of `symcrys/plane` (Python `snap_to_wyckoff_position`) and its result type
+  `SnappedPosition` (#137 F1, #108): replaced by `wyckoffDistances(key, point, { basis })`, which
+  gives for every Wyckoff position the nearest point and the distance (per lattice coordinate, or
+  Euclidean with a basis), on which an application builds its own snapping, e.g. the most special
+  position within a radius.
 
 - **`latticeOperations`** (Python `lattice_operations`), in both entry points (#121 step 6d): its
   matrices are the `matrix` of `operations`, index for index.

@@ -147,9 +147,9 @@
       "type": "dict",
       "doc": "``operations`` int64 array of shape (n,), ``point`` float64 array of shape (2,), ``multiplicity``, ``general``."
     },
-    "snap_to_wyckoff_position": {
-      "type": "dict",
-      "doc": "``letter``, ``multiplicity``, ``site_symmetry``, ``coordinates`` as in ``wyckoff_positions``, and ``point`` a float64 array of shape (2,)."
+    "wyckoff_distances": {
+      "type": "list of dict",
+      "doc": "One per Wyckoff position, in the order of ``wyckoff_positions``: ``letter``, ``multiplicity``, ``site_symmetry``, ``coordinates`` as there, ``point`` a float64 array of shape (2,) and ``distance`` a float."
     },
     "orbit": {
       "type": "list of dict",

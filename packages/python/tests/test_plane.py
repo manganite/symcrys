@@ -60,9 +60,13 @@ def test_numpy_types() -> None:
     assert len(orbit) == 2 and orbit[0]["point"].dtype == np.float64 and orbit[0]["point"].shape == (2,)
     assert orbit[1]["operations"].dtype == np.int64 and orbit[1]["operations"].tolist() == [1]
     assert plane.settings("3m")[0]["is_default"] is True
-    snapped = plane.snap_to_wyckoff_position("p6mm", np.array([0.34, 0.66]), tolerance=0.02)
-    assert snapped["letter"] == "b" and snapped["site_symmetry"] == "3m."
-    assert snapped["point"].dtype == np.float64 and np.allclose(snapped["point"], [1 / 3, 2 / 3])
+    distances = plane.wyckoff_distances("p6mm", np.array([0.34, 0.66]))
+    b = next(d for d in distances if d["letter"] == "b")
+    assert b["site_symmetry"] == "3m." and abs(b["distance"] - (0.34 - 1 / 3)) < 1e-12
+    assert b["point"].dtype == np.float64 and np.allclose(b["point"], [1 / 3, 2 / 3])
+    a = next(d for d in plane.wyckoff_distances("pm", [0.1, 0.3], basis=np.diag([2.0, 1.0])) if d["letter"] == "a")
+    assert abs(a["distance"] - 0.2) < 1e-12
+    assert plane.wyckoff_position("pm", [0.012, 0.3], tolerance=0.02)["letter"] == "a"
 
 
 def test_errors() -> None:
@@ -75,7 +79,7 @@ def test_errors() -> None:
     with pytest.raises(symcrys.SymcrysError, match="two coordinates"):
         plane.site_symmetry("p2", [[0.1, 0.2]])
     with pytest.raises(symcrys.SymcrysError):
-        plane.snap_to_wyckoff_position("p2", [0.1, 0.2], tolerance=0.5)
+        plane.wyckoff_distances("p2", [0.1, 0.2], basis=[[1, 2], [2, 4]])
     with pytest.raises(symcrys.SymcrysError, match="denominator"):
         plane.describe_operations_of([{"matrix": np.eye(2), "translation": [0.1234, 0]}])
     with pytest.raises(symcrys.SymcrysError):

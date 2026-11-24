@@ -108,7 +108,7 @@ const CALLS: Record<string, [Record<string, unknown>, Record<string, Call>]> = {
       wyckoffPosition: call(['p4', [0.1, 0.2]], TOLERANCE),
       siteSymmetry: call(['p4', [0.1, 0.2]], TOLERANCE),
       orbit: call(['p4', [0.1, 0.2]], TOLERANCE),
-      snapToWyckoffPosition: call(['p4', [0.1, 0.2]], TOLERANCE),
+      wyckoffDistances: call(['p4', [0.1, 0.2]], ['basis']),
     },
   ],
 };
