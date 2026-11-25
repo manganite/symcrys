@@ -36,14 +36,14 @@ export function reduceIndices(indices: readonly number[]): readonly number[] {
   return deepFreeze(indices.map((x) => x / g + 0));
 }
 
-/** The plane (hkl) of hexagonal axes as (hkil) with i = −(h + k). */
+/** The plane (hkl) of hexagonal axes as (hkil) with i = −(h + k) (Frank, Acta Cryst. 18, 862 (1965), Eq. (22)). */
 export function planeToFourIndices(hkl: Vec3): FourIndices {
   integers(hkl, 'planeToFourIndices', 3);
   if (hkl.every((x) => x === 0)) throw new RangeError('planeToFourIndices: zero vector');
   return deepFreeze([hkl[0] + 0, hkl[1] + 0, -(hkl[0] + hkl[1]) + 0, hkl[2] + 0]);
 }
 
-/** The plane (hkil) as (hkl); throws a RangeError unless i = −(h + k). */
+/** The plane (hkil) as (hkl) (Frank (1965), Eq. (21)); throws a RangeError unless i = −(h + k). */
 export function planeFromFourIndices(hkil: FourIndices): Vec3 {
   integers(hkil, 'planeFromFourIndices', 4);
   if (hkil[2] !== -(hkil[0] + hkil[1]))

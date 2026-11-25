@@ -947,7 +947,7 @@ T = −(U + V), W = w, scaled to the smallest integers, and back with u = U − 
 reduced. The print anchor is Frank, _Acta Cryst._ **18**, 862 (1965), Eqs. (19)–(22), p. 864, for the
 conventional hexagonal cell (his Eq. (18)): [uvw] → [2u − v, −u + 2v, −u − v, 3w] and
 [uvtw] → [u − t, v − t, w], up to a constant factor; (hkl) → (h, k, −h − k, l) (#112). ITA 2016
-gives the planes only (Ch. 2.1, p. 165). `zoneAxis(h1, h2)` is the reduced cross product h₁ × h₂ (zone law hu + kv + lw = 0), so its
+gives the four indices of planes (reflections) only (Ch. 2.1, p. 165). `zoneAxis(h1, h2)` is the reduced cross product h₁ × h₂ (zone law hu + kv + lw = 0), so its
 sign follows the order of the planes; parallel planes give `undefined` (never `null`, #137 C4).
 
 **Change of the coordinate system** (#120, #137 G2, 0.12). `changeOfCoordinates({ linearPart,

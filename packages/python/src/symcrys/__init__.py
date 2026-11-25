@@ -2227,7 +2227,9 @@ def reduce_indices(indices: ArrayLike) -> NDArray[np.int64]:
 
 
 def plane_to_four_indices(hkl: ArrayLike) -> NDArray[np.int64]:
-    """The plane (hkl) of hexagonal axes as (hkil) with i = −(h + k)."""
+    """The plane (hkl) of hexagonal axes as (hkil) with i = −(h + k) (Frank, Acta Cryst. 18, 862
+    (1965), Eq. (22)).
+    """
     result: NDArray[np.int64] = _shared.convert(
         _call("planeToFourIndices", _shared.array(hkl, "hkl")),
         ("a", np.int64, None),
@@ -2236,7 +2238,8 @@ def plane_to_four_indices(hkl: ArrayLike) -> NDArray[np.int64]:
 
 
 def plane_from_four_indices(hkil: ArrayLike) -> NDArray[np.int64]:
-    """The plane (hkil) as (hkl); raises SymcrysError unless i = −(h + k)."""
+    """The plane (hkil) as (hkl) (Frank (1965), Eq. (21)); raises SymcrysError unless i = −(h + k).
+    """
     result: NDArray[np.int64] = _shared.convert(
         _call("planeFromFourIndices", _shared.array(hkil, "hkil")),
         ("a", np.int64, None),
