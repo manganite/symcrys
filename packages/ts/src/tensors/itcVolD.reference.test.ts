@@ -17,6 +17,7 @@ import { isPointGroupKey, settings, symbol, type PointGroupKey } from '../pointG
 import { expectHeader, readReference, tableRows } from '../testUtils/references.js';
 import { linkScheme, schemeOf, type Scheme } from '../testUtils/yariv.js';
 import { rotateTensor, tensorForm, type TensorSpec } from './tensorForm.js';
+import { toVoigt, type VoigtFactor } from './voigt.js';
 
 /** Abbreviations of § 1.1.4.10.6 and § 1.1.4.10.7 (see the transcriptions), and D3h printed as -62m. */
 const ABBREVIATION: Record<string, string> = {
@@ -209,6 +210,31 @@ function matrixRows(basis: readonly (readonly number[])[], tensor: Tensor4): Map
   return out;
 }
 
+/** The factors of the two index pairs in Voigt's notation for each tensor, as p. 27 defines its matrix. */
+const VOIGT_FACTORS: Readonly<Record<Tensor4, readonly VoigtFactor[]>> = {
+  p: [1, 1],
+  c: [1, 1],
+  π: [1, 2],
+  s: [2, 2],
+  Q: [2, 2],
+};
+
+/** The same rows as `matrixRows`, from `toVoigt` with the factors of the tensor. */
+function voigtRows(basis: readonly (readonly number[])[], tensor: Tensor4, spec: TensorSpec): Map<string, number[]> {
+  const matrices = basis.map(
+    (row) => toVoigt(row, spec, { factors: VOIGT_FACTORS[tensor] }) as readonly (readonly number[])[],
+  );
+  const out = new Map<string, number[]>();
+  for (let a = 1; a <= 6; a++) {
+    for (let b = 1; b <= 6; b++)
+      out.set(
+        `${a}${b}`,
+        matrices.map((m) => m[a - 1][b - 1]),
+      );
+  }
+  return out;
+}
+
 /** The printed scheme: classes of linked cells, each cell with its factor relative to the first cell by name. */
 function printedScheme4(links: (typeof DIAGRAMS)[number]['links']): Scheme {
   const plain = linkScheme(links.map((g) => g.map((m) => ({ name: m.name, filled: true }))));
@@ -250,9 +276,10 @@ describe('ITC Vol. D § 1.1.4.10.6: fourth-rank tensors, forms of the matrices',
     tensor: Tensor4,
     basis: readonly (readonly number[])[],
     what: string,
+    rowsOf: (basis: readonly (readonly number[])[], tensor: Tensor4) => Map<string, number[]> = matrixRows,
   ) {
     expect(basis, `${what}: independent components`).toHaveLength(d.count);
-    const rows = matrixRows(basis, tensor);
+    const rows = rowsOf(basis, tensor);
     // ⊗ = k (t11 − t12), in every basis tensor.
     for (const cell of d.cross) {
       const x = rows.get(cell)!;
@@ -295,8 +322,11 @@ describe('ITC Vol. D § 1.1.4.10.6: fourth-rank tensors, forms of the matrices',
       it(`${d.section} ${groups.join(', ')}: ${tensor}`, () => {
         const intrinsic = tensor === 'c' || tensor === 's' ? 'symmetric-pairs-exchangeable' : 'symmetric-pairs';
         for (const key of groups) {
-          const basis = tensorForm(key, { rank: 4, kind: 'polar', timeParity: 'even', intrinsic }).basis;
+          const spec = { rank: 4, kind: 'polar', timeParity: 'even', intrinsic } as const;
+          const basis = tensorForm(key, spec).basis;
           expectDiagram(d, tensor, basis, key);
+          // toVoigt with ITC's factors of the tensor draws the same diagram (#137 E3).
+          expectDiagram(d, tensor, basis, `${key}, toVoigt`, (b, t) => voigtRows(b, t, spec));
         }
       });
     }

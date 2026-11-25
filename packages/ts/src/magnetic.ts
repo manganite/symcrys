@@ -135,6 +135,7 @@ export {
   type TimeParity,
 } from './tensors/tensorForm.js';
 export { TENSOR_PROPERTIES, type TensorProperty, type TensorPropertyName } from './tensors/propertyTable.js';
+export { fromVoigt, toVoigt, type VoigtFactor, type VoigtOptions } from './tensors/voigt.js';
 export {
   allowedProperties,
   allowedPropertiesOf,

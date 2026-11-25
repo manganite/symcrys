@@ -14,6 +14,8 @@ import * as plane from './plane.js';
 const ops = classes.operations('32');
 const magneticOps = magnetic.operations("6'/m'mm'");
 const basis = classes.latticeBasis('hexagonal');
+const piezo = classes.tensorForm('1', 'piezoelectric').basis[0];
+const piezoVoigt = classes.toVoigt(piezo, 'piezoelectric', { factors: [2] });
 const unit = [
   [1, 0, 0],
   [0, 1, 0],
@@ -24,6 +26,8 @@ const unit = [
 interface Call {
   readonly args: readonly unknown[];
   readonly options?: { readonly index: number; readonly keys: readonly string[] };
+  /** Options a valid call needs (toVoigt: the factors of a tensor without a default). */
+  readonly required?: Readonly<Record<string, unknown>>;
 }
 const SETTING = ['setting', 'axes', 'uniqueAxis'];
 const AXES = ['axes', 'uniqueAxis'];
@@ -53,6 +57,8 @@ const pointCalls = (o: readonly { readonly cartesian: unknown }[], key: string, 
   tensorForm: call([key, property], SETTING),
   tensorFormOf: call([o, property], TOLERANCE),
   rotateTensor: call([[1, 0, 0], unit, 'pyroelectric'], TOLERANCE),
+  toVoigt: { ...call([piezo, 'piezoelectric'], ['factors', ...TOLERANCE]), required: { factors: [2] } },
+  fromVoigt: { ...call([piezoVoigt, 'piezoelectric'], ['factors', ...TOLERANCE]), required: { factors: [2] } },
   allowsProperty: call([key, property]),
   allowedProperties: call([key]),
   allowsPropertyOf: call([o, property], TOLERANCE),
@@ -243,7 +249,8 @@ describe('wrong input is a RangeError (#137 D2)', () => {
     for (const [name, c] of Object.entries(calls)) {
       const f = module[name] as (...a: unknown[]) => unknown;
       it(`${entry} ${name}: valid arguments answer, wrong ones throw a RangeError`, () => {
-        expect(outcome(f, c.args), 'valid arguments').toBe('ok');
+        const valid = c.required && c.options ? [...c.args.slice(0, c.options.index), c.required] : c.args;
+        expect(outcome(f, valid), 'valid arguments').toBe('ok');
         const bad: string[] = [];
         const positions = c.args.length + (c.options ? 1 : 0);
         for (let i = 0; i < positions; i++) {
@@ -281,7 +288,7 @@ describe('wrong input is a RangeError (#137 D2)', () => {
           }
           // Every known key is accepted (undefined means "not given").
           const args = [...c.args];
-          args[index] = Object.fromEntries(keys.map((k) => [k, undefined]));
+          args[index] = Object.fromEntries(keys.map((k) => [k, c.required?.[k]]));
           expect(outcome(f, args)).toBe('ok');
         });
       }

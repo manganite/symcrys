@@ -28,6 +28,7 @@ import * as site from './siteSymmetry.js';
 import { TENSOR_PROPERTIES as ALL_TENSOR_PROPERTIES } from './tensors/propertyTable.js';
 import type { TensorPropertyName as MagneticTensorPropertyName } from './tensors/propertyTable.js';
 import * as tensors from './tensors/tensorForm.js';
+import * as voigtNotation from './tensors/voigt.js';
 import type { IntrinsicSymmetry, TensorForm, TensorKind, TensorRank } from './tensors/tensorForm.js';
 import { deepFreeze } from './freeze.js';
 import type { ToleranceOptions } from './tolerances.js';
@@ -642,6 +643,44 @@ export function rotateTensor(
   options?: ToleranceOptions,
 ): readonly number[] {
   return tensors.rotateTensor(tensor, rotation, timeEven(spec), options);
+}
+
+/**
+ * A tensor in Voigt's two-index notation (ITC Vol. D (2013) § 1.1.4.10, pp. 24–27): each contracted
+ * index pair ij becomes α = 1…6 for 11, 22, 33, 23, 31, 12 (eq. (1.1.4.6)), and a component with
+ * α = 4, 5, 6 is the tensor component times the factor of its pair (`factors`). A symmetric tensor of
+ * rank 2 gives 6 components, one of rank 3 symmetric in its last pair a 3 × 6 matrix (d_iα), in its
+ * first pair a 6 × 3 matrix (e_αk), one of rank 4 a 6 × 6 matrix (s_αβ, c_αβ). Throws a RangeError for a specification
+ * without a symmetric index pair, factors that are missing or not one 1 or 2 per pair, and a tensor
+ * that lacks the index symmetry of its specification (within the tolerance, relative to its largest
+ * component).
+ *
+ * @remarks The tensor is flat, 3^rank components, as `tensorForm` gives a basis tensor.
+ */
+export function toVoigt(
+  tensor: readonly number[],
+  spec: TensorSpecArgument | TensorPropertyName,
+  options?: voigtNotation.VoigtOptions,
+): readonly number[] | readonly (readonly number[])[] {
+  return voigtNotation.toVoigt(tensor, timeEven(spec), options);
+}
+
+/**
+ * The tensor of a Voigt array (`toVoigt` in reverse): each tensor component is the Voigt component
+ * of its index pairs over the factors of the pairs, so that the tensor has the index symmetry of its
+ * specification. Throws a RangeError for a Voigt array of
+ * the wrong shape, and for one that is no tensor of the specification (for rank 4 with interchangeable
+ * pairs a 6 × 6 matrix that is not symmetric, for a totally symmetric tensor one whose
+ * components do not agree), within the tolerance relative to its largest component.
+ *
+ * @remarks The tensor is flat, 3^rank components, as `tensorForm` gives a basis tensor.
+ */
+export function fromVoigt(
+  voigt: readonly number[] | readonly (readonly number[])[],
+  spec: TensorSpecArgument | TensorPropertyName,
+  options?: voigtNotation.VoigtOptions,
+): readonly number[] {
+  return voigtNotation.fromVoigt(voigt, timeEven(spec), options);
 }
 
 /**

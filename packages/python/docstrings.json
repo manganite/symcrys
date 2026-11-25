@@ -65,6 +65,14 @@
     "residual_operations": {
       "type": "Operations",
       "doc": "The kept operations of the caller, in their order."
+    },
+    "to_voigt": {
+      "type": "numpy.ndarray",
+      "doc": "A float64 array: shape (6,) at rank 2, (3, 6) for a tensor symmetric in its last pair, (6, 3) in its first, (6, 6) at rank 4. ``tensor`` may have the shape (3, …, 3) or the flat (3**rank,)."
+    },
+    "from_voigt": {
+      "type": "numpy.ndarray",
+      "doc": "A float64 array of shape (3, …, 3), the tensor with its rank axes."
     }
   },
   "symcrys.magnetic": {
@@ -124,6 +132,14 @@
     "residual_operations": {
       "type": "Operations",
       "doc": "The kept operations of the caller, in their order."
+    },
+    "to_voigt": {
+      "type": "numpy.ndarray",
+      "doc": "A float64 array: shape (6,) at rank 2, (3, 6) for a tensor symmetric in its last pair, (6, 3) in its first, (6, 6) at rank 4. ``tensor`` may have the shape (3, …, 3) or the flat (3**rank,)."
+    },
+    "from_voigt": {
+      "type": "numpy.ndarray",
+      "doc": "A float64 array of shape (3, …, 3), the tensor with its rank axes."
     }
   },
   "symcrys.plane": {

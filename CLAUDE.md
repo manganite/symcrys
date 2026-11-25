@@ -751,9 +751,22 @@ The conventions are in `docs/conventions.md` ("Tensors"); here, what was decided
   (polar toroidal moment, aV); `'gyrotropic'` stays, with ITA's "optical activity"; `'ferroaxial'`
   stays, marked in `source` and the docs as not from ITC, with Gallego et al. (axial toroidal
   moment, eV) beside Hlinka et al. The free parameters keep symcrys's rule (the lowest independent
-  component), documented as not ITC's choice; numeric `toVoigt`/`fromVoigt` come in 0.12 with ITC's
-  factors (ITC Vol. D eq. (1.5.7.4) and § 1.1.4.10), as E3 (a) says, not with Gallego's unity
-  factors.
+  component), documented as not ITC's choice; numeric `toVoigt`/`fromVoigt` with ITC's factors
+  (ITC Vol. D eq. (1.5.7.4) and § 1.1.4.10), as E3 (a) says, not with Gallego's unity factors.
+- **Voigt's notation** (#137 E3, decided by Thomas on 2026-11-25, asked with proposals and a
+  recommendation, 0.12): ITC defines the factor of the components with α = 4, 5, 6 per quantity and
+  per index pair (2 for strain, d, Λ, s, Q; 1 for stress, e, c, p; π has 1 and 2), so the
+  specification does not fix it: an option `factors`, one 1 or 2 per contracted pair, required for a
+  specification and for `'piezoelectric'` (its tensor serves the piezoelectric d, `[2]`, and
+  second-harmonic generation, which ITC contracts with `[1]`, § 1.7.2.2.1.3, p. 185; Thomas,
+  2026-11-25, after the review), with ITC's `[2]` as the default of `'piezomagnetic'`; the layout follows `intrinsic` (rank 2
+  symmetric: 6; rank 3: 3 × 6 for the last pair, 6 × 3 for the first; rank 4: 6 × 6), and a tensor
+  without the index symmetry of its specification is a RangeError. Chosen while implementing: the
+  tolerance of that check is relative to the largest component (bound 1, as the metric); in Python
+  `to_voigt` takes a tensor of shape (3, …, 3) or flat, and `from_voigt` gives the shape (3, …, 3);
+  the print anchors are the relations of § 1.1.4.10 and eq. (1.5.7.4)
+  (`references/itc/vol-d-1.1.4.10-voigt.md`), the diagrams of § 1.1.4.10.6 and Table 1.5.7.1, read
+  as printed in this notation.
 - **Gallego et al. (2019) as the model of the tensor notation** (Thomas, 2026-11-24): the extended
   Jahn symbols of Gallego et al. (MTENSOR of the Bilbao Crystallographic Server; prefix e axial,
   a time-odd, square and curly brackets for symmetric and antisymmetric indices) are the model for
