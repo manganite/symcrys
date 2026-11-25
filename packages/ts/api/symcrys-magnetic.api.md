@@ -291,7 +291,7 @@ export type Mat3 = readonly [Vec3, Vec3, Vec3];
 export function metricTensor(basis: Mat3): Mat3;
 
 // @public
-export function millerIndices(printed: string, values: MillerValues): Vec3;
+export function millerIndices(indices: string, values: MillerValues): Vec3;
 
 // @public
 export interface MillerValues {
@@ -496,7 +496,6 @@ export type TensorKind = 'polar' | 'axial';
 // @public
 export interface TensorProperty {
     readonly description: string;
-    readonly source: string;
     readonly spec: TensorSpec;
 }
 

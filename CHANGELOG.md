@@ -26,6 +26,19 @@ All notable changes to symcrys are recorded here. The format follows
   which the functions accepted before; in Python `TensorSpec` has `time_parity`. `symcrys/magnetic`
   exports `Hkl`, as `symcrys` does. Types only, no change of behaviour.
 
+### Changed
+
+- **Breaking** (#194): results describe their content in crystallographic terms, and the sources
+  are cited in the documentation. An entry of `TENSOR_PROPERTIES` is `{ spec, description }`; the
+  source of each definition is in its documentation and in docs/conventions.md, "Named properties"
+  (formerly the field `source`). `CRYSTAL_FORM_TYPES` is a record by key, the first usual
+  name of a form in lower case with hyphens (`'pedion'`, `'tetragonal-prism'`), with `name`,
+  `faces` and `eigensymmetry` (formerly a list in ITA's numbering); `CrystalForm.formType` is that key
+  (`'ditetragonal-pyramid'`, formerly 12), and the type `CrystalFormTypeKey` lists the 47 keys.
+  `planeGroup(key).origin` of `symcrys/plane` is the site symmetry of the origin (`'2..'` for
+  `p2mg`, `'1'` for `p1`; formerly ITA's sentence `'at 2 1 g'`). The first parameter of
+  `millerIndices` is named `indices` (in Python a positional argument, as before).
+
 ## [0.13.0] - 2026-11-25
 
 Work on the open issues before 1.0: `residualOperations` for the plane (#119), faster calls for

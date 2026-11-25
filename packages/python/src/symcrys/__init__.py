@@ -99,6 +99,58 @@ OperationKind = Literal["identity", "inversion", "rotation", "rotoinversion", "r
 """What a point operation is; a rotoinversion n̄ is the inversion times the rotation n (n = 3, 4,
 6).
 """
+CrystalFormTypeKey = Literal[
+    "pedion",
+    "pinacoid",
+    "sphenoid",
+    "rhombic-disphenoid",
+    "rhombic-pyramid",
+    "rhombic-prism",
+    "rhombic-dipyramid",
+    "tetragonal-pyramid",
+    "tetragonal-disphenoid",
+    "tetragonal-prism",
+    "tetragonal-trapezohedron",
+    "ditetragonal-pyramid",
+    "tetragonal-scalenohedron",
+    "tetragonal-dipyramid",
+    "ditetragonal-prism",
+    "ditetragonal-dipyramid",
+    "trigonal-pyramid",
+    "trigonal-prism",
+    "trigonal-trapezohedron",
+    "ditrigonal-pyramid",
+    "rhombohedron",
+    "ditrigonal-prism",
+    "hexagonal-pyramid",
+    "trigonal-dipyramid",
+    "hexagonal-prism",
+    "ditrigonal-scalenohedron",
+    "hexagonal-trapezohedron",
+    "dihexagonal-pyramid",
+    "ditrigonal-dipyramid",
+    "dihexagonal-prism",
+    "hexagonal-dipyramid",
+    "dihexagonal-dipyramid",
+    "tetrahedron",
+    "cube",
+    "octahedron",
+    "pentagon-tritetrahedron",
+    "pentagon-dodecahedron",
+    "tetragon-tritetrahedron",
+    "trigon-tritetrahedron",
+    "rhomb-dodecahedron",
+    "didodecahedron",
+    "trigon-trioctahedron",
+    "tetragon-trioctahedron",
+    "pentagon-trioctahedron",
+    "hexatetrahedron",
+    "tetrahexahedron",
+    "hexaoctahedron",
+]
+"""A kind of crystal form, one of the 47: the first of its usual English names in lower case, words
+joined by ``-`` (``'pedion'``, ``'tetragonal-prism'``, ``'rhomb-dodecahedron'``).
+"""
 TensorPropertyName = Literal["pyroelectric", "ferroaxial", "piezoelectric", "gyrotropic"]
 """The names of the named tensor properties, the keys of ``TENSOR_PROPERTIES``."""
 CrystalFamily = Literal[
@@ -263,14 +315,12 @@ class TensorSpec(TypedDict):
 
 @final
 class TensorProperty(TypedDict):
-    """A named property: the tensor that describes it, what it is and where it is defined."""
+    """A named property: the tensor that describes it and what it is."""
 
     spec: TensorSpec
     """The kind of tensor whose non-zero form means that the property is allowed."""
     description: str
     """The physical quantity the tensor relates."""
-    source: str
-    """Print source of the definition, with printed page."""
 
 
 @final
@@ -539,19 +589,16 @@ class OrbitPole(TypedDict):
 
 @final
 class CrystalFormType(TypedDict):
-    """One of the 47 crystal forms of ITA Table 3.2.1.3."""
+    """A kind of crystal form: its names, its number of faces and its eigensymmetry."""
 
-    number: int
-    """ITA's number of the form, 1 to 47."""
     name: str
-    """ITA's English name of the form as printed, e.g. ``Tetragonal prism``, ``Sphenoid, dome, or
-    dihedron``.
+    """The usual English names of the form, e.g. ``Tetragonal prism``, ``Sphenoid, dome, or dihedron``.
     """
     faces: int
     """Number of faces."""
     eigensymmetry: str
-    """The eigensymmetry as printed: the point group of the form as a polyhedron, e.g. ``4/mmm``,
-    ``-62m``; ``∞m`` for the pedion and ``∞/mm`` for the pinacoid.
+    """The eigensymmetry: the point group of the form as a polyhedron, e.g. ``4/mmm``, ``-62m``; ``∞m``
+    for the pedion and ``∞/mm`` for the pinacoid.
     """
 
 
@@ -570,11 +617,11 @@ class CrystalForm(TypedDict):
     of -43m and m-3m), ``False`` for a limiting form: its faces have the face symmetry of the position,
     but the form has a higher eigensymmetry (ITA 6th ed., § 3.2.1.2.2, p. 723).
     """
-    form_type: int
-    """The number of the form in ``CRYSTAL_FORM_TYPES`` (ITA Table 3.2.1.3), 1 to 47."""
+    form_type: CrystalFormTypeKey
+    """The kind of the form, its key in ``CRYSTAL_FORM_TYPES``."""
     miller_indices: str
-    """ITA's first face as printed, components separated by commas, e.g. ``h,0,l``, or ``h,h,-2h,l``
-    (Bravais–Miller indices) for hexagonal axes; a leading ``-`` is an overbar.
+    """The first face of the form in the usual notation, components separated by commas, e.g. ``h,0,l``,
+    or ``h,h,-2h,l`` (Bravais–Miller indices) for hexagonal axes; a leading ``-`` is an overbar.
     """
     condition: NotRequired[str]
     """The condition ITA prints with the form, ``|h|<|l|`` or ``|h|>|l|`` (cubic forms (hhl)); absent
@@ -645,7 +692,7 @@ _S_CoordinateChange = (
     },
 )
 _S_TensorSpec = ("d", {"rank": _I, "kind": _V, "intrinsic": _V, "timeParity": _V})
-_S_TensorProperty = ("d", {"spec": _S_TensorSpec, "description": _V, "source": _V})
+_S_TensorProperty = ("d", {"spec": _S_TensorSpec, "description": _V})
 _S_PointGroup = (
     "d",
     {
@@ -724,7 +771,7 @@ _S_WyckoffPosition = (
 _S_FaceOrbitEntry = ("d", {"hkl": ("a", np.int64, None), "operations": ("a", np.int64, None)})
 _S_DirectionOrbitEntry = ("d", {"uvw": ("a", np.int64, None), "operations": ("a", np.int64, None)})
 _S_OrbitPole = ("d", {"direction": ("a", np.float64, None), "operations": ("a", np.int64, None)})
-_S_CrystalFormType = ("d", {"number": _I, "name": _V, "faces": _I, "eigensymmetry": _V})
+_S_CrystalFormType = ("d", {"name": _V, "faces": _I, "eigensymmetry": _V})
 _S_CrystalForm = (
     "d",
     {
@@ -732,7 +779,7 @@ _S_CrystalForm = (
         "multiplicity": _I,
         "siteSymmetry": _V,
         "basic": _V,
-        "formType": _I,
+        "formType": _V,
         "millerIndices": _V,
         "condition": _V,
     },
@@ -764,6 +811,7 @@ __all__ = [
     "CrystalFamily",
     "CrystalForm",
     "CrystalFormType",
+    "CrystalFormTypeKey",
     "CrystalSystem",
     "DirectionElements",
     "DirectionOrbitEntry",
@@ -863,13 +911,13 @@ TENSOR_PROPERTIES: dict[str, TensorProperty] = _shared.convert(
 is optical activity. The properties of time-odd tensors (``'ferromagnetic'``, …) are in the magnetic
 API.
 """
-CRYSTAL_FORM_TYPES: list[CrystalFormType] = _shared.convert(
+CRYSTAL_FORM_TYPES: dict[str, CrystalFormType] = _shared.convert(
     _value("CRYSTAL_FORM_TYPES"),
-    ("l", _S_CrystalFormType),
+    ("m", _S_CrystalFormType),
 )
-"""The 47 crystal forms of ITA Table 3.2.1.3 (6th ed., pp. 724–726) with ITA's numbers, English
-names, numbers of faces and eigensymmetries: ``CRYSTAL_FORM_TYPES[n - 1]`` is form n. Each crystal
-form of ``crystal_forms`` names its form by this number (docs/conventions.md, "Crystal forms").
+"""The 47 kinds of crystal forms, by key (``'pedion'``, ``'tetragonal-prism'``, …): their usual
+names, numbers of faces and eigensymmetries. Each form of ``crystal_forms`` names its kind by this
+key (docs/conventions.md, "Crystal forms").
 """
 POINT_GROUP_KEYS: tuple[str, ...] = _shared.convert(_value("POINT_GROUP_KEYS"), ("t", _V))
 """Keys of the 32 crystal classes: the ITC short symbol of the class (docs/conventions.md, "Keys").
@@ -2367,21 +2415,21 @@ def zone_axis(h1: ArrayLike, h2: ArrayLike) -> Optional[NDArray[np.int64]]:
 
 
 def miller_indices(
-    printed: str,
+    indices: str,
     *,
     h: Optional[int] = None,
     k: Optional[int] = None,
     l: Optional[int] = None,
 ) -> NDArray[np.int64]:
-    """The face (hkl) of printed Miller indices with the caller's values of h, k, l substituted
-    (#137 G3): the printed ``h,h,-2h,l`` with h = 3 and l = 1 gives (3, 3, 1). The printed strings
-    are those of ``wyckoff_positions`` and ``crystal_forms`` (``miller_indices``), as ITA prints
-    them: three indices, or four for hexagonal axes, of which i = −(h + k) is dropped, so that the
-    face can be passed to ``orbit`` (``plane_to_four_indices`` gives the four). Each value is an
-    integer; only the letters the string uses are needed. The face is not reduced, and whether the
-    values keep it in its position (a general face (hkl) with h = k lies on a special one) is the
-    caller's choice. Raises SymcrysError for an unreadable string, a missing or non-integer value,
-    an unknown key and the face (000).
+    """The face (hkl) of symbolic Miller indices with the caller's values of h, k, l substituted
+    (#137 G3): ``h,h,-2h,l`` with h = 3 and l = 1 gives (3, 3, 1). The indices are those of
+    ``wyckoff_positions`` and ``crystal_forms`` (``miller_indices``), in the usual notation: three
+    indices, or four for hexagonal axes, of which i = −(h + k) is dropped, so that the face can be
+    passed to ``orbit`` (``plane_to_four_indices`` gives the four). Each value is an integer; only
+    the letters the string uses are needed. The face is not reduced, and whether the values keep it
+    in its position (a general face (hkl) with h = k lies on a special one) is the caller's choice.
+    Raises SymcrysError for an unreadable string, a missing or non-integer value, an unknown key and
+    the face (000).
 
     Parameters
     ----------
@@ -2393,7 +2441,7 @@ def miller_indices(
         The value of l, an integer.
     """
     result: NDArray[np.int64] = _shared.convert(
-        _call("millerIndices", printed, _shared.options(h=h, k=k, l=l)),
+        _call("millerIndices", indices, _shared.options(h=h, k=k, l=l)),
         ("a", np.int64, None),
     )
     return result

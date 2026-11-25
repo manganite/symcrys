@@ -32,7 +32,7 @@ import {
   sameAxes,
   RHOMBOHEDRAL_IN_HEXAGONAL,
 } from '../testUtils/references.js';
-import { crystalForms } from './crystalForms.js';
+import { CRYSTAL_FORM_TYPES, crystalForms } from './crystalForms.js';
 import { ITA_FORMS, ITA_FORM_TYPES } from './crystalFormsData.js';
 import { POINT_GROUP_KEYS, settings, type PointGroupKey } from './pointGroups.js';
 
@@ -320,6 +320,18 @@ describe('ITA Table 3.2.1.3: the 47 crystal forms', () => {
     expect(ITA_FORM_TYPES.map((r) => r.map(String))).toEqual(typeRows.slice(1));
   });
 
+  it('names each kind of form by the first of its printed names, in lower case with hyphens', () => {
+    const keyOf = (name: string) =>
+      name
+        .split(/,| or /)[0]
+        .trim()
+        .toLowerCase()
+        .replace(/ /g, '-');
+    expect(
+      Object.entries(CRYSTAL_FORM_TYPES).map(([key, t]) => [key, t.name, String(t.faces), t.eigensymmetry]),
+    ).toEqual(typeRows.slice(1).map((r) => [keyOf(r[1]), r[1], r[2], r[3]]));
+  });
+
   it('has the forms 1 to 47 in order, each with its eigensymmetry among the printed entries', () => {
     expect(typeRows.slice(1).map((r) => Number(r[0]))).toEqual(Array.from({ length: 47 }, (_, i) => i + 1));
     for (const r of typeRows.slice(1)) {
@@ -509,9 +521,15 @@ describe('ITA Table 3.2.3.2: face forms', () => {
       );
       expect(found).toHaveLength(1);
       const lib = crystalForms(found[0].key, { setting: found[0].index });
-      expect(lib.map((f) => [f.letter, f.basic ? 'basic' : 'limiting', f.formType, f.millerIndices])).toEqual(
-        e.forms.map((r) => [r[3], r[4], numberOfName(r[5]), r[6]]),
-      );
+      // The kind of each form by its printed name (the key of the library is its own).
+      expect(
+        lib.map((f) => [
+          f.letter,
+          f.basic ? 'basic' : 'limiting',
+          CRYSTAL_FORM_TYPES[f.formType].name,
+          f.millerIndices,
+        ]),
+      ).toEqual(e.forms.map((r) => [r[3], r[4], typeRows[numberOfName(r[5])][1], r[6]]));
       lib.forEach((f, i) => {
         const r = e.forms[i];
         const position = e.positions.find((p) => p[4] === r[3]);

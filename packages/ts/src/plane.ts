@@ -146,7 +146,10 @@ export interface PlaneGroup {
   readonly pattersonSymmetry: PlaneGroupKey;
   /** The centring translations besides (0, 0): `[[0.5, 0.5]]` for `cm` and `c2mm`, otherwise none. */
   readonly centring: readonly (readonly number[])[];
-  /** The block "Origin" as ITA prints it, its positions spaced as printed, e.g. `'at 2 m m'`, `'at 2 1 g'`. */
+  /**
+   * The site symmetry of the origin, as an oriented site-symmetry symbol: `'2mm'` for `p2mm`, `'2..'`
+   * for `p2mg`, `'1'` for `p1` and `pg`.
+   */
   readonly origin: string;
 }
 
@@ -501,7 +504,7 @@ export function planeGroup(key: PlaneGroupKey): PlaneGroup {
     centring: Object.freeze(
       entry.centring.map((t) => Object.freeze(t.split(',').map((c) => toNumber(parseRational(c))))),
     ),
-    origin: entry.origin,
+    origin: wyckoffPosition(entry.symbol as PlaneGroupKey, [0, 0]).siteSymmetry,
   });
 }
 

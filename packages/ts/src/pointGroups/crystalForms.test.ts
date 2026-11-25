@@ -20,11 +20,14 @@ function orbitSize(key: (typeof POINT_GROUP_KEYS)[number], setting: number, v: V
 }
 
 describe('CRYSTAL_FORM_TYPES', () => {
-  it('are the 47 forms, form n at index n - 1, frozen', () => {
-    expect(CRYSTAL_FORM_TYPES).toHaveLength(47);
-    CRYSTAL_FORM_TYPES.forEach((t, i) => expect(t.number).toBe(i + 1));
-    expect(CRYSTAL_FORM_TYPES[9]).toEqual({ number: 10, name: 'Tetragonal prism', faces: 4, eigensymmetry: '4/mmm' });
-    expect(Object.isFrozen(CRYSTAL_FORM_TYPES) && Object.isFrozen(CRYSTAL_FORM_TYPES[0])).toBe(true);
+  it('are the 47 kinds of forms, by key, frozen', () => {
+    expect(Object.keys(CRYSTAL_FORM_TYPES)).toHaveLength(47);
+    expect(CRYSTAL_FORM_TYPES['tetragonal-prism']).toEqual({
+      name: 'Tetragonal prism',
+      faces: 4,
+      eigensymmetry: '4/mmm',
+    });
+    expect(Object.isFrozen(CRYSTAL_FORM_TYPES) && Object.isFrozen(CRYSTAL_FORM_TYPES.pedion)).toBe(true);
   });
 });
 
@@ -49,7 +52,7 @@ describe('crystalForms', () => {
         const label = `${key} #${s.index} ${f.letter} ${f.millerIndices}`;
         const v = representativeFace(key, s.index, f.millerIndices, f.condition).cartesian;
         expect(wyckoffPosition(key, v, { setting: s.index }).letter, label).toBe(f.letter);
-        expect(orbitSize(key, s.index, v), label).toBe(CRYSTAL_FORM_TYPES[f.formType - 1].faces);
+        expect(orbitSize(key, s.index, v), label).toBe(CRYSTAL_FORM_TYPES[f.formType].faces);
         const ops = operations(key, { setting: s.index });
         expect(ops.length / siteSymmetryOf(ops, v).operations.length, label).toBe(f.multiplicity);
       }
@@ -71,8 +74,8 @@ describe('crystalForms', () => {
     // -43m c: (113) is the trigon-tritetrahedron, (331) the tetragon-tritetrahedron.
     const c = crystalForms('-43m').filter((f) => f.letter === 'c' && f.basic);
     expect(c.map((f) => [f.formType, representativeFace('-43m', 1, f.millerIndices, f.condition).hkl])).toEqual([
-      [39, [1, 1, 3]],
-      [38, [3, 3, 1]],
+      ['trigon-tritetrahedron', [1, 1, 3]],
+      ['tetragon-tritetrahedron', [3, 3, 1]],
     ]);
   });
 

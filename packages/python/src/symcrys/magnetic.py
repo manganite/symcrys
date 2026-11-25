@@ -531,14 +531,12 @@ class TensorSpec(TypedDict):
 
 @final
 class TensorProperty(TypedDict):
-    """A named property: the tensor that describes it, what it is and where it is defined."""
+    """A named property: the tensor that describes it and what it is."""
 
     spec: TensorSpec
     """The kind of tensor whose non-zero form means that the property is allowed."""
     description: str
     """The physical quantity the tensor relates."""
-    source: str
-    """Print source of the definition, with printed page."""
 
 
 @final
@@ -683,7 +681,7 @@ _S_SiteSymmetry = (
     },
 )
 _S_TensorSpec = ("d", {"rank": _I, "kind": _V, "timeParity": _V, "intrinsic": _V})
-_S_TensorProperty = ("d", {"spec": _S_TensorSpec, "description": _V, "source": _V})
+_S_TensorProperty = ("d", {"spec": _S_TensorSpec, "description": _V})
 _S_TensorForm = (
     "d",
     {
@@ -824,8 +822,8 @@ TENSOR_PROPERTIES: dict[str, TensorProperty] = _shared.convert(
     _value("TENSOR_PROPERTIES"),
     ("m", _S_TensorProperty),
 )
-"""The named tensor properties. For each name, the tensor that describes the property, what it is,
-and its print source. ``'gyrotropic'`` is optical activity.
+"""The named tensor properties. For each name, the tensor that describes the property and what it
+is. ``'gyrotropic'`` is optical activity.
 """
 
 
@@ -1104,21 +1102,21 @@ def plane_to_four_indices(hkl: ArrayLike) -> NDArray[np.int64]:
 
 
 def miller_indices(
-    printed: str,
+    indices: str,
     *,
     h: Optional[int] = None,
     k: Optional[int] = None,
     l: Optional[int] = None,
 ) -> NDArray[np.int64]:
-    """The face (hkl) of printed Miller indices with the caller's values of h, k, l substituted
-    (#137 G3): the printed ``h,h,-2h,l`` with h = 3 and l = 1 gives (3, 3, 1). The printed strings
-    are those of ``wyckoff_positions`` and ``crystal_forms`` (``miller_indices``), as ITA prints
-    them: three indices, or four for hexagonal axes, of which i = −(h + k) is dropped, so that the
-    face can be passed to ``orbit`` (``plane_to_four_indices`` gives the four). Each value is an
-    integer; only the letters the string uses are needed. The face is not reduced, and whether the
-    values keep it in its position (a general face (hkl) with h = k lies on a special one) is the
-    caller's choice. Raises SymcrysError for an unreadable string, a missing or non-integer value,
-    an unknown key and the face (000).
+    """The face (hkl) of symbolic Miller indices with the caller's values of h, k, l substituted
+    (#137 G3): ``h,h,-2h,l`` with h = 3 and l = 1 gives (3, 3, 1). The indices are those of
+    ``wyckoff_positions`` and ``crystal_forms`` (``miller_indices``), in the usual notation: three
+    indices, or four for hexagonal axes, of which i = −(h + k) is dropped, so that the face can be
+    passed to ``orbit`` (``plane_to_four_indices`` gives the four). Each value is an integer; only
+    the letters the string uses are needed. The face is not reduced, and whether the values keep it
+    in its position (a general face (hkl) with h = k lies on a special one) is the caller's choice.
+    Raises SymcrysError for an unreadable string, a missing or non-integer value, an unknown key and
+    the face (000).
 
     Parameters
     ----------
@@ -1130,7 +1128,7 @@ def miller_indices(
         The value of l, an integer.
     """
     result: NDArray[np.int64] = _shared.convert(
-        _call("millerIndices", printed, _shared.options(h=h, k=k, l=l)),
+        _call("millerIndices", indices, _shared.options(h=h, k=k, l=l)),
         ("a", np.int64, None),
     )
     return result

@@ -30,7 +30,7 @@ const count = (name: TensorPropertyName, type: 'I' | 'II' | 'III') =>
   MAGNETIC_POINT_GROUP_KEYS.filter((k) => pointGroup(k).type === type && allowsProperty(k, name)).length;
 
 describe('TENSOR_PROPERTIES', () => {
-  it('names eight properties, each with a specification, a description and a print source', () => {
+  it('names eight properties, each with a specification and a description', () => {
     expect(TENSOR_PROPERTY_NAMES).toEqual([
       'pyroelectric',
       'ferroaxial',
@@ -45,13 +45,7 @@ describe('TENSOR_PROPERTIES', () => {
       const p = TENSOR_PROPERTIES[name];
       expect(Object.keys(p.spec).sort(), name).toEqual(['intrinsic', 'kind', 'rank', 'timeParity']);
       expect(p.description.length, name).toBeGreaterThan(20);
-      // Ferroaxial order is not in ITC (#137 E4), and its source says so; its classes follow from
-      // Birss's tables of tensor forms.
-      expect(p.source, name).toMatch(
-        name === 'ferroaxial'
-          ? /^Not in ITC: .*Phys\. Rev\. Lett\. 116, 177602 \(2016\).*classes: Birss \(1966\), Tables 4a and 4c, pp\. 56–58/
-          : /ITC Vol\. D \(2013\), § 1\.\d.*p+\. \d+/,
-      );
+      expect(Object.keys(p).sort(), name).toEqual(['description', 'spec']);
     }
   });
 

@@ -210,9 +210,9 @@ describe('the crystallographic API returns nothing about time reversal', () => {
     for (const [name, p] of timeEven) {
       const { timeParity: _timeParity, ...spec } = p.spec;
       const own = classes.TENSOR_PROPERTIES[name as classes.TensorPropertyName];
-      expect(own).toEqual({ spec, description: p.description, source: p.source });
+      expect(own).toEqual({ spec, description: p.description });
       expect(Object.isFrozen(own) && Object.isFrozen(own.spec)).toBe(true);
-      expect(`${own.description} ${own.source}`).not.toMatch(/time/i);
+      expect(own.description).not.toMatch(/time/i);
     }
   });
 });

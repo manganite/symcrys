@@ -39,7 +39,8 @@
   },
   "literals": {
     "//": "Literal types whose values are the keys of a constant of the entry point.",
-    "TensorPropertyName": "TENSOR_PROPERTIES"
+    "TensorPropertyName": "TENSOR_PROPERTIES",
+    "CrystalFormTypeKey": "CRYSTAL_FORM_TYPES"
   },
   "arrays": {
     "//": "The dtype of an array of numbers in a result, by the name of its field: float64 or int64. A field of arrays not listed is an error of the generator. symcrys.plane has its own list, since there `direction` is a lattice direction.",
@@ -114,7 +115,6 @@
       "multiplicity",
       "number",
       "faces",
-      "formType",
       "pointGroupSetting"
     ],
     "float": [

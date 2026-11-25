@@ -9,16 +9,67 @@ import type { PointGroupKey, SettingOptions } from './pointGroups.js';
 import { ITA_FORMS, ITA_FORM_TYPES, type FormRow } from './crystalFormsData.js';
 import { tableSetting, permutationFromSetting1, permutePattern, printedEntry, wyckoffPositions } from './wyckoff.js';
 
-/** One of the 47 crystal forms of ITA Table 3.2.1.3. */
+/**
+ * A kind of crystal form, one of the 47: the first of its usual English names in lower case, words
+ * joined by `-` (`'pedion'`, `'tetragonal-prism'`, `'rhomb-dodecahedron'`).
+ */
+export type CrystalFormTypeKey =
+  | 'pedion'
+  | 'pinacoid'
+  | 'sphenoid'
+  | 'rhombic-disphenoid'
+  | 'rhombic-pyramid'
+  | 'rhombic-prism'
+  | 'rhombic-dipyramid'
+  | 'tetragonal-pyramid'
+  | 'tetragonal-disphenoid'
+  | 'tetragonal-prism'
+  | 'tetragonal-trapezohedron'
+  | 'ditetragonal-pyramid'
+  | 'tetragonal-scalenohedron'
+  | 'tetragonal-dipyramid'
+  | 'ditetragonal-prism'
+  | 'ditetragonal-dipyramid'
+  | 'trigonal-pyramid'
+  | 'trigonal-prism'
+  | 'trigonal-trapezohedron'
+  | 'ditrigonal-pyramid'
+  | 'rhombohedron'
+  | 'ditrigonal-prism'
+  | 'hexagonal-pyramid'
+  | 'trigonal-dipyramid'
+  | 'hexagonal-prism'
+  | 'ditrigonal-scalenohedron'
+  | 'hexagonal-trapezohedron'
+  | 'dihexagonal-pyramid'
+  | 'ditrigonal-dipyramid'
+  | 'dihexagonal-prism'
+  | 'hexagonal-dipyramid'
+  | 'dihexagonal-dipyramid'
+  | 'tetrahedron'
+  | 'cube'
+  | 'octahedron'
+  | 'pentagon-tritetrahedron'
+  | 'pentagon-dodecahedron'
+  | 'tetragon-tritetrahedron'
+  | 'trigon-tritetrahedron'
+  | 'rhomb-dodecahedron'
+  | 'didodecahedron'
+  | 'trigon-trioctahedron'
+  | 'tetragon-trioctahedron'
+  | 'pentagon-trioctahedron'
+  | 'hexatetrahedron'
+  | 'tetrahexahedron'
+  | 'hexaoctahedron';
+
+/** A kind of crystal form: its names, its number of faces and its eigensymmetry. */
 export interface CrystalFormType {
-  /** ITA's number of the form, 1 to 47. */
-  readonly number: number;
-  /** ITA's English name of the form as printed, e.g. `Tetragonal prism`, `Sphenoid, dome, or dihedron`. */
+  /** The usual English names of the form, e.g. `Tetragonal prism`, `Sphenoid, dome, or dihedron`. */
   readonly name: string;
   /** Number of faces. */
   readonly faces: number;
   /**
-   * The eigensymmetry as printed: the point group of the form as a polyhedron, e.g. `4/mmm`, `-62m`;
+   * The eigensymmetry: the point group of the form as a polyhedron, e.g. `4/mmm`, `-62m`;
    * `∞m` for the pedion and `∞/mm` for the pinacoid.
    */
   readonly eigensymmetry: string;
@@ -38,20 +89,76 @@ export interface CrystalForm {
    * but the form has a higher eigensymmetry (ITA 6th ed., § 3.2.1.2.2, p. 723).
    */
   readonly basic: boolean;
-  /** The number of the form in `CRYSTAL_FORM_TYPES` (ITA Table 3.2.1.3), 1 to 47. */
-  readonly formType: number;
+  /** The kind of the form, its key in `CRYSTAL_FORM_TYPES`. */
+  readonly formType: CrystalFormTypeKey;
   /**
-   * ITA's first face as printed, components separated by commas, e.g. `h,0,l`, or `h,h,-2h,l`
-   * (Bravais–Miller indices) for hexagonal axes; a leading `-` is an overbar.
+   * The first face of the form in the usual notation, components separated by commas, e.g. `h,0,l`,
+   * or `h,h,-2h,l` (Bravais–Miller indices) for hexagonal axes; a leading `-` is an overbar.
    */
   readonly millerIndices: string;
   /** The condition ITA prints with the form, `|h|<|l|` or `|h|>|l|` (cubic forms (hhl)); absent otherwise. */
   readonly condition?: string;
 }
 
-/** The 47 crystal forms of ITA Table 3.2.1.3, in ITA's order: `CRYSTAL_FORM_TYPES[n - 1]` is form n. */
-export const CRYSTAL_FORM_TYPES: readonly CrystalFormType[] = Object.freeze(
-  ITA_FORM_TYPES.map(([number, name, faces, eigensymmetry]) => Object.freeze({ number, name, faces, eigensymmetry })),
+/** The keys of the form types, in the order of the stored rows (ITA 2016 Table 3.2.1.3, pp. 724–726). */
+export const FORM_TYPE_KEYS: readonly CrystalFormTypeKey[] = Object.freeze([
+  'pedion',
+  'pinacoid',
+  'sphenoid',
+  'rhombic-disphenoid',
+  'rhombic-pyramid',
+  'rhombic-prism',
+  'rhombic-dipyramid',
+  'tetragonal-pyramid',
+  'tetragonal-disphenoid',
+  'tetragonal-prism',
+  'tetragonal-trapezohedron',
+  'ditetragonal-pyramid',
+  'tetragonal-scalenohedron',
+  'tetragonal-dipyramid',
+  'ditetragonal-prism',
+  'ditetragonal-dipyramid',
+  'trigonal-pyramid',
+  'trigonal-prism',
+  'trigonal-trapezohedron',
+  'ditrigonal-pyramid',
+  'rhombohedron',
+  'ditrigonal-prism',
+  'hexagonal-pyramid',
+  'trigonal-dipyramid',
+  'hexagonal-prism',
+  'ditrigonal-scalenohedron',
+  'hexagonal-trapezohedron',
+  'dihexagonal-pyramid',
+  'ditrigonal-dipyramid',
+  'dihexagonal-prism',
+  'hexagonal-dipyramid',
+  'dihexagonal-dipyramid',
+  'tetrahedron',
+  'cube',
+  'octahedron',
+  'pentagon-tritetrahedron',
+  'pentagon-dodecahedron',
+  'tetragon-tritetrahedron',
+  'trigon-tritetrahedron',
+  'rhomb-dodecahedron',
+  'didodecahedron',
+  'trigon-trioctahedron',
+  'tetragon-trioctahedron',
+  'pentagon-trioctahedron',
+  'hexatetrahedron',
+  'tetrahexahedron',
+  'hexaoctahedron',
+]);
+
+/** The 47 kinds of crystal forms, by key. */
+export const CRYSTAL_FORM_TYPES: Readonly<Record<CrystalFormTypeKey, CrystalFormType>> = Object.freeze(
+  Object.fromEntries(
+    ITA_FORM_TYPES.map(([number, name, faces, eigensymmetry]) => [
+      FORM_TYPE_KEYS[number - 1],
+      Object.freeze({ name, faces, eigensymmetry }),
+    ]),
+  ) as Record<CrystalFormTypeKey, CrystalFormType>,
 );
 
 const HKL = 'hkl';
@@ -88,7 +195,8 @@ export function crystalForms(key: PointGroupKey, options?: SettingOptions): read
       printedRows(key, setting).map(([letter, basic, formType, millerIndices, condition]) => {
         const position = positions.find((p) => p.letter === letter);
         if (!position) throw new Error(`Point group ${key}, setting ${setting}: no Wyckoff position ${letter}`);
-        if (CRYSTAL_FORM_TYPES[formType - 1].faces !== position.multiplicity) {
+        const type = FORM_TYPE_KEYS[formType - 1];
+        if (CRYSTAL_FORM_TYPES[type].faces !== position.multiplicity) {
           throw new Error(
             `Point group ${key}, setting ${setting}: form ${formType} does not have the multiplicity of position ${letter}`,
           );
@@ -98,7 +206,7 @@ export function crystalForms(key: PointGroupKey, options?: SettingOptions): read
           multiplicity: position.multiplicity,
           siteSymmetry: position.siteSymmetry,
           basic,
-          formType,
+          formType: type,
           millerIndices,
           ...(condition === undefined ? {} : { condition }),
         });

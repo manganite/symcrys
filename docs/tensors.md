@@ -88,7 +88,8 @@ A property that is the question whether a tensor is allowed has a name, an entry
 operations) answer whether symmetry allows it. Symmetry only allows a property; whether a crystal
 shows it is a question of the material.
 
-The table is made from `TENSOR_PROPERTIES` of this version:
+The table is made from `TENSOR_PROPERTIES` of this version; the source of each definition is in
+[Conventions, "Named properties"](conventions.md#tensors):
 
 ```{tensor-properties}
 
