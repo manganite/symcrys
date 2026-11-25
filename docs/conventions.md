@@ -466,6 +466,27 @@ the three entry points). `residualOperations` freezes its list, not the operatio
 the caller's. "Not found" is `undefined`, never `null` (`findPointGroup`, `pointGroupOf`,
 `zoneAxis`; in Python `None`).
 
+## Indices and numbering
+
+(Thomas, 2026-11-25, #115 item 4.)
+
+- **Operations.** A field that points into a list of operations holds 0-based indices into that
+  list, in the order `operations` gives it: `operations` of a site symmetry and of each entry of an
+  orbit, `siteSymmetryOperations` of a Wyckoff position, in every entry point. ITA numbers the
+  general position (1) … (n): ITA's number of an operation is its index + 1 ("Order of the
+  operations"). A list of indices is ascending; in Python it is an `int64` array.
+- **Settings** are numbers, not indices: setting 1, 2, … as "Settings" numbers them, the default
+  first.
+- **Other indices into lists** are 0-based as well, e.g. `edges` of the asymmetric unit of a plane
+  group, an index into its `inequalities`.
+- **Miller indices and directions.** Every function that computes with a face or a direction takes
+  and gives three indices, (hkl) and [uvw], also for hexagonal axes. Four indices appear only in
+  the conversions (`planeToFourIndices`, `planeFromFourIndices`, `directionToFourIndices`,
+  `directionFromFourIndices`; "Cell, metric and indices") and in ITA's printed faces, the strings
+  `millerIndices` of the Wyckoff positions and crystal forms, which keep ITA's Bravais–Miller
+  indices (hkil) for hexagonal axes; the function `millerIndices` substitutes values into such a
+  string and gives three indices.
+
 ## Errors
 
 Wrong input is a `RangeError` whose message says what is wrong, in every function of the three
@@ -604,8 +625,11 @@ group they generate.
 **Symmetry directions** (`LATTICE_SYMMETRY_DIRECTIONS`) are the lattice directions of ITA Table
 2.1.3.1, grouped by position of the full symbol, in the printed order and with the printed signs:
 primary, secondary, tertiary (hexagonal family: the row "Hexagonal", also for the trigonal classes
-with hexagonal axes). The monoclinic full symbol reads along a, b, c, so the monoclinic family has
-the orthorhombic positions; the triclinic family has none. A setting with rhombohedral axes has the
+with hexagonal axes). The monoclinic full symbol reads along a, b, c (ITA § 2.1.3.15, p. 171), so
+the monoclinic family has the orthorhombic positions; of these, only the unique axis is a lattice
+symmetry direction in Table 2.1.3.1 ([010] or [001]), and the full symbol has `1` at the other two
+(`P 1 2/m 1`), as `symmetryDirections` gives them (Thomas, 2026-11-25, #115 item 1: the positions
+of the full symbol are kept, not only the unique axis). The triclinic family has none. A setting with rhombohedral axes has the
 two positions of the row "Rhombohedral (rhombohedral axes)": [111], and [1-10], [01-1], [-101].
 
 `symmetryDirections(key, options)` lists, for a setting, every position of the family with the

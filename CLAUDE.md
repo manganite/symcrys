@@ -127,8 +127,8 @@ code to this state; the decisions below follow it.
   to Birss's presentation belongs in birss-app (#125).
 - **No special solutions for applications.** An application's choice is no reason. A choice that
   print leaves open is made by ITC's conventions where they extend to the case, otherwise with
-  Thomas, and recorded here. The special solutions found in 0.10 are listed in #110; one is still
-  open there (tagged "under review" below), and none of these patterns is extended in new work.
+  Thomas, and recorded here. The special solutions found in 0.10 are listed in #110; none of these patterns is extended in new
+  work.
   Example (maintainer, 2026-11-21, #24): stereography keeps its own Cartesian frame and rotates
   symcrys' results into it; symcrys is meant to be useful to other users too, who expect ITC.
 - **ITC is the source of the data.** The data are stored in the ITC frame (#122); nothing is
@@ -681,8 +681,10 @@ quantities, { tolerance })`, in all three entry points (3 × 3, and 2 × 2 in `s
   (`tensorForm` / `magneticTensorForm`) or a context option. The crystallographic API has no time
   reversal at all (operations `{ matrix, cartesian }`, no time parity, no `type`, the time-even
   properties only), and a question that involves time reversal is an error that names the magnetic
-  API, because a wrong reading should fail, not answer. Chosen while implementing _(under review,
-  #110 item 8)_: `timeParity: 'even'` and `timeReversal: false` are accepted in what a caller passes in, so that data of the magnetic API
+  API, because a wrong reading should fail, not answer. Chosen while implementing, and kept by Thomas
+  on 2026-11-25 (#110 item 8: it serves the two entry points of symcrys, not an application, and an
+  explicit `'even'` or `false` cannot give a wrong answer): `timeParity: 'even'` and
+  `timeReversal: false` are accepted in what a caller passes in, so that data of the magnetic API
   without time reversal can be handed on; for the same reason, in the other direction, the
   magnetic API refuses an operation that does not say whether it is combined with time reversal
   (operations of the crystallographic API), instead of reading it as a white group; a search
