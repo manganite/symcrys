@@ -106,13 +106,16 @@ export {
   wyckoffPosition,
   wyckoffPositions,
   type CartesianOperationDescription,
+  type CellOperationArgument,
   type IdentifiedPointGroup,
   type Operation,
+  type OperationArgument,
   type OperationDescription,
   type PointGroup,
   type PointGroupInSetting,
   type TensorProperty,
   type TensorPropertyName,
   type TensorSpec,
+  type TensorSpecArgument,
 } from './crystalClasses.js';
 export type { VoigtFactor, VoigtOptions } from './tensors/voigt.js';

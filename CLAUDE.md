@@ -475,9 +475,11 @@ Decided by Thomas on 2026-11-20 (#29), asked before implementation, unless a poi
   a move to TypeScript 7; #56): one report per entry point, `packages/ts/api/symcrys.api.md`,
   `symcrys-magnetic.api.md`, `symcrys-plane.api.md`, read from the declarations in `dist/`; a PR
   that changes the public API shows it as a diff of these files, and the gate `api:check` fails if
-  one is stale (`npm run api:report` writes them). A type that a public signature uses but the entry
-  point does not export by name (a warning `ae-forgotten-export` in the report) is not written out,
-  so a change of its fields does not show; such types are to be exported by name (#190). Chosen
+  one is stale (`npm run api:report` writes them). Every type a public signature uses is in the report (#190):
+  the signatures name exported types, not internal namespaces, and a type that an entry point does
+  not export by name (an internal key union, the record behind an alias) is written out under its
+  internal name (`includeForgottenExports`, marked `ae-forgotten-export`), so a change of its fields
+  shows too. Chosen
   while implementing: the TSDoc messages of api-extractor are off, since TypeDoc checks the comments
   in the gate `docs`, and escaping `<` or `>` with a backslash, as api-extractor's parser wants, would
   put backslashes into the Python docstrings (TypeDoc keeps them there, unlike for `{` and `}`); no

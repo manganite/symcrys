@@ -6,6 +6,14 @@ All notable changes to symcrys are recorded here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- The types of the arguments that the crystallographic API accepts are exported by name (#190):
+  `OperationArgument` (an operation read by its Cartesian matrix), `CellOperationArgument` (by its
+  matrix W, for `residualOperations`) and `TensorSpecArgument` (a specification, with
+  `timeParity: 'even'` accepted); `symcrys/magnetic` exports `Hkl`, as `symcrys` does. Types only,
+  no change of behaviour.
+
 ## [0.13.0] - 2026-11-25
 
 Work on the open issues before 1.0: `residualOperations` for the plane (#119), faster calls for

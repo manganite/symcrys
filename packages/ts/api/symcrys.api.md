@@ -13,8 +13,6 @@ export interface AffineOperation {
 // @public
 export function allowedProperties(key: PointGroupKey): readonly TensorPropertyName[];
 
-// Warning: (ae-forgotten-export) The symbol "OperationArgument" needs to be exported by the entry point index.d.ts
-//
 // @public
 export function allowedPropertiesOf(operations: readonly OperationArgument[], options?: ToleranceOptions): readonly TensorPropertyName[];
 
@@ -47,10 +45,19 @@ export interface CartesianAxis {
     readonly cartesian: Vec3;
 }
 
-// Warning: (ae-forgotten-export) The symbol "identify" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "CartesianOperationDescription_2" needs to be exported by the entry point index.d.ts
 //
 // @public
-export type CartesianOperationDescription = Omit<identify.CartesianOperationDescription, 'timeReversal'>;
+export type CartesianOperationDescription = Omit<CartesianOperationDescription_2, 'timeReversal'>;
+
+// @public
+interface CartesianOperationDescription_2 {
+    readonly axis?: CartesianAxis;
+    readonly kind: OperationKind;
+    readonly n: number;
+    readonly sense?: '+' | '-';
+    readonly timeReversal: boolean;
+}
 
 // @public
 export interface CellAngles {
@@ -63,6 +70,11 @@ export interface CellAngles {
 export interface CellOperation {
     readonly matrix: Mat3;
 }
+
+// @public
+export type CellOperationArgument = CellOperation & {
+    readonly timeReversal?: false;
+};
 
 // @public
 export function changeOfCoordinates(transformation: CoordinateTransformation, quantities: CoordinateQuantities, options?: ToleranceOptions): CoordinateChange;
@@ -92,10 +104,8 @@ export interface CoordinateTransformation {
     readonly originShift?: Vec3;
 }
 
-// Warning: (ae-forgotten-export) The symbol "forms" needs to be exported by the entry point index.d.ts
-//
 // @public
-export const CRYSTAL_FORM_TYPES: readonly forms.CrystalFormType[];
+export const CRYSTAL_FORM_TYPES: readonly CrystalFormType[];
 
 // @public
 export type CrystalFamily = 'triclinic' | 'monoclinic' | 'orthorhombic' | 'tetragonal' | 'hexagonal' | 'cubic';
@@ -115,7 +125,7 @@ export interface CrystalForm {
 }
 
 // @public
-export function crystalForms(key: PointGroupKey, options?: SettingOptions): readonly forms.CrystalForm[];
+export function crystalForms(key: PointGroupKey, options?: SettingOptions): readonly CrystalForm[];
 
 // @public
 export interface CrystalFormType {
@@ -175,10 +185,8 @@ export interface FaceOrbitEntry {
     readonly operations: readonly number[];
 }
 
-// Warning: (ae-forgotten-export) The symbol "groups" needs to be exported by the entry point index.d.ts
-//
 // @public
-export function findPointGroup(symbol: string, options?: groups.AxesOptions): PointGroupInSetting | undefined;
+export function findPointGroup(symbol: string, options?: AxesOptions): PointGroupInSetting | undefined;
 
 // @public
 export type FixedAngleFamily = 'orthorhombic' | 'tetragonal' | 'hexagonal' | 'cubic';
@@ -186,11 +194,8 @@ export type FixedAngleFamily = 'orthorhombic' | 'tetragonal' | 'hexagonal' | 'cu
 // @public
 export type FourIndices = readonly [number, number, number, number];
 
-// Warning: (ae-forgotten-export) The symbol "TensorSpecArgument" needs to be exported by the entry point index.d.ts
-// Warning: (ae-forgotten-export) The symbol "voigtNotation" needs to be exported by the entry point index.d.ts
-//
 // @public
-export function fromVoigt(voigt: readonly number[] | readonly (readonly number[])[], spec: TensorSpecArgument | TensorPropertyName, options?: voigtNotation.VoigtOptions): readonly number[];
+export function fromVoigt(voigt: readonly number[] | readonly (readonly number[])[], spec: TensorSpecArgument | TensorPropertyName, options?: VoigtOptions): readonly number[];
 
 // @public
 export function generators(key: PointGroupKey, options?: SettingOptions): readonly Operation[];
@@ -283,10 +288,25 @@ export interface Operation {
     readonly matrix: Mat3;
 }
 
-// Warning: (ae-forgotten-export) The symbol "elements" needs to be exported by the entry point index.d.ts
+// @public
+export type OperationArgument = {
+    readonly cartesian: Mat3;
+    readonly timeReversal?: false;
+};
+
+// Warning: (ae-forgotten-export) The symbol "OperationDescription_2" needs to be exported by the entry point index.d.ts
 //
 // @public
-export type OperationDescription = Omit<elements.OperationDescription, 'timeReversal'>;
+export type OperationDescription = Omit<OperationDescription_2, 'timeReversal'>;
+
+// @public
+interface OperationDescription_2 {
+    readonly axis?: Axis;
+    readonly kind: OperationKind;
+    readonly n: number;
+    readonly sense?: '+' | '-';
+    readonly timeReversal: boolean;
+}
 
 // @public
 export type OperationKind = 'identity' | 'inversion' | 'rotation' | 'rotoinversion' | 'reflection';
@@ -294,19 +314,17 @@ export type OperationKind = 'identity' | 'inversion' | 'rotation' | 'rotoinversi
 // @public
 export function operations(key: PointGroupKey, options?: SettingOptions): readonly Operation[];
 
-// Warning: (ae-forgotten-export) The symbol "orbits" needs to be exported by the entry point index.d.ts
-//
 // @public
-export function orbit(key: PointGroupKey, indices: orbits.FaceIndices, options?: SettingOptions): readonly orbits.FaceOrbitEntry[];
+export function orbit(key: PointGroupKey, indices: FaceIndices, options?: SettingOptions): readonly FaceOrbitEntry[];
 
 // @public (undocumented)
-export function orbit(key: PointGroupKey, indices: orbits.DirectionIndices, options?: SettingOptions): readonly orbits.DirectionOrbitEntry[];
+export function orbit(key: PointGroupKey, indices: DirectionIndices, options?: SettingOptions): readonly DirectionOrbitEntry[];
 
 // @public (undocumented)
-export function orbit(key: PointGroupKey, indices: orbits.FaceIndices | orbits.DirectionIndices, options?: SettingOptions): readonly orbits.FaceOrbitEntry[] | readonly orbits.DirectionOrbitEntry[];
+export function orbit(key: PointGroupKey, indices: FaceIndices | DirectionIndices, options?: SettingOptions): readonly FaceOrbitEntry[] | readonly DirectionOrbitEntry[];
 
 // @public
-export function orbitOf(operations: readonly OperationArgument[], direction: Vec3, options?: ToleranceOptions): readonly orbits.OrbitPole[];
+export function orbitOf(operations: readonly OperationArgument[], direction: Vec3, options?: ToleranceOptions): readonly OrbitPole[];
 
 // @public
 export interface OrbitPole {
@@ -358,8 +376,6 @@ export function reciprocalBasis(basis: Mat3): Mat3;
 // @public
 export function reduceIndices(indices: readonly number[]): readonly number[];
 
-// Warning: (ae-forgotten-export) The symbol "CellOperationArgument" needs to be exported by the entry point index.d.ts
-//
 // @public
 export function residualOperations<T extends CellOperationArgument>(operations: readonly T[], basis: Mat3, options?: ToleranceOptions): readonly T[];
 
@@ -392,13 +408,11 @@ export interface SiteSymmetry {
     readonly operations: readonly number[];
 }
 
-// Warning: (ae-forgotten-export) The symbol "site" needs to be exported by the entry point index.d.ts
-//
 // @public
-export function siteSymmetry(key: PointGroupKey, direction: Vec3, options?: SettingOptions & ToleranceOptions): site.SiteSymmetry;
+export function siteSymmetry(key: PointGroupKey, direction: Vec3, options?: SettingOptions & ToleranceOptions): SiteSymmetry;
 
 // @public
-export function siteSymmetryOf(operations: readonly OperationArgument[], direction: Vec3, options?: ToleranceOptions): site.SiteSymmetry;
+export function siteSymmetryOf(operations: readonly OperationArgument[], direction: Vec3, options?: ToleranceOptions): SiteSymmetry;
 
 // @public
 export function symbol(key: PointGroupKey, options?: SymbolOptions): string;
@@ -416,10 +430,22 @@ export interface SymmetryDirection {
 }
 
 // @public
-export function symmetryDirections(key: PointGroupKey, options?: SettingOptions): readonly elements.SymmetryDirection[];
+export function symmetryDirections(key: PointGroupKey, options?: SettingOptions): readonly SymmetryDirection[];
 
 // @public
 export const TENSOR_PROPERTIES: Readonly<Record<TensorPropertyName, TensorProperty>>;
+
+// @public
+const TENSOR_PROPERTIES_2: Readonly<{
+    pyroelectric: TensorProperty_2;
+    ferroaxial: TensorProperty_2;
+    piezoelectric: TensorProperty_2;
+    gyrotropic: TensorProperty_2;
+    ferromagnetic: TensorProperty_2;
+    ferrotoroidic: TensorProperty_2;
+    magnetoelectric: TensorProperty_2;
+    piezomagnetic: TensorProperty_2;
+}>;
 
 // @public
 export interface TensorForm {
@@ -445,10 +471,23 @@ export interface TensorProperty {
     readonly spec: TensorSpec;
 }
 
+// @public
+interface TensorProperty_2 {
+    readonly description: string;
+    readonly source: string;
+    // Warning: (ae-forgotten-export) The symbol "TensorSpec_2" needs to be exported by the entry point index.d.ts
+    readonly spec: TensorSpec_2;
+}
+
 // Warning: (ae-forgotten-export) The symbol "TensorPropertyName_2" needs to be exported by the entry point index.d.ts
 //
 // @public
 export type TensorPropertyName = Extract<TensorPropertyName_2, 'pyroelectric' | 'ferroaxial' | 'piezoelectric' | 'gyrotropic'>;
+
+// Warning: (ae-forgotten-export) The symbol "TENSOR_PROPERTIES_2" needs to be exported by the entry point index.d.ts
+//
+// @public
+type TensorPropertyName_2 = keyof typeof TENSOR_PROPERTIES_2;
 
 // @public
 export type TensorRank = 0 | 1 | 2 | 3 | 4;
@@ -461,12 +500,29 @@ export interface TensorSpec {
 }
 
 // @public
+interface TensorSpec_2 {
+    readonly intrinsic: IntrinsicSymmetry;
+    readonly kind: TensorKind;
+    readonly rank: TensorRank;
+    // Warning: (ae-forgotten-export) The symbol "TimeParity" needs to be exported by the entry point index.d.ts
+    readonly timeParity: TimeParity;
+}
+
+// @public
+export type TensorSpecArgument = TensorSpec & {
+    readonly timeParity?: 'even';
+};
+
+// @public
+type TimeParity = 'even' | 'odd';
+
+// @public
 export interface ToleranceOptions {
     readonly tolerance?: number;
 }
 
 // @public
-export function toVoigt(tensor: readonly number[], spec: TensorSpecArgument | TensorPropertyName, options?: voigtNotation.VoigtOptions): readonly number[] | readonly (readonly number[])[];
+export function toVoigt(tensor: readonly number[], spec: TensorSpecArgument | TensorPropertyName, options?: VoigtOptions): readonly number[] | readonly (readonly number[])[];
 
 // @public
 export interface TransformedOperation {
@@ -502,16 +558,18 @@ export interface WyckoffPosition {
     readonly siteSymmetryOperations: readonly number[];
 }
 
-// Warning: (ae-forgotten-export) The symbol "wyckoff" needs to be exported by the entry point index.d.ts
-//
 // @public
-export function wyckoffPosition(key: PointGroupKey, direction: Vec3, options?: SettingOptions & ToleranceOptions): wyckoff.WyckoffPosition;
+export function wyckoffPosition(key: PointGroupKey, direction: Vec3, options?: SettingOptions & ToleranceOptions): WyckoffPosition;
 
 // @public
-export function wyckoffPositions(key: PointGroupKey, options?: SettingOptions): readonly wyckoff.WyckoffPosition[];
+export function wyckoffPositions(key: PointGroupKey, options?: SettingOptions): readonly WyckoffPosition[];
 
 // @public
 export function zoneAxis(h1: Vec3, h2: Vec3): Vec3 | undefined;
+
+// Warnings were encountered during analysis:
+//
+// src/tensors/propertyTable.ts:32:3 - (ae-forgotten-export) The symbol "TensorProperty_2" needs to be exported by the entry point index.d.ts
 
 // (No @packageDocumentation comment for this package)
 
