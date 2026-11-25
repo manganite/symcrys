@@ -423,7 +423,9 @@ class SymmetryDirection(TypedDict):
     magnetic group with its primes (``4'/m``).
     """
     directions: list[DirectionElements]
-    """The symmetry directions of this position (ITA Table 2.1.3.1), each with the elements along it.
+    """The symmetry directions of this position (ITA Table 2.1.3.1; for a monoclinic group the direction
+    of the position of the full symbol, of which only the unique axis is in the table), each with the
+    elements along it.
     """
 
 
@@ -849,8 +851,11 @@ LATTICE_SYMMETRY_DIRECTIONS: dict[str, list[NDArray[np.int64]]] = _shared.conver
 )
 """The directions of each position of the full symbol, per family, as printed in ITA Table 2.1.3.1
 (hexagonal family: the row "Hexagonal", which also serves the trigonal classes with hexagonal axes).
-Monoclinic: the full symbol reads along a, b, c (ITA 6th ed. § 2.1.3.15, p. 171), the orthorhombic
-row. Triclinic: no symmetry direction.
+Triclinic: no position. Monoclinic: the positions of the full symbol, which reads along a, b, c (ITA
+6th ed. § 2.1.3.15, p. 171), the orthorhombic row; of these, only the unique axis is a lattice
+symmetry direction in Table 2.1.3.1 ([010] for unique axis b, [001] for unique axis c; [100] for
+unique axis a, which the table does not list), and the full symbol has ``1`` at the other two
+positions (``1 2/m 1``).
 
 In Python: family → one int64 array of shape (n, 3) per position, the n directions [uvw] as rows.
 """

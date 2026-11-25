@@ -466,6 +466,36 @@ the three entry points). `residualOperations` freezes its list, not the operatio
 the caller's. "Not found" is `undefined`, never `null` (`findPointGroup`, `pointGroupOf`,
 `zoneAxis`; in Python `None`).
 
+## Indices and numbering
+
+(Thomas, 2026-11-25, #115 item 4.)
+
+- **Indices into a list are 0-based.** A field that points into a list of operations holds
+  indices into the list it refers to: `operations(key, …)` in the same setting for a function of a
+  key (`operations` of a site symmetry and of each entry of an orbit; `siteSymmetryOperations` of a
+  Wyckoff position of a crystal class; the site symmetry and orbit of a plane group), the caller's
+  list for a function of a list (`siteSymmetryOf`, `orbitOf`). Such a list of indices is ascending;
+  in Python it is an `int64` array. Likewise `edges` of the asymmetric unit of a plane group indexes
+  its `inequalities`.
+- **ITA's numbers.** ITA numbers the general position (1) … (n). For a crystal class and for a
+  white or black-and-white group, ITA's number of an operation is its index + 1 ("Order of the
+  operations"). A grey group lists the n operations of its class first, then the same sequence
+  with time reversal, which ITA does not number. A centred plane group lists the (0,0)+ set first,
+  numbered as ITA numbers it, then the same sequence with the centring translation, which ITA
+  numbers (1) … again in its (1/2,1/2)+ set.
+- **Numbers count from 1** where ITA or symcrys numbers something: the `index` of a setting (1 for
+  the default; "Settings"), the `position` of a symmetry direction in the full symbol, `formType`
+  (ITA's number of the crystal form, 1 to 47, so `CRYSTAL_FORM_TYPES[formType - 1]`) and the
+  `number` of a plane group.
+- **Miller indices and lattice directions** are three indices, (hkl) and [uvw], also for hexagonal
+  axes (two in `symcrys/plane`). Four indices, (hkil) and [UVTW], appear in the conversions
+  (`planeToFourIndices`, `planeFromFourIndices`, `directionToFourIndices`,
+  `directionFromFourIndices`; "Cell, metric and indices"), in `reduceIndices`, which takes three or
+  four, and in ITA's printed faces, the strings `millerIndices` of the Wyckoff positions and crystal
+  forms, which keep ITA's Bravais–Miller indices for hexagonal axes; the function `millerIndices`
+  substitutes values into such a string and gives three indices. Functions of a Cartesian vector
+  (`siteSymmetry`, `orbitOf`, `faceNormal`) take or give no indices.
+
 ## Errors
 
 Wrong input is a `RangeError` whose message says what is wrong, in every function of the three
@@ -602,10 +632,15 @@ group they generate.
 ## Symmetry directions and elements
 
 **Symmetry directions** (`LATTICE_SYMMETRY_DIRECTIONS`) are the lattice directions of ITA Table
-2.1.3.1, grouped by position of the full symbol, in the printed order and with the printed signs:
+2.1.3.1 (monoclinic: see below), grouped by position of the full symbol, in the printed order and with the printed signs:
 primary, secondary, tertiary (hexagonal family: the row "Hexagonal", also for the trigonal classes
-with hexagonal axes). The monoclinic full symbol reads along a, b, c, so the monoclinic family has
-the orthorhombic positions; the triclinic family has none. A setting with rhombohedral axes has the
+with hexagonal axes). The monoclinic full symbol reads along a, b, c (ITA § 2.1.3.15, p. 171), so
+the monoclinic family has the orthorhombic positions; of these, only the unique axis is a lattice
+symmetry direction in Table 2.1.3.1 ([010] for unique axis b, [001] for unique axis c; [100] for
+unique axis a, which the table does not list), and the full symbol has `1` at the other two
+(`1 2/m 1`; in a space group `P 1 2/m 1`), as `symmetryDirections` gives them (Thomas, 2026-11-25,
+#115 item 1: the positions of the full symbol are kept, not only the unique axis). The triclinic
+family has none. A setting with rhombohedral axes has the
 two positions of the row "Rhombohedral (rhombohedral axes)": [111], and [1-10], [01-1], [-101].
 
 `symmetryDirections(key, options)` lists, for a setting, every position of the family with the
