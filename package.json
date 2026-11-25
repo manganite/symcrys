@@ -18,6 +18,7 @@
     "build": "npm run build -w symcrys",
     "check:dist": "node scripts/check-dist.mjs",
     "bundle:python": "node scripts/bundle-python.mjs",
+    "benchmark": "node scripts/benchmark.mjs",
     "docs:ts": "typedoc",
     "docs:python": "typedoc && node scripts/python-api.mjs",
     "docs:check": "typedoc && node scripts/python-api.mjs --check && node node_modules/typescript/bin/tsc -p docs/tsconfig.json",

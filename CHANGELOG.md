@@ -8,6 +8,13 @@ All notable changes to symcrys are recorded here. The format follows
 
 ### Changed
 
+- Faster calls for lists of operations (#100): `tensorFormOf` keeps the groups and forms of the
+  last 64 lists of operations, so a list passed again (as in a Python loop) is answered at once;
+  `allowsPropertyOf` and `allowedPropertiesOf` read the dimension of the invariant space from the
+  trace of the group average instead of computing the full form; `rotateTensor` contracts one index
+  at a time, about seven times faster at rank 4. The results are the same; those of `rotateTensor`
+  for a rotation that is not a symmetry operation may differ in the last bits (the sums are taken
+  in another order, a relative difference of the order of 10⁻¹⁵).
 - Two comparisons with a fixed internal tolerance now follow the one convention of the library,
   "strictly below counts as equal or zero" (#101): `residualOperations` takes an entry of `matrix`
   as an integer when it lies less than 10⁻⁹ from it (before: at most 10⁻⁹), and the row reduction of

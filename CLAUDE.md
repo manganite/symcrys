@@ -896,7 +896,13 @@ The conventions are in `docs/conventions.md` ("Tensors"); here, what was decided
 - **Speed** (#30, measured 2026-11-19): birss-app's reduction, bundled, takes under QuickJS
   (`quickjs-ng`) 3–112 ms per class for the SHG tensor and up to about 0.3 s at rank 4 (m-3m), 10–35
   times Node; enough for a Python layer that calls symcrys a few times per material. Forms per
-  class, setting and kind of tensor are cached.
+  class, setting and kind of tensor are cached, and the groups and forms of the last 64 lists of
+  operations a caller passed (#100, 2026-11-25, chosen while implementing: a Python loop over one
+  list costs no closure; keyed by the numbers the function reads and the tolerance). A yes/no
+  question of a named property reads the trace of the group average without the row reduction, and
+  `rotateTensor` contracts one index at a time. Batched calls of the Python layer (one engine call
+  for a stack) were measured and left out: the round trip costs about 0.1 ms, the computation in
+  QuickJS most of the time (`rotate_tensor` of 2000 tensors: 543 ms looped, about 500 ms in one call).
 
 ### Plane groups (and later space groups)
 

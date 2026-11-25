@@ -249,6 +249,58 @@ function freezeRows(rows: readonly (readonly number[])[]): readonly (readonly nu
  * (a unit tensor on one orbit of the intrinsic symmetry) projects it onto the invariant subspace;
  * the projections span it, and the reduced row echelon form makes the basis minimal and canonical.
  */
+/**
+ * Whether the group allows a non-zero tensor of the specification: the dimension of the invariant
+ * subspace is the trace of the group average, the same trace `project` computes, but without the
+ * averaged vectors and their row reduction. Each orbit of the index symmetry adds a diagonal
+ * element of the average, which is an orthogonal projector, so each adds a number from 0 to 1; the
+ * sum is the dimension, a whole number up to rounding, and it is at least 1 as soon as a partial sum
+ * reaches 1/2. For the yes/no questions of the named properties (#100).
+ */
+export function allowsTensor(
+  group: readonly CartesianOperation[],
+  spec: TensorSpec,
+  perms: readonly SignedPermutation[],
+): boolean {
+  const { rank } = spec;
+  const dim = 3 ** rank;
+  const d = digits(rank);
+  const ops = signedOperations(group, spec);
+  let trace = 0;
+  for (let seed = 0; seed < dim; seed++) {
+    const members = orbit(seed, rank, perms);
+    if (!members || seed !== Math.min(...members.map((m) => m.flat))) continue;
+    // The diagonal element of the average on the normalised orbit sum: only its own components.
+    let diagonal = 0;
+    for (const { m, sign } of ops) {
+      for (const t of members) {
+        const o = d[t.flat];
+        let acc = 0;
+        for (const s of members) {
+          const i = d[s.flat];
+          let p = s.sign;
+          for (let r = 0; r < rank; r++) p *= m[o[r] * 3 + i[r]];
+          acc += p;
+        }
+        diagonal += t.sign * sign * acc;
+      }
+    }
+    trace += diagonal / ops.length / members.length;
+    if (trace >= 0.5) return true;
+  }
+  return false;
+}
+
+/** The flat matrices of the operations with the sign each gives a tensor of the specification. */
+function signedOperations(group: readonly CartesianOperation[], spec: TensorSpec): { m: number[]; sign: number }[] {
+  return group.map((op) => ({
+    m: op.cartesian.flat(),
+    sign:
+      (spec.kind === 'axial' ? Math.sign(det(op.cartesian)) : 1) *
+      (spec.timeParity === 'odd' && op.timeReversal ? -1 : 1),
+  }));
+}
+
 function project(
   group: readonly CartesianOperation[],
   spec: TensorSpec,
@@ -258,12 +310,7 @@ function project(
   const { rank } = spec;
   const dim = 3 ** rank;
   const d = digits(rank);
-  const ops = group.map((op) => ({
-    m: op.cartesian.flat(),
-    sign:
-      (spec.kind === 'axial' ? Math.sign(det(op.cartesian)) : 1) *
-      (spec.timeParity === 'odd' && op.timeReversal ? -1 : 1),
-  }));
+  const ops = signedOperations(group, spec);
 
   const spanning: number[][] = [];
   // The trace of the group average on the tensors of this index symmetry: the dimension of the
@@ -390,7 +437,8 @@ export function tensorForm(
  * number of free parameters (docs/conventions.md, "Tolerances"). Throws a RangeError for an
  * operation without an orthogonal Cartesian matrix (`cartesian`; within the tolerance), for an
  * operation that does not say whether it is combined with time reversal, and for operations that
- * generate no finite group within the tolerance.
+ * generate no finite group within the tolerance. The groups and forms of the last 64 lists of
+ * operations are kept, so a list passed again (as in a loop) is answered without computing.
  */
 export function tensorFormOf(
   operations: readonly CartesianOperation[],
@@ -400,7 +448,42 @@ export function tensorFormOf(
   checkOptions(options, TOLERANCE_KEYS, 'tensorFormOf');
   const resolved = specOf(spec);
   const perms = checkSpec(resolved);
-  return formOfGroup(callerGroup(operations, options), resolved, perms);
+  const { group, key } = callerGroupWithKey(operations, options);
+  const formKey = `${key}#${specKey(resolved)}`;
+  const cached = callerForms.get(formKey);
+  if (cached) return remember(callerForms, formKey, cached);
+  return remember(callerForms, formKey, formOfGroup(group, resolved, perms));
+}
+
+/**
+ * The groups and forms of the last `CALLER_CACHE_SIZE` lists of operations a caller passed in, by
+ * the numbers the functions read (`cartesian`, `timeReversal`) and the tolerance: a list passed again,
+ * as a Python loop does, costs no closure and no projection (#100). The results are frozen, so
+ * sharing them is safe; the entries are dropped oldest first.
+ */
+const CALLER_CACHE_SIZE = 64;
+const callerGroups = new Map<string, IdealGroup>();
+const callerForms = new Map<string, TensorForm>();
+
+function remember<T>(cache: Map<string, T>, key: string, value: T): T {
+  cache.delete(key);
+  cache.set(key, value);
+  if (cache.size > CALLER_CACHE_SIZE) cache.delete(cache.keys().next().value as string);
+  return value;
+}
+
+/** The group of `callerGroup` with the key of the caller's list, from the cache when the list was seen. */
+function callerGroupWithKey(
+  operations: readonly CartesianOperation[],
+  options?: ToleranceOptions,
+): { group: IdealGroup; key: string } {
+  const tolerance = toleranceOf(options, 'operations');
+  checkCartesianOperations(operations, tolerance);
+  checkTimeReversal(operations);
+  const key = `${tolerance}#${JSON.stringify(operations.map((op) => [op.cartesian, op.timeReversal === true]))}`;
+  const cached = callerGroups.get(key);
+  const group = remember(callerGroups, key, cached ?? idealGroup(operations, tolerance));
+  return { group, key };
 }
 
 /**
@@ -409,10 +492,7 @@ export function tensorFormOf(
  * compute with.
  */
 export function callerGroup(operations: readonly CartesianOperation[], options?: ToleranceOptions): IdealGroup {
-  const tolerance = toleranceOf(options, 'operations');
-  checkCartesianOperations(operations, tolerance);
-  checkTimeReversal(operations);
-  return idealGroup(operations, tolerance);
+  return callerGroupWithKey(operations, options).group;
 }
 
 /** The form of a tensor (checked specification and its permutations) under a group made exact. */
@@ -456,19 +536,21 @@ export function rotateTensor(
   if (!Array.isArray(tensor) || tensor.length !== dim)
     throw new RangeError(`A tensor of rank ${rank} has ${dim} components, not ${shown(tensor)}`);
   checkNumbers(tensor, dim, 'The tensor');
-  const d = digits(rank);
   const m = rotation.flat();
   const f = resolved.kind === 'axial' ? Math.sign(det(rotation)) : 1;
-  const out = new Array<number>(dim).fill(0);
-  for (let o = 0; o < dim; o++) {
-    let acc = 0;
-    for (let s = 0; s < dim; s++) {
-      if (tensor[s] === 0) continue;
-      let p = tensor[s];
-      for (let r = 0; r < rank; r++) p *= m[d[o][r] * 3 + d[s][r]];
-      acc += p;
+  // One index at a time: t′ = R along index 1, then along index 2, …, rank·3^(rank+1) products
+  // instead of rank·9^rank (#100); index k of the flat position has the stride 3^(rank−1−k).
+  let current: number[] = tensor.map((x) => x + 0);
+  for (let k = 0; k < rank; k++) {
+    const stride = 3 ** (rank - 1 - k);
+    const next = new Array<number>(dim);
+    for (let flat = 0; flat < dim; flat++) {
+      const a = Math.floor(flat / stride) % 3;
+      const base = flat - a * stride;
+      next[flat] =
+        m[a * 3] * current[base] + m[a * 3 + 1] * current[base + stride] + m[a * 3 + 2] * current[base + 2 * stride];
     }
-    out[o] = f * acc;
+    current = next;
   }
-  return deepFreeze(out);
+  return deepFreeze(current.map((x) => f * x + 0));
 }
