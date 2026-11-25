@@ -201,7 +201,8 @@ Carried over from birss-app, where the calculations come from.
 
 ## Tests
 
-- Tests sit next to their module (`foo.ts`, `foo.test.ts`), as in birss-app.
+- Tests sit next to their module (`foo.ts`, `foo.test.ts`), as in birss-app; the test of a repository
+  script next to the script (`scripts/assemble-site.test.mjs`), which vitest collects too.
 - **Test-only code** is `*.test.ts`, `*.fixtures.ts`, `*.pins.json` and anything in a `testUtils/`
   folder (in `packages/ts/src`). It is
   type-checked with Node types (tests read `references/` from disk), may import Node built-ins,
@@ -369,8 +370,9 @@ build && npm run bundle:python`, then in `packages/python` `pip install -e ".[te
   GitHub does not let Thomas approve his own PRs; his OK stays a process rule. Admins may bypass
   only through a pull request (e.g. when a check itself is broken), never by pushing directly.
   Squash and rebase merges are off, head branches are deleted after merge.
-- **Documentation site** (#29): built from the tag by `release.yml` (jobs `site` and `pages`) and
-  published on GitHub Pages, [manganite.github.io/symcrys](https://manganite.github.io/symcrys/).
+- **Documentation site** (#29): built from the tag by `release.yml` (jobs `site` and `pages`, with
+  the sites of the earlier releases, #57) and published on GitHub Pages,
+  [manganite.github.io/symcrys](https://manganite.github.io/symcrys/).
   Settings by Thomas: Pages with the source "GitHub Actions", and a deployment rule for tags
   `v*.*.*` on the environment `github-pages`. Which checks the ruleset `main` requires: "Repository
   settings" above.
@@ -466,8 +468,17 @@ Decided by Thomas on 2026-11-20 (#29), asked before implementation, unless a poi
   headless browser in the gates: the page is simple, and a browser in CI would be a heavy dev
   dependency for it.
 - **Conventions are included, not copied**: `docs/conventions.md` is a page of the site.
-- **Only the newest version** on the site, which names it in its title; versioned pages from 1.0.0
-  on, when the API holds still (#57).
+- **Versioned pages from 0.14** (#57; Thomas, 2026-11-25, asked with options, revising "from 1.0.0"
+  of 2026-11-20, since 1.0 waits): each release attaches its built site to the GitHub release
+  (`symcrys-site-X.Y.Z.tar.gz`, job `site` of `release.yml`), and the job `pages` assembles the sites
+  of all releases (`scripts/assemble-site.mjs`): the newest at the root, so the URLs stay as they
+  are, and the newest PATCH of each MINOR under `/X.Y/`, with `versions.json` for a small version
+  menu of our own in the sidebar (`docs/_templates/sidebar/versions.html`; furo has none). No branch,
+  no change of the Pages settings; the title names the version of each page, and every page's
+  canonical link points to the root. Releases before 0.14 carry no site and stay off. Chosen while
+  implementing (review of PR #192): the site is attached in a job of its own with write access and no
+  dependencies, after npm and PyPI; only releases that carry a site are downloaded, and a failed
+  download fails the job; a PATCH of an older MINOR goes under its folder and leaves the root.
 - **Short READMEs** (root, `packages/ts` for npm, `packages/python` for PyPI): what symcrys is, how
   to install, one short example, the link to the site. The root README keeps development and
   releases.

@@ -82,6 +82,21 @@ def setup(app):  # noqa: ANN001, ANN201
 html_theme = "furo"
 # The site's address: canonical links, Open Graph and sitemap.xml (docs/_ext/symcrys_docs.py, #72).
 html_baseurl = "https://manganite.github.io/symcrys/"
+# The version menu (#57): furo's sidebar with docs/_templates/sidebar/versions.html below the
+# name of the site; it reads versions.json at the published root (scripts/assemble-site.mjs).
+html_sidebars = {
+    "**": [
+        "sidebar/brand.html",
+        "sidebar/versions.html",
+        "sidebar/search.html",
+        "sidebar/scroll-start.html",
+        "sidebar/navigation.html",
+        "sidebar/ethical-ads.html",
+        "sidebar/scroll-end.html",
+        "sidebar/variant-selector.html",
+    ]
+}
+html_context = {"symcrys_site_root": html_baseurl}
 # One description per page (meta description and og:description, at most about 160 characters);
 # the build warns about a page without one.
 symcrys_page_descriptions = {

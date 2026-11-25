@@ -180,6 +180,9 @@ jobs:
   # that the one that runs the dev dependencies has no token for Pages. The environment
   # `github-pages` needs a deployment rule for tags `v*.*.*` (GitHub, Settings › Environments),
   # and Pages its source set to GitHub Actions.
+  # The site of this release, built from the tag; the job attach-site attaches it to the GitHub
+  # release, from which the job pages assembles the versioned site (#57). This job, which installs
+  # the documentation tools and runs the notebooks, has read access only.
   site:
     needs: release
     runs-on: ubuntu-latest
@@ -208,15 +211,41 @@ jobs:
           python -m pip install -e packages/python -r docs/requirements.txt
           npm run docs:check
           npm run docs:site
-      - name: Keep the site for Pages
-        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+      - name: Pack the site
+        # Without Sphinx's doctrees and build info, which Pages leaves out anyway.
+        run: tar -czf "symcrys-site-${GITHUB_REF_NAME#v}.tar.gz" --exclude=./.doctrees --exclude='./.buildinfo*' -C build/docs/html .
+      - name: Keep the site
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          path: build/docs/html
+          name: site
+          path: symcrys-site-*.tar.gz
+          if-no-files-found: error
+
+  # Attaches the site to the GitHub release once both packages were submitted (npm staged, PyPI
+  # approved), so that no version pip cannot install gets a folder of the site. A job of its own with
+  # write access and no dependencies installed.
+  attach-site:
+    needs: [site, npm, pypi]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # attach the site to the GitHub release
+    steps:
+      - name: Get the site
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: site
+      - name: Attach it to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: gh release upload "$GITHUB_REF_NAME" "symcrys-site-${GITHUB_REF_NAME#v}.tar.gz" --clobber
 
   # Published only after both packages were submitted (npm staged, PyPI approved), so that the site
-  # does not show a version that pip cannot install.
+  # does not show a version that pip cannot install. The versioned site (#57): the sites attached to
+  # all releases, the newest at the root and the newest PATCH of each MINOR under /X.Y/, with
+  # versions.json for the version menu (scripts/assemble-site.mjs).
   pages:
-    needs: [site, npm, pypi]
+    needs: attach-site
     runs-on: ubuntu-latest
     concurrency:
       group: pages
@@ -225,9 +254,37 @@ jobs:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
     permissions:
+      contents: read # read the sites attached to the releases
       pages: write
       id-token: write # OIDC token for the Pages deployment
     steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+      - name: Assemble the sites of all releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -o pipefail
+          mkdir -p build/sites
+          # Only the releases that carry a site (from 0.14 on), and a failed download fails the job,
+          # so that no version silently drops off the site.
+          gh api --paginate "repos/$GH_REPO/releases" \
+            --jq '.[] | select(any(.assets[]; .name | test("^symcrys-site-"))) | .tag_name' |
+            while read -r tag; do
+              gh release download "$tag" --pattern 'symcrys-site-*.tar.gz' --dir build/sites
+            done
+          node scripts/assemble-site.mjs build/sites build/pages "${GITHUB_REF_NAME#v}"
+      - name: Keep the site for Pages
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: build/pages
       - name: Deploy to GitHub Pages
         id: deploy
         uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

@@ -1,0 +1,62 @@
+{#- The version menu of the sidebar (#57; Thomas, 2026-11-25): versions.json at the root of the
+    published site lists the newest release and the newest PATCH of each MINOR
+    (scripts/assemble-site.mjs). The button opens the same page in the chosen version, or that
+    version's start page where the page does not exist there; choosing alone does not navigate, so
+    the arrow keys can move through the list (WCAG 3.2.2). Hidden where the site is not served from
+    its published root (a local build) or without versions.json. -#}
+<div class="sidebar-versions" id="symcrys-versions" hidden>
+  <label for="symcrys-version-select">Version</label>
+  <select id="symcrys-version-select"></select>
+  <button type="button" id="symcrys-version-go">Open</button>
+</div>
+<script>
+  (() => {
+    const root = {{ symcrys_site_root|tojson }};
+    const page = {{ (pagename + ".html")|tojson }};
+    if (!location.href.startsWith(root)) return;
+    const box = document.getElementById("symcrys-versions");
+    const select = document.getElementById("symcrys-version-select");
+    const go = document.getElementById("symcrys-version-go");
+    // The addresses of the versions, kept here: the list shows their labels only, and an address
+    // is opened only if it lies under the published root.
+    const urls = [];
+    // The entry whose folder holds this page: the longest prefix of the address.
+    const current = () => {
+      let best = -1;
+      for (let i = 0; i < urls.length; i++) {
+        if (location.href.startsWith(urls[i]) && (best < 0 || urls[i].length > urls[best].length)) best = i;
+      }
+      return best;
+    };
+    fetch(new URL("versions.json", root))
+      .then((response) => (response.ok ? response.json() : Promise.reject(response.status)))
+      .then((versions) => {
+        for (const v of versions) {
+          const url = new URL(v.path, root).href;
+          if (!url.startsWith(root)) continue;
+          urls.push(url);
+          select.add(new Option(String(v.label), String(urls.length - 1)));
+        }
+        const here = current();
+        if (here >= 0) select.selectedIndex = here;
+        go.addEventListener("click", () => {
+          const base = urls[select.selectedIndex];
+          if (base === undefined) return;
+          fetch(base + page, { method: "HEAD" })
+            .then((response) => {
+              location.href = response.ok ? base + page : base;
+            })
+            .catch(() => {
+              location.href = base;
+            });
+        });
+        // Back from the cache of the browser shows the version of this page again.
+        window.addEventListener("pageshow", () => {
+          const again = current();
+          if (again >= 0) select.selectedIndex = again;
+        });
+        box.hidden = false;
+      })
+      .catch(() => {});
+  })();
+</script>

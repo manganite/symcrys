@@ -8,6 +8,9 @@ All notable changes to symcrys are recorded here. The format follows
 
 ### Added
 
+- Documentation site: versioned pages from this release on (#57). The newest release stays at
+  the root, each MINOR keeps its newest PATCH under `/X.Y/` (e.g. `/0.14/`), and a menu in the
+  sidebar opens the same page in another version.
 - The shapes that the crystallographic API accepts have names, the names of the same notions in
   the magnetic API (#190, Thomas, 2026-11-25): `symcrys` exports `CartesianOperation` (an
   operation read by its Cartesian matrix, `timeReversal: false` accepted); its `CellOperation`

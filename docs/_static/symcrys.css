@@ -13,3 +13,14 @@ table.tensor-properties {
   display: block;
   overflow-x: auto;
 }
+/* The version menu of the sidebar (docs/_templates/sidebar/versions.html, #57). */
+.sidebar-versions {
+  margin: 0 var(--sidebar-item-spacing-horizontal) 0.5rem;
+  font-size: var(--sidebar-item-font-size);
+}
+.sidebar-versions select {
+  margin-left: 0.5rem;
+}
+.sidebar-versions button {
+  margin-left: 0.25rem;
+}
