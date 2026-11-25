@@ -1118,8 +1118,10 @@ grid is the tensor itself; the panels Yariv calls the standard orientation are t
 settings), Hoshi et al. (1995) (rank 4, `'symmetric-pairs'`, 6/mmm and 6mm, with Hoshi's tracelessness Q_ii = 0
 added to the form), and Newnham, _Properties of Materials_ (2005), Tables 12.2 and 30.1 (the
 piezoelectric matrices in Voigt's notation, which also check the factor 2 of d through −2d₁₁, −2d₂₂,
-and the gyration tensors of the 32 classes) and Table 30.2 (which acentric classes are optically
-active, enantiomorphic, piezo- and pyroelectric), all in the ITC default settings. The surface use case of #30 is checked against Yariv: an m-3m crystal has no SHG in
+and the gyration tensors of the 32 classes), Table 30.2 (which acentric classes are optically
+active, enantiomorphic, piezo- and pyroelectric), Tables 8.1 and 9.1 (pyroelectric and dielectric
+forms) and Table 13.1 (the elastic stiffnesses c_αβ, without factors, ½(c₁₁ − c₁₂) as c₆₆), all in
+the ITC default settings. The surface use case of #30 is checked against Yariv: an m-3m crystal has no SHG in
 the bulk, its (001), (110) and (111) surfaces have the forms of 4mm, mm2 and 3m with 3, 5 and 4
 independent components.
 
@@ -1135,6 +1137,12 @@ A printed form belongs to the orientation its symbol names (ITC Vol. D § 1.5.7.
 along the entries of an orthorhombic symbol; z, x, y along those of a trigonal or hexagonal one),
 so each printed symbol, those in square brackets included, is compared in the setting that has this
 ITC symbol, and so are the second trigonal orientations the text of § 1.5.8.1 names (312, 31m, …).
+A further print check: Newnham, _Properties of Materials_ (2005), Tables 14.3 (the 31 pyromagnetic
+groups), 14.4 (magnetoelectric, 58 groups) and 14.5 (piezomagnetic, 66 groups, with the factors of
+d, −2Q₂₂), each group compared in the setting its symbol names; five of Newnham's symbols name the
+other orientation of the group than his matrix, and two lack a prime (`4'22`, `4'32`): they are read
+as ITC Vol. D prints the same matrices (errata with their reasons in
+`references/newnham/tables-8.1-9.1-13.1-14.3-14.4-14.5.md`).
 
 ## Plane groups
 
@@ -1270,6 +1278,7 @@ the determination of the plane group of a pattern (a later MINOR, #31).
 | tensor forms, second print check: ITC forms carried into Birss's frame                                                                                                                                                | Birss Tables 4a–4f (pp. 56–66): `references/birss/table-4a.md` … `table-4f.md`                                                                                                                                                                                                                                    | `tensors/birss.reference.test.ts`                                                                       |
 | tensor forms, ITC: counts, pyroelectric direction, piezoelectric classes                                                                                                                                              | ITA Table 3.2.2.1 (p. 738)                                                                                                                                                                                                                                                                                        | `tensors/itc.reference.test.ts`                                                                         |
 | piezoelectric forms in Voigt's notation (with the factors of d), gyration tensors (optical activity), and which acentric classes are optically active, enantiomorphic, piezo- and pyroelectric: a further print check | Newnham, _Properties of Materials_ (OUP, 2005), Tables 12.2 (pp. 91–92), 30.1 (p. 330), 30.2 (p. 332): `references/newnham/tables-12.2-30.1-30.2.md`, with one erratum (−4 in Table 12.2)                                                                                                                         | `tensors/newnham.reference.test.ts`                                                                     |
+| pyroelectric, dielectric and elastic forms (c_αβ without factors) of the 32 classes; pyromagnetic, magnetoelectric and piezomagnetic forms (with the factors of d) of the magnetic groups: a further print check      | Newnham, _Properties of Materials_ (OUP, 2005), Tables 8.1 (p. 53), 9.1 (p. 64), 13.1 (pp. 108–109), 14.3 (p. 133), 14.4 (p. 140), 14.5 (pp. 144–145): `references/newnham/tables-8.1-9.1-13.1-14.3-14.4-14.5.md`, with errata (eight symbols in Tables 14.4 and 14.5)                                            | `tensors/newnhamMatrices.reference.test.ts`                                                             |
 | ferroaxial classes (axial vector, time-even)                                                                                                                                                                          | Birss Table 4a (pp. 56–57) with Table 4c (p. 58): `references/birss/`; the term: Hlinka, Privratska, Ondrejkovic & Janovec, _Phys. Rev. Lett._ **116**, 177602 (2016)                                                                                                                                             | `tensors/tensorProperties.test.ts`                                                                      |
 | rank 3, `'symmetric-last-pair'` (SHG, piezoelectric d_ijk): cells, classes, signs; the forms at m-3m surfaces                                                                                                         | Yariv, _Quantum Electronics_, 2nd ed. (Wiley, 1975), Table 16.1 (pp. 410–411): `references/yariv/table-16.1.md`                                                                                                                                                                                                   | `tensors/yariv.reference.test.ts`, `tensors/tensorForm.test.ts`                                         |
 | rank 4, `'symmetric-pairs'` (electric-quadrupole SHG) for 6/mmm, 6mm                                                                                                                                                  | Hoshi et al., Phys. Rev. B 52, 12355 (1995), Eqs. (11)–(12): `references/hoshi/eqs-11-12.md`                                                                                                                                                                                                                      | `tensors/hoshi.reference.test.ts`                                                                       |
