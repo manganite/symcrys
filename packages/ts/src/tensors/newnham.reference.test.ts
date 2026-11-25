@@ -14,7 +14,7 @@
 
 import { describe, expect, it } from 'vitest';
 import * as classes from '../index.js';
-import { matrixRank } from '../testUtils/rank.js';
+import { printedSpace, sameSpace } from '../testUtils/printedMatrix.js';
 import { readReference, section, tableRows } from '../testUtils/references.js';
 
 const FILE = readReference('newnham/tables-12.2-30.1-30.2.md');
@@ -31,26 +31,6 @@ function keysOf(printed: string): classes.PointGroupKey[] {
       return found.key;
     });
 }
-
-/** The spanning vectors of a printed matrix, one per coefficient symbol. */
-function printedSpace(matrix: string): number[][] {
-  const cells = matrix.split(';').map((row) => row.trim().split(/\s+/));
-  const width = cells[0].length;
-  const vectors = new Map<string, number[]>();
-  cells.forEach((row, i) =>
-    row.forEach((cell, j) => {
-      if (cell === '0') return;
-      const m = /^(-?)(\d?)([dg]\d\d)$/.exec(cell);
-      if (!m) throw new Error(`Newnham: unreadable cell ${cell}`);
-      if (!vectors.has(m[3])) vectors.set(m[3], new Array<number>(cells.length * width).fill(0));
-      vectors.get(m[3])![i * width + j] = (m[1] ? -1 : 1) * Number(m[2] || 1);
-    }),
-  );
-  return [...vectors.values()];
-}
-
-const sameSpace = (a: readonly (readonly number[])[], b: readonly (readonly number[])[], dim: number) =>
-  matrixRank(a, dim) === matrixRank(b, dim) && matrixRank([...a, ...b], dim) === matrixRank(a, dim);
 
 /** The corrections of the section "Errata": per group the matrix row (1-based) or the count, as printed and as read. */
 const ERRATA = tableRows(section(FILE, '### Errata')).slice(1);
