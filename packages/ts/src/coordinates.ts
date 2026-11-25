@@ -348,7 +348,11 @@ export interface CoordinateChange {
  *
  * P, p and the operations are read each number as the simplest fraction within the tolerance
  * (default `EPSILON`; 0.3333333 is 1/3) and transformed exactly, so that every result, the inverse
- * pair included, can be passed back; the other quantities are floating point. A transformed
+ * pair included, can be passed back; the other quantities are floating point. P is rational in a
+ * change between lattice bases, as in ITA; an irrational P (a rotation by 30°) is read as the
+ * nearby fractions, about as exact as the tolerance, and a much smaller tolerance can make the exact
+ * products leave the safe integers, a RangeError.
+ * A transformed
  * operation is `{ matrix, translation }` alone: other fields of the record (`cartesian`, in the
  * magnetic API `timeReversal`) are not carried over, so they are matched by index. Throws a
  * RangeError for a singular P, a quantity of the wrong shape, an unknown quantity, an operation with

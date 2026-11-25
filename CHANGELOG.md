@@ -6,14 +6,24 @@ All notable changes to symcrys are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-11-25
+
+The completion of the ITC content planned in #126 and #137 (part I): the plane groups get the lookups
+and lists of the other entry points and their lattices and cells, all three entry points the change
+of the coordinate system of ITA 2016 § 1.5, the point-group entry points Voigt's notation with ITC's
+factors and Shubnikov's symbols. Two breaking changes: `changeOfAxes` is replaced by
+`changeOfCoordinates` (migration under "Removed"), and `findPointGroup` refuses a symbol with a
+character that only Shubnikov's notation writes ("Changed").
+
 ### Added
 
 - **`symcrys/plane`: lookups and lists** (#97, #137 F4): `isPlaneGroupKey`, `isPointGroupKey`,
   `planeGroups()`, `pointGroups()`, `findPlaneGroup(symbol)` (the key or the full symbol, spaces
   ignored: `findPlaneGroup('p 1 m 1')` gives `{ key: 'pm' }`) and `findPointGroup(symbol)` (`'31m'`
   gives `{ key: '3m', setting: 2 }`), as in the other entry points; `{ setting }` takes the symbol of
-  a setting too (`{ setting: '31m' }`). Python: `is_plane_group_key`, `is_point_group_key`,
-  `plane_groups`, `point_groups`, `find_plane_group`, `find_point_group` in `symcrys.plane`.
+  a setting too (`{ setting: '31m' }`). Types `PlaneGroupFound`, `PointGroupInSetting`. Python:
+  `is_plane_group_key`, `is_point_group_key`, `plane_groups`, `point_groups`, `find_plane_group`,
+  `find_point_group` in `symcrys.plane`.
 - **`symcrys/plane`: lattices and cells** (#119, #137 G5): `planeGroup(key)` gives `bravaisLattice`
   (`'mp'`, `'op'`, `'oc'`, `'tp'`, `'hp'`, ITA 2016 Table 2.1.1.1, p. 143) and `pattersonSymmetry`
   (as the headline of the group prints it, `'p2mm'` for `p2mg`); `pointGroup(key)` of a plane point
@@ -21,7 +31,9 @@ All notable changes to symcrys are recorded here. The format follows
   `cellRestrictions(system)` the restrictions of Table 2.1.1.1 on the cell parameters as data; and
   the cell functions for 2 × 2 bases, with the names of the other entry points:
   `latticeFromParameters({ a, b, gamma })`, `latticeParameters`, `metricTensor`,
-  `reciprocalBasis`. Python: the same in `symcrys.plane` (`lattice_from_parameters(a, b, gamma)`).
+  `reciprocalBasis`. Types `PlaneBravaisLattice`, `CellRestrictions`, `PlaneCellParameter`,
+  `PlaneFixedAngles`, `LatticeParameters`, `Mat2`. Python: the same in `symcrys.plane`
+  (`lattice_from_parameters(a, b, gamma)`).
 - **`changeOfCoordinates`** (#120, #137 G2), in all three entry points (Python
   `change_of_coordinates(linear_part, *, origin_shift=None, points=None, directions=None,
 planes=None, metric=None, operations=None, tolerance=None)`): the change of the coordinate system
@@ -29,30 +41,43 @@ planes=None, metric=None, operations=None, tolerance=None)`): the change of the 
   vector coefficients, Miller indices, the metric tensor and operations (W, w), and the inverse pair
   (Q, q); P, p and the operations are read each number as the simplest fraction within the tolerance
   and transformed exactly, so that every result can be passed back. It replaces `changeOfAxes`
-  (below).
+  (below). Types: `CoordinateTransformation`, `CoordinateQuantities`, `CoordinateChange`,
+  `InverseTransformation`, `AffineOperation`, `TransformedOperation` in each entry point.
 - **`toVoigt` and `fromVoigt`** (#137 E3), in `symcrys` and `symcrys/magnetic` (Python `to_voigt`,
   `from_voigt`): a tensor with symmetric index pairs in Voigt's two-index notation and back, with
   ITC's factors (ITC Vol. D § 1.1.4.10, eq. (1.5.7.4)): one factor, 1 or 2, per contracted index pair
   (`{ factors: [2] }` for the piezoelectric d, `[1]` for second-harmonic generation, `[2, 2]` for s,
   `[1, 2]` for π), ITC's `[2]` by default for `'piezomagnetic'`; 6 components at rank 2, 3 × 6 or
-  6 × 3 at rank 3, 6 × 6 at rank 4.
+  6 × 3 at rank 3, 6 × 6 at rank 4. Types `VoigtFactor`, `VoigtOptions`. In Python `to_voigt` takes a
+  tensor of shape (3, …, 3) or flat, and `from_voigt` gives the shape (3, …, 3); in TypeScript a
+  tensor is flat.
 - **Shubnikov symbols** (#137 B4): `symbol(key, { form: 'shubnikov' })` in `symcrys` and
   `symcrys/magnetic` gives the symbol of ITC Vol. D Table 1.5.2.3 (`2̲:m̲` for `2'/m'`, `6̅/4` for
   `m-3m`), with combining characters for the overbar and the underline; a grey group, which ITC
   does not print, the symbol of its class, `·` and an underlined 1, as Shubnikov & Belov (1964) write
-  it (`m·1̲`). `findPointGroup` does not read them, and
-  refuses a symbol with the underline, `:` or `·`.
+  it (`m·1̲`). `findPointGroup` does not read them, and refuses a symbol with the underline, `:` or
+  `·` ("Changed").
 - The type `PlaneOperationKind` of `symcrys/plane` (Python `symcrys.plane.PlaneOperationKind`), the
   `kind` of a plane operation description, named as `OperationKind` is in the other entry points.
+
+### Changed
+
+- **Breaking:** `findPointGroup` (both point-group entry points) refuses a symbol with a character
+  that only Shubnikov's notation writes (the combining low line U+0332, `:`, `·` and the dot operators U+22C5,
+  U+2219) with a RangeError (Python `SymcrysError`); up to 0.11 such a symbol was "not found"
+  (`undefined`, Python `None`). A caller that passes text of unknown origin catches the error.
+  Shubnikov symbols are written by `symbol(key, { form: 'shubnikov' })` but not read (#137 B4).
 
 ### Removed
 
 - **`changeOfAxes`** and its result type `AxisChange` (Python `change_of_axes`), replaced by
   `changeOfCoordinates` (#120, #137 G2), which also takes det P < 0 (refused by `changeOfAxes`), an
-  origin shift, points, the metric and operations, and cites ITA 2016 instead of 2006. It reads each
-  entry of P as the simplest fraction within the tolerance (default 10⁻⁶) and computes exactly, so a
-  P of floating-point values that are no fraction within the tolerance is taken as the nearby
-  fraction (0.6666667 as 2/3):
+  origin shift, points, the metric and operations, and cites ITA 2016 instead of 2006. It computes
+  exactly with fractions: each entry of P is read as the simplest fraction within the tolerance
+  (default 10⁻⁶; 0.6666667 is 2/3). P is rational in a change between lattice bases, as in ITA; an
+  irrational P, which `changeOfAxes` inverted in floating point (a rotation by 30°), is read as
+  nearby fractions, accurate to about the tolerance, and a much smaller tolerance can make the
+  exact products leave the safe integers (a RangeError):
 
   | Up to 0.11                                    | From 0.12                                                                     |
   | --------------------------------------------- | ----------------------------------------------------------------------------- |
@@ -899,7 +924,8 @@ k=None, l=None)` (new in this version).
 - Project scaffold: TypeScript build to `dist/` (ES modules with type declarations), tests, lint,
   format check, CI and release workflow. The only export so far is `VERSION`.
 
-[Unreleased]: https://github.com/manganite/symcrys/compare/v0.11.0...HEAD
+[Unreleased]: https://github.com/manganite/symcrys/compare/v0.12.0...HEAD
+[0.12.0]: https://github.com/manganite/symcrys/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/manganite/symcrys/compare/v0.10.1...v0.11.0
 [0.10.1]: https://github.com/manganite/symcrys/compare/v0.10.0...v0.10.1
 [0.10.0]: https://github.com/manganite/symcrys/compare/v0.9.0...v0.10.0
