@@ -1,7 +1,7 @@
 /**
  * The keys of the point groups: the 32 crystal classes (type I), the 32 grey groups (type II) and
  * the 58 black-and-white groups (type III), the 122 magnetic point groups (docs/conventions.md,
- * "Keys"). Their data are in itcData.ts and itcMagneticData.ts.
+ * "Keys"). Their data are in classData.ts and blackWhiteData.ts.
  */
 
 import { IDENTITY } from '../linalg.js';

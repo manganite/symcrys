@@ -1,11 +1,11 @@
 /**
  * ITA's selected generators of every point-group setting it lists, the data from which
- * `itcData.ts` builds the operations in ITA's order. ITA bases the sequence of the coordinate
+ * `classData.ts` builds the operations in ITA's order. ITA bases the sequence of the coordinate
  * triplets on its "Generators selected" (Vol. A, 5th ed. 2006, § 2.2.11 (iv), p. 27; transcribed
  * for the symmorphic P group of every setting it lists in references/itc/vol-a-2006-symmetry-operations.md)
  * and takes the next generator as soon as a power of the current one lies in the group generated
  * so far (§ 8.3.5, p. 737). This gives ITA's numbering of the general position (ITA 6th ed. Table
- * 3.2.3.2), as `itcData.reference.test.ts` checks for all 45 entries (5 with rhombohedral axes). The generators are the
+ * 3.2.3.2), as `classData.reference.test.ts` checks for all 45 entries (5 with rhombohedral axes). The generators are the
  * printed triplets of Table 3.2.3.2, as matrices W in the conventional basis (x̃ = W x);
  * docs/conventions.md, "Order of the operations".
  */
@@ -21,7 +21,7 @@ export type IntMat3 = readonly [
  * ITA's selected generators per setting (`key|full ITC symbol of the setting`, with `|rhombohedral`
  * for rhombohedral axes), in printed order (identity and translations left out).
  */
-export const ITA_GENERATORS: Readonly<Record<string, readonly IntMat3[]>> = {
+export const SELECTED_GENERATORS: Readonly<Record<string, readonly IntMat3[]>> = {
   // 1: P1 (No. 1), p. 113
   '1|1': [],
   // -1: P-1 (No. 2), p. 115

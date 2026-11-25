@@ -619,7 +619,7 @@ operations }`; `undefined`, never `null` (`zoneAxis`); every result frozen and `
   (`docs/conventions.md`, "Order of the operations", "Generators"). Consumers draw and list
   operations in this order (stereography: poles, faces, face lists), so it should mean something
   and stay stable; a closure order has no meaning of its own. The data are ITA's selected
-  generators (`pointGroups/itaOrder.ts`, #122). An index into a list of operations is 0-based, ITA's
+  generators (`pointGroups/generatorData.ts`, #122). An index into a list of operations is 0-based, ITA's
   number of the operation its index + 1, and numbers such as a setting's `index` count from 1
   (Thomas, 2026-11-25, #115 item 4, asked with options: stated in one place,
   `docs/conventions.md`, "Indices and numbering", rather than 1-based indices, which would be
@@ -651,9 +651,9 @@ operations }`; `undefined`, never `null` (`zoneAxis`); every result frozen and `
   the magnetic groups.
 - **Stored frame and settings** (Thomas, 2026-11-22, #110 point 1; #122, #116, #123): the data are
   stored in the ITC frame: ITA's selected generators as exact integer matrices in the lattice basis
-  of each printed setting (`pointGroups/itaOrder.ts`), the settings ITA does not print (`2mm`,
-  `m2m`, unique axis a) derived by a change of basis (`pointGroups/itcData.ts`), and for the
-  magnetic groups the full symbols per setting (`pointGroups/itcMagneticData.ts`); a setting is
+  of each printed setting (`pointGroups/generatorData.ts`), the settings ITA does not print (`2mm`,
+  `m2m`, unique axis a) derived by a change of basis (`pointGroups/classData.ts`), and for the
+  magnetic groups the full symbols per setting (`pointGroups/blackWhiteData.ts`); a setting is
   selected by its ITC symbol or by its index, numbered as `docs/conventions.md` ("Settings") gives
   them (the orthorhombic ones by the column order of ITA 2016 Table 1.5.4.4, #137 A4; monoclinic
   unique axis a is setting 3, #137 A5). A crystal class has the same settings, with the same
@@ -816,7 +816,7 @@ quantities, { tolerance })`, in all three entry points (3 × 3, and 2 × 2 in `s
   `shubnikov.reference.test.ts`).
 - **Magnetic point groups: data** (2026-11-19, #13; #122, #109): stored are the ITC full symbols of
   the black-and-white groups, one per setting, and the time reversal of their operations is derived
-  from them (`pointGroups/itcMagneticData.ts`). Not stored: the grey groups (class and time
+  from them (`pointGroups/blackWhiteData.ts`). Not stored: the grey groups (class and time
   reversal, ITC Vol. D eq. (1.5.2.1)). The print (58 full symbols of ITC Vol. D Table 1.5.2.3, 58
   symbols of Birss Table 6) checks the symbols. The types `'I'`, `'II'`, `'III'` are those of ITC
   Vol. D Table 1.2.6.12 ("Symbols per volume"; `docs/conventions.md`, "Types").

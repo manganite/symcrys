@@ -20,21 +20,17 @@ export interface WyckoffEntry {
   readonly uniqueAxis?: 'b' | 'c';
   /** Trigonal: `'rhombohedral'` for an entry with rhombohedral axes (hexagonal axes otherwise). */
   readonly axes?: 'rhombohedral';
-  /** Printed page. */
-  readonly page: number;
   /** In printed order, general position first. */
   readonly rows: readonly WyckoffRow[];
 }
 
-export const ITA_WYCKOFF: readonly WyckoffEntry[] = [
+export const CLASS_WYCKOFF_POSITIONS: readonly WyckoffEntry[] = [
   {
     symbol: '1',
-    page: 745,
     rows: [['a', 1, '1', ['x,y,z'], 'h,k,l']],
   },
   {
     symbol: '-1',
-    page: 745,
     rows: [
       ['a', 2, '1', ['x,y,z', '-x,-y,-z'], 'h,k,l'],
       ['o', 1, '-1', ['0,0,0'], ''],
@@ -43,7 +39,6 @@ export const ITA_WYCKOFF: readonly WyckoffEntry[] = [
   {
     symbol: '2',
     uniqueAxis: 'b',
-    page: 745,
     rows: [
       ['b', 2, '1', ['x,y,z', '-x,y,-z'], 'h,k,l'],
       ['a', 1, '2', ['0,y,0'], '0,1,0'],
@@ -52,7 +47,6 @@ export const ITA_WYCKOFF: readonly WyckoffEntry[] = [
   {
     symbol: '2',
     uniqueAxis: 'c',
-    page: 745,
     rows: [
       ['b', 2, '1', ['x,y,z', '-x,-y,z'], 'h,k,l'],
       ['a', 1, '2', ['0,0,z'], '0,0,1'],
@@ -61,7 +55,6 @@ export const ITA_WYCKOFF: readonly WyckoffEntry[] = [
   {
     symbol: 'm',
     uniqueAxis: 'b',
-    page: 746,
     rows: [
       ['b', 2, '1', ['x,y,z', 'x,-y,z'], 'h,k,l'],
       ['a', 1, 'm', ['x,0,z'], 'h,0,l'],
@@ -70,7 +63,6 @@ export const ITA_WYCKOFF: readonly WyckoffEntry[] = [
   {
     symbol: 'm',
     uniqueAxis: 'c',
-    page: 746,
     rows: [
       ['b', 2, '1', ['x,y,z', 'x,y,-z'], 'h,k,l'],
       ['a', 1, 'm', ['x,y,0'], 'h,k,0'],
@@ -79,7 +71,6 @@ export const ITA_WYCKOFF: readonly WyckoffEntry[] = [
   {
     symbol: '2/m',
     uniqueAxis: 'b',
-    page: 746,
     rows: [
       ['c', 4, '1', ['x,y,z', '-x,y,-z', '-x,-y,-z', 'x,-y,z'], 'h,k,l'],
       ['b', 2, 'm', ['x,0,z', '-x,0,-z'], 'h,0,l'],
@@ -90,7 +81,6 @@ export const ITA_WYCKOFF: readonly WyckoffEntry[] = [
   {
     symbol: '2/m',
     uniqueAxis: 'c',
-    page: 747,
     rows: [
       ['c', 4, '1', ['x,y,z', '-x,-y,z', '-x,-y,-z', 'x,y,-z'], 'h,k,l'],
       ['b', 2, 'm', ['x,y,0', '-x,-y,0'], 'h,k,0'],
@@ -100,7 +90,6 @@ export const ITA_WYCKOFF: readonly WyckoffEntry[] = [
   },
   {
     symbol: '222',
-    page: 747,
     rows: [
       ['d', 4, '1', ['x,y,z', '-x,-y,z', '-x,y,-z', 'x,-y,-z'], 'h,k,l'],
       ['c', 2, '..2', ['0,0,z', '0,0,-z'], '0,0,1'],
@@ -111,7 +100,6 @@ export const ITA_WYCKOFF: readonly WyckoffEntry[] = [
   },
   {
     symbol: 'mm2',
-    page: 748,
     rows: [
       ['d', 4, '1', ['x,y,z', '-x,-y,z', 'x,-y,z', '-x,y,z'], 'h,k,l'],
       ['c', 2, 'm..', ['0,y,z', '0,-y,z'], '0,k,l'],
@@ -121,7 +109,6 @@ export const ITA_WYCKOFF: readonly WyckoffEntry[] = [
   },
   {
     symbol: 'mmm',
-    page: 748,
     rows: [
       ['g', 8, '1', ['x,y,z', '-x,-y,z', '-x,y,-z', 'x,-y,-z', '-x,-y,-z', 'x,y,-z', 'x,-y,z', '-x,y,z'], 'h,k,l'],
       ['f', 4, '..m', ['x,y,0', '-x,-y,0', '-x,y,0', 'x,-y,0'], 'h,k,0'],
@@ -135,7 +122,6 @@ export const ITA_WYCKOFF: readonly WyckoffEntry[] = [
   },
   {
     symbol: '4',
-    page: 749,
     rows: [
       ['b', 4, '1', ['x,y,z', '-x,-y,z', '-y,x,z', 'y,-x,z'], 'h,k,l'],
       ['a', 1, '4..', ['0,0,z'], '0,0,1'],
@@ -143,7 +129,6 @@ export const ITA_WYCKOFF: readonly WyckoffEntry[] = [
   },
   {
     symbol: '-4',
-    page: 749,
     rows: [
       ['b', 4, '1', ['x,y,z', '-x,-y,z', 'y,-x,-z', '-y,x,-z'], 'h,k,l'],
       ['a', 2, '2..', ['0,0,z', '0,0,-z'], '0,0,1'],
@@ -152,7 +137,6 @@ export const ITA_WYCKOFF: readonly WyckoffEntry[] = [
   },
   {
     symbol: '4/m',
-    page: 749,
     rows: [
       ['c', 8, '1', ['x,y,z', '-x,-y,z', '-y,x,z', 'y,-x,z', '-x,-y,-z', 'x,y,-z', 'y,-x,-z', '-y,x,-z'], 'h,k,l'],
       ['b', 4, 'm..', ['x,y,0', '-x,-y,0', '-y,x,0', 'y,-x,0'], 'h,k,0'],
@@ -162,7 +146,6 @@ export const ITA_WYCKOFF: readonly WyckoffEntry[] = [
   },
   {
     symbol: '422',
-    page: 750,
     rows: [
       ['d', 8, '1', ['x,y,z', '-x,-y,z', '-y,x,z', 'y,-x,z', '-x,y,-z', 'x,-y,-z', 'y,x,-z', '-y,-x,-z'], 'h,k,l'],
       ['c', 4, '.2.', ['x,0,0', '-x,0,0', '0,x,0', '0,-x,0'], '1,0,0'],
@@ -173,7 +156,6 @@ export const ITA_WYCKOFF: readonly WyckoffEntry[] = [
   },
   {
     symbol: '4mm',
-    page: 750,
     rows: [
       ['d', 8, '1', ['x,y,z', '-x,-y,z', '-y,x,z', 'y,-x,z', 'x,-y,z', '-x,y,z', '-y,-x,z', 'y,x,z'], 'h,k,l'],
       ['c', 4, '.m.', ['x,0,z', '-x,0,z', '0,x,z', '0,-x,z'], 'h,0,l'],
@@ -183,7 +165,6 @@ export const ITA_WYCKOFF: readonly WyckoffEntry[] = [
   },
   {
     symbol: '-42m',
-    page: 751,
     rows: [
       ['d', 8, '1', ['x,y,z', '-x,-y,z', 'y,-x,-z', '-y,x,-z', '-x,y,-z', 'x,-y,-z', '-y,-x,z', 'y,x,z'], 'h,k,l'],
       ['c', 4, '..m', ['x,x,z', '-x,-x,z', 'x,-x,-z', '-x,x,-z'], 'h,h,l'],
@@ -194,7 +175,6 @@ export const ITA_WYCKOFF: readonly WyckoffEntry[] = [
   },
   {
     symbol: '-4m2',
-    page: 751,
     rows: [
       ['d', 8, '1', ['x,y,z', '-x,-y,z', 'y,-x,-z', '-y,x,-z', 'x,-y,z', '-x,y,z', 'y,x,-z', '-y,-x,-z'], 'h,k,l'],
       ['c', 4, '.m.', ['x,0,z', '-x,0,z', '0,-x,-z', '0,x,-z'], 'h,0,l'],
@@ -205,7 +185,6 @@ export const ITA_WYCKOFF: readonly WyckoffEntry[] = [
   },
   {
     symbol: '4/mmm',
-    page: 752,
     rows: [
       [
         'g',
@@ -242,7 +221,6 @@ export const ITA_WYCKOFF: readonly WyckoffEntry[] = [
   },
   {
     symbol: '3',
-    page: 752,
     rows: [
       ['b', 3, '1', ['x,y,z', '-y,x-y,z', '-x+y,-x,z'], 'h,k,i,l'],
       ['a', 1, '3..', ['0,0,z'], '0,0,0,1'],
@@ -251,7 +229,6 @@ export const ITA_WYCKOFF: readonly WyckoffEntry[] = [
   {
     symbol: '3',
     axes: 'rhombohedral',
-    page: 753,
     rows: [
       ['b', 3, '1', ['x,y,z', 'z,x,y', 'y,z,x'], 'h,k,l'],
       ['a', 1, '3.', ['x,x,x'], '1,1,1'],
@@ -259,7 +236,6 @@ export const ITA_WYCKOFF: readonly WyckoffEntry[] = [
   },
   {
     symbol: '-3',
-    page: 753,
     rows: [
       ['b', 6, '1', ['x,y,z', '-y,x-y,z', '-x+y,-x,z', '-x,-y,-z', 'y,-x+y,-z', 'x-y,x,-z'], 'h,k,i,l'],
       ['a', 2, '3..', ['0,0,z', '0,0,-z'], '0,0,0,1'],
@@ -269,7 +245,6 @@ export const ITA_WYCKOFF: readonly WyckoffEntry[] = [
   {
     symbol: '-3',
     axes: 'rhombohedral',
-    page: 753,
     rows: [
       ['b', 6, '1', ['x,y,z', 'z,x,y', 'y,z,x', '-x,-y,-z', '-z,-x,-y', '-y,-z,-x'], 'h,k,l'],
       ['a', 2, '3.', ['x,x,x', '-x,-x,-x'], '1,1,1'],
@@ -278,7 +253,6 @@ export const ITA_WYCKOFF: readonly WyckoffEntry[] = [
   },
   {
     symbol: '312',
-    page: 754,
     rows: [
       ['c', 6, '1', ['x,y,z', '-y,x-y,z', '-x+y,-x,z', '-y,-x,-z', '-x+y,y,-z', 'x,x-y,-z'], 'h,k,i,l'],
       ['b', 3, '..2', ['x,-x,0', 'x,2x,0', '-2x,-x,0'], '1,0,-1,0'],
@@ -288,7 +262,6 @@ export const ITA_WYCKOFF: readonly WyckoffEntry[] = [
   },
   {
     symbol: '321',
-    page: 754,
     rows: [
       ['c', 6, '1', ['x,y,z', '-y,x-y,z', '-x+y,-x,z', 'y,x,-z', 'x-y,-y,-z', '-x,-x+y,-z'], 'h,k,i,l'],
       ['b', 3, '.2.', ['x,0,0', '0,x,0', '-x,-x,0'], '1,1,-2,0'],
@@ -299,7 +272,6 @@ export const ITA_WYCKOFF: readonly WyckoffEntry[] = [
   {
     symbol: '32',
     axes: 'rhombohedral',
-    page: 755,
     rows: [
       ['c', 6, '1', ['x,y,z', 'z,x,y', 'y,z,x', '-z,-y,-x', '-y,-x,-z', '-x,-z,-y'], 'h,k,l'],
       ['b', 3, '.2', ['x,-x,0', '0,x,-x', '-x,0,x'], '0,1,-1'],
@@ -309,7 +281,6 @@ export const ITA_WYCKOFF: readonly WyckoffEntry[] = [
   },
   {
     symbol: '3m1',
-    page: 755,
     rows: [
       ['c', 6, '1', ['x,y,z', '-y,x-y,z', '-x+y,-x,z', '-y,-x,z', '-x+y,y,z', 'x,x-y,z'], 'h,k,i,l'],
       ['b', 3, '.m.', ['x,-x,z', 'x,2x,z', '-2x,-x,z'], 'h,0,-h,l'],
@@ -318,7 +289,6 @@ export const ITA_WYCKOFF: readonly WyckoffEntry[] = [
   },
   {
     symbol: '31m',
-    page: 756,
     rows: [
       ['c', 6, '1', ['x,y,z', '-y,x-y,z', '-x+y,-x,z', 'y,x,z', 'x-y,-y,z', '-x,-x+y,z'], 'h,k,i,l'],
       ['b', 3, '..m', ['x,0,z', '0,x,z', '-x,-x,z'], 'h,h,-2h,l'],
@@ -328,7 +298,6 @@ export const ITA_WYCKOFF: readonly WyckoffEntry[] = [
   {
     symbol: '3m',
     axes: 'rhombohedral',
-    page: 756,
     rows: [
       ['c', 6, '1', ['x,y,z', 'z,x,y', 'y,z,x', 'z,y,x', 'y,x,z', 'x,z,y'], 'h,k,l'],
       ['b', 3, '.m', ['x,y,x', 'x,x,y', 'y,x,x'], 'h,h,l'],
@@ -337,7 +306,6 @@ export const ITA_WYCKOFF: readonly WyckoffEntry[] = [
   },
   {
     symbol: '-31m',
-    page: 757,
     rows: [
       [
         'd',
@@ -367,7 +335,6 @@ export const ITA_WYCKOFF: readonly WyckoffEntry[] = [
   },
   {
     symbol: '-3m1',
-    page: 758,
     rows: [
       [
         'd',
@@ -398,7 +365,6 @@ export const ITA_WYCKOFF: readonly WyckoffEntry[] = [
   {
     symbol: '-3m',
     axes: 'rhombohedral',
-    page: 759,
     rows: [
       [
         'd',
@@ -428,7 +394,6 @@ export const ITA_WYCKOFF: readonly WyckoffEntry[] = [
   },
   {
     symbol: '6',
-    page: 760,
     rows: [
       ['b', 6, '1', ['x,y,z', '-y,x-y,z', '-x+y,-x,z', '-x,-y,z', 'y,-x+y,z', 'x-y,x,z'], 'h,k,i,l'],
       ['a', 1, '6..', ['0,0,z'], '0,0,0,1'],
@@ -436,7 +401,6 @@ export const ITA_WYCKOFF: readonly WyckoffEntry[] = [
   },
   {
     symbol: '-6',
-    page: 760,
     rows: [
       ['c', 6, '1', ['x,y,z', '-y,x-y,z', '-x+y,-x,z', 'x,y,-z', '-y,x-y,-z', '-x+y,-x,-z'], 'h,k,i,l'],
       ['b', 3, 'm..', ['x,y,0', '-y,x-y,0', '-x+y,-x,0'], 'h,k,i,0'],
@@ -446,7 +410,6 @@ export const ITA_WYCKOFF: readonly WyckoffEntry[] = [
   },
   {
     symbol: '6/m',
-    page: 760,
     rows: [
       [
         'c',
@@ -475,7 +438,6 @@ export const ITA_WYCKOFF: readonly WyckoffEntry[] = [
   },
   {
     symbol: '622',
-    page: 761,
     rows: [
       [
         'd',
@@ -505,7 +467,6 @@ export const ITA_WYCKOFF: readonly WyckoffEntry[] = [
   },
   {
     symbol: '6mm',
-    page: 762,
     rows: [
       [
         'd',
@@ -534,7 +495,6 @@ export const ITA_WYCKOFF: readonly WyckoffEntry[] = [
   },
   {
     symbol: '-6m2',
-    page: 762,
     rows: [
       [
         'e',
@@ -565,7 +525,6 @@ export const ITA_WYCKOFF: readonly WyckoffEntry[] = [
   },
   {
     symbol: '-62m',
-    page: 763,
     rows: [
       [
         'e',
@@ -596,7 +555,6 @@ export const ITA_WYCKOFF: readonly WyckoffEntry[] = [
   },
   {
     symbol: '6/mmm',
-    page: 764,
     rows: [
       [
         'g',
@@ -698,7 +656,6 @@ export const ITA_WYCKOFF: readonly WyckoffEntry[] = [
   },
   {
     symbol: '23',
-    page: 765,
     rows: [
       [
         'c',
@@ -727,7 +684,6 @@ export const ITA_WYCKOFF: readonly WyckoffEntry[] = [
   },
   {
     symbol: 'm-3',
-    page: 766,
     rows: [
       [
         'd',
@@ -788,7 +744,6 @@ export const ITA_WYCKOFF: readonly WyckoffEntry[] = [
   },
   {
     symbol: '432',
-    page: 767,
     rows: [
       [
         'd',
@@ -849,7 +804,6 @@ export const ITA_WYCKOFF: readonly WyckoffEntry[] = [
   },
   {
     symbol: '-43m',
-    page: 768,
     rows: [
       [
         'd',
@@ -910,7 +864,6 @@ export const ITA_WYCKOFF: readonly WyckoffEntry[] = [
   },
   {
     symbol: 'm-3m',
-    page: 769,
     rows: [
       [
         'f',

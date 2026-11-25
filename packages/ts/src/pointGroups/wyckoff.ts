@@ -8,7 +8,7 @@ import { checkOptions, pick, SETTING_KEYS, shown, TOLERANCE_KEYS } from '../chec
 import { apply, inverse, transpose, type Mat3, type Vec3 } from '../linalg.js';
 import { crystalFamily } from '../lattice.js';
 import { substituteMillerIndices } from '../indices.js';
-import { itcBasis, itcClass, itcSetting as itcClassSetting } from './itcData.js';
+import { itcBasis, classData, itcSetting as itcClassSetting } from './classData.js';
 import {
   settingIndexOf,
   isMagneticPointGroupKey,
@@ -21,7 +21,7 @@ import {
 } from './pointGroups.js';
 import { siteSymmetryOf, siteTolerance, type SiteSymmetry } from '../siteSymmetry.js';
 import type { ToleranceOptions } from '../tolerances.js';
-import { ITA_WYCKOFF, type WyckoffRow } from './wyckoffData.js';
+import { CLASS_WYCKOFF_POSITIONS, type WyckoffRow } from './wyckoffData.js';
 
 /** A face (hkl): three Miller indices in the conventional basis (for hexagonal axes without i = −(h + k)). */
 export type Hkl = readonly [number, number, number];
@@ -119,7 +119,7 @@ function permuteSymbol(symbolText: string, r: Mat3): string {
  * The permutation r that carries setting 1 of a class into `setting` (new axis i = r[i][j] × old
  * axis j), for the settings ITA does not print (`mm2` settings 2 and 3, monoclinic unique axis a):
  * the transpose of the change
- * of basis P of the ITC class data ((a′, b′, c′) = (a, b, c)·P, itcData.ts). Coordinates (P⁻¹·x)
+ * of basis P of the ITC class data ((a′, b′, c′) = (a, b, c)·P, classData.ts). Coordinates (P⁻¹·x)
  * and Miller indices (h·P) are carried by the same r only because P is a signed permutation
  * (P⁻¹ = Pᵀ); throws for a setting that is not carried from setting 1 by one.
  */
@@ -143,7 +143,7 @@ export function permutationFromSetting1(key: PointGroupKey, setting: number): Ma
  * the one with the ITC short symbol (and unique axis or axes) of the setting, or undefined if ITA does not
  * print the setting.
  */
-export function printedEntry<
+export function storedEntry<
   E extends { readonly symbol: string; readonly uniqueAxis?: 'b' | 'c'; readonly axes?: 'rhombohedral' },
 >(table: readonly E[], key: PointGroupKey, setting: number): E | undefined {
   const s = settings(key)[setting - 1];
@@ -156,14 +156,14 @@ export function printedEntry<
 }
 
 /** The printed rows of a setting; for a setting ITA does not print, those of setting 1 carried into its frame. */
-function printedRows(key: PointGroupKey, setting: number): readonly WyckoffRow[] {
-  const entry = printedEntry(ITA_WYCKOFF, key, setting);
+function storedRows(key: PointGroupKey, setting: number): readonly WyckoffRow[] {
+  const entry = storedEntry(CLASS_WYCKOFF_POSITIONS, key, setting);
   if (entry) return entry.rows;
   if (setting === 1) throw new Error(`Point group ${key}: no printed Wyckoff positions for setting 1`);
   const r = permutationFromSetting1(key, setting);
   // A monoclinic site symmetry (`2`, `m`, `2/m`) names the element on the unique axis, not a position.
-  const oriented = crystalFamily(itcClass(key).crystalSystem) !== 'monoclinic';
-  return printedRows(key, 1).map(([letter, mult, site, coords, miller]) => [
+  const oriented = crystalFamily(classData(key).crystalSystem) !== 'monoclinic';
+  return storedRows(key, 1).map(([letter, mult, site, coords, miller]) => [
     letter,
     mult,
     oriented ? permuteSymbol(site, r) : site,
@@ -174,7 +174,7 @@ function printedRows(key: PointGroupKey, setting: number): readonly WyckoffRow[]
 
 /**
  * The lattice basis in which the Cartesian normals of the representatives are computed, that of the
- * setting (itcData.ts, `itcBasis`): monoclinic and triclinic a, b, c along x, y, z; rhombohedral
+ * setting (classData.ts, `itcBasis`): monoclinic and triclinic a, b, c along x, y, z; rhombohedral
  * axes in the hexagonal cell of `latticeBasis` (docs/conventions.md, "Site symmetry and Wyckoff
  * positions").
  */
@@ -231,7 +231,7 @@ export function wyckoffPositions(key: PointGroupKey, options?: SettingOptions): 
   if (!result) {
     const ops = operations(key, { setting });
     result = Object.freeze(
-      printedRows(key, setting)
+      storedRows(key, setting)
         .filter(([letter]) => letter !== 'o')
         .map(([letter, multiplicity, site, coordinates, millerIndices]) => {
           const stab = siteSymmetryOf(ops, representativeFace(key, setting, millerIndices).cartesian);

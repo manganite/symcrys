@@ -204,9 +204,9 @@ A class may be placed in the Cartesian frame in more than one way: a **setting**
 numbered from 1, and one of them is the ITC default.
 
 The operations, generators, symbols and lattice operations of the classes come from ITA's selected
-generators, exact integer matrices in the conventional basis (`pointGroups/itcData.ts`); a setting
+generators, exact integer matrices in the conventional basis (`pointGroups/classData.ts`); a setting
 ITA does not print is a printed one in another basis. A black-and-white group is given by its ITC
-symbol in each setting, from which its operations follow (`pointGroups/itcMagneticData.ts`).
+symbol in each setting, from which its operations follow (`pointGroups/blackWhiteData.ts`).
 
 **Numbering** (#137 A4): the ITC default is setting 1; then, for the monoclinic classes, unique
 axis c and unique axis a; for the orthorhombic groups, the further orientations in the order of the columns of ITA

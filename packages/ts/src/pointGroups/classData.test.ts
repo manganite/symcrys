@@ -1,28 +1,28 @@
 /**
- * The exact ITC class data (itcData.ts, #122) against the ITC output of the API. Since PR 2b the
+ * The exact ITC class data (classData.ts, #122) against the ITC output of the API. Since PR 2b the
  * API reads the settings, symbols, defaults, operations, generators and lattice operations of the
  * classes in the ITC convention from these data, so this test checks the wiring (every setting, the
  * same order, no copy that drifts); that the output did not change is checked by the ITC baseline
- * pins (#121, itcBaseline.pins.test.ts), and its correctness by itcData.reference.test.ts. Also the
+ * pins (#121, itcBaseline.pins.test.ts), and its correctness by classData.reference.test.ts. Also the
  * change of basis that gives `2mm` and `m2m` (ITA 2016 Table 1.5.4.4, cab and bca).
  */
 
 import { describe, expect, it } from 'vitest';
 import { matricesEqual, type Mat3 } from '../linalg.js';
-import { ITC_CLASSES, itcCartesianGenerators, itcCartesianOperations, itcLatticeOperations } from './itcData.js';
+import { CLASSES, itcCartesianGenerators, itcCartesianOperations, itcLatticeOperations } from './classData.js';
 import { POINT_GROUP_KEYS, generators, operations, settings } from './pointGroups.js';
 
-const SETTINGS = ITC_CLASSES.flatMap((c) => c.settings.map((s) => [`${c.key} #${s.index} ${s.short}`, c, s] as const));
+const SETTINGS = CLASSES.flatMap((c) => c.settings.map((s) => [`${c.key} #${s.index} ${s.short}`, c, s] as const));
 
 const sameMatrices = (a: readonly Mat3[], b: readonly Mat3[]) =>
   a.length === b.length && a.every((m, i) => matricesEqual(m, b[i]));
 
 describe('the API gives the exact ITC class data', () => {
   it('has the 32 classes in the order of POINT_GROUP_KEYS', () => {
-    expect(ITC_CLASSES.map((c) => c.key)).toEqual([...POINT_GROUP_KEYS]);
+    expect(CLASSES.map((c) => c.key)).toEqual([...POINT_GROUP_KEYS]);
   });
 
-  it.each(ITC_CLASSES.map((c) => [c.key, c] as const))('%s: the same settings', (key, c) => {
+  it.each(CLASSES.map((c) => [c.key, c] as const))('%s: the same settings', (key, c) => {
     expect(
       c.settings.map((s) => ({
         index: s.index,

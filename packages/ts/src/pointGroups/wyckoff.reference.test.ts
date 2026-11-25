@@ -34,7 +34,7 @@ import {
 } from '../testUtils/references.js';
 import { POINT_GROUP_KEYS, operations, settings, type PointGroupKey } from './pointGroups.js';
 import { wyckoffPositions } from './wyckoff.js';
-import { ITA_WYCKOFF } from './wyckoffData.js';
+import { CLASS_WYCKOFF_POSITIONS } from './wyckoffData.js';
 
 const ORTHONORMAL: M = [
   [1, 0, 0],
@@ -327,7 +327,7 @@ const UNIQUE: Record<string, number[]> = { b: [0, 1, 0], c: [0, 0, 1] };
 
 describe('ITA Table 3.2.3.2: Wyckoff positions', () => {
   it('the library data equal the transcription, row by row', () => {
-    const fromData = ITA_WYCKOFF.flatMap((e) =>
+    const fromData = CLASS_WYCKOFF_POSITIONS.flatMap((e) =>
       e.rows.map((r) => [
         e.symbol,
         e.uniqueAxis
@@ -337,7 +337,6 @@ describe('ITA Table 3.2.3.2: Wyckoff positions', () => {
             : ['3', '-3', '312', '321', '3m1', '31m', '-31m', '-3m1'].includes(e.symbol)
               ? 'hexagonal axes'
               : '',
-        String(e.page),
         String(r[1]),
         r[0],
         r[2],
@@ -345,7 +344,8 @@ describe('ITA Table 3.2.3.2: Wyckoff positions', () => {
         r[4],
       ]),
     );
-    expect(fromData).toEqual(wyckoffRows.slice(1));
+    // The page of each row is in the transcription only.
+    expect(fromData).toEqual(wyckoffRows.slice(1).map((r) => r.filter((_, i) => i !== 2)));
   });
 
   it('has Wyckoff positions for each of the 45 printed entries, on the page of the entry', () => {

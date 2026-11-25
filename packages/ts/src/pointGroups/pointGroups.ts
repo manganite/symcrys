@@ -11,22 +11,22 @@ import { EPSILON, INTEGER_EPSILON } from '../tolerances.js';
 import { compactSymbol } from '../notation.js';
 import { compose, operation, operationsEqual, type CartesianOperation, type Operation } from '../operations.js';
 import {
-  ITC_CLASSES,
+  CLASSES,
   itcBasis,
   itcCartesianGenerators,
   itcCartesianOperations,
-  itcClass,
+  classData,
   itcLatticeGenerators,
   itcLatticeOperations,
   itcSetting,
-} from './itcData.js';
-import type { IntMat3 } from './itaOrder.js';
+} from './classData.js';
+import type { IntMat3 } from './generatorData.js';
 import {
-  ITC_BLACK_WHITE,
-  itcBlackWhiteClassSetting,
-  itcBlackWhiteOperations,
-  itcBlackWhiteSetting,
-} from './itcMagneticData.js';
+  BLACK_WHITE_GROUPS,
+  blackWhiteClassSetting,
+  blackWhiteOperations,
+  blackWhiteSetting,
+} from './blackWhiteData.js';
 import { crystalFamily, latticeSystemsOfSystem, type CrystalSystem, type LatticeSystem } from '../lattice.js';
 import {
   MAGNETIC_POINT_GROUP_KEYS,
@@ -184,21 +184,21 @@ interface GroupData {
   readonly crystalClass: GroupData;
   readonly crystalSystem: CrystalSystem;
   readonly schoenflies: string;
-  /** The ITC default setting (itcData.ts, itcMagneticData.ts). */
+  /** The ITC default setting (classData.ts, blackWhiteData.ts). */
   readonly itcDefault: number;
   /** The number of settings. */
   readonly settingCount: number;
 }
 
-/** The ITC default setting of a class, from the ITC class data (itcData.ts). */
+/** The ITC default setting of a class, from the ITC class data (classData.ts). */
 function itcDefaultOf(key: PointGroupKey): number {
-  return itcClass(key).settings.find((s) => s.isDefault)!.index;
+  return classData(key).settings.find((s) => s.isDefault)!.index;
 }
 
 // Built from the ITC data, in their order (that of POINT_GROUP_KEYS and
 // BLACK_WHITE_POINT_GROUP_KEYS).
 const BY_KEY = new Map<string, GroupData>();
-for (const c of ITC_CLASSES) {
+for (const c of CLASSES) {
   const self: GroupData = {
     key: c.key,
     type: 'I',
@@ -213,7 +213,7 @@ for (const c of ITC_CLASSES) {
   BY_KEY.set(c.key, self);
 }
 // Grey groups: the class and time reversal (ITC Vol. D, eq. (1.5.2.1)).
-for (const c of ITC_CLASSES) {
+for (const c of CLASSES) {
   const crystalClass = BY_KEY.get(c.key)!;
   const key: MagneticPointGroupKey = `${c.key}1'`;
   BY_KEY.set(key, {
@@ -226,7 +226,7 @@ for (const c of ITC_CLASSES) {
     settingCount: crystalClass.settingCount,
   });
 }
-for (const g of ITC_BLACK_WHITE) {
+for (const g of BLACK_WHITE_GROUPS) {
   const crystalClass = BY_KEY.get(g.crystalClass)!;
   BY_KEY.set(g.key, {
     key: g.key,
@@ -411,25 +411,25 @@ function withMatrix(ops: readonly CartesianOperation[], op: CartesianOperation):
  * The setting of the crystal class whose frame is that of setting `index` of the group: the one
  * in which the class has the operations of the group without their time reversal. For a class and
  * a grey group it is `index` itself; for a black-and-white group, the class setting named by its
- * ITC symbol without primes (itcMagneticData.ts). A black-and-white group may have its settings in
+ * ITC symbol without primes (blackWhiteData.ts). A black-and-white group may have its settings in
  * another order than its class, and settings its class does not tell apart (docs/conventions.md,
  * "Settings").
  */
 function classSetting(d: GroupData, index: number): number {
-  return d.type === 'III' ? itcBlackWhiteClassSetting(d.key as BlackWhitePointGroupKey, index) : index;
+  return d.type === 'III' ? blackWhiteClassSetting(d.key as BlackWhitePointGroupKey, index) : index;
 }
 
 /** The unique axis of a monoclinic setting; undefined in other systems. */
 function settingUniqueAxis(d: GroupData, index: number): 'a' | 'b' | 'c' | undefined {
   return d.type === 'III'
-    ? itcBlackWhiteSetting(d.key as BlackWhitePointGroupKey, index).uniqueAxis
+    ? blackWhiteSetting(d.key as BlackWhitePointGroupKey, index).uniqueAxis
     : itcSetting(d.crystalClass.key as PointGroupKey, index).uniqueAxis;
 }
 
 /** The axes of a trigonal setting, `'hexagonal'` or `'rhombohedral'`; undefined in other systems. */
 function settingAxes(d: GroupData, index: number): 'hexagonal' | 'rhombohedral' | undefined {
   return d.type === 'III'
-    ? itcBlackWhiteSetting(d.key as BlackWhitePointGroupKey, index).axes
+    ? blackWhiteSetting(d.key as BlackWhitePointGroupKey, index).axes
     : itcSetting(d.crystalClass.key as PointGroupKey, index).axes;
 }
 
@@ -453,7 +453,7 @@ const itaGeneratorCache = new Map<string, readonly CartesianOperation[]>();
  * magnetic group: ITA's generators of its class in the same frame, each with the time reversal it
  * has in the group; for a grey group followed by time reversal 1'.
  */
-function settingItaGenerators(d: GroupData, index: number): readonly CartesianOperation[] {
+function settingGenerators(d: GroupData, index: number): readonly CartesianOperation[] {
   const cacheKey = `${d.key}#${index}`;
   let result = itaGeneratorCache.get(cacheKey);
   if (!result) {
@@ -461,7 +461,7 @@ function settingItaGenerators(d: GroupData, index: number): readonly CartesianOp
     if (d.type === 'I') {
       gens = itcCartesianGenerators(d.key as PointGroupKey, index).map((m) => operation(m));
     } else {
-      const classGens = settingItaGenerators(d.crystalClass, classSetting(d, index));
+      const classGens = settingGenerators(d.crystalClass, classSetting(d, index));
       gens =
         d.type === 'II'
           ? [...classGens, TIME_REVERSAL]
@@ -475,9 +475,9 @@ function settingItaGenerators(d: GroupData, index: number): readonly CartesianOp
 
 /**
  * The operations of a setting in ITA's order (docs/conventions.md, "Order of the operations"). A
- * crystal class: from the ITC class data (itcData.ts), built coset by coset from ITA's generators.
+ * crystal class: from the ITC class data (classData.ts), built coset by coset from ITA's generators.
  * A black-and-white group: the operations of its class in the setting its ITC symbol names, in
- * that order, each with the time reversal its symbol gives (itcMagneticData.ts). A grey group: the
+ * that order, each with the time reversal its symbol gives (blackWhiteData.ts). A grey group: the
  * operations of its class, then the same sequence combined with time reversal.
  */
 function settingOperations(d: GroupData, index: number): readonly CartesianOperation[] {
@@ -491,7 +491,7 @@ function settingOperations(d: GroupData, index: number): readonly CartesianOpera
       const classOps = settingOperations(d.crystalClass, index);
       ordered = [...classOps, ...classOps.map((op) => compose(TIME_REVERSAL, op))];
     } else {
-      ordered = [...itcBlackWhiteOperations(d.key as BlackWhitePointGroupKey, index)];
+      ordered = [...blackWhiteOperations(d.key as BlackWhitePointGroupKey, index)];
     }
     result = Object.freeze(ordered.map(freezeOperation));
     operationCache.set(cacheKey, result);
@@ -515,7 +515,7 @@ function settingSymbols(d: GroupData, index: number): { readonly short: string; 
 
 /**
  * Short and full symbol of a setting by the rule. A crystal class: from the ITC class data
- * (itcData.ts). A grey group: the symbols of its class followed by `1'`. A black-and-white group:
+ * (classData.ts). A grey group: the symbols of its class followed by `1'`. A black-and-white group:
  * the symbols of its class in the same frame, with the primes of its operations
  * (magneticSymbols.ts).
  */
@@ -651,7 +651,7 @@ export function settings(key: MagneticPointGroupKey): readonly Setting[] {
       const symbols = settingSymbols(d, i + 1);
       const data =
         d.type === 'III'
-          ? itcBlackWhiteSetting(d.key as BlackWhitePointGroupKey, i + 1)
+          ? blackWhiteSetting(d.key as BlackWhitePointGroupKey, i + 1)
           : itcSetting(d.crystalClass.key as PointGroupKey, i + 1);
       return Object.freeze({
         index: i + 1,
@@ -681,7 +681,7 @@ export function integer(m: Mat3, what: string): Mat3 {
  * The records of the API for Cartesian operations of a setting: each with its matrix W in the
  * lattice basis of the setting. A crystal class takes W from the exact ITC class data (`exact`, in
  * the same order); a magnetic group computes W = B⁻¹·R·B in the basis B of the setting of its class
- * (itcData.ts, `itcBasis`), which is exact after rounding, since W is an integer matrix.
+ * (classData.ts, `itcBasis`), which is exact after rounding, since W is an integer matrix.
  */
 function records(
   d: GroupData,
@@ -745,7 +745,7 @@ export function generators(key: MagneticPointGroupKey, options?: SettingOptions)
   let result = recordCache.get(cacheKey);
   if (!result) {
     const exact = d.type === 'I' ? itcLatticeGenerators(d.key as PointGroupKey, index) : undefined;
-    result = records(d, index, settingItaGenerators(d, index), exact);
+    result = records(d, index, settingGenerators(d, index), exact);
     recordCache.set(cacheKey, result);
   }
   return result;
@@ -755,7 +755,7 @@ export function generators(key: MagneticPointGroupKey, options?: SettingOptions)
  * A Schoenflies symbol as ITC Vol. D writes it (#137 B3): `S6` for the class -3, where ITA writes
  * `C3i` (Table 3.2.1.2), as the crystallographic API does, and so `S6R` for its grey group. The
  * black-and-white groups store their symbols as Vol. D prints them (`S6(C3)`, `D3d(S6)`,
- * `C6h(S6)`; itcMagneticData.ts).
+ * `C6h(S6)`; blackWhiteData.ts).
  */
 const volDSchoenflies = (s: string): string => s.replace(/C3i/g, 'S6');
 
@@ -794,12 +794,12 @@ const OVERBAR = '\u0305';
  */
 function shubnikov(d: GroupData): string {
   if (d.type === 'II') return `${shubnikov(d.crystalClass)}·1${LOW_LINE}`;
-  const printed = SHUBNIKOV[d.key];
-  if (printed === undefined) throw new Error(`No Shubnikov symbol for ${d.key}`);
+  const symbol = SHUBNIKOV[d.key];
+  if (symbol === undefined) throw new Error(`No Shubnikov symbol for ${d.key}`);
   let out = '';
   let underline = false;
   let overbar = false;
-  for (const c of printed) {
+  for (const c of symbol) {
     if (c === '_') underline = true;
     else if (c === '-') overbar = true;
     else if (c === '.') out += '·';

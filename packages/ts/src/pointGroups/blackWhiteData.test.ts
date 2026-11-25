@@ -1,28 +1,28 @@
 /**
- * The ITC data of the black-and-white groups (itcMagneticData.ts, #122 PR 2c) and the API. The API
+ * The ITC data of the black-and-white groups (blackWhiteData.ts, #122 PR 2c) and the API. The API
  * reads the settings, defaults, symbols and operations of these groups in the ITC convention from
  * these data, so this test checks the wiring and the derivation: every setting names one setting of
  * its class and exactly one group (the module throws otherwise); half of the class's operations
  * carry time reversal; the API gives the data's operations in the same order. That the output did
  * not change is checked by the ITC baseline pins (#121, itcBaseline.pins.test.ts), correctness by
- * itcMagneticData.reference.test.ts and magnetic.reference.test.ts.
+ * blackWhiteData.reference.test.ts and magnetic.reference.test.ts.
  */
 
 import { describe, expect, it } from 'vitest';
 import { matricesEqual } from '../linalg.js';
 import { BLACK_WHITE_POINT_GROUP_KEYS } from './keys.js';
-import { itcLatticeOperations } from './itcData.js';
-import { ITC_BLACK_WHITE, itcBlackWhiteClassSetting, itcBlackWhiteOperations } from './itcMagneticData.js';
+import { itcLatticeOperations } from './classData.js';
+import { BLACK_WHITE_GROUPS, blackWhiteClassSetting, blackWhiteOperations } from './blackWhiteData.js';
 import { operations, pointGroup, settings, symbol } from './pointGroups.js';
 
-const SETTINGS = ITC_BLACK_WHITE.flatMap((g) =>
+const SETTINGS = BLACK_WHITE_GROUPS.flatMap((g) =>
   g.settings.map((s) => [`${g.key} #${s.index} ${s.full}`, g, s] as const),
 );
 
 describe('the ITC data of the black-and-white groups', () => {
   it('has the 58 groups in the order of BLACK_WHITE_POINT_GROUP_KEYS, one default each', () => {
-    expect(ITC_BLACK_WHITE.map((g) => g.key)).toEqual([...BLACK_WHITE_POINT_GROUP_KEYS]);
-    for (const g of ITC_BLACK_WHITE) {
+    expect(BLACK_WHITE_GROUPS.map((g) => g.key)).toEqual([...BLACK_WHITE_POINT_GROUP_KEYS]);
+    for (const g of BLACK_WHITE_GROUPS) {
       expect(g.settings.filter((s) => s.isDefault)).toHaveLength(1);
       expect(settings(g.key)).toHaveLength(g.settings.length);
     }
@@ -38,7 +38,7 @@ describe('the ITC data of the black-and-white groups', () => {
       [1, 2, 0],
       [0, 2, 1],
     ];
-    for (const g of ITC_BLACK_WHITE) {
+    for (const g of BLACK_WHITE_GROUPS) {
       expect(g.settings[0].isDefault, g.key).toBe(true);
       const system = pointGroup(g.key).crystalSystem;
       if (system === 'orthorhombic') {
@@ -58,11 +58,11 @@ describe('the ITC data of the black-and-white groups', () => {
   });
 
   it.each(SETTINGS)('%s: one group, half of its class with time reversal', (_, g, s) => {
-    const ops = itcBlackWhiteOperations(g.key, s.index);
-    expect(ops).toHaveLength(itcLatticeOperations(g.crystalClass, itcBlackWhiteClassSetting(g.key, s.index)).length);
+    const ops = blackWhiteOperations(g.key, s.index);
+    expect(ops).toHaveLength(itcLatticeOperations(g.crystalClass, blackWhiteClassSetting(g.key, s.index)).length);
     expect(ops.filter((o) => o.timeReversal)).toHaveLength(ops.length / 2);
     expect(ops[0].timeReversal).toBe(false);
-    expect(itcBlackWhiteClassSetting(g.key, s.index)).toBeGreaterThan(0);
+    expect(blackWhiteClassSetting(g.key, s.index)).toBeGreaterThan(0);
   });
 
   it.each(SETTINGS)('%s: the API gives the data', (_, g, s) => {
@@ -72,7 +72,7 @@ describe('the ITC data of the black-and-white groups', () => {
     expect(api.uniqueAxis).toBe(s.uniqueAxis);
     expect(symbol(g.key, { setting: s.index, form: 'full' })).toBe(s.full);
     const ops = operations(g.key, { setting: s.index });
-    const data = itcBlackWhiteOperations(g.key, s.index);
+    const data = blackWhiteOperations(g.key, s.index);
     expect(ops).toHaveLength(data.length);
     ops.forEach((o, i) => {
       expect(matricesEqual(o.cartesian, data[i].cartesian)).toBe(true);

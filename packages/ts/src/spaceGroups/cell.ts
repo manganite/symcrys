@@ -228,16 +228,16 @@ export function planeAsymmetricUnit(key: string | number): AsymmetricUnit {
   const entry = planeGroupEntry(key);
   let unit = unitCache.get(entry.symbol);
   if (!unit) {
-    const printed = parseAsymmetricUnit(entry.asymmetricUnit);
-    const vertices = polygon(printed);
+    const inequalities = parseAsymmetricUnit(entry.asymmetricUnit);
+    const vertices = polygon(inequalities);
     const edges = vertices.map((p, i) => {
       const q = vertices[(i + 1) % vertices.length];
-      const edge = printed.findIndex((e) => excess(e, p)[0] === 0 && excess(e, q)[0] === 0);
-      if (edge < 0) throw new Error(`No printed inequality of ${entry.symbol} holds an edge`);
+      const edge = inequalities.findIndex((e) => excess(e, p)[0] === 0 && excess(e, q)[0] === 0);
+      if (edge < 0) throw new Error(`No inequality of ${entry.symbol} holds an edge`);
       return edge;
     });
     unit = Object.freeze({
-      inequalities: Object.freeze(printed.map((e) => Object.freeze(e))),
+      inequalities: Object.freeze(inequalities.map((e) => Object.freeze(e))),
       vertices: Object.freeze(vertices.map((v) => Object.freeze(v))),
       edges: Object.freeze(edges),
     });

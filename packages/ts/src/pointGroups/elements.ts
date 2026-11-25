@@ -11,9 +11,9 @@ import { det, trace, type Mat3, type Vec3 } from '../linalg.js';
 import { crystalFamily } from '../lattice.js';
 import type { Operation } from '../operations.js';
 import type { Uvw } from '../symmetryDirections.js';
-import type { IntMat3 } from './itaOrder.js';
-import { itcBasis, itcSetting, itcSymmetryDirections } from './itcData.js';
-import { seitzOf, type SeitzTable } from './seitzData.js';
+import type { IntMat3 } from './generatorData.js';
+import { itcBasis, itcSetting, itcSymmetryDirections } from './classData.js';
+import { seitzOf, type SeitzAxes } from './seitzData.js';
 import {
   classSettingOf,
   operations,
@@ -164,7 +164,7 @@ function describe(
   op: Operation,
   axes: readonly Axis[],
   basis: Mat3,
-  table: SeitzTable,
+  table: SeitzAxes,
   what: string,
 ): OperationDescription {
   const proper = det(op.cartesian) > 0;
@@ -205,13 +205,13 @@ function analysis(key: MagneticPointGroupKey, options?: SettingOptions): Analysi
   const family = crystalFamily(pointGroup(key).crystalSystem);
   // The basis and the symmetry directions of the setting: for rhombohedral axes those of ITA Table
   // 2.1.3.1 for rhombohedral axes; monoclinic and triclinic a, b, c along x, y, z, exact for the
-  // unique axis, the only symmetry direction that carries an element (itcData.ts, `itcBasis`).
+  // unique axis, the only symmetry direction that carries an element (classData.ts, `itcBasis`).
   const c = classSettingOf(key, options);
   const basis = itcBasis(c.key, c.index);
   const positions = itcSymmetryDirections(c.key, c.index).map((dirs) => dirs.map((d) => axisOf(basis, d)));
   const all = positions.flat();
   const what = `Point group ${key}`;
-  const table: SeitzTable =
+  const table: SeitzAxes =
     family !== 'hexagonal'
       ? 'cubic'
       : itcSetting(c.key, c.index).axes === 'rhombohedral'

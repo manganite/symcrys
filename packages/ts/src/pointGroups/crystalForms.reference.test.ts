@@ -33,7 +33,7 @@ import {
   RHOMBOHEDRAL_IN_HEXAGONAL,
 } from '../testUtils/references.js';
 import { CRYSTAL_FORM_TYPES, crystalForms } from './crystalForms.js';
-import { ITA_FORMS, ITA_FORM_TYPES } from './crystalFormsData.js';
+import { CLASS_FORMS, FORM_TYPE_DATA } from './crystalFormsData.js';
 import { POINT_GROUP_KEYS, settings, type PointGroupKey } from './pointGroups.js';
 
 const ORTHONORMAL: M = [
@@ -317,7 +317,7 @@ const eigenOrder = (n: number): number => {
 
 describe('ITA Table 3.2.1.3: the 47 crystal forms', () => {
   it('the library data equal the transcription', () => {
-    expect(ITA_FORM_TYPES.map((r) => r.map(String))).toEqual(typeRows.slice(1));
+    expect(FORM_TYPE_DATA.map((r) => r.map(String))).toEqual(typeRows.slice(1));
   });
 
   it('names each kind of form by the first of its printed names, in lower case with hyphens', () => {
@@ -342,11 +342,10 @@ describe('ITA Table 3.2.1.3: the 47 crystal forms', () => {
 
 describe('ITA Table 3.2.3.2: face forms', () => {
   it('the library data equal the transcription, row by row (names as numbers of Table 3.2.1.3)', () => {
-    const fromData = ITA_FORMS.flatMap((e) =>
+    const fromData = CLASS_FORMS.flatMap((e) =>
       e.rows.map((r) => [
         e.symbol,
         e.uniqueAxis ?? '',
-        String(e.page),
         r[0],
         r[1] ? 'basic' : 'limiting',
         String(r[2]),
@@ -356,10 +355,9 @@ describe('ITA Table 3.2.3.2: face forms', () => {
     );
     const fromPrint = faceRows
       .slice(1)
-      .map(([short, axes, page, letter, form, name, miller, condition]) => [
+      .map(([short, axes, , letter, form, name, miller, condition]) => [
         short,
         /^unique axis (b|c)$/.exec(axes)?.[1] ?? '',
-        page,
         letter,
         form,
         String(numberOfName(name)),

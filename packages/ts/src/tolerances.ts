@@ -152,7 +152,7 @@ export const ELIMINATION_EPSILON = 1e-12;
 
 /**
  * No crystal class has more than 48 operations (m-3m): a coset closure of ITA's generators beyond
- * that is a data error (pointGroups/itcData.ts).
+ * that is a data error (pointGroups/classData.ts).
  */
 export const MAX_CLASS_ORDER = 48;
 

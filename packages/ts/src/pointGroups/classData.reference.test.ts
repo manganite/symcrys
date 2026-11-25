@@ -1,5 +1,5 @@
 /**
- * The exact ITC class data (itcData.ts) against print (fixture class (a)): ITA (6th ed.) Table
+ * The exact ITC class data (classData.ts) against print (fixture class (a)): ITA (6th ed.) Table
  * 3.2.3.2, pp. 745–769, re-parsed from references/itc/. For each of the 45 entries, the operations built from ITA's selected generators are the printed general
  * position, as integer matrices in the conventional basis and in the printed order; the symbols and
  * the crystal system and Schoenflies symbol are those of the headline.
@@ -7,7 +7,7 @@
 
 import { describe, expect, it } from 'vitest';
 import { expectHeader, readReference, tableRows, sameAxes } from '../testUtils/references.js';
-import { ITC_CLASSES, itcLatticeOperations } from './itcData.js';
+import { CLASSES, itcLatticeOperations } from './classData.js';
 
 const headlineRows = tableRows(readReference('itc/vol-a-table-3.2.3.2-headlines.md'));
 expectHeader(headlineRows, ['System', 'Short', 'Full', 'Schoenflies', 'Axes', 'Page']);
@@ -29,7 +29,7 @@ const matrixOf = (triplet: string): number[][] => triplet.split(',').map(coeffic
 /** The setting of the class data that an entry names: its short symbol, and its unique axis if monoclinic. */
 function settingOf(short: string, axes: string) {
   const axis = /^unique axis (b|c)$/.exec(axes)?.[1];
-  return ITC_CLASSES.flatMap((c) =>
+  return CLASSES.flatMap((c) =>
     c.settings
       .filter((s) => s.short === short && (axis === undefined || s.uniqueAxis === axis) && sameAxes(axes, s))
       .map((s) => ({ c, s })),
@@ -41,7 +41,7 @@ describe('ITA Table 3.2.3.2 against the exact class data', () => {
 
   it('names every setting of the class data once, except 2mm, m2m and unique axis a, which ITA does not list', () => {
     const named = entries.flatMap((r) => settingOf(r[0], r[1]).map(({ c, s }) => `${c.key}#${s.index}`));
-    const all = ITC_CLASSES.flatMap((c) => c.settings.filter((s) => !s.from).map((s) => `${c.key}#${s.index}`));
+    const all = CLASSES.flatMap((c) => c.settings.filter((s) => !s.from).map((s) => `${c.key}#${s.index}`));
     expect(named.sort()).toEqual(all.sort());
   });
 
