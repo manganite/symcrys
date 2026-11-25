@@ -30,6 +30,11 @@ All notable changes to symcrys are recorded here. The format follows
   the tensor forms eliminates an entry of 10⁻¹² too (before: only above). A result differs only for
   an input exactly on these bounds.
 
+### Fixed
+
+- `residualOperations` (both point-group entry points) names itself in the error for a basis that is
+  not a regular 3 × 3 matrix; before, the message named `metricTensor`.
+
 ## [0.12.0] - 2026-11-25
 
 The completion of the ITC content planned in #126 and #137 (part I): the plane groups get the lookups

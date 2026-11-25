@@ -462,6 +462,9 @@ def test_residual_operations_of_the_plane() -> None:
     rows = [i for i in range(len(ops)) if any((ops.matrix[i] == m).all() for m in kept.matrix)]
     assert kept.matrix.tolist() == ops.matrix[rows].tolist()
     assert len(plane.residual_operations(list(ops), cell)) == 4
+    assert len(plane.residual_operations(ops, cell, tolerance=0.5)) == 8
+    with pytest.raises(ValueError):
+        plane.residual_operations(ops, cell, tolerance=1.5)
     with pytest.raises(ValueError):
         plane.residual_operations([{"matrix": [[0.5, -0.866], [0.866, 0.5]], "translation": [0, 0]}], cell)
 

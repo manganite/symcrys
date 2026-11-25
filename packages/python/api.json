@@ -131,7 +131,7 @@
     ]
   },
   "functions": {
-    "//": "What a function's TypeScript type does not say: the dtype of an array it returns, the keys an operation must have, an argument converted otherwise; operationKeys and bare may be given per module (siteSymmetryOf and orbitOf do not depend on time reversal, docs/conventions.md).",
+    "//": "What a function's TypeScript type does not say: the dtype of an array it returns, the keys an operation must have, an argument converted otherwise; operationKeys, bare and listOf may be given per module (siteSymmetryOf and orbitOf do not depend on time reversal, docs/conventions.md).",
     "faceNormal": {
       "returns": "float64"
     },

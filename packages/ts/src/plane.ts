@@ -851,9 +851,9 @@ export function reciprocalBasis(basis: Mat2): Mat2 {
   return deepFreeze(copy(planeReciprocalBasis(basis, 'reciprocalBasis')));
 }
 
-/** An operation passed to `residualOperations`: its matrix W on lattice coordinates (the `matrix` of an operation). */
+/** An operation of a list given to `residualOperations`: at least its matrix W; other fields are kept. */
 export interface PlaneCellOperation {
-  /** The integer 2 × 2 matrix W acting on lattice coordinates (the `matrix` of an operation). */
+  /** The integer 2 × 2 matrix W acting on lattice coordinates. */
   readonly matrix: readonly (readonly number[])[];
 }
 

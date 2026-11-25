@@ -248,6 +248,7 @@ export function residualOperations<T extends CellOperation>(
   options?: ToleranceOptions,
 ): readonly T[] {
   checkOptions(options, TOLERANCE_KEYS, 'residualOperations');
+  checkBasis(basis, 'residualOperations');
   const g = metricTensor(basis);
   const tolerance = toleranceOf(options, 'metric');
   if (!Array.isArray(operations)) throw new RangeError('residualOperations: operations must be a list');
