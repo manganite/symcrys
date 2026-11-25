@@ -17,8 +17,8 @@ const rows = tableRows(readReference('itc/vol-d-table-1.5.2.3.md')).slice(1);
 /** The transcription's notation as print shows it: underline U+0332, overbar U+0305, centred dot. */
 const asPrinted = (t: string) =>
   t
-    .replace(/(_?)(-?)([0-9m])/g, (_, u: string, o: string, c: string) => c + (o ? '̅' : '') + (u ? '̲' : ''))
-    .replace(/\./g, '·');
+    .replace(/(_?)(-?)([0-9m])/g, (_, u: string, o: string, c: string) => c + (u ? '\u0332' : '') + (o ? '\u0305' : ''))
+    .replace(/\./g, '\u00b7');
 
 const keyOf = (short: string) => magnetic.findPointGroup(short)!.key;
 
@@ -39,6 +39,14 @@ describe('ITC Vol. D Table 1.5.2.3: Shubnikov symbols', () => {
     }
   });
 
+  it('every symbol is in Unicode normal form (the low line before the overbar), so normalizing keeps it', () => {
+    for (const key of magnetic.POINT_GROUP_KEYS) {
+      const s = magnetic.symbol(key, { form: 'shubnikov' });
+      expect(s.normalize('NFC'), key).toBe(s);
+      expect(s.normalize('NFD'), key).toBe(s);
+    }
+  });
+
   it('the crystallographic API gives the 32 classes the symbols of their rows (type I)', () => {
     for (const key of classes.POINT_GROUP_KEYS) {
       expect(classes.symbol(key, { form: 'shubnikov' }), key).toBe(magnetic.symbol(key, { form: 'shubnikov' }));
@@ -54,6 +62,7 @@ describe('ITC Vol. D Table 1.5.2.3: Shubnikov symbols', () => {
   });
 
   it('findPointGroup refuses a symbol with characters only Shubnikov writes (underline, :, ·)', () => {
+    for (const s of ['2\u22C5m', '3\u22192']) expect(() => magnetic.findPointGroup(s), s).toThrow(/Shubnikov/);
     for (const key of ["2'/m'", '2/m', "6'/m'mm'"] as const) {
       const s = magnetic.symbol(key, { form: 'shubnikov' });
       expect(() => magnetic.findPointGroup(s), s).toThrow(/Shubnikov/);

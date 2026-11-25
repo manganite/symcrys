@@ -409,8 +409,10 @@ writes; ITC Vol. D and the magnetic API write `S6`).
   not written as `-`. A grey group, for which ITC prints no Shubnikov symbol, has the symbol of its
   class followed by an underlined 1 (`3:21̲` for `321'`), a rule of symcrys. The symbol names no
   orientation, so every setting has the same one, as for Schoenflies. Birss Table 6 prints the same
-  symbols for the 58 black-and-white groups (tested; `references/birss/table-6.md`).
-- Rendering (overbars, subscripts, LaTeX) is left to the applications.
+  symbols for the 90 groups (tested; `references/birss/table-6.md`). The low line comes before the
+  overbar where both mark a digit, Unicode's canonical order, so that normalizing a symbol keeps it.
+- Apart from the combining characters of the Shubnikov form, rendering (overbars, subscripts, LaTeX)
+  is left to the applications.
 
 ## Reading symbols
 

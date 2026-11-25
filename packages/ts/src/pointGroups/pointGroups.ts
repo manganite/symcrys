@@ -803,7 +803,9 @@ function shubnikov(d: GroupData): string {
     else if (c === '.') out += '·';
     else if (c === ':' || c === '/') out += c;
     else {
-      out += c + (overbar ? OVERBAR : '') + (underline ? LOW_LINE : '');
+      // The low line before the overbar: Unicode's canonical order (combining classes 220, 230), so
+      // that the symbol is its own NFC and NFD form.
+      out += c + (underline ? LOW_LINE : '') + (overbar ? OVERBAR : '');
       underline = false;
       overbar = false;
     }
@@ -833,7 +835,7 @@ function find(
   // Shubnikov's notation is written (symbol, form 'shubnikov') but not read: its overbar is a
   // rotoreflection, so 6̅ is −3 there and C3h in Hermann–Mauguin (Thomas, 2026-11-25). A symbol with
   // a character that only it writes is refused rather than read as something else.
-  if (/[\u0332:·]/.test(symbol)) {
+  if (/[\u0332:·\u22C5\u2219]/.test(symbol)) {
     throw new RangeError(
       `findPointGroup does not read Shubnikov symbols (${shown(symbol)}): give the Hermann–Mauguin or Schoenflies symbol`,
     );

@@ -6,8 +6,10 @@
  * print (`symbol` derives theirs, docs/conventions.md).
  */
 
+import type { MagneticPointGroupKey } from './pointGroups.js';
+
 /** Key → printed Shubnikov symbol, in the order of Table 1.5.2.3. */
-export const SHUBNIKOV: Readonly<Record<string, string>> = {
+export const SHUBNIKOV: Readonly<Partial<Record<MagneticPointGroupKey, string>>> = {
   '1': '1',
   '-1': '-2',
   "-1'": '_-2',
