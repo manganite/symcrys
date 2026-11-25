@@ -180,11 +180,13 @@ jobs:
   # that the one that runs the dev dependencies has no token for Pages. The environment
   # `github-pages` needs a deployment rule for tags `v*.*.*` (GitHub, Settings › Environments),
   # and Pages its source set to GitHub Actions.
+  # The site of this release, built from the tag and attached to the GitHub release as
+  # symcrys-site-X.Y.Z.tar.gz, from which the job pages assembles the versioned site (#57).
   site:
     needs: release
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write # attach the site to the GitHub release
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -208,13 +210,17 @@ jobs:
           python -m pip install -e packages/python -r docs/requirements.txt
           npm run docs:check
           npm run docs:site
-      - name: Keep the site for Pages
-        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
-        with:
-          path: build/docs/html
+      - name: Attach the site to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tar -czf "symcrys-site-${GITHUB_REF_NAME#v}.tar.gz" -C build/docs/html .
+          gh release upload "$GITHUB_REF_NAME" "symcrys-site-${GITHUB_REF_NAME#v}.tar.gz" --clobber
 
   # Published only after both packages were submitted (npm staged, PyPI approved), so that the site
-  # does not show a version that pip cannot install.
+  # does not show a version that pip cannot install. The versioned site (#57): the sites attached to
+  # all releases, the newest at the root and the newest PATCH of each MINOR under /X.Y/, with
+  # versions.json for the version menu (scripts/assemble-site.mjs).
   pages:
     needs: [site, npm, pypi]
     runs-on: ubuntu-latest
@@ -225,9 +231,32 @@ jobs:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
     permissions:
+      contents: read # read the sites attached to the releases
       pages: write
       id-token: write # OIDC token for the Pages deployment
     steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+      - name: Assemble the sites of all releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p build/sites
+          for tag in $(gh release list --limit 1000 --json tagName --jq '.[].tagName'); do
+            # Releases before 0.14 carry no site; any other failure shows in the check below.
+            gh release download "$tag" --pattern 'symcrys-site-*.tar.gz' --dir build/sites 2>/dev/null || true
+          done
+          node scripts/assemble-site.mjs build/sites build/pages "${GITHUB_REF_NAME#v}"
+      - name: Keep the site for Pages
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: build/pages
       - name: Deploy to GitHub Pages
         id: deploy
         uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

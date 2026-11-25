@@ -146,11 +146,14 @@ module (`foo.ts`, `foo.test.ts`). Working rules for contributors, human or agent
    runs all gates, and creates the GitHub release with the `CHANGELOG.md` section as notes and the
    `npm pack` tarball, the Python sdist and the wheel attached. Check that the workflow is green
    and the release carries `symcrys-X.Y.Z.tgz`, `symcrys-X.Y.Z.tar.gz` and
-   `symcrys-X.Y.Z-py3-none-any.whl`.
+   `symcrys-X.Y.Z-py3-none-any.whl`, and after the job `site` also `symcrys-site-X.Y.Z.tar.gz`.
 
-**Documentation site.** The jobs `site` and `pages` of `release.yml` build the site from the tag
-and publish it on GitHub Pages (environment `github-pages`, no approval). Afterwards the site shows
-the new version in its title: [manganite.github.io/symcrys](https://manganite.github.io/symcrys/).
+**Documentation site.** The job `site` of `release.yml` builds the site from the tag and attaches it
+to the GitHub release as `symcrys-site-X.Y.Z.tar.gz`; the job `pages` assembles the sites of all
+releases (the newest at the root, the newest PATCH of each MINOR under `/X.Y/`, from 0.14 on;
+`scripts/assemble-site.mjs`) and publishes them on GitHub Pages (environment `github-pages`, no
+approval). Afterwards the site shows the new version in its title and in its version menu:
+[manganite.github.io/symcrys](https://manganite.github.io/symcrys/).
 This rests on two settings (Thomas): Settings › Pages, source "GitHub Actions"; Settings ›
 Environments › `github-pages`, a deployment rule for tags `v*.*.*` (without it the deployment from
 a tag is refused).
