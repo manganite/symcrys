@@ -8,11 +8,12 @@ All notable changes to symcrys are recorded here. The format follows
 
 ### Added
 
-- The types of the arguments that the crystallographic API accepts are exported by name (#190):
-  `OperationArgument` (an operation read by its Cartesian matrix), `CellOperationArgument` (by its
-  matrix W, for `residualOperations`) and `TensorSpecArgument` (a specification, with
-  `timeParity: 'even'` accepted); `symcrys/magnetic` exports `Hkl`, as `symcrys` does. Types only,
-  no change of behaviour.
+- The shapes that the crystallographic API accepts have names, the names of the same notions in
+  the magnetic API (#190, Thomas, 2026-11-25): `symcrys` exports `CartesianOperation` (an
+  operation read by its Cartesian matrix, `timeReversal: false` accepted); its `CellOperation`
+  has the optional `timeReversal?: false` and its `TensorSpec` the optional `timeParity?: 'even'`,
+  which the functions accepted before; in Python `TensorSpec` has `time_parity`. `symcrys/magnetic`
+  exports `Hkl`, as `symcrys` does. Types only, no change of behaviour.
 
 ## [0.13.0] - 2026-11-25
 

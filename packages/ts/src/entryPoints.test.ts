@@ -276,13 +276,13 @@ describe('the crystallographic API refuses what involves time reversal', () => {
 
   it("a time-odd tensor specification; time parity 'even' is accepted", () => {
     const vector = { rank: 1, kind: 'axial', intrinsic: 'none' } as const;
-    const odd = { ...vector, timeParity: 'odd' } as classes.TensorSpec;
+    const odd = { ...vector, timeParity: 'odd' } as unknown as classes.TensorSpec;
     const even = { ...vector, timeParity: 'even' } as classes.TensorSpec;
     expect(() => classes.tensorForm('3', odd)).toThrow(MAGNETIC_API);
     expect(() => classes.tensorFormOf(classes.operations('3'), odd)).toThrow(MAGNETIC_API);
     expect(() => classes.rotateTensor([0, 0, 1], classes.operations('3')[1].cartesian, odd)).toThrow(MAGNETIC_API);
     expect(classes.tensorForm('3', even)).toBe(classes.tensorForm('3', vector));
-    expect(() => classes.tensorForm('3', { ...vector, timeParity: 'x' } as classes.TensorSpec)).toThrow(
+    expect(() => classes.tensorForm('3', { ...vector, timeParity: 'x' } as unknown as classes.TensorSpec)).toThrow(
       /The time parity of a tensor is 'even' or 'odd', not "x"/,
     );
     expect(() => classes.tensorForm('3', null as unknown as classes.TensorSpec)).toThrow(/Not a tensor specification/);
@@ -501,8 +501,8 @@ describe('the types keep the two entry points apart', () => {
     attempt(() => classes.pointGroup('32').type);
     // @ts-expect-error the table has no time-odd property
     attempt(() => classes.TENSOR_PROPERTIES.magnetoelectric);
-    // @ts-expect-error a specification has no time parity
-    attempt(() => classes.TENSOR_PROPERTIES.piezoelectric.spec.timeParity);
+    // A specification may say 'even' when a caller passes it; the table never sets it.
+    expect(classes.TENSOR_PROPERTIES.piezoelectric.spec.timeParity).toBeUndefined();
     // @ts-expect-error a class in a setting is not generic in the key
     const _magnetic: classes.PointGroupInSetting<"4'/mmm'"> | undefined = undefined;
     expect(_magnetic).toBeUndefined();

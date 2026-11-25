@@ -239,6 +239,10 @@ class TensorSpec(TypedDict):
     """``'polar'`` or ``'axial'``: whether an improper operation changes the sign (factor det R)."""
     intrinsic: IntrinsicSymmetry
     """The index symmetry of the tensor."""
+    time_parity: NotRequired[Literal["even"]]
+    """Accepted in a specification a caller passes if ``'even'``, so that one of the magnetic API can be
+    handed on; a time-odd tensor belongs to the magnetic API. Never set in a result.
+    """
 
 
 @final
@@ -617,7 +621,7 @@ _S_CoordinateChange = (
         "operations": ("l", _S_TransformedOperation),
     },
 )
-_S_TensorSpec = ("d", {"rank": _I, "kind": _V, "intrinsic": _V})
+_S_TensorSpec = ("d", {"rank": _I, "kind": _V, "intrinsic": _V, "timeParity": _V})
 _S_TensorProperty = ("d", {"spec": _S_TensorSpec, "description": _V, "source": _V})
 _S_PointGroup = (
     "d",

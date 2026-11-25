@@ -27,7 +27,6 @@ export {
   metricTensor,
   reciprocalBasis,
   type CellAngles,
-  type CellOperation,
   type IsValidCellOptions,
   type LatticeParameters,
 } from './cell.js';
@@ -105,17 +104,16 @@ export {
   tensorFormOf,
   wyckoffPosition,
   wyckoffPositions,
+  type CartesianOperation,
   type CartesianOperationDescription,
-  type CellOperationArgument,
+  type CellOperation,
   type IdentifiedPointGroup,
   type Operation,
-  type OperationArgument,
   type OperationDescription,
   type PointGroup,
   type PointGroupInSetting,
   type TensorProperty,
   type TensorPropertyName,
   type TensorSpec,
-  type TensorSpecArgument,
 } from './crystalClasses.js';
 export type { VoigtFactor, VoigtOptions } from './tensors/voigt.js';
