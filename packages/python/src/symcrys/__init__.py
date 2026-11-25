@@ -466,8 +466,8 @@ class WyckoffPosition(TypedDict):
     """
     miller_indices: str
     """ITA's representative face as printed, components separated by commas, e.g. ``h,h,l``, or
-    ``h,h,-2h,l`` (Bravais–Miller indices) for hexagonal axes. ``miller_indices(printed, { h, k, l })``
-    gives a face with numbers, ``face_normal(basis, hkl)`` its normal in a cell.
+    ``h,h,-2h,l`` (Bravais–Miller indices) for hexagonal axes. the function ``miller_indices``
+    substitutes values of h, k, l and gives a face with numbers, ``face_normal`` its normal in a cell.
     """
     site_symmetry_operations: NDArray[np.int64]
     """Indices into ``operations`` (same setting) of the site symmetry of the position: of the
@@ -1051,12 +1051,12 @@ def change_of_coordinates(
     inverse pair included, can be passed back; the other quantities are floating point. P is
     rational in a change between lattice bases, as in ITA; an irrational P (a rotation by 30°) is
     read as the nearby fractions, about as exact as the tolerance, and a much smaller tolerance can
-    make the exact products leave the safe integers, a SymcrysError. A transformed operation is ``{
-    matrix, translation }`` alone: other fields of the record (``cartesian``, in the magnetic API
-    ``time_reversal``) are not carried over, so they are matched by index. Raises SymcrysError for a
-    singular P, a quantity of the wrong shape, an unknown quantity, an operation with det W ≠ ±1,
-    and one whose W′ is not integral (the new basis does not span a lattice that the operation maps
-    onto itself).
+    make the exact products leave the safe integers, a SymcrysError. A transformed operation has a
+    ``matrix`` and a ``translation`` alone: other fields of the record (``cartesian``, in the
+    magnetic API ``time_reversal``) are not carried over, so they are matched by index. Raises
+    SymcrysError for a singular P, a quantity of the wrong shape, an unknown quantity, an operation
+    with det W ≠ ±1, and one whose W′ is not integral (the new basis does not span a lattice that
+    the operation maps onto itself).
 
     Parameters
     ----------

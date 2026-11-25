@@ -353,7 +353,7 @@ export interface CoordinateChange {
  * nearby fractions, about as exact as the tolerance, and a much smaller tolerance can make the exact
  * products leave the safe integers, a RangeError.
  * A transformed
- * operation is `{ matrix, translation }` alone: other fields of the record (`cartesian`, in the
+ * operation has a `matrix` and a `translation` alone: other fields of the record (`cartesian`, in the
  * magnetic API `timeReversal`) are not carried over, so they are matched by index. Throws a
  * RangeError for a singular P, a quantity of the wrong shape, an unknown quantity, an operation with
  * det W ≠ ±1, and one whose W′ is not integral (the new basis does not span a lattice that the
