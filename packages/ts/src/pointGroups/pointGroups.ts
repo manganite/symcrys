@@ -4,6 +4,7 @@
  * operations, generators and symbols, as ITC gives them (CLAUDE.md, "Pure ITC").
  */
 
+import { SHUBNIKOV } from './shubnikovData.js';
 import { checkOptions, SETTING_KEYS, shown } from '../checks.js';
 import { INVERSION, det, inverse, matricesEqual, multiply, type Mat3 } from '../linalg.js';
 import { EPSILON } from '../tolerances.js';
@@ -160,8 +161,16 @@ export interface SymbolOptions extends SettingOptions {
    * `'schoenflies'`: Schoenflies symbol, subscripts written inline (`C3v`, `D2d`, `Oh`); `C3i` for
    * the class -3 in the crystallographic API (ITA), `S6` in the magnetic API (ITC Vol. D: `S6(C3)`,
    * `D3d(S6)`).
+   * `'shubnikov'`: Shubnikov symbol as ITC Vol. D Table 1.5.2.3 prints it, with the combining
+   * overbar (U+0305) and the combining low line (U+0332, an element combined with time reversal)
+   * after their character and `·` for the centred dot: `2̲:m̲` for `2'/m'`, `6̅` for `-3` (Shubnikov's
+   * overbar is a rotoreflection). A grey group, which ITC does not print, has the symbol of its class,
+   * a centred dot and an underlined 1, as Shubnikov & Belov (1964, pp. 113–114) write it (`3:2·1̲` for
+   * `321'`). The same in every setting, since it names no
+   * orientation; `findPointGroup` does not read it, since it clashes with Hermann–Mauguin (`2̅` is
+   * −1, `6̅` is −3).
    */
-  readonly form?: 'short' | 'full' | 'schoenflies';
+  readonly form?: 'short' | 'full' | 'schoenflies' | 'shubnikov';
 }
 
 /**
@@ -767,9 +776,43 @@ export function symbol(key: MagneticPointGroupKey, options?: SymbolOptions): str
   const form = options?.form ?? 'short';
   const s = settingSymbols(d, settingIndex(d, options));
   if (form === 'schoenflies') return volDSchoenflies(d.schoenflies);
+  if (form === 'shubnikov') return shubnikov(d);
   if (form === 'short') return s.short;
   if (form === 'full') return s.full;
   throw new RangeError(`Unknown symbol form: ${shown(form)}`);
+}
+
+/** The underline of Shubnikov's notation (time reversal) and the overbar, as combining characters. */
+const LOW_LINE = '\u0332';
+const OVERBAR = '\u0305';
+
+/**
+ * The Shubnikov symbol of a group: the printed one of ITC Vol. D Table 1.5.2.3 (types I and III),
+ * written with combining characters; for a grey group, which ITC does not print, the symbol of its
+ * class, a centred dot and an underlined 1, as Shubnikov & Belov (1964, pp. 113–114) write it
+ * (`m·1̲`, `4·1̲`).
+ */
+function shubnikov(d: GroupData): string {
+  if (d.type === 'II') return `${shubnikov(d.crystalClass)}·1${LOW_LINE}`;
+  const printed = SHUBNIKOV[d.key];
+  if (printed === undefined) throw new Error(`No Shubnikov symbol for ${d.key}`);
+  let out = '';
+  let underline = false;
+  let overbar = false;
+  for (const c of printed) {
+    if (c === '_') underline = true;
+    else if (c === '-') overbar = true;
+    else if (c === '.') out += '·';
+    else if (c === ':' || c === '/') out += c;
+    else {
+      // The low line before the overbar: Unicode's canonical order (combining classes 220, 230), so
+      // that the symbol is its own NFC and NFD form.
+      out += c + (underline ? LOW_LINE : '') + (overbar ? OVERBAR : '');
+      underline = false;
+      overbar = false;
+    }
+  }
+  return out;
 }
 
 /** A point group in a given setting. */
@@ -791,6 +834,14 @@ function find(
   // A symbol that names no group is not found; a value that is no symbol at all is wrong input.
   if (typeof symbol !== 'string')
     throw new RangeError(`findPointGroup takes a symbol (a string), not ${shown(symbol)}`);
+  // Shubnikov's notation is written (symbol, form 'shubnikov') but not read: its overbar is a
+  // rotoreflection, so 6̅ is −3 there and C3h in Hermann–Mauguin (Thomas, 2026-11-25). A symbol with
+  // a character that only it writes is refused rather than read as something else.
+  if (/[\u0332:·\u22C5\u2219]/.test(symbol)) {
+    throw new RangeError(
+      `findPointGroup does not read Shubnikov symbols (${shown(symbol)}): give the Hermann–Mauguin or Schoenflies symbol`,
+    );
+  }
   const target = compact(symbol);
   const candidates = [...BY_KEY.values()].filter((d) => !classesOnly || d.type === 'I');
   // The key, a short or full symbol of a setting (spaces ignored), Birss's cubic form; then a
