@@ -93,6 +93,8 @@ symcrys_page_descriptions = {
     "group in symcrys/magnetic. Which entry point to use, and why.",
     "conventions": "The conventions of symcrys for point and plane groups after ITC, axis frames, "
     "settings, symbols, Wyckoff positions, crystal forms and tensors, with print sources.",
+    "plane-groups": "The 17 plane groups and 10 plane point groups in symcrys/plane: operations in ITA's "
+    "order, Wyckoff positions, site symmetry, asymmetric unit, symmetry elements and 2D cells.",
     "tensors": "Tensor forms allowed by a point group, rank 0 to 4, and named properties such as "
     "piezoelectric, pyroelectric, gyrotropic, ferroaxial and magnetoelectric.",
     "cells": "Cells in symcrys: lattice from cell parameters, reciprocal basis, angles between planes, "

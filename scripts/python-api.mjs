@@ -115,7 +115,8 @@ function render(parts, where) {
     problems.push(`${where}: '|' outside code (a substitution in reStructuredText)`);
   // A TypeScript name left in a code span is a conversion this script does not know.
   for (const m of out.matchAll(/``([^`]*)``/g)) {
-    if (/\b[a-z][a-z0-9]*[A-Z]\w*/.test(m[1]) || /\.ts\b/.test(m[1])) {
+    // A call with an object literal is TypeScript too: Python passes keyword arguments.
+    if (/\b[a-z][a-z0-9]*[A-Z]\w*/.test(m[1]) || /\.ts\b/.test(m[1]) || /\w\([^)]*\{/.test(m[1])) {
       problems.push(`${where}: TypeScript name left in \`\`${m[1]}\`\``);
     }
   }

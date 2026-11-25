@@ -31,6 +31,9 @@ Where to start:
 - [Cells, metric, angles and indices](cells.md): the cell from lattice parameters, metric tensor,
   angles between directions and faces, the operations a distortion leaves, Bravais–Miller indices,
   the zone law and the change of the coordinate system.
+- [Plane groups](plane-groups.md): the 17 plane groups and the plane point groups of
+  `symcrys/plane`, their operations, Wyckoff positions, asymmetric unit, symmetry elements and
+  cells.
 - [Tensors and named properties](tensors.md): forms of property tensors, and the named properties
   such as piezoelectric or ferromagnetic.
 - [Examples](examples.md), among them second-harmonic generation at surfaces.
@@ -51,6 +54,7 @@ readings
 conventions
 forms
 cells
+plane-groups
 tensors
 examples
 reference/index

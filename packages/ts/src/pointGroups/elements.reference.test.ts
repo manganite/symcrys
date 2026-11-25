@@ -4,7 +4,8 @@
  * (references/itc/vol-a-2006-symmetry-operations.md).
  *
  * Each printed line is turned into a matrix with the independent algebra of testUtils, by the
- * definitions of ITA § 11.1.2 (pp. 810–811): the axis direction is the direction of increasing
+ * definitions of ITA 2016 § 1.4.2.1 (p. 50), which reproduces § 11.1.2 of the 5th edition
+ * (pp. 810–811), whose space-group tables these lines come from: the axis direction is the direction of increasing
  * parameter of the printed location, `+` a counter-clockwise rotation seen from its tip, a
  * rotoinversion the rotation followed by the inversion. These matrices must be exactly the
  * operations of the setting, line (n) must be the n-th triplet of the general position in ITA
@@ -147,7 +148,7 @@ interface Expected {
   cartesian?: number[];
 }
 
-/** The operation a printed line names, by ITA § 11.1.2. */
+/** The operation a printed line names, by ITA 2016 § 1.4.2.1 (5th ed. § 11.1.2). */
 function expected(p: PrintedOperation, b: M): Expected {
   if (p.symbol === '1') return { matrix: I3, kind: 'identity', order: 1 };
   if (p.symbol === '-1') {

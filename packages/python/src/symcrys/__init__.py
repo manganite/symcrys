@@ -466,8 +466,8 @@ class WyckoffPosition(TypedDict):
     """
     miller_indices: str
     """ITA's representative face as printed, components separated by commas, e.g. ``h,h,l``, or
-    ``h,h,-2h,l`` (Bravais–Miller indices) for hexagonal axes. ``miller_indices(printed, { h, k, l })``
-    gives a face with numbers, ``face_normal(basis, hkl)`` its normal in a cell.
+    ``h,h,-2h,l`` (Bravais–Miller indices) for hexagonal axes. ``miller_indices`` substitutes values of
+    h, k, l and gives a face with numbers, ``face_normal`` its normal in a cell.
     """
     site_symmetry_operations: NDArray[np.int64]
     """Indices into ``operations`` (same setting) of the site symmetry of the position: of the
