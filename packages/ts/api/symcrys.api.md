@@ -41,6 +41,9 @@ export interface Axis {
 }
 
 // @public
+export type BravaisLattice = 'aP' | 'mP' | 'mS' | 'oP' | 'oS' | 'oI' | 'oF' | 'tP' | 'tI' | 'hP' | 'hR' | 'cP' | 'cI' | 'cF';
+
+// @public
 export interface CartesianAxis {
     readonly cartesian: Vec3;
 }
@@ -66,6 +69,16 @@ interface CartesianOperationDescription_2 {
 }
 
 // @public
+export interface Cell {
+    readonly axes?: 'hexagonal' | 'rhombohedral';
+    readonly cell?: number;
+    readonly cellChoice?: number;
+    readonly centring?: 'P' | 'C' | 'I' | 'F' | 'H' | 'D';
+    readonly setting?: OrthorhombicSetting | 'obverse' | 'reverse';
+    readonly uniqueAxis?: 'a' | 'b' | 'c';
+}
+
+// @public
 export interface CellAngles {
     readonly alpha: number;
     readonly beta: number;
@@ -77,6 +90,9 @@ export interface CellOperation {
     readonly matrix: Mat3;
     readonly timeReversal?: false;
 }
+
+// @public
+export function cellTransformation(bravaisLattice: BravaisLattice, fromCell: Cell, toCell: Cell): CoordinateTransformation;
 
 // @public
 export function changeOfCoordinates(transformation: CoordinateTransformation, quantities: CoordinateQuantities, options?: ToleranceOptions): CoordinateChange;
@@ -329,6 +345,9 @@ export interface OrbitPole {
 }
 
 // @public
+export type OrthorhombicSetting = 'abc' | 'ba-c' | 'cab' | '-cba' | 'bca' | 'a-cb';
+
+// @public
 export function planeFromFourIndices(hkil: FourIndices): Vec3;
 
 // @public
@@ -476,18 +495,6 @@ export interface ToleranceOptions {
 
 // @public
 export function toVoigt(tensor: readonly number[], spec: TensorSpec | TensorPropertyName, options?: VoigtOptions): readonly number[] | readonly (readonly number[])[];
-
-// @public
-export const TRANSFORMATION_MATRICES: readonly TransformationMatrix[];
-
-// @public
-export interface TransformationMatrix {
-    readonly crystalSystem: string;
-    readonly inverseLinearPart: Mat3;
-    readonly linearPart: Mat3;
-    readonly page: number;
-    readonly statements: readonly string[];
-}
 
 // @public
 export interface TransformedOperation {

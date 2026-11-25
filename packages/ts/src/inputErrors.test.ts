@@ -76,6 +76,7 @@ const pointCalls = (o: readonly { readonly cartesian: unknown }[], key: string, 
   isValidCell: call([{ alpha: 90, beta: 90, gamma: 120 }], ['minVolumeRatio']),
   residualOperations: call([key === '32' ? classes.operations('6/mmm') : magneticOps, basis], TOLERANCE),
   changeOfCoordinates: call([{ linearPart: unit, originShift: [0, 0, 0.5] }, { points: [[0.1, 0.2, 0.3]] }], TOLERANCE),
+  cellTransformation: call(['hR', { axes: 'hexagonal', cell: 2 }, { uniqueAxis: 'b', cellChoice: 3 }]),
   directionFromFourIndices: call([[2, -1, -1, 0]]),
   directionToFourIndices: call([[1, 0, 0]]),
   planeFromFourIndices: call([[1, 0, -1, 0]]),
@@ -225,6 +226,8 @@ const MAY_ANSWER: Readonly<Record<string, (position: number, value: unknown) => 
   isPlaneGroupKey: () => true,
   // An empty record of quantities transforms none of them.
   changeOfCoordinates: (p, v) => p === 1 && isEmptyObject(v),
+  // `{}` is the standard cell.
+  cellTransformation: (p, v) => p > 0 && isEmptyObject(v),
   findPlaneGroup: (p, v) => p === 0 && typeof v === 'string',
   reduceIndices: (p, v) => Array.isArray(v) && v.length > 0 && v.every((x) => Number.isSafeInteger(x) && x !== 0),
   findPointGroup: (p, v) => p === 0 && typeof v === 'string',

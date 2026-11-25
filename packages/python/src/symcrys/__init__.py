@@ -190,6 +190,22 @@ class LatticeParameters(TypedDict):
 
 
 @final
+class CoordinateTransformation(TypedDict):
+    """A change of the coordinate system (P, p) (ITA 2016 § 1.5.1.3, p. 83): (a′, b′, c′) = (a, b,
+    c)·P, origin O′ = O + p.
+    """
+
+    linear_part: NDArray[np.float64]
+    """P, the linear part: its columns are the new basis vectors a′, b′, c′ in the old basis (eq.
+    (1.5.1.4)); det P ≠ 0, also negative.
+    """
+    origin_shift: NotRequired[NDArray[np.float64]]
+    """p, the origin shift: the coordinates of the new origin in the old coordinate system; default
+    zero.
+    """
+
+
+@final
 class InverseTransformation(TypedDict):
     """The inverse change of the coordinate system (Q, q) = (P, p)⁻¹."""
 
@@ -593,29 +609,16 @@ class TensorForm(TypedDict):
     """
 
 
-@final
-class TransformationMatrix(TypedDict):
-    """A row of ITA Table 1.5.1.1."""
-
-    statements: list[str]
-    """The printed statements of the row, in order: one for most rows (``'F → P (Fig. 1.5.1.4)'``),
-    several where print states several transformations with the same P (the changes of cell choice of a
-    monoclinic cell, ``'Cell choice 1 → cell choice 2: P → P, C → A'``, …, ``'Unique axis b invariant
-    (Fig. 1.5.1.2a)'``). An overbar is written as a leading minus sign (``'(b, a, -c) → (a, b, c)'``).
-    """
-    linear_part: NDArray[np.float64]
-    """P: the columns are the new basis vectors in the old basis, (a′, b′, c′) = (a, b, c)·P."""
-    inverse_linear_part: NDArray[np.float64]
-    """Q = P⁻¹, for the transformation against the arrow ("replace P by Q and vice versa")."""
-    crystal_system: str
-    """The column "Crystal system" as printed, its lines joined by a comma and a space."""
-    page: int
-    """The printed page of ITA (6th ed., 2016)."""
-
-
 _OPERATION_FIELDS = {"matrix": (np.int64, (3, 3)), "cartesian": (np.float64, (3, 3))}
 _S_Operations = ("ops", Operations, {"matrix": (np.int64, (3, 3)), "cartesian": (np.float64, (3, 3))})
 _S_LatticeParameters = ("d", {"a": _F, "b": _F, "c": _F, "alpha": _F, "beta": _F, "gamma": _F})
+_S_CoordinateTransformation = (
+    "d",
+    {
+        "linearPart": ("a", np.float64, None),
+        "originShift": ("a", np.float64, None),
+    },
+)
 _S_InverseTransformation = (
     "d",
     {
@@ -743,16 +746,6 @@ _S_TensorForm = (
         "relations": ("a", np.float64, None),
     },
 )
-_S_TransformationMatrix = (
-    "d",
-    {
-        "statements": ("l", _V),
-        "linearPart": ("a", np.float64, None),
-        "inverseLinearPart": ("a", np.float64, None),
-        "crystalSystem": _V,
-        "page": _I,
-    },
-)
 
 __all__ = [
     "TENSOR_PROPERTIES",
@@ -760,7 +753,6 @@ __all__ = [
     "POINT_GROUP_KEYS",
     "LATTICE_SYMMETRY_DIRECTIONS",
     "EPSILON",
-    "TRANSFORMATION_MATRICES",
     "VERSION",
     "SymcrysError",
     "SymcrysInternalError",
@@ -768,6 +760,7 @@ __all__ = [
     "CartesianAxis",
     "CartesianOperationDescription",
     "CoordinateChange",
+    "CoordinateTransformation",
     "CrystalFamily",
     "CrystalForm",
     "CrystalFormType",
@@ -795,7 +788,6 @@ __all__ = [
     "TensorProperty",
     "TensorPropertyName",
     "TensorSpec",
-    "TransformationMatrix",
     "TransformedOperation",
     "WyckoffPosition",
     "allowed_properties",
@@ -804,6 +796,7 @@ __all__ = [
     "allows_property_of",
     "angle_between_directions",
     "angle_between_planes",
+    "cell_transformation",
     "change_of_coordinates",
     "crystal_family",
     "crystal_forms",
@@ -899,19 +892,6 @@ EPSILON: float = _shared.convert(_value("EPSILON"), _F)
 """The default tolerance of every function that compares numbers a caller passes in (operations,
 directions, points): two numbers closer than this count as equal, in the metric of their kind
 (docs/conventions.md, "Tolerances").
-"""
-TRANSFORMATION_MATRICES: list[TransformationMatrix] = _shared.convert(
-    _value("TRANSFORMATION_MATRICES"),
-    ("l", _S_TransformationMatrix),
-)
-"""ITA Table 1.5.1.1 (6th ed., 2016, pp. 77–80): the selected transformation matrices P and Q = P⁻¹,
-one record per printed row in printed order (``statements``, ``linear_part``,
-``inverse_linear_part``, ``crystal_system``, ``page``). A record's ``linear_part`` is the P that
-``change_of_coordinates`` takes; fractions such as 1/3 are the nearest numbers, which
-``change_of_coordinates`` reads back as fractions.
-
-In Python: a list of dicts, ``linear_part`` and ``inverse_linear_part`` float64 arrays of shape (3,
-3); pass ``linear_part`` to ``change_of_coordinates``.
 """
 VERSION: str = _shared.convert(_value("VERSION"), _V)
 """The version of symcrys, the same for the TypeScript and the Python package."""
@@ -1078,6 +1058,35 @@ def face_normal(basis: ArrayLike, hkl: ArrayLike) -> NDArray[np.float64]:
     result: NDArray[np.float64] = _shared.convert(
         _call("faceNormal", _shared.array(basis, "basis", np.float64), _shared.array(hkl, "hkl")),
         ("a", np.float64, None),
+    )
+    return result
+
+
+def cell_transformation(
+    bravais_lattice: str,
+    from_cell: Mapping[str, Any],
+    to_cell: Mapping[str, Any],
+) -> CoordinateTransformation:
+    """The change of the coordinate system from one cell of a lattice to another: P with (a′, b′,
+    c′) = (a, b, c)·P, where (a, b, c) is the basis of ``from_cell`` and (a′, b′, c′) that of
+    ``to_cell``, to be passed to ``change_of_coordinates`` (the origin stays). The change back is
+    ``cell_transformation(bravais_lattice, to_cell, from_cell)``.
+
+    A cell is named by its fields (``Cell``), and an empty one is the conventional cell in the
+    standard setting: a monoclinic cell by its unique axis and cell choice, an orthorhombic one by
+    its setting, the primitive cell of a centred lattice by the centring ``'P'``, the further cells
+    of ITA by their centring and index (C₁: centring ``'C'``, cell 1), the cells of a rhombohedral
+    lattice by their axes, ``'hexagonal'`` or ``'rhombohedral'``, or as monoclinic cells. Fractions
+    such as 1/3 are the nearest numbers, which ``change_of_coordinates`` reads back as fractions.
+    """
+    result: CoordinateTransformation = _shared.convert(
+        _call(
+            "cellTransformation",
+            bravais_lattice,
+            _shared.mapping(from_cell, "from_cell"),
+            _shared.mapping(to_cell, "to_cell"),
+        ),
+        _S_CoordinateTransformation,
     )
     return result
 

@@ -968,12 +968,30 @@ can be passed back (Thomas, 2026-11-25); an operation with det W ≠ ±1, or who
 (the new basis spans no lattice that the operation maps onto itself), is refused. A transformed
 operation is `{ matrix, translation }` alone, its translation w′ not reduced modulo the lattice, as
 ITA writes it; other fields of an operation record (`cartesian`, `timeReversal`) are not carried
-over. The plane has the same function with 2 × 2 matrices (`symcrys/plane`). The
-matrices P of named changes are ITA Table 1.5.1.1 as data, `TRANSFORMATION_MATRICES` (both
-point-group entry points; #120): one record per printed row in printed order (pp. 77–80), with the
-printed statements, P (`linearPart`, the argument of `changeOfCoordinates`), Q = P⁻¹
-(`inverseLinearPart`, for the change against the arrow), the printed crystal system and the page;
-no keys of symcrys' own (Thomas, 2026-11-25).
+over. The plane has the same function with 2 × 2 matrices (`symcrys/plane`).
+
+### Cells of a lattice
+
+`cellTransformation(bravaisLattice, fromCell, toCell)` gives P from one cell of a lattice to
+another, `{ linearPart }`, to be passed to `changeOfCoordinates` (both point-group entry points;
+#120). The lattice is named by its Bravais symbol (ITA 2016 Table 1.3.4.1, p. 39: `aP`, `mP`, `mS`,
+`oP`, `oS`, `oI`, `oF`, `tP`, `tI`, `hP`, `hR`, `cP`, `cI`, `cF`), a cell by the fields of `Cell`;
+`{}` is the conventional cell in the standard setting:
+
+| Lattice                | Cells                                                                                                                                                                                                                       |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `mP`, `mS`             | `{ uniqueAxis, cellChoice }`: unique axis a, b, c and cell choice 1, 2, 3 (standard b, 1)                                                                                                                                   |
+| `oP`, `oS`, `oI`, `oF` | `{ setting }`: `'abc'`, `'ba-c'`, `'cab'`, `'-cba'`, `'bca'`, `'a-cb'` (ITA 2016 Table 1.5.4.4); `oI`, `oF` also `{ centring: 'P' }`, the primitive cell                                                                    |
+| `tP`                   | `{ centring: 'C', cell: 1 \| 2 }`: C₁, C₂                                                                                                                                                                                   |
+| `tI`                   | `{ centring: 'F', cell: 1 \| 2 }`: F₁, F₂; `{ centring: 'P' }`                                                                                                                                                              |
+| `hP`                   | `{ centring, cell }`: orthohexagonal `'C'` (C₁–C₃), triple hexagonal `'H'` (H₁–H₃), triple rhombohedral `'D'` (D₁, D₂)                                                                                                      |
+| `hR`                   | `{ axes: 'rhombohedral' }`; `{ axes: 'hexagonal', cell, setting }`: R₁–R₃, `'obverse'` or `'reverse'` (standard R₁ obverse); `{ uniqueAxis: 'b' \| 'c', cellChoice }`: the C-centred (b) and A-centred (c) monoclinic cells |
+| `cI`, `cF`             | `{ centring: 'P' }`, the primitive cell                                                                                                                                                                                     |
+
+The matrices are those of ITA 2016 Table 1.5.1.1 (pp. 77–80); two cells the table does not join
+directly are joined by a product of its matrices, computed exactly. The triple hexagonal cell R from
+which the table gives the monoclinic cells of an `hR` lattice is R₁ obverse. The change back is
+`cellTransformation(bravaisLattice, toCell, fromCell)`.
 
 ## Tensors
 
@@ -1342,6 +1360,7 @@ the determination of the plane group of a pattern (a later MINOR, #31).
 | plane groups: asymmetric unit, symmetry elements in the cell                                                                                                                                                          | the printed vertices and inequalities, the Wyckoff positions (centres and mirror lines) and the printed glides of the same pages; all lines also derived from the printed general position                                                                                                                                                                 | `spaceGroups/cell.reference.test.ts`                                                                    |
 | plane groups: finding a group by its short or full symbol (`findPlaneGroup`)                                                                                                                                          | the short and full symbols of the same pages                                                                                                                                                                                                                                                                                                               | `spaceGroups/planeGroups.reference.test.ts`                                                             |
 | change of the coordinate system: P⁻¹, points, vectors, indices, metric, operations                                                                                                                                    | ITA 6th ed. (2016), Chapter 1.5: the worked examples of pp. 75–90 (F → P, zircon, GeTe, P2₁/c, I4₁/amd) and rows of Table 1.5.1.1 (pp. 77, 79): `references/itc/vol-a-2016-1.5-transformations.md`                                                                                                                                                         | `coordinates.reference.test.ts`                                                                         |
+| cells of a lattice: P between any two cells                                                                                                                                                                           | ITA 6th ed. (2016) Table 1.5.1.1, pp. 77–80, all 41 rows, each joining the cells it states: `references/itc/vol-a-2016-table-1.5.1.1.md`                                                                                                                                                                                                                   | `cellTransformation.reference.test.ts`                                                                  |
 | three and four indices of hexagonal axes, planes and directions                                                                                                                                                       | Frank, _Acta Cryst._ 18, 862 (1965), Eqs. (18)–(22), p. 864: `references/frank/eqs-18-22.md`                                                                                                                                                                                                                                                               | `indices.reference.test.ts`                                                                             |
 | plane lattices: crystal families, Bravais lattices, restrictions on the cell, Laue classes; Patterson symmetry                                                                                                        | ITA 6th ed. (2016), Table 2.1.1.1 (p. 143), block "Two dimensions": `references/itc/vol-a-table-2.1.1.1.md`; § 3.2.1.1 (p. 720); the headlines of Chapter 2.2                                                                                                                                                                                              | `spaceGroups/planeLattice.reference.test.ts`                                                            |
 | plane point groups: keys, settings of `3m`, operations                                                                                                                                                                | ITA 6th ed. (2016), Table 3.2.1.1 (p. 720), Ch. 3.2, p. 721, item (d); operations: the linear parts of the plane groups (above)                                                                                                                                                                                                                            | `plane.test.ts`                                                                                         |

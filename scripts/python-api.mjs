@@ -600,8 +600,9 @@ function schema(ctx, ir, field, where, dtype) {
 //
 // A parameter that is an object of plain fields (the cell parameters, the angles, the values of h, k,
 // l, the face {hkl} or direction {uvw} of orbit) becomes its fields as arguments (#137 H2): a field
-// every signature requires a parameter, the others keyword-only. Operations, tensor specifications and
-// options objects are not such objects.
+// every signature requires a parameter, the others keyword-only. Operations, tensor specifications,
+// options objects and the parameters listed in api.json as "mappings" (two records with the same
+// fields, the cells of cellTransformation) are not such objects.
 
 /**
  * The alternatives of an object parameter, one record per signature, or null.
@@ -613,6 +614,11 @@ function schema(ctx, ir, field, where, dtype) {
 function objectAlternatives(decl, i, where) {
   const p = decl.signatures[0].parameters[i];
   if (p.name === 'operations' || isOptions(p)) return null;
+  // A record passed as one mapping (cellTransformation: two cells with the same fields).
+  if (api.functions[decl.name]?.mappings?.includes(p.name)) {
+    used.add(`functions.${decl.name}.mappings`);
+    return null;
+  }
   const alts = decl.signatures.flatMap((/** @type {Json} */ s) => {
     const ir = read(s.parameters[i].type, where);
     return ir.k === 'union' ? ir.of : [ir];

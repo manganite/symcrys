@@ -241,6 +241,10 @@ Carried over from birss-app, where the calculations come from.
   API; "Point groups" below) and `src/plane.ts` (`symcrys/plane`, the plane groups; "Plane groups"
   below). Everything else is internal and may change freely. The API reports in `packages/ts/api/`
   (#56) show it; a PR that changes them changes the public API.
+- **No print metadata** (Thomas, 2026-11-25, #120): the API gives no page numbers, figure
+  references or printed texts of a table (captions, statements, the text of a column); what comes
+  from print is named in the API's own system of names, and its source is given in the code (TSDoc
+  `@remarks` or a comment) and in `references/`.
 - **Plain data at the API boundary** (maintainer, 2026-11-19, #30): exported functions take and
   return numbers, strings, booleans, arrays and plain objects; no classes, no functions, no `Map` or
   `Set` as arguments or results. A thin layer in another language (Python, #30) can then pass
@@ -707,12 +711,7 @@ quantities, { tolerance })`, in all three entry points (3 × 3, and 2 × 2 in `s
   and gives the inverse pair; it replaces `changeOfAxes`. P, p and the operations are read as
   fractions and transformed exactly: each number as the simplest fraction within the tolerance
   (Thomas, 2026-11-25, after the review showed that a bound of 12 on the denominator, his first
-  answer, refuses the function's own inverse pair, q = −1/24 for H₁ with p = 1/8). ITA Table 1.5.1.1
-  as data (#120; Thomas, 2026-11-25, asked with options): `TRANSFORMATION_MATRICES`, one record per
-  printed row in printed order, with the printed statements, P (`linearPart`), Q = P⁻¹
-  (`inverseLinearPart`), the crystal system and the page, no keys of symcrys' own; chosen while
-  implementing: Q is `inverseLinearPart`, since `inverse` is a record of `changeOfCoordinates` and the
-  Python layer reads array fields by name. Chosen while implementing: the fields are `linearPart` and
+  answer, refuses the function's own inverse pair, q = −1/24 for H₁ with p = 1/8). Chosen while implementing: the fields are `linearPart` and
   `originShift`, ITA's words for P and p (§§ 1.5.1.2, 1.5.1.3), since `P` and `p` would be one name in
   Python; an operation whose W′ is not integral is refused (the record's `matrix` has integer
   entries), and a transformed operation is `{ matrix, translation }` alone, w′ not reduced modulo the
@@ -721,6 +720,20 @@ quantities, { tolerance })`, in all three entry points (3 × 3, and 2 × 2 in `s
   anchors are ITA's worked examples of Chapter 1.5 and rows of
   Table 1.5.1.1 (`references/itc/vol-a-2016-1.5-transformations.md`); the Python generator takes
   two object parameters of one signature, and a list of operations as a field of one.
+- **Cells of a lattice** (#120; Thomas, 2026-11-25, asked with a design and a recommendation, after
+  rejecting a list of the printed rows with their pages and texts, "No print metadata" above):
+  `cellTransformation(bravaisLattice, fromCell, toCell)` gives `{ linearPart }`, P from one named cell
+  to another, for `changeOfCoordinates`; the change back swaps the cells. The Bravais lattice is
+  ITA's symbol (Table 1.3.4.1), a cell is named by the fields of `Cell`, in the words the API has
+  already (`uniqueAxis`, `axes`, `setting`, `centring`) and `cellChoice` and `cell` (the index of C₁,
+  H₁, R₁ …), `{}` the conventional cell in the standard setting. The data are the rows of ITA 2016
+  Table 1.5.1.1, internal, with the cells each row joins; any two cells of a lattice are joined by a
+  product of them, exactly. Chosen while implementing: the triple hexagonal cell R of rows 30–35 is
+  R₁ obverse (rows 36–41 are row 16 times rows 30–35, tested); a cell that ITA names among several
+  (C₁, C₂ …) needs its `cell`, except the hexagonal axes of `hR`, whose standard is R₁ obverse; the
+  primitive cell of `oI` and `oF` only in the standard setting, which is what ITA gives; in Python the
+  two cells are mappings (`cell_transformation("hR", {}, {"axes": "rhombohedral"})`), since their
+  fields would collide as arguments (api.json, "mappings").
 - **`latticeBasis` only for families with fixed cell angles** (2026-11-09, #14): for monoclinic
   and triclinic a Cartesian basis would need the cell angles, which a point group does not fix.
 - **Two entry points, `symcrys` and `symcrys/magnetic`** (maintainer, 2026-11-20, #47): the

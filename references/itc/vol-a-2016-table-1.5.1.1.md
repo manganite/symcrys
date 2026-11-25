@@ -2,28 +2,26 @@
 
 Source: _International Tables for Crystallography_, Vol. A, 6th edition (2016), Chapter 1.5
 (Transformations of coordinate systems; H. Wondratschek, M. I. Aroyo, B. Souvignier and
-G. Chapuis), Table 1.5.1.1, printed pp. 77–80 (PDF page = printed page − 75). Transcribed on
-2026-11-25 from the page images of the chapter PDF in Thomas' Zotero (attachment `AHHQY85L`),
-rendered at 110 and 220 dpi; the text layer of the PDF takes fractions apart, so it was not used.
-Where the overbar of a small fraction was hard to see (the first or second column of the rows
-"Triple hexagonal cell R, obverse setting → …"), the reading was checked by P·Q = 1, which the tests
-check for every row.
+G. Chapuis), Table 1.5.1.1, pp. 77–80. Transcribed on 2026-11-25. As printed, Q = P⁻¹ holds
+exactly in every row.
 
 The table's heading note: "For inverse transformations (against the arrow) replace P by Q and vice
 versa."
 
-Transcription conventions: one row per printed row, in printed order. "Transformation" gives the
-printed statements of the row, separated by `;` (a row of the monoclinic part states three
-transformations with the same P); bold vectors as plain letters, an overbar as a leading `-`
-(`(b, a, -c)`), subscripts as printed (C₁, R₁); "(Fig. …)" as printed. A matrix is written by rows,
-rows separated by `;`, entries by spaces; a leading `-` is an overbar; fractions as `n/d`. "Crystal
-system" as printed, its lines joined by `, `.
+Transcription conventions: one row per printed row, in printed order, numbered. "Transformation"
+gives the entries of the printed cell in printed order, separated by `;`: each statement, and each
+remark printed beside or below them (a remark set against a brace applies to all statements of the
+brace: "Unique axis b invariant", "(Fig. 1.5.1.5), c axis invariant"); a statement of the form
+"Cell choice 1 → cell choice 2" with its centrings, printed in braces, as "P → P, C → A"; bold
+vectors as plain letters, an overbar as a leading `-` (`(b, a, -c)`), subscripts as printed (C₁, R₁);
+"(Fig. …)" as printed. A matrix is written by rows, rows separated by `;`, entries by spaces; a
+leading `-` is an overbar; fractions as `n/d`. "Crystal system" as printed, its lines joined by `, `.
 
 | No. | Page | Transformation | P | Q | Crystal system |
 |---|---|---|---|---|---|
-| 1 | 77 | Cell choice 1 → cell choice 2: P → P, C → A; Cell choice 2 → cell choice 3: P → P, A → I; Cell choice 3 → cell choice 1: P → P, I → C; Unique axis b invariant (Fig. 1.5.1.2a) | -1 0 1; 0 1 0; -1 0 0 | 0 0 -1; 0 1 0; 1 0 -1 | Monoclinic (cf. Sections 1.5.4.3 and 2.1.3.15) |
-| 2 | 77 | Cell choice 1 → cell choice 2: P → P, A → B; Cell choice 2 → cell choice 3: P → P, B → I; Cell choice 3 → cell choice 1: P → P, I → A; Unique axis c invariant (Fig. 1.5.1.2b) | 0 -1 0; 1 -1 0; 0 0 1 | -1 1 0; -1 0 0; 0 0 1 | Monoclinic (cf. Sections 1.5.4.3 and 2.1.3.15) |
-| 3 | 77 | Cell choice 1 → cell choice 2: P → P, B → C; Cell choice 2 → cell choice 3: P → P, C → I; Cell choice 3 → cell choice 1: P → P, I → B; Unique axis a invariant (Fig. 1.5.1.2c) | 1 0 0; 0 0 -1; 0 1 -1 | 1 0 0; 0 -1 1; 0 -1 0 | Monoclinic (cf. Sections 1.5.4.3 and 2.1.3.15) |
+| 1 | 77 | Cell choice 1 → cell choice 2: P → P, C → A; Cell choice 2 → cell choice 3: P → P, A → I; Cell choice 3 → cell choice 1: P → P, I → C; Unique axis b invariant; (Fig. 1.5.1.2a) | -1 0 1; 0 1 0; -1 0 0 | 0 0 -1; 0 1 0; 1 0 -1 | Monoclinic (cf. Sections 1.5.4.3 and 2.1.3.15) |
+| 2 | 77 | Cell choice 1 → cell choice 2: P → P, A → B; Cell choice 2 → cell choice 3: P → P, B → I; Cell choice 3 → cell choice 1: P → P, I → A; Unique axis c invariant; (Fig. 1.5.1.2b) | 0 -1 0; 1 -1 0; 0 0 1 | -1 1 0; -1 0 0; 0 0 1 | Monoclinic (cf. Sections 1.5.4.3 and 2.1.3.15) |
+| 3 | 77 | Cell choice 1 → cell choice 2: P → P, B → C; Cell choice 2 → cell choice 3: P → P, C → I; Cell choice 3 → cell choice 1: P → P, I → B; Unique axis a invariant; (Fig. 1.5.1.2c) | 1 0 0; 0 0 -1; 0 1 -1 | 1 0 0; 0 -1 1; 0 -1 0 | Monoclinic (cf. Sections 1.5.4.3 and 2.1.3.15) |
 | 4 | 77 | Unique axis b → unique axis c; Cell choice 1: P → P, C → A; Cell choice 2: P → P, A → B; Cell choice 3: P → P, I → I; Cell choice invariant | 0 1 0; 0 0 1; 1 0 0 | 0 0 1; 1 0 0; 0 1 0 | Monoclinic (cf. Sections 1.5.4.3 and 2.1.3.15) |
 | 5 | 77 | Unique axis b → unique axis a; Cell choice 1: P → P, C → B; Cell choice 2: P → P, A → C; Cell choice 3: P → P, I → I; Cell choice invariant | 0 0 1; 1 0 0; 0 1 0 | 0 1 0; 0 0 1; 1 0 0 | Monoclinic (cf. Sections 1.5.4.3 and 2.1.3.15) |
 | 6 | 77 | Unique axis c → unique axis a; Cell choice 1: P → P, A → B; Cell choice 2: P → P, B → C; Cell choice 3: P → P, I → I; Cell choice invariant | 0 1 0; 0 0 1; 1 0 0 | 0 0 1; 1 0 0; 0 1 0 | Monoclinic (cf. Sections 1.5.4.3 and 2.1.3.15) |
@@ -34,8 +32,8 @@ system" as printed, its lines joined by `, `.
 | 11 | 78 | (-c, b, a) → (a, b, c) | 0 0 -1; 0 1 0; 1 0 0 | 0 0 1; 0 1 0; -1 0 0 | Unconventional orthorhombic setting |
 | 12 | 78 | (b, c, a) → (a, b, c) | 0 1 0; 0 0 1; 1 0 0 | 0 0 1; 1 0 0; 0 1 0 | Unconventional orthorhombic setting |
 | 13 | 78 | (a, -c, b) → (a, b, c) | 1 0 0; 0 0 -1; 0 1 0 | 1 0 0; 0 0 1; 0 -1 0 | Unconventional orthorhombic setting |
-| 14 | 78 | P → C₁; I → F₁ (Fig. 1.5.1.5), c axis invariant | 1 1 0; -1 1 0; 0 0 1 | 1/2 -1/2 0; 1/2 1/2 0; 0 0 1 | Tetragonal (cf. Section 1.5.4.3) |
-| 15 | 78 | P → C₂; I → F₂ (Fig. 1.5.1.5), c axis invariant | 1 -1 0; 1 1 0; 0 0 1 | 1/2 1/2 0; -1/2 1/2 0; 0 0 1 | Tetragonal (cf. Section 1.5.4.3) |
+| 14 | 78 | P → C₁; I → F₁; (Fig. 1.5.1.5), c axis invariant | 1 1 0; -1 1 0; 0 0 1 | 1/2 -1/2 0; 1/2 1/2 0; 0 0 1 | Tetragonal (cf. Section 1.5.4.3) |
+| 15 | 78 | P → C₂; I → F₂; (Fig. 1.5.1.5), c axis invariant | 1 -1 0; 1 1 0; 0 0 1 | 1/2 1/2 0; -1/2 1/2 0; 0 0 1 | Tetragonal (cf. Section 1.5.4.3) |
 | 16 | 78 | Primitive rhombohedral cell → triple hexagonal cell R₁, obverse setting (Fig. 1.5.1.6a,c) | 1 0 1; -1 1 1; 0 -1 1 | 2/3 -1/3 -1/3; 1/3 1/3 -2/3; 1/3 1/3 1/3 | Rhombohedral space groups (cf. Section 1.5.4.3) |
 | 17 | 78 | Primitive rhombohedral cell → triple hexagonal cell R₂, obverse setting (Fig. 1.5.1.6c) | 0 -1 1; 1 0 1; -1 1 1 | -1/3 2/3 -1/3; -2/3 1/3 1/3; 1/3 1/3 1/3 | Rhombohedral space groups (cf. Section 1.5.4.3) |
 | 18 | 78 | Primitive rhombohedral cell → triple hexagonal cell R₃, obverse setting (Fig. 1.5.1.6c) | -1 1 1; 0 -1 1; 1 0 1 | -1/3 -1/3 2/3; 1/3 -2/3 1/3; 1/3 1/3 1/3 | Rhombohedral space groups (cf. Section 1.5.4.3) |
@@ -59,6 +57,6 @@ system" as printed, its lines joined by `, `.
 | 36 | 79 | Primitive rhombohedral cell → C-centred monoclinic cell, unique axis b, cell choice 1 (Fig. 1.5.1.10a) | 0 0 1; -1 1 1; -1 -1 1 | 1 -1/2 -1/2; 0 1/2 -1/2; 1 0 0 | Rhombohedral space groups (cf. Section 1.5.4.3) |
 | 37 | 79 | Primitive rhombohedral cell → C-centred monoclinic cell, unique axis b, cell choice 2 (Fig. 1.5.1.10a) | -1 -1 1; 0 0 1; -1 1 1 | -1/2 1 -1/2; -1/2 0 1/2; 0 1 0 | Rhombohedral space groups (cf. Section 1.5.4.3) |
 | 38 | 80 | Primitive rhombohedral cell → C-centred monoclinic cell, unique axis b, cell choice 3 (Fig. 1.5.1.10a) | -1 1 1; -1 -1 1; 0 0 1 | -1/2 -1/2 1; 1/2 -1/2 0; 0 0 1 | Rhombohedral space groups (cf. Section 1.5.4.3) |
-| 39 | 80 | Primitive rhombohedral cell → A-centred monoclinic cell, unique axis c, cell choice 1 (Fig. 1.5.1.10b) | 1 0 0; 1 -1 1; 1 -1 -1 | 1 0 0; 1 -1/2 -1/2; 0 1/2 -1/2 | Rhombohedral space groups (cf. Section 1.5.4.3) |
+| 39 | 80 | Primitive rhombohedral cell → A-centred monoclinic cell, unique axis c, cell choice 1 (Fig.1.5.1.10b) | 1 0 0; 1 -1 1; 1 -1 -1 | 1 0 0; 1 -1/2 -1/2; 0 1/2 -1/2 | Rhombohedral space groups (cf. Section 1.5.4.3) |
 | 40 | 80 | Primitive rhombohedral cell → A-centred monoclinic cell, unique axis c, cell choice 2 (Fig. 1.5.1.10b) | 1 -1 -1; 1 0 0; 1 -1 1 | 0 1 0; -1/2 1 -1/2; -1/2 0 1/2 | Rhombohedral space groups (cf. Section 1.5.4.3) |
 | 41 | 80 | Primitive rhombohedral cell → A-centred monoclinic cell, unique axis c, cell choice 3 (Fig. 1.5.1.10b) | 1 -1 1; 1 -1 -1; 1 0 0 | 0 0 1; -1/2 -1/2 1; 1/2 -1/2 0 | Rhombohedral space groups (cf. Section 1.5.4.3) |

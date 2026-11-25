@@ -56,7 +56,7 @@ export {
   type InverseTransformation,
   type TransformedOperation,
 } from './coordinates.js';
-export { TRANSFORMATION_MATRICES, type TransformationMatrix } from './transformationMatrices.js';
+export { cellTransformation, type BravaisLattice, type Cell, type OrthorhombicSetting } from './cellTransformation.js';
 
 import type {
   PointGroupKey as ClassKey,
