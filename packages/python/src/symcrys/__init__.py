@@ -2246,7 +2246,7 @@ def plane_from_four_indices(hkil: ArrayLike) -> NDArray[np.int64]:
 
 def direction_to_four_indices(uvw: ArrayLike) -> NDArray[np.int64]:
     """The direction [uvw] of hexagonal axes as [UVTW], reduced: U = (2u − v)/3, V = (2v − u)/3, T =
-    −(U + V), W = w, scaled to the smallest integers.
+    −(U + V), W = w, scaled to the smallest integers (Frank, Acta Cryst. 18, 862 (1965), Eq. (20)).
     """
     result: NDArray[np.int64] = _shared.convert(
         _call("directionToFourIndices", _shared.array(uvw, "uvw")),
@@ -2256,8 +2256,8 @@ def direction_to_four_indices(uvw: ArrayLike) -> NDArray[np.int64]:
 
 
 def direction_from_four_indices(uvtw: ArrayLike) -> NDArray[np.int64]:
-    """The direction [UVTW] as [uvw], reduced: u = U − T, v = V − T, w = W; raises SymcrysError
-    unless T = −(U + V).
+    """The direction [UVTW] as [uvw], reduced: u = U − T, v = V − T, w = W (Frank (1965), Eq. (19));
+    raises SymcrysError unless T = −(U + V).
     """
     result: NDArray[np.int64] = _shared.convert(
         _call("directionFromFourIndices", _shared.array(uvtw, "uvtw")),

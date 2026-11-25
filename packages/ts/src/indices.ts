@@ -53,7 +53,8 @@ export function planeFromFourIndices(hkil: FourIndices): Vec3 {
 
 /**
  * The direction [uvw] of hexagonal axes as [UVTW], reduced: U = (2u − v)/3, V = (2v − u)/3,
- * T = −(U + V), W = w, scaled to the smallest integers.
+ * T = −(U + V), W = w, scaled to the smallest integers (Frank, Acta Cryst. 18, 862 (1965),
+ * Eq. (20)).
  */
 export function directionToFourIndices(uvw: Vec3): FourIndices {
   integers(uvw, 'directionToFourIndices', 3);
@@ -62,7 +63,10 @@ export function directionToFourIndices(uvw: Vec3): FourIndices {
   return deepFreeze(reduceIndices([2 * u - v, 2 * v - u, -(u + v), 3 * w]) as unknown as FourIndices);
 }
 
-/** The direction [UVTW] as [uvw], reduced: u = U − T, v = V − T, w = W; throws a RangeError unless T = −(U + V). */
+/**
+ * The direction [UVTW] as [uvw], reduced: u = U − T, v = V − T, w = W (Frank (1965), Eq. (19));
+ * throws a RangeError unless T = −(U + V).
+ */
 export function directionFromFourIndices(uvtw: FourIndices): Vec3 {
   integers(uvtw, 'directionFromFourIndices', 4);
   if (uvtw.every((x) => x === 0)) throw new RangeError('directionFromFourIndices: zero vector');
