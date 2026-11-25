@@ -29,6 +29,7 @@ import {
   type PlaneBravaisLattice,
 } from './spaceGroups/planeLattice.js';
 import { deepFreeze } from './freeze.js';
+import { changeCoordinates } from './coordinates.js';
 import {
   PLANE_GROUP_KEYS as GROUP_KEYS,
   planeGroupEntry,
@@ -53,7 +54,7 @@ import {
   planeWyckoffDistances,
   planeWyckoffPositionOf,
 } from './spaceGroups/positions.js';
-import { parseRational, rational, toNumber, type Rational } from './spaceGroups/rational.js';
+import { nearestFraction, parseRational, toNumber, type Rational } from './spaceGroups/rational.js';
 
 export { VERSION } from './version.js';
 export { EPSILON, type ToleranceOptions } from './tolerances.js';
@@ -413,37 +414,6 @@ function describe(op: ExactOperation): OperationDescription {
   });
 }
 
-/** Tolerance for reading an integer or a fraction from a double. */
-/** The largest denominator of a translation that `describeOperationsOf` reads. */
-const MAX_DENOMINATOR = 12;
-
-/**
- * The fraction with a denominator of at most `MAX_DENOMINATOR` within `tolerance` of the value.
- * Two such fractions can lie as close as 1/132 (1/11 and 1/12): a value within the tolerance of two
- * different ones is refused, not read as either.
- */
-function fractionOf(value: unknown, tolerance: number): Rational {
-  if (typeof value === 'number' && Number.isFinite(value)) {
-    const found: Rational[] = [];
-    for (let d = 1; d <= MAX_DENOMINATOR; d++) {
-      for (const n of [Math.floor(value * d), Math.ceil(value * d)]) {
-        if (Math.abs(value - n / d) >= tolerance) continue;
-        const r = rational(n, d);
-        if (!found.some((f) => f[0] === r[0] && f[1] === r[1])) found.push(r);
-      }
-    }
-    if (found.length === 1) return found[0];
-    if (found.length > 1) {
-      throw new RangeError(
-        `The translation ${shown(value)} lies within ${tolerance} of ${found.map((f) => `${f[0]}/${f[1]}`).join(' and ')}: pass a smaller tolerance`,
-      );
-    }
-  }
-  throw new RangeError(
-    `Not within ${tolerance} of a translation with a denominator of at most ${MAX_DENOMINATOR}: ${shown(value)}`,
-  );
-}
-
 /** An operation from a caller as an exact operation; throws a RangeError unless it has the shape of a plane operation. */
 function exactOf(op: unknown, tolerance: number): ExactOperation {
   const o = op as Partial<PlaneOperation> | null;
@@ -461,7 +431,7 @@ function exactOf(op: unknown, tolerance: number): ExactOperation {
       return Math.round(v) + 0;
     }),
   );
-  return { matrix, translation: t.map((v) => fractionOf(v, tolerance)) };
+  return { matrix, translation: t.map((v) => nearestFraction(v, tolerance, 'translation')) };
 }
 
 /** True if `key` is the key of one of the 17 plane groups (its short symbol, as ITA prints it). */
@@ -878,4 +848,92 @@ export function metricTensor(basis: Mat2): Mat2 {
  */
 export function reciprocalBasis(basis: Mat2): Mat2 {
   return deepFreeze(copy(planeReciprocalBasis(basis, 'reciprocalBasis')));
+}
+
+// --- change of the coordinate system (#120, #137 G2) ---------------------------------------------------
+
+/** A change of the coordinate system (P, p) of the plane (ITA 2016 § 1.5.1.3, p. 83): (a′, b′) = (a, b)·P, origin O′ = O + p. */
+export interface CoordinateTransformation {
+  /** P, the linear part: its columns are the new basis vectors a′, b′ in the old basis; det P ≠ 0, also negative. */
+  readonly linearPart: Mat2;
+  /** p, the origin shift: the coordinates of the new origin in the old coordinate system; default zero. */
+  readonly originShift?: readonly number[];
+}
+
+/** An operation (W, w) in the lattice basis, x ↦ W·x + w; a record of `operations` passes as it is. */
+export interface AffineOperation {
+  /** The linear part W, a 2 × 2 matrix with integer entries. */
+  readonly matrix: readonly (readonly number[])[];
+  /** The translation part w; default zero, as for the operations of a point group. */
+  readonly translation?: readonly number[];
+}
+
+/** An operation (W′, w′) in the new coordinate system. */
+export interface TransformedOperation {
+  /** W′ = P⁻¹WP, integer entries. */
+  readonly matrix: Mat2;
+  /** w′ = P⁻¹(w + (W − I)p), not reduced modulo the lattice. */
+  readonly translation: readonly number[];
+}
+
+/** The quantities that `changeOfCoordinates` transforms; each is optional. */
+export interface CoordinateQuantities {
+  /** Point coordinates x: x′ = P⁻¹(x − p) (eq. (1.5.1.7)). */
+  readonly points?: readonly (readonly number[])[];
+  /** Coefficients [uv] of vectors, e.g. directions: [uv]′ = P⁻¹[uv] (eq. (1.5.2.3)); not changed by the origin shift. */
+  readonly directions?: readonly (readonly number[])[];
+  /** Miller indices (hk) of lines: (hk)′ = (hk)P (eq. (1.5.2.2)); not changed by the origin shift. */
+  readonly planes?: readonly (readonly number[])[];
+  /** The metric tensor G: G′ = PᵀGP (eq. (1.5.2.4)). */
+  readonly metric?: Mat2;
+  /** Operations (W, w): W′ = P⁻¹WP, w′ = P⁻¹(w + (W − I)p) (eqs. (1.5.2.12), (1.5.2.13)). */
+  readonly operations?: readonly AffineOperation[];
+}
+
+/** The inverse change of the coordinate system (Q, q) = (P, p)⁻¹. */
+export interface InverseTransformation {
+  /** Q = P⁻¹. */
+  readonly linearPart: Mat2;
+  /** q = −P⁻¹p. */
+  readonly originShift: readonly number[];
+}
+
+/** The result of `changeOfCoordinates`: the inverse pair and each given quantity in the new coordinate system. */
+export interface CoordinateChange {
+  /** (Q, q) = (P⁻¹, −P⁻¹p), which takes the new coordinates back to the old (eq. (1.5.1.7)). */
+  readonly inverse: InverseTransformation;
+  /** The points, as given, in the new coordinates. */
+  readonly points?: readonly (readonly number[])[];
+  /** The vector coefficients, as given, in the new basis. */
+  readonly directions?: readonly (readonly number[])[];
+  /** The Miller indices, as given, in the new basis. */
+  readonly planes?: readonly (readonly number[])[];
+  /** The metric tensor in the new basis. */
+  readonly metric?: Mat2;
+  /** The operations, as given, in the new coordinate system. */
+  readonly operations?: readonly TransformedOperation[];
+}
+
+/**
+ * Changes the coordinate system of the plane by the pair (P, p) of ITA (6th ed., 2016) § 1.5.1.3
+ * (p. 83), with 2 × 2 matrices: the new basis is (a′, b′) = (a, b)·P and the new origin lies at p.
+ * Transforms the given quantities by ITA's equations (§ 1.5.2, pp. 83–85): point coordinates
+ * x′ = P⁻¹(x − p), vector coefficients [uv]′ = P⁻¹[uv], Miller indices (hk)′ = (hk)P, the metric
+ * tensor G′ = PᵀGP, and operations W′ = P⁻¹WP, w′ = P⁻¹(w + (W − I)p); and gives the inverse pair
+ * (Q, q) = (P⁻¹, −P⁻¹p). det P may be negative.
+ *
+ * P, p and the operations are read each number as the simplest fraction within the tolerance
+ * (default `EPSILON`; 0.3333333 is 1/3) and transformed exactly, so that every result, the inverse
+ * pair included, can be passed back; the other quantities are floating point. A transformed
+ * operation is `{ matrix, translation }`. Throws a RangeError for a singular P, a quantity of the
+ * wrong shape, an unknown quantity, an operation with det W ≠ ±1, and one whose W′ is not integral.
+ */
+export function changeOfCoordinates(
+  transformation: CoordinateTransformation,
+  quantities: CoordinateQuantities,
+  options?: ToleranceOptions,
+): CoordinateChange {
+  return deepFreeze(
+    changeCoordinates(2, transformation, quantities, options, 'changeOfCoordinates') as unknown as CoordinateChange,
+  );
 }

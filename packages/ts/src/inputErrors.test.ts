@@ -69,7 +69,7 @@ const pointCalls = (o: readonly { readonly cartesian: unknown }[], key: string, 
   reciprocalBasis: call([basis]),
   isValidCell: call([{ alpha: 90, beta: 90, gamma: 120 }], ['minVolumeRatio']),
   residualOperations: call([key === '32' ? classes.operations('6/mmm') : magneticOps, basis], TOLERANCE),
-  changeOfAxes: call([unit]),
+  changeOfCoordinates: call([{ linearPart: unit, originShift: [0, 0, 0.5] }, { points: [[0.1, 0.2, 0.3]] }], TOLERANCE),
   directionFromFourIndices: call([[2, -1, -1, 0]]),
   directionToFourIndices: call([[1, 0, 0]]),
   planeFromFourIndices: call([[1, 0, -1, 0]]),
@@ -125,6 +125,19 @@ const CALLS: Record<string, [Record<string, unknown>, Record<string, Call>]> = {
           [0, 2],
         ],
       ]),
+      changeOfCoordinates: call(
+        [
+          {
+            linearPart: [
+              [1, 0],
+              [0, 1],
+            ],
+            originShift: [0, 0.5],
+          },
+          { points: [[0.1, 0.2]] },
+        ],
+        TOLERANCE,
+      ),
       settings: call(['3m']),
       symbol: call(['3m'], ['setting', 'form']),
       operations: call(['p4'], ['setting']),
@@ -194,6 +207,8 @@ const display = (v: unknown): string => {
 const MAY_ANSWER: Readonly<Record<string, (position: number, value: unknown) => boolean>> = {
   isPointGroupKey: () => true,
   isPlaneGroupKey: () => true,
+  // An empty record of quantities transforms none of them.
+  changeOfCoordinates: (p, v) => p === 1 && isEmptyObject(v),
   findPlaneGroup: (p, v) => p === 0 && typeof v === 'string',
   reduceIndices: (p, v) => Array.isArray(v) && v.length > 0 && v.every((x) => Number.isSafeInteger(x) && x !== 0),
   findPointGroup: (p, v) => p === 0 && typeof v === 'string',

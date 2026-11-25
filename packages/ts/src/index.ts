@@ -32,7 +32,6 @@ export {
   type LatticeParameters,
 } from './cell.js';
 export {
-  changeOfAxes,
   directionFromFourIndices,
   directionToFourIndices,
   planeFromFourIndices,
@@ -40,10 +39,18 @@ export {
   millerIndices,
   reduceIndices,
   zoneAxis,
-  type AxisChange,
   type FourIndices,
   type MillerValues,
 } from './indices.js';
+export {
+  changeOfCoordinates,
+  type AffineOperation,
+  type CoordinateChange,
+  type CoordinateQuantities,
+  type CoordinateTransformation,
+  type InverseTransformation,
+  type TransformedOperation,
+} from './coordinates.js';
 
 export type { PointGroupKey, Setting, AxesOptions, SettingOptions, SymbolOptions } from './pointGroups/pointGroups.js';
 export { LATTICE_SYMMETRY_DIRECTIONS, type Uvw } from './symmetryDirections.js';

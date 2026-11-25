@@ -697,12 +697,20 @@ describe('every result is frozen, nested values included (#137 C4)', () => {
     metricTensor: [basis],
     reciprocalBasis: [basis],
     residualOperations: [classes.operations('6/mmm'), basis],
-    changeOfAxes: [
-      [
-        [1, 0, 0],
-        [0, 1, 0],
-        [0, 0, 1],
-      ],
+    changeOfCoordinates: [
+      {
+        linearPart: [
+          [1, 0, 1],
+          [-1, 1, 1],
+          [0, -1, 1],
+        ],
+        originShift: [0, 0, 0.5],
+      },
+      {
+        points: [[0.1, 0.2, 0.3]],
+        metric: classes.metricTensor(basis),
+        operations: classes.operations('-3', { axes: 'rhombohedral' }),
+      },
     ],
     directionFromFourIndices: [[2, -1, -1, 0]],
     directionToFourIndices: [[1, 0, 0]],
@@ -729,6 +737,15 @@ describe('every result is frozen, nested values included (#137 C4)', () => {
     findPlaneGroup: ['p 4 m m'],
     findPointGroup: ['31m'],
     cellRestrictions: ['square'],
+    changeOfCoordinates: [
+      {
+        linearPart: [
+          [1, 1],
+          [-1, 2],
+        ],
+      },
+      { points: [[0.1, 0.2]], operations: plane.operations('p6') },
+    ],
     latticeFromParameters: [{ a: 2, b: 2, gamma: 120 }],
     latticeParameters: [
       [

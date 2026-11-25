@@ -22,8 +22,32 @@ All notable changes to symcrys are recorded here. The format follows
   the cell functions for 2 × 2 bases, with the names of the other entry points:
   `latticeFromParameters({ a, b, gamma })`, `latticeParameters`, `metricTensor`,
   `reciprocalBasis`. Python: the same in `symcrys.plane` (`lattice_from_parameters(a, b, gamma)`).
+- **`changeOfCoordinates`** (#120, #137 G2), in all three entry points (Python
+  `change_of_coordinates(linear_part, *, origin_shift=None, points=None, directions=None,
+planes=None, metric=None, operations=None, tolerance=None)`): the change of the coordinate system
+  by the pair (P, p) of ITA 2016 § 1.5 (pp. 83–85), with det P < 0 allowed, for point coordinates,
+  vector coefficients, Miller indices, the metric tensor and operations (W, w), and the inverse pair
+  (Q, q); P, p and the operations are read each number as the simplest fraction within the tolerance
+  and transformed exactly, so that every result can be passed back. It replaces `changeOfAxes`
+  (below).
 - The type `PlaneOperationKind` of `symcrys/plane` (Python `symcrys.plane.PlaneOperationKind`), the
   `kind` of a plane operation description, named as `OperationKind` is in the other entry points.
+
+### Removed
+
+- **`changeOfAxes`** and its result type `AxisChange` (Python `change_of_axes`), replaced by
+  `changeOfCoordinates` (#120, #137 G2), which also takes det P < 0 (refused by `changeOfAxes`), an
+  origin shift, points, the metric and operations, and cites ITA 2016 instead of 2006. It reads each
+  entry of P as the simplest fraction within the tolerance (default 10⁻⁶) and computes exactly, so a
+  P of floating-point values that are no fraction within the tolerance is taken as the nearby
+  fraction (0.6666667 as 2/3):
+
+  | Up to 0.11                                    | From 0.12                                                                     |
+  | --------------------------------------------- | ----------------------------------------------------------------------------- |
+  | `changeOfAxes(P).direction` (Q = P⁻¹)         | `changeOfCoordinates({ linearPart: P }, {}).inverse.linearPart`               |
+  | `changeOfAxes(P).direction` applied to [uvw]  | `changeOfCoordinates({ linearPart: P }, { directions: [uvw] }).directions[0]` |
+  | `changeOfAxes(P).plane` (Pᵀ) applied to (hkl) | `changeOfCoordinates({ linearPart: P }, { planes: [hkl] }).planes[0]`         |
+  | Python: `symcrys.change_of_axes(P)`           | `symcrys.change_of_coordinates(P, directions=…, planes=…)`                    |
 
 ### Fixed
 

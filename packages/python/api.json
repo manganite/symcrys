@@ -44,17 +44,50 @@
   "arrays": {
     "//": "The dtype of an array of numbers in a result, by the name of its field: float64 or int64. A field of arrays not listed is an error of the generator. symcrys.plane has its own list, since there `direction` is a lattice direction.",
     "symcrys": {
-      "float64": ["cartesian", "direction", "basis", "relations", "plane"],
-      "int64": ["lattice", "hkl", "uvw", "operations", "parameters", "siteSymmetryOperations"]
+      "float64": [
+        "cartesian",
+        "direction",
+        "basis",
+        "relations",
+        "linearPart",
+        "originShift",
+        "points",
+        "directions",
+        "planes",
+        "metric",
+        "translation"
+      ],
+      "int64": ["lattice", "hkl", "uvw", "operations", "parameters", "siteSymmetryOperations", "matrix"]
     },
     "symcrys.plane": {
-      "float64": ["translation", "location", "glide", "point", "vertices", "centring"],
-      "int64": ["direction", "axis", "operations", "edges", "inequalities"]
+      "float64": [
+        "translation",
+        "location",
+        "glide",
+        "point",
+        "vertices",
+        "centring",
+        "linearPart",
+        "originShift",
+        "points",
+        "directions",
+        "planes",
+        "metric"
+      ],
+      "int64": ["direction", "axis", "operations", "edges", "inequalities", "matrix"]
     }
   },
   "shapes": {
     "//": "The shape of an array field where the nested lists may be empty (-1: any length).",
+    "symcrys": {
+      "points": [-1, 3],
+      "directions": [-1, 3],
+      "planes": [-1, 3]
+    },
     "symcrys.plane": {
+      "points": [-1, 2],
+      "directions": [-1, 2],
+      "planes": [-1, 2],
       "translation": [2],
       "location": [2],
       "glide": [2],
@@ -138,6 +171,9 @@
     },
     "directionFromFourIndices": {
       "returns": "int64"
+    },
+    "changeOfCoordinates": {
+      "operationKeys": ["matrix"]
     },
     "residualOperations": {
       "operationKeys": ["matrix"],

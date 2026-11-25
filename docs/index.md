@@ -30,7 +30,7 @@ Where to start:
   list of operations.
 - [Cells, metric, angles and indices](cells.md): the cell from lattice parameters, metric tensor,
   angles between directions and faces, the operations a distortion leaves, Bravais–Miller indices,
-  the zone law and the change of axes.
+  the zone law and the change of the coordinate system.
 - [Tensors and named properties](tensors.md): forms of property tensors, and the named properties
   such as piezoelectric or ferromagnetic.
 - [Examples](examples.md), among them second-harmonic generation at surfaces.
