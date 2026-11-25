@@ -143,6 +143,10 @@
     }
   },
   "symcrys.plane": {
+    "residual_operations": {
+      "type": "Operations",
+      "doc": "The kept operations of the caller, in their order."
+    },
     "plane_group": {
       "type": "dict",
       "doc": "``centring`` is a float64 array of shape (n, 2), n = 0 or 1."

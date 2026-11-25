@@ -187,7 +187,7 @@
     },
     "residualOperations": {
       "operationKeys": ["matrix"],
-      "listOf": "Operation",
+      "listOf": { "symcrys": "Operation", "symcrys.magnetic": "Operation", "symcrys.plane": "PlaneOperation" },
       "selects": true
     },
     "tensorForm": {

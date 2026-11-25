@@ -125,6 +125,16 @@ const CALLS: Record<string, [Record<string, unknown>, Record<string, Call>]> = {
           [0, 2],
         ],
       ]),
+      residualOperations: call(
+        [
+          plane.operations('p4mm'),
+          [
+            [1, 0],
+            [0, 2],
+          ],
+        ],
+        TOLERANCE,
+      ),
       reciprocalBasis: call([
         [
           [1, 0],

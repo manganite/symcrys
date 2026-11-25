@@ -935,11 +935,13 @@ async function generate(name, cfg) {
       }
       // A generic result (residualOperations gives back the caller's operations): the list of a
       // record of the entry point named in api.json.
-      const listOf = own.listOf && tsModule.children.find((/** @type {Json} */ c) => c.name === own.listOf);
+      // The name of that record: one for every module, or per module an object (#119).
+      const listOfName = typeof own.listOf === 'object' ? own.listOf[ctx.name] : own.listOf;
+      const listOf = listOfName && tsModule.children.find((/** @type {Json} */ c) => c.name === listOfName);
       const returns = listOf
         ? {
             k: 'arr',
-            of: readDeclaration(listOf.kind === KIND.reference ? byId.get(listOf.target) : listOf, where, own.listOf),
+            of: readDeclaration(listOf.kind === KIND.reference ? byId.get(listOf.target) : listOf, where, listOfName),
           }
         : sigs.length > 1
           ? unite(sigs.map((/** @type {Json} */ s) => read(s.type, where)))

@@ -771,6 +771,13 @@ describe('every result is frozen, nested values included (#137 C4)', () => {
         [0, 2],
       ],
     ],
+    residualOperations: [
+      plane.operations('p4mm'),
+      [
+        [1, 0],
+        [0, 2],
+      ],
+    ],
     settings: ['3m'],
     operations: ['p4'],
     generators: ['p4'],

@@ -22,6 +22,7 @@ import {
   planeLatticeParameters,
   planeLaueClass,
   planeMetricTensor,
+  planeResidualOperations,
   planeReciprocalBasis,
   type CellRestrictions,
   type LatticeParameters,
@@ -848,6 +849,33 @@ export function metricTensor(basis: Mat2): Mat2 {
  */
 export function reciprocalBasis(basis: Mat2): Mat2 {
   return deepFreeze(copy(planeReciprocalBasis(basis, 'reciprocalBasis')));
+}
+
+/** An operation passed to `residualOperations`: its matrix W on lattice coordinates (the `matrix` of an operation). */
+export interface PlaneCellOperation {
+  /** The integer 2 × 2 matrix W acting on lattice coordinates (the `matrix` of an operation). */
+  readonly matrix: readonly (readonly number[])[];
+}
+
+/**
+ * The operations of a list that keep the metric of a cell: W with WᵀGW = G, G the metric tensor of
+ * `basis` (columns a, b). It is the point symmetry of a distorted lattice among the operations of a
+ * group, e.g. those of p4mm that a rectangular cell keeps. The operations are read by `matrix`, the
+ * integer matrix W on lattice coordinates, as `operations` gives them; the list is taken as it is,
+ * not closed into a group, and the kept operations are the ones of the list, in its order. The
+ * deviation counts relative to the largest entry of G (`tolerance`, default `EPSILON`), so the
+ * result does not depend on the unit of the edge lengths. Throws a RangeError for an operation
+ * without a 2 × 2 integer matrix and for a basis that is not a non-singular 2 × 2 matrix.
+ */
+export function residualOperations<T extends PlaneCellOperation>(
+  operations: readonly T[],
+  basis: Mat2,
+  options?: ToleranceOptions,
+): readonly T[] {
+  checkOptions(options, TOLERANCE_KEYS, 'residualOperations');
+  const tolerance = toleranceOf(options, 'metric');
+  // The list is frozen, not the operations in it, which are the caller's.
+  return Object.freeze(planeResidualOperations(operations, basis, tolerance, 'residualOperations'));
 }
 
 // --- change of the coordinate system (#120, #137 G2) ---------------------------------------------------

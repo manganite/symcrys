@@ -624,6 +624,7 @@ __all__ = [
     "point_group",
     "point_groups",
     "reciprocal_basis",
+    "residual_operations",
     "settings",
     "site_symmetry",
     "symbol",
@@ -1160,6 +1161,46 @@ def reciprocal_basis(basis: ArrayLike) -> NDArray[np.float64]:
         _call("reciprocalBasis", _shared.array(basis, "basis", np.float64)),
         ("a", np.float64, None),
     )
+    return result
+
+
+def residual_operations(
+    operations: Operations | Sequence[Mapping[str, Any]],
+    basis: ArrayLike,
+    *,
+    tolerance: Optional[float] = None,
+) -> Operations:
+    """The operations of a list that keep the metric of a cell: W with WᵀGW = G, G the metric tensor
+    of ``basis`` (columns a, b). It is the point symmetry of a distorted lattice among the
+    operations of a group, e.g. those of p4mm that a rectangular cell keeps. The operations are read
+    by ``matrix``, the integer matrix W on lattice coordinates, as ``operations`` gives them; the
+    list is taken as it is, not closed into a group, and the kept operations are the ones of the
+    list, in its order. The deviation counts relative to the largest entry of G (``tolerance``,
+    default ``EPSILON``), so the result does not depend on the unit of the edge lengths. Raises
+    SymcrysError for an operation without a 2 × 2 integer matrix and for a basis that is not a
+    non-singular 2 × 2 matrix.
+
+    Parameters
+    ----------
+    tolerance : keyword-only, optional
+        Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁶). It is measured per
+        matrix entry for operations, as the distance of unit vectors for directions and per
+        coordinate modulo the lattice for points (docs/conventions.md, "Tolerances").
+
+    Returns
+    -------
+    Operations
+        The kept operations of the caller, in their order.
+    """
+    given = _shared.operation_list(operations, ("matrix",))
+    kept = _call(
+        "residualOperations",
+        [{**op, "index": i} for i, op in enumerate(given)],
+        _shared.array(basis, "basis", np.float64),
+        _shared.options(tolerance=tolerance),
+    )
+    ops = operations if isinstance(operations, Operations) else _shared.operations_of(given, Operations)
+    result: Operations = _shared.select(ops, kept)
     return result
 
 

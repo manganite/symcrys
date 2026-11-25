@@ -452,6 +452,20 @@ def test_residual_operations_in_both_apis() -> None:
         magnetic.residual_operations([{"matrix": np.eye(3)}], cell)
 
 
+def test_residual_operations_of_the_plane() -> None:
+    # The kept rows of the caller's Operations, as Operations of symcrys.plane (#119).
+    ops = plane.operations("p4mm")
+    cell = plane.lattice_from_parameters(3, 3.1, 90)
+    kept = plane.residual_operations(ops, cell)
+    assert isinstance(kept, plane.Operations)
+    assert kept.matrix.shape == (4, 2, 2) and kept.translation.shape == (4, 2)
+    rows = [i for i in range(len(ops)) if any((ops.matrix[i] == m).all() for m in kept.matrix)]
+    assert kept.matrix.tolist() == ops.matrix[rows].tolist()
+    assert len(plane.residual_operations(list(ops), cell)) == 4
+    with pytest.raises(ValueError):
+        plane.residual_operations([{"matrix": [[0.5, -0.866], [0.866, 0.5]], "translation": [0, 0]}], cell)
+
+
 def test_find_point_group_reads_symbols_tolerantly() -> None:
     # #96: the spellings of print and pasted text, Schoenflies symbols and Birss's cubic symbols.
     for hm in ("m3̄m", "m−3m", "mbar3m", "Oh", "Oₕ", "m3m"):

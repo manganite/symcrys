@@ -1291,7 +1291,9 @@ square), the pairs of equal parameters (`[['a', 'b']]`), the fixed angles (`{ ga
 angles conventionally taken non-acute (γ of the oblique system, the footnote of the table). The cell
 functions have the names of the other entry points, for 2 × 2 matrices whose columns are a and b:
 `latticeFromParameters({ a, b, gamma })` (a along x, b at γ from a towards +y),
-`latticeParameters(basis)`, `metricTensor(basis)` and `reciprocalBasis(basis)` (a_i · a*_j = δ_ij).
+`latticeParameters(basis)`, `metricTensor(basis)` and `reciprocalBasis(basis)` (a_i · a*_j = δ_ij),
+and `residualOperations(operations, basis)`, the operations of a list whose integer `matrix` W
+keeps the metric, WᵀGW = G, relative to the largest entry of G (the metric tolerance, as in 3D).
 
 **Not yet.** The positions and edge forms of the plane point groups (ITA Table 3.2.3.1, #81) and
 the determination of the plane group of a pattern (a later MINOR, #31).

@@ -6,6 +6,12 @@ All notable changes to symcrys are recorded here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- `residualOperations` in `symcrys/plane` (#119): the operations of a list whose matrix W keeps the
+  metric of a plane cell, WᵀGW = G, as in the other entry points; in Python
+  `symcrys.plane.residual_operations`, which keeps the rows of the caller's `Operations`.
+
 ### Changed
 
 - Faster calls for lists of operations (#100): `tensorFormOf`, `allowsPropertyOf` and
