@@ -10,13 +10,13 @@
  */
 
 import { parseOperation } from '../spaceGroups/affine.js';
-import type { IntMat3 } from './itaOrder.js';
+import type { IntMat3 } from './generatorData.js';
 
 /** A coordinate triplet, the direction [uvw] of its Seitz symbol (none for 1 and -1), its sense (n ≥ 3). */
 type SeitzRow = readonly [string, readonly [number, number, number] | null, '+' | '-' | null];
 
 /** ITA Table 1.4.2.1. No. 32 read with the overbar the type gives it (erratum in the transcription). */
-const SEITZ_TABLE_1_4_2_1: readonly SeitzRow[] = [
+const SEITZ_CUBIC: readonly SeitzRow[] = [
   ['x,y,z', null, null], // 1: 1
   ['-x,-y,z', [0, 0, 1], null], // 2: 2_{001}
   ['-x,y,-z', [0, 1, 0], null], // 3: 2_{010}
@@ -68,7 +68,7 @@ const SEITZ_TABLE_1_4_2_1: readonly SeitzRow[] = [
 ];
 
 /** ITA Table 1.4.2.2. */
-const SEITZ_TABLE_1_4_2_2: readonly SeitzRow[] = [
+const SEITZ_HEXAGONAL: readonly SeitzRow[] = [
   ['x,y,z', null, null], // 1: 1
   ['-y,x-y,z', [0, 0, 1], '+'], // 2: 3^+_{001}
   ['-x+y,-x,z', [0, 0, 1], '-'], // 3: 3^-_{001}
@@ -96,7 +96,7 @@ const SEITZ_TABLE_1_4_2_2: readonly SeitzRow[] = [
 ];
 
 /** ITA Table 1.4.2.3. */
-const SEITZ_TABLE_1_4_2_3: readonly SeitzRow[] = [
+const SEITZ_RHOMBOHEDRAL: readonly SeitzRow[] = [
   ['x,y,z', null, null], // 1: 1
   ['z,x,y', [1, 1, 1], '+'], // 2: 3^+_{111}
   ['y,z,x', [1, 1, 1], '-'], // 3: 3^-_{111}
@@ -111,37 +111,41 @@ const SEITZ_TABLE_1_4_2_3: readonly SeitzRow[] = [
   ['x,z,y', [0, 1, -1], null], // 12: m_{01-1}
 ];
 
-/** The tables by the axes of the setting. */
-export type SeitzTable = 'cubic' | 'hexagonal' | 'rhombohedral';
+/**
+ * The Seitz data by the axes of the setting: `'cubic'` for the orthogonal-type axes of the cubic,
+ * tetragonal, orthorhombic, monoclinic and triclinic families (the operations of m-3m), `'hexagonal'`
+ * for hexagonal axes (6/mmm), `'rhombohedral'` for rhombohedral axes (-3m).
+ */
+export type SeitzAxes = 'cubic' | 'hexagonal' | 'rhombohedral';
 
-const TABLES: Readonly<Record<SeitzTable, readonly SeitzRow[]>> = {
-  cubic: SEITZ_TABLE_1_4_2_1,
-  hexagonal: SEITZ_TABLE_1_4_2_2,
-  rhombohedral: SEITZ_TABLE_1_4_2_3,
+const SEITZ_BY_AXES: Readonly<Record<SeitzAxes, readonly SeitzRow[]>> = {
+  cubic: SEITZ_CUBIC,
+  hexagonal: SEITZ_HEXAGONAL,
+  rhombohedral: SEITZ_RHOMBOHEDRAL,
 };
 
-const parsed = new Map<SeitzTable, readonly { w: IntMat3; axis: SeitzRow[1]; sense: SeitzRow[2] }[]>();
+const parsed = new Map<SeitzAxes, readonly { w: IntMat3; axis: SeitzRow[1]; sense: SeitzRow[2] }[]>();
 
 /**
- * The Seitz direction and sense of the matrix W in a table, or undefined if the table has no such W.
+ * The Seitz direction and sense of the matrix W for the given axes, or undefined if they have no such W.
  */
 export function seitzOf(
-  table: SeitzTable,
+  axes: SeitzAxes,
   w: IntMat3,
 ): { readonly axis: SeitzRow[1]; readonly sense: SeitzRow[2] } | undefined {
-  let rows = parsed.get(table);
+  let rows = parsed.get(axes);
   if (!rows) {
-    rows = TABLES[table].map(([t, axis, sense]) => ({
+    rows = SEITZ_BY_AXES[axes].map(([t, axis, sense]) => ({
       w: parseOperation(t).matrix as unknown as IntMat3,
       axis,
       sense,
     }));
-    parsed.set(table, rows);
+    parsed.set(axes, rows);
   }
   return rows.find((r) => r.w.every((row, i) => row.every((v, j) => v === w[i][j])));
 }
 
-/** The rows of a table, for the tests. */
-export function seitzRows(table: SeitzTable): readonly SeitzRow[] {
-  return TABLES[table];
+/** The stored rows for the given axes, for the tests. */
+export function seitzRows(axes: SeitzAxes): readonly SeitzRow[] {
+  return SEITZ_BY_AXES[axes];
 }

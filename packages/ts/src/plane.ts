@@ -98,7 +98,11 @@ export type PointGroupKey = PlanePointGroupKey;
 /** The short symbols of the 17 plane groups, in ITA's order (plane group n at index n − 1). */
 export const PLANE_GROUP_KEYS: readonly PlaneGroupKey[] = Object.freeze([...GROUP_KEYS] as PlaneGroupKey[]);
 
-/** The keys of the 10 plane point groups, in the order of ITA Table 3.2.1.1. */
+/**
+ * The keys of the 10 plane point groups, in ITA's order.
+ *
+ * @remarks Source: ITA (2016), Table 3.2.1.1.
+ */
 export const POINT_GROUP_KEYS: readonly PointGroupKey[] = Object.freeze([...PLANE_POINT_GROUP_KEYS]);
 
 /** Options that choose the setting of a plane point group. */
@@ -137,11 +141,17 @@ export interface PlaneGroup {
   readonly pointGroupSetting: number;
   /** The crystal system. */
   readonly crystalSystem: PlaneSystem;
-  /** The Bravais lattice (ITA 2016 Table 2.1.1.1, p. 143): `'mp'`, `'op'`, `'oc'`, `'tp'` or `'hp'`. */
+  /**
+   * The Bravais lattice: `'mp'`, `'op'`, `'oc'`, `'tp'` or `'hp'`.
+   *
+   * @remarks Source: ITA (2016), Table 2.1.1.1, p. 143.
+   */
   readonly bravaisLattice: PlaneBravaisLattice;
   /**
-   * The Patterson symmetry as ITA prints it in the headline of the group (Chapter 2.2), a plane group:
-   * the lattice of the group with its Laue class, e.g. `'p2mm'` for `p2mg`, `'c2mm'` for `cm`.
+   * The Patterson symmetry as ITA gives it in the headline of the group, a plane group: the lattice
+   * of the group with its Laue class, e.g. `'p2mm'` for `p2mg`, `'c2mm'` for `cm`.
+   *
+   * @remarks Source: ITA (2016), Chapter 2.2.
    */
   readonly pattersonSymmetry: PlaneGroupKey;
   /** The centring translations besides (0, 0): `[[0.5, 0.5]]` for `cm` and `c2mm`, otherwise none. */
@@ -163,7 +173,9 @@ export interface PointGroup {
   readonly order: number;
   /**
    * The Laue class: the point group with the symmetry centre of the plane, the twofold rotation,
-   * added (ITA 2016 § 3.2.1.1, p. 720); one of `'2'`, `'2mm'`, `'4'`, `'4mm'`, `'6'`, `'6mm'`.
+   * added; one of `'2'`, `'2mm'`, `'4'`, `'4mm'`, `'6'`, `'6mm'`.
+   *
+   * @remarks Source: ITA (2016), § 3.2.1.1, p. 720.
    */
   readonly laueClass: PointGroupKey;
 }
@@ -196,7 +208,9 @@ export interface Setting {
 export interface OperationDescription {
   /**
    * `'identity'`, `'translation'`, `'rotation'`, `'reflection'` (in a line) or `'glide-reflection'`,
-   * as ITA names the operations (ITA 2016 Table 2.1.2.1, p. 145).
+   * as ITA names the operations.
+   *
+   * @remarks Source: ITA (2016), Table 2.1.2.1, p. 145.
    */
   readonly kind: PlaneOperationKind;
   /** The n of the linear part (an n-fold rotation): 1 for the identity and a translation, 2 for a reflection or glide reflection. */
@@ -215,25 +229,29 @@ export interface OperationDescription {
   /**
    * For a reflection or glide reflection: its axis, the normal of its line in the lattice basis (as
    * the `axis` of a reflection of the point groups is the normal of its plane, #137 C3), its symmetry
-   * direction with the sign of its Seitz symbol (ITA 2016 Tables 1.4.2.4, 1.4.2.5, p. 53: `m₁₀`, `m₁₂`,
-   * #107, #114): the shortest integer vector along the columns of W − I, first non-zero component
-   * positive, which is the Seitz direction for every plane group (tested). Without a metric it is not the perpendicular of `direction`: in a hexagonal
-   * basis the normal of a line along [1,0] is [1,2].
+   * direction with the sign of its Seitz symbol (`m₁₀`, `m₁₂`): the shortest integer vector along the
+   * columns of W − I, first non-zero component positive, which is the Seitz direction for every plane
+   * group (tested). Without a metric it is not the perpendicular of `direction`: in a hexagonal basis
+   * the normal of a line along [1,0] is [1,2].
+   *
+   * @remarks Source: ITA (2016), Tables 1.4.2.4 and 1.4.2.5, p. 53 (#107, #114).
    */
   readonly axis?: readonly number[];
   /** For a glide: the glide vector (w + W·w)/2, not reduced modulo the lattice. */
   readonly glide?: readonly number[];
 }
 
-/** A Wyckoff position of a plane group, as ITA prints it. */
+/** A Wyckoff position of a plane group, in ITA's notation. */
 export interface WyckoffPosition {
   /** The Wyckoff letter. */
   readonly letter: string;
   /** The multiplicity: the number of points in the conventional cell. */
   readonly multiplicity: number;
-  /** The oriented site-symmetry symbol, e.g. `'.m.'`, `'2mm'` (without the spaces of the print). */
+  /** The oriented site-symmetry symbol, written without spaces, e.g. `'.m.'`, `'2mm'`. */
   readonly siteSymmetry: string;
-  /** The printed coordinates of the (0,0)+ set, e.g. `['x,0', '-x,0']`; a leading `-` is an overbar. */
+  /**
+   * All coordinate triplets of the (0,0)+ set, e.g. `['x,0', '-x,0']`; a leading `-` is an overbar.
+   */
   readonly coordinates: readonly string[];
 }
 
@@ -272,10 +290,10 @@ export interface SiteSymmetry {
   readonly general: boolean;
 }
 
-/** The asymmetric unit of a plane group: the printed inequalities, and the convex polygon they bound (lattice basis). */
+/** The asymmetric unit of a plane group: ITA's inequalities, and the convex polygon they bound (lattice basis). */
 export interface AsymmetricUnit {
   /**
-   * The inequalities as ITA prints them, in printed order, each [a, b, c] for a·x + b·y ≤ c
+   * ITA's inequalities, in ITA's order, each [a, b, c] for a·x + b·y ≤ c
    * (integers, no common factor), also those that hold no edge of the polygon (p3: x ≤ 2/3).
    */
   readonly inequalities: readonly (readonly number[])[];
@@ -285,7 +303,11 @@ export interface AsymmetricUnit {
   readonly edges: readonly number[];
 }
 
-/** A rotation point (ITA 2016 Table 2.1.2.1, p. 145: the symmetry element of a rotation in the plane). */
+/**
+ * A rotation point: the symmetry element of a rotation in the plane.
+ *
+ * @remarks Source: ITA (2016), Table 2.1.2.1, p. 145.
+ */
 export interface RotationPoint {
   /** The highest n of an n-fold rotation about it. */
   readonly n: number;
@@ -438,7 +460,7 @@ function exactOf(op: unknown, tolerance: number): ExactOperation {
   return { matrix, translation: t.map((v) => nearestFraction(v, tolerance, 'translation')) };
 }
 
-/** True if `key` is the key of one of the 17 plane groups (its short symbol, as ITA prints it). */
+/** True if `key` is the key of one of the 17 plane groups (its short symbol in ITA's notation). */
 export function isPlaneGroupKey(key: string): key is PlaneGroupKey {
   return isGroupKey(key);
 }
@@ -453,7 +475,11 @@ export function planeGroups(): readonly PlaneGroup[] {
   return Object.freeze(PLANE_GROUP_KEYS.map((key) => planeGroup(key)));
 }
 
-/** The 10 plane point groups, in the order of ITA Table 3.2.1.1. */
+/**
+ * The 10 plane point groups, in ITA's order.
+ *
+ * @remarks Source: ITA (2016), Table 3.2.1.1.
+ */
 export function pointGroups(): readonly PointGroup[] {
   return Object.freeze(POINT_GROUP_KEYS.map((key) => pointGroup(key)));
 }
@@ -461,7 +487,7 @@ export function pointGroups(): readonly PointGroup[] {
 /**
  * Finds a plane group by a symbol: the key (the short symbol, `'pm'`) or the full symbol (`'p1m1'`,
  * `'p 1 m 1'`), spaces ignored (docs/conventions.md, "Reading symbols"). The lattice letter is
- * lower case, as ITA prints it. Gives `undefined` if the symbol names no plane group; throws a
+ * lower case, as in ITA's notation. Gives `undefined` if the symbol names no plane group; throws a
  * RangeError for a value that is not a string.
  */
 export function findPlaneGroup(symbol: string): PlaneGroupFound | undefined {
@@ -537,9 +563,12 @@ export function settings(key: PointGroupKey): readonly Setting[] {
  * Hermann–Mauguin symbol as one word: for a plane group the key (`'p2mg'`, `'pm'`), for a plane
  * point group in a setting `'3m1'` or `'31m'` for `3m`, otherwise the key. In the form `'full'`
  * the full symbol with its positions separated by spaces, as in the other entry points: `'p 1 m 1'`
- * for `pm` (ITA prints `p1m1`), `'p 2 m g'`, `'3 m 1'`; ITA prints no other full symbol for a plane
- * point group (Ch. 3.2, p. 721, and Table 3.2.3.1). A plane group has setting 1 only. Throws a
- * RangeError for an unknown key, setting or form.
+ * for `pm` (ITA writes `p1m1`), `'p 2 m g'`, `'3 m 1'`; a plane point group has no other full
+ * symbol in ITA. A plane group has setting 1 only. Throws a RangeError for an unknown key, setting
+ * or form.
+ *
+ * @remarks Source: ITA (2016), Chapter 3.2, p. 721, and Table 3.2.3.1 (the symbols of the plane
+ * point groups).
  */
 export function symbol(key: PlaneGroupKey | PointGroupKey, options?: SymbolOptions): string {
   checkOptions(options, ['setting', 'form'], 'symbol');
@@ -574,7 +603,7 @@ export function operations(key: PlaneGroupKey | PointGroupKey, options?: Setting
 }
 
 /**
- * ITA's selected generators, in printed order, without the identity and the integer translations:
+ * ITA's selected generators, in ITA's order, without the identity and the integer translations:
  * for a centred plane group the centring translation first. A point group: the linear parts of the
  * generators of its symmorphic plane group. Throws a RangeError for an unknown key or setting.
  */
@@ -620,7 +649,7 @@ export function describeOperationsOf(
 }
 
 /**
- * The Wyckoff positions of a plane group as ITA prints them, general position first. Throws a
+ * The Wyckoff positions of a plane group in ITA's notation and order, general position first. Throws a
  * RangeError for an unknown key and for a plane point group, whose positions are not in symcrys
  * yet.
  */
@@ -653,7 +682,7 @@ export function siteSymmetry(key: PlaneGroupKey, point: readonly number[], optio
 
 /**
  * The Wyckoff position of a point (lattice basis) under a plane group, as `wyckoffPositions` gives
- * it: the most special printed position whose point set lies within the tolerance of the point,
+ * it: the most special position whose point set lies within the tolerance of the point,
  * measured per coordinate modulo the lattice, and among positions of equal multiplicity the nearest
  * (the distance of `wyckoffDistances`); the general position always holds the point. Throws a
  * RangeError as `siteSymmetry`.
@@ -672,9 +701,9 @@ export function wyckoffPosition(
 }
 
 /**
- * The distance of a point (lattice basis) to every Wyckoff position of a plane group, in the
- * printed order of `wyckoffPositions`, each with the nearest point of the position (#137 F1, #108).
- * The point set of a position is the union of its printed coordinates with every centring and
+ * The distance of a point (lattice basis) to every Wyckoff position of a plane group, in the order
+ * of `wyckoffPositions`, each with the nearest point of the position (#137 F1, #108). The point set
+ * of a position is the union of the points of its coordinates with every centring and
  * lattice translation: a point, a line or the plane. Without a basis the distance is the larger of
  * the two coordinate differences modulo the lattice, the metric of the tolerance of
  * `wyckoffPosition`; with a basis (columns a, b) it is Euclidean, and the nearest point is the
@@ -731,8 +760,8 @@ export function orbit(
 }
 
 /**
- * The asymmetric unit of a plane group as ITA prints it (#137 F3): the printed inequalities, all of
- * them in printed order (a double inequality and a `min` give one each), and the convex polygon
+ * The asymmetric unit of a plane group as ITA gives it (#137 F3): ITA's inequalities, all of them
+ * in ITA's order (a double inequality and a `min` give one each), and the convex polygon
  * they bound, with its vertices and, per edge, the index of the inequality that holds it. Throws a
  * RangeError for an unknown key.
  */
@@ -804,10 +833,12 @@ const copy = (m: Mat2): Mat2 => [
 ];
 
 /**
- * The restrictions on the cell parameters of a crystal system of the plane, as ITA 2016 Table
- * 2.1.1.1 (p. 143) gives them for the conventional cell: the parameters to be determined, the pairs
- * of equal parameters, the fixed angles, and the angles conventionally taken non-acute. Throws a
- * RangeError for anything that is not one of the four crystal systems of the plane.
+ * The restrictions on the cell parameters of a crystal system of the plane, as ITA gives them for
+ * the conventional cell: the parameters to be determined, the pairs of equal parameters, the fixed
+ * angles, and the angles conventionally taken non-acute. Throws a RangeError for anything that is
+ * not one of the four crystal systems of the plane.
+ *
+ * @remarks Source: ITA (2016), Table 2.1.1.1, p. 143.
  */
 export function cellRestrictions(system: PlaneSystem): CellRestrictions {
   if (!(PLANE_SYSTEMS as readonly unknown[]).includes(system)) {
@@ -883,7 +914,11 @@ export function residualOperations<T extends PlaneCellOperation>(
 
 // --- change of the coordinate system (#120, #137 G2) ---------------------------------------------------
 
-/** A change of the coordinate system (P, p) of the plane (ITA 2016 § 1.5.1.3, p. 83): (a′, b′) = (a, b)·P, origin O′ = O + p. */
+/**
+ * A change of the coordinate system (P, p) of the plane: (a′, b′) = (a, b)·P, origin O′ = O + p.
+ *
+ * @remarks Source: ITA (2016), § 1.5.1.3, p. 83.
+ */
 export interface CoordinateTransformation {
   /** P, the linear part: its columns are the new basis vectors a′, b′ in the old basis; det P ≠ 0, also negative. */
   readonly linearPart: Mat2;
@@ -909,15 +944,35 @@ export interface TransformedOperation {
 
 /** The quantities that `changeOfCoordinates` transforms; each is optional. */
 export interface CoordinateQuantities {
-  /** Point coordinates x: x′ = P⁻¹(x − p) (eq. (1.5.1.7)). */
+  /**
+   * Point coordinates x: x′ = P⁻¹(x − p).
+   *
+   * @remarks Source: ITA (2016), eq. (1.5.1.7).
+   */
   readonly points?: readonly (readonly number[])[];
-  /** Coefficients [uv] of vectors, e.g. directions: [uv]′ = P⁻¹[uv] (eq. (1.5.2.3)); not changed by the origin shift. */
+  /**
+   * Coefficients [uv] of vectors, e.g. directions: [uv]′ = P⁻¹[uv]; not changed by the origin shift.
+   *
+   * @remarks Source: ITA (2016), eq. (1.5.2.3).
+   */
   readonly directions?: readonly (readonly number[])[];
-  /** Miller indices (hk) of lines: (hk)′ = (hk)P (eq. (1.5.2.2)); not changed by the origin shift. */
+  /**
+   * Miller indices (hk) of lines: (hk)′ = (hk)P; not changed by the origin shift.
+   *
+   * @remarks Source: ITA (2016), eq. (1.5.2.2).
+   */
   readonly planes?: readonly (readonly number[])[];
-  /** The metric tensor G: G′ = PᵀGP (eq. (1.5.2.4)). */
+  /**
+   * The metric tensor G: G′ = PᵀGP.
+   *
+   * @remarks Source: ITA (2016), eq. (1.5.2.4).
+   */
   readonly metric?: Mat2;
-  /** Operations (W, w): W′ = P⁻¹WP, w′ = P⁻¹(w + (W − I)p) (eqs. (1.5.2.12), (1.5.2.13)). */
+  /**
+   * Operations (W, w): W′ = P⁻¹WP, w′ = P⁻¹(w + (W − I)p).
+   *
+   * @remarks Source: ITA (2016), eqs. (1.5.2.12), (1.5.2.13).
+   */
   readonly operations?: readonly AffineOperation[];
 }
 
@@ -931,7 +986,11 @@ export interface InverseTransformation {
 
 /** The result of `changeOfCoordinates`: the inverse pair and each given quantity in the new coordinate system. */
 export interface CoordinateChange {
-  /** (Q, q) = (P⁻¹, −P⁻¹p), which takes the new coordinates back to the old (eq. (1.5.1.7)). */
+  /**
+   * (Q, q) = (P⁻¹, −P⁻¹p), which takes the new coordinates back to the old.
+   *
+   * @remarks Source: ITA (2016), eq. (1.5.1.7).
+   */
   readonly inverse: InverseTransformation;
   /** The points, as given, in the new coordinates. */
   readonly points?: readonly (readonly number[])[];
@@ -946,9 +1005,9 @@ export interface CoordinateChange {
 }
 
 /**
- * Changes the coordinate system of the plane by the pair (P, p) of ITA (6th ed., 2016) § 1.5.1.3
- * (p. 83), with 2 × 2 matrices: the new basis is (a′, b′) = (a, b)·P and the new origin lies at p.
- * Transforms the given quantities by ITA's equations (§ 1.5.2, pp. 83–85): point coordinates
+ * Changes the coordinate system of the plane by the pair (P, p), with 2 × 2 matrices: the new basis
+ * is (a′, b′) = (a, b)·P and the new origin lies at p. Transforms the given quantities by ITA's
+ * equations: point coordinates
  * x′ = P⁻¹(x − p), vector coefficients [uv]′ = P⁻¹[uv], Miller indices (hk)′ = (hk)P, the metric
  * tensor G′ = PᵀGP, and operations W′ = P⁻¹WP, w′ = P⁻¹(w + (W − I)p); and gives the inverse pair
  * (Q, q) = (P⁻¹, −P⁻¹p). det P may be negative.
@@ -961,6 +1020,9 @@ export interface CoordinateChange {
  * products leave the safe integers, a RangeError.
  * A transformed operation has a `matrix` and a `translation`. Throws a RangeError for a singular P, a quantity of the
  * wrong shape, an unknown quantity, an operation with det W ≠ ±1, and one whose W′ is not integral.
+ *
+ * @remarks Source: ITA (6th ed., 2016), § 1.5.1.3, p. 83 (the pair (P, p)); § 1.5.2, pp. 83–85 (the
+ * equations).
  */
 export function changeOfCoordinates(
   transformation: CoordinateTransformation,

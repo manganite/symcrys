@@ -37,7 +37,7 @@ function keyOf(printed: string, misprint: Record<string, string> = {}): PointGro
   return key;
 }
 
-const itcDefault = (key: PointGroupKey) => settings(key).find((s) => s.isDefault)!.index;
+const defaultSetting = (key: PointGroupKey) => settings(key).find((s) => s.isDefault)!.index;
 
 // --- § 1.1.4.10.7: axial tensors of rank 2 ---------------------------------------------------------
 
@@ -66,7 +66,7 @@ const PANELS = AXIAL.slice(1).map((r) => ({
 
 /** The setting the panel is drawn in: ITC default, or the monoclinic setting with the axis on Ox3 / Ox2. */
 function settingOf(key: PointGroupKey, frame: string): number {
-  if (!frame) return itcDefault(key);
+  if (!frame) return defaultSetting(key);
   const axis = frame === 'parallel to Ox3' ? 'c' : frame === 'parallel to Ox2' ? 'b' : null;
   const s = settings(key).find((x) => x.uniqueAxis === axis);
   if (!s) throw new Error(`${key}: no setting for frame ${frame}`);
@@ -106,7 +106,7 @@ describe('ITC Vol. D § 1.1.4.10.7: axial tensors of rank 2', () => {
   }
 
   it('the monoclinic panels drawn parallel to Ox2 are the ITC default setting (unique axis b)', () => {
-    for (const key of ['2', 'm'] as const) expect(settingOf(key, 'parallel to Ox2')).toBe(itcDefault(key));
+    for (const key of ['2', 'm'] as const) expect(settingOf(key, 'parallel to Ox2')).toBe(defaultSetting(key));
   });
 });
 

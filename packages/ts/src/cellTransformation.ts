@@ -14,13 +14,19 @@ import type { Mat3 } from './linalg.js';
 import { add, multiply, parseRational, toNumber, ZERO, type Rational } from './spaceGroups/rational.js';
 
 /**
- * A Bravais type of lattice in three dimensions, as ITA (6th ed., 2016) Table 1.3.4.1 (p. 39) writes
- * it: the crystal family (a, m, o, t, h, c) and the centring of the conventional cell (P, S, I, F, R).
+ * A Bravais type of lattice in three dimensions, in ITA's notation: the crystal family (a, m, o, t,
+ * h, c) and the centring of the conventional cell (P, S, I, F, R).
+ *
+ * @remarks Source: ITA (2016), Table 1.3.4.1, p. 39.
  */
 export type BravaisLattice =
   'aP' | 'mP' | 'mS' | 'oP' | 'oS' | 'oI' | 'oF' | 'tP' | 'tI' | 'hP' | 'hR' | 'cP' | 'cI' | 'cF';
 
-/** The six settings of an orthorhombic cell, named as ITA 2016 Table 1.5.4.4 names them. */
+/**
+ * The six settings of an orthorhombic cell, named by ITA's symbols of the settings.
+ *
+ * @remarks Source: ITA (2016), Table 1.5.4.4.
+ */
 export type OrthorhombicSetting = 'abc' | 'ba-c' | 'cab' | '-cba' | 'bca' | 'a-cb';
 
 /**
@@ -374,11 +380,12 @@ function cellKey(lattice: BravaisLattice, cell: unknown, what: string): string {
  * changeOfCoordinates(t, { operations: operations('-3m') }).operations;
  * ```
  *
- * @throws RangeError for a Bravais lattice not in ITA 2016 Table 1.3.4.1, or a cell the lattice does
- * not have.
+ * @throws RangeError for a Bravais lattice that is not one of the 14 types, or a cell the lattice
+ * does not have.
  *
  * @remarks The matrices are those of ITA (6th ed., 2016) Table 1.5.1.1, pp. 77–80; a pair of cells
  * that the table does not join directly is joined by a product of its matrices, computed exactly.
+ * The 14 Bravais types are those of ITA (2016), Table 1.3.4.1, p. 39.
  */
 export function cellTransformation(
   bravaisLattice: BravaisLattice,

@@ -39,8 +39,10 @@ export interface CartesianOperationDescription {
   /** What the operation is, without time reversal. */
   readonly kind: OperationKind;
   /**
-   * The n of the symbol n or n̄ (ITA 2016 § 1.2.1, p. 12: an n-fold rotation): 1 for the identity and the
-   * inversion, 2 for a reflection (m = 2̄), otherwise the order of the rotation part.
+   * The n of the symbol n or n̄ (n for an n-fold rotation): 1 for the identity and the inversion, 2
+   * for a reflection (m = 2̄), otherwise the order of the rotation part.
+   *
+   * @remarks Source: ITA (2016), § 1.2.1, p. 12.
    */
   readonly n: number;
   /** Rotation axis, rotoinversion axis or the normal of the mirror plane; absent for the identity and the inversion. */

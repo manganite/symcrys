@@ -11,9 +11,9 @@ import { det, trace, type Mat3, type Vec3 } from '../linalg.js';
 import { crystalFamily } from '../lattice.js';
 import type { Operation } from '../operations.js';
 import type { Uvw } from '../symmetryDirections.js';
-import type { IntMat3 } from './itaOrder.js';
-import { itcBasis, itcSetting, itcSymmetryDirections } from './itcData.js';
-import { seitzOf, type SeitzTable } from './seitzData.js';
+import type { IntMat3 } from './generatorData.js';
+import { settingBasis, classSettingData, settingSymmetryDirections } from './classData.js';
+import { seitzOf, type SeitzAxes } from './seitzData.js';
 import {
   classSettingOf,
   operations,
@@ -31,8 +31,10 @@ export type OperationKind = 'identity' | 'inversion' | 'rotation' | 'rotoinversi
 export interface Axis {
   /**
    * Integer coordinates in the conventional basis: for the axis of an operation with the sign of its
-   * Seitz symbol (ITA Tables 1.4.2.1–1.4.2.3), for a symmetry direction with the sign of ITA Table
-   * 2.1.3.1.
+   * Seitz symbol, for a symmetry direction with the sign ITA gives the lattice symmetry direction.
+   *
+   * @remarks Source: ITA (2016), Tables 1.4.2.1–1.4.2.3 (Seitz symbols) and Table 2.1.3.1 (symmetry
+   * directions).
    */
   readonly lattice: Uvw;
   /**
@@ -47,8 +49,10 @@ export interface OperationDescription {
   /** What the operation is, without time reversal. */
   readonly kind: OperationKind;
   /**
-   * The n of the symbol n or n̄ (ITA 2016 § 1.2.1, p. 12: an n-fold rotation): 1 for the identity and the
-   * inversion, 2 for a reflection (m = 2̄), otherwise the order of the rotation part.
+   * The n of the symbol n or n̄ (n for an n-fold rotation): 1 for the identity and the inversion, 2
+   * for a reflection (m = 2̄), otherwise the order of the rotation part.
+   *
+   * @remarks Source: ITA (2016), § 1.2.1, p. 12.
    */
   readonly n: number;
   /** Rotation axis, rotoinversion axis or the normal of the mirror plane; absent for the identity and the inversion. */
@@ -86,9 +90,11 @@ export interface SymmetryDirection {
    */
   readonly symbol?: string;
   /**
-   * The symmetry directions of this position (ITA Table 2.1.3.1; for a monoclinic group the
-   * direction of the position of the full symbol, of which only the unique axis is in the table),
-   * each with the elements along it.
+   * The symmetry directions of this position, each with the elements along it; for a monoclinic
+   * group the direction a, b or c of the position of the full symbol, of which only the unique axis
+   * is a lattice symmetry direction.
+   *
+   * @remarks Source: ITA (2016), Table 2.1.3.1 (the lattice symmetry directions).
    */
   readonly directions: readonly DirectionElements[];
 }
@@ -164,7 +170,7 @@ function describe(
   op: Operation,
   axes: readonly Axis[],
   basis: Mat3,
-  table: SeitzTable,
+  seitzAxes: SeitzAxes,
   what: string,
 ): OperationDescription {
   const proper = det(op.cartesian) > 0;
@@ -172,7 +178,7 @@ function describe(
   const timeReversal = op.timeReversal;
   if (n === 1) return Object.freeze({ kind: proper ? 'identity' : 'inversion', n: 1, timeReversal });
   const direction = findAxis(axes, rotationAxis(r, n), what);
-  const seitz = seitzOf(table, op.matrix as unknown as IntMat3);
+  const seitz = seitzOf(seitzAxes, op.matrix as unknown as IntMat3);
   if (!seitz?.axis) throw new Error(`${what}: no Seitz symbol for the matrix ${shown(op.matrix)}`);
   // A frozen copy: the result must not share the table's array (every result frozen, #137 C4).
   const signed = axisOf(basis, Object.freeze([...seitz.axis]) as unknown as Uvw);
@@ -205,19 +211,19 @@ function analysis(key: MagneticPointGroupKey, options?: SettingOptions): Analysi
   const family = crystalFamily(pointGroup(key).crystalSystem);
   // The basis and the symmetry directions of the setting: for rhombohedral axes those of ITA Table
   // 2.1.3.1 for rhombohedral axes; monoclinic and triclinic a, b, c along x, y, z, exact for the
-  // unique axis, the only symmetry direction that carries an element (itcData.ts, `itcBasis`).
+  // unique axis, the only symmetry direction that carries an element (classData.ts, `settingBasis`).
   const c = classSettingOf(key, options);
-  const basis = itcBasis(c.key, c.index);
-  const positions = itcSymmetryDirections(c.key, c.index).map((dirs) => dirs.map((d) => axisOf(basis, d)));
+  const basis = settingBasis(c.key, c.index);
+  const positions = settingSymmetryDirections(c.key, c.index).map((dirs) => dirs.map((d) => axisOf(basis, d)));
   const all = positions.flat();
   const what = `Point group ${key}`;
-  const table: SeitzTable =
+  const seitzAxes: SeitzAxes =
     family !== 'hexagonal'
       ? 'cubic'
-      : itcSetting(c.key, c.index).axes === 'rhombohedral'
+      : classSettingData(c.key, c.index).axes === 'rhombohedral'
         ? 'rhombohedral'
         : 'hexagonal';
-  const descriptions = Object.freeze(ops.map((op) => describe(op, all, basis, table, what)));
+  const descriptions = Object.freeze(ops.map((op) => describe(op, all, basis, seitzAxes, what)));
 
   // The full symbol of a grey group ends in 1', which is no position of the symbol.
   const tokens =
@@ -254,9 +260,11 @@ function analysis(key: MagneticPointGroupKey, options?: SettingOptions): Analysi
 /**
  * Each operation of the point group described geometrically, in the order of `operations` for
  * the same key and options. An axis lies along a symmetry direction and has the sign of the
- * operation's Seitz symbol (ITA 6th ed., Tables 1.4.2.1–1.4.2.3, p. 52), e.g. [1, 1, 0] for 2₁₁₀ in
- * the hexagonal family, where ITA Table 2.1.3.1 lists [1̄, 1̄, 0]; for n ≥ 3 the sign fixes what the
- * sense refers to.
+ * operation's Seitz symbol, e.g. [1, 1, 0] for 2₁₁₀ in the hexagonal family, whose lattice symmetry
+ * direction is [1̄, 1̄, 0]; for n ≥ 3 the sign fixes what the sense refers to.
+ *
+ * @remarks Source: ITA (6th ed., 2016), Tables 1.4.2.1–1.4.2.3, p. 52 (the Seitz symbols), and
+ * Table 2.1.3.1 (the lattice symmetry direction [1̄, 1̄, 0]).
  */
 export function describeOperations(
   key: MagneticPointGroupKey,
@@ -268,12 +276,16 @@ export function describeOperations(
 
 /**
  * The positions of the full Hermann–Mauguin symbol in the requested setting, each with its
- * symmetry directions (ITA Table 2.1.3.1; monoclinic: the directions a, b, c of the full symbol,
- * of which only the unique axis is in the table) and the symmetry elements along them. All positions of the
- * crystal family are listed (for rhombohedral axes the two of that row of the table), also those the
- * symbol of the class leaves out (then without `symbol`); the triclinic family has none. A direction
- * has the sign of ITA Table 2.1.3.1, the axis of an operation along it that of its Seitz symbol, so
- * the two are parallel and may be opposite: match them by direction, up to sign.
+ * symmetry directions (monoclinic: the directions a, b, c of the full symbol, of which only the
+ * unique axis is a lattice symmetry direction) and the symmetry elements along them. All positions
+ * of the crystal family are listed (for rhombohedral axes the two positions of the rhombohedral
+ * lattice), also those the symbol of the class leaves out (then without `symbol`); the triclinic
+ * family has none. A direction has the sign ITA gives the lattice symmetry direction, the axis of an operation
+ * along it that of its Seitz symbol, so the two are parallel and may be opposite: match them by
+ * direction, up to sign.
+ *
+ * @remarks Source: ITA (2016), Table 2.1.3.1 (the symmetry directions, their signs, and the row for
+ * rhombohedral axes).
  */
 export function symmetryDirections(key: MagneticPointGroupKey, options?: SettingOptions): readonly SymmetryDirection[] {
   checkOptions(options, SETTING_KEYS, 'symmetryDirections');

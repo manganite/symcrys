@@ -113,7 +113,6 @@ describe('plane groups: transcription', () => {
         pointGroup: g.fields['Point group'],
         system: g.fields.System.toLowerCase(),
         pattersonSymmetry: g.fields['Patterson symmetry'],
-        page: g.page,
         asymmetricUnit: g.fields['Asymmetric unit'],
         ...(g.fields.Vertices ? { vertices: g.fields.Vertices.split('; ') } : {}),
         centring: g.fields.Centring ? ['1/2,1/2'] : [],

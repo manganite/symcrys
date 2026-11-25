@@ -4,11 +4,11 @@
  * with half of the operations combined with time reversal (ITC Vol. D, § 1.5.2.1); its symbol in a
  * setting is the class's symbol in that setting with the primes of the operations it names
  * (magneticSymbols.ts). So the symbol without primes names the setting of the class
- * (itcData.ts), and the time reversal of its operations is the one assignment, among those that
+ * (classData.ts), and the time reversal of its operations is the one assignment, among those that
  * ITA's generators of the class allow, whose primed symbol is the stored one (checked unique).
  *
  * Print anchors (tests): the symbols of the ITC default settings and their operations are those of
- * ITC Vol. D Table 1.5.2.3 (pp. 111–112; `itcMagneticData.reference.test.ts`,
+ * ITC Vol. D Table 1.5.2.3 (pp. 111–112; `blackWhiteData.reference.test.ts`,
  * `magnetic.reference.test.ts`). Every other setting is an orientation ITC prints
  * (`references/itc/orientations.md`; CLAUDE.md, "Pure ITC"); where a transcribed table prints it
  * (Tables 1.5.2.4, 1.5.7.1, 1.5.8.1) the tests compare it with print.
@@ -19,11 +19,11 @@
 import { shown } from '../checks.js';
 import { operation, type CartesianOperation } from '../operations.js';
 import type { BlackWhitePointGroupKey, PointGroupKey } from './keys.js';
-import { itcCartesianOperations, itcClass, itcLatticeGenerators, itcTimeReversal } from './itcData.js';
+import { settingCartesianOperations, classData, settingLatticeGenerators, settingTimeReversal } from './classData.js';
 import { primedSymbols } from './magneticSymbols.js';
 
 /** One ITC setting of a black-and-white group. */
-export interface ItcBlackWhiteSetting {
+export interface BlackWhiteSetting {
   /** 1-based, in the order of #137 A4 (`bw` below). */
   readonly index: number;
   /** The ITC full symbol with primes, positions separated by single spaces. */
@@ -37,12 +37,12 @@ export interface ItcBlackWhiteSetting {
 }
 
 /** A black-and-white group with its crystal class and its ITC settings. */
-export interface ItcBlackWhite {
+export interface BlackWhiteGroup {
   readonly key: BlackWhitePointGroupKey;
   readonly crystalClass: PointGroupKey;
   /** Schoenflies symbol G(H), H the subgroup without time reversal (ITC Vol. D Table 1.5.2.3). */
   readonly schoenflies: string;
-  readonly settings: readonly ItcBlackWhiteSetting[];
+  readonly settings: readonly BlackWhiteSetting[];
 }
 
 /**
@@ -58,8 +58,8 @@ function bw(
   crystalClass: PointGroupKey,
   schoenflies: string,
   fullSymbols: readonly (string | readonly [string, 'rhombohedral'])[],
-): ItcBlackWhite {
-  const system = itcClass(crystalClass).crystalSystem;
+): BlackWhiteGroup {
+  const system = classData(crystalClass).crystalSystem;
   return {
     key,
     crystalClass,
@@ -80,7 +80,7 @@ function bw(
 }
 
 /** The 58 black-and-white groups in the order of `BLACK_WHITE_POINT_GROUP_KEYS`. */
-export const ITC_BLACK_WHITE: readonly ItcBlackWhite[] = [
+export const BLACK_WHITE_GROUPS: readonly BlackWhiteGroup[] = [
   bw("-1'", '-1', 'Ci(C1)', ["-1'"]),
   bw("2'", '2', 'C2(C1)', ["1 2' 1", "1 1 2'", "2' 1 1"]),
   bw("m'", 'm', 'Cs(C1)', ["1 m' 1", "1 1 m'", "m' 1 1"]),
@@ -141,28 +141,28 @@ export const ITC_BLACK_WHITE: readonly ItcBlackWhite[] = [
   bw("m'-3'm", 'm-3m', 'Oh(Td)', ["4'/m' -3' 2'/m"]),
 ];
 
-const BY_KEY = new Map<string, ItcBlackWhite>(ITC_BLACK_WHITE.map((g) => [g.key, g]));
+const BY_KEY = new Map<string, BlackWhiteGroup>(BLACK_WHITE_GROUPS.map((g) => [g.key, g]));
 
 /** The ITC data of a black-and-white group. */
-export function itcBlackWhite(key: BlackWhitePointGroupKey): ItcBlackWhite {
+export function blackWhiteGroup(key: BlackWhitePointGroupKey): BlackWhiteGroup {
   const g = BY_KEY.get(key);
   if (!g) throw new RangeError(`Unknown black-and-white point group key: ${shown(key)}`);
   return g;
 }
 
 /** A setting of a black-and-white group. */
-export function itcBlackWhiteSetting(key: BlackWhitePointGroupKey, index: number): ItcBlackWhiteSetting {
-  const s = itcBlackWhite(key).settings.find((x) => x.index === index);
+export function blackWhiteSetting(key: BlackWhitePointGroupKey, index: number): BlackWhiteSetting {
+  const s = blackWhiteGroup(key).settings.find((x) => x.index === index);
   if (!s) throw new RangeError(`Point group ${key} has no setting ${index}`);
   return s;
 }
 
 /** The setting of the crystal class that a setting of the group lies in: the one whose full symbol is the group's without primes. */
-export function itcBlackWhiteClassSetting(key: BlackWhitePointGroupKey, index: number): number {
-  const g = itcBlackWhite(key);
-  const s = itcBlackWhiteSetting(key, index);
+export function blackWhiteClassSetting(key: BlackWhitePointGroupKey, index: number): number {
+  const g = blackWhiteGroup(key);
+  const s = blackWhiteSetting(key, index);
   const plain = s.full.replace(/'/g, '');
-  const matches = itcClass(g.crystalClass).settings.filter((c) => c.full === plain && c.axes === s.axes);
+  const matches = classData(g.crystalClass).settings.filter((c) => c.full === plain && c.axes === s.axes);
   if (matches.length !== 1)
     throw new Error(
       `${key} setting ${index}: ${matches.length} settings of ${g.crystalClass} have the symbol ${plain}`,
@@ -177,22 +177,22 @@ const operationCache = new Map<string, readonly CartesianOperation[]>();
  * its time reversal. Throws unless exactly one assignment of time reversal to ITA's generators of
  * the class gives a group whose primed full symbol is the stored one.
  */
-export function itcBlackWhiteOperations(key: BlackWhitePointGroupKey, index: number): readonly CartesianOperation[] {
+export function blackWhiteOperations(key: BlackWhitePointGroupKey, index: number): readonly CartesianOperation[] {
   const cacheKey = `${key}#${index}`;
   let result = operationCache.get(cacheKey);
   if (!result) {
-    const g = itcBlackWhite(key);
-    const full = itcBlackWhiteSetting(key, index).full;
-    const classIndex = itcBlackWhiteClassSetting(key, index);
-    const cls = itcClass(g.crystalClass);
+    const g = blackWhiteGroup(key);
+    const full = blackWhiteSetting(key, index).full;
+    const classIndex = blackWhiteClassSetting(key, index);
+    const cls = classData(g.crystalClass);
     const classSetting = cls.settings.find((s) => s.index === classIndex)!;
-    const matrices = itcCartesianOperations(g.crystalClass, classIndex);
-    const n = itcLatticeGenerators(g.crystalClass, classIndex).length;
+    const matrices = settingCartesianOperations(g.crystalClass, classIndex);
+    const n = settingLatticeGenerators(g.crystalClass, classIndex).length;
     const found: CartesianOperation[][] = [];
     // Every assignment of time reversal to the generators but the one without any.
     for (let bits = 1; bits < 1 << n; bits++) {
       const flags = Array.from({ length: n }, (_, k) => (bits & (1 << k)) !== 0);
-      const parity = itcTimeReversal(g.crystalClass, classIndex, flags);
+      const parity = settingTimeReversal(g.crystalClass, classIndex, flags);
       if (!parity) continue;
       const ops = matrices.map((m, i) => ({ ...operation(m), timeReversal: parity[i] }));
       const symbols = primedSymbols(classSetting, cls.crystalSystem, ops);

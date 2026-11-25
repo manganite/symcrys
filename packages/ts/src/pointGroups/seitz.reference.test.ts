@@ -14,7 +14,7 @@ import * as classes from '../index.js';
 import * as magnetic from '../magnetic.js';
 import * as plane from '../plane.js';
 import { readReference, tableRows } from '../testUtils/references.js';
-import { seitzRows, type SeitzTable } from './seitzData.js';
+import { seitzRows, type SeitzAxes } from './seitzData.js';
 
 const text = readReference('itc/vol-a-2016-tables-1.4.2-seitz.md');
 
@@ -134,7 +134,7 @@ describe('ITA Tables 1.4.2.1–1.4.2.5: the printed Seitz symbols agree with the
   });
 
   it('the data of the library are the transcription', () => {
-    for (const name of ['cubic', 'hexagonal', 'rhombohedral'] as SeitzTable[]) {
+    for (const name of ['cubic', 'hexagonal', 'rhombohedral'] as SeitzAxes[]) {
       const lib = seitzRows(name).map(([t, axis, sense]) => [t, axis ? [...axis] : null, sense]);
       const printed = TABLES[name].map((row) => {
         const s = seitzOf(seitzSymbol(name, row));

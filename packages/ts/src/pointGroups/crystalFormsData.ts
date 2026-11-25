@@ -15,7 +15,7 @@
 export type FormTypeRow = readonly [number, string, number, string];
 
 /** The 47 crystal forms of ITA Table 3.2.1.3, in printed order. */
-export const ITA_FORM_TYPES: readonly FormTypeRow[] = [
+export const FORM_TYPE_DATA: readonly FormTypeRow[] = [
   [1, 'Pedion or monohedron', 1, '∞m'],
   [2, 'Pinacoid or parallelohedron', 2, '∞/mm'],
   [3, 'Sphenoid, dome, or dihedron', 2, 'mm2'],
@@ -66,7 +66,7 @@ export const ITA_FORM_TYPES: readonly FormTypeRow[] = [
 ];
 
 /**
- * [Wyckoff letter, basic (false: a limiting form), number in ITA_FORM_TYPES, Miller indices of the
+ * [Wyckoff letter, basic (false: a limiting form), number in FORM_TYPE_DATA, Miller indices of the
  * first face, condition printed with the form (`|h|<|l|`)].
  */
 export type FormRow = readonly [string, boolean, number, string, string?];
@@ -78,27 +78,22 @@ export interface FormEntry {
   readonly uniqueAxis?: 'b' | 'c';
   /** Trigonal: `'rhombohedral'` for an entry with rhombohedral axes (hexagonal axes otherwise). */
   readonly axes?: 'rhombohedral';
-  /** Printed page. */
-  readonly page: number;
   /** In printed order: general position first, each position's basic form before its limiting forms. */
   readonly rows: readonly FormRow[];
 }
 
-export const ITA_FORMS: readonly FormEntry[] = [
+export const CLASS_FORMS: readonly FormEntry[] = [
   {
     symbol: '1',
-    page: 745,
     rows: [['a', true, 1, 'h,k,l']],
   },
   {
     symbol: '-1',
-    page: 745,
     rows: [['a', true, 2, 'h,k,l']],
   },
   {
     symbol: '2',
     uniqueAxis: 'b',
-    page: 745,
     rows: [
       ['b', true, 3, 'h,k,l'],
       ['b', false, 2, 'h,0,l'],
@@ -108,7 +103,6 @@ export const ITA_FORMS: readonly FormEntry[] = [
   {
     symbol: '2',
     uniqueAxis: 'c',
-    page: 745,
     rows: [
       ['b', true, 3, 'h,k,l'],
       ['b', false, 2, 'h,k,0'],
@@ -118,7 +112,6 @@ export const ITA_FORMS: readonly FormEntry[] = [
   {
     symbol: 'm',
     uniqueAxis: 'b',
-    page: 746,
     rows: [
       ['b', true, 3, 'h,k,l'],
       ['b', false, 2, '0,1,0'],
@@ -128,7 +121,6 @@ export const ITA_FORMS: readonly FormEntry[] = [
   {
     symbol: 'm',
     uniqueAxis: 'c',
-    page: 746,
     rows: [
       ['b', true, 3, 'h,k,l'],
       ['b', false, 2, '0,0,1'],
@@ -138,7 +130,6 @@ export const ITA_FORMS: readonly FormEntry[] = [
   {
     symbol: '2/m',
     uniqueAxis: 'b',
-    page: 746,
     rows: [
       ['c', true, 6, 'h,k,l'],
       ['b', true, 2, 'h,0,l'],
@@ -148,7 +139,6 @@ export const ITA_FORMS: readonly FormEntry[] = [
   {
     symbol: '2/m',
     uniqueAxis: 'c',
-    page: 747,
     rows: [
       ['c', true, 6, 'h,k,l'],
       ['b', true, 2, 'h,k,0'],
@@ -157,7 +147,6 @@ export const ITA_FORMS: readonly FormEntry[] = [
   },
   {
     symbol: '222',
-    page: 747,
     rows: [
       ['d', true, 4, 'h,k,l'],
       ['d', false, 6, 'h,k,0'],
@@ -170,7 +159,6 @@ export const ITA_FORMS: readonly FormEntry[] = [
   },
   {
     symbol: 'mm2',
-    page: 748,
     rows: [
       ['d', true, 5, 'h,k,l'],
       ['d', false, 6, 'h,k,0'],
@@ -183,7 +171,6 @@ export const ITA_FORMS: readonly FormEntry[] = [
   },
   {
     symbol: 'mmm',
-    page: 748,
     rows: [
       ['g', true, 7, 'h,k,l'],
       ['f', true, 6, 'h,k,0'],
@@ -196,7 +183,6 @@ export const ITA_FORMS: readonly FormEntry[] = [
   },
   {
     symbol: '4',
-    page: 749,
     rows: [
       ['b', true, 8, 'h,k,l'],
       ['b', false, 10, 'h,k,0'],
@@ -205,7 +191,6 @@ export const ITA_FORMS: readonly FormEntry[] = [
   },
   {
     symbol: '-4',
-    page: 749,
     rows: [
       ['b', true, 9, 'h,k,l'],
       ['b', false, 10, 'h,k,0'],
@@ -214,7 +199,6 @@ export const ITA_FORMS: readonly FormEntry[] = [
   },
   {
     symbol: '4/m',
-    page: 749,
     rows: [
       ['c', true, 14, 'h,k,l'],
       ['b', true, 10, 'h,k,0'],
@@ -223,7 +207,6 @@ export const ITA_FORMS: readonly FormEntry[] = [
   },
   {
     symbol: '422',
-    page: 750,
     rows: [
       ['d', true, 11, 'h,k,l'],
       ['d', false, 15, 'h,k,0'],
@@ -236,7 +219,6 @@ export const ITA_FORMS: readonly FormEntry[] = [
   },
   {
     symbol: '4mm',
-    page: 750,
     rows: [
       ['d', true, 12, 'h,k,l'],
       ['d', false, 15, 'h,k,0'],
@@ -249,7 +231,6 @@ export const ITA_FORMS: readonly FormEntry[] = [
   },
   {
     symbol: '-42m',
-    page: 751,
     rows: [
       ['d', true, 13, 'h,k,l'],
       ['d', false, 15, 'h,k,0'],
@@ -262,7 +243,6 @@ export const ITA_FORMS: readonly FormEntry[] = [
   },
   {
     symbol: '-4m2',
-    page: 751,
     rows: [
       ['d', true, 13, 'h,k,l'],
       ['d', false, 15, 'h,k,0'],
@@ -275,7 +255,6 @@ export const ITA_FORMS: readonly FormEntry[] = [
   },
   {
     symbol: '4/mmm',
-    page: 752,
     rows: [
       ['g', true, 16, 'h,k,l'],
       ['f', true, 14, 'h,0,l'],
@@ -288,7 +267,6 @@ export const ITA_FORMS: readonly FormEntry[] = [
   },
   {
     symbol: '3',
-    page: 752,
     rows: [
       ['b', true, 17, 'h,k,i,l'],
       ['b', false, 18, 'h,k,i,0'],
@@ -298,7 +276,6 @@ export const ITA_FORMS: readonly FormEntry[] = [
   {
     symbol: '3',
     axes: 'rhombohedral',
-    page: 753,
     rows: [
       ['b', true, 17, 'h,k,l'],
       ['b', false, 18, 'h,k,-h-k'],
@@ -307,7 +284,6 @@ export const ITA_FORMS: readonly FormEntry[] = [
   },
   {
     symbol: '-3',
-    page: 753,
     rows: [
       ['b', true, 21, 'h,k,i,l'],
       ['b', false, 25, 'h,k,i,0'],
@@ -317,7 +293,6 @@ export const ITA_FORMS: readonly FormEntry[] = [
   {
     symbol: '-3',
     axes: 'rhombohedral',
-    page: 753,
     rows: [
       ['b', true, 21, 'h,k,l'],
       ['b', false, 25, 'h,k,-h-k'],
@@ -326,7 +301,6 @@ export const ITA_FORMS: readonly FormEntry[] = [
   },
   {
     symbol: '312',
-    page: 754,
     rows: [
       ['c', true, 19, 'h,k,i,l'],
       ['c', false, 22, 'h,k,i,0'],
@@ -339,7 +313,6 @@ export const ITA_FORMS: readonly FormEntry[] = [
   },
   {
     symbol: '321',
-    page: 754,
     rows: [
       ['c', true, 19, 'h,k,i,l'],
       ['c', false, 22, 'h,k,i,0'],
@@ -353,7 +326,6 @@ export const ITA_FORMS: readonly FormEntry[] = [
   {
     symbol: '32',
     axes: 'rhombohedral',
-    page: 755,
     rows: [
       ['c', true, 19, 'h,k,l'],
       ['c', false, 22, 'h,k,-h-k'],
@@ -366,7 +338,6 @@ export const ITA_FORMS: readonly FormEntry[] = [
   },
   {
     symbol: '3m1',
-    page: 755,
     rows: [
       ['c', true, 20, 'h,k,i,l'],
       ['c', false, 22, 'h,k,i,0'],
@@ -379,7 +350,6 @@ export const ITA_FORMS: readonly FormEntry[] = [
   },
   {
     symbol: '31m',
-    page: 756,
     rows: [
       ['c', true, 20, 'h,k,i,l'],
       ['c', false, 22, 'h,k,i,0'],
@@ -393,7 +363,6 @@ export const ITA_FORMS: readonly FormEntry[] = [
   {
     symbol: '3m',
     axes: 'rhombohedral',
-    page: 756,
     rows: [
       ['c', true, 20, 'h,k,l'],
       ['c', false, 22, 'h,k,-h-k'],
@@ -406,7 +375,6 @@ export const ITA_FORMS: readonly FormEntry[] = [
   },
   {
     symbol: '-31m',
-    page: 757,
     rows: [
       ['d', true, 26, 'h,k,i,l'],
       ['d', false, 30, 'h,k,i,0'],
@@ -419,7 +387,6 @@ export const ITA_FORMS: readonly FormEntry[] = [
   },
   {
     symbol: '-3m1',
-    page: 758,
     rows: [
       ['d', true, 26, 'h,k,i,l'],
       ['d', false, 30, 'h,k,i,0'],
@@ -433,7 +400,6 @@ export const ITA_FORMS: readonly FormEntry[] = [
   {
     symbol: '-3m',
     axes: 'rhombohedral',
-    page: 759,
     rows: [
       ['d', true, 26, 'h,k,l'],
       ['d', false, 30, 'h,k,-h-k'],
@@ -446,7 +412,6 @@ export const ITA_FORMS: readonly FormEntry[] = [
   },
   {
     symbol: '6',
-    page: 760,
     rows: [
       ['b', true, 23, 'h,k,i,l'],
       ['b', false, 25, 'h,k,i,0'],
@@ -455,7 +420,6 @@ export const ITA_FORMS: readonly FormEntry[] = [
   },
   {
     symbol: '-6',
-    page: 760,
     rows: [
       ['c', true, 24, 'h,k,i,l'],
       ['b', true, 18, 'h,k,i,0'],
@@ -464,7 +428,6 @@ export const ITA_FORMS: readonly FormEntry[] = [
   },
   {
     symbol: '6/m',
-    page: 760,
     rows: [
       ['c', true, 31, 'h,k,i,l'],
       ['b', true, 25, 'h,k,i,0'],
@@ -473,7 +436,6 @@ export const ITA_FORMS: readonly FormEntry[] = [
   },
   {
     symbol: '622',
-    page: 761,
     rows: [
       ['d', true, 27, 'h,k,i,l'],
       ['d', false, 30, 'h,k,i,0'],
@@ -486,7 +448,6 @@ export const ITA_FORMS: readonly FormEntry[] = [
   },
   {
     symbol: '6mm',
-    page: 762,
     rows: [
       ['d', true, 28, 'h,k,i,l'],
       ['d', false, 30, 'h,k,i,0'],
@@ -499,7 +460,6 @@ export const ITA_FORMS: readonly FormEntry[] = [
   },
   {
     symbol: '-6m2',
-    page: 762,
     rows: [
       ['e', true, 29, 'h,k,i,l'],
       ['e', false, 31, 'h,h,-2h,l'],
@@ -512,7 +472,6 @@ export const ITA_FORMS: readonly FormEntry[] = [
   },
   {
     symbol: '-62m',
-    page: 763,
     rows: [
       ['e', true, 29, 'h,k,i,l'],
       ['e', false, 31, 'h,0,-h,l'],
@@ -525,7 +484,6 @@ export const ITA_FORMS: readonly FormEntry[] = [
   },
   {
     symbol: '6/mmm',
-    page: 764,
     rows: [
       ['g', true, 32, 'h,k,i,l'],
       ['f', true, 30, 'h,k,i,0'],
@@ -538,7 +496,6 @@ export const ITA_FORMS: readonly FormEntry[] = [
   },
   {
     symbol: '23',
-    page: 765,
     rows: [
       ['c', true, 36, 'h,k,l'],
       ['c', false, 39, 'h,h,l', '|h|<|l|'],
@@ -551,7 +508,6 @@ export const ITA_FORMS: readonly FormEntry[] = [
   },
   {
     symbol: 'm-3',
-    page: 766,
     rows: [
       ['d', true, 41, 'h,k,l'],
       ['d', false, 43, 'h,h,l', '|h|<|l|'],
@@ -564,7 +520,6 @@ export const ITA_FORMS: readonly FormEntry[] = [
   },
   {
     symbol: '432',
-    page: 767,
     rows: [
       ['d', true, 44, 'h,k,l'],
       ['d', false, 43, 'h,h,l', '|h|<|l|'],
@@ -577,7 +532,6 @@ export const ITA_FORMS: readonly FormEntry[] = [
   },
   {
     symbol: '-43m',
-    page: 768,
     rows: [
       ['d', true, 45, 'h,k,l'],
       ['d', false, 46, '0,k,l'],
@@ -590,7 +544,6 @@ export const ITA_FORMS: readonly FormEntry[] = [
   },
   {
     symbol: 'm-3m',
-    page: 769,
     rows: [
       ['f', true, 47, 'h,k,l'],
       ['e', true, 43, 'h,h,l', '|h|<|l|'],

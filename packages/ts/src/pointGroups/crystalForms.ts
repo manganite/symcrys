@@ -6,8 +6,8 @@
 
 import { SETTING_KEYS, checkOptions } from '../checks.js';
 import type { PointGroupKey, SettingOptions } from './pointGroups.js';
-import { ITA_FORMS, ITA_FORM_TYPES, type FormRow } from './crystalFormsData.js';
-import { tableSetting, permutationFromSetting1, permutePattern, printedEntry, wyckoffPositions } from './wyckoff.js';
+import { CLASS_FORMS, FORM_TYPE_DATA, type FormRow } from './crystalFormsData.js';
+import { tableSetting, permutationFromSetting1, permutePattern, storedEntry, wyckoffPositions } from './wyckoff.js';
 
 /**
  * A kind of crystal form, one of the 47: the first of its usual English names in lower case, words
@@ -86,7 +86,9 @@ export interface CrystalForm {
   /**
    * `true` for a basic form, a form of lowest eigensymmetry of the position (two at the faces (hhl)
    * of -43m and m-3m), `false` for a limiting form: its faces have the face symmetry of the position,
-   * but the form has a higher eigensymmetry (ITA 6th ed., § 3.2.1.2.2, p. 723).
+   * but the form has a higher eigensymmetry.
+   *
+   * @remarks Source: ITA (6th ed., 2016), § 3.2.1.2.2, p. 723.
    */
   readonly basic: boolean;
   /** The kind of the form, its key in `CRYSTAL_FORM_TYPES`. */
@@ -96,7 +98,10 @@ export interface CrystalForm {
    * or `h,h,-2h,l` (Bravais–Miller indices) for hexagonal axes; a leading `-` is an overbar.
    */
   readonly millerIndices: string;
-  /** The condition ITA prints with the form, `|h|<|l|` or `|h|>|l|` (cubic forms (hhl)); absent otherwise. */
+  /**
+   * The condition on the indices that ITA gives with the form, `|h|<|l|` or `|h|>|l|` (cubic forms
+   * (hhl)); absent otherwise.
+   */
   readonly condition?: string;
 }
 
@@ -154,7 +159,7 @@ export const FORM_TYPE_KEYS: readonly CrystalFormTypeKey[] = Object.freeze([
 /** The 47 kinds of crystal forms, by key. */
 export const CRYSTAL_FORM_TYPES: Readonly<Record<CrystalFormTypeKey, CrystalFormType>> = Object.freeze(
   Object.fromEntries(
-    ITA_FORM_TYPES.map(([number, name, faces, eigensymmetry]) => [
+    FORM_TYPE_DATA.map(([number, name, faces, eigensymmetry]) => [
       FORM_TYPE_KEYS[number - 1],
       Object.freeze({ name, faces, eigensymmetry }),
     ]),
@@ -163,13 +168,13 @@ export const CRYSTAL_FORM_TYPES: Readonly<Record<CrystalFormTypeKey, CrystalForm
 
 const HKL = 'hkl';
 
-/** The printed rows of a setting; for a setting ITA does not print, those of setting 1 carried into its frame. */
-function printedRows(key: PointGroupKey, setting: number): readonly FormRow[] {
-  const entry = printedEntry(ITA_FORMS, key, setting);
+/** The stored rows of a setting; for a setting ITA does not list, those of setting 1 carried into its frame. */
+function storedRows(key: PointGroupKey, setting: number): readonly FormRow[] {
+  const entry = storedEntry(CLASS_FORMS, key, setting);
   if (entry) return entry.rows;
   if (setting === 1) throw new Error(`Point group ${key}: no printed crystal forms for setting 1`);
   const r = permutationFromSetting1(key, setting);
-  return printedRows(key, 1).map(([letter, basic, type, miller, condition]) => {
+  return storedRows(key, 1).map(([letter, basic, type, miller, condition]) => {
     if (condition !== undefined) throw new Error(`Cannot carry the condition ${condition} into another setting`);
     return [letter, basic, type, permutePattern(miller, r, HKL)];
   });
@@ -192,7 +197,7 @@ export function crystalForms(key: PointGroupKey, options?: SettingOptions): read
   if (!result) {
     const positions = wyckoffPositions(key, { setting });
     result = Object.freeze(
-      printedRows(key, setting).map(([letter, basic, formType, millerIndices, condition]) => {
+      storedRows(key, setting).map(([letter, basic, formType, millerIndices, condition]) => {
         const position = positions.find((p) => p.letter === letter);
         if (!position) throw new Error(`Point group ${key}, setting ${setting}: no Wyckoff position ${letter}`);
         const type = FORM_TYPE_KEYS[formType - 1];

@@ -8,7 +8,7 @@ import { checkOptions, pick, SETTING_KEYS, shown, TOLERANCE_KEYS } from '../chec
 import { apply, inverse, transpose, type Mat3, type Vec3 } from '../linalg.js';
 import { crystalFamily } from '../lattice.js';
 import { substituteMillerIndices } from '../indices.js';
-import { itcBasis, itcClass, itcSetting as itcClassSetting } from './itcData.js';
+import { settingBasis, classData, classSettingData } from './classData.js';
 import {
   settingIndexOf,
   isMagneticPointGroupKey,
@@ -21,7 +21,7 @@ import {
 } from './pointGroups.js';
 import { siteSymmetryOf, siteTolerance, type SiteSymmetry } from '../siteSymmetry.js';
 import type { ToleranceOptions } from '../tolerances.js';
-import { ITA_WYCKOFF, type WyckoffRow } from './wyckoffData.js';
+import { CLASS_WYCKOFF_POSITIONS, type WyckoffRow } from './wyckoffData.js';
 
 /** A face (hkl): three Miller indices in the conventional basis (for hexagonal axes without i = −(h + k)). */
 export type Hkl = readonly [number, number, number];
@@ -32,23 +32,24 @@ export interface WyckoffPosition {
   readonly letter: string;
   /** Number of equivalent directions (faces of the form). */
   readonly multiplicity: number;
-  /** Oriented site-symmetry symbol as ITA prints it, e.g. `..m`, `4m.m`, `1`. */
+  /** Oriented site-symmetry symbol in ITA's notation, e.g. `..m`, `4m.m`, `1`. */
   readonly siteSymmetry: string;
   /**
-   * ITA's coordinate triplets of the position as printed, in printed order, the first being the
+   * ITA's coordinate triplets of the position, the full list in ITA's order, the first being the
    * representative point, e.g. `['x,x,z', '-x,-x,z', …]` (a leading `-` is an overbar); one per
    * equivalent direction, as in `symcrys/plane`.
    */
   readonly coordinates: readonly string[];
   /**
-   * ITA's representative face as printed, components separated by commas, e.g. `h,h,l`, or
-   * `h,h,-2h,l` (Bravais–Miller indices) for hexagonal axes. the function `millerIndices` substitutes values
-   * of h, k, l and gives a face with numbers, `faceNormal` its normal in a cell.
+   * ITA's representative face, components separated by commas, e.g. `h,h,l`, or `h,h,-2h,l`
+   * (Bravais–Miller indices) for hexagonal axes. The function `millerIndices` substitutes values of
+   * h, k, l and gives a face with numbers, `faceNormal` its normal in a cell.
    */
   readonly millerIndices: string;
   /**
    * Indices into `operations` (same setting) of the site symmetry of the position: of the operations
-   * that fix its first printed face for values of h, k, l that keep the face in the position.
+   * that fix its representative face (`millerIndices`) for values of h, k, l that keep the face in
+   * the position.
    */
   readonly siteSymmetryOperations: readonly number[];
 }
@@ -67,7 +68,7 @@ export const RHOMBOHEDRAL_VALUES: Readonly<Record<'h' | 'k' | 'l', number>> = { 
 
 /** The values of h, k, l for the representative faces of a setting. */
 export function representativeValues(key: PointGroupKey, setting: number): Readonly<Record<'h' | 'k' | 'l', number>> {
-  return itcClassSetting(key, setting).axes === 'rhombohedral' ? RHOMBOHEDRAL_VALUES : REPRESENTATIVE_VALUES;
+  return classSettingData(key, setting).axes === 'rhombohedral' ? RHOMBOHEDRAL_VALUES : REPRESENTATIVE_VALUES;
 }
 
 /** Printed Miller indices (three, or four for hexagonal axes) as three numbers, with the given values of h, k, l. */
@@ -119,12 +120,12 @@ function permuteSymbol(symbolText: string, r: Mat3): string {
  * The permutation r that carries setting 1 of a class into `setting` (new axis i = r[i][j] × old
  * axis j), for the settings ITA does not print (`mm2` settings 2 and 3, monoclinic unique axis a):
  * the transpose of the change
- * of basis P of the ITC class data ((a′, b′, c′) = (a, b, c)·P, itcData.ts). Coordinates (P⁻¹·x)
+ * of basis P of the ITC class data ((a′, b′, c′) = (a, b, c)·P, classData.ts). Coordinates (P⁻¹·x)
  * and Miller indices (h·P) are carried by the same r only because P is a signed permutation
  * (P⁻¹ = Pᵀ); throws for a setting that is not carried from setting 1 by one.
  */
 export function permutationFromSetting1(key: PointGroupKey, setting: number): Mat3 {
-  const from = itcClassSetting(key, setting).from;
+  const from = classSettingData(key, setting).from;
   if (from?.index !== 1) throw new Error(`Point group ${key}, setting ${setting}: not carried from setting 1`);
   const p = from.basis;
   const signedPermutation = [0, 1, 2].every(
@@ -143,7 +144,7 @@ export function permutationFromSetting1(key: PointGroupKey, setting: number): Ma
  * the one with the ITC short symbol (and unique axis or axes) of the setting, or undefined if ITA does not
  * print the setting.
  */
-export function printedEntry<
+export function storedEntry<
   E extends { readonly symbol: string; readonly uniqueAxis?: 'b' | 'c'; readonly axes?: 'rhombohedral' },
 >(table: readonly E[], key: PointGroupKey, setting: number): E | undefined {
   const s = settings(key)[setting - 1];
@@ -155,15 +156,15 @@ export function printedEntry<
   );
 }
 
-/** The printed rows of a setting; for a setting ITA does not print, those of setting 1 carried into its frame. */
-function printedRows(key: PointGroupKey, setting: number): readonly WyckoffRow[] {
-  const entry = printedEntry(ITA_WYCKOFF, key, setting);
+/** The stored rows of a setting; for a setting ITA does not list, those of setting 1 carried into its frame. */
+function storedRows(key: PointGroupKey, setting: number): readonly WyckoffRow[] {
+  const entry = storedEntry(CLASS_WYCKOFF_POSITIONS, key, setting);
   if (entry) return entry.rows;
   if (setting === 1) throw new Error(`Point group ${key}: no printed Wyckoff positions for setting 1`);
   const r = permutationFromSetting1(key, setting);
   // A monoclinic site symmetry (`2`, `m`, `2/m`) names the element on the unique axis, not a position.
-  const oriented = crystalFamily(itcClass(key).crystalSystem) !== 'monoclinic';
-  return printedRows(key, 1).map(([letter, mult, site, coords, miller]) => [
+  const oriented = crystalFamily(classData(key).crystalSystem) !== 'monoclinic';
+  return storedRows(key, 1).map(([letter, mult, site, coords, miller]) => [
     letter,
     mult,
     oriented ? permuteSymbol(site, r) : site,
@@ -174,12 +175,12 @@ function printedRows(key: PointGroupKey, setting: number): readonly WyckoffRow[]
 
 /**
  * The lattice basis in which the Cartesian normals of the representatives are computed, that of the
- * setting (itcData.ts, `itcBasis`): monoclinic and triclinic a, b, c along x, y, z; rhombohedral
+ * setting (classData.ts, `settingBasis`): monoclinic and triclinic a, b, c along x, y, z; rhombohedral
  * axes in the hexagonal cell of `latticeBasis` (docs/conventions.md, "Site symmetry and Wyckoff
  * positions").
  */
 export function faceBasis(key: PointGroupKey, setting: number): Mat3 {
-  return itcBasis(key, setting);
+  return settingBasis(key, setting);
 }
 
 /** h, k, l of a representative face under the printed condition |h| < |l| (cubic forms (hhl)). */
@@ -231,7 +232,7 @@ export function wyckoffPositions(key: PointGroupKey, options?: SettingOptions): 
   if (!result) {
     const ops = operations(key, { setting });
     result = Object.freeze(
-      printedRows(key, setting)
+      storedRows(key, setting)
         .filter(([letter]) => letter !== 'o')
         .map(([letter, multiplicity, site, coordinates, millerIndices]) => {
           const stab = siteSymmetryOf(ops, representativeFace(key, setting, millerIndices).cartesian);

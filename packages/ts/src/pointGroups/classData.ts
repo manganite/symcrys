@@ -3,8 +3,8 @@
  * symbols, and the operations as ITA prints them, integer matrices W in the conventional basis
  * (x̃ = W·x), in ITA's order, built from ITA's selected generators. The Cartesian matrices are
  * derived, B·W·B⁻¹. Nothing here is derived from the Birss frame: the source is ITA's selected
- * generators (5th ed., Part 7; `itaOrder.ts`); the general position of ITA 6th ed. Table 3.2.3.2 is
- * the print check (`itcData.reference.test.ts`).
+ * generators (5th ed., Part 7; `generatorData.ts`); the general position of ITA 6th ed. Table 3.2.3.2 is
+ * the print check (`classData.reference.test.ts`).
  *
  * A setting that ITA does not print with generators is the printed one in another basis: with
  * (a′, b′, c′) = (a, b, c)·P, W′ = P⁻¹·W·P (ITA 2016 eqs. (1.5.1.4), (1.5.1.5), p. 76). `2mm` and
@@ -12,7 +12,7 @@
  * cab turns Pmm2 into P2mm); their operations keep the order of the printed setting.
  *
  * Internal; read by pointGroups.ts and orbits.ts (#122). The settings are numbered by the rule of
- * #137 A4 (`ItcSetting.index`).
+ * #137 A4 (`ClassSetting.index`).
  */
 
 import { MAX_CLASS_ORDER } from '../tolerances.js';
@@ -21,10 +21,10 @@ import { crystalFamily, latticeBasis, type CrystalSystem } from '../lattice.js';
 import { IDENTITY as LINEAR_IDENTITY, inverse, multiply, snap, type Mat3 } from '../linalg.js';
 import type { PointGroupKey } from './keys.js';
 import { LATTICE_SYMMETRY_DIRECTIONS, type Uvw } from '../symmetryDirections.js';
-import { ITA_GENERATORS, type IntMat3 } from './itaOrder.js';
+import { SELECTED_GENERATORS, type IntMat3 } from './generatorData.js';
 
 /** One ITC setting of a class. */
-export interface ItcSetting {
+export interface ClassSetting {
   /**
    * 1-based, by the rule of #137 A4: the ITC default first; then monoclinic unique axis c (b is the
    * default); orthorhombic the orientations in the column order of ITA 2016 Table 1.5.4.4; the other
@@ -50,12 +50,12 @@ export interface ItcSetting {
 }
 
 /** A class with its crystal system and its ITC settings. */
-export interface ItcClass {
+export interface ClassData {
   readonly key: PointGroupKey;
   readonly crystalSystem: CrystalSystem;
   /** The Schoenflies symbol, as ITA Table 3.2.3.2 prints it. */
   readonly schoenflies: string;
-  readonly settings: readonly ItcSetting[];
+  readonly settings: readonly ClassSetting[];
 }
 
 /**
@@ -74,7 +74,7 @@ const SETTING_BCA: IntMat3 = [
   [0, 1, 0],
 ];
 
-const one = (index: number, short: string, full = short): ItcSetting => ({ index, short, full, isDefault: true });
+const one = (index: number, short: string, full = short): ClassSetting => ({ index, short, full, isDefault: true });
 
 /** A class with one setting. */
 const single = (
@@ -82,7 +82,7 @@ const single = (
   crystalSystem: CrystalSystem,
   schoenflies: string,
   full: string = key,
-): ItcClass => ({
+): ClassData => ({
   key,
   crystalSystem,
   schoenflies,
@@ -96,7 +96,7 @@ const single = (
  * The setting of a trigonal class with rhombohedral axes (ITA Table 3.2.3.2, pp. 753–759): the
  * symbol ITA prints there, the operations from ITA's generators of the R group in rhombohedral axes.
  */
-const rhombohedral = (index: number, short: string, full: string): ItcSetting => ({
+const rhombohedral = (index: number, short: string, full: string): ClassSetting => ({
   index,
   short,
   full,
@@ -112,7 +112,7 @@ const rhombohedral = (index: number, short: string, full: string): ItcSetting =>
  * monoclinic part of ITA 2016 Table 1.5.4.4 (p. 97) is that of unique axis b so carried (C121 →
  * B211, P1c1 → Pb11).
  */
-const monoclinic = (key: PointGroupKey, schoenflies: string): ItcClass => {
+const monoclinic = (key: PointGroupKey, schoenflies: string): ClassData => {
   const full = (position: number) => [0, 1, 2].map((i) => (i === position ? key : '1')).join(' ');
   return {
     key,
@@ -144,7 +144,7 @@ const pair = (
   standard: [string, string],
   other: [string, string],
   withRhombohedral?: [string, string],
-): ItcClass => {
+): ClassData => {
   const axes = crystalSystem === 'trigonal' ? ({ axes: 'hexagonal' } as const) : {};
   return {
     key,
@@ -159,7 +159,7 @@ const pair = (
 };
 
 /** The 32 classes in the order of `POINT_GROUP_KEYS`, with the ITC symbols of ITA Table 3.2.3.2 (headlines). */
-export const ITC_CLASSES: readonly ItcClass[] = [
+export const CLASSES: readonly ClassData[] = [
   single('1', 'triclinic', 'C1'),
   single('-1', 'triclinic', 'Ci'),
   monoclinic('2', 'C2'),
@@ -215,18 +215,18 @@ export const ITC_CLASSES: readonly ItcClass[] = [
   single('m-3m', 'cubic', 'Oh', '4/m -3 2/m'),
 ];
 
-const BY_KEY = new Map(ITC_CLASSES.map((c) => [c.key, c]));
+const BY_KEY = new Map(CLASSES.map((c) => [c.key, c]));
 
 /** The class data of a key. */
-export function itcClass(key: PointGroupKey): ItcClass {
+export function classData(key: PointGroupKey): ClassData {
   const c = BY_KEY.get(key);
   if (!c) throw new RangeError(`Unknown point group key: ${shown(key)}`);
   return c;
 }
 
 /** The setting of a class with this index. */
-export function itcSetting(key: PointGroupKey, index: number): ItcSetting {
-  const s = itcClass(key).settings.find((x) => x.index === index);
+export function classSettingData(key: PointGroupKey, index: number): ClassSetting {
+  const s = classData(key).settings.find((x) => x.index === index);
   if (!s) throw new RangeError(`Point group ${key} has no setting ${index}`);
   return s;
 }
@@ -258,10 +258,10 @@ function iinverse(m: IntMat3): IntMat3 {
 const transform = (w: IntMat3, p: IntMat3): IntMat3 => imul(imul(iinverse(p), w), p);
 
 /** ITA's selected generators of a setting, or those of the printed setting it comes from, carried by P. */
-export function itcLatticeGenerators(key: PointGroupKey, index: number): readonly IntMat3[] {
-  const s = itcSetting(key, index);
-  if (s.from) return itcLatticeGenerators(key, s.from.index).map((w) => transform(w, s.from!.basis));
-  const gens = ITA_GENERATORS[`${key}|${s.full}${s.axes === 'rhombohedral' ? '|rhombohedral' : ''}`];
+export function settingLatticeGenerators(key: PointGroupKey, index: number): readonly IntMat3[] {
+  const s = classSettingData(key, index);
+  if (s.from) return settingLatticeGenerators(key, s.from.index).map((w) => transform(w, s.from!.basis));
+  const gens = SELECTED_GENERATORS[`${key}|${s.full}${s.axes === 'rhombohedral' ? '|rhombohedral' : ''}`];
   if (!gens) throw new Error(`No ITA generators for ${key} setting ${index}`);
   return gens;
 }
@@ -273,17 +273,17 @@ const operationCache = new Map<string, readonly IntMat3[]>();
  * the group H generated so far by the cosets gH, g²H, … until a power of g lies in H (ITA 5th ed.,
  * § 2.2.11 (iv), p. 27; § 8.3.5, p. 737). A setting carried from a printed one keeps its order.
  */
-export function itcLatticeOperations(key: PointGroupKey, index: number): readonly IntMat3[] {
+export function settingLatticeOperations(key: PointGroupKey, index: number): readonly IntMat3[] {
   const cacheKey = `${key}#${index}`;
   let ops = operationCache.get(cacheKey);
   if (!ops) {
-    const s = itcSetting(key, index);
+    const s = classSettingData(key, index);
     if (s.from) {
-      ops = itcLatticeOperations(key, s.from.index).map((w) => transform(w, s.from!.basis));
+      ops = settingLatticeOperations(key, s.from.index).map((w) => transform(w, s.from!.basis));
     } else {
       const has = (list: readonly IntMat3[], w: IntMat3) => list.some((x) => iequal(x, w));
       const list: IntMat3[] = [LINEAR_IDENTITY];
-      for (const g of itcLatticeGenerators(key, index)) {
+      for (const g of settingLatticeGenerators(key, index)) {
         const h = list.slice();
         for (let power = g; !has(h, power); power = imul(power, g)) {
           if (list.length > MAX_CLASS_ORDER)
@@ -323,20 +323,20 @@ const RHOMBOHEDRAL_IN_HEXAGONAL: Mat3 = [
  * point operations do not depend on the cell, and those of the Miller indices only through it
  * (docs/conventions.md, "Cartesian frame").
  */
-export function itcBasis(key: PointGroupKey, index: number): Mat3 {
-  const family = crystalFamily(itcClass(key).crystalSystem);
+export function settingBasis(key: PointGroupKey, index: number): Mat3 {
+  const family = crystalFamily(classData(key).crystalSystem);
   if (family === 'monoclinic' || family === 'triclinic') return LINEAR_IDENTITY;
   const b = latticeBasis(family);
-  return itcSetting(key, index).axes === 'rhombohedral' ? multiply(b, RHOMBOHEDRAL_IN_HEXAGONAL) : b;
+  return classSettingData(key, index).axes === 'rhombohedral' ? multiply(b, RHOMBOHEDRAL_IN_HEXAGONAL) : b;
 }
 
 /**
  * The symmetry directions of a setting, per position of its full symbol (ITA Table 2.1.3.1): those
  * of its family, and for rhombohedral axes [111]; [1-10], [01-1], [-101].
  */
-export function itcSymmetryDirections(key: PointGroupKey, index: number): readonly (readonly Uvw[])[] {
-  if (itcSetting(key, index).axes === 'rhombohedral') return RHOMBOHEDRAL_DIRECTIONS;
-  return LATTICE_SYMMETRY_DIRECTIONS[crystalFamily(itcClass(key).crystalSystem)];
+export function settingSymmetryDirections(key: PointGroupKey, index: number): readonly (readonly Uvw[])[] {
+  if (classSettingData(key, index).axes === 'rhombohedral') return RHOMBOHEDRAL_DIRECTIONS;
+  return LATTICE_SYMMETRY_DIRECTIONS[crystalFamily(classData(key).crystalSystem)];
 }
 
 const RHOMBOHEDRAL_DIRECTIONS: readonly (readonly Uvw[])[] = Object.freeze(
@@ -350,21 +350,21 @@ const RHOMBOHEDRAL_DIRECTIONS: readonly (readonly Uvw[])[] = Object.freeze(
   ].map((dirs) => Object.freeze(dirs.map((d) => Object.freeze(d) as unknown as Uvw))),
 );
 
-/** W of a setting as a Cartesian matrix B·W·B⁻¹ in the basis `itcBasis`, snapped to the exact values. */
+/** W of a setting as a Cartesian matrix B·W·B⁻¹ in the basis `settingBasis`, snapped to the exact values. */
 function cartesianOf(w: IntMat3, basis: Mat3): Mat3 {
   return snap(multiply(multiply(basis, w as unknown as Mat3), inverse(basis)));
 }
 
 /** The operations of a setting as Cartesian matrices, in ITA's order. */
-export function itcCartesianOperations(key: PointGroupKey, index: number): readonly Mat3[] {
-  const basis = itcBasis(key, index);
-  return itcLatticeOperations(key, index).map((w) => cartesianOf(w, basis));
+export function settingCartesianOperations(key: PointGroupKey, index: number): readonly Mat3[] {
+  const basis = settingBasis(key, index);
+  return settingLatticeOperations(key, index).map((w) => cartesianOf(w, basis));
 }
 
 /** ITA's selected generators of a setting as Cartesian matrices, in printed order. */
-export function itcCartesianGenerators(key: PointGroupKey, index: number): readonly Mat3[] {
-  const basis = itcBasis(key, index);
-  return itcLatticeGenerators(key, index).map((w) => cartesianOf(w, basis));
+export function settingCartesianGenerators(key: PointGroupKey, index: number): readonly Mat3[] {
+  const basis = settingBasis(key, index);
+  return settingLatticeGenerators(key, index).map((w) => cartesianOf(w, basis));
 }
 
 /**
@@ -373,9 +373,13 @@ export function itcCartesianGenerators(key: PointGroupKey, index: number): reado
  * exists: time reversal is then a homomorphism onto {1, 1'}, and the flags fix it, if they are
  * consistent. Exact, on the integer matrices.
  */
-export function itcTimeReversal(key: PointGroupKey, index: number, flags: readonly boolean[]): boolean[] | undefined {
-  const ops = itcLatticeOperations(key, index);
-  const gens = itcLatticeGenerators(key, index);
+export function settingTimeReversal(
+  key: PointGroupKey,
+  index: number,
+  flags: readonly boolean[],
+): boolean[] | undefined {
+  const ops = settingLatticeOperations(key, index);
+  const gens = settingLatticeGenerators(key, index);
   if (flags.length !== gens.length) throw new RangeError(`${key} setting ${index} has ${gens.length} generators`);
   const indexOf = (w: IntMat3) => ops.findIndex((x) => iequal(x, w));
   const parity: (boolean | undefined)[] = ops.map((_, i) => (i === 0 ? false : undefined));

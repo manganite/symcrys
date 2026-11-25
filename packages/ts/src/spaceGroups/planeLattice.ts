@@ -15,7 +15,11 @@ import {
   type PlanePointGroupKey,
 } from './planePointGroups.js';
 
-/** A Bravais lattice of the plane, by its symbol in ITA Table 2.1.1.1: family symbol and centring. */
+/**
+ * A Bravais lattice of the plane, by its ITA symbol: family symbol and centring.
+ *
+ * @remarks Source: ITA (2016), Table 2.1.1.1, p. 143.
+ */
 export type PlaneBravaisLattice = 'mp' | 'op' | 'oc' | 'tp' | 'hp';
 
 /** A parameter of a plane cell: the edge lengths a, b and the angle γ between them. */
@@ -27,15 +31,27 @@ export interface PlaneFixedAngles {
   readonly gamma?: number;
 }
 
-/** The restrictions on the cell parameters of a crystal system of the plane (ITA Table 2.1.1.1). */
+/**
+ * The restrictions on the cell parameters of a crystal system of the plane.
+ *
+ * @remarks Source: ITA (2016), Table 2.1.1.1, p. 143.
+ */
 export interface CellRestrictions {
-  /** The parameters to be determined (column "Parameters to be determined"), e.g. `['a']` for square. */
+  /**
+   * The parameters to be determined, e.g. `['a']` for square.
+   *
+   * @remarks Source: the column "Parameters to be determined" of ITA (2016), Table 2.1.1.1.
+   */
   readonly parameters: readonly PlaneCellParameter[];
   /** Pairs of parameters that are equal: `[['a', 'b']]` for square and hexagonal. */
   readonly equal: readonly (readonly PlaneCellParameter[])[];
   /** The angles fixed to a value, in degrees: gamma 90 for rectangular and square, 120 for hexagonal; none for oblique. */
   readonly angles: PlaneFixedAngles;
-  /** The angles conventionally taken non-acute (≥ 90°), the footnote § of the table: `['gamma']` for oblique. */
+  /**
+   * The angles conventionally taken non-acute (≥ 90°): `['gamma']` for oblique.
+   *
+   * @remarks Source: the footnote § of ITA (2016), Table 2.1.1.1.
+   */
   readonly nonAcute: readonly PlaneCellParameter[];
 }
 

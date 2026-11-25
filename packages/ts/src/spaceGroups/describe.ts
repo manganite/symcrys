@@ -11,9 +11,10 @@ import { determinant, dimensionOf, trace, type ExactOperation, type IntMatrix } 
 import { ZERO, add, multiply, rational, scale, type Rational } from './rational.js';
 
 /**
- * What an operation of a plane group or plane point group is, as ITA names the operations (ITA 2016
- * Table 2.1.2.1, p. 145): `'reflection'` (in a line, as `'reflection'` of the point groups) and
- * `'glide-reflection'`.
+ * What an operation of a plane group or plane point group is, in ITA's names of the operations:
+ * `'reflection'` (in a line, as `'reflection'` of the point groups) and `'glide-reflection'`.
+ *
+ * @remarks Source: ITA (2016), Table 2.1.2.1, p. 145.
  */
 export type PlaneOperationKind = 'identity' | 'translation' | 'rotation' | 'reflection' | 'glide-reflection';
 
