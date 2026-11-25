@@ -89,7 +89,7 @@ def test_every_key_of_a_group_is_a_str() -> None:
 
 def test_the_two_modules_have_the_same_names() -> None:
     only_classes = {"magnetic", "plane", "CRYSTAL_FORM_TYPES", "crystal_forms", "wyckoff_position", "wyckoff_positions"}
-    only_classes |= {"CrystalForm", "CrystalFormType", "WyckoffPosition"}
+    only_classes |= {"CrystalForm", "CrystalFormType", "CrystalFormTypeKey", "WyckoffPosition"}
     only_magnetic = {"PointGroupType", "TimeParity"}
     assert set(symcrys.__all__) - only_classes == set(magnetic.__all__) - only_magnetic
     assert symcrys.magnetic is magnetic and magnetic.VERSION == symcrys.VERSION == symcrys.__version__
@@ -251,7 +251,7 @@ def test_named_tensor_properties() -> None:
     assert symcrys.allowed_properties("-3") == ["ferroaxial"]
     assert symcrys.tensor_form("-3", "ferroaxial")["parameters"].tolist() == [[2]]
     piezo = symcrys.TENSOR_PROPERTIES["piezoelectric"]
-    assert piezo["spec"] == SHG and set(piezo) == {"spec", "description", "source"}
+    assert piezo["spec"] == SHG and set(piezo) == {"spec", "description"}
     assert magnetic.TENSOR_PROPERTIES["piezoelectric"]["spec"] == MAGNETIC_SHG
     assert symcrys.allowed_properties("432") == ["gyrotropic"]
     assert magnetic.allowed_properties("432") == ["gyrotropic", "magnetoelectric"]

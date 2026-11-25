@@ -241,10 +241,17 @@ Carried over from birss-app, where the calculations come from.
   API; "Point groups" below) and `src/plane.ts` (`symcrys/plane`, the plane groups; "Plane groups"
   below). Everything else is internal and may change freely. The API reports in `packages/ts/api/`
   (#56) show it; a PR that changes them changes the public API.
-- **No print metadata** (Thomas, 2026-11-25, #120): the API gives no page numbers, figure
-  references or printed texts of a table (captions, statements, the text of a column); what comes
-  from print is named in the API's own system of names, and its source is given in the code (TSDoc
-  `@remarks` or a comment) and in `references/`.
+- **Not a clone of ITC** (Thomas, 2026-11-25, #120, #194; birss-app as the model): symcrys is a
+  product of its own that shows its roots and print anchors but presents crystallographic data and
+  methods in its own form. No function, parameter, field or identifier, internal ones included, is
+  named after a table number, a page or "printed", and no result carries a citation, a page, a
+  figure reference, a row number of a table or a printed text (captions, statements, the text of a
+  column). The usual crystallographic notation stays as it is and needs no alternative (point-group
+  symbols, Wyckoff letters, coordinates such as `x,-y,z`, Miller indices `h,0,l`, names of forms,
+  group numbers, the properties of a group or lattice in their usual notation). What can be derived
+  may be derived; data need not be transcriptions of tables. The source is given in the code (TSDoc
+  `@remarks` or a comment), in `docs/` and in `references/`; test-only code may be named after the
+  print anchor it checks.
 - **Plain data at the API boundary** (maintainer, 2026-11-19, #30): exported functions take and
   return numbers, strings, booleans, arrays and plain objects; no classes, no functions, no `Map` or
   `Set` as arguments or results. A thin layer in another language (Python, #30) can then pass
@@ -553,8 +560,8 @@ The conventions themselves are in `docs/conventions.md`; here, what was decided 
 operations }`; `undefined`, never `null` (`zoneAxis`); every result frozen and `readonly` (tested
   over every function of the three entry points; `residualOperations` freezes its list, not the
   caller's operations); parameter names `direction1`, `direction2`, `plane1`, `plane2`, `symbol`; the
-  origin of a plane group with its positions spaced as printed (`at 2 1 g`; read again from the
-  page images). The Wyckoff `coordinates` of the point groups are the printed list too (Thomas,
+  origin of a plane group as its site symmetry (`2..` for `p2mg`), derived since #194 (Thomas,
+  2026-11-25, asked with options). The Wyckoff `coordinates` of the point groups are the printed list too (Thomas,
   2026-11-23: transcribed in full from ITA Table 3.2.3.2; the second part of step 7d).
 - **Names of ITA** (#137 C1, C2, decided by Thomas on 2026-11-22; #121 step 7c): the suffix `…Of`
   means "of a list of operations" and only that: `siteSymmetryOf(operations, direction)` beside
@@ -668,8 +675,9 @@ operations }`; `undefined`, never `null` (`zoneAxis`); every result frozen and `
   symmetry and Wyckoff positions").
 - **Crystal forms, group identification, orbits** (maintainer, 2026-11-21, #24 items 2 and 3;
   asked before implementation). **Data of a form:** a table of the 47 forms of ITA Table 3.2.1.3
-  (`CRYSTAL_FORM_TYPES`: number, English name as printed, number of faces, eigensymmetry), to which
-  the forms of a class refer by number; the English names are terms of the print source, like the
+  (`CRYSTAL_FORM_TYPES`, by a key made of the first usual name, `'tetragonal-prism'`, since #194:
+  English names, number of faces, eigensymmetry), to which the forms of a class refer by that key;
+  the English names are terms of the print source, like the
   symbols, while names in other languages (stereography's German ones) and the link ids stay in the
   apps; point forms are left out. Crystal forms are given for the crystal classes only, like the
   Wyckoff positions they belong to. **Names**, in the `…Of` scheme: `crystalForms(key, { setting })`;
@@ -721,7 +729,7 @@ quantities, { tolerance })`, in all three entry points (3 × 3, and 2 × 2 in `s
   Table 1.5.1.1 (`references/itc/vol-a-2016-1.5-transformations.md`); the Python generator takes
   two object parameters of one signature, and a list of operations as a field of one.
 - **Cells of a lattice** (#120; Thomas, 2026-11-25, asked with a design and a recommendation, after
-  rejecting a list of the printed rows with their pages and texts, "No print metadata" above):
+  rejecting a list of the printed rows with their pages and texts, "Not a clone of ITC" above):
   `cellTransformation(bravaisLattice, fromCell, toCell)` gives `{ linearPart }`, P from one named cell
   to another, for `changeOfCoordinates`; the change back swaps the cells. The Bravais lattice is
   ITA's symbol (Table 1.3.4.1), a cell is named by the fields of `Cell`, in the words the API has
@@ -912,7 +920,8 @@ The conventions are in `docs/conventions.md` ("Tensors"); here, what was decided
   clear yet (#19).
 - **Named tensor properties, one generic call** (maintainer, 2026-11-19, #41; names asked before
   implementation, 2026-11-20): a property that is the question whether a tensor is allowed is an
-  entry of the table `TENSOR_PROPERTIES` (name → `TensorSpec`, description, print source), not a
+  entry of the table `TENSOR_PROPERTIES` (name → `TensorSpec`, description; the source in the code
+  and the docs since #194), not a
   function of its own, so a new property is a line of data, and the same call serves a key and any
   list of operations: `allowsProperty(key, name)`, `allowedProperties(key)`,
   `allowsPropertyOf(operations, name)`, `allowedPropertiesOf(operations)`; `tensorForm` and

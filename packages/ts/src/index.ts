@@ -57,7 +57,7 @@ export { LATTICE_SYMMETRY_DIRECTIONS, type Uvw } from './symmetryDirections.js';
 export type { Axis, DirectionElements, OperationKind, SymmetryDirection } from './pointGroups/elements.js';
 export type { SiteSymmetry } from './siteSymmetry.js';
 export type { Hkl, WyckoffPosition } from './pointGroups/wyckoff.js';
-export type { CrystalForm, CrystalFormType } from './pointGroups/crystalForms.js';
+export type { CrystalForm, CrystalFormType, CrystalFormTypeKey } from './pointGroups/crystalForms.js';
 export type {
   DirectionIndices,
   DirectionOrbitEntry,

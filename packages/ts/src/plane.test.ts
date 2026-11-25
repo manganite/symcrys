@@ -159,7 +159,7 @@ describe('plain numbers at the API', () => {
       bravaisLattice: 'oc',
       pattersonSymmetry: 'c2mm',
       centring: [[0.5, 0.5]],
-      origin: 'at 2 m m',
+      origin: '2mm',
     });
     const ops = plane.operations('p3');
     expect(ops[1]).toEqual({

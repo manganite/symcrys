@@ -84,7 +84,7 @@ export function zoneAxis(h1: Vec3, h2: Vec3): Vec3 | undefined {
   return deepFreeze(reduceIndices(c) as unknown as Vec3);
 }
 
-/** The values of h, k, l substituted into printed Miller indices. */
+/** The values of h, k, l substituted into symbolic Miller indices. */
 export interface MillerValues {
   /** The value of h, an integer. */
   readonly h?: number;
@@ -95,11 +95,11 @@ export interface MillerValues {
 }
 
 /**
- * One printed index as a number: a term (`h`, `-2h`, `0`, `1`) or a sum of terms (`-h-k`, `2k-h`, as
- * printed for rhombohedral axes); `i` is −(h + k). `fail` makes the error: a RangeError for a
+ * One symbolic index as a number: a term (`h`, `-2h`, `0`, `1`) or a sum of terms (`-h-k`, `2k-h`, as
+ * written for rhombohedral axes); `i` is −(h + k). `fail` makes the error: a RangeError for a
  * caller's string, a plain Error for the transcribed data.
  */
-function printedIndex(component: string, values: MillerValues, fail: (message: string) => Error): number {
+function indexValue(component: string, values: MillerValues, fail: (message: string) => Error): number {
   // A term is a signed number, or a signed letter with an optional factor; terms after the first
   // begin with their sign, so that run-together terms (`hk`, `h2`) are unreadable.
   if (!/^-?(\d+|\d*[hkil])([+-](\d+|\d*[hkil]))*$/.test(component)) throw fail(`Unreadable Miller index: ${component}`);
@@ -123,35 +123,35 @@ function printedIndex(component: string, values: MillerValues, fail: (message: s
 }
 
 /**
- * Printed Miller indices, three or four (Bravais–Miller, hexagonal axes) separated by commas, as
+ * Symbolic Miller indices, three or four (Bravais–Miller, hexagonal axes) separated by commas, as
  * three numbers (hkl) with the given values of h, k, l; four lose i, which must be −(h + k). Internal:
  * `fail` makes the error.
  */
-export function substituteMillerIndices(printed: string, values: MillerValues, fail: (message: string) => Error): Vec3 {
-  const components = printed.split(',').map((c) => c.trim());
+export function substituteMillerIndices(indices: string, values: MillerValues, fail: (message: string) => Error): Vec3 {
+  const components = indices.split(',').map((c) => c.trim());
   // i is the third of four indices; ITA prints no i among three.
   if (components.length === 3 && components.some((c) => c.includes('i'))) {
-    throw fail(`Unreadable Miller indices: ${printed} (i among three indices)`);
+    throw fail(`Unreadable Miller indices: ${indices} (i among three indices)`);
   }
-  const parts = components.map((c) => printedIndex(c, values, fail) + 0);
+  const parts = components.map((c) => indexValue(c, values, fail) + 0);
   if (parts.length === 3) return [parts[0], parts[1], parts[2]];
   if (parts.length === 4 && parts[2] === -(parts[0] + parts[1])) return [parts[0], parts[1], parts[3]];
-  throw fail(`Unreadable Miller indices: ${printed}`);
+  throw fail(`Unreadable Miller indices: ${indices}`);
 }
 
 /**
- * The face (hkl) of printed Miller indices with the caller's values of h, k, l substituted (#137 G3):
- * the printed `h,h,-2h,l` with h = 3 and l = 1 gives (3, 3, 1). The printed strings are those of
- * `wyckoffPositions` and `crystalForms` (`millerIndices`), as ITA prints them: three indices, or four
+ * The face (hkl) of symbolic Miller indices with the caller's values of h, k, l substituted (#137 G3):
+ * `h,h,-2h,l` with h = 3 and l = 1 gives (3, 3, 1). The indices are those of `wyckoffPositions` and
+ * `crystalForms` (`millerIndices`), in the usual notation: three indices, or four
  * for hexagonal axes, of which i = −(h + k) is dropped, so that the face can be passed to `orbit`
  * (`planeToFourIndices` gives the four). Each value is an integer; only the letters the string uses
  * are needed. The face is not reduced, and whether the values keep it in its position (a general
  * face (hkl) with h = k lies on a special one) is the caller's choice. Throws a RangeError for an
  * unreadable string, a missing or non-integer value, an unknown key and the face (000).
  */
-export function millerIndices(printed: string, values: MillerValues): Vec3 {
-  if (typeof printed !== 'string')
-    throw new RangeError(`millerIndices: printed Miller indices expected, not ${shown(printed)}`);
+export function millerIndices(indices: string, values: MillerValues): Vec3 {
+  if (typeof indices !== 'string')
+    throw new RangeError(`millerIndices: Miller indices such as 'h,0,l' expected, not ${shown(indices)}`);
   if (values === null || typeof values !== 'object' || Array.isArray(values)) {
     throw new RangeError(`millerIndices: values { h, k, l } expected, not ${shown(values)}`);
   }
@@ -168,8 +168,8 @@ export function millerIndices(printed: string, values: MillerValues): Vec3 {
     own[letter] = v as number;
   }
   // Spaces around the commas are allowed; a space inside an index is unreadable.
-  const hkl = substituteMillerIndices(printed, own, (m) => new RangeError(`millerIndices: ${m}`));
+  const hkl = substituteMillerIndices(indices, own, (m) => new RangeError(`millerIndices: ${m}`));
   if (hkl.every((x) => x === 0))
-    throw new RangeError(`millerIndices: ${printed} gives the face (000) with ${shown(values)}`);
+    throw new RangeError(`millerIndices: ${indices} gives the face (000) with ${shown(values)}`);
   return deepFreeze(hkl);
 }

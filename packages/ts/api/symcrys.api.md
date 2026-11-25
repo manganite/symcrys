@@ -123,7 +123,7 @@ export interface CoordinateTransformation {
 }
 
 // @public
-export const CRYSTAL_FORM_TYPES: readonly CrystalFormType[];
+export const CRYSTAL_FORM_TYPES: Readonly<Record<CrystalFormTypeKey, CrystalFormType>>;
 
 // @public
 export type CrystalFamily = 'triclinic' | 'monoclinic' | 'orthorhombic' | 'tetragonal' | 'hexagonal' | 'cubic';
@@ -135,7 +135,7 @@ export function crystalFamily(system: CrystalSystem): CrystalFamily;
 export interface CrystalForm {
     readonly basic: boolean;
     readonly condition?: string;
-    readonly formType: number;
+    readonly formType: CrystalFormTypeKey;
     readonly letter: string;
     readonly millerIndices: string;
     readonly multiplicity: number;
@@ -150,8 +150,10 @@ export interface CrystalFormType {
     readonly eigensymmetry: string;
     readonly faces: number;
     readonly name: string;
-    readonly number: number;
 }
+
+// @public
+export type CrystalFormTypeKey = 'pedion' | 'pinacoid' | 'sphenoid' | 'rhombic-disphenoid' | 'rhombic-pyramid' | 'rhombic-prism' | 'rhombic-dipyramid' | 'tetragonal-pyramid' | 'tetragonal-disphenoid' | 'tetragonal-prism' | 'tetragonal-trapezohedron' | 'ditetragonal-pyramid' | 'tetragonal-scalenohedron' | 'tetragonal-dipyramid' | 'ditetragonal-prism' | 'ditetragonal-dipyramid' | 'trigonal-pyramid' | 'trigonal-prism' | 'trigonal-trapezohedron' | 'ditrigonal-pyramid' | 'rhombohedron' | 'ditrigonal-prism' | 'hexagonal-pyramid' | 'trigonal-dipyramid' | 'hexagonal-prism' | 'ditrigonal-scalenohedron' | 'hexagonal-trapezohedron' | 'dihexagonal-pyramid' | 'ditrigonal-dipyramid' | 'dihexagonal-prism' | 'hexagonal-dipyramid' | 'dihexagonal-dipyramid' | 'tetrahedron' | 'cube' | 'octahedron' | 'pentagon-tritetrahedron' | 'pentagon-dodecahedron' | 'tetragon-tritetrahedron' | 'trigon-tritetrahedron' | 'rhomb-dodecahedron' | 'didodecahedron' | 'trigon-trioctahedron' | 'tetragon-trioctahedron' | 'pentagon-trioctahedron' | 'hexatetrahedron' | 'tetrahexahedron' | 'hexaoctahedron';
 
 // @public
 export type CrystalSystem = 'triclinic' | 'monoclinic' | 'orthorhombic' | 'tetragonal' | 'trigonal' | 'hexagonal' | 'cubic';
@@ -291,7 +293,7 @@ export type Mat3 = readonly [Vec3, Vec3, Vec3];
 export function metricTensor(basis: Mat3): Mat3;
 
 // @public
-export function millerIndices(printed: string, values: MillerValues): Vec3;
+export function millerIndices(indices: string, values: MillerValues): Vec3;
 
 // @public
 export interface MillerValues {

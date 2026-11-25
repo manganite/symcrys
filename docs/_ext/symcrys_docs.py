@@ -72,7 +72,7 @@ class TensorProperties(SphinxDirective):
         import symcrys
         from symcrys import magnetic
 
-        header = ["Name", "Tensor", "In ``symcrys``", "Description", "Source"]
+        header = ["Name", "Tensor", "In ``symcrys``", "Description"]
         rows = []
         for name, prop in magnetic.TENSOR_PROPERTIES.items():
             spec = prop["spec"]
@@ -81,14 +81,14 @@ class TensorProperties(SphinxDirective):
                 f"intrinsic {spec['intrinsic']}"
             )
             here = "yes" if name in symcrys.TENSOR_PROPERTIES else "no (magnetic API only)"
-            rows.append([f"``'{name}'``", kind, here, prop["description"], prop["source"]])
+            rows.append([f"``'{name}'``", kind, here, prop["description"]])
         return self._table(header, rows)
 
     def _table(self, header: list[str], rows: list[list[str]]) -> list[nodes.Node]:
         table = nodes.table(classes=["tensor-properties"])
         group = nodes.tgroup(cols=len(header))
         table += group
-        for width in (14, 18, 12, 30, 26):
+        for width in (16, 24, 14, 46):
             group += nodes.colspec(colwidth=width)
         head = nodes.thead()
         group += head

@@ -239,9 +239,11 @@ def form_number(name: str) -> int:
 
 def test_ita_3213_the_47_forms() -> None:
     assert FORM_TYPES[0] == ["No.", "Crystal form", "Faces", "Eigensymmetry"]
-    assert [[str(t["number"]), t["name"], str(t["faces"]), t["eigensymmetry"]] for t in symcrys.CRYSTAL_FORM_TYPES] == (
-        FORM_TYPES[1:]
-    )
+    # The kinds by key, in the printed order; the key is the first printed name, lower case, hyphens.
+    rows = [[t["name"], str(t["faces"]), t["eigensymmetry"]] for t in symcrys.CRYSTAL_FORM_TYPES.values()]
+    assert rows == [r[1:] for r in FORM_TYPES[1:]]
+    keys = [r[1].replace(" or ", ",").split(",")[0].strip().lower().replace(" ", "-") for r in FORM_TYPES[1:]]
+    assert list(symcrys.CRYSTAL_FORM_TYPES) == keys
 
 
 def _setting(short: str, axes: str) -> tuple[str, int]:
@@ -267,17 +269,19 @@ def test_ita_3232_face_forms(entry: tuple[str, str]) -> None:
     assert FACE_FORMS[0] == ["Short", "Axes", "Page", "Letter", "Form", "Name", "Miller indices", "Condition"]
     key, setting = _setting(*entry)
     printed = [
-        [r[3], r[4] == "basic", form_number(r[5]), r[6], re.sub(r"abs\((\w)\)", r"|\1|", r[7])]
+        [r[3], r[4] == "basic", FORM_TYPES[form_number(r[5])][1], r[6], re.sub(r"abs\((\w)\)", r"|\1|", r[7])]
         for r in FACE_FORMS[1:]
         if (r[0], r[1]) == entry
     ]
     forms = symcrys.crystal_forms(key, setting=setting)
-    assert [[f["letter"], f["basic"], f["form_type"], f["miller_indices"], f.get("condition", "")] for f in forms] == (
-        printed
-    )
+    kinds = symcrys.CRYSTAL_FORM_TYPES
+    assert [
+        [f["letter"], f["basic"], kinds[f["form_type"]]["name"], f["miller_indices"], f.get("condition", "")]
+        for f in forms
+    ] == printed
     for f in forms:
         assert "representative" not in f
-        faces = symcrys.CRYSTAL_FORM_TYPES[f["form_type"] - 1]["faces"]
+        faces = symcrys.CRYSTAL_FORM_TYPES[f["form_type"]]["faces"]
         assert f["multiplicity"] == faces
 
 

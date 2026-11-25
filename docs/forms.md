@@ -20,8 +20,9 @@ number of faces, eigensymmetry). The rules and the print anchors are in
 
 ```
 
-A form names its kind by its number in `CRYSTAL_FORM_TYPES`; an application that shows the names
-in another language keeps its own table by these numbers.
+A form names its kind by its key in `CRYSTAL_FORM_TYPES` (`'tetragonal-prism'`), which gives the
+usual English names, the number of faces and the eigensymmetry; an application that shows the names
+in another language keeps its own table by these keys.
 
 ## Python
 
@@ -29,11 +30,11 @@ in another language keeps its own table by these numbers.
 import symcrys
 
 for f in symcrys.crystal_forms("-43m"):
-    form = symcrys.CRYSTAL_FORM_TYPES[f["form_type"] - 1]
+    form = symcrys.CRYSTAL_FORM_TYPES[f["form_type"]]
     print(f["letter"], f["basic"], f["miller_indices"], f.get("condition", ""), form["name"])
 ```
 
-The Miller indices of a form are printed with letters. `miller_indices` substitutes values of your
+The Miller indices of a form are written with letters. `miller_indices` substitutes values of your
 choice, and `face_normal` gives the pole of that face in a cell, e.g. to draw it or to compute its
 site symmetry (the cell decides the pole: for monoclinic and triclinic crystals give the real cell,
 `lattice_from_parameters`):

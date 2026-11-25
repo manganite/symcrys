@@ -136,8 +136,8 @@ class PlaneGroup(TypedDict):
     none.
     """
     origin: str
-    """The block "Origin" as ITA prints it, its positions spaced as printed, e.g. ``'at 2 m m'``, ``'at
-    2 1 g'``.
+    """The site symmetry of the origin, as an oriented site-symmetry symbol: ``'2mm'`` for ``p2mm``,
+    ``'2..'`` for ``p2mg``, ``'1'`` for ``p1`` and ``pg``.
     """
 
 

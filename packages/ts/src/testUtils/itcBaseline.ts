@@ -206,6 +206,12 @@ const withRepresentative =
     representative: representativeFace(key as PointGroupKey, setting, record.millerIndices, record.condition),
   });
 
+/** The number of a form type in the shape of the pins (before #194): its place among the keys, from 1. */
+const FORM_NUMBER = new Map(Object.keys(classes.CRYSTAL_FORM_TYPES).map((k, i) => [k, i + 1]));
+
+/** A crystal form in the shape of the pins (before #194): `formType` as a number. */
+const oldForm = <F extends { readonly formType: string }>(f: F) => ({ ...f, formType: FORM_NUMBER.get(f.formType) });
+
 /** A point group in the shape of the pins (before #121 step 7c): `chiral` for `enantiomorphic`. */
 const oldPointGroup = ({ enantiomorphic, ...rest }: { readonly enantiomorphic: boolean }) => ({
   ...rest,
@@ -332,7 +338,7 @@ function pointGroupPins(add: (id: string, f: () => unknown) => void, key: Magnet
       add(id('classes.describeOperations'), () => oldDescriptions(classes.describeOperations(key, options)));
       const old = withRepresentative(key, options.setting);
       add(id('classes.wyckoffPositions'), () => classes.wyckoffPositions(key, options).map((w) => old(oldWyckoff(w))));
-      add(id('classes.crystalForms'), () => classes.crystalForms(key, options).map(old));
+      add(id('classes.crystalForms'), () => classes.crystalForms(key, options).map((f) => old(oldForm(f))));
       for (const d of DIRECTIONS) {
         add(id(`classes.wyckoffPositionOf [${d}]`), () => old(oldWyckoff(classes.wyckoffPosition(key, d, options))));
       }
@@ -554,7 +560,9 @@ function generalPins(add: (id: string, f: () => unknown) => void): void {
   add('magnetic.pointGroups', () => magnetic.pointGroups().map(oldPointGroup));
   add('classes.isPointGroupKey', () => ['32', "321'", '-62m', 'x'].map((k) => classes.isPointGroupKey(k)));
   add('magnetic.isPointGroupKey', () => ['32', "321'", '-62m', 'x'].map((k) => magnetic.isPointGroupKey(k)));
-  add('CRYSTAL_FORM_TYPES', () => classes.CRYSTAL_FORM_TYPES);
+  add('CRYSTAL_FORM_TYPES', () =>
+    Object.entries(classes.CRYSTAL_FORM_TYPES).map(([, t], i) => ({ number: i + 1, ...t })),
+  );
   add('magnetic.TENSOR_PROPERTIES', () => oldProperties(magnetic.TENSOR_PROPERTIES));
   add('classes.TENSOR_PROPERTIES', () => oldProperties(classes.TENSOR_PROPERTIES));
   add('LATTICE_SYMMETRY_DIRECTIONS', () => classes.LATTICE_SYMMETRY_DIRECTIONS);

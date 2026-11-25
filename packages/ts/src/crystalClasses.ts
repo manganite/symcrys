@@ -38,7 +38,7 @@ import type {
 } from './tensors/tensorForm.js';
 import { deepFreeze } from './freeze.js';
 import type { ToleranceOptions } from './tolerances.js';
-import type { CrystalForm, CrystalFormType } from './pointGroups/crystalForms.js';
+import type { CrystalForm, CrystalFormType, CrystalFormTypeKey } from './pointGroups/crystalForms.js';
 import type {
   OperationDescription as MagneticOperationDescription,
   SymmetryDirection,
@@ -175,12 +175,11 @@ export const TENSOR_PROPERTIES = Object.freeze(
   Object.fromEntries(
     Object.entries(ALL_TENSOR_PROPERTIES)
       .filter(([, p]) => p.spec.timeParity === 'even')
-      .map(([name, { spec, description, source }]) => [
+      .map(([name, { spec, description }]) => [
         name,
         Object.freeze({
           spec: Object.freeze({ rank: spec.rank, kind: spec.kind, intrinsic: spec.intrinsic }),
           description,
-          source,
         }),
       ]),
   ),
@@ -600,12 +599,13 @@ export function orbitOf(
 // --- crystal forms ---------------------------------------------------------------------------------
 
 /**
- * The 47 crystal forms of ITA Table 3.2.1.3 (6th ed., pp. 724–726) with ITA's numbers, English
- * names, numbers of faces and eigensymmetries: `CRYSTAL_FORM_TYPES[n - 1]` is form n. Each
- * crystal form of `crystalForms` names its form by this number (docs/conventions.md, "Crystal
- * forms").
+ * The 47 kinds of crystal forms, by key (`'pedion'`, `'tetragonal-prism'`, …): their usual names,
+ * numbers of faces and eigensymmetries. Each form of `crystalForms` names its kind by this key
+ * (docs/conventions.md, "Crystal forms").
+ *
+ * @remarks The data are those of ITA (6th ed., 2016) Table 3.2.1.3, pp. 724–726.
  */
-export const CRYSTAL_FORM_TYPES: readonly CrystalFormType[] = forms.CRYSTAL_FORM_TYPES;
+export const CRYSTAL_FORM_TYPES: Readonly<Record<CrystalFormTypeKey, CrystalFormType>> = forms.CRYSTAL_FORM_TYPES;
 
 /**
  * The crystal forms of a crystal class, as ITA 6th ed. Table 3.2.3.2 prints them: for each Wyckoff

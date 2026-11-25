@@ -484,8 +484,7 @@ the caller's. "Not found" is `undefined`, never `null` (`findPointGroup`, `point
   numbered as ITA numbers it, then the same sequence with the centring translation, which ITA
   numbers (1) … again in its (1/2,1/2)+ set.
 - **Numbers count from 1** where ITA or symcrys numbers something: the `index` of a setting (1 for
-  the default; "Settings"), the `position` of a symmetry direction in the full symbol, `formType`
-  (ITA's number of the crystal form, 1 to 47, so `CRYSTAL_FORM_TYPES[formType - 1]`) and the
+  the default; "Settings"), the `position` of a symmetry direction in the full symbol and the
   `number` of a plane group.
 - **Miller indices and lattice directions** are three indices, (hkl) and [uvw], also for hexagonal
   axes (two in `symcrys/plane`). Four indices, (hkil) and [UVTW], appear in the conversions
@@ -776,11 +775,12 @@ multiplicities and oriented site-symmetry symbols of all face positions agree wi
 A **crystal form** is a set of faces equivalent under a point group: the orbit of one face (hkl)
 (ITA 6th ed., § 3.2.1.2.2, p. 722). ITA distinguishes 47 forms by their number of faces and their
 **eigensymmetry**, the symmetry of the form as a polyhedron, and lists them in Table 3.2.1.3
-(pp. 724–726). symcrys exports this table as `CRYSTAL_FORM_TYPES`: number (1 to 47), English name as
-printed, number of faces, eigensymmetry as printed (`4/mmm`, `-62m`; `∞m` and `∞/mm` for pedion and
-pinacoid). Names in other languages, and the names an application derives from the generating group
-(sphenoid in 2, dome in m), are left to the applications, which look a form up by its number
-(maintainer, 2026-11-21, #24).
+(pp. 724–726). symcrys gives the 47 kinds as `CRYSTAL_FORM_TYPES`, by a key made of the first of
+their usual names in lower case, words joined by `-` (`'pedion'`, `'tetragonal-prism'`,
+`'rhomb-dodecahedron'`; Thomas, 2026-11-25, #194): the usual English names, the number of faces and
+the eigensymmetry (`4/mmm`, `-62m`; `∞m` and `∞/mm` for pedion and pinacoid). Names in other
+languages, and the names an application derives from the generating group (sphenoid in 2, dome in
+m), are left to the applications, which look a form up by its key (maintainer, 2026-11-21, #24).
 
 `crystalForms(key, { setting })` lists the forms of a crystal class as ITA 6th ed. Table 3.2.3.2
 prints them in its fifth column (pp. 745–769): by Wyckoff position, general position first, and for
@@ -798,7 +798,7 @@ tetragonal dipyramids of 422, (h0l) and (hhl)).
 | `multiplicity`  | number of faces, the multiplicity of the position                         |
 | `siteSymmetry`  | the oriented site-symmetry symbol of the position (the face symmetry)     |
 | `basic`         | true for the basic form of the position, false for a limiting form        |
-| `formType`      | the number of the form in `CRYSTAL_FORM_TYPES`                            |
+| `formType`      | the kind of the form, its key in `CRYSTAL_FORM_TYPES`                     |
 | `millerIndices` | ITA's first face of the form as printed, e.g. `h,0,l`, `1,1,-2,0`         |
 | `condition`     | the condition printed with the cubic forms (hhl), below; absent otherwise |
 
@@ -1101,18 +1101,18 @@ table prints a symbol class in parentheses where the frame is rotated.
 
 **Named properties.** A physical property that a group allows if and only if a tensor of a certain
 kind does not vanish has a name in `TENSOR_PROPERTIES`: name → kind of tensor (`spec`), what the
-tensor relates (`description`) and the print source of the definition (`source`).
+tensor relates (`description`). The source of each definition is in the last column below.
 
-| Name                | Tensor                                 | Property                                             |
-| ------------------- | -------------------------------------- | ---------------------------------------------------- |
-| `'pyroelectric'`    | rank 1, polar, even                    | spontaneous polarization                             |
-| `'ferroaxial'`      | rank 1, axial, even                    | ferroaxial (ferro-rotational) order: an axial vector |
-| `'piezoelectric'`   | rank 3, polar, even, symmetric in j, k | P_i = d_ijk T_jk                                     |
-| `'gyrotropic'`      | rank 2, axial, even, symmetric         | optical activity: the gyration tensor g_ij           |
-| `'ferromagnetic'`   | rank 1, axial, odd                     | spontaneous magnetization (also ferri-, weak ferro-) |
-| `'ferrotoroidic'`   | rank 1, polar, odd                     | spontaneous toroidal moment                          |
-| `'magnetoelectric'` | rank 2, axial, odd                     | linear magnetoelectric effect, P_i = α_ij H_j        |
-| `'piezomagnetic'`   | rank 3, axial, odd, symmetric in j, k  | M_i = Λ_ijk T_jk                                     |
+| Name                | Tensor                                 | Property                                             | Source                                                                                                                                                                                                                                                       |
+| ------------------- | -------------------------------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `'pyroelectric'`    | rank 1, polar, even                    | spontaneous polarization                             | ITC Vol. D (2013), § 1.1.4.4.2, p. 12; classes: ITA (2016) Table 3.2.2.1, p. 738                                                                                                                                                                             |
+| `'ferroaxial'`      | rank 1, axial, even                    | ferroaxial (ferro-rotational) order: an axial vector | Not in ITC: Hlinka, Privratska, Ondrejkovic & Janovec, Phys. Rev. Lett. 116, 177602 (2016); Gallego et al., Acta Cryst. A75, 438 (2019), p. 440 (axial toroidal moment, type eV); classes: Birss (1966), Tables 4a and 4c, pp. 56–58                         |
+| `'piezoelectric'`   | rank 3, polar, even, symmetric in j, k | P_i = d_ijk T_jk                                     | ITC Vol. D (2013), § 1.1.4.4.3, p. 12, and § 1.1.4.10.1, eqs. (1.1.4.5), (1.1.4.7), p. 24; classes: ITA (2016) Table 3.2.2.1, p. 738                                                                                                                         |
+| `'gyrotropic'`      | rank 2, axial, even, symmetric         | optical activity: the gyration tensor g_ij           | ITC Vol. D (2013), § 1.1.4.10.7.2, p. 30; classes: ITA (2016) Table 3.2.2.1, p. 738                                                                                                                                                                          |
+| `'ferromagnetic'`   | rank 1, axial, odd                     | spontaneous magnetization (also ferri-, weak ferro-) | ITC Vol. D (2013), § 1.5.2.1 with Table 1.5.2.4, p. 113                                                                                                                                                                                                      |
+| `'ferrotoroidic'`   | rank 1, polar, odd                     | spontaneous toroidal moment                          | ITC Vol. D (2013), § 1.5.4.3, p. 128 (the term), and § 1.5.8.1, footnote 3, p. 140 (the 31 groups of Table 1.5.8.1 whose magnetoelectric tensor need not be symmetric); Gallego et al., Acta Cryst. A75, 438 (2019), p. 440 (polar toroidal moment, type aV) |
+| `'magnetoelectric'` | rank 2, axial, odd                     | linear magnetoelectric effect, P_i = α_ij H_j        | ITC Vol. D (2013), § 1.5.8, eqs. (1.5.8.2), (1.5.8.3), p. 139, and § 1.5.8.1 with Table 1.5.8.1, pp. 139–140                                                                                                                                                 |
+| `'piezomagnetic'`   | rank 3, axial, odd, symmetric in j, k  | M_i = Λ_ijk T_jk                                     | ITC Vol. D (2013), § 1.5.7, eq. (1.5.7.2), and § 1.5.7.1 with Table 1.5.7.1, pp. 134–135                                                                                                                                                                     |
 
 `allowsProperty(key, name)` is true if the form is not zero, `allowedProperties(key)` lists the
 names a group allows, in the order of the table; `allowsPropertyOf(operations, name)` and
@@ -1366,7 +1366,7 @@ the determination of the plane group of a pattern (a later MINOR, #31).
 | orthorhombic settings: one for every orientation of the axes; the six orientations of `2'm'm`                                                                                                                         | counted by hand; Paufler (1986) Table A 6, rows 12–20 (p. 316): `references/paufler/table-a6-orthorhombic.md`; the symbols of `2'm'm` in Birss Table 6, ITC Vol. D Tables 1.5.2.3, 1.5.2.4, 1.5.7.1, 1.5.8.1 and Paufler                                                                                                                                   | `pointGroups/magnetic.reference.test.ts`, `tensors/itcMagnetic.reference.test.ts`                       |
 | the three types of magnetic point groups; which describes a non-magnetic crystal                                                                                                                                      | Birss (1966) pp. 84, 102; Litvin, _Acta Cryst._ A**64**, 419 (2008), p. 419; Paufler, _Physikalische Kristallographie_ (Akademie-Verlag, Berlin, 1986), pp. 60–62                                                                                                                                                                                          | `tensors/birssMagnetic.reference.test.ts` (classes: c-forms equal i-forms; grey groups: c-forms vanish) |
 | the two entry points: a time-even question has one answer for a class, its white group and its grey group                                                                                                             | none needed: the same operations (Birss pp. 84, 102, as the row above); checked by comparing the two entry points                                                                                                                                                                                                                                          | `entryPoints.test.ts`                                                                                   |
-| named tensor properties: the kind of tensor behind each name                                                                                                                                                          | ITC Vol. D (2013) §§ 1.1.4.4.2, 1.1.4.4.3 (p. 12), 1.1.4.10.7.2 (p. 30), 1.5.2.1 (p. 113), 1.5.7.1 (p. 134), 1.5.8.1 (pp. 139–140); the `source` of each entry of `TENSOR_PROPERTIES`                                                                                                                                                                      | `tensors/tensorProperties.test.ts`                                                                      |
+| named tensor properties: the kind of tensor behind each name                                                                                                                                                          | ITC Vol. D (2013) §§ 1.1.4.4.2, 1.1.4.4.3 (p. 12), 1.1.4.10.7.2 (p. 30), 1.5.2.1 (p. 113), 1.5.7.1 (p. 134), 1.5.8.1 (pp. 139–140); the sources in "Named properties"                                                                                                                                                                                      | `tensors/tensorProperties.test.ts`                                                                      |
 | plane groups: general position, generators, centring, origin, asymmetric unit, Wyckoff positions                                                                                                                      | ITA 6th ed. (2016), Chapter 2.2 (pp. 176–192): `references/itc/vol-a-2016-plane-groups.md`; additional check against the 5th ed. (2006), Part 6 (pp. 92–109), by `audit/plane-groups-2006`                                                                                                                                                                 | `spaceGroups/planeGroups.reference.test.ts`                                                             |
 | plane groups: description of the operations                                                                                                                                                                           | the block "Symmetry operations" of the same pages, both sets of the centred groups; symbols as in ITA § 2.1.3.9 (pp. 160–161); normals: ITA Table 2.1.3.1 (p. 151), `references/itc/vol-a-table-2.1.3.1-plane.md`, with the full symbols                                                                                                                   | `spaceGroups/describe.reference.test.ts`                                                                |
 | plane groups: site symmetry, orbit and Wyckoff position of a point                                                                                                                                                    | the Wyckoff positions of the same pages: every printed point of every position                                                                                                                                                                                                                                                                             | `spaceGroups/positions.reference.test.ts`                                                               |

@@ -114,7 +114,6 @@ describe('plane groups: transcription', () => {
         system: g.fields.System.toLowerCase(),
         pattersonSymmetry: g.fields['Patterson symmetry'],
         page: g.page,
-        origin: g.fields.Origin,
         asymmetricUnit: g.fields['Asymmetric unit'],
         ...(g.fields.Vertices ? { vertices: g.fields.Vertices.split('; ') } : {}),
         centring: g.fields.Centring ? ['1/2,1/2'] : [],
@@ -125,6 +124,35 @@ describe('plane groups: transcription', () => {
     });
     expect(PLANE_GROUP_DATA).toEqual(fromPrint);
     expect(PLANE_GROUP_KEYS).toEqual(PRINT.map((g) => g.symbol));
+  });
+
+  it('gives the origin the site symmetry its printed position states', () => {
+    // The printed origin, and its site symmetry written out by hand in the notation of the group's
+    // Wyckoff positions: the rotation and the mirrors at their positions, a dot for 1 or a glide line.
+    const ORIGIN: Readonly<Record<string, readonly [printed: string, siteSymmetry: string]>> = {
+      p1: ['arbitrary', '1'],
+      p2: ['at 2', '2'],
+      pm: ['on m', '.m.'],
+      pg: ['on g', '1'],
+      cm: ['on m', '.m.'],
+      p2mm: ['at 2 m m', '2mm'],
+      p2mg: ['at 2 1 g', '2..'],
+      p2gg: ['at 2', '2..'],
+      c2mm: ['at 2 m m', '2mm'],
+      p4: ['at 4', '4..'],
+      p4mm: ['at 4 m m', '4mm'],
+      p4gm: ['at 4 1 g', '4..'],
+      p3: ['at 3', '3..'],
+      p3m1: ['at 3 m 1', '3m.'],
+      p31m: ['at 3 1 m', '3.m'],
+      p6: ['at 6', '6..'],
+      p6mm: ['at 6 m m', '6mm'],
+    };
+    for (const g of PRINT) {
+      const [printed, siteSymmetry] = ORIGIN[g.symbol];
+      expect(g.fields.Origin, g.symbol).toBe(printed);
+      expect(plane.planeGroup(g.symbol as plane.PlaneGroupKey).origin, g.symbol).toBe(siteSymmetry);
+    }
   });
 });
 
