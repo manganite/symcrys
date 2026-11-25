@@ -105,11 +105,14 @@ convention or the process updates this file (or the `docs/` file) in the same PR
 - **Newnham for property tensors** (Thomas, 2026-11-25): R. E. Newnham, _Properties of Materials:
   Anisotropy, Symmetry, Structure_ (Oxford University Press, 2005), in Zotero (`G32GB96M`, PDF
   `UKXAALX2`; metadata checked against the title page and the imprint). The printed page is the PDF
-  page index − 12 (checked at six pages across the book). It gives the property tensors with their
-  symmetry and their matrices, chapter by chapter (pyroelectricity, dielectric constant,
-  piezoelectricity, elasticity, magnetic phenomena, electro-optic and nonlinear optical effects,
-  optical activity), and so a further print check of the tensor forms and the Voigt conventions
-  beside ITC Vol. D and Birss; consult it before putting a question on property tensors to Thomas.
+  page number − 13 (page index − 12 counting from 0; checked on every numbered page). It gives the
+  property tensors with their symmetry and their matrices, chapter by chapter (pyroelectricity,
+  dielectric constant, piezoelectricity, elasticity, magnetic phenomena, electro-optic and nonlinear
+  optical effects, optical activity), and so a further print check of the tensor forms and the Voigt
+  conventions beside ITC Vol. D and Birss; consult it before putting a question on property tensors
+  to Thomas. Its forms are in the IEEE settings (§ 4.3, p. 26: orthorhombic c < a < b; trigonal and
+  hexagonal Z₁ ∥ a, Z₃ ∥ c, as symcrys), so a comparison brings both into one frame first, as for
+  Birss.
 
 ## Pure ITC (decided 2026-11-22)
 
