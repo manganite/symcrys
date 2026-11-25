@@ -1,7 +1,7 @@
 """symcrys.plane: the plane API, for the 17 plane groups and the 10 plane point groups.
 
-Coordinates and operations are in the lattice basis (a, b), as ITA (6th ed., 2016) prints them in
-Chapter 2.2. Keys are the symbols ITA prints: ``"p2mg"``, ``"c2mm"`` for the plane groups,
+Coordinates and operations are in the lattice basis (a, b), as ITA gives them for the plane
+groups. Keys are ITA's symbols: ``"p2mg"``, ``"c2mm"`` for the plane groups,
 ``"2mm"``, ``"3m"`` for the plane point groups. A matrix is a float64 array of shape (2, 2) with
 integer entries, a translation, a point and a vertex float64 arrays of shape (2,); a direction of a
 line is an int64 array of shape (2,) (docs/conventions.md, "Plane groups").
@@ -36,8 +36,7 @@ _F = ("f",)
 PlaneSystem = Literal["oblique", "rectangular", "square", "hexagonal"]
 """A crystal system of the plane, as ITA names it."""
 PlaneBravaisLattice = Literal["mp", "op", "oc", "tp", "hp"]
-"""A Bravais lattice of the plane, by its symbol in ITA Table 2.1.1.1: family symbol and centring.
-"""
+"""A Bravais lattice of the plane, by its ITA symbol: family symbol and centring."""
 PlaneOperationKind = Literal[
     "identity",
     "translation",
@@ -45,9 +44,8 @@ PlaneOperationKind = Literal[
     "reflection",
     "glide-reflection",
 ]
-"""What an operation of a plane group or plane point group is, as ITA names the operations (ITA 2016
-Table 2.1.2.1, p. 145): ``'reflection'`` (in a line, as ``'reflection'`` of the point groups) and
-``'glide-reflection'``.
+"""What an operation of a plane group or plane point group is, in ITA's names of the operations:
+``'reflection'`` (in a line, as ``'reflection'`` of the point groups) and ``'glide-reflection'``.
 """
 PlaneCellParameter = Literal["a", "b", "gamma"]
 """A parameter of a plane cell: the edge lengths a, b and the angle γ between them."""
@@ -123,13 +121,10 @@ class PlaneGroup(TypedDict):
     crystal_system: PlaneSystem
     """The crystal system."""
     bravais_lattice: PlaneBravaisLattice
-    """The Bravais lattice (ITA 2016 Table 2.1.1.1, p. 143): ``'mp'``, ``'op'``, ``'oc'``, ``'tp'`` or
-    ``'hp'``.
-    """
+    """The Bravais lattice: ``'mp'``, ``'op'``, ``'oc'``, ``'tp'`` or ``'hp'``."""
     patterson_symmetry: str
-    """The Patterson symmetry as ITA prints it in the headline of the group (Chapter 2.2), a plane
-    group: the lattice of the group with its Laue class, e.g. ``'p2mm'`` for ``p2mg``, ``'c2mm'`` for
-    ``cm``.
+    """The Patterson symmetry as ITA gives it in the headline of the group, a plane group: the lattice
+    of the group with its Laue class, e.g. ``'p2mm'`` for ``p2mg``, ``'c2mm'`` for ``cm``.
     """
     centring: NDArray[np.float64]
     """The centring translations besides (0, 0): ``[[0.5, 0.5]]`` for ``cm`` and ``c2mm``, otherwise
@@ -153,8 +148,7 @@ class PointGroup(TypedDict):
     """The order of the group."""
     laue_class: str
     """The Laue class: the point group with the symmetry centre of the plane, the twofold rotation,
-    added (ITA 2016 § 3.2.1.1, p. 720); one of ``'2'``, ``'2mm'``, ``'4'``, ``'4mm'``, ``'6'``,
-    ``'6mm'``.
+    added; one of ``'2'``, ``'2mm'``, ``'4'``, ``'4mm'``, ``'6'``, ``'6mm'``.
     """
 
 
@@ -194,7 +188,7 @@ class OperationDescription(TypedDict):
 
     kind: PlaneOperationKind
     """``'identity'``, ``'translation'``, ``'rotation'``, ``'reflection'`` (in a line) or
-    ``'glide-reflection'``, as ITA names the operations (ITA 2016 Table 2.1.2.1, p. 145).
+    ``'glide-reflection'``, as ITA names the operations.
     """
     n: int
     """The n of the linear part (an n-fold rotation): 1 for the identity and a translation, 2 for a
@@ -215,11 +209,10 @@ class OperationDescription(TypedDict):
     axis: NotRequired[NDArray[np.int64]]
     """For a reflection or glide reflection: its axis, the normal of its line in the lattice basis (as
     the ``axis`` of a reflection of the point groups is the normal of its plane, #137 C3), its symmetry
-    direction with the sign of its Seitz symbol (ITA 2016 Tables 1.4.2.4, 1.4.2.5, p. 53: ``m₁₀``,
-    ``m₁₂``, #107, #114): the shortest integer vector along the columns of W − I, first non-zero
-    component positive, which is the Seitz direction for every plane group (tested). Without a metric it
-    is not the perpendicular of ``direction``: in a hexagonal basis the normal of a line along [1,0] is
-    [1,2].
+    direction with the sign of its Seitz symbol (``m₁₀``, ``m₁₂``): the shortest integer vector along
+    the columns of W − I, first non-zero component positive, which is the Seitz direction for every
+    plane group (tested). Without a metric it is not the perpendicular of ``direction``: in a hexagonal
+    basis the normal of a line along [1,0] is [1,2].
     """
     glide: NotRequired[NDArray[np.float64]]
     """For a glide: the glide vector (w + W·w)/2, not reduced modulo the lattice."""
@@ -227,18 +220,17 @@ class OperationDescription(TypedDict):
 
 @final
 class WyckoffPosition(TypedDict):
-    """A Wyckoff position of a plane group, as ITA prints it."""
+    """A Wyckoff position of a plane group, in ITA's notation."""
 
     letter: str
     """The Wyckoff letter."""
     multiplicity: int
     """The multiplicity: the number of points in the conventional cell."""
     site_symmetry: str
-    """The oriented site-symmetry symbol, e.g. ``'.m.'``, ``'2mm'`` (without the spaces of the print).
-    """
+    """The oriented site-symmetry symbol, written without spaces, e.g. ``'.m.'``, ``'2mm'``."""
     coordinates: list[str]
-    """The printed coordinates of the (0,0)+ set, e.g. ``['x,0', '-x,0']``; a leading ``-`` is an
-    overbar.
+    """The coordinates of the (0,0)+ set, the full list of the position, e.g. ``['x,0', '-x,0']``; a
+    leading ``-`` is an overbar.
     """
 
 
@@ -272,11 +264,10 @@ class WyckoffDistance(TypedDict):
     multiplicity: int
     """The multiplicity: the number of points in the conventional cell."""
     site_symmetry: str
-    """The oriented site-symmetry symbol, e.g. ``'.m.'``, ``'2mm'`` (without the spaces of the print).
-    """
+    """The oriented site-symmetry symbol, written without spaces, e.g. ``'.m.'``, ``'2mm'``."""
     coordinates: list[str]
-    """The printed coordinates of the (0,0)+ set, e.g. ``['x,0', '-x,0']``; a leading ``-`` is an
-    overbar.
+    """The coordinates of the (0,0)+ set, the full list of the position, e.g. ``['x,0', '-x,0']``; a
+    leading ``-`` is an overbar.
     """
     point: NDArray[np.float64]
     """The point of the position nearest to the given one (lattice basis), modulo the lattice, in [0,
@@ -302,13 +293,13 @@ class PointOrbitEntry(TypedDict):
 
 @final
 class AsymmetricUnit(TypedDict):
-    """The asymmetric unit of a plane group: the printed inequalities, and the convex polygon they
-    bound (lattice basis).
+    """The asymmetric unit of a plane group: ITA's inequalities, and the convex polygon they bound
+    (lattice basis).
     """
 
     inequalities: NDArray[np.int64]
-    """The inequalities as ITA prints them, in printed order, each [a, b, c] for a·x + b·y ≤ c
-    (integers, no common factor), also those that hold no edge of the polygon (p3: x ≤ 2/3).
+    """ITA's inequalities, in ITA's order, each [a, b, c] for a·x + b·y ≤ c (integers, no common
+    factor), also those that hold no edge of the polygon (p3: x ≤ 2/3).
     """
     vertices: NDArray[np.float64]
     """The vertices of the polygon, counter-clockwise (a towards b), starting at the lowest (smallest y,
@@ -322,9 +313,7 @@ class AsymmetricUnit(TypedDict):
 
 @final
 class RotationPoint(TypedDict):
-    """A rotation point (ITA 2016 Table 2.1.2.1, p. 145: the symmetry element of a rotation in the
-    plane).
-    """
+    """A rotation point: the symmetry element of a rotation in the plane."""
 
     n: int
     """The highest n of an n-fold rotation about it."""
@@ -372,13 +361,10 @@ class PlaneFixedAngles(TypedDict):
 
 @final
 class CellRestrictions(TypedDict):
-    """The restrictions on the cell parameters of a crystal system of the plane (ITA Table 2.1.1.1).
-    """
+    """The restrictions on the cell parameters of a crystal system of the plane."""
 
     parameters: list[PlaneCellParameter]
-    """The parameters to be determined (column "Parameters to be determined"), e.g. ``['a']`` for
-    square.
-    """
+    """The parameters to be determined, e.g. ``['a']`` for square."""
     equal: list[list[PlaneCellParameter]]
     """Pairs of parameters that are equal: ``[['a', 'b']]`` for square and hexagonal."""
     angles: PlaneFixedAngles
@@ -386,9 +372,7 @@ class CellRestrictions(TypedDict):
     none for oblique.
     """
     non_acute: list[PlaneCellParameter]
-    """The angles conventionally taken non-acute (≥ 90°), the footnote § of the table: ``['gamma']`` for
-    oblique.
-    """
+    """The angles conventionally taken non-acute (≥ 90°): ``['gamma']`` for oblique."""
 
 
 @final
@@ -432,7 +416,7 @@ class CoordinateChange(TypedDict):
     """
 
     inverse: InverseTransformation
-    """(Q, q) = (P⁻¹, −P⁻¹p), which takes the new coordinates back to the old (eq. (1.5.1.7))."""
+    """(Q, q) = (P⁻¹, −P⁻¹p), which takes the new coordinates back to the old."""
     points: NotRequired[NDArray[np.float64]]
     """The points, as given, in the new coordinates."""
     directions: NotRequired[NDArray[np.float64]]
@@ -653,12 +637,12 @@ directions, points): two numbers closer than this count as equal, in the metric 
 PLANE_GROUP_KEYS: tuple[str, ...] = _shared.convert(_value("PLANE_GROUP_KEYS"), ("t", _V))
 """The short symbols of the 17 plane groups, in ITA's order (plane group n at index n − 1)."""
 POINT_GROUP_KEYS: tuple[str, ...] = _shared.convert(_value("POINT_GROUP_KEYS"), ("t", _V))
-"""The keys of the 10 plane point groups, in the order of ITA Table 3.2.1.1."""
+"""The keys of the 10 plane point groups, in ITA's order."""
 
 
 def is_plane_group_key(key: str) -> bool:
-    """True if ``key`` is the key of one of the 17 plane groups (its short symbol, as ITA prints
-    it).
+    """True if ``key`` is the key of one of the 17 plane groups (its short symbol in ITA's
+    notation).
     """
     result: bool = _shared.convert(_call("isPlaneGroupKey", key), _V)
     return result
@@ -677,7 +661,7 @@ def plane_groups() -> list[PlaneGroup]:
 
 
 def point_groups() -> list[PointGroup]:
-    """The 10 plane point groups, in the order of ITA Table 3.2.1.1."""
+    """The 10 plane point groups, in ITA's order."""
     result: list[PointGroup] = _shared.convert(_call("pointGroups"), ("l", _S_PointGroup))
     return result
 
@@ -685,7 +669,7 @@ def point_groups() -> list[PointGroup]:
 def find_plane_group(symbol: str) -> Optional[PlaneGroupFound]:
     """Finds a plane group by a symbol: the key (the short symbol, ``'pm'``) or the full symbol
     (``'p1m1'``, ``'p 1 m 1'``), spaces ignored (docs/conventions.md, "Reading symbols"). The
-    lattice letter is lower case, as ITA prints it. Gives ``None`` if the symbol names no plane
+    lattice letter is lower case, as in ITA's notation. Gives ``None`` if the symbol names no plane
     group; raises SymcrysError for a value that is not a string.
     """
     result: Optional[PlaneGroupFound] = _shared.convert(
@@ -744,9 +728,9 @@ def symbol(
     the Hermann–Mauguin symbol as one word: for a plane group the key (``'p2mg'``, ``'pm'``), for a
     plane point group in a setting ``'3m1'`` or ``'31m'`` for ``3m``, otherwise the key. In the form
     ``'full'`` the full symbol with its positions separated by spaces, as in the other entry points:
-    ``'p 1 m 1'`` for ``pm`` (ITA prints ``p1m1``), ``'p 2 m g'``, ``'3 m 1'``; ITA prints no other
-    full symbol for a plane point group (Ch. 3.2, p. 721, and Table 3.2.3.1). A plane group has
-    setting 1 only. Raises SymcrysError for an unknown key, setting or form.
+    ``'p 1 m 1'`` for ``pm`` (ITA writes ``p1m1``), ``'p 2 m g'``, ``'3 m 1'``; a plane point group
+    has no other full symbol in ITA. A plane group has setting 1 only. Raises SymcrysError for an
+    unknown key, setting or form.
 
     Parameters
     ----------
@@ -796,10 +780,9 @@ def operations(key: str, *, setting: Optional[Union[int, str]] = None) -> Operat
 
 
 def generators(key: str, *, setting: Optional[Union[int, str]] = None) -> Operations:
-    """ITA's selected generators, in printed order, without the identity and the integer
-    translations: for a centred plane group the centring translation first. A point group: the
-    linear parts of the generators of its symmorphic plane group. Raises SymcrysError for an unknown
-    key or setting.
+    """ITA's selected generators, in ITA's order, without the identity and the integer translations:
+    for a centred plane group the centring translation first. A point group: the linear parts of the
+    generators of its symmorphic plane group. Raises SymcrysError for an unknown key or setting.
 
     Parameters
     ----------
@@ -892,9 +875,9 @@ def describe_operations_of(
 
 
 def wyckoff_positions(key: str) -> list[WyckoffPosition]:
-    """The Wyckoff positions of a plane group as ITA prints them, general position first. Raises
-    SymcrysError for an unknown key and for a plane point group, whose positions are not in symcrys
-    yet.
+    """The Wyckoff positions of a plane group in ITA's notation and order, general position first.
+    Raises SymcrysError for an unknown key and for a plane point group, whose positions are not in
+    symcrys yet.
     """
     result: list[WyckoffPosition] = _shared.convert(
         _call("wyckoffPositions", key),
@@ -942,8 +925,8 @@ def wyckoff_position(
     tolerance: Optional[float] = None,
 ) -> WyckoffPosition:
     """The Wyckoff position of a point (lattice basis) under a plane group, as ``wyckoff_positions``
-    gives it: the most special printed position whose point set lies within the tolerance of the
-    point, measured per coordinate modulo the lattice, and among positions of equal multiplicity the
+    gives it: the most special position whose point set lies within the tolerance of the point,
+    measured per coordinate modulo the lattice, and among positions of equal multiplicity the
     nearest (the distance of ``wyckoff_distances``); the general position always holds the point.
     Raises SymcrysError as ``site_symmetry``.
 
@@ -973,10 +956,10 @@ def wyckoff_distances(
     basis: Optional[ArrayLike] = None,
 ) -> list[WyckoffDistance]:
     """The distance of a point (lattice basis) to every Wyckoff position of a plane group, in the
-    printed order of ``wyckoff_positions``, each with the nearest point of the position (#137 F1,
-    #108). The point set of a position is the union of its printed coordinates with every centring
-    and lattice translation: a point, a line or the plane. Without a basis the distance is the
-    larger of the two coordinate differences modulo the lattice, the metric of the tolerance of
+    order of ``wyckoff_positions``, each with the nearest point of the position (#137 F1, #108). The
+    point set of a position is the union of the points of its coordinates with every centring and
+    lattice translation: a point, a line or the plane. Without a basis the distance is the larger of
+    the two coordinate differences modulo the lattice, the metric of the tolerance of
     ``wyckoff_position``; with a basis (columns a, b) it is Euclidean, and the nearest point is the
     Euclidean nearest one; per coordinate the nearest point of a line need not be unique (on x,0
     every x within the distance is as near), and then it is one of them. The basis should be a
@@ -1045,10 +1028,10 @@ def orbit(
 
 
 def asymmetric_unit(key: str) -> AsymmetricUnit:
-    """The asymmetric unit of a plane group as ITA prints it (#137 F3): the printed inequalities,
-    all of them in printed order (a double inequality and a ``min`` give one each), and the convex
-    polygon they bound, with its vertices and, per edge, the index of the inequality that holds it.
-    Raises SymcrysError for an unknown key.
+    """The asymmetric unit of a plane group as ITA gives it (#137 F3): ITA's inequalities, all of
+    them in ITA's order (a double inequality and a ``min`` give one each), and the convex polygon
+    they bound, with its vertices and, per edge, the index of the inequality that holds it. Raises
+    SymcrysError for an unknown key.
 
     Returns
     -------
@@ -1096,10 +1079,10 @@ def symmetry_elements(key: str, *, box: Optional[ArrayLike] = None) -> SymmetryE
 
 
 def cell_restrictions(system: str) -> CellRestrictions:
-    """The restrictions on the cell parameters of a crystal system of the plane, as ITA 2016 Table
-    2.1.1.1 (p. 143) gives them for the conventional cell: the parameters to be determined, the
-    pairs of equal parameters, the fixed angles, and the angles conventionally taken non-acute.
-    Raises SymcrysError for anything that is not one of the four crystal systems of the plane.
+    """The restrictions on the cell parameters of a crystal system of the plane, as ITA gives them
+    for the conventional cell: the parameters to be determined, the pairs of equal parameters, the
+    fixed angles, and the angles conventionally taken non-acute. Raises SymcrysError for anything
+    that is not one of the four crystal systems of the plane.
     """
     result: CellRestrictions = _shared.convert(
         _call("cellRestrictions", system),
@@ -1215,12 +1198,11 @@ def change_of_coordinates(
     operations: Optional[Operations | Sequence[Mapping[str, Any]]] = None,
     tolerance: Optional[float] = None,
 ) -> CoordinateChange:
-    """Changes the coordinate system of the plane by the pair (P, p) of ITA (6th ed., 2016) §
-    1.5.1.3 (p. 83), with 2 × 2 matrices: the new basis is (a′, b′) = (a, b)·P and the new origin
-    lies at p. Transforms the given quantities by ITA's equations (§ 1.5.2, pp. 83–85): point
-    coordinates x′ = P⁻¹(x − p), vector coefficients [uv]′ = P⁻¹[uv], Miller indices (hk)′ = (hk)P,
-    the metric tensor G′ = PᵀGP, and operations W′ = P⁻¹WP, w′ = P⁻¹(w + (W − I)p); and gives the
-    inverse pair (Q, q) = (P⁻¹, −P⁻¹p). det P may be negative.
+    """Changes the coordinate system of the plane by the pair (P, p), with 2 × 2 matrices: the new
+    basis is (a′, b′) = (a, b)·P and the new origin lies at p. Transforms the given quantities by
+    ITA's equations: point coordinates x′ = P⁻¹(x − p), vector coefficients [uv]′ = P⁻¹[uv], Miller
+    indices (hk)′ = (hk)P, the metric tensor G′ = PᵀGP, and operations W′ = P⁻¹WP, w′ = P⁻¹(w + (W −
+    I)p); and gives the inverse pair (Q, q) = (P⁻¹, −P⁻¹p). det P may be negative.
 
     P, p and the operations are read each number as the simplest fraction within the tolerance
     (default ``EPSILON``; 0.3333333 is 1/3) and transformed exactly, so that every result, the
@@ -1240,17 +1222,16 @@ def change_of_coordinates(
         p, the origin shift: the coordinates of the new origin in the old coordinate system; default
         zero.
     points : keyword-only, optional
-        Point coordinates x: x′ = P⁻¹(x − p) (eq. (1.5.1.7)).
+        Point coordinates x: x′ = P⁻¹(x − p).
     directions : keyword-only, optional
-        Coefficients [uv] of vectors, e.g. directions: [uv]′ = P⁻¹[uv] (eq. (1.5.2.3)); not changed
-        by the origin shift.
-    planes : keyword-only, optional
-        Miller indices (hk) of lines: (hk)′ = (hk)P (eq. (1.5.2.2)); not changed by the origin
+        Coefficients [uv] of vectors, e.g. directions: [uv]′ = P⁻¹[uv]; not changed by the origin
         shift.
+    planes : keyword-only, optional
+        Miller indices (hk) of lines: (hk)′ = (hk)P; not changed by the origin shift.
     metric : keyword-only, optional
-        The metric tensor G: G′ = PᵀGP (eq. (1.5.2.4)).
+        The metric tensor G: G′ = PᵀGP.
     operations : keyword-only, optional
-        Operations (W, w): W′ = P⁻¹WP, w′ = P⁻¹(w + (W − I)p) (eqs. (1.5.2.12), (1.5.2.13)).
+        Operations (W, w): W′ = P⁻¹WP, w′ = P⁻¹(w + (W − I)p).
     tolerance : keyword-only, optional
         Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁶). It is measured per
         matrix entry for operations, as the distance of unit vectors for directions and per

@@ -18,14 +18,17 @@ export type VoigtFactor = 1 | 2;
 export interface VoigtOptions extends ToleranceOptions {
   /**
    * The factor of each contracted index pair, in the order of the pairs: 2 where ITC defines the
-   * Voigt component as the sum of the two symmetric components, 1 where it is the component itself
-   * (ITC Vol. D § 1.1.4.10). So the strain (S₄ = 2S₂₃), the piezoelectric d (d_iα = d_ijk + d_ikj)
+   * Voigt component as the sum of the two symmetric components, 1 where it is the component itself.
+   * So the strain (S₄ = 2S₂₃), the piezoelectric d (d_iα = d_ijk + d_ikj)
    * and the piezomagnetic Λ take `[2]`, the compliances s and the electrostriction Q `[2, 2]`; the
    * stress and the piezoelectric e take `[1]`, the stiffnesses c and the elasto-optic p `[1, 1]`;
    * the piezo-optic π takes `[1, 2]`; the susceptibility of second-harmonic generation, which has
-   * the tensor of `'piezoelectric'`, takes `[1]` (§ 1.7.2.2.1.3, p. 185). Required, except for
-   * `'piezomagnetic'`, which takes ITC's `[2]` (eq. (1.5.7.4)); `'piezoelectric'` has none, since
-   * its tensor serves both d and second-harmonic generation.
+   * the tensor of `'piezoelectric'`, takes `[1]`. Required, except for `'piezomagnetic'`, which
+   * takes ITC's `[2]`; `'piezoelectric'` has none, since its tensor serves both d and second-harmonic
+   * generation.
+   *
+   * @remarks Sources: ITC Vol. D (2013), § 1.1.4.10 (the factors); § 1.7.2.2.1.3, p. 185
+   * (second-harmonic generation, `[1]`); eq. (1.5.7.4) (the piezomagnetic Λ, `[2]`).
    */
   readonly factors?: readonly VoigtFactor[];
   /**
@@ -173,8 +176,8 @@ function resolve(specOrName: TensorSpec | TensorPropertyName, options: VoigtOpti
 }
 
 /**
- * A tensor in Voigt's two-index notation (ITC Vol. D (2013) § 1.1.4.10, pp. 24–27): each contracted
- * index pair ij becomes α = 1…6 for 11, 22, 33, 23, 31, 12 (eq. (1.1.4.6)), and a component with
+ * A tensor in Voigt's two-index notation: each contracted index pair ij becomes α = 1…6 for 11, 22,
+ * 33, 23, 31, 12, and a component with
  * α = 4, 5, 6 is the tensor component times the factor of its pair (`factors`). A symmetric tensor of
  * rank 2 gives 6 components, one of rank 3 symmetric in its last pair a 3 × 6 matrix (d_iα), in its
  * first pair a 6 × 3 matrix (e_αk), one of rank 4 a 6 × 6 matrix (s_αβ, c_αβ). Throws a RangeError for a specification
@@ -182,7 +185,8 @@ function resolve(specOrName: TensorSpec | TensorPropertyName, options: VoigtOpti
  * that lacks the index symmetry of its specification (within the tolerance, relative to its largest
  * component).
  *
- * @remarks The tensor is flat, 3^rank components, as `tensorForm` gives a basis tensor.
+ * @remarks The tensor is flat, 3^rank components, as `tensorForm` gives a basis tensor. Source:
+ * ITC Vol. D (2013), § 1.1.4.10, pp. 24–27; the index pairs, eq. (1.1.4.6).
  */
 export function toVoigt(
   tensor: readonly number[],

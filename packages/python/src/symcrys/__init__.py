@@ -4,7 +4,7 @@ A thin layer over the TypeScript library symcrys of the same version, which runs
 JavaScript engine (quickjs-ng). Every function here calls the function of the same name in the
 library (camelCase there, snake_case here) and returns its result as plain Python data, matrices
 and vectors as NumPy arrays, records as dicts typed by the TypedDicts of the module (rules in
-``symcrys._convert``). The conventions, frames and print
+``symcrys._convert``). The conventions, frames and their
 sources are documented once, for both languages: https://manganite.github.io/symcrys/conventions.html
 
 This module is the crystallographic API: the 32 crystal classes, without time reversal. The
@@ -60,17 +60,17 @@ IntrinsicSymmetry = Literal[
     "totally-symmetric",
 ]
 """Symmetry of the tensor under permutation of its own indices, independent of the crystal, with its
-Jahn symbol as Gallego et al. write them (_Acta Cryst._ A75, 438 (2019), pp. 439–440, after Jahn
-(1949): square brackets for a symmetric, curly brackets for an antisymmetric set of indices): -
-``'none'``: no index symmetry, Vⁿ; - ``'symmetric-first-pair'`` (rank 2 and above): the first two
-indices are interchangeable, [V²]V…; - ``'symmetric-last-pair'`` (rank 2 and above): the last two,
-V…[V²] (at rank 3 second-harmonic generation and the piezoelectric effect); at rank 2 both mean a
-symmetric tensor, [V²]; - ``'symmetric-pairs'`` (rank 4): each of the two pairs symmetric, the pairs
-not interchangeable, [V²][V²] (e.g. electric-quadrupole SHG, photoelasticity; Jahn 1949 writes
-[V²]²); - ``'symmetric-pairs-exchangeable'`` (rank 4): in addition the pairs interchangeable,
-[[V²][V²]] (elastic stiffness, the symmetry Voigt's notation uses; Jahn 1949 writes [[V²]²]); -
-``'antisymmetric'`` (rank 2): t_ij = −t_ji, {V²}; - ``'totally-symmetric'`` (rank 2 and above):
-every index interchangeable, [Vⁿ] (e.g. second-harmonic generation under Kleinman's condition).
+Jahn symbol in the extended notation (square brackets for a symmetric, curly brackets for an
+antisymmetric set of indices): - ``'none'``: no index symmetry, Vⁿ; - ``'symmetric-first-pair'``
+(rank 2 and above): the first two indices are interchangeable, [V²]V…; - ``'symmetric-last-pair'``
+(rank 2 and above): the last two, V…[V²] (at rank 3 second-harmonic generation and the piezoelectric
+effect); at rank 2 both mean a symmetric tensor, [V²]; - ``'symmetric-pairs'`` (rank 4): each of the
+two pairs symmetric, the pairs not interchangeable, [V²][V²] (e.g. electric-quadrupole SHG,
+photoelasticity; in Jahn's original notation [V²]²); - ``'symmetric-pairs-exchangeable'`` (rank 4):
+in addition the pairs interchangeable, [[V²][V²]] (elastic stiffness, the symmetry Voigt's notation
+uses; in Jahn's original notation [[V²]²]); - ``'antisymmetric'`` (rank 2): t_ij = −t_ji, {V²}; -
+``'totally-symmetric'`` (rank 2 and above): every index interchangeable, [Vⁿ] (e.g. second-harmonic
+generation under Kleinman's condition).
 """
 CrystalSystem = Literal[
     "triclinic",
@@ -91,9 +91,8 @@ LatticeSystem = Literal[
     "rhombohedral",
     "cubic",
 ]
-"""One of the seven lattice systems of ITA Table 1.3.4.1 (p. 39): the lattices whose point symmetry
-is the same holohedry. The hexagonal family has two, ``'hexagonal'`` (hP) and ``'rhombohedral'``
-(hR).
+"""One of the seven lattice systems: the lattices whose point symmetry is the same holohedry. The
+hexagonal family has two, ``'hexagonal'`` (hP) and ``'rhombohedral'`` (hR).
 """
 OperationKind = Literal["identity", "inversion", "rotation", "rotoinversion", "reflection"]
 """What a point operation is; a rotoinversion n̄ is the inversion times the rotation n (n = 3, 4,
@@ -243,13 +242,11 @@ class LatticeParameters(TypedDict):
 
 @final
 class CoordinateTransformation(TypedDict):
-    """A change of the coordinate system (P, p) (ITA 2016 § 1.5.1.3, p. 83): (a′, b′, c′) = (a, b,
-    c)·P, origin O′ = O + p.
-    """
+    """A change of the coordinate system (P, p): (a′, b′, c′) = (a, b, c)·P, origin O′ = O + p."""
 
     linear_part: NDArray[np.float64]
-    """P, the linear part: its columns are the new basis vectors a′, b′, c′ in the old basis (eq.
-    (1.5.1.4)); det P ≠ 0, also negative.
+    """P, the linear part: its columns are the new basis vectors a′, b′, c′ in the old basis; det P ≠ 0,
+    also negative.
     """
     origin_shift: NotRequired[NDArray[np.float64]]
     """p, the origin shift: the coordinates of the new origin in the old coordinate system; default
@@ -284,7 +281,7 @@ class CoordinateChange(TypedDict):
     """
 
     inverse: InverseTransformation
-    """(Q, q) = (P⁻¹, −P⁻¹p), which takes the new coordinates back to the old (eq. (1.5.1.7))."""
+    """(Q, q) = (P⁻¹, −P⁻¹p), which takes the new coordinates back to the old."""
     points: NotRequired[NDArray[np.float64]]
     """The points, as given, in the new coordinates."""
     directions: NotRequired[NDArray[np.float64]]
@@ -340,9 +337,8 @@ class PointGroup(TypedDict):
     polar: bool
     """Polar (pyroelectric class): some direction is left unchanged by every operation."""
     enantiomorphic: bool
-    """Enantiomorphic: proper rotations only. ITA § 3.2.2.1.3 (p. 738): "All these terms
-    [enantiomorphism, enantiomerism, chirality, dissymmetry] refer to the same symmetry restriction, the
-    absence of improper rotations (rotoinversions, rotoreflections)".
+    """Enantiomorphic: proper rotations only, no rotoinversions or rotoreflections. Enantiomorphism,
+    enantiomerism, chirality and dissymmetry all name this one symmetry restriction.
     """
     laue_class: str
     """The Laue class: the centrosymmetric crystal class generated by the class and the inversion.
@@ -410,8 +406,8 @@ class CartesianOperationDescription(TypedDict):
     kind: OperationKind
     """What the operation is, without time reversal."""
     n: int
-    """The n of the symbol n or n̄ (ITA 2016 § 1.2.1, p. 12: an n-fold rotation): 1 for the identity and
-    the inversion, 2 for a reflection (m = 2̄), otherwise the order of the rotation part.
+    """The n of the symbol n or n̄ (n for an n-fold rotation): 1 for the identity and the inversion, 2
+    for a reflection (m = 2̄), otherwise the order of the rotation part.
     """
     axis: NotRequired[CartesianAxis]
     """Rotation axis, rotoinversion axis or the normal of the mirror plane; absent for the identity and
@@ -429,8 +425,7 @@ class Axis(TypedDict):
 
     lattice: NDArray[np.int64]
     """Integer coordinates in the conventional basis: for the axis of an operation with the sign of its
-    Seitz symbol (ITA Tables 1.4.2.1–1.4.2.3), for a symmetry direction with the sign of ITA Table
-    2.1.3.1.
+    Seitz symbol, for a symmetry direction with ITA's sign of the symmetry direction.
     """
     cartesian: NDArray[np.float64]
     """Unit vector in the Cartesian frame of symcrys. Monoclinic: a, b, c taken along x, y, z, exact for
@@ -445,8 +440,8 @@ class OperationDescription(TypedDict):
     kind: OperationKind
     """What the operation is, without time reversal."""
     n: int
-    """The n of the symbol n or n̄ (ITA 2016 § 1.2.1, p. 12: an n-fold rotation): 1 for the identity and
-    the inversion, 2 for a reflection (m = 2̄), otherwise the order of the rotation part.
+    """The n of the symbol n or n̄ (n for an n-fold rotation): 1 for the identity and the inversion, 2
+    for a reflection (m = 2̄), otherwise the order of the rotation part.
     """
     axis: NotRequired[Axis]
     """Rotation axis, rotoinversion axis or the normal of the mirror plane; absent for the identity and
@@ -464,8 +459,7 @@ class DirectionElements(TypedDict):
 
     lattice: NDArray[np.int64]
     """Integer coordinates in the conventional basis: for the axis of an operation with the sign of its
-    Seitz symbol (ITA Tables 1.4.2.1–1.4.2.3), for a symmetry direction with the sign of ITA Table
-    2.1.3.1.
+    Seitz symbol, for a symmetry direction with ITA's sign of the symmetry direction.
     """
     cartesian: NDArray[np.float64]
     """Unit vector in the Cartesian frame of symcrys. Monoclinic: a, b, c taken along x, y, z, exact for
@@ -493,9 +487,9 @@ class SymmetryDirection(TypedDict):
     magnetic group with its primes (``4'/m``).
     """
     directions: list[DirectionElements]
-    """The symmetry directions of this position (ITA Table 2.1.3.1; for a monoclinic group the direction
-    of the position of the full symbol, of which only the unique axis is in the table), each with the
-    elements along it.
+    """The symmetry directions of this position, each with the elements along it; for a monoclinic group
+    the direction a, b or c of the position of the full symbol, of which only the unique axis is a
+    lattice symmetry direction.
     """
 
 
@@ -530,20 +524,21 @@ class WyckoffPosition(TypedDict):
     multiplicity: int
     """Number of equivalent directions (faces of the form)."""
     site_symmetry: str
-    """Oriented site-symmetry symbol as ITA prints it, e.g. ``..m``, ``4m.m``, ``1``."""
+    """Oriented site-symmetry symbol in ITA's notation, e.g. ``..m``, ``4m.m``, ``1``."""
     coordinates: list[str]
-    """ITA's coordinate triplets of the position as printed, in printed order, the first being the
+    """ITA's coordinate triplets of the position, the full list in ITA's order, the first being the
     representative point, e.g. ``['x,x,z', '-x,-x,z', …]`` (a leading ``-`` is an overbar); one per
     equivalent direction, as in ``symcrys.plane``.
     """
     miller_indices: str
-    """ITA's representative face as printed, components separated by commas, e.g. ``h,h,l``, or
-    ``h,h,-2h,l`` (Bravais–Miller indices) for hexagonal axes. the function ``miller_indices``
-    substitutes values of h, k, l and gives a face with numbers, ``face_normal`` its normal in a cell.
+    """ITA's representative face, components separated by commas, e.g. ``h,h,l``, or ``h,h,-2h,l``
+    (Bravais–Miller indices) for hexagonal axes. The function ``miller_indices`` substitutes values of
+    h, k, l and gives a face with numbers, ``face_normal`` its normal in a cell.
     """
     site_symmetry_operations: NDArray[np.int64]
     """Indices into ``operations`` (same setting) of the site symmetry of the position: of the
-    operations that fix its first printed face for values of h, k, l that keep the face in the position.
+    operations that fix its representative face (``miller_indices``) for values of h, k, l that keep the
+    face in the position.
     """
 
 
@@ -615,7 +610,7 @@ class CrystalForm(TypedDict):
     basic: bool
     """``True`` for a basic form, a form of lowest eigensymmetry of the position (two at the faces (hhl)
     of -43m and m-3m), ``False`` for a limiting form: its faces have the face symmetry of the position,
-    but the form has a higher eigensymmetry (ITA 6th ed., § 3.2.1.2.2, p. 723).
+    but the form has a higher eigensymmetry.
     """
     form_type: CrystalFormTypeKey
     """The kind of the form, its key in ``CRYSTAL_FORM_TYPES``."""
@@ -624,8 +619,8 @@ class CrystalForm(TypedDict):
     or ``h,h,-2h,l`` (Bravais–Miller indices) for hexagonal axes; a leading ``-`` is an overbar.
     """
     condition: NotRequired[str]
-    """The condition ITA prints with the form, ``|h|<|l|`` or ``|h|>|l|`` (cubic forms (hhl)); absent
-    otherwise.
+    """The condition on the indices that ITA gives with the form, ``|h|<|l|`` or ``|h|>|l|`` (cubic
+    forms (hhl)); absent otherwise.
     """
 
 
@@ -926,13 +921,12 @@ LATTICE_SYMMETRY_DIRECTIONS: dict[str, list[NDArray[np.int64]]] = _shared.conver
     _value("LATTICE_SYMMETRY_DIRECTIONS"),
     ("x", "lattice_symmetry_directions"),
 )
-"""The directions of each position of the full symbol, per family, as printed in ITA Table 2.1.3.1
-(hexagonal family: the row "Hexagonal", which also serves the trigonal classes with hexagonal axes).
-Triclinic: no position. Monoclinic: the positions of the full symbol, which reads along a, b, c (ITA
-6th ed. § 2.1.3.15, p. 171), the orthorhombic row; of these, only the unique axis is a lattice
-symmetry direction in Table 2.1.3.1 ([010] for unique axis b, [001] for unique axis c; [100] for
-unique axis a, which the table does not list), and the full symbol has ``1`` at the other two
-positions (``1 2/m 1``).
+"""The symmetry directions of each position of the full symbol, per family, as ITA gives them
+(hexagonal family: the hexagonal row, which also serves the trigonal classes with hexagonal axes).
+Triclinic: no position. Monoclinic: the positions of the full symbol, which reads along a, b, c, the
+orthorhombic row; of these, only the unique axis is a lattice symmetry direction ([010] for unique
+axis b, [001] for unique axis c, [100] for unique axis a), and the full symbol has ``1`` at the
+other two positions (``1 2/m 1``).
 
 In Python: family → one int64 array of shape (n, 3) per position, the n directions [uvw] as rows.
 """
@@ -1175,12 +1169,12 @@ def change_of_coordinates(
     operations: Optional[Operations | Sequence[Mapping[str, Any]]] = None,
     tolerance: Optional[float] = None,
 ) -> CoordinateChange:
-    """Changes the coordinate system by the pair (P, p) of ITA (6th ed., 2016) § 1.5.1.3 (p. 83):
-    the new basis is (a′, b′, c′) = (a, b, c)·P and the new origin lies at p. Transforms the given
-    quantities by ITA's equations (§ 1.5.2, pp. 83–85): point coordinates x′ = P⁻¹(x − p), vector
-    coefficients [uvw]′ = P⁻¹[uvw], Miller indices (hkl)′ = (hkl)P, the metric tensor G′ = PᵀGP, and
-    operations W′ = P⁻¹WP, w′ = P⁻¹(w + (W − I)p); and gives the inverse pair (Q, q) = (P⁻¹, −P⁻¹p).
-    det P may be negative (a change of handedness, which ITA allows; § 1.5.1.2, p. 76).
+    """Changes the coordinate system by the pair (P, p): the new basis is (a′, b′, c′) = (a, b, c)·P
+    and the new origin lies at p. Transforms the given quantities by ITA's equations: point
+    coordinates x′ = P⁻¹(x − p), vector coefficients [uvw]′ = P⁻¹[uvw], Miller indices (hkl)′ =
+    (hkl)P, the metric tensor G′ = PᵀGP, and operations W′ = P⁻¹WP, w′ = P⁻¹(w + (W − I)p); and
+    gives the inverse pair (Q, q) = (P⁻¹, −P⁻¹p). det P may be negative (a change of handedness,
+    which ITA allows).
 
     P, p and the operations are read each number as the simplest fraction within the tolerance
     (default ``EPSILON``; 0.3333333 is 1/3) and transformed exactly, so that every result, the
@@ -1197,23 +1191,22 @@ def change_of_coordinates(
     Parameters
     ----------
     linear_part
-        P, the linear part: its columns are the new basis vectors a′, b′, c′ in the old basis (eq.
-        (1.5.1.4)); det P ≠ 0, also negative.
+        P, the linear part: its columns are the new basis vectors a′, b′, c′ in the old basis; det P
+        ≠ 0, also negative.
     origin_shift : keyword-only, optional
         p, the origin shift: the coordinates of the new origin in the old coordinate system; default
         zero.
     points : keyword-only, optional
-        Point coordinates x: x′ = P⁻¹(x − p) (eq. (1.5.1.7)).
+        Point coordinates x: x′ = P⁻¹(x − p).
     directions : keyword-only, optional
-        Coefficients [uvw] of vectors, e.g. directions: [uvw]′ = P⁻¹[uvw] (eq. (1.5.2.3)); not
-        changed by the origin shift.
-    planes : keyword-only, optional
-        Miller indices (hkl) of planes: (hkl)′ = (hkl)P (eq. (1.5.2.2)); not changed by the origin
+        Coefficients [uvw] of vectors, e.g. directions: [uvw]′ = P⁻¹[uvw]; not changed by the origin
         shift.
+    planes : keyword-only, optional
+        Miller indices (hkl) of planes: (hkl)′ = (hkl)P; not changed by the origin shift.
     metric : keyword-only, optional
-        The metric tensor G: G′ = PᵀGP (eq. (1.5.2.4)).
+        The metric tensor G: G′ = PᵀGP.
     operations : keyword-only, optional
-        Operations (W, w): W′ = P⁻¹WP, w′ = P⁻¹(w + (W − I)p) (eqs. (1.5.2.12), (1.5.2.13)).
+        Operations (W, w): W′ = P⁻¹WP, w′ = P⁻¹(w + (W − I)p).
     tolerance : keyword-only, optional
         Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁶). It is measured per
         matrix entry for operations, as the distance of unit vectors for directions and per
@@ -1264,7 +1257,7 @@ def find_point_group(
 ) -> Optional[PointGroupInSetting]:
     """Finds a crystal class by a symbol, read tolerantly. It reads, spaces ignored (#96;
     docs/conventions.md, "Reading symbols"): the key; the short or full symbol of a setting
-    (``312``, ``1 1 2``); a Schoenflies symbol, ITA's or ITC Vol. D's (``D3``, ``C3i``, ``S6``);
+    (``312``, ``1 1 2``); a Schoenflies symbol in either usual spelling (``D3``, ``C3i``, ``S6``);
     Birss's cubic symbols without the overbar on the 3 (``m3m``). A symbol that names several
     settings (the key ``32``, which is also the symbol of the setting with rhombohedral axes; ``2``
     for unique axis b, c and a; any Schoenflies symbol) gives the standard (ITC default) setting,
@@ -1353,8 +1346,8 @@ def generators(
     setting: Optional[Union[int, str]] = None,
 ) -> Operations:
     """Generators of the crystal class in the requested setting (docs/conventions.md, "Generators"):
-    ITA's selected generators in printed order, without the identity and ITA's lattice translations,
-    so the list is empty for ``1``; for the settings ITA does not print (``mm2`` settings 2 and 3,
+    ITA's selected generators in ITA's order, without the identity and ITA's lattice translations,
+    so the list is empty for ``1``; for the settings ITA does not list (``mm2`` settings 2 and 3,
     monoclinic unique axis a), those of setting 1 carried into their frame.
 
     Parameters
@@ -1397,8 +1390,8 @@ def symbol(
     setting: Optional[Union[int, str]] = None,
     form: Optional[Literal["short", "full", "schoenflies", "shubnikov"]] = None,
 ) -> str:
-    """A symbol of the crystal class in the requested setting, as ITA writes it (Tables 3.2.1.2 and
-    3.2.3.2: ``321``, ``C3i``; docs/conventions.md, "Symbols").
+    """A symbol of the crystal class in the requested setting, in ITA's notation (``321``, ``C3i``;
+    docs/conventions.md, "Symbols").
 
     Parameters
     ----------
@@ -1415,20 +1408,20 @@ def symbol(
         ``'32'``, ``'2'`` for unique axis b, c and a) gives the standard (ITC default) setting,
         unless ``axes`` or ``unique_axis`` chooses another. Default: the ITC default setting.
     form : keyword-only, optional
-        ``'short'`` (default): short symbol of the setting, e.g. ``321`` for class ``32`` (ITA Table
-        3.2.3.2); in the magnetic API the default setting of a grey or black-and-white group has its
-        key as short symbol (``32'`` as ITC Vol. D Table 1.5.2.3 prints it; ``321'``, the class key
-        and ``1'``). ``'full'``: full symbol, positions separated by spaces, e.g. ``-3 2/m 1``.
-        ``'schoenflies'``: Schoenflies symbol, subscripts written inline (``C3v``, ``D2d``, ``Oh``);
-        ``C3i`` for the class -3 in the crystallographic API (ITA), ``S6`` in the magnetic API (ITC
-        Vol. D: ``S6(C3)``, ``D3d(S6)``). ``'shubnikov'``: Shubnikov symbol as ITC Vol. D Table
-        1.5.2.3 prints it, with the combining overbar (U+0305) and the combining low line (U+0332,
-        an element combined with time reversal) after their character and ``·`` for the centred dot:
-        ``2̲:m̲`` for ``2'/m'``, ``6̅`` for ``-3`` (Shubnikov's overbar is a rotoreflection). A grey
-        group, which ITC does not print, has the symbol of its class, a centred dot and an
-        underlined 1, as Shubnikov & Belov (1964, pp. 113–114) write it (``3:2·1̲`` for ``321'``).
-        The same in every setting, since it names no orientation; ``find_point_group`` does not read
-        it, since it clashes with Hermann–Mauguin (``2̅`` is −1, ``6̅`` is −3).
+        ``'short'`` (default): short symbol of the setting, e.g. ``321`` for class ``32``; in the
+        magnetic API the default setting of a grey or black-and-white group has its key as short
+        symbol (``32'``, the ITC short symbol; ``321'``, the class key and ``1'``). ``'full'``: full
+        symbol, positions separated by spaces, e.g. ``-3 2/m 1``. ``'schoenflies'``: Schoenflies
+        symbol, subscripts written inline (``C3v``, ``D2d``, ``Oh``); ``C3i`` for the class -3 in
+        the crystallographic API (ITA), ``S6`` in the magnetic API (ITC: ``S6(C3)``, ``D3d(S6)``).
+        ``'shubnikov'``: Shubnikov symbol in ITC's notation, with the combining overbar (U+0305) and
+        the combining low line (U+0332, an element combined with time reversal) after their
+        character and ``·`` for the centred dot: ``2̲:m̲`` for ``2'/m'``, ``6̅`` for ``-3``
+        (Shubnikov's overbar is a rotoreflection). A grey group, for which ITC gives no Shubnikov
+        symbol, has the symbol of its class, a centred dot and an underlined 1, in Shubnikov's own
+        notation (``3:2·1̲`` for ``321'``). The same in every setting, since it names no
+        orientation; ``find_point_group`` does not read it, since it clashes with Hermann–Mauguin
+        (``2̅`` is −1, ``6̅`` is −3).
     """
     result: str = _shared.convert(
         _call(
@@ -1442,11 +1435,10 @@ def symbol(
 
 
 def lattice_systems(key: str) -> list[LatticeSystem]:
-    """The lattice systems of a crystal class: those whose lattices it can act on (ITA § 1.3.4.4.2
-    and Table 1.3.4.1, p. 39). One for every class but the trigonal ones, which belong to the
-    hexagonal (hP) or the rhombohedral (hR) lattice system depending on the basis, so they give
-    both, ``['hexagonal', 'rhombohedral']``. The holohedry of each is ``holohedry(lattice_system)``.
-    Raises SymcrysError for an unknown key.
+    """The lattice systems of a crystal class: those whose lattices it can act on. One for every
+    class but the trigonal ones, which belong to the hexagonal (hP) or the rhombohedral (hR) lattice
+    system depending on the basis, so they give both, ``['hexagonal', 'rhombohedral']``. The
+    holohedry of each is ``holohedry(lattice_system)``. Raises SymcrysError for an unknown key.
     """
     result: list[LatticeSystem] = _shared.convert(_call("latticeSystems", key), ("l", _V))
     return result
@@ -1485,11 +1477,10 @@ def is_enantiomorphic_of(
     *,
     tolerance: Optional[float] = None,
 ) -> bool:
-    """True if the group generated by ``operations`` is enantiomorphic: proper rotations only (ITA §
-    3.2.2.1.3). For a crystal class, read ``point_group(key)["enantiomorphic"]``. Polar is the named
-    property ``'pyroelectric'``: ``allows_property_of(operations, 'pyroelectric')``. Raises
-    SymcrysError for an operation without an orthogonal Cartesian matrix (``cartesian``; within the
-    tolerance).
+    """True if the group generated by ``operations`` is enantiomorphic: proper rotations only. For a
+    crystal class, read ``point_group(key)["enantiomorphic"]``. Polar is the named property
+    ``'pyroelectric'``: ``allows_property_of(operations, 'pyroelectric')``. Raises SymcrysError for
+    an operation without an orthogonal Cartesian matrix (``cartesian``; within the tolerance).
 
     Parameters
     ----------
@@ -1589,9 +1580,8 @@ def describe_operations(
 ) -> list[OperationDescription]:
     """Each operation of the crystal class described geometrically, in the order of ``operations``
     for the same key and options. An axis lies along a symmetry direction and has the sign of the
-    operation's Seitz symbol (ITA 6th ed., Tables 1.4.2.1–1.4.2.3, p. 52), e.g. [1, 1, 0] for 2₁₁₀
-    in the hexagonal family, where ITA Table 2.1.3.1 lists [1̄, 1̄, 0]; for n ≥ 3 the sign fixes
-    what the sense refers to.
+    operation's Seitz symbol, e.g. [1, 1, 0] for 2₁₁₀ in the hexagonal family, whose lattice
+    symmetry direction is [1̄, 1̄, 0]; for n ≥ 3 the sign fixes what the sense refers to.
 
     Parameters
     ----------
@@ -1633,10 +1623,10 @@ def symmetry_directions(
     setting: Optional[Union[int, str]] = None,
 ) -> list[SymmetryDirection]:
     """The positions of the full Hermann–Mauguin symbol in the requested setting, each with its
-    symmetry directions (ITA Table 2.1.3.1) and the symmetry elements along them. All positions of
-    the crystal family are listed (for rhombohedral axes the two of that row of the table), also
-    those the symbol of the class leaves out (then without ``symbol``); the triclinic family has
-    none. A direction has the sign of ITA Table 2.1.3.1, the axis of an operation along it that of
+    symmetry directions and the symmetry elements along them. All positions of the crystal family
+    are listed (for rhombohedral axes the two positions of the rhombohedral lattice), also those the
+    symbol of the class leaves out (then without ``symbol``); the triclinic family has none. A
+    direction has ITA's sign of the symmetry direction, the axis of an operation along it that of
     its Seitz symbol, so the two are parallel and may be opposite: match them by direction, up to
     sign.
 
@@ -2013,9 +2003,9 @@ def crystal_forms(
     unique_axis: Optional[Literal["a", "b", "c"]] = None,
     setting: Optional[Union[int, str]] = None,
 ) -> list[CrystalForm]:
-    """The crystal forms of a crystal class, as ITA 6th ed. Table 3.2.3.2 prints them: for each
-    Wyckoff position (general position first) its basic form (two for the cubic faces (hhl) of -43m
-    and m-3m), then its limiting forms (docs/conventions.md, "Crystal forms").
+    """The crystal forms of a crystal class: for each Wyckoff position (general position first) its
+    basic form (two for the cubic faces (hhl) of -43m and m-3m), then its limiting forms
+    (docs/conventions.md, "Crystal forms").
 
     Parameters
     ----------
@@ -2183,28 +2173,26 @@ def to_voigt(
     factors: Optional[ArrayLike] = None,
     tolerance: Optional[float] = None,
 ) -> NDArray[np.float64]:
-    """A tensor in Voigt's two-index notation (ITC Vol. D (2013) § 1.1.4.10, pp. 24–27): each
-    contracted index pair ij becomes α = 1…6 for 11, 22, 33, 23, 31, 12 (eq. (1.1.4.6)), and a
-    component with α = 4, 5, 6 is the tensor component times the factor of its pair (``factors``). A
-    symmetric tensor of rank 2 gives 6 components, one of rank 3 symmetric in its last pair a 3 × 6
-    matrix (d_iα), in its first pair a 6 × 3 matrix (e_αk), one of rank 4 a 6 × 6 matrix (s_αβ,
-    c_αβ). Raises SymcrysError for a specification without a symmetric index pair, factors that are
-    missing or not one 1 or 2 per pair, and a tensor that lacks the index symmetry of its
-    specification (within the tolerance, relative to its largest component).
+    """A tensor in Voigt's two-index notation: each contracted index pair ij becomes α = 1…6 for 11,
+    22, 33, 23, 31, 12, and a component with α = 4, 5, 6 is the tensor component times the factor of
+    its pair (``factors``). A symmetric tensor of rank 2 gives 6 components, one of rank 3 symmetric
+    in its last pair a 3 × 6 matrix (d_iα), in its first pair a 6 × 3 matrix (e_αk), one of rank 4 a
+    6 × 6 matrix (s_αβ, c_αβ). Raises SymcrysError for a specification without a symmetric index
+    pair, factors that are missing or not one 1 or 2 per pair, and a tensor that lacks the index
+    symmetry of its specification (within the tolerance, relative to its largest component).
 
     Parameters
     ----------
     factors : keyword-only, optional
         The factor of each contracted index pair, in the order of the pairs: 2 where ITC defines the
         Voigt component as the sum of the two symmetric components, 1 where it is the component
-        itself (ITC Vol. D § 1.1.4.10). So the strain (S₄ = 2S₂₃), the piezoelectric d (d_iα = d_ijk
-        + d_ikj) and the piezomagnetic Λ take ``[2]``, the compliances s and the electrostriction Q
-        ``[2, 2]``; the stress and the piezoelectric e take ``[1]``, the stiffnesses c and the
-        elasto-optic p ``[1, 1]``; the piezo-optic π takes ``[1, 2]``; the susceptibility of
-        second-harmonic generation, which has the tensor of ``'piezoelectric'``, takes ``[1]`` (§
-        1.7.2.2.1.3, p. 185). Required, except for ``'piezomagnetic'``, which takes ITC's ``[2]``
-        (eq. (1.5.7.4)); ``'piezoelectric'`` has none, since its tensor serves both d and
-        second-harmonic generation.
+        itself. So the strain (S₄ = 2S₂₃), the piezoelectric d (d_iα = d_ijk + d_ikj) and the
+        piezomagnetic Λ take ``[2]``, the compliances s and the electrostriction Q ``[2, 2]``; the
+        stress and the piezoelectric e take ``[1]``, the stiffnesses c and the elasto-optic p ``[1,
+        1]``; the piezo-optic π takes ``[1, 2]``; the susceptibility of second-harmonic generation,
+        which has the tensor of ``'piezoelectric'``, takes ``[1]``. Required, except for
+        ``'piezomagnetic'``, which takes ITC's ``[2]``; ``'piezoelectric'`` has none, since its
+        tensor serves both d and second-harmonic generation.
     tolerance : keyword-only, optional
         The index symmetry of the tensor (or of the tensor of a Voigt array) is checked within this
         tolerance, relative to its largest component; default ``EPSILON`` (10⁻⁶).
@@ -2247,14 +2235,13 @@ def from_voigt(
     factors : keyword-only, optional
         The factor of each contracted index pair, in the order of the pairs: 2 where ITC defines the
         Voigt component as the sum of the two symmetric components, 1 where it is the component
-        itself (ITC Vol. D § 1.1.4.10). So the strain (S₄ = 2S₂₃), the piezoelectric d (d_iα = d_ijk
-        + d_ikj) and the piezomagnetic Λ take ``[2]``, the compliances s and the electrostriction Q
-        ``[2, 2]``; the stress and the piezoelectric e take ``[1]``, the stiffnesses c and the
-        elasto-optic p ``[1, 1]``; the piezo-optic π takes ``[1, 2]``; the susceptibility of
-        second-harmonic generation, which has the tensor of ``'piezoelectric'``, takes ``[1]`` (§
-        1.7.2.2.1.3, p. 185). Required, except for ``'piezomagnetic'``, which takes ITC's ``[2]``
-        (eq. (1.5.7.4)); ``'piezoelectric'`` has none, since its tensor serves both d and
-        second-harmonic generation.
+        itself. So the strain (S₄ = 2S₂₃), the piezoelectric d (d_iα = d_ijk + d_ikj) and the
+        piezomagnetic Λ take ``[2]``, the compliances s and the electrostriction Q ``[2, 2]``; the
+        stress and the piezoelectric e take ``[1]``, the stiffnesses c and the elasto-optic p ``[1,
+        1]``; the piezo-optic π takes ``[1, 2]``; the susceptibility of second-harmonic generation,
+        which has the tensor of ``'piezoelectric'``, takes ``[1]``. Required, except for
+        ``'piezomagnetic'``, which takes ITC's ``[2]``; ``'piezoelectric'`` has none, since its
+        tensor serves both d and second-harmonic generation.
     tolerance : keyword-only, optional
         The index symmetry of the tensor (or of the tensor of a Voigt array) is checked within this
         tolerance, relative to its largest component; default ``EPSILON`` (10⁻⁶).
@@ -2360,9 +2347,7 @@ def reduce_indices(indices: ArrayLike) -> NDArray[np.int64]:
 
 
 def plane_to_four_indices(hkl: ArrayLike) -> NDArray[np.int64]:
-    """The plane (hkl) of hexagonal axes as (hkil) with i = −(h + k) (Frank, Acta Cryst. 18, 862
-    (1965), Eq. (22)).
-    """
+    """The plane (hkl) of hexagonal axes as (hkil) with i = −(h + k)."""
     result: NDArray[np.int64] = _shared.convert(
         _call("planeToFourIndices", _shared.array(hkl, "hkl")),
         ("a", np.int64, None),
@@ -2371,8 +2356,7 @@ def plane_to_four_indices(hkl: ArrayLike) -> NDArray[np.int64]:
 
 
 def plane_from_four_indices(hkil: ArrayLike) -> NDArray[np.int64]:
-    """The plane (hkil) as (hkl) (Frank (1965), Eq. (21)); raises SymcrysError unless i = −(h + k).
-    """
+    """The plane (hkil) as (hkl); raises SymcrysError unless i = −(h + k)."""
     result: NDArray[np.int64] = _shared.convert(
         _call("planeFromFourIndices", _shared.array(hkil, "hkil")),
         ("a", np.int64, None),
@@ -2382,7 +2366,7 @@ def plane_from_four_indices(hkil: ArrayLike) -> NDArray[np.int64]:
 
 def direction_to_four_indices(uvw: ArrayLike) -> NDArray[np.int64]:
     """The direction [uvw] of hexagonal axes as [UVTW], reduced: U = (2u − v)/3, V = (2v − u)/3, T =
-    −(U + V), W = w, scaled to the smallest integers (Frank, Acta Cryst. 18, 862 (1965), Eq. (20)).
+    −(U + V), W = w, scaled to the smallest integers.
     """
     result: NDArray[np.int64] = _shared.convert(
         _call("directionToFourIndices", _shared.array(uvw, "uvw")),
@@ -2392,8 +2376,8 @@ def direction_to_four_indices(uvw: ArrayLike) -> NDArray[np.int64]:
 
 
 def direction_from_four_indices(uvtw: ArrayLike) -> NDArray[np.int64]:
-    """The direction [UVTW] as [uvw], reduced: u = U − T, v = V − T, w = W (Frank (1965), Eq. (19));
-    raises SymcrysError unless T = −(U + V).
+    """The direction [UVTW] as [uvw], reduced: u = U − T, v = V − T, w = W; raises SymcrysError
+    unless T = −(U + V).
     """
     result: NDArray[np.int64] = _shared.convert(
         _call("directionFromFourIndices", _shared.array(uvtw, "uvtw")),
@@ -2477,11 +2461,11 @@ def lattice_basis(family: str) -> NDArray[np.float64]:
 
 
 def holohedry(lattice_system: str) -> str:
-    """The holohedry of a lattice system, the point symmetry of its lattices (ITA Table 1.3.4.1, p.
-    39), e.g. ``6/mmm`` for the hexagonal and ``-3m`` for the rhombohedral lattice system. A
-    trigonal crystal belongs to either lattice system, so ``lattice_systems(key)`` gives two for a
-    trigonal class. Raises SymcrysError for anything that is not one of the seven lattice systems, a
-    crystal system ``'trigonal'`` included.
+    """The holohedry of a lattice system, the point symmetry of its lattices, e.g. ``6/mmm`` for the
+    hexagonal and ``-3m`` for the rhombohedral lattice system. A trigonal crystal belongs to either
+    lattice system, so ``lattice_systems(key)`` gives two for a trigonal class. Raises SymcrysError
+    for anything that is not one of the seven lattice systems, a crystal system ``'trigonal'``
+    included.
     """
     result: str = _shared.convert(_call("holohedry", lattice_system), _V)
     return result

@@ -276,9 +276,18 @@ function transform(
 
 // --- the three-dimensional API (symcrys, symcrys/magnetic) -------------------------------------------
 
-/** A change of the coordinate system (P, p) (ITA 2016 § 1.5.1.3, p. 83): (a′, b′, c′) = (a, b, c)·P, origin O′ = O + p. */
+/**
+ * A change of the coordinate system (P, p): (a′, b′, c′) = (a, b, c)·P, origin O′ = O + p.
+ *
+ * @remarks Source: ITA (2016), § 1.5.1.3, p. 83.
+ */
 export interface CoordinateTransformation {
-  /** P, the linear part: its columns are the new basis vectors a′, b′, c′ in the old basis (eq. (1.5.1.4)); det P ≠ 0, also negative. */
+  /**
+   * P, the linear part: its columns are the new basis vectors a′, b′, c′ in the old basis; det P ≠ 0,
+   * also negative.
+   *
+   * @remarks Source: ITA (2016), eq. (1.5.1.4).
+   */
   readonly linearPart: Mat3;
   /** p, the origin shift: the coordinates of the new origin in the old coordinate system; default zero. */
   readonly originShift?: Vec3;
@@ -302,15 +311,36 @@ export interface TransformedOperation {
 
 /** The quantities that `changeOfCoordinates` transforms; each is optional. */
 export interface CoordinateQuantities {
-  /** Point coordinates x: x′ = P⁻¹(x − p) (eq. (1.5.1.7)). */
+  /**
+   * Point coordinates x: x′ = P⁻¹(x − p).
+   *
+   * @remarks Source: ITA (2016), eq. (1.5.1.7).
+   */
   readonly points?: readonly Vec3[];
-  /** Coefficients [uvw] of vectors, e.g. directions: [uvw]′ = P⁻¹[uvw] (eq. (1.5.2.3)); not changed by the origin shift. */
+  /**
+   * Coefficients [uvw] of vectors, e.g. directions: [uvw]′ = P⁻¹[uvw]; not changed by the origin
+   * shift.
+   *
+   * @remarks Source: ITA (2016), eq. (1.5.2.3).
+   */
   readonly directions?: readonly Vec3[];
-  /** Miller indices (hkl) of planes: (hkl)′ = (hkl)P (eq. (1.5.2.2)); not changed by the origin shift. */
+  /**
+   * Miller indices (hkl) of planes: (hkl)′ = (hkl)P; not changed by the origin shift.
+   *
+   * @remarks Source: ITA (2016), eq. (1.5.2.2).
+   */
   readonly planes?: readonly Vec3[];
-  /** The metric tensor G: G′ = PᵀGP (eq. (1.5.2.4)). */
+  /**
+   * The metric tensor G: G′ = PᵀGP.
+   *
+   * @remarks Source: ITA (2016), eq. (1.5.2.4).
+   */
   readonly metric?: Mat3;
-  /** Operations (W, w): W′ = P⁻¹WP, w′ = P⁻¹(w + (W − I)p) (eqs. (1.5.2.12), (1.5.2.13)). */
+  /**
+   * Operations (W, w): W′ = P⁻¹WP, w′ = P⁻¹(w + (W − I)p).
+   *
+   * @remarks Source: ITA (2016), eqs. (1.5.2.12), (1.5.2.13).
+   */
   readonly operations?: readonly AffineOperation[];
 }
 
@@ -324,7 +354,11 @@ export interface InverseTransformation {
 
 /** The result of `changeOfCoordinates`: the inverse pair and each given quantity in the new coordinate system. */
 export interface CoordinateChange {
-  /** (Q, q) = (P⁻¹, −P⁻¹p), which takes the new coordinates back to the old (eq. (1.5.1.7)). */
+  /**
+   * (Q, q) = (P⁻¹, −P⁻¹p), which takes the new coordinates back to the old.
+   *
+   * @remarks Source: ITA (2016), eq. (1.5.1.7).
+   */
   readonly inverse: InverseTransformation;
   /** The points, as given, in the new coordinates. */
   readonly points?: readonly Vec3[];
@@ -339,12 +373,11 @@ export interface CoordinateChange {
 }
 
 /**
- * Changes the coordinate system by the pair (P, p) of ITA (6th ed., 2016) § 1.5.1.3 (p. 83): the
- * new basis is (a′, b′, c′) = (a, b, c)·P and the new origin lies at p. Transforms the given
- * quantities by ITA's equations (§ 1.5.2, pp. 83–85): point coordinates x′ = P⁻¹(x − p), vector
- * coefficients [uvw]′ = P⁻¹[uvw], Miller indices (hkl)′ = (hkl)P, the metric tensor G′ = PᵀGP, and
- * operations W′ = P⁻¹WP, w′ = P⁻¹(w + (W − I)p); and gives the inverse pair (Q, q) = (P⁻¹, −P⁻¹p).
- * det P may be negative (a change of handedness, which ITA allows; § 1.5.1.2, p. 76).
+ * Changes the coordinate system by the pair (P, p): the new basis is (a′, b′, c′) = (a, b, c)·P and
+ * the new origin lies at p. Transforms the given quantities by ITA's equations: point coordinates
+ * x′ = P⁻¹(x − p), vector coefficients [uvw]′ = P⁻¹[uvw], Miller indices (hkl)′ = (hkl)P, the
+ * metric tensor G′ = PᵀGP, and operations W′ = P⁻¹WP, w′ = P⁻¹(w + (W − I)p); and gives the inverse
+ * pair (Q, q) = (P⁻¹, −P⁻¹p). det P may be negative (a change of handedness, which ITA allows).
  *
  * P, p and the operations are read each number as the simplest fraction within the tolerance
  * (default `EPSILON`; 0.3333333 is 1/3) and transformed exactly, so that every result, the inverse
@@ -358,6 +391,9 @@ export interface CoordinateChange {
  * RangeError for a singular P, a quantity of the wrong shape, an unknown quantity, an operation with
  * det W ≠ ±1, and one whose W′ is not integral (the new basis does not span a lattice that the
  * operation maps onto itself).
+ *
+ * @remarks Source: ITA (6th ed., 2016), § 1.5.1.3, p. 83 (the pair (P, p)); § 1.5.2, pp. 83–85 (the
+ * equations); § 1.5.1.2, p. 76 (a negative det P).
  */
 export function changeOfCoordinates(
   transformation: CoordinateTransformation,

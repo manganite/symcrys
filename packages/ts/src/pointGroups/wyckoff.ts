@@ -32,23 +32,24 @@ export interface WyckoffPosition {
   readonly letter: string;
   /** Number of equivalent directions (faces of the form). */
   readonly multiplicity: number;
-  /** Oriented site-symmetry symbol as ITA prints it, e.g. `..m`, `4m.m`, `1`. */
+  /** Oriented site-symmetry symbol in ITA's notation, e.g. `..m`, `4m.m`, `1`. */
   readonly siteSymmetry: string;
   /**
-   * ITA's coordinate triplets of the position as printed, in printed order, the first being the
+   * ITA's coordinate triplets of the position, the full list in ITA's order, the first being the
    * representative point, e.g. `['x,x,z', '-x,-x,z', …]` (a leading `-` is an overbar); one per
    * equivalent direction, as in `symcrys/plane`.
    */
   readonly coordinates: readonly string[];
   /**
-   * ITA's representative face as printed, components separated by commas, e.g. `h,h,l`, or
-   * `h,h,-2h,l` (Bravais–Miller indices) for hexagonal axes. the function `millerIndices` substitutes values
-   * of h, k, l and gives a face with numbers, `faceNormal` its normal in a cell.
+   * ITA's representative face, components separated by commas, e.g. `h,h,l`, or `h,h,-2h,l`
+   * (Bravais–Miller indices) for hexagonal axes. The function `millerIndices` substitutes values of
+   * h, k, l and gives a face with numbers, `faceNormal` its normal in a cell.
    */
   readonly millerIndices: string;
   /**
    * Indices into `operations` (same setting) of the site symmetry of the position: of the operations
-   * that fix its first printed face for values of h, k, l that keep the face in the position.
+   * that fix its representative face (`millerIndices`) for values of h, k, l that keep the face in
+   * the position.
    */
   readonly siteSymmetryOperations: readonly number[];
 }

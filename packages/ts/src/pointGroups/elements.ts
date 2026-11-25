@@ -31,8 +31,10 @@ export type OperationKind = 'identity' | 'inversion' | 'rotation' | 'rotoinversi
 export interface Axis {
   /**
    * Integer coordinates in the conventional basis: for the axis of an operation with the sign of its
-   * Seitz symbol (ITA Tables 1.4.2.1–1.4.2.3), for a symmetry direction with the sign of ITA Table
-   * 2.1.3.1.
+   * Seitz symbol, for a symmetry direction with ITA's sign of the symmetry direction.
+   *
+   * @remarks Source: ITA (2016), Tables 1.4.2.1–1.4.2.3 (Seitz symbols) and Table 2.1.3.1 (symmetry
+   * directions).
    */
   readonly lattice: Uvw;
   /**
@@ -47,8 +49,10 @@ export interface OperationDescription {
   /** What the operation is, without time reversal. */
   readonly kind: OperationKind;
   /**
-   * The n of the symbol n or n̄ (ITA 2016 § 1.2.1, p. 12: an n-fold rotation): 1 for the identity and the
-   * inversion, 2 for a reflection (m = 2̄), otherwise the order of the rotation part.
+   * The n of the symbol n or n̄ (n for an n-fold rotation): 1 for the identity and the inversion, 2
+   * for a reflection (m = 2̄), otherwise the order of the rotation part.
+   *
+   * @remarks Source: ITA (2016), § 1.2.1, p. 12.
    */
   readonly n: number;
   /** Rotation axis, rotoinversion axis or the normal of the mirror plane; absent for the identity and the inversion. */
@@ -86,9 +90,11 @@ export interface SymmetryDirection {
    */
   readonly symbol?: string;
   /**
-   * The symmetry directions of this position (ITA Table 2.1.3.1; for a monoclinic group the
-   * direction of the position of the full symbol, of which only the unique axis is in the table),
-   * each with the elements along it.
+   * The symmetry directions of this position, each with the elements along it; for a monoclinic
+   * group the direction a, b or c of the position of the full symbol, of which only the unique axis
+   * is a lattice symmetry direction.
+   *
+   * @remarks Source: ITA (2016), Table 2.1.3.1 (the lattice symmetry directions).
    */
   readonly directions: readonly DirectionElements[];
 }
@@ -254,9 +260,11 @@ function analysis(key: MagneticPointGroupKey, options?: SettingOptions): Analysi
 /**
  * Each operation of the point group described geometrically, in the order of `operations` for
  * the same key and options. An axis lies along a symmetry direction and has the sign of the
- * operation's Seitz symbol (ITA 6th ed., Tables 1.4.2.1–1.4.2.3, p. 52), e.g. [1, 1, 0] for 2₁₁₀ in
- * the hexagonal family, where ITA Table 2.1.3.1 lists [1̄, 1̄, 0]; for n ≥ 3 the sign fixes what the
- * sense refers to.
+ * operation's Seitz symbol, e.g. [1, 1, 0] for 2₁₁₀ in the hexagonal family, whose lattice symmetry
+ * direction is [1̄, 1̄, 0]; for n ≥ 3 the sign fixes what the sense refers to.
+ *
+ * @remarks Source: ITA (6th ed., 2016), Tables 1.4.2.1–1.4.2.3, p. 52 (the Seitz symbols), and
+ * Table 2.1.3.1 (the lattice symmetry direction [1̄, 1̄, 0]).
  */
 export function describeOperations(
   key: MagneticPointGroupKey,
@@ -268,12 +276,16 @@ export function describeOperations(
 
 /**
  * The positions of the full Hermann–Mauguin symbol in the requested setting, each with its
- * symmetry directions (ITA Table 2.1.3.1; monoclinic: the directions a, b, c of the full symbol,
- * of which only the unique axis is in the table) and the symmetry elements along them. All positions of the
- * crystal family are listed (for rhombohedral axes the two of that row of the table), also those the
- * symbol of the class leaves out (then without `symbol`); the triclinic family has none. A direction
- * has the sign of ITA Table 2.1.3.1, the axis of an operation along it that of its Seitz symbol, so
- * the two are parallel and may be opposite: match them by direction, up to sign.
+ * symmetry directions (monoclinic: the directions a, b, c of the full symbol, of which only the
+ * unique axis is a lattice symmetry direction) and the symmetry elements along them. All positions
+ * of the crystal family are listed (for rhombohedral axes the two positions of the rhombohedral
+ * lattice), also those the symbol of the class leaves out (then without `symbol`); the triclinic
+ * family has none. A direction has ITA's sign of the symmetry direction, the axis of an operation
+ * along it that of its Seitz symbol, so the two are parallel and may be opposite: match them by
+ * direction, up to sign.
+ *
+ * @remarks Source: ITA (2016), Table 2.1.3.1 (the symmetry directions, their signs, and the row for
+ * rhombohedral axes).
  */
 export function symmetryDirections(key: MagneticPointGroupKey, options?: SettingOptions): readonly SymmetryDirection[] {
   checkOptions(options, SETTING_KEYS, 'symmetryDirections');

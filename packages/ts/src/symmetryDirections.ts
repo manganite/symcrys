@@ -15,13 +15,15 @@ const frozen = (rows: [number, number, number][][]): readonly (readonly Uvw[])[]
   Object.freeze(rows.map((dirs) => Object.freeze(dirs.map((d) => Object.freeze(d) as unknown as Uvw))));
 
 /**
- * The directions of each position of the full symbol, per family, as printed in ITA Table 2.1.3.1
- * (hexagonal family: the row "Hexagonal", which also serves the trigonal classes with hexagonal
- * axes). Triclinic: no position. Monoclinic: the positions of the full symbol, which reads along a,
- * b, c (ITA 6th ed. § 2.1.3.15, p. 171), the orthorhombic row; of these, only the unique axis is a
- * lattice symmetry direction in Table 2.1.3.1 ([010] for unique axis b, [001] for unique axis c;
- * [100] for unique axis a, which the table does not list), and the full symbol has `1` at the other
- * two positions (`1 2/m 1`).
+ * The symmetry directions of each position of the full symbol, per family, as ITA gives them
+ * (hexagonal family: the hexagonal row, which also serves the trigonal classes with hexagonal axes).
+ * Triclinic: no position. Monoclinic: the positions of the full symbol, which reads along a, b, c,
+ * the orthorhombic row; of these, only the unique axis is a lattice symmetry direction ([010] for
+ * unique axis b, [001] for unique axis c, [100] for unique axis a), and the full symbol has `1` at
+ * the other two positions (`1 2/m 1`).
+ *
+ * @remarks Source: ITA (2016), Table 2.1.3.1, which lists no row for unique axis a; the monoclinic
+ * full symbol, ITA (6th ed., 2016), § 2.1.3.15, p. 171.
  */
 export const LATTICE_SYMMETRY_DIRECTIONS: Readonly<Record<CrystalFamily, readonly (readonly Uvw[])[]>> = Object.freeze({
   triclinic: frozen([]),

@@ -56,8 +56,10 @@ export const GREY_POINT_GROUP_KEYS: readonly GreyPointGroupKey[] = Object.freeze
 );
 
 /**
- * Keys of the 58 black-and-white groups: the short Hermann–Mauguin symbol of ITC Vol. D
- * Table 1.5.2.3, in the order of the table (docs/conventions.md, "Keys").
+ * Keys of the 58 black-and-white groups: their ITC short Hermann–Mauguin symbols, in ITC's order
+ * (docs/conventions.md, "Keys").
+ *
+ * @remarks Source: ITC Vol. D (2013), Table 1.5.2.3.
  */
 export const BLACK_WHITE_POINT_GROUP_KEYS = Object.freeze([
   "-1'",

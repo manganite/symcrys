@@ -86,7 +86,9 @@ export interface CrystalForm {
   /**
    * `true` for a basic form, a form of lowest eigensymmetry of the position (two at the faces (hhl)
    * of -43m and m-3m), `false` for a limiting form: its faces have the face symmetry of the position,
-   * but the form has a higher eigensymmetry (ITA 6th ed., § 3.2.1.2.2, p. 723).
+   * but the form has a higher eigensymmetry.
+   *
+   * @remarks Source: ITA (6th ed., 2016), § 3.2.1.2.2, p. 723.
    */
   readonly basic: boolean;
   /** The kind of the form, its key in `CRYSTAL_FORM_TYPES`. */
@@ -96,7 +98,10 @@ export interface CrystalForm {
    * or `h,h,-2h,l` (Bravais–Miller indices) for hexagonal axes; a leading `-` is an overbar.
    */
   readonly millerIndices: string;
-  /** The condition ITA prints with the form, `|h|<|l|` or `|h|>|l|` (cubic forms (hhl)); absent otherwise. */
+  /**
+   * The condition on the indices that ITA gives with the form, `|h|<|l|` or `|h|>|l|` (cubic forms
+   * (hhl)); absent otherwise.
+   */
   readonly condition?: string;
 }
 

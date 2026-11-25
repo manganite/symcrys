@@ -33,8 +33,10 @@ export function crystalFamily(system: CrystalSystem): CrystalFamily {
 }
 
 /**
- * One of the seven lattice systems of ITA Table 1.3.4.1 (p. 39): the lattices whose point symmetry
- * is the same holohedry. The hexagonal family has two, `'hexagonal'` (hP) and `'rhombohedral'` (hR).
+ * One of the seven lattice systems: the lattices whose point symmetry is the same holohedry. The
+ * hexagonal family has two, `'hexagonal'` (hP) and `'rhombohedral'` (hR).
+ *
+ * @remarks Source: ITA (2016), Table 1.3.4.1, p. 39.
  */
 export type LatticeSystem =
   'triclinic' | 'monoclinic' | 'orthorhombic' | 'tetragonal' | 'hexagonal' | 'rhombohedral' | 'cubic';
