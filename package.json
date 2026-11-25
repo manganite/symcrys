@@ -18,6 +18,8 @@
     "test:coverage": "vitest run --coverage --testTimeout=60000",
     "build": "npm run build -w symcrys",
     "check:dist": "node scripts/check-dist.mjs",
+    "api:check": "api-extractor run -c packages/ts/api/index.api-extractor.json && api-extractor run -c packages/ts/api/magnetic.api-extractor.json && api-extractor run -c packages/ts/api/plane.api-extractor.json",
+    "api:report": "api-extractor run --local -c packages/ts/api/index.api-extractor.json && api-extractor run --local -c packages/ts/api/magnetic.api-extractor.json && api-extractor run --local -c packages/ts/api/plane.api-extractor.json",
     "bundle:python": "node scripts/bundle-python.mjs",
     "benchmark": "node scripts/benchmark.mjs",
     "docs:ts": "typedoc",
@@ -32,6 +34,7 @@
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
+    "@microsoft/api-extractor": "7.60.1",
     "@types/node": "22.20.5",
     "@vitest/coverage-v8": "5.1.0",
     "esbuild": "0.28.2",

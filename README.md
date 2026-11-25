@@ -83,6 +83,7 @@ npm run format:check   # Prettier (npm run format fixes)
 npm test               # vitest
 npm run build          # packages/ts/dist/: JavaScript, .d.ts, source maps
 npm run check:dist     # dist/ loads, imports only relative .js paths, has no test-only code
+npm run api:check      # the API reports in packages/ts/api/ are current (npm run api:report writes them)
 npm run benchmark      # times the heavy calls of dist/, to compare with the previous version
 npm run test:coverage  # the tests with a coverage report in build/coverage/ (not a gate)
 ```
@@ -124,7 +125,7 @@ stereography now takes these data from symcrys, so the two audits of its catalog
 transcription at a fixed revision (`audit/stereography-2006.ts`); a full clone is needed.
 `npm run audit:itc-baseline` captures the ITC baseline pins (CLAUDE.md, "Tests").
 
-CI runs these seven gates on every pull request, on Node 22 and 24, the gate `python` (bundle,
+CI runs these eight gates on every pull request, on Node 22 and 24, the gate `python` (bundle,
 build sdist and wheel, install the wheel, `mypy`, `pytest`) on Python 3.10 and the newest, and the
 gate `docs` (`docs:check` and `docs:site` above); the external links (`docs:linkcheck`) are
 checked by the workflow Links, which is not a gate, and the job `coverage` keeps a coverage report
@@ -135,7 +136,8 @@ module (`foo.ts`, `foo.test.ts`). Working rules for contributors, human or agent
 
 1. Release PR: version in `packages/ts/package.json`, `package-lock.json` (`npm install
 --package-lock-only`), `packages/ts/src/version.ts` and `packages/python/pyproject.toml`, and the stored output of
-   `symcrys.VERSION` in `packages/python/examples/surface-shg.ipynb`; move the `Unreleased` entries of `CHANGELOG.md` under
+   `symcrys.VERSION` in `packages/python/examples/surface-shg.ipynb`; the API reports, which show `VERSION`
+   (`npm run build && npm run api:report`); move the `Unreleased` entries of `CHANGELOG.md` under
    `## [X.Y.Z] - YYYY-MM-DD` and update the link definitions at the bottom (`[Unreleased]` compares
    `vX.Y.Z...HEAD`, `[X.Y.Z]` compares the previous tag with `vX.Y.Z`).
 2. After the merge: `git fetch origin`, check that `origin/main` is the merge commit of the release PR,

@@ -39,6 +39,8 @@ jobs:
         run: npm run build
       - name: Check dist
         run: npm run check:dist
+      - name: API report current (api-extractor)
+        run: npm run api:check
 
   # The coverage of the library by the tests (#69): a report kept as the artefact "coverage", to see
   # which paths no test reaches. Not a gate: no percentage is required, and the ruleset does not
