@@ -6,6 +6,16 @@ All notable changes to symcrys are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-11-25
+
+Work on the open issues before 1.0: `residualOperations` for the plane (#119), faster calls for
+lists of operations (#100) and a cleaner inside (#101), no breaking change. Beside the API: a guide
+page for the plane groups on the site; further print checks of the property tensors (Newnham,
+_Properties of Materials_, 2005: piezoelectric, gyration, pyroelectric, dielectric, elastic,
+pyromagnetic, magnetoelectric and piezomagnetic matrices) and of the four-index symbols (Frank,
+_Acta Cryst._ 18, 862, 1965); the API decisions of #110 and #115 documented ("Indices and
+numbering" in the conventions).
+
 ### Added
 
 - `residualOperations` in `symcrys/plane` (#119): the operations of a list whose matrix W keeps the
@@ -953,7 +963,8 @@ k=None, l=None)` (new in this version).
 - Project scaffold: TypeScript build to `dist/` (ES modules with type declarations), tests, lint,
   format check, CI and release workflow. The only export so far is `VERSION`.
 
-[Unreleased]: https://github.com/manganite/symcrys/compare/v0.12.0...HEAD
+[Unreleased]: https://github.com/manganite/symcrys/compare/v0.13.0...HEAD
+[0.13.0]: https://github.com/manganite/symcrys/compare/v0.12.0...v0.13.0
 [0.12.0]: https://github.com/manganite/symcrys/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/manganite/symcrys/compare/v0.10.1...v0.11.0
 [0.10.1]: https://github.com/manganite/symcrys/compare/v0.10.0...v0.10.1
