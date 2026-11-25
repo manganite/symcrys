@@ -54,10 +54,21 @@ describe('ITC Vol. D Table 1.5.2.3: Shubnikov symbols', () => {
     expect(classes.symbol('m-3m', { form: 'shubnikov' })).toBe('6̅/4');
   });
 
-  it('a grey group: the symbol of its class and an underlined 1 (not printed by ITC)', () => {
+  it('a grey group (not printed by ITC): as Shubnikov & Belov (1964, pp. 113–114) write it, the class, · and 1̲', () => {
+    const rows = tableRows(readReference('shubnikov-belov/neutral-groups.md')).slice(1);
+    expect(rows).toHaveLength(2);
+    for (const [polar, neutral] of rows) {
+      const [, symbol, international] = /^(\S+) \[(.+)\]$/.exec(neutral)!;
+      const key = keyOf(international);
+      expect(magnetic.symbol(key, { form: 'shubnikov' }), neutral).toBe(asPrinted(symbol));
+      expect(asPrinted(symbol).startsWith(asPrinted(polar.split(' ')[0]))).toBe(true);
+    }
+    // The rule for every grey group: the symbol of the polar group (its class), ·, 1̲.
     for (const key of classes.POINT_GROUP_KEYS) {
       const grey = magnetic.POINT_GROUP_KEYS.find((k) => k === `${key}1'`)!;
-      expect(magnetic.symbol(grey, { form: 'shubnikov' })).toBe(`${magnetic.symbol(key, { form: 'shubnikov' })}1̲`);
+      expect(magnetic.symbol(grey, { form: 'shubnikov' })).toBe(
+        `${magnetic.symbol(key, { form: 'shubnikov' })}\u00b71\u0332`,
+      );
     }
   });
 

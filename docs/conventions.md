@@ -407,7 +407,9 @@ writes; ITC Vol. D and the magnetic API write `S6`).
   after its character, and `·` for the centred dot: `2̲:m̲` for `2'/m'`, `6̅/4` for `m-3m`. Shubnikov's
   overbar marks a rotoreflection (`2̅` is −1, `6̅` is −3), not Hermann–Mauguin's rotoinversion, so it is
   not written as `-`. A grey group, for which ITC prints no Shubnikov symbol, has the symbol of its
-  class followed by an underlined 1 (`3:21̲` for `321'`), a rule of symcrys. The symbol names no
+  class, a centred dot and an underlined 1 (`3:2·1̲` for `321'`), as Shubnikov & Belov, _Colored
+  Symmetry_ (1964), pp. 113–114, write it ("the addition of the symbol 1̲ [1′] to the symbol of the
+  polar group", `m·1̲ [m1′]`, `4·1̲ [41′]`; `references/shubnikov-belov/neutral-groups.md`). The symbol names no
   orientation, so every setting has the same one, as for Schoenflies. Birss Table 6 prints the same
   symbols for the 90 groups (tested; `references/birss/table-6.md`). The low line comes before the
   overbar where both mark a digit, Unicode's canonical order, so that normalizing a symbol keeps it.

@@ -164,8 +164,9 @@ export interface SymbolOptions extends SettingOptions {
    * `'shubnikov'`: Shubnikov symbol as ITC Vol. D Table 1.5.2.3 prints it, with the combining
    * overbar (U+0305) and the combining low line (U+0332, an element combined with time reversal)
    * after their character and `·` for the centred dot: `2̲:m̲` for `2'/m'`, `6̅` for `-3` (Shubnikov's
-   * overbar is a rotoreflection). A grey group has the symbol of its class followed by an underlined
-   * 1 (`3:21̲` for `321'`), which ITC does not print. The same in every setting, since it names no
+   * overbar is a rotoreflection). A grey group, which ITC does not print, has the symbol of its class,
+   * a centred dot and an underlined 1, as Shubnikov & Belov (1964, pp. 113–114) write it (`3:2·1̲` for
+   * `321'`). The same in every setting, since it names no
    * orientation; `findPointGroup` does not read it, since it clashes with Hermann–Mauguin (`2̅` is
    * −1, `6̅` is −3).
    */
@@ -787,11 +788,12 @@ const OVERBAR = '\u0305';
 
 /**
  * The Shubnikov symbol of a group: the printed one of ITC Vol. D Table 1.5.2.3 (types I and III),
- * written with combining characters; for a grey group the symbol of its class with an underlined 1,
- * a rule of symcrys (Thomas, 2026-11-25), since ITC prints none.
+ * written with combining characters; for a grey group, which ITC does not print, the symbol of its
+ * class, a centred dot and an underlined 1, as Shubnikov & Belov (1964, pp. 113–114) write it
+ * (`m·1̲`, `4·1̲`).
  */
 function shubnikov(d: GroupData): string {
-  if (d.type === 'II') return `${shubnikov(d.crystalClass)}1${LOW_LINE}`;
+  if (d.type === 'II') return `${shubnikov(d.crystalClass)}·1${LOW_LINE}`;
   const printed = SHUBNIKOV[d.key];
   if (printed === undefined) throw new Error(`No Shubnikov symbol for ${d.key}`);
   let out = '';

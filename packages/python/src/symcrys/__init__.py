@@ -1286,10 +1286,10 @@ def symbol(
         1.5.2.3 prints it, with the combining overbar (U+0305) and the combining low line (U+0332,
         an element combined with time reversal) after their character and ``·`` for the centred dot:
         ``2̲:m̲`` for ``2'/m'``, ``6̅`` for ``-3`` (Shubnikov's overbar is a rotoreflection). A grey
-        group has the symbol of its class followed by an underlined 1 (``3:21̲`` for ``321'``),
-        which ITC does not print. The same in every setting, since it names no orientation;
-        ``find_point_group`` does not read it, since it clashes with Hermann–Mauguin (``2̅`` is −1,
-        ``6̅`` is −3).
+        group, which ITC does not print, has the symbol of its class, a centred dot and an
+        underlined 1, as Shubnikov & Belov (1964, pp. 113–114) write it (``3:2·1̲`` for ``321'``).
+        The same in every setting, since it names no orientation; ``find_point_group`` does not read
+        it, since it clashes with Hermann–Mauguin (``2̅`` is −1, ``6̅`` is −3).
     """
     result: str = _shared.convert(
         _call(
