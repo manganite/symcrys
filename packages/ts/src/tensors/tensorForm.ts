@@ -26,8 +26,15 @@ import {
   type SettingOptions,
 } from '../pointGroups/pointGroups.js';
 import { specOf, type TensorPropertyName } from './propertyTable.js';
-import { EPSILON, MAX_PIVOT_THRESHOLD, SNAP_EPSILON, toleranceOf, type ToleranceOptions } from '../tolerances.js';
-import { PIVOT_EPSILON, rowEchelonWithPivots } from './rowEchelon.js';
+import {
+  EPSILON,
+  MAX_PIVOT_THRESHOLD,
+  PIVOT_EPSILON,
+  SNAP_EPSILON,
+  toleranceOf,
+  type ToleranceOptions,
+} from '../tolerances.js';
+import { rowEchelonWithPivots } from './rowEchelon.js';
 import { deepFreeze } from '../freeze.js';
 
 /** Rank of a tensor: 0 (scalar) to 4. */
@@ -319,6 +326,7 @@ function project(
  */
 function reduce(spanning: readonly number[][], dim: number, deviation: number, rank: number) {
   const start = Math.max(10 * deviation, PIVOT_EPSILON);
+  // 0.999: the tenfold steps from a power of ten reach PIVOT_EPSILON itself despite rounding.
   for (let threshold = start; threshold >= PIVOT_EPSILON * 0.999; threshold /= 10) {
     const reduced = rowEchelonWithPivots(spanning, dim, threshold);
     if (reduced.pivots.length === rank) return reduced;

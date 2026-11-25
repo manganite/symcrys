@@ -75,3 +75,106 @@ export const IDEAL_SNAP = 1e-12;
  * taken for independent ones; a genuine pivot of a form of a point group is far larger.
  */
 export const MAX_PIVOT_THRESHOLD = 1e-2;
+
+// --- internal tolerances of the computations -------------------------------------------------------
+//
+// The constants below are fixed: no option changes them. Most gate numbers that symcrys computes
+// itself; some gate a caller's input where only rounding is at stake (an integer matrix, a singular
+// basis, a flat cell). They sit far below anything a crystallographic quantity can differ by and far
+// above the rounding of a double (about 10⁻¹⁶ relative), so they decide nothing but rounding. One
+// convention: a difference strictly below the constant counts as equal or as zero (`<`), and a bound
+// that refuses (a singular matrix, a flat cell) refuses a value on it too. Every literal tolerance of
+// the library is one of these.
+
+/**
+ * A computed number within this of an integer is that integer: the entries of a matrix W in the
+ * lattice basis computed from Cartesian matrices (pointGroups.ts, `integer`), or passed as the
+ * integer `matrix` of an operation (cell.ts, `residualOperations`).
+ */
+export const INTEGER_EPSILON = 1e-9;
+
+/**
+ * Two numbers computed from exact data in floating point are equal within this: a point of a plane
+ * group that its fixing operations map onto itself modulo the lattice (spaceGroups/positions.ts),
+ * and, per vector averaged, the length below which a mean of unit vectors counts as zero
+ * (siteSymmetry.ts).
+ */
+export const ROUNDING_EPSILON = 1e-9;
+
+/**
+ * The margin of a floor, a ceiling or a closed interval taken of a number that is exact up to
+ * rounding (a rational turned into a double): the translates of a symmetry element that meet a box
+ * and the class of a line (spaceGroups/cell.ts), so that a boundary value counts as inside.
+ */
+export const BOUNDARY_EPSILON = 1e-12;
+
+/**
+ * The ratio |det| / (product of the column lengths) below which a matrix counts as singular; for a
+ * cell it is V/(abc), for a plane cell the area over ab. One criterion for `inverse`, the cell
+ * functions and the plane bases (linalg.ts, `isSingular`; spaceGroups/planeLattice.ts;
+ * spaceGroups/positions.ts). It depends neither on the unit of the entries nor on the lengths of the
+ * columns relative to each other.
+ */
+export const SINGULAR_RATIO = 1e-9;
+
+/**
+ * A cell is flat when V/(abc) (in the plane sin γ, the area over ab) is below this: `isValidCell`
+ * compares its square, the radicand 1 − cos²α − cos²β − cos²γ + 2 cos α cos β cos γ, with
+ * `FLAT_CELL_RADICAND`, and `latticeFromParameters` of the plane refuses such a γ.
+ */
+export const FLAT_CELL_RATIO = 1e-6;
+/** `FLAT_CELL_RATIO` squared, the bound of the radicand of the volume (cell.ts, `isValidCell`). */
+export const FLAT_CELL_RADICAND = 1e-12;
+
+/**
+ * Two unit vectors whose dot product is within this of ±1 are parallel: the axis of an operation
+ * along a symmetry direction (pointGroups/elements.ts). A deviation of 10⁻⁶ is an angle of about
+ * 1.4·10⁻³ rad, far below the angle between two symmetry directions.
+ */
+export const AXIS_EPSILON = 1e-6;
+
+/**
+ * A rotation by an angle (radians) below this is the identity (pointGroups/elements.ts); the
+ * smallest rotation of a point group is 60°.
+ */
+export const ANGLE_EPSILON = 1e-6;
+
+/**
+ * Row reduction (tensors/rowEchelon.ts): an entry below `PIVOT_EPSILON` does not serve as a pivot,
+ * so float noise is never a new direction; one below `ELIMINATION_EPSILON` is not eliminated and is
+ * set to zero in the result. The values are those of birss-app's `linalg.ts`, where the tensor code
+ * comes from; `MAX_PIVOT_THRESHOLD` (above) bounds the raised threshold.
+ */
+export const PIVOT_EPSILON = 1e-7;
+export const ELIMINATION_EPSILON = 1e-12;
+
+// --- bounds --------------------------------------------------------------------------------------
+
+/**
+ * No crystal class has more than 48 operations (m-3m): a coset closure of ITA's generators beyond
+ * that is a data error (pointGroups/itcData.ts).
+ */
+export const MAX_CLASS_ORDER = 48;
+
+/**
+ * The passes of setting a direction or a point onto the fixed space of the operations that fix it
+ * within the tolerance, until the set of them is stable (siteSymmetry.ts, spaceGroups/positions.ts);
+ * it settles in one or two passes for every group, so 8 only stops a loop that does not.
+ */
+export const SITE_PASSES = 8;
+
+/**
+ * The depth of the search for the simplest fraction within a tolerance (spaceGroups/rational.ts,
+ * `simplestFraction`), one step per term of a continued fraction: a double has at most about 40, so
+ * 200 is reached only by a tolerance far too small for the value.
+ */
+export const MAX_FRACTION_DEPTH = 200;
+
+/** No point group has more than 96 operations (m-3m1'): a closure beyond that is no point group. */
+export const MAX_POINT_GROUP_ORDER = 96;
+
+/**
+ * The bound of a closure of Cartesian operations a caller passes in (closure.ts), well above the
+ * largest point group, so that the error message can say the operations generate no finite group.
+ */
+export const MAX_GROUP_ORDER = 200;

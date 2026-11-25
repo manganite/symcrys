@@ -5,6 +5,7 @@
  * stay with the applications (CLAUDE.md, "Symmetry elements as structured data").
  */
 
+import { gcd } from '../integers.js';
 import { shown } from '../checks.js';
 import { determinant, dimensionOf, trace, type ExactOperation, type IntMatrix } from './affine.js';
 import { ZERO, add, multiply, rational, scale, type Rational } from './rational.js';
@@ -49,10 +50,6 @@ export interface PlaneOperationDescription {
    * symmetry element of its coset is the mirror line, which ITA lists.
    */
   readonly glide?: readonly Rational[];
-}
-
-function gcd(a: number, b: number): number {
-  return b === 0 ? Math.abs(a) : gcd(b, a % b);
 }
 
 /** The shortest integer vector along the non-zero column of a 2 × 2 matrix of rank 1, first non-zero component positive. */

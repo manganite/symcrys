@@ -4,6 +4,7 @@
  * Internal for now; the entry point `symcrys/plane` comes later.
  */
 
+import { deepFreeze } from '../freeze.js';
 import { shown } from '../checks.js';
 import {
   closure,
@@ -37,7 +38,7 @@ export function centringOperations(entry: PlaneGroupEntry): ExactOperation[] {
   ];
 }
 
-const cache = new Map<number, ExactOperation[]>();
+const cache = new Map<number, readonly ExactOperation[]>();
 
 /**
  * The operations of a plane group, one per coset of the integer translations, translations in
@@ -46,7 +47,7 @@ const cache = new Map<number, ExactOperation[]>();
  * generators, with the integer translations and the centring, do not give exactly this set, which
  * would be an error in the data.
  */
-export function planeGroupOperations(key: string | number): ExactOperation[] {
+export function planeGroupOperations(key: string | number): readonly ExactOperation[] {
   const entry = planeGroupEntry(key);
   const cached = cache.get(entry.number);
   if (cached) return cached;
@@ -60,8 +61,10 @@ export function planeGroupOperations(key: string | number): ExactOperation[] {
   if (!same) {
     throw new Error(`The selected generators of ${entry.symbol} do not give its general position`);
   }
-  cache.set(entry.number, ops);
-  return ops;
+  // Frozen, so that a caller inside the library cannot change the cached list (#101).
+  const frozen = deepFreeze(ops);
+  cache.set(entry.number, frozen);
+  return frozen;
 }
 
 /**

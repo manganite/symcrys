@@ -3,7 +3,8 @@
  * i, column j, and a matrix acts on a column vector from the left.
  */
 
-import { EPSILON, SNAP_EPSILON } from './tolerances.js';
+import { deepFreeze } from './freeze.js';
+import { EPSILON, SINGULAR_RATIO, SNAP_EPSILON } from './tolerances.js';
 
 /** A Cartesian vector. */
 export type Vec3 = readonly [number, number, number];
@@ -11,17 +12,18 @@ export type Vec3 = readonly [number, number, number];
 /** A Cartesian 3×3 matrix, as three rows. */
 export type Mat3 = readonly [Vec3, Vec3, Vec3];
 
-export const IDENTITY: Mat3 = [
+// Frozen: they are shared by the modules and put into cached lists (#101).
+export const IDENTITY: Mat3 = deepFreeze([
   [1, 0, 0],
   [0, 1, 0],
   [0, 0, 1],
-];
+] as const);
 
-export const INVERSION: Mat3 = [
+export const INVERSION: Mat3 = deepFreeze([
   [-1, 0, 0],
   [0, -1, 0],
   [0, 0, -1],
-];
+] as const);
 
 /** Builds a matrix from a row accessor. */
 function build(f: (i: number, j: number) => number): Mat3 {
@@ -119,14 +121,6 @@ export function matricesEqual(a: Mat3, b: Mat3): boolean {
   for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) if (Math.abs(a[i][j] - b[i][j]) > EPSILON) return false;
   return true;
 }
-
-/**
- * Below this ratio of |det| to the product of the column lengths (Hadamard's bound, the largest
- * |det| columns of these lengths can have) a matrix counts as singular. The ratio depends neither
- * on the unit of the entries nor on the lengths of the columns relative to each other; for a cell
- * it is V/(abc).
- */
-const SINGULAR_RATIO = 1e-9;
 
 /**
  * True if `a` is singular within rounding: |det a| at most `SINGULAR_RATIO` times the product of

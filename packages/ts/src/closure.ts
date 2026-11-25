@@ -7,21 +7,41 @@
  * nearest to them before anything is computed from them.
  */
 
-import { det, inverse, multiply, snap, trace, transpose, type Mat3 } from './linalg.js';
+import { det, IDENTITY as LINEAR_IDENTITY, inverse, multiply, snap, trace, transpose, type Mat3 } from './linalg.js';
 import type { CartesianOperation } from './operations.js';
-import { IDEAL_PASSES, IDEAL_SETTLED, IDEAL_SNAP, IDEAL_UNSETTLED, PRODUCT_MATCH } from './tolerances.js';
+import {
+  IDEAL_PASSES,
+  IDEAL_SETTLED,
+  IDEAL_SNAP,
+  IDEAL_UNSETTLED,
+  MAX_GROUP_ORDER,
+  PRODUCT_MATCH,
+} from './tolerances.js';
 
-const IDENTITY: CartesianOperation = {
-  cartesian: [
-    [1, 0, 0],
-    [0, 1, 0],
-    [0, 0, 1],
-  ],
-  timeReversal: false,
-};
+const IDENTITY: CartesianOperation = { cartesian: LINEAR_IDENTITY, timeReversal: false };
 
-/** No finite group of Cartesian operations that symcrys computes with has more elements (m-3m1' has 96). */
-export const MAX_GROUP_ORDER = 200;
+/**
+ * The indices of a subset of a group, closed under the group's product (`product(i, j)`, the index
+ * of the product of the elements at i and j, or a negative number for a product outside the list),
+ * ascending. Each element is multiplied with every element before it, in both orders, as it is
+ * added, so the result is closed once the loop ends. The one closure by index (#101), for a site
+ * symmetry in a point group (siteSymmetry.ts) and in a plane group (spaceGroups/positions.ts).
+ */
+export function closeIndices(product: (i: number, j: number) => number, indices: readonly number[]): number[] {
+  const set = [...new Set(indices)];
+  const member = new Set(set);
+  for (let i = 0; i < set.length; i++) {
+    for (let j = 0; j <= i; j++) {
+      for (const k of [product(set[i], set[j]), product(set[j], set[i])]) {
+        if (k >= 0 && !member.has(k)) {
+          member.add(k);
+          set.push(k);
+        }
+      }
+    }
+  }
+  return set.sort((a, b) => a - b);
+}
 
 /** True if the two operations agree in time reversal and in every matrix entry within `tolerance`. */
 export function sameWithin(a: CartesianOperation, b: CartesianOperation, tolerance: number): boolean {

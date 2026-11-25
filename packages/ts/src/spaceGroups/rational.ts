@@ -5,7 +5,9 @@
  * intermediate product is checked: a result outside the safe integers throws instead of rounding.
  */
 
+import { MAX_FRACTION_DEPTH } from '../tolerances.js';
 import { shown } from '../checks.js';
+import { gcd } from '../integers.js';
 
 /** A rational number n/d: d > 0, gcd(n, d) = 1, both safe integers. */
 export type Rational = readonly [numerator: number, denominator: number];
@@ -15,15 +17,6 @@ export const ZERO: Rational = [0, 1];
 
 /** The rational 1. */
 export const ONE: Rational = [1, 1];
-
-function gcd(a: number, b: number): number {
-  let x = Math.abs(a);
-  let y = Math.abs(b);
-  while (y !== 0) {
-    [x, y] = [y, x % y];
-  }
-  return x;
-}
 
 /** Throws unless `value` is a safe integer. */
 export function checkSafeInteger(value: number, what: string): number {
@@ -163,7 +156,8 @@ export function simplestFraction(value: unknown, tolerance: number, what: string
     // The simplest fraction in the open interval (lo, hi), lo < hi.
     if (lo < 0 && hi > 0) return ZERO;
     if (hi <= 0) return negate(simplest(-hi, -lo, depth));
-    if (depth > 200) throw new RangeError(`The ${what} ${shown(value)} has no fraction within ${tolerance}`);
+    if (depth > MAX_FRACTION_DEPTH)
+      throw new RangeError(`The ${what} ${shown(value)} has no fraction within ${tolerance}`);
     const f = Math.floor(lo);
     if (f + 1 < hi) return rational(checkSafeInteger(f + 1, `The ${what}`));
     // lo and hi lie in [f, f + 1]: f + 1/y with y in (1/(hi − f), 1/(lo − f)).

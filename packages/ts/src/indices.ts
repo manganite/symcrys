@@ -6,16 +6,10 @@
 import { shown } from './checks.js';
 import { type Vec3 } from './linalg.js';
 import { deepFreeze } from './freeze.js';
+import { gcd } from './integers.js';
 
 /** A direction [UVTW] or a plane (hkil) in four indices (Bravais–Miller). */
 export type FourIndices = readonly [number, number, number, number];
-
-function gcd(a: number, b: number): number {
-  a = Math.abs(a);
-  b = Math.abs(b);
-  while (b) [a, b] = [b, a % b];
-  return a;
-}
 
 function integers(v: readonly number[], who: string, length?: number): void {
   if (

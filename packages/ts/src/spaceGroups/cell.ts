@@ -6,6 +6,8 @@
  * lattice basis; drawing them stays with the applications. Internal for now.
  */
 
+import { BOUNDARY_EPSILON } from '../tolerances.js';
+import { gcd } from '../integers.js';
 import { shown } from '../checks.js';
 import { type ExactOperation } from './affine.js';
 import { describePlaneOperation } from './describe.js';
@@ -136,10 +138,6 @@ function parseLinear(text: string): Linear {
   const e = sum();
   if (i !== s.length) fail();
   return e;
-}
-
-function gcd(a: number, b: number): number {
-  return b === 0 ? Math.abs(a) : gcd(b, a % b);
 }
 
 /** p ≤ 0 as an inequality with integer coefficients without a common factor. */
@@ -301,7 +299,7 @@ const lineParameter = (l: LineClass): number => {
  */
 function classOffset(d: readonly [number, number], c: Rational, step: Rational): Rational {
   const modulo = (v: Rational, m: Rational): Rational =>
-    subtract(v, scale(Math.floor(toNumber(v) / toNumber(m) + 1e-12), m));
+    subtract(v, scale(Math.floor(toNumber(v) / toNumber(m) + BOUNDARY_EPSILON), m));
   const reduced = modulo(c, step);
   if (d[1] === 0) return reduced; // the point is (0, c/d_x) with d_x = 1
   // x = −c/d_y; c' = c − m·step moves x by m·step/d_y: take x in [0, step/|d_y|).
@@ -467,11 +465,16 @@ export function planeElementsInBox(key: string | number, box: Box): CellElements
     for (const tau of taus) {
       const base = [add(point[0], tau[0]), add(point[1], tau[1])];
       const [px, py] = base.map(num);
-      for (let i = Math.ceil(x0 - px - 1e-12); i <= Math.floor(x1 - px + 1e-12); i++) {
-        for (let j = Math.ceil(y0 - py - 1e-12); j <= Math.floor(y1 - py + 1e-12); j++) {
+      for (let i = Math.ceil(x0 - px - BOUNDARY_EPSILON); i <= Math.floor(x1 - px + BOUNDARY_EPSILON); i++) {
+        for (let j = Math.ceil(y0 - py - BOUNDARY_EPSILON); j <= Math.floor(y1 - py + BOUNDARY_EPSILON); j++) {
           const p = [add(base[0], r(i)), add(base[1], r(j))];
           const [qx, qy] = p.map(num);
-          if (qx >= x0 - 1e-12 && qx <= x1 + 1e-12 && qy >= y0 - 1e-12 && qy <= y1 + 1e-12)
+          if (
+            qx >= x0 - BOUNDARY_EPSILON &&
+            qx <= x1 + BOUNDARY_EPSILON &&
+            qy >= y0 - BOUNDARY_EPSILON &&
+            qy <= y1 + BOUNDARY_EPSILON
+          )
             inside.push({ n, point: p });
         }
       }
@@ -485,7 +488,11 @@ export function planeElementsInBox(key: string | number, box: Box): CellElements
     const hi = Math.max(...values);
     const c = num(l.c);
     const step = num(l.step);
-    for (let k = Math.ceil((lo - c) / step - 1e-12); k <= Math.floor((hi - c) / step + 1e-12); k++) {
+    for (
+      let k = Math.ceil((lo - c) / step - BOUNDARY_EPSILON);
+      k <= Math.floor((hi - c) / step + BOUNDARY_EPSILON);
+      k++
+    ) {
       crossing.push({ ...l, c: add(l.c, scale(k, l.step)) });
     }
   }

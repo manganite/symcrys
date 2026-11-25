@@ -8,7 +8,7 @@ import { TOLERANCE_KEYS, checkOptions } from '../checks.js';
 import { det, trace, type Mat3, type Vec3 } from '../linalg.js';
 import { closeWithin, sameWithin } from '../closure.js';
 import { checkCartesianOperations, checkTimeReversal, type CartesianOperation } from '../operations.js';
-import { EPSILON, toleranceOf, type ToleranceOptions } from '../tolerances.js';
+import { EPSILON, MAX_POINT_GROUP_ORDER, toleranceOf, type ToleranceOptions } from '../tolerances.js';
 import { axialVector, rotationAxis, type OperationKind } from './elements.js';
 import {
   MAGNETIC_POINT_GROUP_KEYS,
@@ -54,9 +54,6 @@ export interface CartesianOperationDescription {
   readonly timeReversal: boolean;
 }
 
-/** No point group has more than 96 operations (m-3m1'). */
-const MAX_ORDER = 96;
-
 /**
  * How far the trace of a matrix with entries within `tolerance` may lie from an integer: three
  * diagonal entries, so three times the tolerance (at least that of `EPSILON`).
@@ -67,7 +64,7 @@ const same = sameWithin;
 
 /** The group the operations generate within the tolerance, or undefined if it is larger than any point group. */
 const close = (ops: readonly CartesianOperation[], tolerance: number): CartesianOperation[] | undefined =>
-  closeWithin(ops, tolerance, MAX_ORDER);
+  closeWithin(ops, tolerance, MAX_POINT_GROUP_ORDER);
 
 /**
  * How many operations of each kind a group has: determinant, trace and time reversal of each. For
