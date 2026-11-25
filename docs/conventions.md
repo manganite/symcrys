@@ -400,8 +400,16 @@ writes; ITC Vol. D and the magnetic API write `S6`).
   crystallographic API writes `C3i` for `-3`, as ITA does (Tables 3.2.1.2, 3.2.3.2), the magnetic API
   `S6` throughout, as ITC Vol. D does (`S6`, `S6(C3)`, `D3d(S6)`, `C6h(S6)`; Table 1.5.2.3), and so
   `S6R` for the grey group.
-- **Shubnikov symbols** are not provided. `references/` holds them as printed (ITC Vol. D
-  Table 1.5.2.3; Birss Tables 3 and 6).
+- **Shubnikov** (`form: 'shubnikov'`; #137 B4, decided by Thomas on 2026-11-25): the symbol of ITC
+  Vol. D Table 1.5.2.3, column 3 (pp. 111–112), for the 32 classes (in both entry points) and the 58
+  black-and-white groups, written as print shows it: the overbar as the combining overbar U+0305
+  and the underline (an element combined with time reversal) as the combining low line U+0332, each
+  after its character, and `·` for the centred dot: `2̲:m̲` for `2'/m'`, `6̅/4` for `m-3m`. Shubnikov's
+  overbar marks a rotoreflection (`2̅` is −1, `6̅` is −3), not Hermann–Mauguin's rotoinversion, so it is
+  not written as `-`. A grey group, for which ITC prints no Shubnikov symbol, has the symbol of its
+  class followed by an underlined 1 (`3:21̲` for `321'`), a rule of symcrys. The symbol names no
+  orientation, so every setting has the same one, as for Schoenflies. Birss Table 6 prints the same
+  symbols for the 58 black-and-white groups (tested; `references/birss/table-6.md`).
 - Rendering (overbars, subscripts, LaTeX) is left to the applications.
 
 ## Reading symbols
@@ -427,7 +435,10 @@ normalisation before the comparison (#96; decided by Thomas on 2026-11-22 and 20
 
   Every symbol `symbol()` writes is read back to its group (tested over all settings and forms of
   both entry points), and to its setting where the symbol, or the symbol with the setting's axes or
-  unique axis, names one. A symbol that names several groups is a RangeError that lists them; none
+  unique axis, names one; the one exception is the Shubnikov form, which is not read, since its
+  overbar means something else (`6̅` is −3 there, `-6` is C3h in Hermann–Mauguin; Thomas,
+  2026-11-25): a symbol with a character only Shubnikov writes (the underline, `:`, `·`) is a
+  RangeError, and one without (`6̅`, `2̅`) is read as Hermann–Mauguin. A symbol that names several groups is a RangeError that lists them; none
   of the symbols of the library does. The crystallographic API finds no magnetic group, in any
   spelling.
 

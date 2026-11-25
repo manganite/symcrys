@@ -36,6 +36,11 @@ planes=None, metric=None, operations=None, tolerance=None)`): the change of the 
   (`{ factors: [2] }` for the piezoelectric d, `[1]` for second-harmonic generation, `[2, 2]` for s,
   `[1, 2]` for π), ITC's `[2]` by default for `'piezomagnetic'`; 6 components at rank 2, 3 × 6 or
   6 × 3 at rank 3, 6 × 6 at rank 4.
+- **Shubnikov symbols** (#137 B4): `symbol(key, { form: 'shubnikov' })` in `symcrys` and
+  `symcrys/magnetic` gives the symbol of ITC Vol. D Table 1.5.2.3 (`2̲:m̲` for `2'/m'`, `6̅/4` for
+  `m-3m`), with combining characters for the overbar and the underline; a grey group the symbol of
+  its class and an underlined 1, which ITC does not print. `findPointGroup` does not read them, and
+  refuses a symbol with the underline, `:` or `·`.
 - The type `PlaneOperationKind` of `symcrys/plane` (Python `symcrys.plane.PlaneOperationKind`), the
   `kind` of a plane operation description, named as `OperationKind` is in the other entry points.
 

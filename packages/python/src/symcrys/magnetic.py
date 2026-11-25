@@ -1631,7 +1631,7 @@ def symbol(
     axes: Optional[Literal["hexagonal", "rhombohedral"]] = None,
     unique_axis: Optional[Literal["a", "b", "c"]] = None,
     setting: Optional[Union[int, str]] = None,
-    form: Optional[Literal["short", "full", "schoenflies"]] = None,
+    form: Optional[Literal["short", "full", "schoenflies", "shubnikov"]] = None,
 ) -> str:
     """A symbol of the point group in the requested setting. The default setting of a grey or
     black-and-white group has its key as short symbol (``32'``, as ITC Vol. D Table 1.5.2.3 prints
@@ -1659,7 +1659,14 @@ def symbol(
         and ``1'``). ``'full'``: full symbol, positions separated by spaces, e.g. ``-3 2/m 1``.
         ``'schoenflies'``: Schoenflies symbol, subscripts written inline (``C3v``, ``D2d``, ``Oh``);
         ``C3i`` for the class -3 in the crystallographic API (ITA), ``S6`` in the magnetic API (ITC
-        Vol. D: ``S6(C3)``, ``D3d(S6)``).
+        Vol. D: ``S6(C3)``, ``D3d(S6)``). ``'shubnikov'``: Shubnikov symbol as ITC Vol. D Table
+        1.5.2.3 prints it, with the combining overbar (U+0305) and the combining low line (U+0332,
+        an element combined with time reversal) after their character and ``·`` for the centred dot:
+        ``2̲:m̲`` for ``2'/m'``, ``6̅`` for ``-3`` (Shubnikov's overbar is a rotoreflection). A grey
+        group has the symbol of its class followed by an underlined 1 (``3:21̲`` for ``321'``),
+        which ITC does not print. The same in every setting, since it names no orientation;
+        ``find_point_group`` does not read it, since it clashes with Hermann–Mauguin (``2̅`` is −1,
+        ``6̅`` is −3).
     """
     result: str = _shared.convert(
         _call(

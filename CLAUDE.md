@@ -712,6 +712,17 @@ quantities, { tolerance })`, in all three entry points (3 × 3, and 2 × 2 in `s
   still selects the default setting. Confirmed by Thomas on 2026-11-23
   (#150): the white groups keep `321`, and the default short symbol is the one of Table 1.5.2.3
   (`3m'`), although Vol. D writes `3m'1` where it sets the orientation against `31m'` (p. 140).
+- **Shubnikov symbols** (#137 B4, decided by Thomas on 2026-11-25, asked with proposals and a
+  recommendation): `symbol(key, { form: 'shubnikov' })` in both point-group entry points, for every
+  setting the same symbol (it names no orientation), written as print shows it, with the combining
+  overbar and low line (U+0305, U+0332) and `·`, not with `-`, since Shubnikov's overbar is a
+  rotoreflection; a grey group, which ITC does not print, gets the symbol of its class with an
+  underlined 1, a rule of symcrys (Thomas chose it over an error); `findPointGroup` does not read the
+  form (an exception to the read-back rule, `docs/conventions.md`, "Reading symbols"). Chosen while
+  implementing: a symbol with a character that only Shubnikov writes (underline, `:`, `·`) is a
+  RangeError of `findPointGroup`, rather than read as something else; the data are column 3 of the
+  transcription of Table 1.5.2.3 (`pointGroups/shubnikovData.ts`, compared with it by
+  `shubnikov.reference.test.ts`).
 - **Magnetic point groups: data** (2026-11-19, #13; #122, #109): stored are the ITC full symbols of
   the black-and-white groups, one per setting, and the time reversal of their operations is derived
   from them (`pointGroups/itcMagneticData.ts`). Not stored: the grey groups (class and time
