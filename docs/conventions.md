@@ -851,8 +851,9 @@ setting: the key is still found, the setting is absent. `1` and `-1` have no ori
 setting 1. The result is undefined if the operations generate no point group (an operation of
 order 5, a group of more than 96 operations). The setting is found from the operations passed in,
 which generate the group, not from their products, whose errors add up. The first call builds a
-table of the 122 groups (about 0.1 s); after that a call takes about 1.5 ms for the 48 operations
-of m-3m (Node, measured 2026-11-21), since the closure multiplies only by the operations passed in
+table of the 122 groups (about 0.1 s in Node, 0.3 s in the Python package); after that a call takes
+about 1 ms for the 48 operations of m-3m in Node (`npm run benchmark`), about 4 ms in Python
+(measured by hand; both 2026-11-25), since the closure multiplies only by the operations passed in
 and compares a product only with the operations of its kind.
 
 **How the group is named.** Each operation contributes its determinant, its trace and, in the

@@ -322,7 +322,7 @@ Carried over from birss-app, where the calculations come from.
   flat components; `rotate_tensor` keeps the shape of the tensor, (3, …, 3) or flat, and takes
   stacks of tensors and rotations as leading axes, broadcast as in NumPy. Chosen while
   implementing: the library rotates one tensor by one rotation per call and the Python layer loops
-  (batched calls are #100); an object parameter's fields are documented by their TSDoc, so `orbit`
+  (batched calls were measured and left out, #100, "Speed"); an object parameter's fields are documented by their TSDoc, so `orbit`
   got the named types `FaceIndices` and `DirectionIndices` in TypeScript.
 - **The engine stays replaceable** (#30): the whole boundary is one function, `call(name,
 argsJson) → resultJson` (`_engine.py`, `scripts/bundle-python.mjs`; a name of the magnetic API has
@@ -896,7 +896,14 @@ The conventions are in `docs/conventions.md` ("Tensors"); here, what was decided
 - **Speed** (#30, measured 2026-11-19): birss-app's reduction, bundled, takes under QuickJS
   (`quickjs-ng`) 3–112 ms per class for the SHG tensor and up to about 0.3 s at rank 4 (m-3m), 10–35
   times Node; enough for a Python layer that calls symcrys a few times per material. Forms per
-  class, setting and kind of tensor are cached.
+  class, setting and kind of tensor are cached, and the groups and forms of the last 64 lists of
+  operations a caller passed (#100, 2026-11-25, chosen while implementing: a Python loop over one
+  list costs no closure; keyed by the numbers the function reads and the tolerance). A yes/no
+  question of a named property reads the trace of the group average without the row reduction, and
+  `rotateTensor` contracts one index at a time. Batched calls of the Python layer (one engine call
+  for a stack) were measured and left out: a Python call of a cheap function costs about 0.1 ms with
+  its conversions and JSON, the engine round trip itself far less, and the computation in QuickJS
+  takes most of the time (`rotate_tensor` of 2000 tensors: 543 ms looped, about 500 ms in one call).
 
 ### Plane groups (and later space groups)
 

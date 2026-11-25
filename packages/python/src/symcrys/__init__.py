@@ -1391,8 +1391,8 @@ def point_group_of(
     class (an operation of order 5, a group larger than 48). Raises SymcrysError for an operation
     without an orthogonal Cartesian matrix (``cartesian``; within ``tolerance``, at least
     ``EPSILON``). The classes ``1`` and ``-1`` have no orientation, so they always have setting 1.
-    The first call builds a table of the groups (about 0.1 s; docs/conventions.md, "Point group of a
-    list of operations").
+    The first call builds a table of the groups (about 0.1 s in Node, 0.3 s in the Python package;
+    docs/conventions.md, "Point group of a list of operations").
 
     Parameters
     ----------
@@ -1973,7 +1973,9 @@ def tensor_form_of(
     matrices with rounding errors (e.g. rounded to 6 decimals) give the form of the exact group,
     with its number of free parameters (docs/conventions.md, "Tolerances"). Raises SymcrysError for
     an operation without an orthogonal Cartesian matrix (``cartesian``; within the tolerance) and
-    for operations that generate no finite group within the tolerance.
+    for operations that generate no finite group within the tolerance. The groups and forms of the
+    last 64 lists of operations are kept, so a list passed again (as in a loop) is answered without
+    closing the group and projecting again.
 
     Parameters
     ----------

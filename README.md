@@ -83,6 +83,7 @@ npm run format:check   # Prettier (npm run format fixes)
 npm test               # vitest
 npm run build          # packages/ts/dist/: JavaScript, .d.ts, source maps
 npm run check:dist     # dist/ loads, imports only relative .js paths, has no test-only code
+npm run benchmark      # times the heavy calls of dist/, to compare with the previous version
 ```
 
 The Python package (Python 3.10 or later) needs the built `dist/`, bundled into one script:

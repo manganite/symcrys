@@ -1947,7 +1947,9 @@ def tensor_form_of(
     group, with its number of free parameters (docs/conventions.md, "Tolerances"). Raises
     SymcrysError for an operation without an orthogonal Cartesian matrix (``cartesian``; within the
     tolerance), for an operation that does not say whether it is combined with time reversal, and
-    for operations that generate no finite group within the tolerance.
+    for operations that generate no finite group within the tolerance. The groups and forms of the
+    last 64 lists of operations are kept, so a list passed again (as in a loop) is answered without
+    closing the group and projecting again.
 
     Parameters
     ----------

@@ -15,7 +15,7 @@ import { checkOptions, shown, TOLERANCE_KEYS } from '../checks.js';
 import type { CartesianOperation } from '../operations.js';
 import type { MagneticPointGroupKey } from '../pointGroups/pointGroups.js';
 import { TENSOR_PROPERTY_NAMES, specOf, type TensorPropertyName } from './propertyTable.js';
-import { callerGroup, checkedSpec, formOfGroup, tensorForm } from './tensorForm.js';
+import { allowsTensor, callerGroup, checkedSpec, tensorForm } from './tensorForm.js';
 import type { ToleranceOptions } from '../tolerances.js';
 import type { IdealGroup } from '../closure.js';
 import { deepFreeze } from '../freeze.js';
@@ -68,5 +68,5 @@ export function allowedPropertiesOf(
 
 function allows(group: IdealGroup, name: TensorPropertyName): boolean {
   const { spec, perms } = checkedSpec(name);
-  return formOfGroup(group, spec, perms).basis.length > 0;
+  return allowsTensor(group.operations, spec, perms);
 }
