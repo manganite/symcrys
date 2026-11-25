@@ -1036,8 +1036,8 @@ def reciprocal_basis(basis: ArrayLike) -> NDArray[np.float64]:
 
 
 def direction_from_four_indices(uvtw: ArrayLike) -> NDArray[np.int64]:
-    """The direction [UVTW] as [uvw], reduced: u = U − T, v = V − T, w = W; raises SymcrysError
-    unless T = −(U + V).
+    """The direction [UVTW] as [uvw], reduced: u = U − T, v = V − T, w = W (Frank (1965), Eq. (19));
+    raises SymcrysError unless T = −(U + V).
     """
     result: NDArray[np.int64] = _shared.convert(
         _call("directionFromFourIndices", _shared.array(uvtw, "uvtw")),
@@ -1048,7 +1048,7 @@ def direction_from_four_indices(uvtw: ArrayLike) -> NDArray[np.int64]:
 
 def direction_to_four_indices(uvw: ArrayLike) -> NDArray[np.int64]:
     """The direction [uvw] of hexagonal axes as [UVTW], reduced: U = (2u − v)/3, V = (2v − u)/3, T =
-    −(U + V), W = w, scaled to the smallest integers.
+    −(U + V), W = w, scaled to the smallest integers (Frank, Acta Cryst. 18, 862 (1965), Eq. (20)).
     """
     result: NDArray[np.int64] = _shared.convert(
         _call("directionToFourIndices", _shared.array(uvw, "uvw")),
@@ -1058,7 +1058,8 @@ def direction_to_four_indices(uvw: ArrayLike) -> NDArray[np.int64]:
 
 
 def plane_from_four_indices(hkil: ArrayLike) -> NDArray[np.int64]:
-    """The plane (hkil) as (hkl); raises SymcrysError unless i = −(h + k)."""
+    """The plane (hkil) as (hkl) (Frank (1965), Eq. (21)); raises SymcrysError unless i = −(h + k).
+    """
     result: NDArray[np.int64] = _shared.convert(
         _call("planeFromFourIndices", _shared.array(hkil, "hkil")),
         ("a", np.int64, None),
@@ -1067,7 +1068,9 @@ def plane_from_four_indices(hkil: ArrayLike) -> NDArray[np.int64]:
 
 
 def plane_to_four_indices(hkl: ArrayLike) -> NDArray[np.int64]:
-    """The plane (hkl) of hexagonal axes as (hkil) with i = −(h + k)."""
+    """The plane (hkl) of hexagonal axes as (hkil) with i = −(h + k) (Frank, Acta Cryst. 18, 862
+    (1965), Eq. (22)).
+    """
     result: NDArray[np.int64] = _shared.convert(
         _call("planeToFourIndices", _shared.array(hkl, "hkl")),
         ("a", np.int64, None),
