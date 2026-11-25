@@ -84,6 +84,7 @@ npm test               # vitest
 npm run build          # packages/ts/dist/: JavaScript, .d.ts, source maps
 npm run check:dist     # dist/ loads, imports only relative .js paths, has no test-only code
 npm run benchmark      # times the heavy calls of dist/, to compare with the previous version
+npm run test:coverage  # the tests with a coverage report in build/coverage/ (not a gate)
 ```
 
 The Python package (Python 3.10 or later) needs the built `dist/`, bundled into one script:
@@ -126,7 +127,8 @@ transcription at a fixed revision (`audit/stereography-2006.ts`); a full clone i
 CI runs these seven gates on every pull request, on Node 22 and 24, the gate `python` (bundle,
 build sdist and wheel, install the wheel, `mypy`, `pytest`) on Python 3.10 and the newest, and the
 gate `docs` (`docs:check` and `docs:site` above); the external links (`docs:linkcheck`) are
-checked by the workflow Links, which is not a gate. Tests sit next to their
+checked by the workflow Links, which is not a gate, and the job `coverage` keeps a coverage report
+of the tests (`npm run test:coverage`, `build/coverage/`) as an artefact, not a gate either. Tests sit next to their
 module (`foo.ts`, `foo.test.ts`). Working rules for contributors, human or agent: `CLAUDE.md`.
 
 ## Releases

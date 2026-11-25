@@ -1,6 +1,5 @@
 node_modules/
 dist/
-coverage/
 *.tgz
 # Python package (packages/python)
 packages/python/src/symcrys/_bundle.js
@@ -9,6 +8,7 @@ __pycache__/
 .pytest_cache/
 .mypy_cache/
 .venv/
-# Documentation site (npm run docs:ts, docs:site; the notebooks are copied in by the Sphinx build)
+# Build output: the documentation site (npm run docs:ts, docs:site; the notebooks are copied in by
+# the Sphinx build) and the coverage report (npm run test:coverage, build/coverage)
 build/
 docs/examples/notebooks/
