@@ -241,17 +241,16 @@ Carried over from birss-app, where the calculations come from.
   API; "Point groups" below) and `src/plane.ts` (`symcrys/plane`, the plane groups; "Plane groups"
   below). Everything else is internal and may change freely. The API reports in `packages/ts/api/`
   (#56) show it; a PR that changes them changes the public API.
-- **Not a clone of ITC** (Thomas, 2026-11-25, #120, #194; birss-app as the model): symcrys is a
-  product of its own that shows its roots and print anchors but presents crystallographic data and
-  methods in its own form. No function, parameter, field or identifier, internal ones included, is
-  named after a table number, a page or "printed", and no result carries a citation, a page, a
-  figure reference, a row number of a table or a printed text (captions, statements, the text of a
-  column). The usual crystallographic notation stays as it is and needs no alternative (point-group
-  symbols, Wyckoff letters, coordinates such as `x,-y,z`, Miller indices `h,0,l`, names of forms,
-  group numbers, the properties of a group or lattice in their usual notation). What can be derived
-  may be derived; data need not be transcriptions of tables. The source is given in the code (TSDoc
-  `@remarks` or a comment), in `docs/` and in `references/`; test-only code may be named after the
-  print anchor it checks.
+- **Own structure, named anchors** (Thomas, 2026-11-25, #120, #194, with birss-app as a model):
+  symcrys organizes crystallographic data and methods in a structure of its own, and every name in
+  it, of a function, parameter, field, type or internal identifier, says what the thing is in
+  crystallographic terms (`cellTransformation`, `CELL_CHANGES`, `formType: 'tetragonal-prism'`).
+  The usual notation of the field is that content and is used as it is: symbols, Wyckoff letters,
+  coordinates such as `x,-y,z`, Miller indices `h,0,l`, the names of forms, group numbers. Results
+  carry content only; the print sources that anchor their correctness are cited in the code (a
+  comment or TSDoc `@remarks`), in `docs/` and in `references/`, and test-only code may be named
+  after the anchor it checks. Data are derived where the group or the lattice gives them, and stored
+  otherwise, in the form the calculation needs.
 - **Plain data at the API boundary** (maintainer, 2026-11-19, #30): exported functions take and
   return numbers, strings, booleans, arrays and plain objects; no classes, no functions, no `Map` or
   `Set` as arguments or results. A thin layer in another language (Python, #30) can then pass
@@ -729,7 +728,8 @@ quantities, { tolerance })`, in all three entry points (3 × 3, and 2 × 2 in `s
   Table 1.5.1.1 (`references/itc/vol-a-2016-1.5-transformations.md`); the Python generator takes
   two object parameters of one signature, and a list of operations as a field of one.
 - **Cells of a lattice** (#120; Thomas, 2026-11-25, asked with a design and a recommendation, after
-  rejecting a list of the printed rows with their pages and texts, "Not a clone of ITC" above):
+  rejecting a list of the printed rows with their pages and texts, "Own structure, named anchors"
+  above):
   `cellTransformation(bravaisLattice, fromCell, toCell)` gives `{ linearPart }`, P from one named cell
   to another, for `changeOfCoordinates`; the change back swaps the cells. The Bravais lattice is
   ITA's symbol (Table 1.3.4.1), a cell is named by the fields of `Cell`, in the words the API has
