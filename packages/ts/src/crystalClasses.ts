@@ -620,8 +620,8 @@ export function tensorForm(
  * number of free parameters (docs/conventions.md, "Tolerances"). Throws a RangeError for an
  * operation without an orthogonal Cartesian matrix (`cartesian`; within the tolerance) and for
  * operations that generate no finite group within the tolerance. The groups and forms of the last
- * 64 lists of operations are kept, so a list passed again (as in a loop) is answered without
- * computing.
+ * 64 lists of operations are kept, so a list passed again (as in a loop) is answered without closing the group and
+ * projecting again.
  */
 export function tensorFormOf(
   operations: readonly OperationArgument[],

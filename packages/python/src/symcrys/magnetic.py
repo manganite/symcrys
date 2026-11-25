@@ -1949,7 +1949,7 @@ def tensor_form_of(
     tolerance), for an operation that does not say whether it is combined with time reversal, and
     for operations that generate no finite group within the tolerance. The groups and forms of the
     last 64 lists of operations are kept, so a list passed again (as in a loop) is answered without
-    computing.
+    closing the group and projecting again.
 
     Parameters
     ----------

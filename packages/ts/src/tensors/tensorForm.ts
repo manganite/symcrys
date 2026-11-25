@@ -245,11 +245,6 @@ function freezeRows(rows: readonly (readonly number[])[]): readonly (readonly nu
 }
 
 /**
- * The form for a group given as its full list of operations. The group average of each seed
- * (a unit tensor on one orbit of the intrinsic symmetry) projects it onto the invariant subspace;
- * the projections span it, and the reduced row echelon form makes the basis minimal and canonical.
- */
-/**
  * Whether the group allows a non-zero tensor of the specification: the dimension of the invariant
  * subspace is the trace of the group average, the same trace `project` computes, but without the
  * averaged vectors and their row reduction. Each orbit of the index symmetry adds a diagonal
@@ -301,6 +296,11 @@ function signedOperations(group: readonly CartesianOperation[], spec: TensorSpec
   }));
 }
 
+/**
+ * The form for a group given as its full list of operations. The group average of each seed
+ * (a unit tensor on one orbit of the intrinsic symmetry) projects it onto the invariant subspace;
+ * the projections span it, and the reduced row echelon form makes the basis minimal and canonical.
+ */
 function project(
   group: readonly CartesianOperation[],
   spec: TensorSpec,
@@ -438,7 +438,7 @@ export function tensorForm(
  * operation without an orthogonal Cartesian matrix (`cartesian`; within the tolerance), for an
  * operation that does not say whether it is combined with time reversal, and for operations that
  * generate no finite group within the tolerance. The groups and forms of the last 64 lists of
- * operations are kept, so a list passed again (as in a loop) is answered without computing.
+ * operations are kept, so a list passed again (as in a loop) is answered without closing the group and projecting again.
  */
 export function tensorFormOf(
   operations: readonly CartesianOperation[],
@@ -448,22 +448,33 @@ export function tensorFormOf(
   checkOptions(options, TOLERANCE_KEYS, 'tensorFormOf');
   const resolved = specOf(spec);
   const perms = checkSpec(resolved);
-  const { group, key } = callerGroupWithKey(operations, options);
-  const formKey = `${key}#${specKey(resolved)}`;
-  const cached = callerForms.get(formKey);
-  if (cached) return remember(callerForms, formKey, cached);
-  return remember(callerForms, formKey, formOfGroup(group, resolved, perms));
+  const { group } = callerGroupWithKey(operations, options);
+  let forms = callerForms.get(group);
+  if (!forms) {
+    forms = new Map();
+    callerForms.set(group, forms);
+  }
+  const formKey = specKey(resolved);
+  let form = forms.get(formKey);
+  if (!form) {
+    form = formOfGroup(group, resolved, perms);
+    forms.set(formKey, form);
+  }
+  return form;
 }
 
 /**
- * The groups and forms of the last `CALLER_CACHE_SIZE` lists of operations a caller passed in, by
- * the numbers the functions read (`cartesian`, `timeReversal`) and the tolerance: a list passed again,
- * as a Python loop does, costs no closure and no projection (#100). The results are frozen, so
- * sharing them is safe; the entries are dropped oldest first.
+ * The groups of the last `CALLER_CACHE_SIZE` lists of operations a caller passed in, keyed by the
+ * numbers the functions read (`cartesian`, `timeReversal`, in the order given) and the tolerance,
+ * and the forms computed for each group: a list passed again, as a Python loop does, costs no
+ * closure and no projection (#100). The checks of the input run on every call, before the lookup.
+ * Groups and forms are frozen, so sharing them is safe; the groups are dropped oldest first, and
+ * their forms with them. The key is the list as given, so the same group in another order or with
+ * other rounding is computed anew (correct, just not shared).
  */
 const CALLER_CACHE_SIZE = 64;
 const callerGroups = new Map<string, IdealGroup>();
-const callerForms = new Map<string, TensorForm>();
+const callerForms = new WeakMap<IdealGroup, Map<string, TensorForm>>();
 
 function remember<T>(cache: Map<string, T>, key: string, value: T): T {
   cache.delete(key);
@@ -482,7 +493,7 @@ function callerGroupWithKey(
   checkTimeReversal(operations);
   const key = `${tolerance}#${JSON.stringify(operations.map((op) => [op.cartesian, op.timeReversal === true]))}`;
   const cached = callerGroups.get(key);
-  const group = remember(callerGroups, key, cached ?? idealGroup(operations, tolerance));
+  const group = remember(callerGroups, key, cached ?? deepFreeze(idealGroup(operations, tolerance)));
   return { group, key };
 }
 

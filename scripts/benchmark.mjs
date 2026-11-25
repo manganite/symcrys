@@ -1,7 +1,8 @@
 // Times the heavy calls of the built library (packages/ts/dist/; npm run build first) in Node, so
 // that a regression shows (#100): npm run benchmark. The numbers depend on the machine; compare
 // them with a run of the previous version on the same machine, not with fixed values. The Python
-// package runs the same code in QuickJS, 3 to 10 times slower (CLAUDE.md, "Speed").
+// package runs the same code in QuickJS, several times slower (3 to 4 times for these calls,
+// measured on 2026-11-25).
 
 import { pathToFileURL } from 'node:url';
 import { fileURLToPath } from 'node:url';
@@ -29,7 +30,7 @@ function time(label, f, n = 20) {
 }
 
 /**
- * Operations with rounding errors, as a caller gives them: a list the caches have not seen.
+ * Operations with rounding errors, as a caller gives them; the caches keep them after the first call.
  * @param {readonly { cartesian: readonly (readonly number[])[]; timeReversal?: boolean }[]} ops
  */
 const rounded = (ops) =>
@@ -52,6 +53,25 @@ time('pointGroupOf m-3m (first call builds the table)', () => classes.pointGroup
 time('tensorForm m-3m, rank 4', () => classes.tensorForm('m-3m', rank4));
 time('tensorFormOf m-3m, piezoelectric', () => classes.tensorFormOf(cubic, 'piezoelectric'));
 time('tensorFormOf m-3m, rank 4', () => classes.tensorFormOf(cubic, rank4));
+
+// A list the caches have not seen, on every call: one entry moved by a different amount far below
+// the tolerance, so the closure and the projection run each time.
+let shift = 0;
+/** @param {ReturnType<typeof rounded>} ops */
+const fresh = (ops) => {
+  shift += 1;
+  return ops.map((op, i) =>
+    i === 1
+      ? { ...op, cartesian: op.cartesian.map((row, r) => row.map((x, c) => (r === c ? x + shift * 1e-12 : x))) }
+      : op,
+  );
+};
+time(
+  'tensorFormOf m-3m, piezoelectric, new list each call',
+  () => classes.tensorFormOf(fresh(cubic), 'piezoelectric'),
+  5,
+);
+time("allowedPropertiesOf m-3m1', new list each call", () => magnetic.allowedPropertiesOf(fresh(grey)), 5);
 time("allowedPropertiesOf m-3m1'", () => magnetic.allowedPropertiesOf(grey));
 time(
   'rotateTensor, rank 4',

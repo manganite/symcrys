@@ -8,13 +8,16 @@ All notable changes to symcrys are recorded here. The format follows
 
 ### Changed
 
-- Faster calls for lists of operations (#100): `tensorFormOf` keeps the groups and forms of the
-  last 64 lists of operations, so a list passed again (as in a Python loop) is answered at once;
+- Faster calls for lists of operations (#100): `tensorFormOf`, `allowsPropertyOf` and
+  `allowedPropertiesOf` keep the groups of the last 64 lists of operations (and `tensorFormOf` the
+  forms), so a list passed again (as in a Python loop) costs no closure again;
   `allowsPropertyOf` and `allowedPropertiesOf` read the dimension of the invariant space from the
   trace of the group average instead of computing the full form; `rotateTensor` contracts one index
-  at a time, about seven times faster at rank 4. The results are the same; those of `rotateTensor`
-  for a rotation that is not a symmetry operation may differ in the last bits (the sums are taken
-  in another order, a relative difference of the order of 10⁻¹⁵).
+  at a time, about seven times faster at rank 4. The results are the same, except that
+  `rotateTensor` for a rotation that is not a symmetry operation may differ in the last bits (the
+  sums are taken in another order, a relative difference of the order of 10⁻¹⁵), and that it gives
+  0 where it gave −0 (a zero component of an axial tensor under an improper rotation; visible only
+  with `Object.is` in TypeScript).
 - Two comparisons with a fixed internal tolerance now follow the one convention of the library,
   "strictly below counts as equal or zero" (#101): `residualOperations` takes an entry of `matrix`
   as an integer when it lies less than 10⁻⁹ from it (before: at most 10⁻⁹), and the row reduction of

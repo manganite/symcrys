@@ -96,20 +96,16 @@ describe('the cache of tensorFormOf', () => {
     expect(tensorFormOf(rounded, 'piezoelectric', { tolerance: 1e-4 }).basis.length).toBe(first.basis.length);
   });
 
-  it('refuses wrong operations also when the same list was seen before', () => {
+  it('refuses wrong operations also when the same numbers were seen before', () => {
+    // The key holds the matrices and the time reversal read as a boolean; an operation without
+    // time reversal has the numbers of a seen list and must still be refused, before the lookup.
     tensorFormOf(ops, 'piezoelectric');
-    const broken = ops.map((op, i) =>
-      i === 3
-        ? {
-            ...op,
-            cartesian: [
-              [2, 0, 0],
-              [0, 1, 0],
-              [0, 0, 1],
-            ] as Mat3,
-          }
-        : op,
-    );
-    expect(() => tensorFormOf(broken, 'piezoelectric')).toThrow(RangeError);
+    const unsaid = ops.map(({ cartesian }) => ({ cartesian })) as unknown as CartesianOperation[];
+    expect(() => tensorFormOf(unsaid, 'piezoelectric')).toThrow(RangeError);
+    const notBoolean = ops.map(({ cartesian }) => ({
+      cartesian,
+      timeReversal: 'no',
+    })) as unknown as CartesianOperation[];
+    expect(() => tensorFormOf(notBoolean, 'piezoelectric')).toThrow(RangeError);
   });
 });
