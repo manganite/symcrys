@@ -10,6 +10,13 @@ kernelspec:
 The same calls in TypeScript and in Python. Every example on this page is run when the site is
 built, and the output shown is what it printed.
 
+Before reading matrices: an operation has `matrix`, ITA's W in the lattice basis a, b, c, and
+`cartesian`, the same operation in a right-handed orthonormal frame x, y, z (row-major, acting on
+column vectors). Where the lattice basis sits in that frame depends on the family (x ∥ a and z ∥ c
+for hexagonal axes, the monoclinic unique axis along y by default): the table is in
+[Conventions](conventions.md), "Cartesian frame". A tensor form is in the same Cartesian frame, and
+its components are listed row-major (`xxx`, `xxy`, …).
+
 ## TypeScript
 
 ```bash
@@ -40,7 +47,7 @@ The plane groups and the plane point groups are in `symcrys/plane`, in the latti
 
 Without a build step, copy `dist/` of the package (from the npm tarball, or from the release on
 GitHub) next to your code and import `dist/index.js`, `dist/magnetic.js` or `dist/plane.js`: every module imports
-only relative `.js` paths.
+only relative `.js` paths ([In the browser](browser.md), with a complete page).
 
 ## Python
 

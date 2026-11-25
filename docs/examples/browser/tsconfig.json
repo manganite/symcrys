@@ -1,0 +1,13 @@
+{
+  // Type check of the page script of the browser example (docs/browser.md) with the DOM, against the
+  // build of this checkout: run by the gate docs (npm run docs:check) after `npm run build`.
+  "extends": "../../../tsconfig.json",
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": true,
+    "noEmit": true,
+    "lib": ["ES2022", "DOM"],
+    "types": []
+  },
+  "include": ["*.js"]
+}

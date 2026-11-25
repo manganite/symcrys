@@ -95,6 +95,8 @@ symcrys_page_descriptions = {
     "settings, symbols, Wyckoff positions, crystal forms and tensors, with print sources.",
     "plane-groups": "The 17 plane groups and 10 plane point groups in symcrys/plane: operations in ITA's "
     "order, Wyckoff positions, site symmetry, asymmetric unit, symmetry elements and 2D cells.",
+    "browser": "symcrys in a web page without a bundler: an ES module import of the package's dist/, "
+    "with a complete example that shows the form of a property tensor for a chosen group and setting.",
     "tensors": "Tensor forms allowed by a point group, rank 0 to 4, and named properties such as "
     "piezoelectric, pyroelectric, gyrotropic, ferroaxial and magnetoelectric.",
     "cells": "Cells in symcrys: lattice from cell parameters, reciprocal basis, angles between planes, "
@@ -113,7 +115,29 @@ symcrys_page_descriptions = {
 html_title = f"symcrys {release}"
 html_static_path = ["_static"]
 html_css_files = ["symcrys.css"]
-html_extra_path = [str(ROOT / "build" / "docs" / "ts-extra")]
+# The browser example (browser.md, #65) as a page of the site: its files and a copy of the build of
+# this checkout, the package's dist/, under browser/; the page loads symcrys from there unbundled.
+BROWSER = ROOT / "build" / "docs" / "browser-extra"
+
+
+def _browser_example() -> None:
+    import shutil
+
+    target = BROWSER / "browser"
+    shutil.rmtree(BROWSER, ignore_errors=True)
+    shutil.copytree(DOCS / "examples" / "browser", target, ignore=shutil.ignore_patterns("tsconfig.json"))
+    dist = ROOT / "packages" / "ts" / "dist"
+    if not (dist / "index.js").exists():
+        raise RuntimeError("packages/ts/dist is missing: run npm run build before the site")
+    # The declarations are not needed in a page; the source maps are, for the browser's tools.
+    shutil.copytree(dist, target / "symcrys", ignore=shutil.ignore_patterns("*.d.ts", "*.d.ts.map"))
+    for needed in ("index.html", "main.js", "form.js", "symcrys/index.js"):
+        if not (target / needed).exists():
+            raise RuntimeError(f"the browser example lacks {needed}")
+
+
+_browser_example()
+html_extra_path = [str(ROOT / "build" / "docs" / "ts-extra"), str(BROWSER)]
 html_theme_options = {
     "source_repository": "https://github.com/manganite/symcrys/",
     "source_branch": "main",

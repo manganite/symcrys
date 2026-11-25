@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>symcrys in the browser</title>
+    <!-- symcrys/ is a copy of the package's dist/: the modules import only relative .js paths, so the
+         browser loads them as they are; the import map gives them the name 'symcrys'. -->
+    <script type="importmap">
+      { "imports": { "symcrys": "./symcrys/index.js" } }
+    </script>
+    <script type="module" src="./main.js"></script>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        margin: 2rem;
+        max-width: 40rem;
+      }
+      label {
+        display: block;
+        margin: 0.5rem 0;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>The form of a property tensor</h1>
+    <label
+      >Crystal class
+      <select id="group"></select
+    ></label>
+    <label
+      >Setting
+      <select id="setting"></select
+    ></label>
+    <label
+      >Property
+      <select id="property"></select
+    ></label>
+    <div id="form"></div>
+  </body>
+</html>
