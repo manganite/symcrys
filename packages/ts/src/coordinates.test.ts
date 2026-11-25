@@ -119,9 +119,73 @@ describe('changeOfCoordinates', () => {
       { operations: classes.operations('-3m') },
     );
     for (const op of result.operations!) for (const x of op.matrix.flat()) expect(Number.isInteger(x)).toBe(true);
-    expect(() => classes.changeOfCoordinates({ linearPart: rounded }, {}, { tolerance: 1e-9 })).toThrow(
-      /denominator of at most 12/,
+    // Within a smaller tolerance than the rounding, 0.66666667 is no longer 2/3: the operations of
+    // -3m have no integral matrix in that basis, or the exact products leave the safe integers.
+    expect(() =>
+      classes.changeOfCoordinates(
+        { linearPart: rounded },
+        { operations: classes.operations('-3m') },
+        { tolerance: 1e-9 },
+      ),
+    ).toThrow(/^changeOfCoordinates: /);
+  });
+
+  it('every result can be passed back: denominators above 12 (review of #173)', () => {
+    // The triple cell H₁ with an origin shift of 1/8: q has the denominator 24.
+    const H1: Mat3 = [
+      [1, 1, 0],
+      [-1, 2, 0],
+      [0, 0, 1],
+    ];
+    const there = classes.changeOfCoordinates({ linearPart: H1, originShift: [1 / 8, 0, 0] }, { points });
+    expect(there.inverse.originShift[1]).toBe(-1 / 24);
+    closeTo(classes.changeOfCoordinates(there.inverse, { points: there.points }).points!, points);
+    // A sixfold screw axis in a cell with c tripled: w′ = 1/18, and back.
+    const tripled: Mat3 = [
+      [1, 0, 0],
+      [0, 1, 0],
+      [0, 0, 3],
+    ];
+    const screw = { matrix: classes.operations('6')[1].matrix, translation: [0, 0, 1 / 6] as Vec3 };
+    const once = classes.changeOfCoordinates({ linearPart: tripled }, { operations: [screw] });
+    expect(once.operations![0].translation[2]).toBe(1 / 18);
+    const back = classes.changeOfCoordinates(once.inverse, { operations: once.operations });
+    expect(back.operations![0].translation[2]).toBe(1 / 6);
+    // A sixteenfold superstructure: Q has the entry 1/16.
+    const sixteen: Mat3 = [
+      [1, 0, 0],
+      [0, 1, 0],
+      [0, 0, 16],
+    ];
+    const inverse = classes.changeOfCoordinates({ linearPart: sixteen }, {}).inverse.linearPart;
+    expect(inverse[2][2]).toBe(1 / 16);
+    expect(classes.changeOfCoordinates({ linearPart: inverse }, {}).inverse.linearPart).toEqual(sixteen);
+  });
+
+  it('Borchardt-Ott & Sowa, Section 10.6, Example 2: a′ = a + b, b′ = −a + b, c′ = c', () => {
+    // The old a becomes ½a′ − ½b′; the plane (100) becomes (1, −1, 0), (110) becomes (2, 0, 0).
+    const P: Mat3 = [
+      [1, -1, 0],
+      [1, 1, 0],
+      [0, 0, 1],
+    ];
+    const result = classes.changeOfCoordinates(
+      { linearPart: P },
+      {
+        directions: [[1, 0, 0]],
+        planes: [
+          [1, 0, 0],
+          [0, 0, 1],
+          [1, 1, 0],
+        ],
+      },
     );
+    expect(result.directions).toEqual([[0.5, -0.5, 0]]);
+    expect(result.planes).toEqual([
+      [1, -1, 0],
+      [0, 0, 1],
+      [2, 0, 0],
+    ]);
   });
 
   it('keeps a record of operations as given otherwise: other fields are not carried over', () => {
@@ -139,7 +203,7 @@ describe('changeOfCoordinates', () => {
     expect(Object.isFrozen(result.inverse.linearPart[0])).toBe(true);
   });
 
-  it('refuses a singular P, entries that are no fraction, wrong shapes, unknown fields, and a W′ that is not integral', () => {
+  it('refuses a singular P, null, wrong shapes, unknown fields, det W ≠ ±1 and a W′ that is not integral', () => {
     const f = classes.changeOfCoordinates;
     expect(() =>
       f(
@@ -153,18 +217,38 @@ describe('changeOfCoordinates', () => {
         {},
       ),
     ).toThrow(/singular/);
+    expect(() => f({ linearPart: R, originShift: null as never }, {})).toThrow(/3 numbers/);
+    expect(() => f({ linearPart: R }, { operations: [{ matrix: R as never, translation: null as never }] })).toThrow(
+      RangeError,
+    );
+    expect(() =>
+      f(
+        { linearPart: R },
+        {
+          operations: [
+            {
+              matrix: [
+                [2, 0, 0],
+                [0, 1, 0],
+                [0, 0, 1],
+              ],
+            },
+          ],
+        },
+      ),
+    ).toThrow(/det W = ±1/);
     expect(() =>
       f(
         {
           linearPart: [
-            [0.123456, 0, 0],
+            [1e300, 0, 0],
             [0, 1, 0],
             [0, 0, 1],
           ],
         },
         {},
       ),
-    ).toThrow(/denominator/);
+    ).toThrow(/^changeOfCoordinates: /);
     expect(() =>
       f(
         {

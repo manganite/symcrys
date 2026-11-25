@@ -1,6 +1,6 @@
 /**
- * Miller and Bravais–Miller indices, the zone law and the change of axes
- * (docs/conventions.md, "Cell, metric and indices"). Plain integers and matrices in and out.
+ * Miller and Bravais–Miller indices and the zone law (docs/conventions.md, "Cell, metric and
+ * indices"); the change of the coordinate system is in coordinates.ts. Plain integers and matrices in and out.
  */
 
 import { shown } from './checks.js';

@@ -49,7 +49,6 @@
         "direction",
         "basis",
         "relations",
-        "plane",
         "linearPart",
         "originShift",
         "points",
@@ -80,7 +79,15 @@
   },
   "shapes": {
     "//": "The shape of an array field where the nested lists may be empty (-1: any length).",
+    "symcrys": {
+      "points": [-1, 3],
+      "directions": [-1, 3],
+      "planes": [-1, 3]
+    },
     "symcrys.plane": {
+      "points": [-1, 2],
+      "directions": [-1, 2],
+      "planes": [-1, 2],
       "translation": [2],
       "location": [2],
       "glide": [2],

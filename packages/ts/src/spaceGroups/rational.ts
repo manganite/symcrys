@@ -146,3 +146,29 @@ export function nearestFraction(value: unknown, tolerance: number, what: string)
     `Not within ${tolerance} of a ${what} with a denominator of at most ${MAX_DENOMINATOR}: ${shown(value)}`,
   );
 }
+
+/**
+ * The simplest fraction (smallest denominator) strictly within `tolerance` of a number from a
+ * caller, found by descending the Stern–Brocot tree (continued fractions): unique, and exactly n/d
+ * for the double nearest to n/d as long as two fractions of denominators up to d lie more than
+ * twice the tolerance apart (d up to about 700 at the tolerance 10⁻⁶). `what` names the number in
+ * the messages. Throws a RangeError for a value that is not a finite number, and where the fraction
+ * leaves the safe integers.
+ */
+export function simplestFraction(value: unknown, tolerance: number, what: string): Rational {
+  if (!(typeof value === 'number' && Number.isFinite(value))) {
+    throw new RangeError(`The ${what} must be a finite number, not ${shown(value)}`);
+  }
+  const simplest = (lo: number, hi: number, depth: number): Rational => {
+    // The simplest fraction in the open interval (lo, hi), lo < hi.
+    if (lo < 0 && hi > 0) return ZERO;
+    if (hi <= 0) return negate(simplest(-hi, -lo, depth));
+    if (depth > 200) throw new RangeError(`The ${what} ${shown(value)} has no fraction within ${tolerance}`);
+    const f = Math.floor(lo);
+    if (f + 1 < hi) return rational(checkSafeInteger(f + 1, `The ${what}`));
+    // lo and hi lie in [f, f + 1]: f + 1/y with y in (1/(hi − f), 1/(lo − f)).
+    const inner = simplest(1 / (hi - f), lo === f ? Infinity : 1 / (lo - f), depth + 1);
+    return add(rational(checkSafeInteger(f, `The ${what}`)), rational(inner[1], inner[0]));
+  };
+  return simplest(value - tolerance, value + tolerance, 0);
+}

@@ -922,10 +922,11 @@ export interface CoordinateChange {
  * tensor G′ = PᵀGP, and operations W′ = P⁻¹WP, w′ = P⁻¹(w + (W − I)p); and gives the inverse pair
  * (Q, q) = (P⁻¹, −P⁻¹p). det P may be negative.
  *
- * P, p and the operations are read as fractions with a denominator of at most 12, within the
- * tolerance (default `EPSILON`), and transformed exactly; the other quantities are floating point.
- * Throws a RangeError for a P that is singular or has an entry that is no such fraction, for a
- * quantity of the wrong shape, an unknown quantity, and an operation whose W′ is not integral.
+ * P, p and the operations are read each number as the simplest fraction within the tolerance
+ * (default `EPSILON`; 0.3333333 is 1/3) and transformed exactly, so that every result, the inverse
+ * pair included, can be passed back; the other quantities are floating point. A transformed
+ * operation is `{ matrix, translation }`. Throws a RangeError for a singular P, a quantity of the
+ * wrong shape, an unknown quantity, an operation with det W ≠ ±1, and one whose W′ is not integral.
  */
 export function changeOfCoordinates(
   transformation: CoordinateTransformation,

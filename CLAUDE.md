@@ -646,12 +646,16 @@ operations }`; `undefined`, never `null` (`zoneAxis`); every result frozen and `
 quantities, { tolerance })`, in all three entry points (3 × 3, and 2 × 2 in `symcrys/plane`), which
   transforms the quantities given (points, directions, planes, metric, operations) by ITA 2016 § 1.5
   and gives the inverse pair; it replaces `changeOfAxes`. P, p and the operations are read as
-  fractions with a denominator of at most 12 and transformed exactly. ITA Table 1.5.1.1 as data comes
-  later, in a step of its own. Chosen while implementing: the fields are `linearPart` and
+  fractions and transformed exactly: each number as the simplest fraction within the tolerance
+  (Thomas, 2026-11-25, after the review showed that a bound of 12 on the denominator, his first
+  answer, refuses the function's own inverse pair, q = −1/24 for H₁ with p = 1/8). ITA Table 1.5.1.1
+  as data comes later, in a step of its own. Chosen while implementing: the fields are `linearPart` and
   `originShift`, ITA's words for P and p (§§ 1.5.1.2, 1.5.1.3), since `P` and `p` would be one name in
   Python; an operation whose W′ is not integral is refused (the record's `matrix` has integer
   entries), and a transformed operation is `{ matrix, translation }` alone, w′ not reduced modulo the
-  lattice, as ITA writes it; the print anchors are ITA's worked examples of Chapter 1.5 and rows of
+  lattice, as ITA writes it (other fields, `cartesian` and `timeReversal`, are matched by index; in
+  Python the result is a list of these records, not `Operations`, which needs `cartesian`); the print
+  anchors are ITA's worked examples of Chapter 1.5 and rows of
   Table 1.5.1.1 (`references/itc/vol-a-2016-1.5-transformations.md`); the Python generator takes
   two object parameters of one signature, and a list of operations as a field of one.
 - **`latticeBasis` only for families with fixed cell angles** (2026-11-09, #14): for monoclinic

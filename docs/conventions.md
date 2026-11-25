@@ -476,12 +476,12 @@ option, `tolerance` (`ToleranceOptions`; in Python the keyword `tolerance`), wit
 `EPSILON` = 10⁻⁶, which all three entry points export (#137 D1, #93). Two numbers count as equal
 when they differ by less than the tolerance, in the metric of their kind:
 
-| Kind of object                            | Metric                                                  | Bound | Functions                                                                                                                                                                                |
-| ----------------------------------------- | ------------------------------------------------------- | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| operations                                | per matrix entry                                        | 0.1   | `pointGroupOf`, `describeOperationsOf` (also in `symcrys/plane`), `tensorFormOf`, `isCentrosymmetricOf`, `isEnantiomorphicOf`, `allowsPropertyOf`, `allowedPropertiesOf`, `rotateTensor` |
-| directions                                | Euclidean distance of the unit vectors                  | 1     | `siteSymmetryOf`, `siteSymmetry`, `wyckoffPosition`, `orbitOf`                                                                                                                           |
-| points of the plane                       | per coordinate in the lattice basis, modulo the lattice | 1/2   | `siteSymmetry`, `wyckoffPosition`, `orbit` of `symcrys/plane`                                                                                                                            |
-| the metric tensor G of a cell (W ᵀGW = G) | per entry, relative to the largest entry of G           | 1     | `residualOperations`                                                                                                                                                                     |
+| Kind of object                            | Metric                                                  | Bound | Functions                                                                                                                                                                                                                                                                 |
+| ----------------------------------------- | ------------------------------------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| operations                                | per matrix entry                                        | 0.1   | `pointGroupOf`, `describeOperationsOf` (also in `symcrys/plane`), `tensorFormOf`, `isCentrosymmetricOf`, `isEnantiomorphicOf`, `allowsPropertyOf`, `allowedPropertiesOf`, `rotateTensor`; `changeOfCoordinates` (all three entry points) for the entries of P, p, W and w |
+| directions                                | Euclidean distance of the unit vectors                  | 1     | `siteSymmetryOf`, `siteSymmetry`, `wyckoffPosition`, `orbitOf`                                                                                                                                                                                                            |
+| points of the plane                       | per coordinate in the lattice basis, modulo the lattice | 1/2   | `siteSymmetry`, `wyckoffPosition`, `orbit` of `symcrys/plane`                                                                                                                                                                                                             |
+| the metric tensor G of a cell (W ᵀGW = G) | per entry, relative to the largest entry of G           | 1     | `residualOperations`                                                                                                                                                                                                                                                      |
 
 - **One check.** A tolerance is a finite number above 0 and below the bound of its kind, beyond
   which it says nothing: two distinct operations of a crystallographic point group differ in some
@@ -492,7 +492,8 @@ when they differ by less than the tolerance, in the metric of their kind:
   orthogonality of the operations with its tolerance, at most 0.1 (per entry of RᵀR, at least
   `EPSILON`). The translations read by `describeOperationsOf` of `symcrys/plane` are compared per
   coordinate; one that lies within the tolerance of two fractions with denominators up to 12
-  (which can be 1/132 apart) is refused.
+  (which can be 1/132 apart) is refused. `changeOfCoordinates` reads each entry of P, p, W and w as
+  the simplest fraction within the tolerance, which is unique.
 - **Operations of a caller are made exact.** `tensorFormOf`, `isCentrosymmetricOf`,
   `allowsPropertyOf` and `allowedPropertiesOf` close the list into a group within the tolerance and
   replace it by the exact group nearest to it before they compute anything: each matrix f(x) by
@@ -905,10 +906,13 @@ W′ = P⁻¹WP, w′ = P⁻¹(w + (W − I)p) (eqs. (1.5.2.12), (1.5.2.13)); hu
 origin shift changes neither vectors, indices nor the metric. It also gives the inverse pair
 (Q, q) = (P⁻¹, −P⁻¹p), which takes the new coordinates back. det P may be negative (ITA calls a
 positive one preferable, § 1.5.1.2, p. 76); a singular P is refused. P, p and the operations are
-read as fractions with a denominator of at most 12, within the tolerance, and transformed exactly,
-so that W′ is exactly integral; an operation whose W′ is not integral (the new basis spans no lattice
-that the operation maps onto itself) is refused. A translation w′ is not reduced modulo the lattice,
-as ITA writes it. The plane has the same function with 2 × 2 matrices (`symcrys/plane`). The
+read each number as the simplest fraction within the tolerance (0.3333333 is 1/3, 0.0625 is 1/16)
+and transformed exactly, so that W′ is exactly integral and every result, the inverse pair included,
+can be passed back (Thomas, 2026-11-25); an operation with det W ≠ ±1, or whose W′ is not integral
+(the new basis spans no lattice that the operation maps onto itself), is refused. A transformed
+operation is `{ matrix, translation }` alone, its translation w′ not reduced modulo the lattice, as
+ITA writes it; other fields of an operation record (`cartesian`, `timeReversal`) are not carried
+over. The plane has the same function with 2 × 2 matrices (`symcrys/plane`). The
 matrices P of named changes (ITA Table 1.5.1.1: cell choices, centrings, rhombohedral ↔ hexagonal)
 are not tabulated here; the caller passes them.
 

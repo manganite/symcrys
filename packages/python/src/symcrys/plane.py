@@ -563,9 +563,9 @@ _S_CoordinateChange = (
     "d",
     {
         "inverse": _S_InverseTransformation,
-        "points": ("a", np.float64, None),
-        "directions": ("a", np.float64, None),
-        "planes": ("a", np.float64, None),
+        "points": ("a", np.float64, (-1, 2)),
+        "directions": ("a", np.float64, (-1, 2)),
+        "planes": ("a", np.float64, (-1, 2)),
         "metric": ("a", np.float64, None),
         "operations": ("l", _S_TransformedOperation),
     },
@@ -1181,11 +1181,12 @@ def change_of_coordinates(
     the metric tensor G′ = PᵀGP, and operations W′ = P⁻¹WP, w′ = P⁻¹(w + (W − I)p); and gives the
     inverse pair (Q, q) = (P⁻¹, −P⁻¹p). det P may be negative.
 
-    P, p and the operations are read as fractions with a denominator of at most 12, within the
-    tolerance (default ``EPSILON``), and transformed exactly; the other quantities are floating
-    point. Raises SymcrysError for a P that is singular or has an entry that is no such fraction,
-    for a quantity of the wrong shape, an unknown quantity, and an operation whose W′ is not
-    integral.
+    P, p and the operations are read each number as the simplest fraction within the tolerance
+    (default ``EPSILON``; 0.3333333 is 1/3) and transformed exactly, so that every result, the
+    inverse pair included, can be passed back; the other quantities are floating point. A
+    transformed operation is ``{ matrix, translation }``. Raises SymcrysError for a singular P, a
+    quantity of the wrong shape, an unknown quantity, an operation with det W ≠ ±1, and one whose W′
+    is not integral.
 
     Parameters
     ----------

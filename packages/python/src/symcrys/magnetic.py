@@ -1142,11 +1142,14 @@ def change_of_coordinates(
     operations W′ = P⁻¹WP, w′ = P⁻¹(w + (W − I)p); and gives the inverse pair (Q, q) = (P⁻¹, −P⁻¹p).
     det P may be negative (a change of handedness, which ITA allows; § 1.5.1.2, p. 76).
 
-    P, p and the operations are read as fractions with a denominator of at most 12, within the
-    tolerance (default ``EPSILON``), and transformed exactly; the other quantities are floating
-    point. Raises SymcrysError for a P that is singular or has an entry that is no such fraction,
-    for a quantity of the wrong shape, an unknown quantity, and an operation whose W′ is not
-    integral (the new basis does not span a lattice that the operation maps onto itself).
+    P, p and the operations are read each number as the simplest fraction within the tolerance
+    (default ``EPSILON``; 0.3333333 is 1/3) and transformed exactly, so that every result, the
+    inverse pair included, can be passed back; the other quantities are floating point. A
+    transformed operation is ``{ matrix, translation }`` alone: other fields of the record
+    (``cartesian``, in the magnetic API ``time_reversal``) are not carried over, so they are matched
+    by index. Raises SymcrysError for a singular P, a quantity of the wrong shape, an unknown
+    quantity, an operation with det W ≠ ±1, and one whose W′ is not integral (the new basis does not
+    span a lattice that the operation maps onto itself).
 
     Parameters
     ----------

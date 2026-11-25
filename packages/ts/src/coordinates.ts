@@ -4,10 +4,10 @@
  * entry points wrap it with their matrix types (docs/conventions.md, "Change of the coordinate
  * system").
  *
- * The linear part P, the origin shift p and the operations (W, w) are read as fractions with a
- * denominator of at most 12, within the tolerance, and transformed exactly, so that W′ = P⁻¹WP is
- * exactly integral where it is; points, direction and plane coefficients and the metric are
- * floating point.
+ * The linear part P, the origin shift p and the operations (W, w) are read each number as the
+ * simplest fraction within the tolerance and transformed exactly, so that W′ = P⁻¹WP is exactly
+ * integral where it is and every result, the inverse pair included, is read back exactly; points,
+ * direction and plane coefficients and the metric are floating point.
  */
 
 import { checkObject, checkOptions, shown, TOLERANCE_KEYS } from './checks.js';
@@ -19,7 +19,7 @@ import {
   add,
   isInteger,
   multiply,
-  nearestFraction,
+  simplestFraction,
   negate,
   rational,
   subtract,
@@ -152,6 +152,23 @@ export function changeCoordinates(
   options: ToleranceOptions | undefined,
   who: string,
 ): GenericChange {
+  try {
+    return transform(d, transformation, quantities, options, who);
+  } catch (e) {
+    // Exact arithmetic that leaves the safe integers names the function too.
+    if (e instanceof RangeError && !e.message.startsWith(`${who}`))
+      throw new RangeError(`${who}: ${e.message}`, { cause: e });
+    throw e;
+  }
+}
+
+function transform(
+  d: 2 | 3,
+  transformation: GenericTransformation,
+  quantities: GenericQuantities,
+  options: ToleranceOptions | undefined,
+  who: string,
+): GenericChange {
   checkOptions(options, TOLERANCE_KEYS, who);
   const tolerance = toleranceOf(options, 'operations');
   checkObject(transformation, `${who} takes the transformation { linearPart, originShift }`);
@@ -168,12 +185,15 @@ export function changeCoordinates(
   }
   const P0 = transformation.linearPart;
   if (!isRows(P0, d)) throw new RangeError(`${who}: the linear part P must be a ${d} × ${d} matrix, not ${shown(P0)}`);
-  const P = P0.map((row) => row.map((x) => nearestFraction(x, tolerance, 'entry of P')));
+  const fraction = (x: number, what: string): Rational => simplestFraction(x, tolerance, what);
+  const P = P0.map((row) => row.map((x) => fraction(x, 'entry of P')));
   if (determinant(P)[0] === 0) throw new RangeError(`${who}: the linear part P is singular (det P = 0)`);
-  const shift0 = transformation.originShift ?? Array.from({ length: d }, () => 0);
+  // Only a missing origin shift is zero; null is a wrong value, not a missing one.
+  const shift0 =
+    transformation.originShift === undefined ? Array.from({ length: d }, () => 0) : transformation.originShift;
   if (!isVector(shift0, d))
     throw new RangeError(`${who}: the origin shift p must be ${d} numbers, not ${shown(shift0)}`);
-  const p = shift0.map((x) => nearestFraction(x, tolerance, 'coordinate of p'));
+  const p = shift0.map((x) => fraction(x, 'coordinate of p'));
   const Q = inverse(P);
   const q = apply(Q, p).map(negate);
   const Pf = floats(P);
@@ -230,11 +250,14 @@ export function changeCoordinates(
           return rational(Math.round(x));
         }),
       );
-      const t0 = translation ?? Array.from({ length: d }, () => 0);
+      if (determinant(W)[1] !== 1 || Math.abs(determinant(W)[0]) !== 1) {
+        throw new RangeError(`${who}: the matrix W of operation ${n + 1} has det W = ±1, not ${shown(matrix)}`);
+      }
+      const t0 = translation === undefined ? Array.from({ length: d }, () => 0) : translation;
       if (!isVector(t0, d)) {
         throw new RangeError(`${who}: the translation of operation ${n + 1} must be ${d} numbers, not ${shown(t0)}`);
       }
-      const w = t0.map((x) => nearestFraction(x, tolerance, 'translation'));
+      const w = t0.map((x) => fraction(x, 'translation'));
       const W1 = product(product(Q, W), P);
       if (!W1.every((row) => row.every(isInteger))) {
         throw new RangeError(
@@ -323,11 +346,14 @@ export interface CoordinateChange {
  * operations W′ = P⁻¹WP, w′ = P⁻¹(w + (W − I)p); and gives the inverse pair (Q, q) = (P⁻¹, −P⁻¹p).
  * det P may be negative (a change of handedness, which ITA allows; § 1.5.1.2, p. 76).
  *
- * P, p and the operations are read as fractions with a denominator of at most 12, within the
- * tolerance (default `EPSILON`), and transformed exactly; the other quantities are floating point.
- * Throws a RangeError for a P that is singular or has an entry that is no such fraction, for a
- * quantity of the wrong shape, an unknown quantity, and an operation whose W′ is not integral (the
- * new basis does not span a lattice that the operation maps onto itself).
+ * P, p and the operations are read each number as the simplest fraction within the tolerance
+ * (default `EPSILON`; 0.3333333 is 1/3) and transformed exactly, so that every result, the inverse
+ * pair included, can be passed back; the other quantities are floating point. A transformed
+ * operation is `{ matrix, translation }` alone: other fields of the record (`cartesian`, in the
+ * magnetic API `timeReversal`) are not carried over, so they are matched by index. Throws a
+ * RangeError for a singular P, a quantity of the wrong shape, an unknown quantity, an operation with
+ * det W ≠ ±1, and one whose W′ is not integral (the new basis does not span a lattice that the
+ * operation maps onto itself).
  */
 export function changeOfCoordinates(
   transformation: CoordinateTransformation,

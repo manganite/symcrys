@@ -1,8 +1,7 @@
 /**
- * Indices: reduction, three and four indices, the zone law and the change of axes. Expected values
- * are the printed rules (Borchardt-Ott & Sowa, Section 3.5 for the zone law, Section 10.6 for the
- * change of axes; ITA Vol. A, 2006, Section 5.1.3 for the transformation of indices) and hand
- * calculations, not library output.
+ * Indices: reduction, three and four indices and the zone law. Expected values are the printed
+ * rules (Borchardt-Ott & Sowa, Section 3.5 for the zone law) and hand calculations, not library
+ * output. The change of the coordinate system is tested in coordinates.test.ts.
  */
 
 import { describe, expect, it } from 'vitest';

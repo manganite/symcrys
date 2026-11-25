@@ -181,10 +181,13 @@ describe('ITA 2016 Table 1.5.1.1, selected rows (pp. 77, 79)', () => {
     }
   });
 
+  // The four hexagonal rows leave c unchanged (the last row and column of P are those of the unit
+  // matrix, checked), so their upper left 2 × 2 blocks are changes of the plane hexagonal cell.
   it('the upper left 2 × 2 blocks of the hexagonal rows, which leave c unchanged, in the plane', () => {
     for (const [name, P, Q] of table.filter((r) => r[0].startsWith('Hexagonal'))) {
       const block = (m: number[][]) => [m[0].slice(0, 2), m[1].slice(0, 2)];
       expect(matrix(P)[2]).toEqual([0, 0, 1]);
+      expect(matrix(P).map((row) => row[2])).toEqual([0, 0, 1]);
       const result = plane.changeOfCoordinates({ linearPart: block(matrix(P)) as unknown as plane.Mat2 }, {});
       expect(result.inverse.linearPart.flat(), name).toEqual(
         block(matrix(Q))
