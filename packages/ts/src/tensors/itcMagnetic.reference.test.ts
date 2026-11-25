@@ -26,6 +26,7 @@ import { matrixRank } from '../testUtils/rank.js';
 import { readReference, section, tableRows } from '../testUtils/references.js';
 import { TENSOR_PROPERTIES, type TensorPropertyName } from './propertyTable.js';
 import { tensorForm } from './tensorForm.js';
+import { toVoigt } from './voigt.js';
 import { allowsProperty } from './tensorProperties.js';
 
 // --- printed symbols → group and setting ------------------------------------------------------------
@@ -200,6 +201,27 @@ function describeFormTable(
 
 describe('ITC Vol. D Table 1.5.7.1: piezomagnetic effect', () => {
   describeFormTable('itc/vol-d-table-1.5.7.1.md', 'piezomagnetic', 66, 27, placeVoigt);
+});
+
+describe('ITC Vol. D Table 1.5.7.1 in Voigt notation: toVoigt with the factors of the piezomagnetic tensor (#137 E3)', () => {
+  // The printed 3 × 6 matrices read as they stand, Λ_iα, against toVoigt of the computed forms with
+  // the default factors of 'piezomagnetic' (Λ_i4 = 2Λ_i23, eq. (1.5.7.4)).
+  const content = readReference('itc/vol-d-table-1.5.7.1.md');
+  const matrices = printedMatrices(content);
+  const placeAsPrinted = (i: number, a: number, value: number, v: number[]) => {
+    v[6 * i + a] += value;
+  };
+  for (const g of printedGroups(content)) {
+    it(`block ${g.block}, ${g.schoenflies}: ${g.symbols.join(', ')}`, () => {
+      const printed = printedSpace(matrices.get(g.block)!, 18, placeAsPrinted);
+      for (const s of g.symbols) {
+        const voigt = formFor(s, 'piezomagnetic').map((t) =>
+          (toVoigt(t, 'piezomagnetic') as readonly (readonly number[])[]).flat(),
+        );
+        expect(sameSpace(voigt, printed, 18), s).toBe(true);
+      }
+    });
+  }
 });
 
 describe('ITC Vol. D Table 1.5.8.1: linear magnetoelectric effect', () => {

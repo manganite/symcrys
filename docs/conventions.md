@@ -482,6 +482,7 @@ when they differ by less than the tolerance, in the metric of their kind:
 | directions                                | Euclidean distance of the unit vectors                  | 1     | `siteSymmetryOf`, `siteSymmetry`, `wyckoffPosition`, `orbitOf`                                                                                                                                                                                                            |
 | points of the plane                       | per coordinate in the lattice basis, modulo the lattice | 1/2   | `siteSymmetry`, `wyckoffPosition`, `orbit` of `symcrys/plane`                                                                                                                                                                                                             |
 | the metric tensor G of a cell (W ᵀGW = G) | per entry, relative to the largest entry of G           | 1     | `residualOperations`                                                                                                                                                                                                                                                      |
+| the index symmetry of a tensor            | per component, relative to its largest component        | 1     | `toVoigt`, `fromVoigt`                                                                                                                                                                                                                                                    |
 
 - **One check.** A tolerance is a finite number above 0 and below the bound of its kind, beyond
   which it says nothing: two distinct operations of a crystallographic point group differ in some
@@ -962,11 +963,26 @@ order). For rank 3, xyz is 0·9 + 1·3 + 2 = 5.
   tensor t: t_c − Σₖ basis[k][c]·t_{parameters[k]} = 0. A row with a single 1 says the component
   vanishes.
 
-Relation strings (`\chi_{xxx} = -\chi_{xyy}`), Voigt matrices, Nye diagrams and LaTeX are
-presentation and stay in the applications; they follow from these numbers. Numeric conversions to
-and from the abbreviated (Voigt) notation, `toVoigt` and `fromVoigt`, are planned for 0.12 (#137
-E3), with ITC's factors (ITC Vol. D eq. (1.5.7.4) and § 1.1.4.10, which halve or double some
-components), not with the unity factors that Gallego et al. (2019, p. 440) take throughout.
+Relation strings (`\chi_{xxx} = -\chi_{xyy}`), Nye diagrams and LaTeX are presentation and stay
+in the applications; they follow from these numbers.
+
+**Voigt's notation** (#137 E3, 0.12). `toVoigt(tensor, spec, { factors })` writes a tensor with
+symmetric index pairs in the two-index notation of ITC Vol. D § 1.1.4.10 (pp. 24–27), and
+`fromVoigt(voigt, spec, { factors })` takes it back. Each contracted pair ij becomes α = 1…6 for 11,
+22, 33, 23, 31, 12 (eq. (1.1.4.6)). The shape follows the specification: a symmetric tensor of rank 2
+gives 6 components; one of rank 3 symmetric in its last pair a 3 × 6 matrix (d_iα), in its first pair
+a 6 × 3 matrix (e_αk); one of rank 4 with symmetric pairs a 6 × 6 matrix; a specification without a
+symmetric pair is refused. ITC defines the components with α = 4, 5, 6 per quantity: as the sum of
+the two symmetric components (factor 2: the strain, S₄ = 2S₂₃; the piezoelectric d, d_iα = d_ijk +
+d_ikj; the piezomagnetic Λ, Λ_i4 = 2Λ_i23, eq. (1.5.7.4); the compliances s and the electrostriction
+Q on both pairs, eq. (1.1.4.12)), or as one component (factor 1: the stress, the piezoelectric e,
+the stiffnesses c, the elasto-optic p); the piezo-optic π has 1 on its first pair and 2 on its
+second. So the specification does not fix the factors, and the caller gives one per pair
+(`factors: [2]`, `[2, 2]`, `[1, 2]`; decided by Thomas on 2026-11-25); the named properties that
+ITC tabulates in this notation take its factors by default (`'piezoelectric'`, `'piezomagnetic'`:
+`[2]`). A tensor that lacks the index symmetry of its specification, or a Voigt array that is no
+tensor of it, is refused, within the tolerance relative to its largest component. Gallego et al.
+(2019, p. 440) use unity factors throughout; symcrys follows ITC.
 
 **Settings.** A tensor form is Cartesian, so it depends on the setting (above, "Settings"): for `2`
 the polar vector lies along y in the default setting (unique axis b) and along z in setting 2 (unique axis c).

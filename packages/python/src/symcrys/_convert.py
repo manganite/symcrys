@@ -111,4 +111,11 @@ def _lattice_symmetry_directions(x: Any) -> Any:
     return {family: [np.asarray(d, dtype=np.int64).reshape(-1, 3) for d in positions] for family, positions in x.items()}
 
 
-CUSTOM = {"tensor_form": _tensor_form, "lattice_symmetry_directions": _lattice_symmetry_directions}
+def _tensor(x: Any) -> Any:
+    # A flat tensor of 3**rank components in its shape (3, …, 3), as the basis tensors of tensor_form.
+    flat = np.asarray(x, dtype=np.float64)
+    rank = round(np.log(flat.size) / np.log(3)) if flat.size > 1 else 0
+    return flat.reshape((3,) * rank)
+
+
+CUSTOM = {"tensor_form": _tensor_form, "lattice_symmetry_directions": _lattice_symmetry_directions, "tensor": _tensor}

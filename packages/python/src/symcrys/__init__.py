@@ -775,6 +775,7 @@ __all__ = [
     "direction_to_four_indices",
     "face_normal",
     "find_point_group",
+    "from_voigt",
     "generators",
     "holohedry",
     "is_centrosymmetric_of",
@@ -806,6 +807,7 @@ __all__ = [
     "symmetry_directions",
     "tensor_form",
     "tensor_form_of",
+    "to_voigt",
     "wyckoff_position",
     "wyckoff_positions",
     "zone_axis",
@@ -2022,6 +2024,100 @@ def rotate_tensor(
         rotation,
         spec,
         _shared.options(tolerance=tolerance),
+    )
+    return result
+
+
+def to_voigt(
+    tensor: ArrayLike,
+    spec: TensorSpec | Mapping[str, Any] | TensorPropertyName,
+    *,
+    factors: Optional[ArrayLike] = None,
+    tolerance: Optional[float] = None,
+) -> NDArray[np.float64]:
+    """A tensor in Voigt's two-index notation (ITC Vol. D (2013) § 1.1.4.10, pp. 24–27): each
+    contracted index pair ij becomes α = 1…6 for 11, 22, 33, 23, 31, 12 (eq. (1.1.4.6)), and a
+    component with α = 4, 5, 6 is the tensor component times the factor of its pair (``factors``). A
+    symmetric tensor of rank 2 gives 6 components, one of rank 3 symmetric in its last pair a 3 × 6
+    matrix (d_iα), in its first pair a 6 × 3 matrix (e_αk), one of rank 4 a 6 × 6 matrix (s_αβ,
+    c_αβ). Raises SymcrysError for a specification without a symmetric index pair, factors that are
+    missing or not one 1 or 2 per pair, and a tensor that lacks the index symmetry of its
+    specification (within the tolerance, relative to its largest component).
+
+    Parameters
+    ----------
+    factors : keyword-only, optional
+        The factor of each contracted index pair, in the order of the pairs: 2 where ITC defines the
+        Voigt component as the sum of the two symmetric components, as for the strain (S₄ = 2S₂₃),
+        the piezoelectric d (d_iα = d_ijk + d_ikj), the piezomagnetic Λ and the compliances s (``[2,
+        2]``); 1 where it is the component itself, as for the stress, the piezoelectric e and the
+        stiffnesses c (``[1, 1]``); the piezo-optic π has ``[1, 2]``. Required for a specification;
+        a named property takes ITC's factors where ITC tabulates it in Voigt's notation
+        (``'piezoelectric'``, ``'piezomagnetic'``: ``[2]``).
+    tolerance : keyword-only, optional
+        The index symmetry of the tensor (or of the tensor of a Voigt array) is checked within this
+        tolerance, relative to its largest component; default ``EPSILON`` (10⁻⁶).
+
+    Returns
+    -------
+    numpy.ndarray
+        A float64 array: shape (6,) at rank 2, (3, 6) for a tensor symmetric in its last pair, (6,
+        3) in its first, (6, 6) at rank 4. ``tensor`` may have the shape (3, …, 3) or the flat
+        (3**rank,).
+    """
+    result: NDArray[np.float64] = _shared.convert(
+        _call(
+            "toVoigt",
+            _shared.array(tensor, "tensor", np.float64).reshape(-1),
+            _shared.spec(spec),
+            _shared.options(factors=None if factors is None else _shared.array(factors, "factors", np.float64), tolerance=tolerance),
+        ),
+        ("a", np.float64, None),
+    )
+    return result
+
+
+def from_voigt(
+    voigt: ArrayLike,
+    spec: TensorSpec | Mapping[str, Any] | TensorPropertyName,
+    *,
+    factors: Optional[ArrayLike] = None,
+    tolerance: Optional[float] = None,
+) -> NDArray[np.float64]:
+    """The tensor of a Voigt array (``to_voigt`` in reverse): each tensor component is the Voigt
+    component of its index pairs over the factors of the pairs, so that the tensor has the index
+    symmetry of its specification. Raises SymcrysError for a Voigt array of the wrong shape, and for
+    one that is no tensor of the specification (for rank 4 with interchangeable pairs a 6 × 6 matrix
+    that is not symmetric, for a totally symmetric tensor one whose components do not agree), within
+    the tolerance relative to its largest component.
+
+    Parameters
+    ----------
+    factors : keyword-only, optional
+        The factor of each contracted index pair, in the order of the pairs: 2 where ITC defines the
+        Voigt component as the sum of the two symmetric components, as for the strain (S₄ = 2S₂₃),
+        the piezoelectric d (d_iα = d_ijk + d_ikj), the piezomagnetic Λ and the compliances s (``[2,
+        2]``); 1 where it is the component itself, as for the stress, the piezoelectric e and the
+        stiffnesses c (``[1, 1]``); the piezo-optic π has ``[1, 2]``. Required for a specification;
+        a named property takes ITC's factors where ITC tabulates it in Voigt's notation
+        (``'piezoelectric'``, ``'piezomagnetic'``: ``[2]``).
+    tolerance : keyword-only, optional
+        The index symmetry of the tensor (or of the tensor of a Voigt array) is checked within this
+        tolerance, relative to its largest component; default ``EPSILON`` (10⁻⁶).
+
+    Returns
+    -------
+    numpy.ndarray
+        A float64 array of shape (3, …, 3), the tensor with its rank axes.
+    """
+    result: NDArray[np.float64] = _shared.convert(
+        _call(
+            "fromVoigt",
+            _shared.array(voigt, "voigt", np.float64),
+            _shared.spec(spec),
+            _shared.options(factors=None if factors is None else _shared.array(factors, "factors", np.float64), tolerance=tolerance),
+        ),
+        ("x", "tensor"),
     )
     return result
 

@@ -94,6 +94,8 @@ export {
   pointGroupOf,
   pointGroups,
   rotateTensor,
+  toVoigt,
+  fromVoigt,
   settings,
   siteSymmetry,
   siteSymmetryOf,
@@ -113,3 +115,4 @@ export {
   type TensorPropertyName,
   type TensorSpec,
 } from './crystalClasses.js';
+export type { VoigtFactor, VoigtOptions } from './tensors/voigt.js';

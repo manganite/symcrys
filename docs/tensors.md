@@ -99,3 +99,10 @@ Second-harmonic generation has the tensor of `'piezoelectric'` and so no name of
 ```{code-cell} ipython3
 symcrys.allows_property("432", "piezoelectric"), symcrys.tensor_form("-3", "ferroaxial")["parameters"]
 ```
+
+In Voigt's notation, with ITC's factors (here those of the piezoelectric d, d_iα = d_ijk + d_ikj):
+
+```{code-cell} ipython3
+d = symcrys.tensor_form("3", "piezoelectric")["basis"][0]
+symcrys.to_voigt(d, "piezoelectric")
+```

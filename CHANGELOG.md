@@ -30,6 +30,11 @@ planes=None, metric=None, operations=None, tolerance=None)`): the change of the 
   (Q, q); P, p and the operations are read each number as the simplest fraction within the tolerance
   and transformed exactly, so that every result can be passed back. It replaces `changeOfAxes`
   (below).
+- **`toVoigt` and `fromVoigt`** (#137 E3), in `symcrys` and `symcrys/magnetic` (Python `to_voigt`,
+  `from_voigt`): a tensor with symmetric index pairs in Voigt's two-index notation and back, with
+  ITC's factors (ITC Vol. D § 1.1.4.10, eq. (1.5.7.4)): one factor, 1 or 2, per contracted index pair
+  (`{ factors: [2] }` for d, `[2, 2]` for s, `[1, 2]` for π), ITC's by default for `'piezoelectric'`
+  and `'piezomagnetic'`; 6 components at rank 2, 3 × 6 or 6 × 3 at rank 3, 6 × 6 at rank 4.
 - The type `PlaneOperationKind` of `symcrys/plane` (Python `symcrys.plane.PlaneOperationKind`), the
   `kind` of a plane operation description, named as `OperationKind` is in the other entry points.
 

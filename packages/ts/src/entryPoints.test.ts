@@ -697,6 +697,8 @@ describe('every result is frozen, nested values included (#137 C4)', () => {
     metricTensor: [basis],
     reciprocalBasis: [basis],
     residualOperations: [classes.operations('6/mmm'), basis],
+    toVoigt: [classes.tensorForm('1', 'piezoelectric').basis[0], 'piezoelectric'],
+    fromVoigt: [classes.toVoigt(classes.tensorForm('1', 'piezoelectric').basis[0], 'piezoelectric'), 'piezoelectric'],
     changeOfCoordinates: [
       {
         linearPart: [

@@ -581,6 +581,9 @@ function schema(ctx, ir, field, where, dtype) {
           }),
         );
         inner = `("l", ${schema(ctx, { k: 'rec', fields }, field, where)})`;
+      } else if (defined.every((/** @type {any} */ u) => isNumArray(u))) {
+        // Arrays of numbers of different depth (toVoigt: 6 components or a matrix): one array.
+        inner = `("a", np.${dtype ?? dtypeOf(ctx, field, where)}, None)`;
       } else throw new Error(`${where}: a union in a result that has no schema`);
       return defined.length < ir.of.length ? `("o", ${inner})` : inner;
     }
@@ -676,6 +679,10 @@ function argument(ctx, ir, name, fn, where) {
   if (ir.k === 'str') {
     if (isTensorPropertyNames(ctx, ir)) return { py: tensorPropertyName(ctx), expr: py };
     return { py: 'str', expr: py };
+  }
+  if (ir.k === 'union' && ir.of.every((/** @type {any} */ u) => isNumArray(u))) {
+    // Arrays of numbers of different depth (fromVoigt: 6 components or a matrix).
+    return { py: 'ArrayLike', expr: `_shared.array(${py}, "${py}", np.float64)` };
   }
   if (isNumArray(ir)) {
     const float = ir.shape?.length === 2 ? ', np.float64' : '';
@@ -936,7 +943,7 @@ async function generate(name, cfg) {
       let ann;
       let sch;
       if (own.custom) {
-        ann = pyType(ctx, returns, d.name, where);
+        ann = pyType(ctx, returns, d.name, where, own.returns);
         sch = `("x", "${own.custom}")`;
       } else if (returns.k === 'num') {
         ann = numberType(ctx, d.name, where);
@@ -947,7 +954,9 @@ async function generate(name, cfg) {
         sch = schema(ctx, returns, d.name, where, dtype);
       }
       if (returns.k === 'union' && returns.of.every((/** @type {any} */ u) => u.k === 'arr')) {
-        ann = [...new Set(returns.of.map((/** @type {any} */ u) => pyType(ctx, u, d.name, where)))].join(' | ');
+        ann = [...new Set(returns.of.map((/** @type {any} */ u) => pyType(ctx, u, d.name, where, own.returns)))].join(
+          ' | ',
+        );
       }
       if (extra[py]) extrasUsed.add(py);
       // An overloaded function whose overloads differ in an object parameter (orbit: hkl or uvw):

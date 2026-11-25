@@ -14,6 +14,8 @@ import * as plane from './plane.js';
 const ops = classes.operations('32');
 const magneticOps = magnetic.operations("6'/m'mm'");
 const basis = classes.latticeBasis('hexagonal');
+const piezo = classes.tensorForm('1', 'piezoelectric').basis[0];
+const piezoVoigt = classes.toVoigt(piezo, 'piezoelectric');
 const unit = [
   [1, 0, 0],
   [0, 1, 0],
@@ -53,6 +55,8 @@ const pointCalls = (o: readonly { readonly cartesian: unknown }[], key: string, 
   tensorForm: call([key, property], SETTING),
   tensorFormOf: call([o, property], TOLERANCE),
   rotateTensor: call([[1, 0, 0], unit, 'pyroelectric'], TOLERANCE),
+  toVoigt: call([piezo, 'piezoelectric'], ['factors', ...TOLERANCE]),
+  fromVoigt: call([piezoVoigt, 'piezoelectric'], ['factors', ...TOLERANCE]),
   allowsProperty: call([key, property]),
   allowedProperties: call([key]),
   allowsPropertyOf: call([o, property], TOLERANCE),

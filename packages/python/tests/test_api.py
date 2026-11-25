@@ -665,3 +665,19 @@ def test_operations_review_of_step_12b() -> None:
     # Neither a foreign dataclass nor the class itself is taken as operations.
     with pytest.raises(symcrys.SymcrysError, match="must be Operations"):
         symcrys.point_group_of(symcrys.Operations)  # type: ignore[arg-type]
+
+
+def test_voigt_takes_and_gives_tensors_in_their_shape() -> None:
+    d = symcrys.tensor_form("3m", "piezoelectric")["basis"][0]
+    assert d.shape == (3, 3, 3)
+    v = symcrys.to_voigt(d, "piezoelectric")
+    assert v.shape == (3, 6) and v.dtype == np.float64
+    assert np.allclose(symcrys.to_voigt(d.reshape(-1), "piezoelectric"), v)
+    back = symcrys.from_voigt(v, "piezoelectric")
+    assert back.shape == (3, 3, 3) and np.allclose(back, d)
+    s = {"rank": 4, "kind": "polar", "intrinsic": "symmetric-pairs"}
+    t = symcrys.tensor_form("6/mmm", s)["basis"][0]
+    assert symcrys.to_voigt(t, s, factors=[2, 2]).shape == (6, 6)
+    assert symcrys.from_voigt(symcrys.to_voigt(t, s, factors=[1, 2]), s, factors=[1, 2]).shape == (3, 3, 3, 3)
+    with pytest.raises(symcrys.SymcrysError, match="give the factors"):
+        symcrys.to_voigt(t, s)
