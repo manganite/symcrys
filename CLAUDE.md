@@ -127,8 +127,8 @@ code to this state; the decisions below follow it.
   to Birss's presentation belongs in birss-app (#125).
 - **No special solutions for applications.** An application's choice is no reason. A choice that
   print leaves open is made by ITC's conventions where they extend to the case, otherwise with
-  Thomas, and recorded here. The special solutions found in 0.10 are listed in #110; none of these patterns is extended in new
-  work.
+  Thomas, and recorded here. The special solutions found in 0.10 are listed in #110; none of these
+  patterns is extended in new work.
   Example (maintainer, 2026-11-21, #24): stereography keeps its own Cartesian frame and rotates
   symcrys' results into it; symcrys is meant to be useful to other users too, who expect ITC.
 - **ITC is the source of the data.** The data are stored in the ITC frame (#122); nothing is
@@ -558,14 +558,21 @@ operations }`; `undefined`, never `null` (`zoneAxis`); every result frozen and `
   `2_z` stay in the applications, which also translate them. An axis is given both as a lattice
   direction [uvw] and as a Cartesian unit vector, with the sign of its Seitz symbol ("Pure ITC",
   #114), which fixes what the sense refers to; the symmetry directions follow ITA Table 2.1.3.1
-  (`docs/conventions.md`, "Symmetry directions and elements").
+  (`docs/conventions.md`, "Symmetry directions and elements"). For the monoclinic groups they are
+  the three positions of the full symbol (a, b, c, ITA § 2.1.3.15), although Table 2.1.3.1 lists
+  only the unique axis (Thomas, 2026-11-25, #115 item 1, asked with options: documented rather than
+  changed, since the positions are what the full symbol reads and a change would break the API).
 - **Operations in ITA's order, ITA's generators** (maintainer, 2026-11-18,
   crystallography-common#99; #25, #27): `operations` returns the operations as ITA numbers them,
   built coset by coset from ITA's selected generators, and `generators` returns those generators
   (`docs/conventions.md`, "Order of the operations", "Generators"). Consumers draw and list
   operations in this order (stereography: poles, faces, face lists), so it should mean something
   and stay stable; a closure order has no meaning of its own. The data are ITA's selected
-  generators (`pointGroups/itaOrder.ts`, #122).
+  generators (`pointGroups/itaOrder.ts`, #122). An index into a list of operations is 0-based, ITA's
+  number of the operation its index + 1, and numbers such as a setting's `index` count from 1
+  (Thomas, 2026-11-25, #115 item 4, asked with options: stated in one place,
+  `docs/conventions.md`, "Indices and numbering", rather than 1-based indices, which would be
+  unusual for arrays in TypeScript and Python and would break the API).
 - **Cartesian floating-point matrices with snapping** (maintainer, 2026-11-08, #13), as in
   birss-app, whose tests came with them; the exact matrix W in the lattice basis is the field
   `matrix` of every operation ("The operation record").

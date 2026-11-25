@@ -19,8 +19,9 @@ const frozen = (rows: [number, number, number][][]): readonly (readonly Uvw[])[]
  * (hexagonal family: the row "Hexagonal", which also serves the trigonal classes with hexagonal
  * axes). Triclinic: no position. Monoclinic: the positions of the full symbol, which reads along a,
  * b, c (ITA 6th ed. § 2.1.3.15, p. 171), the orthorhombic row; of these, only the unique axis is a
- * lattice symmetry direction in Table 2.1.3.1 ([010] for unique axis b, [001] for unique axis c),
- * and the full symbol has `1` at the other two positions (`P 1 2/m 1`).
+ * lattice symmetry direction in Table 2.1.3.1 ([010] for unique axis b, [001] for unique axis c;
+ * [100] for unique axis a, which the table does not list), and the full symbol has `1` at the other
+ * two positions (`1 2/m 1`).
  */
 export const LATTICE_SYMMETRY_DIRECTIONS: Readonly<Record<CrystalFamily, readonly (readonly Uvw[])[]>> = Object.freeze({
   triclinic: frozen([]),

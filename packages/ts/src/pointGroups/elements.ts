@@ -84,7 +84,11 @@ export interface SymmetryDirection {
    * magnetic group with its primes (`4'/m`).
    */
   readonly symbol?: string;
-  /** The symmetry directions of this position (ITA Table 2.1.3.1), each with the elements along it. */
+  /**
+   * The symmetry directions of this position (ITA Table 2.1.3.1; for a monoclinic group the
+   * direction of the position of the full symbol, of which only the unique axis is in the table),
+   * each with the elements along it.
+   */
   readonly directions: readonly DirectionElements[];
 }
 
@@ -265,7 +269,8 @@ export function describeOperations(
 
 /**
  * The positions of the full Hermann–Mauguin symbol in the requested setting, each with its
- * symmetry directions (ITA Table 2.1.3.1) and the symmetry elements along them. All positions of the
+ * symmetry directions (ITA Table 2.1.3.1; monoclinic: the directions a, b, c of the full symbol,
+ * of which only the unique axis is in the table) and the symmetry elements along them. All positions of the
  * crystal family are listed (for rhombohedral axes the two of that row of the table), also those the
  * symbol of the class leaves out (then without `symbol`); the triclinic family has none. A direction
  * has the sign of ITA Table 2.1.3.1, the axis of an operation along it that of its Seitz symbol, so

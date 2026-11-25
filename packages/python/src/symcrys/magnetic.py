@@ -318,7 +318,9 @@ class SymmetryDirection(TypedDict):
     magnetic group with its primes (``4'/m``).
     """
     directions: list[DirectionElements]
-    """The symmetry directions of this position (ITA Table 2.1.3.1), each with the elements along it.
+    """The symmetry directions of this position (ITA Table 2.1.3.1; for a monoclinic group the direction
+    of the position of the full symbol, of which only the unique axis is in the table), each with the
+    elements along it.
     """
 
 
@@ -783,8 +785,9 @@ LATTICE_SYMMETRY_DIRECTIONS: dict[str, list[NDArray[np.int64]]] = _shared.conver
 (hexagonal family: the row "Hexagonal", which also serves the trigonal classes with hexagonal axes).
 Triclinic: no position. Monoclinic: the positions of the full symbol, which reads along a, b, c (ITA
 6th ed. § 2.1.3.15, p. 171), the orthorhombic row; of these, only the unique axis is a lattice
-symmetry direction in Table 2.1.3.1 ([010] for unique axis b, [001] for unique axis c), and the full
-symbol has ``1`` at the other two positions (``P 1 2/m 1``).
+symmetry direction in Table 2.1.3.1 ([010] for unique axis b, [001] for unique axis c; [100] for
+unique axis a, which the table does not list), and the full symbol has ``1`` at the other two
+positions (``1 2/m 1``).
 
 In Python: family → one int64 array of shape (n, 3) per position, the n directions [uvw] as rows.
 """
@@ -1265,12 +1268,13 @@ def symmetry_directions(
     setting: Optional[Union[int, str]] = None,
 ) -> list[SymmetryDirection]:
     """The positions of the full Hermann–Mauguin symbol in the requested setting, each with its
-    symmetry directions (ITA Table 2.1.3.1) and the symmetry elements along them. All positions of
-    the crystal family are listed (for rhombohedral axes the two of that row of the table), also
-    those the symbol of the class leaves out (then without ``symbol``); the triclinic family has
-    none. A direction has the sign of ITA Table 2.1.3.1, the axis of an operation along it that of
-    its Seitz symbol, so the two are parallel and may be opposite: match them by direction, up to
-    sign.
+    symmetry directions (ITA Table 2.1.3.1; monoclinic: the directions a, b, c of the full symbol,
+    of which only the unique axis is in the table) and the symmetry elements along them. All
+    positions of the crystal family are listed (for rhombohedral axes the two of that row of the
+    table), also those the symbol of the class leaves out (then without ``symbol``); the triclinic
+    family has none. A direction has the sign of ITA Table 2.1.3.1, the axis of an operation along
+    it that of its Seitz symbol, so the two are parallel and may be opposite: match them by
+    direction, up to sign.
 
     Parameters
     ----------
