@@ -1116,7 +1116,10 @@ gives π, Q and s, and the element 66 of the trigonal and hexagonal classes, ⊗
 `'symmetric-last-pair'`, all 21 noncentrosymmetric classes; it prints d_ijk without the Voigt factor 2, so its 3×6
 grid is the tensor itself; the panels Yariv calls the standard orientation are the ITC default
 settings), Hoshi et al. (1995) (rank 4, `'symmetric-pairs'`, 6/mmm and 6mm, with Hoshi's tracelessness Q_ii = 0
-added to the form). The surface use case of #30 is checked against Yariv: an m-3m crystal has no SHG in
+added to the form), and Newnham, _Properties of Materials_ (2005), Tables 12.2 and 30.1 (the
+piezoelectric matrices in Voigt's notation, which also check the factor 2 of d through −2d₁₁, −2d₂₂,
+and the gyration tensors of the 32 classes) and Table 30.2 (which acentric classes are optically
+active, enantiomorphic, piezo- and pyroelectric), all in the ITC default settings. The surface use case of #30 is checked against Yariv: an m-3m crystal has no SHG in
 the bulk, its (001), (110) and (111) surfaces have the forms of 4mm, mm2 and 3m with 3, 5 and 4
 independent components.
 

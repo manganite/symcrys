@@ -6,18 +6,24 @@ point groups", printed pp. 91–92; Table 30.1 "Gyration tensor for the 32 cryst
 texture groups", p. 330; Table 30.2 "Properties associated with acentric crystals and textures:
 piezoelectricity (P), pyroelectricity (P*), optical activity (O), and enantiomorphism (E)", p. 332.
 Transcribed on 2026-11-25 from the PDF in Thomas' Zotero (item `G32GB96M`, attachment `UKXAALX2`;
-printed page = PDF page − 13), read from page images at 100–170 dpi, the entry of −4 in Table 12.2
-at 400 dpi.
+printed page = PDF page number − 13 = page index − 12 counting from 0), read from page images at
+100–170 dpi, the entry of −4 in Table 12.2 at 400 dpi; every cell checked again at 300–600 dpi in
+the review of PR #178.
 
 The axes are those of § 4.3 (p. 26), the IEEE standard settings: monoclinic Z₂ ∥ b (the twofold axis
 or the normal of the mirror), orthorhombic Z₁, Z₂, Z₃ along a, b, c, trigonal and hexagonal Z₁ ∥ a,
-Z₃ ∥ c, tetragonal and cubic Z₁, Z₂, Z₃ along a, b, c.
+Z₃ ∥ c, tetragonal and cubic Z₁, Z₂, Z₃ along a, b, c. Where the secondary elements lie, § 4.3
+refers to Table 4.2, "Minimum symmetry elements for the 32 crystal classes" (p. 25): 2 ∥ Z₂ and
+m ⊥ Z₂ in 2, m, 2/m; 2 ∥ Z₁ in 32, 422, −42m, 622; m ⊥ Z₁ in 3m, −3m, 4mm, 6mm, −6m2; in mm2
+m ⊥ Z₁, m ⊥ Z₂.
 
 Transcription conventions: a matrix is written by rows, rows separated by `;`, entries by spaces; an
 entry is `0` or a coefficient as printed with its sign and factor (`d14`, `-d15`, `-2d22`, `g11`); a
 leading `-` before a point-group digit is the overbar. Group names as printed (Table 12.2 prints
 `m3` and `m3m` without the overbar of the 3, in its list of the groups without piezoelectricity).
-The Curie (limiting, texture) groups are transcribed where they share a row with crystal classes.
+The Curie (limiting, texture) groups are transcribed where they share a row or a cell of a group
+list with crystal classes (Tables 12.2 and 30.1), not where Table 30.2 prints them in a column of
+their own.
 
 ## Table 12.2, pp. 91–92
 
@@ -46,12 +52,19 @@ The matrix d_ij (P_i = d_ij X_j; i = 1–3, j = 1–6, the Voigt index of the st
 
 ### Errata
 
-- **−4:** the second row prints `d25` and the count `(3)`. Neither fits the other: with `d25` as a
+| Group | Row | As printed | Read as |
+|---|---|---|---|
+| -4 | 2 | 0 0 0 d25 d14 0 | 0 0 0 d15 d14 0 |
+| -4 | count | 3 | 4 |
+
+- **−4:** the second row prints `d25` and the count `(3)`, and neither fits the other: with `d25` as a
   coefficient of its own the matrix has five symbols (d14, d15, d25, d31, d36), and no reading gives
-  three. Read with `d25` as `d15`, the matrix has the form that the symmetry of −4 gives and four
-  independent coefficients (d14, d15, d31, d36), as the row of 4, 6, ∞ above it has with other
-  signs: `0 0 0 d14 -d15 0; 0 0 0 d15 d14 0; d31 -d31 0 0 0 d36`, count 4. The tests read this
-  correction and compare it with the computed form.
+  three. A second print gives the form: Yariv, _Quantum Electronics_, 2nd ed. (1975), Table 16.1
+  (pp. 410–411, after Nye), class −4, links d14 with d25 and d15 with −d24, d31 with −d32, and d36
+  alone, four moduli (`references/yariv/table-16.1.md`). So `d25` reads as `d15` and the count as 4,
+  which keeps every other printed cell: `0 0 0 d14 -d15 0; 0 0 0 d15 d14 0; d31 -d31 0 0 0 d36`.
+  The tests read this table, check that the printed row is as stated, and compare the correction
+  with the computed form.
 
 ## Table 30.1, p. 330
 

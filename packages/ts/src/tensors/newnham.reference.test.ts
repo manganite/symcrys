@@ -2,9 +2,10 @@
  * Property tensors against a further print (fixture class (a)): Newnham, Properties of Materials
  * (2005), Tables 12.2 (piezoelectric matrices, pp. 91–92), 30.1 (gyration tensors, p. 330) and 30.2
  * (the properties of the acentric classes, p. 332), re-parsed from
- * references/newnham/tables-12.2-30.1-30.2.md, with the erratum of −4 in Table 12.2 read as noted
- * there. Newnham's axes (§ 4.3, the IEEE settings) are those of the ITC default settings for these
- * forms, so the printed forms are compared in the default setting.
+ * references/newnham/tables-12.2-30.1-30.2.md, with its errata read from the same file (−4 in Table
+ * 12.2, corrected after Yariv's Table 16.1). Newnham's axes (§ 4.3, the IEEE settings, with the
+ * secondary elements of his Table 4.2, p. 25) are those of the ITC default settings for these forms,
+ * so the printed forms are compared in the default setting.
  *
  * Table 12.2 is printed in Voigt's notation with the factors of the piezoelectric d (d_122 = ½d_16,
  * p. 90): it is compared with `toVoigt(…, { factors: [2] })` of the computed form, which checks the
@@ -51,13 +52,36 @@ function printedSpace(matrix: string): number[][] {
 const sameSpace = (a: readonly (readonly number[])[], b: readonly (readonly number[])[], dim: number) =>
   matrixRank(a, dim) === matrixRank(b, dim) && matrixRank([...a, ...b], dim) === matrixRank(a, dim);
 
-/** The corrections of the section "Errata" of the transcription. */
-const ERRATA: Readonly<Record<string, { matrix: string; count: string }>> = {
-  '-4': { matrix: '0 0 0 d14 -d15 0; 0 0 0 d15 d14 0; d31 -d31 0 0 0 d36', count: '4' },
-};
+/** The corrections of the section "Errata": per group the matrix row (1-based) or the count, as printed and as read. */
+const ERRATA = tableRows(section(FILE, '### Errata')).slice(1);
+
+/** A printed row of Table 12.2 with its errata applied, after checking that each erratum names what is printed. */
+function corrected(groups: string, matrix: string, count: string): { matrix: string; count: string } {
+  const rows = matrix.split(';').map((r) => r.trim());
+  let n = count;
+  for (const [group, row, printed, readAs] of ERRATA.filter((e) => e[0] === groups)) {
+    if (row === 'count') {
+      expect(n, `${groups}: the printed count`).toBe(printed);
+      n = readAs;
+    } else {
+      expect(rows[Number(row) - 1], `${group}: row ${row} as printed`).toBe(printed);
+      rows[Number(row) - 1] = readAs;
+    }
+  }
+  return { matrix: rows.join('; '), count: n };
+}
 
 describe('Newnham Table 12.2: piezoelectric matrices', () => {
   const rows = tableRows(section(FILE, '## Table 12.2')).slice(1);
+
+  it('every erratum names a printed row of the table', () => {
+    expect(ERRATA.length).toBeGreaterThan(0);
+    for (const [group] of ERRATA)
+      expect(
+        rows.some((r) => r[0] === group),
+        group,
+      ).toBe(true);
+  });
 
   it('covers the 32 crystal classes once', () => {
     const keys = rows.flatMap((r) => keysOf(r[0]));
@@ -66,7 +90,7 @@ describe('Newnham Table 12.2: piezoelectric matrices', () => {
 
   for (const [groups, printedMatrix, printedCount] of rows) {
     it(groups, () => {
-      const { matrix, count } = ERRATA[groups] ?? { matrix: printedMatrix, count: printedCount };
+      const { matrix, count } = corrected(groups, printedMatrix, printedCount);
       const printed = printedSpace(matrix);
       expect(printed.length, 'symbols').toBe(count === '' ? 0 : Number(count));
       for (const key of keysOf(groups)) {
