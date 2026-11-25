@@ -20,7 +20,8 @@ numbering" in the conventions).
 
 - `residualOperations` in `symcrys/plane` (#119): the operations of a list whose matrix W keeps the
   metric of a plane cell, WᵀGW = G, as in the other entry points; in Python
-  `symcrys.plane.residual_operations`, which keeps the rows of the caller's `Operations`.
+  `symcrys.plane.residual_operations`, which keeps the rows of the caller's `Operations`. Type
+  `PlaneCellOperation`.
 
 ### Changed
 
@@ -30,7 +31,8 @@ numbering" in the conventions).
   `allowsPropertyOf` and `allowedPropertiesOf` read the dimension of the invariant space from the
   trace of the group average instead of computing the full form; `rotateTensor` contracts one index
   at a time, about seven times faster at rank 4. The results are the same, except that
-  `rotateTensor` for a rotation that is not a symmetry operation may differ in the last bits (the
+  `rotateTensor` for a rotation with entries other than 0 and ±1 (a hexagonal or trigonal operation,
+  or a general rotation) may differ in the last bits (the
   sums are taken in another order, a relative difference of the order of 10⁻¹⁵), and that it gives
   0 where it gave −0 (a zero component of an axial tensor under an improper rotation; visible only
   with `Object.is` in TypeScript).
@@ -43,7 +45,8 @@ numbering" in the conventions).
 ### Fixed
 
 - `residualOperations` (both point-group entry points) names itself in the error for a basis that is
-  not a regular 3 × 3 matrix; before, the message named `metricTensor`.
+  not a finite, non-singular 3 × 3 matrix; since 0.8.0 the message named `metricTensor`.
+  The check itself is unchanged.
 
 ## [0.12.0] - 2026-11-25
 
