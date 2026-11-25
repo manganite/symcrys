@@ -9,6 +9,7 @@
     "reportFolder": "<projectFolder>/api/",
     "reportTempFolder": "<projectFolder>/../../build/api/"
   },
+  "newlineKind": "lf",
   "docModel": { "enabled": false },
   "dtsRollup": { "enabled": false },
   "tsdocMetadata": { "enabled": false },

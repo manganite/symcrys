@@ -21,13 +21,13 @@ apply here. Where this file and another document disagree on process, this file 
 
 ## Layout
 
-| Path                   | What                                                                                                            |
-| ---------------------- | --------------------------------------------------------------------------------------------------------------- |
-| `packages/ts`          | the npm package `symcrys`: `src/`, `dist/`, `package.json`, `tsconfig.build.json`, a README for npm             |
-| `packages/python`      | the PyPI package `symcrys`: `pyproject.toml`, `src/symcrys/`, `tests/`, `examples/`                             |
-| `references/`, `docs/` | shared by both packages; `docs/` is also the source of the documentation site                                   |
-| `scripts/`, `audit/`   | repository tools: `check-dist.mjs`, `bundle-python.mjs`, `python-api.mjs`; the audits against sibling checkouts |
-| root `package.json`    | private npm workspace: the dev dependencies and the gates                                                       |
+| Path                   | What                                                                                                                                              |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `packages/ts`          | the npm package `symcrys`: `src/`, `dist/`, `package.json`, `tsconfig.build.json`, a README for npm; `api/`, the API reports (not in the package) |
+| `packages/python`      | the PyPI package `symcrys`: `pyproject.toml`, `src/symcrys/`, `tests/`, `examples/`                                                               |
+| `references/`, `docs/` | shared by both packages; `docs/` is also the source of the documentation site                                                                     |
+| `scripts/`, `audit/`   | repository tools: `check-dist.mjs`, `bundle-python.mjs`, `python-api.mjs`; the audits against sibling checkouts                                   |
+| root `package.json`    | private npm workspace: the dev dependencies and the gates                                                                                         |
 
 Below, `src/`, `dist/` and `tsconfig.build.json` without a prefix are those of `packages/ts`.
 Decision on the layout (maintainer, 2026-11-19, #30): two package folders, as first proposed in
@@ -341,7 +341,8 @@ argsJson) → resultJson` (`_engine.py`, `scripts/bundle-python.mjs`; a name of 
   branch (`feature/`, `fix/`, `refactor/`, `docs/`, `chore/`, `audit/`), Conventional Commits
   (`type(scope): summary`), PR to `main`, merged with a merge commit (no squash).
 - **Gates**, run by CI on every PR, these eight on Node 22 and 24: `typecheck`, `typecheck:ts7`,
-  `lint`, `format:check`, `test`, `build`, `check:dist`, `api:check` (the API reports current, #56); and `python` on Python 3.10 and the newest
+  `lint`, `format:check`, `test`, `build`, `check:dist`, `api:check` (the API reports current,
+  #56); and `python` on Python 3.10 and the newest
   (bundle, build sdist and wheel, install the wheel into a fresh environment, `mypy --strict`,
   `pytest`; maintainer, 2026-11-19, from the first PR of the Python package); and `docs` (#29):
   `npm run docs:check` (TypeDoc with every warning an error: an undocumented export, a broken
@@ -470,14 +471,18 @@ Decided by Thomas on 2026-11-20 (#29), asked before implementation, unless a poi
 - **Short READMEs** (root, `packages/ts` for npm, `packages/python` for PyPI): what symcrys is, how
   to install, one short example, the link to the site. The root README keeps development and
   releases.
-- **An API report** (`@microsoft/api-extractor`, which ships TypeScript 6.0.3 itself; #56, came
-  with 0.14): one report per entry point, `packages/ts/api/symcrys.api.md`, `symcrys-magnetic.api.md`,
-  `symcrys-plane.api.md`, read from the declarations in `dist/`; a PR that changes the public API
-  shows it as a diff of these files, and the gate `api:check` fails if one is stale
-  (`npm run api:report` writes them). Chosen while implementing: the TSDoc messages of api-extractor
-  are off, since TypeDoc checks the comments in the gate `docs`, and escaping `>` or `{` with a
-  backslash, as api-extractor's parser wants, would put backslashes into the Python docstrings; no
-  release tags (`@public`), as all exports of an entry point are public.
+- **An API report** (`@microsoft/api-extractor`, which ships TypeScript 6.0.3 itself and keeps it on
+  a move to TypeScript 7; #56): one report per entry point, `packages/ts/api/symcrys.api.md`,
+  `symcrys-magnetic.api.md`, `symcrys-plane.api.md`, read from the declarations in `dist/`; a PR
+  that changes the public API shows it as a diff of these files, and the gate `api:check` fails if
+  one is stale (`npm run api:report` writes them). A type that a public signature uses but the entry
+  point does not export by name (a warning `ae-forgotten-export` in the report) is not written out,
+  so a change of its fields does not show; such types are to be exported by name (#190). Chosen
+  while implementing: the TSDoc messages of api-extractor are off, since TypeDoc checks the comments
+  in the gate `docs`, and escaping `<` or `>` with a backslash, as api-extractor's parser wants, would
+  put backslashes into the Python docstrings (TypeDoc keeps them there, unlike for `{` and `}`); no
+  release tags (`@public`), as all exports of an entry point are public; reports with LF line
+  endings.
 - **A PATCH release of its own** (0.6.1) puts the site online with the generated docstrings.
 - **Findability** (maintainer, 2026-11-22, #72): every page has a description (`symcrys_page_descriptions`
   in `docs/conf.py`; the build warns about a page without one, so the gate `docs` fails), Open Graph

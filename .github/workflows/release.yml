@@ -64,6 +64,7 @@ jobs:
           npm test
           npm run build
           npm run check:dist
+          npm run api:check
       # --ignore-scripts: pack the dist/ that the gates just checked, without rebuilding it (prepack)
       - name: Pack
         id: pack
