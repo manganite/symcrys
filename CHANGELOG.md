@@ -6,6 +6,14 @@ All notable changes to symcrys are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-11-25
+
+The completion of the ITC content planned in #126 and #137 (part I): the plane groups get the lookups
+and lists of the other entry points and their lattices and cells, all three entry points the change
+of the coordinate system of ITA 2016 § 1.5, the point-group entry points Voigt's notation with ITC's
+factors and Shubnikov's symbols. One breaking change: `changeOfAxes` is replaced by
+`changeOfCoordinates` (migration under "Removed").
+
 ### Added
 
 - **`symcrys/plane`: lookups and lists** (#97, #137 F4): `isPlaneGroupKey`, `isPointGroupKey`,
@@ -44,6 +52,13 @@ planes=None, metric=None, operations=None, tolerance=None)`): the change of the 
   refuses a symbol with the underline, `:` or `·`.
 - The type `PlaneOperationKind` of `symcrys/plane` (Python `symcrys.plane.PlaneOperationKind`), the
   `kind` of a plane operation description, named as `OperationKind` is in the other entry points.
+
+### Changed
+
+- `findPointGroup` (both point-group entry points) refuses a symbol with a character that only
+  Shubnikov's notation writes (the combining low line U+0332, `:`, `·` and the dot operators U+22C5,
+  U+2219) with a RangeError; up to 0.11 such a symbol was "not found" (`undefined`). Shubnikov
+  symbols are written by `symbol(key, { form: 'shubnikov' })` but not read (#137 B4).
 
 ### Removed
 
@@ -899,7 +914,8 @@ k=None, l=None)` (new in this version).
 - Project scaffold: TypeScript build to `dist/` (ES modules with type declarations), tests, lint,
   format check, CI and release workflow. The only export so far is `VERSION`.
 
-[Unreleased]: https://github.com/manganite/symcrys/compare/v0.11.0...HEAD
+[Unreleased]: https://github.com/manganite/symcrys/compare/v0.12.0...HEAD
+[0.12.0]: https://github.com/manganite/symcrys/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/manganite/symcrys/compare/v0.10.1...v0.11.0
 [0.10.1]: https://github.com/manganite/symcrys/compare/v0.10.0...v0.10.1
 [0.10.0]: https://github.com/manganite/symcrys/compare/v0.9.0...v0.10.0
