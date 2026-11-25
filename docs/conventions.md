@@ -526,7 +526,7 @@ when they differ by less than the tolerance, in the metric of their kind:
 | operations                                | per matrix entry                                        | 0.1   | `pointGroupOf`, `describeOperationsOf` (also in `symcrys/plane`), `tensorFormOf`, `isCentrosymmetricOf`, `isEnantiomorphicOf`, `allowsPropertyOf`, `allowedPropertiesOf`, `rotateTensor`; `changeOfCoordinates` (all three entry points) for the entries of P, p, W and w |
 | directions                                | Euclidean distance of the unit vectors                  | 1     | `siteSymmetryOf`, `siteSymmetry`, `wyckoffPosition`, `orbitOf`                                                                                                                                                                                                            |
 | points of the plane                       | per coordinate in the lattice basis, modulo the lattice | 1/2   | `siteSymmetry`, `wyckoffPosition`, `orbit` of `symcrys/plane`                                                                                                                                                                                                             |
-| the metric tensor G of a cell (W ᵀGW = G) | per entry, relative to the largest entry of G           | 1     | `residualOperations`                                                                                                                                                                                                                                                      |
+| the metric tensor G of a cell (W ᵀGW = G) | per entry, relative to the largest entry of G           | 1     | `residualOperations` (also in `symcrys/plane`)                                                                                                                                                                                                                            |
 | the index symmetry of a tensor            | per component, relative to its largest component        | 1     | `toVoigt`, `fromVoigt`                                                                                                                                                                                                                                                    |
 
 - **One check.** A tolerance is a finite number above 0 and below the bound of its kind, beyond
@@ -1291,7 +1291,10 @@ square), the pairs of equal parameters (`[['a', 'b']]`), the fixed angles (`{ ga
 angles conventionally taken non-acute (γ of the oblique system, the footnote of the table). The cell
 functions have the names of the other entry points, for 2 × 2 matrices whose columns are a and b:
 `latticeFromParameters({ a, b, gamma })` (a along x, b at γ from a towards +y),
-`latticeParameters(basis)`, `metricTensor(basis)` and `reciprocalBasis(basis)` (a_i · a*_j = δ_ij).
+`latticeParameters(basis)`, `metricTensor(basis)` and `reciprocalBasis(basis)` (a_i · a*_j = δ_ij),
+and, since 0.13, `residualOperations(operations, basis)`, the operations of a list whose integer
+`matrix` W keeps the metric, WᵀGW = G, relative to the largest entry of G (the metric tolerance, as
+in 3D).
 
 **Not yet.** The positions and edge forms of the plane point groups (ITA Table 3.2.3.1, #81) and
 the determination of the plane group of a pattern (a later MINOR, #31).

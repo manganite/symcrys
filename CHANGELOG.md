@@ -6,6 +6,12 @@ All notable changes to symcrys are recorded here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- `residualOperations` in `symcrys/plane` (#119): the operations of a list whose matrix W keeps the
+  metric of a plane cell, WᵀGW = G, as in the other entry points; in Python
+  `symcrys.plane.residual_operations`, which keeps the rows of the caller's `Operations`.
+
 ### Changed
 
 - Faster calls for lists of operations (#100): `tensorFormOf`, `allowsPropertyOf` and
@@ -23,6 +29,11 @@ All notable changes to symcrys are recorded here. The format follows
   as an integer when it lies less than 10⁻⁹ from it (before: at most 10⁻⁹), and the row reduction of
   the tensor forms eliminates an entry of 10⁻¹² too (before: only above). A result differs only for
   an input exactly on these bounds.
+
+### Fixed
+
+- `residualOperations` (both point-group entry points) names itself in the error for a basis that is
+  not a regular 3 × 3 matrix; before, the message named `metricTensor`.
 
 ## [0.12.0] - 2026-11-25
 

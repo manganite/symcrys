@@ -1026,7 +1026,9 @@ while implementing gets its own note here.
   `angles` and `nonAcute`, the last for the footnote § of the table (γ of the oblique system); a
   basis is the type `Mat2` (two rows of two numbers, as `Mat3`), and a cell flat within rounding or
   with edges whose products overflow or vanish is refused by the criterion of the 3D cell functions
-  (review).
+  (review). `residualOperations` for d = 2 followed in 0.13 (#119; chosen while implementing: as in
+  3D, the caller's operations are kept as they are, read by their integer `matrix`; in Python the
+  kept rows of the caller's `Operations`).
 - **No frieze, layer or magnetic plane groups for now** (#31 question 3): no consumer needs them;
   the dimension-generic module keeps them possible (idea in #74).
 - **Entry point `symcrys/plane`, later `symcrys/space`** (#31 question 4), as `symcrys/magnetic`

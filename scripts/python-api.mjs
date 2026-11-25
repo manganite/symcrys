@@ -638,6 +638,14 @@ function objectFields(alts) {
 // --- arguments --------------------------------------------------------------------------------------
 
 /**
+ * A setting of api.json for one module: the value itself, or, given per module as an object, the
+ * value of the module `name`.
+ * @param {any} v
+ * @param {string} name
+ */
+const perModule = (v, name) => (v === undefined || typeof v === 'string' || Array.isArray(v) ? v : v[name]);
+
+/**
  * A parameter of a function: its Python annotation and the expression that passes it on.
  * @param {Ctx} ctx
  * @param {any} ir
@@ -655,10 +663,8 @@ function argument(ctx, ir, name, fn, where) {
   if (name === 'operations') {
     // The keys an operation needs, and the field a bare array of matrices is read as: the module's,
     // or a function's own in api.json (an array, or per module an object).
-    const perModule = (/** @type {any} */ v) =>
-      v === undefined || typeof v === 'string' || Array.isArray(v) ? v : v[ctx.name];
-    const ownKeys = perModule(api.functions[fn]?.operationKeys);
-    const ownBare = perModule(api.functions[fn]?.bare);
+    const ownKeys = perModule(api.functions[fn]?.operationKeys, ctx.name);
+    const ownBare = perModule(api.functions[fn]?.bare, ctx.name);
     if (ownKeys) used.add(`functions.${fn}.operationKeys`);
     if (ownBare) used.add(`functions.${fn}.bare`);
     const keys = ownKeys ?? ctx.ops.keys;
@@ -935,11 +941,13 @@ async function generate(name, cfg) {
       }
       // A generic result (residualOperations gives back the caller's operations): the list of a
       // record of the entry point named in api.json.
-      const listOf = own.listOf && tsModule.children.find((/** @type {Json} */ c) => c.name === own.listOf);
+      // The name of that record: one for every module, or per module an object (#119).
+      const listOfName = perModule(own.listOf, ctx.name);
+      const listOf = listOfName && tsModule.children.find((/** @type {Json} */ c) => c.name === listOfName);
       const returns = listOf
         ? {
             k: 'arr',
-            of: readDeclaration(listOf.kind === KIND.reference ? byId.get(listOf.target) : listOf, where, own.listOf),
+            of: readDeclaration(listOf.kind === KIND.reference ? byId.get(listOf.target) : listOf, where, listOfName),
           }
         : sigs.length > 1
           ? unite(sigs.map((/** @type {Json} */ s) => read(s.type, where)))

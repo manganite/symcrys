@@ -5,7 +5,7 @@
  * entry point is `symcrys/plane`.
  */
 
-import { FLAT_CELL_RATIO, SINGULAR_RATIO } from '../tolerances.js';
+import { FLAT_CELL_RATIO, INTEGER_EPSILON, SINGULAR_RATIO } from '../tolerances.js';
 import { checkObject, shown } from '../checks.js';
 import type { PlaneSystem } from './planeGroupData.js';
 import {
@@ -196,6 +196,48 @@ export function planeMetricTensor(basis: unknown, who: string): Mat2 {
     [dot(a, a), dot(a, b)],
     [dot(b, a), dot(b, b)],
   ];
+}
+
+/**
+ * The operations of a list whose integer matrix W keeps the metric of a cell, WᵀGW = G, compared
+ * relative to the largest entry of G within `tolerance`; the list is taken as it is and the kept
+ * operations are the ones of the list, in its order (the plane form of `residualOperations` of
+ * cell.ts, #119). Throws a RangeError for a list that is not one, an operation without a 2 × 2
+ * matrix of integers (`matrix`, not a Cartesian matrix) and a basis as `planeBasisColumns`.
+ */
+export function planeResidualOperations<T extends { readonly matrix: readonly (readonly number[])[] }>(
+  operations: readonly T[],
+  basis: unknown,
+  tolerance: number,
+  who: string,
+): T[] {
+  const g = planeMetricTensor(basis, who);
+  if (!Array.isArray(operations)) throw new RangeError(`${who}: operations must be a list`);
+  operations.forEach((op, i) => {
+    const m = (op as { readonly matrix?: unknown } | null)?.matrix;
+    const ok =
+      Array.isArray(m) &&
+      m.length === 2 &&
+      m.every((r) => Array.isArray(r) && r.length === 2 && r.every((x) => typeof x === 'number' && Number.isFinite(x)));
+    if (!ok) throw new RangeError(`${who}: operation ${i} has no 2 × 2 matrix of finite numbers`);
+    // W is an integer matrix in the lattice basis; anything else would give a wrong answer.
+    if (!(m as number[][]).every((r) => r.every((x) => Math.abs(x - Math.round(x)) < INTEGER_EPSILON))) {
+      throw new RangeError(
+        `${who}: the matrix of operation ${i} is not an integer matrix in the lattice basis: ${shown(m)}`,
+      );
+    }
+  });
+  const scale = Math.max(...g.flat().map(Math.abs));
+  return operations.filter(({ matrix: w }) => {
+    // (WᵀGW)_ij = Σ_kl W_ki G_kl W_lj
+    for (let i = 0; i < 2; i++)
+      for (let j = 0; j < 2; j++) {
+        let s = 0;
+        for (let k = 0; k < 2; k++) for (let l = 0; l < 2; l++) s += w[k][i] * g[k][l] * w[l][j];
+        if (!(Math.abs(s - g[i][j]) < tolerance * scale)) return false;
+      }
+    return true;
+  });
 }
 
 /** The reciprocal basis A⁻ᵀ of a basis A (columns a, b) as the columns a*, b*, with a_i · a*_j = δ_ij. */
