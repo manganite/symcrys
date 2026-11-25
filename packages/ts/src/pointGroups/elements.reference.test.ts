@@ -4,7 +4,7 @@
  * (references/itc/vol-a-2006-symmetry-operations.md).
  *
  * Each printed line is turned into a matrix with the independent algebra of testUtils, by the
- * definitions of ITA 2016 § 1.4.2.1 (p. 50), which reproduces § 11.1.2 of the 5th edition
+ * definitions of ITA 2016 § 1.4.2.1 (p. 50), which partly reproduces § 11.1.2 of the 5th edition
  * (pp. 810–811), whose space-group tables these lines come from: the axis direction is the direction of increasing
  * parameter of the printed location, `+` a counter-clockwise rotation seen from its tip, a
  * rotoinversion the rotation followed by the inversion. These matrices must be exactly the

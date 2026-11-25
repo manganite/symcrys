@@ -42,8 +42,8 @@ export interface WyckoffPosition {
   readonly coordinates: readonly string[];
   /**
    * ITA's representative face as printed, components separated by commas, e.g. `h,h,l`, or
-   * `h,h,-2h,l` (Bravais–Miller indices) for hexagonal axes. `millerIndices` substitutes values of h,
-   * k, l and gives a face with numbers, `faceNormal` its normal in a cell.
+   * `h,h,-2h,l` (Bravais–Miller indices) for hexagonal axes. the function `millerIndices` substitutes values
+   * of h, k, l and gives a face with numbers, `faceNormal` its normal in a cell.
    */
   readonly millerIndices: string;
   /**

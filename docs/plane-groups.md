@@ -12,13 +12,16 @@ point groups of ITA (6th ed., Chapters 2.2 and 3.2). Everything is in the lattic
 operation is ITA's pair (W, w), `matrix` with integer entries and `translation` with fractions as
 numbers, in the order of ITA's general position; points, the asymmetric unit and the symmetry
 elements have coordinates x, y in the cell. A metric enters only where you give a cell. The rules
-and the print anchors are in [Conventions](conventions.md), "Plane groups".
+and the print anchors are in [Conventions](conventions.md), "Plane groups". Functions are named as in
+TypeScript; in Python they are in snake case (`wyckoffPositions` → `plane.wyckoff_positions`), as
+[Getting started](getting-started.md) explains.
 
 ## Keys, symbols and the data of a group
 
 A key is the symbol ITA prints: `'p2mg'`, `'c2mm'` for a plane group, `'2mm'`, `'4mm'`, `'3m'` for a
 plane point group (the plane point group of a plane group is its linear part). `planeGroup` gives
-the data ITA prints in the headline of a group, the symbols come from `symbol`, and
+the data of a group as ITA prints it (number, point group, crystal system, Patterson symmetry,
+centring, origin) and its Bravais lattice, the symbols come from `symbol`, and
 `findPlaneGroup` reads a symbol in the forms `symbol` writes.
 
 ```{code-cell} ipython3
@@ -69,7 +72,7 @@ plane.site_symmetry("p4gm", [0.5, 0.003], tolerance=0.01)
 ```
 
 ```{code-cell} ipython3
-[entry["point"] for entry in plane.orbit("p4gm", [0.1, 0.6])]
+[entry["point"] for entry in plane.orbit("p4gm", [0.1, 0.3])]  # a general point: 8 images
 ```
 
 Which position a dragged point should snap to, and within which radius, is a choice of the
@@ -108,6 +111,6 @@ basis = plane.lattice_from_parameters(4.0, 5.0, 100.0)
 plane.metric_tensor(basis), plane.cell_restrictions("hexagonal")
 ```
 
-`changeOfCoordinates` transforms points, directions, the metric and operations to another
+`changeOfCoordinates` transforms points, directions, lines (indices), the metric and operations to another
 coordinate system of the plane (ITA 2016 § 1.5), as in the other entry points
 ([Cells, metric, angles and indices](cells.md)).

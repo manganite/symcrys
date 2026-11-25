@@ -32,7 +32,7 @@ carries `timeReversal`, and a tensor specification `timeParity`:
 ```
 
 The plane groups and the plane point groups are in `symcrys/plane`, in the lattice basis
-([Conventions](conventions.md), "Plane groups"):
+([Plane groups](plane-groups.md); [Conventions](conventions.md), "Plane groups"):
 
 ```{ts-example} plane.ts
 

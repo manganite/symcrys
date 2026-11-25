@@ -595,8 +595,8 @@ export function describeOperations(
 /**
  * Any operations of the plane (lattice basis) described geometrically, index for index, as
  * `describeOperations` describes those of a group: for instance a product of operations, an
- * operation shifted by a lattice translation, or the operations of a site symmetry. Each operation is
- * `{ matrix, translation }` as `operations` gives it. Each matrix must have integer entries (within
+ * operation shifted by a lattice translation, or the operations of a site symmetry. Each operation has
+ * a `matrix` and a `translation`, as `operations` gives it. Each matrix must have integer entries (within
  * the tolerance, per entry) and be the linear part of a crystallographic plane point group
  * (determinant ±1, order 1, 2, 3, 4 or 6); each component of a translation is read as the fraction
  * with a denominator of at most 12 within the tolerance (1/3 from 0.333…), as the translations of
@@ -928,7 +928,7 @@ export interface CoordinateChange {
  * change between lattice bases, as in ITA; an irrational P (a rotation by 30°) is read as the
  * nearby fractions, about as exact as the tolerance, and a much smaller tolerance can make the exact
  * products leave the safe integers, a RangeError.
- * A transformed operation is `{ matrix, translation }`. Throws a RangeError for a singular P, a quantity of the
+ * A transformed operation has a `matrix` and a `translation`. Throws a RangeError for a singular P, a quantity of the
  * wrong shape, an unknown quantity, an operation with det W ≠ ±1, and one whose W′ is not integral.
  */
 export function changeOfCoordinates(

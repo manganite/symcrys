@@ -113,11 +113,14 @@ function render(parts, where) {
   // reStructuredText would read |…| as a substitution.
   if (/\|/.test(out.replace(/``[^`]*``/g, '')))
     problems.push(`${where}: '|' outside code (a substitution in reStructuredText)`);
-  // A TypeScript name left in a code span is a conversion this script does not know.
+  // A TypeScript name left in a code span is a conversion this script does not know; an object
+  // literal is TypeScript too (shorthand `{ a, b }`, or an argument of a call): Python writes a dict
+  // or passes keyword arguments.
   for (const m of out.matchAll(/``([^`]*)``/g)) {
-    // A call with an object literal is TypeScript too: Python passes keyword arguments.
-    if (/\b[a-z][a-z0-9]*[A-Z]\w*/.test(m[1]) || /\.ts\b/.test(m[1]) || /\w\([^)]*\{/.test(m[1])) {
+    if (/\b[a-z][a-z0-9]*[A-Z]\w*/.test(m[1]) || /\.ts\b/.test(m[1])) {
       problems.push(`${where}: TypeScript name left in \`\`${m[1]}\`\``);
+    } else if (/\w\(.*\{/.test(m[1]) || /\{\s*[a-z_]\w*\s*(,\s*[a-z_]\w*\s*)*\}/.test(m[1])) {
+      problems.push(`${where}: TypeScript object literal left in \`\`${m[1]}\`\``);
     }
   }
   // Paragraphs stay apart; the lines within one are joined.
