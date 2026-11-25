@@ -207,6 +207,10 @@ Carried over from birss-app, where the calculations come from.
   type-checked with Node types (tests read `references/` from disk), may import Node built-ins,
   and is left out of `dist/` and the npm package; `check:dist` fails if any of it is built. Any
   other file in `src/` is library code.
+- **Consistency tests** compare symcrys with itself under a change that must not matter: another
+  unit, basis or setting (`invariance.test.ts`, #69), another entry point (`entryPoints.test.ts`).
+  They find contradictions, not wrong values, and are no correctness authority; the expected values
+  of correctness tests come from print ("Correctness and provenance").
 - Test classes by file suffix: `*.reference.test.ts` (re-parse print transcriptions),
   `*.audit.test.ts` (exhaustive coverage), `*.pins.test.ts` (behavioural pins), plain `*.test.ts`.
   `npm test` runs all of them; no subset is a

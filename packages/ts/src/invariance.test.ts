@@ -6,12 +6,17 @@
  *
  * - **Unit of length:** angles, face normals and the operations a cell keeps do not change when all
  *   edges are scaled; the metric scales with the square.
- * - **Basis:** a change of the basis by a unimodular P (ITA 2016 § 1.5) leaves angles between
+ * - **Basis:** a change of the basis by a unimodular P (det ±1; ITA 2016 § 1.5) leaves angles between
  *   directions and between planes and the face normals unchanged, gives the metric of the new basis,
  *   and keeps the same operations of a distorted cell.
  * - **Setting:** the settings of a point group are one group in another orientation; the Cartesian
  *   rotation R between two settings carries the tensor forms of one onto those of the other, for
- *   every crystal class and magnetic point group.
+ *   the 52 groups with more than one setting (in both entry points, since a crystal class is a
+ *   white group). For a trigonal group the rhombohedral setting has the Cartesian operations of
+ *   setting 1 (R = identity), and the forms of 6'/mmm' chosen here do not change under the turn, so
+ *   these six groups are checked trivially. The forms are compared as spans, which a factor ±1 does
+ *   not change: the factor det R of an axial tensor in `rotateTensor` is checked in
+ *   tensorForm.test.ts, not here.
  */
 
 import { describe, expect, it } from 'vitest';
@@ -73,21 +78,25 @@ describe('the unit of length', () => {
 
   it('in the plane', () => {
     const ops = plane.operations('p6mm');
+    // A nearly hexagonal cell too, whose answer hangs on a tolerance relative to the metric.
     for (const [a, b, gamma] of [
       [2, 2, 120],
       [2, 2.3, 118],
       [3, 4, 90],
+      [2, 2.01, 120.3],
     ]) {
       const basis = plane.latticeFromParameters({ a, b, gamma });
-      const scaled = plane.latticeFromParameters({ a: a * 1e3, b: b * 1e3, gamma });
-      expect(plane.residualOperations(ops, scaled)).toEqual(plane.residualOperations(ops, basis));
-      expect(plane.latticeParameters(scaled).gamma).toBeCloseTo(gamma, 9);
+      for (const k of [1e-3, 1e3]) {
+        const scaled = plane.latticeFromParameters({ a: a * k, b: b * k, gamma });
+        expect(plane.residualOperations(ops, scaled)).toEqual(plane.residualOperations(ops, basis));
+        expect(plane.latticeParameters(scaled).gamma).toBeCloseTo(gamma, 9);
+      }
     }
   });
 });
 
 describe('the basis', () => {
-  // Unimodular P, so that integer indices stay integers (ITA 2016 § 1.5.1.3: the columns are the new
+  // Unimodular P (det ±1), so that integer indices stay integers (ITA 2016 § 1.5.1.3: the columns are the new
   // basis vectors in the old basis).
   const CHANGES: M3[] = [
     [
@@ -109,6 +118,17 @@ describe('the basis', () => {
       [-1, 0, 0],
       [0, 1, 0],
       [0, 0, -1],
+    ],
+    // det P = −1: a change of handedness, which ITA allows.
+    [
+      [0, 1, 0],
+      [1, 0, 0],
+      [0, 0, 1],
+    ],
+    [
+      [1, 1, 0],
+      [0, -1, 0],
+      [0, 0, 1],
     ],
   ];
   for (const p of CELLS) {

@@ -8,7 +8,8 @@ export default defineConfig({
     // 5 s. Per-test timeouts were tried first, but which tests cross 5 s depends on the load.
     testTimeout: 30_000,
     // npm run test:coverage (#69): which lines of the library no test reaches. A report to look at
-    // (CI keeps it as the artefact "coverage"), not a gate and no percentage to reach.
+    // (CI keeps it as the artefact "coverage"), not a gate and no percentage to reach. The
+    // instrumentation makes the slowest tests about twice as slow, so the script doubles the timeout.
     coverage: {
       provider: 'v8',
       include: ['packages/ts/src/**/*.ts'],

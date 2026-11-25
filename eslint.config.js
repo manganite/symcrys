@@ -31,7 +31,7 @@ const TEST_ONLY = [
 ];
 
 export default defineConfig([
-  { ignores: ['**/dist/', 'coverage/', '**/node_modules/', 'references/', 'packages/python/', 'build/'] },
+  { ignores: ['**/dist/', '**/node_modules/', 'references/', 'packages/python/', 'build/'] },
   { linterOptions: { reportUnusedDisableDirectives: 'error' } },
   js.configs.recommended,
   tseslint.configs.recommended,
