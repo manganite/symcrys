@@ -27,7 +27,6 @@ export {
   metricTensor,
   reciprocalBasis,
   type CellAngles,
-  type CellOperation,
   type IsValidCellOptions,
   type LatticeParameters,
 } from './cell.js';
@@ -105,7 +104,9 @@ export {
   tensorFormOf,
   wyckoffPosition,
   wyckoffPositions,
+  type CartesianOperation,
   type CartesianOperationDescription,
+  type CellOperation,
   type IdentifiedPointGroup,
   type Operation,
   type OperationDescription,

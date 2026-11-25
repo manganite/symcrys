@@ -475,14 +475,19 @@ Decided by Thomas on 2026-11-20 (#29), asked before implementation, unless a poi
   a move to TypeScript 7; #56): one report per entry point, `packages/ts/api/symcrys.api.md`,
   `symcrys-magnetic.api.md`, `symcrys-plane.api.md`, read from the declarations in `dist/`; a PR
   that changes the public API shows it as a diff of these files, and the gate `api:check` fails if
-  one is stale (`npm run api:report` writes them). A type that a public signature uses but the entry
-  point does not export by name (a warning `ae-forgotten-export` in the report) is not written out,
-  so a change of its fields does not show; such types are to be exported by name (#190). Chosen
-  while implementing: the TSDoc messages of api-extractor are off, since TypeDoc checks the comments
-  in the gate `docs`, and escaping `<` or `>` with a backslash, as api-extractor's parser wants, would
-  put backslashes into the Python docstrings (TypeDoc keeps them there, unlike for `{` and `}`); no
-  release tags (`@public`), as all exports of an entry point are public; reports with LF line
-  endings.
+  one is stale (`npm run api:report` writes them). Every type a public signature uses is in the
+  report (#190; Thomas, 2026-11-25, PR #191, asked with options): the signatures name exported
+  types, not internal namespaces, and the types behind the aliases of `symcrys/magnetic` and
+  `symcrys/plane` (`PointGroupKey = MagneticPointGroupKey`, …), which the entry points do not export
+  by name, are written out by api-extractor under their internal names, renamed on a clash
+  (`PointGroup_2`; `includeForgottenExports`, marked `ae-forgotten-export`), so a change of their
+  fields shows too. `scripts/check-api-reports.mjs`, part of `api:check`, lists these types and
+  fails on another one, on a namespace written out and on a warning that names a source file, so
+  that nothing internal comes in with a reference. Chosen while implementing: the TSDoc messages of
+  api-extractor are off, since TypeDoc checks the comments in the gate `docs`, and escaping `<` or
+  `>` with a backslash, as api-extractor's parser wants, would put backslashes into the Python
+  docstrings (TypeDoc keeps them there, unlike for `{` and `}`); no release tags (`@public`), as all
+  exports of an entry point are public; reports with LF line endings.
 - **A PATCH release of its own** (0.6.1) puts the site online with the generated docstrings.
 - **Findability** (maintainer, 2026-11-22, #72): every page has a description (`symcrys_page_descriptions`
   in `docs/conf.py`; the build warns about a page without one, so the gate `docs` fails), Open Graph

@@ -17,7 +17,7 @@ import type { Mat3, Vec3 } from './linalg.js';
 import type { CartesianOperation as MagneticOperation, Operation as MagneticRecord } from './operations.js';
 import * as elements from './pointGroups/elements.js';
 import * as groups from './pointGroups/pointGroups.js';
-import type { PointGroupKey, Setting, SettingOptions, SymbolOptions } from './pointGroups/pointGroups.js';
+import type { AxesOptions, PointGroupKey, Setting, SettingOptions, SymbolOptions } from './pointGroups/pointGroups.js';
 import * as properties from './pointGroups/properties.js';
 import * as forms from './pointGroups/crystalForms.js';
 import * as identify from './pointGroups/identify.js';
@@ -29,9 +29,31 @@ import { TENSOR_PROPERTIES as ALL_TENSOR_PROPERTIES } from './tensors/propertyTa
 import type { TensorPropertyName as MagneticTensorPropertyName } from './tensors/propertyTable.js';
 import * as tensors from './tensors/tensorForm.js';
 import * as voigtNotation from './tensors/voigt.js';
-import type { IntrinsicSymmetry, TensorForm, TensorKind, TensorRank } from './tensors/tensorForm.js';
+import type {
+  IntrinsicSymmetry,
+  TensorForm,
+  TensorKind,
+  TensorRank,
+  TensorSpec as MagneticTensorSpec,
+} from './tensors/tensorForm.js';
 import { deepFreeze } from './freeze.js';
 import type { ToleranceOptions } from './tolerances.js';
+import type { CrystalForm, CrystalFormType } from './pointGroups/crystalForms.js';
+import type {
+  OperationDescription as MagneticOperationDescription,
+  SymmetryDirection,
+} from './pointGroups/elements.js';
+import type { CartesianOperationDescription as MagneticCartesianOperationDescription } from './pointGroups/identify.js';
+import type {
+  DirectionIndices,
+  DirectionOrbitEntry,
+  FaceIndices,
+  FaceOrbitEntry,
+  OrbitPole,
+} from './pointGroups/orbits.js';
+import type { WyckoffPosition } from './pointGroups/wyckoff.js';
+import type { SiteSymmetry } from './siteSymmetry.js';
+import type { VoigtOptions } from './tensors/voigt.js';
 
 const USE_MAGNETIC =
   "the crystallographic API has no time reversal; use the magnetic API ('symcrys/magnetic', in Python symcrys.magnetic)";
@@ -84,7 +106,7 @@ export interface PointGroupInSetting {
 }
 
 /** One point operation described geometrically. */
-export type OperationDescription = Omit<elements.OperationDescription, 'timeReversal'>;
+export type OperationDescription = Omit<MagneticOperationDescription, 'timeReversal'>;
 
 /** The kind of tensor. */
 export interface TensorSpec {
@@ -94,33 +116,38 @@ export interface TensorSpec {
   readonly kind: TensorKind;
   /** The index symmetry of the tensor. */
   readonly intrinsic: IntrinsicSymmetry;
+  /**
+   * Accepted in a specification a caller passes if `'even'`, so that one of the magnetic API can be
+   * handed on; a time-odd tensor belongs to the magnetic API. Never set in a result.
+   */
+  readonly timeParity?: 'even';
 }
 
 /**
- * An operation as a caller may pass it to a function that computes with Cartesian matrices: its
+ * An operation as a caller passes it to a function that computes with Cartesian matrices: its
  * Cartesian matrix (`cartesian`; other fields, such as `matrix`, are not read), so that the
- * operations of `operations` can be passed as they are. `timeReversal: false` is accepted, so that
- * an operation of the magnetic API without time reversal can be handed on from plain JavaScript;
- * with `timeReversal: true` it is refused, at compile time and at run time.
+ * operations of `operations` can be passed as they are. The same notion as `CartesianOperation` of
+ * the magnetic API, read without time reversal: `timeReversal: false` is accepted, so that an
+ * operation of the magnetic API without time reversal can be handed on; `true` is refused, at
+ * compile time and at run time.
  */
-type OperationArgument = {
+export interface CartesianOperation {
   /** The orthogonal Cartesian 3×3 matrix, rows first. */
   readonly cartesian: Mat3;
   /** Accepted if false; an operation with time reversal belongs to the magnetic API. */
   readonly timeReversal?: false;
-};
+}
 
-/** An operation as a caller may pass it to `residualOperations`: its matrix W in the lattice basis. */
-type CellOperationArgument = cell.CellOperation & {
+/**
+ * An operation of a list given to `residualOperations`: at least its matrix W; other fields are
+ * kept. `timeReversal: false` is accepted, `true` belongs to the magnetic API.
+ */
+export interface CellOperation {
+  /** The integer 3×3 matrix W acting on lattice coordinates (the `matrix` of an operation). */
+  readonly matrix: Mat3;
   /** Accepted if false; an operation with time reversal belongs to the magnetic API. */
   readonly timeReversal?: false;
-};
-
-/** A tensor specification as a caller may pass it; `timeParity: 'even'` is accepted, `'odd'` refused. */
-type TensorSpecArgument = TensorSpec & {
-  /** Accepted if `'even'`; a time-odd tensor belongs to the magnetic API. */
-  readonly timeParity?: 'even';
-};
+}
 
 /** A named property: the tensor that describes it, what it is and where it is defined. */
 export interface TensorProperty {
@@ -133,10 +160,11 @@ export interface TensorProperty {
 }
 
 /** Name of a tensor property in `TENSOR_PROPERTIES`. */
-export type TensorPropertyName = Extract<
-  MagneticTensorPropertyName,
-  'pyroelectric' | 'ferroaxial' | 'piezoelectric' | 'gyrotropic'
->;
+export type TensorPropertyName = 'pyroelectric' | 'ferroaxial' | 'piezoelectric' | 'gyrotropic';
+// Every name is one of the table of all properties (a compile-time check).
+type _NamesInTable = TensorPropertyName extends MagneticTensorPropertyName ? true : never;
+const _namesInTable: _NamesInTable = true;
+void _namesInTable;
 
 /**
  * The named tensor properties of the crystal classes: those of time-even tensors. `'gyrotropic'`
@@ -183,7 +211,7 @@ function propertyName(name: TensorPropertyName): TensorPropertyName {
 }
 
 /** The time-even tensor of a specification or of a property name, as the shared modules take it. */
-function timeEven(specOrName: TensorSpecArgument | TensorPropertyName): tensors.TensorSpec | TensorPropertyName {
+function timeEven(specOrName: TensorSpec | TensorPropertyName): MagneticTensorSpec | TensorPropertyName {
   if (typeof specOrName === 'string') return propertyName(specOrName);
   if (typeof specOrName !== 'object' || specOrName === null) {
     throw new RangeError(`Not a tensor specification: ${shown(specOrName)}`);
@@ -216,7 +244,7 @@ function checkUnitary(operations: readonly { readonly timeReversal?: false }[]):
 }
 
 /** A list of operations as the shared modules take it. */
-function unitary(operations: readonly OperationArgument[]): MagneticOperation[] {
+function unitary(operations: readonly CartesianOperation[]): MagneticOperation[] {
   checkUnitary(operations);
   // The other fields are kept for the checks of the shared modules (a record with `matrix` only
   // is refused there with a hint).
@@ -237,7 +265,7 @@ function withoutTime(ops: readonly MagneticRecord[]): readonly Operation[] {
   return result;
 }
 
-const descriptionCache = new WeakMap<readonly elements.OperationDescription[], readonly OperationDescription[]>();
+const descriptionCache = new WeakMap<readonly MagneticOperationDescription[], readonly OperationDescription[]>();
 
 // --- point groups ----------------------------------------------------------------------------------
 
@@ -281,7 +309,7 @@ export function pointGroups(): readonly PointGroup[] {
  * also for the symbol of a magnetic group with time reversal; a value that is not a string, and a
  * symbol that names several groups, are a RangeError (the latter lists the groups).
  */
-export function findPointGroup(symbol: string, options?: groups.AxesOptions): PointGroupInSetting | undefined {
+export function findPointGroup(symbol: string, options?: AxesOptions): PointGroupInSetting | undefined {
   if (arguments.length > 2) groups.rejectConventionArgument(arguments.length);
   return deepFreeze(groups.findPointGroup(symbol, options));
 }
@@ -344,7 +372,7 @@ export function latticeSystems(key: PointGroupKey): readonly LatticeSystem[] {
  * `tensorFormOf` does. For a crystal class, read `pointGroup(key).centrosymmetric`. Throws a
  * RangeError as `tensorFormOf`.
  */
-export function isCentrosymmetricOf(operations: readonly OperationArgument[], options?: ToleranceOptions): boolean {
+export function isCentrosymmetricOf(operations: readonly CartesianOperation[], options?: ToleranceOptions): boolean {
   return properties.isCentrosymmetricOf(unitary(operations), options);
 }
 
@@ -354,7 +382,7 @@ export function isCentrosymmetricOf(operations: readonly OperationArgument[], op
  * `allowsPropertyOf(operations, 'pyroelectric')`. Throws a RangeError for an operation without an
  * orthogonal Cartesian matrix (`cartesian`; within the tolerance).
  */
-export function isEnantiomorphicOf(operations: readonly OperationArgument[], options?: ToleranceOptions): boolean {
+export function isEnantiomorphicOf(operations: readonly CartesianOperation[], options?: ToleranceOptions): boolean {
   return properties.isEnantiomorphicOf(unitary(operations), options);
 }
 
@@ -372,7 +400,7 @@ export interface IdentifiedPointGroup {
 }
 
 /** One operation of any list described geometrically (`describeOperationsOf`). */
-export type CartesianOperationDescription = Omit<identify.CartesianOperationDescription, 'timeReversal'>;
+export type CartesianOperationDescription = Omit<MagneticCartesianOperationDescription, 'timeReversal'>;
 
 /**
  * The crystal class generated by a list of Cartesian operations, for instance those left after
@@ -386,7 +414,7 @@ export type CartesianOperationDescription = Omit<identify.CartesianOperationDesc
  * operations").
  */
 export function pointGroupOf(
-  operations: readonly OperationArgument[],
+  operations: readonly CartesianOperation[],
   options?: ToleranceOptions,
 ): IdentifiedPointGroup | undefined {
   return identify.pointGroupOf(unitary(operations), options) as IdentifiedPointGroup | undefined;
@@ -402,7 +430,7 @@ export function pointGroupOf(
  * 4, 6), both within `tolerance` (default `EPSILON`, as for `pointGroupOf`).
  */
 export function describeOperationsOf(
-  operations: readonly OperationArgument[],
+  operations: readonly CartesianOperation[],
   options?: ToleranceOptions,
 ): readonly CartesianOperationDescription[] {
   return Object.freeze(
@@ -444,10 +472,7 @@ export function describeOperations(key: PointGroupKey, options?: SettingOptions)
  * has the sign of ITA Table 2.1.3.1, the axis of an operation along it that of its Seitz symbol, so
  * the two are parallel and may be opposite: match them by direction, up to sign.
  */
-export function symmetryDirections(
-  key: PointGroupKey,
-  options?: SettingOptions,
-): readonly elements.SymmetryDirection[] {
+export function symmetryDirections(key: PointGroupKey, options?: SettingOptions): readonly SymmetryDirection[] {
   return elements.symmetryDirections(classKey(key), options);
 }
 
@@ -465,10 +490,10 @@ export function symmetryDirections(
  * direction or do not settle into a group (a tolerance far too large, e.g. 0.5).
  */
 export function siteSymmetryOf(
-  operations: readonly OperationArgument[],
+  operations: readonly CartesianOperation[],
   direction: Vec3,
   options?: ToleranceOptions,
-): site.SiteSymmetry {
+): SiteSymmetry {
   checkUnitary(operations);
   // The shared function reads the matrices only, so the list of the caller is passed on as it is.
   return site.siteSymmetryOf(operations as readonly MagneticOperation[], direction, options);
@@ -483,7 +508,7 @@ export function siteSymmetry(
   key: PointGroupKey,
   direction: Vec3,
   options?: SettingOptions & ToleranceOptions,
-): site.SiteSymmetry {
+): SiteSymmetry {
   return wyckoff.siteSymmetry(classKey(key), direction, options);
 }
 
@@ -491,7 +516,7 @@ export function siteSymmetry(
  * The Wyckoff positions of a crystal class for directions, as ITA tabulates them (general position
  * first) (docs/conventions.md, "Site symmetry and Wyckoff positions").
  */
-export function wyckoffPositions(key: PointGroupKey, options?: SettingOptions): readonly wyckoff.WyckoffPosition[] {
+export function wyckoffPositions(key: PointGroupKey, options?: SettingOptions): readonly WyckoffPosition[] {
   return wyckoff.wyckoffPositions(classKey(key), options);
 }
 
@@ -504,7 +529,7 @@ export function wyckoffPosition(
   key: PointGroupKey,
   direction: Vec3,
   options?: SettingOptions & ToleranceOptions,
-): wyckoff.WyckoffPosition {
+): WyckoffPosition {
   return wyckoff.wyckoffPosition(classKey(key), direction, options);
 }
 
@@ -517,7 +542,7 @@ export function wyckoffPosition(
  * order. The deviation counts relative to the largest entry of G (`tolerance`, default
  * `EPSILON`). An operation combined with time reversal belongs to the magnetic API.
  */
-export function residualOperations<T extends CellOperationArgument>(
+export function residualOperations<T extends CellOperation>(
   operations: readonly T[],
   basis: Mat3,
   options?: ToleranceOptions,
@@ -535,27 +560,23 @@ export function residualOperations<T extends CellOperationArgument>(
  * multiplicity of the face (direction). Throws a RangeError unless exactly one of `hkl` and `uvw` is
  * given, as three integers not all zero (hexagonal axes: three indices, without i).
  */
+export function orbit(key: PointGroupKey, indices: FaceIndices, options?: SettingOptions): readonly FaceOrbitEntry[];
 export function orbit(
   key: PointGroupKey,
-  indices: orbits.FaceIndices,
+  indices: DirectionIndices,
   options?: SettingOptions,
-): readonly orbits.FaceOrbitEntry[];
+): readonly DirectionOrbitEntry[];
 export function orbit(
   key: PointGroupKey,
-  indices: orbits.DirectionIndices,
+  indices: FaceIndices | DirectionIndices,
   options?: SettingOptions,
-): readonly orbits.DirectionOrbitEntry[];
+): readonly FaceOrbitEntry[] | readonly DirectionOrbitEntry[];
 export function orbit(
   key: PointGroupKey,
-  indices: orbits.FaceIndices | orbits.DirectionIndices,
+  indices: FaceIndices | DirectionIndices,
   options?: SettingOptions,
-): readonly orbits.FaceOrbitEntry[] | readonly orbits.DirectionOrbitEntry[];
-export function orbit(
-  key: PointGroupKey,
-  indices: orbits.FaceIndices | orbits.DirectionIndices,
-  options?: SettingOptions,
-): readonly orbits.FaceOrbitEntry[] | readonly orbits.DirectionOrbitEntry[] {
-  return orbits.orbit(classKey(key), indices as orbits.FaceIndices, options);
+): readonly FaceOrbitEntry[] | readonly DirectionOrbitEntry[] {
+  return orbits.orbit(classKey(key), indices as FaceIndices, options);
 }
 
 /**
@@ -568,10 +589,10 @@ export function orbit(
  * `tolerance`, at least `EPSILON`).
  */
 export function orbitOf(
-  operations: readonly OperationArgument[],
+  operations: readonly CartesianOperation[],
   direction: Vec3,
   options?: ToleranceOptions,
-): readonly orbits.OrbitPole[] {
+): readonly OrbitPole[] {
   checkUnitary(operations);
   return orbits.orbitOf(operations, direction, options);
 }
@@ -584,14 +605,14 @@ export function orbitOf(
  * crystal form of `crystalForms` names its form by this number (docs/conventions.md, "Crystal
  * forms").
  */
-export const CRYSTAL_FORM_TYPES: readonly forms.CrystalFormType[] = forms.CRYSTAL_FORM_TYPES;
+export const CRYSTAL_FORM_TYPES: readonly CrystalFormType[] = forms.CRYSTAL_FORM_TYPES;
 
 /**
  * The crystal forms of a crystal class, as ITA 6th ed. Table 3.2.3.2 prints them: for each Wyckoff
  * position (general position first) its basic form (two for the cubic faces (hhl) of -43m and
  * m-3m), then its limiting forms (docs/conventions.md, "Crystal forms").
  */
-export function crystalForms(key: PointGroupKey, options?: SettingOptions): readonly forms.CrystalForm[] {
+export function crystalForms(key: PointGroupKey, options?: SettingOptions): readonly CrystalForm[] {
   return forms.crystalForms(classKey(key), options);
 }
 
@@ -604,7 +625,7 @@ export function crystalForms(key: PointGroupKey, options?: SettingOptions): read
  */
 export function tensorForm(
   key: PointGroupKey,
-  spec: TensorSpecArgument | TensorPropertyName,
+  spec: TensorSpec | TensorPropertyName,
   options?: SettingOptions,
 ): TensorForm {
   return tensors.tensorForm(classKey(key), timeEven(spec), options);
@@ -624,8 +645,8 @@ export function tensorForm(
  * projecting again.
  */
 export function tensorFormOf(
-  operations: readonly OperationArgument[],
-  spec: TensorSpecArgument | TensorPropertyName,
+  operations: readonly CartesianOperation[],
+  spec: TensorSpec | TensorPropertyName,
   options?: ToleranceOptions,
 ): TensorForm {
   return tensors.tensorFormOf(unitary(operations), timeEven(spec), options);
@@ -642,7 +663,7 @@ export function tensorFormOf(
 export function rotateTensor(
   tensor: readonly number[],
   rotation: Mat3,
-  spec: TensorSpecArgument | TensorPropertyName,
+  spec: TensorSpec | TensorPropertyName,
   options?: ToleranceOptions,
 ): readonly number[] {
   return tensors.rotateTensor(tensor, rotation, timeEven(spec), options);
@@ -662,8 +683,8 @@ export function rotateTensor(
  */
 export function toVoigt(
   tensor: readonly number[],
-  spec: TensorSpecArgument | TensorPropertyName,
-  options?: voigtNotation.VoigtOptions,
+  spec: TensorSpec | TensorPropertyName,
+  options?: VoigtOptions,
 ): readonly number[] | readonly (readonly number[])[] {
   return voigtNotation.toVoigt(tensor, timeEven(spec), options);
 }
@@ -680,8 +701,8 @@ export function toVoigt(
  */
 export function fromVoigt(
   voigt: readonly number[] | readonly (readonly number[])[],
-  spec: TensorSpecArgument | TensorPropertyName,
-  options?: voigtNotation.VoigtOptions,
+  spec: TensorSpec | TensorPropertyName,
+  options?: VoigtOptions,
 ): readonly number[] {
   return voigtNotation.fromVoigt(voigt, timeEven(spec), options);
 }
@@ -709,7 +730,7 @@ export function allowedProperties(key: PointGroupKey): readonly TensorPropertyNa
  * `tensorFormOf` does.
  */
 export function allowsPropertyOf(
-  operations: readonly OperationArgument[],
+  operations: readonly CartesianOperation[],
   name: TensorPropertyName,
   options?: ToleranceOptions,
 ): boolean {
@@ -721,7 +742,7 @@ export function allowsPropertyOf(
 
 /** The named properties the group generated by `operations` allows. Reads the operations as `allowsPropertyOf`. */
 export function allowedPropertiesOf(
-  operations: readonly OperationArgument[],
+  operations: readonly CartesianOperation[],
   options?: ToleranceOptions,
 ): readonly TensorPropertyName[] {
   checkOptions(options, TOLERANCE_KEYS, 'allowedPropertiesOf');

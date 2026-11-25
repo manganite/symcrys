@@ -182,6 +182,9 @@ export interface PlaneOperation {
 export type PlaneOperationKind = 'identity' | 'translation' | 'rotation' | 'reflection' | 'glide-reflection';
 
 // @public
+type PlanePointGroupKey = '1' | '2' | 'm' | '2mm' | '4' | '4mm' | '3' | '3m' | '6' | '6mm';
+
+// @public
 export type PlaneSystem = 'oblique' | 'rectangular' | 'square' | 'hexagonal';
 
 // @public

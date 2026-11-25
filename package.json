@@ -18,7 +18,7 @@
     "test:coverage": "vitest run --coverage --testTimeout=60000",
     "build": "npm run build -w symcrys",
     "check:dist": "node scripts/check-dist.mjs",
-    "api:check": "api-extractor run -c packages/ts/api/index.api-extractor.json && api-extractor run -c packages/ts/api/magnetic.api-extractor.json && api-extractor run -c packages/ts/api/plane.api-extractor.json",
+    "api:check": "api-extractor run -c packages/ts/api/index.api-extractor.json && api-extractor run -c packages/ts/api/magnetic.api-extractor.json && api-extractor run -c packages/ts/api/plane.api-extractor.json && node scripts/check-api-reports.mjs",
     "api:report": "api-extractor run --local -c packages/ts/api/index.api-extractor.json && api-extractor run --local -c packages/ts/api/magnetic.api-extractor.json && api-extractor run --local -c packages/ts/api/plane.api-extractor.json",
     "bundle:python": "node scripts/bundle-python.mjs",
     "benchmark": "node scripts/benchmark.mjs",

@@ -106,7 +106,7 @@ export {
 } from './pointGroups/elements.js';
 export { residualMagneticOperations as residualOperations, type MagneticCellOperation } from './cell.js';
 export { siteSymmetryOf, type SiteSymmetry } from './siteSymmetry.js';
-export { siteSymmetry } from './pointGroups/wyckoff.js';
+export { siteSymmetry, type Hkl } from './pointGroups/wyckoff.js';
 export {
   describeOperationsOf,
   pointGroupOf,
