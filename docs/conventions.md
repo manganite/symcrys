@@ -978,19 +978,32 @@ another, `{ linearPart }`, to be passed to `changeOfCoordinates` (both point-gro
 `oP`, `oS`, `oI`, `oF`, `tP`, `tI`, `hP`, `hR`, `cP`, `cI`, `cF`), a cell by the fields of `Cell`;
 `{}` is the conventional cell in the standard setting:
 
-| Lattice                | Cells                                                                                                                                                                                                                       |
-| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `mP`, `mS`             | `{ uniqueAxis, cellChoice }`: unique axis a, b, c and cell choice 1, 2, 3 (standard b, 1)                                                                                                                                   |
-| `oP`, `oS`, `oI`, `oF` | `{ setting }`: `'abc'`, `'ba-c'`, `'cab'`, `'-cba'`, `'bca'`, `'a-cb'` (ITA 2016 Table 1.5.4.4); `oI`, `oF` also `{ centring: 'P' }`, the primitive cell                                                                    |
-| `tP`                   | `{ centring: 'C', cell: 1 \| 2 }`: C₁, C₂                                                                                                                                                                                   |
-| `tI`                   | `{ centring: 'F', cell: 1 \| 2 }`: F₁, F₂; `{ centring: 'P' }`                                                                                                                                                              |
-| `hP`                   | `{ centring, cell }`: orthohexagonal `'C'` (C₁–C₃), triple hexagonal `'H'` (H₁–H₃), triple rhombohedral `'D'` (D₁, D₂)                                                                                                      |
-| `hR`                   | `{ axes: 'rhombohedral' }`; `{ axes: 'hexagonal', cell, setting }`: R₁–R₃, `'obverse'` or `'reverse'` (standard R₁ obverse); `{ uniqueAxis: 'b' \| 'c', cellChoice }`: the C-centred (b) and A-centred (c) monoclinic cells |
-| `cI`, `cF`             | `{ centring: 'P' }`, the primitive cell                                                                                                                                                                                     |
+| Lattice                | Cells                                                                                                                                                                                                                                                                |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `mP`, `mS`             | `uniqueAxis` (a, b, c) and `cellChoice` (1, 2, 3); standard b, 1. In `mS` the cell choices of one axis are centred C, A, I (b), A, B, I (c), B, C, I (a)                                                                                                             |
+| `oP`, `oS`, `oI`, `oF` | `setting`: `'abc'`, `'ba-c'`, `'cab'`, `'-cba'`, `'bca'`, `'a-cb'` (ITA 2016 Table 1.5.4.4), the basis of the cell in the standard one; `oI`, `oF` also `centring` `'P'`, the primitive cell                                                                         |
+| `tP`                   | `centring` `'C'` and `cell` 1, 2: C₁, C₂                                                                                                                                                                                                                             |
+| `tI`                   | `centring` `'F'` and `cell` 1, 2: F₁, F₂; `centring` `'P'`, the primitive cell                                                                                                                                                                                       |
+| `hP`                   | `centring` and `cell`: orthohexagonal `'C'` (C₁–C₃), triple hexagonal `'H'` (H₁–H₃), triple rhombohedral `'D'` (D₁, D₂)                                                                                                                                              |
+| `hR`                   | `axes` `'rhombohedral'`, the primitive cell; `axes` `'hexagonal'` with `cell` 1–3 and `setting` `'obverse'` or `'reverse'`: R₁–R₃ (standard R₁ obverse); `centring` `'C'` with `cell` 1–3, the C-centred monoclinic cells C₁–C₃, and `'A'`, the A-centred ones A₁–A₃ |
+| `cI`, `cF`             | `centring` `'P'`, the primitive cell                                                                                                                                                                                                                                 |
+
+Where a lattice takes `centring`, the centring of its conventional cell names that cell. In `Cell`,
+`setting` names an orthorhombic setting or the obverse or reverse setting of the hexagonal axes of
+`hR`, not the setting of a point group, and `centring` is a letter, not the centring translations
+that `planeGroup` gives.
+
+The three monoclinic cells of an `hR` lattice with the same centring are named by an index, not by a
+cell choice: they are equally centred, and their unique axes (b₁, b₂, b₃ for C₁–C₃, c₁, c₂, c₃ for
+A₁–A₃) are the three twofold axes of the lattice, 120° apart (ITA 2016 Figs. 1.5.1.9, 1.5.1.10,
+p. 80). ITA calls them cell choices 1, 2, 3 in Table 1.5.1.1, but a cell choice of a monoclinic
+lattice keeps the unique axis and changes the centring, so one name would stand for two things.
 
 The matrices are those of ITA 2016 Table 1.5.1.1 (pp. 77–80); two cells the table does not join
 directly are joined by a product of its matrices, computed exactly. The triple hexagonal cell R from
-which the table gives the monoclinic cells of an `hR` lattice is R₁ obverse. The change back is
+which the table gives the monoclinic cells of an `hR` lattice is R₁ obverse. The primitive cell of a
+centred lattice is the one the table gives for its conventional cell (I → P, F → P); the F-centred
+cells F₁, F₂ of `tI` have no primitive cell of their own. The change back is
 `cellTransformation(bravaisLattice, toCell, fromCell)`.
 
 ## Tensors

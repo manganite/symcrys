@@ -78,7 +78,7 @@ export interface Cell {
     readonly axes?: 'hexagonal' | 'rhombohedral';
     readonly cell?: number;
     readonly cellChoice?: number;
-    readonly centring?: 'P' | 'C' | 'I' | 'F' | 'H' | 'D';
+    readonly centring?: 'P' | 'A' | 'C' | 'I' | 'F' | 'H' | 'D';
     readonly setting?: OrthorhombicSetting | 'obverse' | 'reverse';
     readonly uniqueAxis?: 'a' | 'b' | 'c';
 }

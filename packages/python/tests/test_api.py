@@ -53,7 +53,10 @@ def test_every_function_has_its_docstring_from_the_tsdoc() -> None:
             if callable(obj) and not isinstance(obj, type) and not (name[0].isupper() and not name.isupper()):
                 doc = obj.__doc__ or ""
                 assert len(doc.strip()) > 20, f"{module.__name__}.{name} has no docstring"
-                assert not re.search(r"``[^`]*\b[a-z]+[A-Z]\w*[^`]*``", doc), f"{module.__name__}.{name}: camelCase"
+                # A name in camelCase inside a code span; text between two spans is not code (mP, hR).
+                spans = re.findall(r"``([^`]+)``", doc)
+                left = [x for x in spans if re.search(r"\b[a-z]+[A-Z]\w*", x)]
+                assert not left, f"{module.__name__}.{name}: camelCase in {left}"
 
 
 KEY_FIELDS = {"key", "point_group", "laue_class", "crystal_class", "holohedry"}
@@ -422,8 +425,8 @@ def test_cell_metric_and_indices() -> None:
     assert change["inverse"]["linear_part"].dtype == np.float64 and change["directions"].shape == (1, 3)
     assert change["planes"].dtype == np.float64 and change["operations"][1]["matrix"].dtype == np.int64
     # cells as mappings, keys in snake_case; P a float64 (3, 3) array that change_of_coordinates takes
-    t = symcrys.cell_transformation("hR", {"axes": "hexagonal", "cell": 2}, {"unique_axis": "c", "cell_choice": 3})
-    back = magnetic.cell_transformation("hR", {"unique_axis": "c", "cell_choice": 3}, {"axes": "hexagonal", "cell": 2})
+    t = symcrys.cell_transformation("mS", {"cell_choice": 2}, {"unique_axis": "c", "cell_choice": 3})
+    back = magnetic.cell_transformation("mS", {"unique_axis": "c", "cell_choice": 3}, {"cell_choice": 2})
     assert t["linear_part"].dtype == np.float64 and t["linear_part"].shape == (3, 3)
     assert np.allclose(t["linear_part"] @ back["linear_part"], np.eye(3))
     with pytest.raises(symcrys.SymcrysError, match="names no cell"):

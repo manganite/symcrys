@@ -7,7 +7,7 @@
  * joined by a product of its matrices, exactly in rationals.
  */
 
-import { checkObject, isPlainObject, shown } from './checks.js';
+import { checkObject, shown } from './checks.js';
 import type { CoordinateTransformation } from './coordinates.js';
 import { deepFreeze } from './freeze.js';
 import type { Mat3 } from './linalg.js';
@@ -24,25 +24,9 @@ export type BravaisLattice =
 export type OrthorhombicSetting = 'abc' | 'ba-c' | 'cab' | '-cba' | 'bca' | 'a-cb';
 
 /**
- * A cell of a lattice, named by the fields that apply to its Bravais lattice; a field left out takes
- * the value of the conventional cell in the standard setting, so `{}` is that cell.
- *
- * - `mP`, `mS`: `uniqueAxis` (a, b or c) and `cellChoice` (1, 2 or 3; the
- *   standard is b and 1).
- * - `oP`, `oS`, `oI`, `oF`: `setting`, one of the six settings (standard `'abc'`); `oI` and `oF`
- *   also `{ centring: 'P' }`, the primitive cell of the standard setting.
- * - `tP`: `{ centring: 'C', cell }`, the C-centred cells C₁ (`cell: 1`) and C₂ (`cell: 2`).
- * - `tI`: `{ centring: 'F', cell }`, the F-centred cells F₁ and F₂, and `{ centring: 'P' }`, the
- *   primitive cell.
- * - `hP`: `centring` and `cell`, with centring `'C'` (the orthohexagonal cells C₁, C₂, C₃), `'H'` (the
- *   triple hexagonal cells H₁, H₂, H₃) or `'D'` (the triple rhombohedral cells D₁, D₂).
- * - `hR`: `{ axes: 'rhombohedral' }`, the primitive rhombohedral cell; `{ axes: 'hexagonal', cell,
- *   setting }`, the triple hexagonal cells R₁, R₂, R₃ in the obverse or reverse setting (standard: R₁,
- *   obverse); `uniqueAxis` and `cellChoice`, the C-centred monoclinic cells of unique axis b or the
- *   A-centred ones of unique axis c, cell choice 1, 2 or 3.
- * - `cI`, `cF`: `{ centring: 'P' }`, the primitive cell.
- *
- * A `centring` equal to that of the conventional cell names the conventional cell.
+ * A cell of a lattice, named by the fields that apply to its Bravais lattice (listed with
+ * `cellTransformation`); a field left out takes the value of the conventional cell in the standard
+ * setting, so `{}` is that cell.
  */
 export interface Cell {
   /** The unique axis of a monoclinic cell. */
@@ -52,10 +36,10 @@ export interface Cell {
   /** An orthorhombic setting, or for hexagonal axes of an `hR` lattice the obverse or reverse setting. */
   readonly setting?: OrthorhombicSetting | 'obverse' | 'reverse';
   /** The centring of the cell: `'P'` for a primitive cell, or the letter of a centred cell. */
-  readonly centring?: 'P' | 'C' | 'I' | 'F' | 'H' | 'D';
+  readonly centring?: 'P' | 'A' | 'C' | 'I' | 'F' | 'H' | 'D';
   /** The axes of an `hR` lattice: `'hexagonal'` (the triple hexagonal cell, standard) or `'rhombohedral'`. */
   readonly axes?: 'hexagonal' | 'rhombohedral';
-  /** The index of a cell where several cells have the same centring: C₁ is `cell: 1`. */
+  /** The index of a cell where several cells have the same centring: 1 for C₁. */
   readonly cell?: number;
 }
 
@@ -189,19 +173,19 @@ export const CELL_CHANGES: readonly CellChange[] = [
   { p: '1 0 -1; 0 1 -1; 1 1 1', q: '2/3 -1/3 1/3; -1/3 2/3 1/3; -1/3 -1/3 1/3', edges: [['hP', 'P', 'D1']] },
   { p: '-1 0 1; 0 -1 1; 1 1 1', q: '-2/3 1/3 1/3; 1/3 -2/3 1/3; 1/3 1/3 1/3', edges: [['hP', 'P', 'D2']] },
   // p. 79: triple hexagonal cell R (obverse) → C-centred monoclinic, unique axis b, and A-centred, unique axis c, cell choices 1–3.
-  { p: '2/3 0 0; 1/3 1 0; -2/3 0 1', q: '3/2 0 0; -1/2 1 0; 1 0 1', edges: [['hR', 'R1-obverse', 'b1']] },
-  { p: '-1/3 -1 0; 1/3 -1 0; -2/3 0 1', q: '-3/2 3/2 0; -1/2 -1/2 0; -1 1 1', edges: [['hR', 'R1-obverse', 'b2']] },
-  { p: '-1/3 1 0; -2/3 0 0; -2/3 0 1', q: '0 -3/2 0; 1 -1/2 0; 0 -1 1', edges: [['hR', 'R1-obverse', 'b3']] },
-  { p: '0 2/3 0; 0 1/3 1; 1 -2/3 0', q: '1 0 1; 3/2 0 0; -1/2 1 0', edges: [['hR', 'R1-obverse', 'c1']] },
-  { p: '0 -1/3 -1; 0 1/3 -1; 1 -2/3 0', q: '-1 1 1; -3/2 3/2 0; -1/2 -1/2 0', edges: [['hR', 'R1-obverse', 'c2']] },
-  { p: '0 -1/3 1; 0 -2/3 0; 1 -2/3 0', q: '0 -1 1; 0 -3/2 0; 1 -1/2 0', edges: [['hR', 'R1-obverse', 'c3']] },
+  { p: '2/3 0 0; 1/3 1 0; -2/3 0 1', q: '3/2 0 0; -1/2 1 0; 1 0 1', edges: [['hR', 'R1-obverse', 'C1']] },
+  { p: '-1/3 -1 0; 1/3 -1 0; -2/3 0 1', q: '-3/2 3/2 0; -1/2 -1/2 0; -1 1 1', edges: [['hR', 'R1-obverse', 'C2']] },
+  { p: '-1/3 1 0; -2/3 0 0; -2/3 0 1', q: '0 -3/2 0; 1 -1/2 0; 0 -1 1', edges: [['hR', 'R1-obverse', 'C3']] },
+  { p: '0 2/3 0; 0 1/3 1; 1 -2/3 0', q: '1 0 1; 3/2 0 0; -1/2 1 0', edges: [['hR', 'R1-obverse', 'A1']] },
+  { p: '0 -1/3 -1; 0 1/3 -1; 1 -2/3 0', q: '-1 1 1; -3/2 3/2 0; -1/2 -1/2 0', edges: [['hR', 'R1-obverse', 'A2']] },
+  { p: '0 -1/3 1; 0 -2/3 0; 1 -2/3 0', q: '0 -1 1; 0 -3/2 0; 1 -1/2 0', edges: [['hR', 'R1-obverse', 'A3']] },
   // pp. 79–80: primitive rhombohedral cell → the same monoclinic cells.
-  { p: '0 0 1; -1 1 1; -1 -1 1', q: '1 -1/2 -1/2; 0 1/2 -1/2; 1 0 0', edges: [['hR', 'rhombohedral', 'b1']] },
-  { p: '-1 -1 1; 0 0 1; -1 1 1', q: '-1/2 1 -1/2; -1/2 0 1/2; 0 1 0', edges: [['hR', 'rhombohedral', 'b2']] },
-  { p: '-1 1 1; -1 -1 1; 0 0 1', q: '-1/2 -1/2 1; 1/2 -1/2 0; 0 0 1', edges: [['hR', 'rhombohedral', 'b3']] },
-  { p: '1 0 0; 1 -1 1; 1 -1 -1', q: '1 0 0; 1 -1/2 -1/2; 0 1/2 -1/2', edges: [['hR', 'rhombohedral', 'c1']] },
-  { p: '1 -1 -1; 1 0 0; 1 -1 1', q: '0 1 0; -1/2 1 -1/2; -1/2 0 1/2', edges: [['hR', 'rhombohedral', 'c2']] },
-  { p: '1 -1 1; 1 -1 -1; 1 0 0', q: '0 0 1; -1/2 -1/2 1; 1/2 -1/2 0', edges: [['hR', 'rhombohedral', 'c3']] },
+  { p: '0 0 1; -1 1 1; -1 -1 1', q: '1 -1/2 -1/2; 0 1/2 -1/2; 1 0 0', edges: [['hR', 'rhombohedral', 'C1']] },
+  { p: '-1 -1 1; 0 0 1; -1 1 1', q: '-1/2 1 -1/2; -1/2 0 1/2; 0 1 0', edges: [['hR', 'rhombohedral', 'C2']] },
+  { p: '-1 1 1; -1 -1 1; 0 0 1', q: '-1/2 -1/2 1; 1/2 -1/2 0; 0 0 1', edges: [['hR', 'rhombohedral', 'C3']] },
+  { p: '1 0 0; 1 -1 1; 1 -1 -1', q: '1 0 0; 1 -1/2 -1/2; 0 1/2 -1/2', edges: [['hR', 'rhombohedral', 'A1']] },
+  { p: '1 -1 -1; 1 0 0; 1 -1 1', q: '0 1 0; -1/2 1 -1/2; -1/2 0 1/2', edges: [['hR', 'rhombohedral', 'A2']] },
+  { p: '1 -1 1; 1 -1 -1; 1 0 0', q: '0 0 1; -1/2 -1/2 1; 1/2 -1/2 0', edges: [['hR', 'rhombohedral', 'A3']] },
 ];
 
 /** The key of the conventional cell in the standard setting. */
@@ -258,81 +242,94 @@ function cellsOf(lattice: BravaisLattice): Map<string, { p: RMatrix; q: RMatrix 
 
 /** The fields of a cell that each Bravais lattice takes. */
 function fieldsOf(lattice: BravaisLattice): readonly (keyof Cell)[] {
-  if (lattice === 'mP' || lattice === 'mS') return ['uniqueAxis', 'cellChoice'];
-  if (lattice === 'oP' || lattice === 'oS') return ['setting'];
-  if (lattice === 'oI' || lattice === 'oF') return ['setting', 'centring'];
+  if (lattice === 'mP') return ['uniqueAxis', 'cellChoice', 'centring'];
+  if (lattice === 'mS') return ['uniqueAxis', 'cellChoice'];
+  if (lattice === 'oS') return ['setting'];
+  if (lattice[0] === 'o') return ['setting', 'centring'];
   if (lattice === 'tP' || lattice === 'tI' || lattice === 'hP') return ['centring', 'cell'];
-  if (lattice === 'hR') return ['axes', 'cell', 'setting', 'uniqueAxis', 'cellChoice'];
-  if (lattice === 'cI' || lattice === 'cF') return ['centring'];
-  return [];
+  if (lattice === 'hR') return ['axes', 'cell', 'setting', 'centring'];
+  return ['centring'];
 }
 
-/** The internal key of a cell, or a RangeError that says which cells the lattice has. */
+/** The cells named by a centring and an index, with the number of each, per lattice. */
+const INDEXED: Readonly<Partial<Record<BravaisLattice, Readonly<Record<string, number>>>>> = {
+  tP: { C: 2 },
+  tI: { F: 2 },
+  hP: { C: 3, H: 3, D: 2 },
+  hR: { C: 3, A: 3 },
+};
+
+/** The internal key of a cell, or a RangeError that says what is wrong with it. */
 function cellKey(lattice: BravaisLattice, cell: unknown, what: string): string {
-  checkObject(cell, what);
-  if (!isPlainObject(cell)) throw new RangeError(`${what} must be a plain object, not ${shown(cell)}`);
+  checkObject(cell, `${what} must be a plain object`);
   const allowed = fieldsOf(lattice);
   const wrong = Object.keys(cell).filter((k) => !(allowed as readonly string[]).includes(k));
   if (wrong.length > 0) {
-    const takes = allowed.length > 0 ? `the fields ${allowed.join(', ')}` : 'no fields (it has one cell, {})';
-    throw new RangeError(`${what}: a cell of an ${lattice} lattice takes ${takes}, not ${wrong.join(', ')}`);
+    throw new RangeError(
+      `${what}: a cell of the lattice ${lattice} takes the fields ${allowed.join(', ')}, not ${wrong.join(', ')}`,
+    );
+  }
+  const nulls = Object.entries(cell).filter(([, v]) => v === null);
+  if (nulls.length > 0) {
+    throw new RangeError(`${what}: ${nulls.map(([k]) => k).join(', ')} is null; leave a field out for its default`);
   }
   const c = cell as Cell;
-  const fail = (): never => {
-    throw new RangeError(
-      `${what}: ${shown(cell)} names no cell of an ${lattice} lattice (cellTransformation lists them)`,
-    );
+  const fail = (why: string): never => {
+    throw new RangeError(`${what}: ${shown(cell)} names no cell of the lattice ${lattice}: ${why}`);
   };
-  const index = (v: unknown, n: number, dflt?: number): number => {
-    if (v === undefined && dflt !== undefined) return dflt;
-    return Number.isInteger(v) && (v as number) >= 1 && (v as number) <= n ? (v as number) : fail();
-  };
-  const monoclinic = (axes: readonly string[]): string => {
-    const axis = c.uniqueAxis ?? 'b';
-    if (!axes.includes(axis)) fail();
-    return `${axis}${index(c.cellChoice, 3, 1)}`;
-  };
+  const index = (v: unknown, n: number, name: string): number =>
+    Number.isInteger(v) && (v as number) >= 1 && (v as number) <= n
+      ? (v as number)
+      : fail(`${name} must be ${n === 2 ? '1 or 2' : '1, 2 or 3'}`);
+  const own = lattice[1] === 'S' || lattice === 'hR' ? undefined : lattice[1];
+  const indexed = INDEXED[lattice] ?? {};
+  // A centring: the conventional cell's own, 'P' for the primitive cell of a centred lattice, or a
+  // cell with an index.
+  if (c.centring !== undefined && c.centring !== own) {
+    const n = indexed[c.centring];
+    if (n !== undefined) {
+      if (c.axes !== undefined || c.setting !== undefined) fail(`centring ${c.centring} takes cell alone`);
+      return `${c.centring}${index(c.cell, n, 'cell')}`;
+    }
+    const primitive = c.centring === 'P' && ['oI', 'oF', 'tI', 'cI', 'cF'].includes(lattice);
+    if (!primitive) {
+      const named = [own, own !== undefined && own !== 'P' ? 'P' : undefined, ...Object.keys(indexed)].filter(Boolean);
+      return fail(`its centring is one of ${named.join(', ')}`);
+    }
+    if (c.setting !== undefined && c.setting !== 'abc') fail('the primitive cell is given for the setting abc only');
+    return 'P';
+  }
+  if (c.cell !== undefined && lattice !== 'hR')
+    fail(`cell is given with the centring ${Object.keys(indexed).join(' or ')}`);
   switch (lattice) {
     case 'mP':
-    case 'mS':
-      return monoclinic(['a', 'b', 'c']);
+    case 'mS': {
+      const axis = c.uniqueAxis ?? 'b';
+      if (!['a', 'b', 'c'].includes(axis)) fail('uniqueAxis must be a, b or c');
+      return `${axis}${c.cellChoice === undefined ? 1 : index(c.cellChoice, 3, 'cellChoice')}`;
+    }
     case 'oP':
     case 'oS':
     case 'oI':
     case 'oF': {
       const setting = c.setting ?? 'abc';
-      if (!(SETTINGS as readonly string[]).includes(setting)) fail();
-      if (c.centring === undefined || c.centring === lattice[1]) return setting;
-      return c.centring === 'P' && setting === 'abc' ? 'P' : fail();
-    }
-    case 'tP':
-    case 'tI':
-    case 'hP':
-    case 'cI':
-    case 'cF': {
-      const own = lattice[1];
-      const centring = c.centring ?? own;
-      const several: Readonly<Record<string, number>> =
-        lattice === 'tP' ? { C: 2 } : lattice === 'tI' ? { F: 2 } : lattice === 'hP' ? { C: 3, H: 3, D: 2 } : {};
-      if (several[centring] !== undefined) return `${centring}${index(c.cell, several[centring])}`;
-      if (c.cell !== undefined) fail();
-      return centring === own || (centring === 'P' && own !== 'P') ? centring : fail();
+      return (SETTINGS as readonly string[]).includes(setting)
+        ? setting
+        : fail(`setting must be one of ${SETTINGS.join(', ')}`);
     }
     case 'hR': {
-      if (c.uniqueAxis !== undefined || c.cellChoice !== undefined) {
-        if (c.axes !== undefined || c.cell !== undefined || c.setting !== undefined) fail();
-        return monoclinic(['b', 'c']);
-      }
       if (c.axes === 'rhombohedral') {
-        return c.cell === undefined && c.setting === undefined ? 'rhombohedral' : fail();
+        return c.cell === undefined && c.setting === undefined
+          ? 'rhombohedral'
+          : fail('rhombohedral axes have one cell');
       }
-      if (c.axes !== undefined && c.axes !== 'hexagonal') fail();
+      if (c.axes !== undefined && c.axes !== 'hexagonal') fail('axes must be hexagonal or rhombohedral');
       const setting = c.setting ?? 'obverse';
-      if (setting !== 'obverse' && setting !== 'reverse') fail();
-      return `R${index(c.cell, 3, 1)}-${setting}`;
+      if (setting !== 'obverse' && setting !== 'reverse') fail('setting must be obverse or reverse');
+      return `R${c.cell === undefined ? 1 : index(c.cell, 3, 'cell')}-${setting}`;
     }
     default:
-      return 'P';
+      return own ?? fail('no such cell');
   }
 }
 
@@ -342,10 +339,32 @@ function cellKey(lattice: BravaisLattice, cell: unknown, what: string): string {
  * `toCell`, to be passed to `changeOfCoordinates` (the origin stays). The change back is
  * `cellTransformation(bravaisLattice, toCell, fromCell)`.
  *
- * A cell is named by its fields (`Cell`), and an empty one is the conventional cell in the standard
- * setting: a monoclinic cell by its unique axis and cell choice, an orthorhombic one by its setting,
- * the primitive cell of a centred lattice by the centring `'P'`, the further cells of ITA by their
- * centring and index (C₁: centring `'C'`, cell 1), the cells of a rhombohedral lattice by their axes, `'hexagonal'` or `'rhombohedral'`, or as monoclinic cells.
+ * A cell is named by its fields; a field left out takes the value of the conventional cell in the
+ * standard setting, so an empty cell is that cell. Where a lattice takes `centring`, the centring of
+ * its conventional cell names that cell. The fields by Bravais lattice:
+ *
+ * mP and mS: `uniqueAxis` (`'a'`, `'b'`, `'c'`; standard `'b'`) and `cellChoice` (1, 2, 3; standard
+ * 1); in mS the cell choices of one unique axis are centred C, A, I (unique axis b), A, B, I (c) and
+ * B, C, I (a).
+ *
+ * oP, oS, oI and oF: `setting`, `'abc'` (standard), `'ba-c'`, `'cab'`, `'-cba'`, `'bca'` or `'a-cb'`,
+ * the basis of the cell in the standard one; oI and oF also `centring` `'P'`, the primitive cell of
+ * the standard setting.
+ *
+ * tP: `centring` `'C'` and `cell` 1 or 2, the C-centred cells C₁, C₂. tI: `centring` `'F'` and `cell`
+ * 1 or 2, the F-centred cells F₁, F₂, and `centring` `'P'`, the primitive cell.
+ *
+ * hP: `centring` and `cell`, `'C'` for the orthohexagonal cells C₁, C₂, C₃, `'H'` for the triple
+ * hexagonal cells H₁, H₂, H₃, `'D'` for the triple rhombohedral cells D₁, D₂.
+ *
+ * hR: `axes` `'hexagonal'` (standard) with `cell` 1, 2, 3 and `setting` `'obverse'` or `'reverse'`, the
+ * triple hexagonal cells R₁, R₂, R₃ (standard R₁ obverse); `axes` `'rhombohedral'`, the primitive
+ * cell; `centring` `'C'` and `cell` 1, 2, 3, the C-centred monoclinic cells C₁, C₂, C₃, whose unique
+ * axes b₁, b₂, b₃ are the three twofold axes of the lattice, and `centring` `'A'` with `cell`, the
+ * A-centred ones A₁, A₂, A₃, with unique axes c₁, c₂, c₃.
+ *
+ * cI and cF: `centring` `'P'`, the primitive cell, the one ITA gives for the conventional cell.
+ *
  * Fractions such as 1/3 are the nearest numbers, which `changeOfCoordinates` reads back as fractions.
  *
  * @example

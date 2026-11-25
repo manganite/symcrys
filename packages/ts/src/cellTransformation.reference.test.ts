@@ -129,18 +129,18 @@ const MEANING: readonly (readonly [changes: readonly Change[], volume: string])[
   [[['hP', {}, { centring: 'H', cell: 3 }]], '3'],
   [[['hP', {}, { centring: 'D', cell: 1 }]], '3'],
   [[['hP', { centring: 'P' }, { centring: 'D', cell: 2 }]], '3'],
-  [[['hR', hex(1, 'obverse'), mono('b', 1)]], '2/3'],
-  [[['hR', { axes: 'hexagonal' }, mono('b', 2)]], '2/3'],
-  [[['hR', {}, mono('b', 3)]], '2/3'],
-  [[['hR', {}, mono('c', 1)]], '2/3'],
-  [[['hR', {}, mono('c', 2)]], '2/3'],
-  [[['hR', {}, mono('c', 3)]], '2/3'],
-  [[['hR', rh, { uniqueAxis: 'b' }]], '2'],
-  [[['hR', rh, mono('b', 2)]], '2'],
-  [[['hR', rh, mono('b', 3)]], '2'],
-  [[['hR', rh, { uniqueAxis: 'c' }]], '2'],
-  [[['hR', rh, mono('c', 2)]], '2'],
-  [[['hR', rh, mono('c', 3)]], '2'],
+  [[['hR', hex(1, 'obverse'), { centring: 'C', cell: 1 }]], '2/3'],
+  [[['hR', { axes: 'hexagonal' }, { centring: 'C', cell: 2 }]], '2/3'],
+  [[['hR', {}, { centring: 'C', cell: 3 }]], '2/3'],
+  [[['hR', {}, { centring: 'A', cell: 1 }]], '2/3'],
+  [[['hR', {}, { centring: 'A', cell: 2 }]], '2/3'],
+  [[['hR', {}, { centring: 'A', cell: 3 }]], '2/3'],
+  [[['hR', rh, { centring: 'C', cell: 1 }]], '2'],
+  [[['hR', rh, { centring: 'C', cell: 2 }]], '2'],
+  [[['hR', rh, { centring: 'C', cell: 3 }]], '2'],
+  [[['hR', rh, { centring: 'A', cell: 1 }]], '2'],
+  [[['hR', rh, { centring: 'A', cell: 2 }]], '2'],
+  [[['hR', rh, { centring: 'A', cell: 3 }]], '2'],
 ];
 
 describe('the changes of cell against print (ITA 2016 Table 1.5.1.1)', () => {
@@ -187,8 +187,8 @@ describe('the changes of cell against print (ITA 2016 Table 1.5.1.1)', () => {
 
 describe('cellTransformation', () => {
   it('joins any two cells of a lattice by a product of the printed matrices', () => {
-    const t = cellTransformation('hR', hex(2, 'reverse'), mono('c', 3));
-    const back = cellTransformation('hR', mono('c', 3), hex(2, 'reverse'));
+    const t = cellTransformation('hR', hex(2, 'reverse'), { centring: 'A', cell: 3 });
+    const back = cellTransformation('hR', { centring: 'A', cell: 3 }, hex(2, 'reverse'));
     const round = changeOfCoordinates(t, {
       metric: [
         [1, 0, 0],
@@ -228,6 +228,98 @@ describe('cellTransformation', () => {
     }
   });
 
+  it('the worked example of ITA 2016 § 1.5.3.2.1 (B), p. 90: unique axis c, cell choice 3 → unique axis b, cell choice 1', () => {
+    const example = section(readReference('itc/vol-a-2016-1.5-transformations.md'), '## 5 ');
+    const printedP = matrix(/^P: (.*)$/m.exec(example)![1]);
+    expectClose(cellTransformation('mP', mono('c', 3), mono('b', 1)).linearPart, printedP);
+  });
+
+  it('every cell spans the lattice of the standard cell, with the centring its name states', () => {
+    // The centring vectors of a cell (ITA 2016 Table 1.2.1.2 and § 1.5.1, Figs. 1.5.1.6–1.5.1.10),
+    // written out here from the name of the cell, not from the matrices.
+    const t = (s: string) => s.split(' ').map((x) => value(parse(x)));
+    const V: Readonly<Record<string, number[][]>> = {
+      P: [],
+      A: [t('0 1/2 1/2')],
+      B: [t('1/2 0 1/2')],
+      C: [t('1/2 1/2 0')],
+      I: [t('1/2 1/2 1/2')],
+      F: [t('0 1/2 1/2'), t('1/2 0 1/2'), t('1/2 1/2 0')],
+      obverse: [t('2/3 1/3 1/3'), t('1/3 2/3 2/3')],
+      reverse: [t('1/3 2/3 1/3'), t('2/3 1/3 2/3')],
+      H: [t('2/3 1/3 0'), t('1/3 2/3 0')],
+      D: [t('1/3 1/3 1/3'), t('2/3 2/3 2/3')],
+    };
+    const monoclinic = (axis: 'a' | 'b' | 'c', centrings: string): [Cell, string][] =>
+      [1, 2, 3].map((k) => [mono(axis, k), centrings[k - 1]]);
+    const settings = (letters: string): [Cell, string][] =>
+      (['abc', 'ba-c', 'cab', '-cba', 'bca', 'a-cb'] as const).map((setting, i) => [{ setting }, letters[i]]);
+    const CELLS: readonly [BravaisLattice, string, readonly [Cell, string][]][] = [
+      ['mP', 'P', [...monoclinic('b', 'PPP'), ...monoclinic('c', 'PPP'), ...monoclinic('a', 'PPP')]],
+      ['mS', 'C', [...monoclinic('b', 'CAI'), ...monoclinic('c', 'ABI'), ...monoclinic('a', 'BCI')]],
+      ['oP', 'P', settings('PPPPPP')],
+      ['oS', 'C', settings('CCAABB')],
+      ['oI', 'I', [...settings('IIIIII'), [{ centring: 'P' }, 'P']]],
+      ['oF', 'F', [...settings('FFFFFF'), [{ centring: 'P' }, 'P']]],
+      [
+        'tP',
+        'P',
+        [
+          [{ centring: 'C', cell: 1 }, 'C'],
+          [{ centring: 'C', cell: 2 }, 'C'],
+        ],
+      ],
+      [
+        'tI',
+        'I',
+        [
+          [{ centring: 'F', cell: 1 }, 'F'],
+          [{ centring: 'F', cell: 2 }, 'F'],
+          [{ centring: 'P' }, 'P'],
+        ],
+      ],
+      [
+        'hP',
+        'P',
+        [
+          ...[1, 2, 3].map((cell): [Cell, string] => [{ centring: 'C', cell }, 'C']),
+          ...[1, 2, 3].map((cell): [Cell, string] => [{ centring: 'H', cell }, 'H']),
+          ...[1, 2].map((cell): [Cell, string] => [{ centring: 'D', cell }, 'D']),
+        ],
+      ],
+      [
+        'hR',
+        'obverse',
+        [
+          [rh, 'P'],
+          ...[1, 2, 3].map((cell): [Cell, string] => [hex(cell, 'obverse'), 'obverse']),
+          ...[1, 2, 3].map((cell): [Cell, string] => [hex(cell, 'reverse'), 'reverse']),
+          ...[1, 2, 3].map((cell): [Cell, string] => [{ centring: 'C', cell }, 'C']),
+          ...[1, 2, 3].map((cell): [Cell, string] => [{ centring: 'A', cell }, 'A']),
+        ],
+      ],
+      ['cI', 'I', [[{ centring: 'P' }, 'P']]],
+      ['cF', 'F', [[{ centring: 'P' }, 'P']]],
+    ];
+    const apply = (m: readonly (readonly number[])[], v: readonly number[]) =>
+      m.map((row) => row.reduce((s, x, k) => s + x * v[k], 0));
+    const unitVectors = [t('1 0 0'), t('0 1 0'), t('0 0 1')];
+    /** Whether v is a vector of the lattice with the given centring vectors (coordinates modulo 1). */
+    const inLattice = (v: readonly number[], centring: readonly number[][]) =>
+      [[0, 0, 0], ...centring].some((c) => v.every((x, i) => Math.abs(x - c[i] - Math.round(x - c[i])) < 1e-9));
+    for (const [lattice, standard, cells] of CELLS) {
+      for (const [cell, centring] of cells) {
+        const where = `${lattice} ${JSON.stringify(cell)}`;
+        // Coordinates in the new cell are x′ = P⁻¹x: the standard cell's translations must be
+        // translations of the new cell, and the new cell's (by P) translations of the standard cell.
+        const P = cellTransformation(lattice, {}, cell).linearPart;
+        const Q = cellTransformation(lattice, cell, {}).linearPart;
+        for (const v of [...unitVectors, ...V[standard]]) expect(inLattice(apply(Q, v), V[centring]), where).toBe(true);
+        for (const v of [...unitVectors, ...V[centring]]) expect(inLattice(apply(P, v), V[standard]), where).toBe(true);
+      }
+    }
+  });
+
   it('refuses a lattice or a cell that ITA does not name', () => {
     const bad: readonly [unknown, unknown][] = [
       ['hP', { centring: 'H' }], // which of H₁, H₂, H₃
@@ -235,12 +327,18 @@ describe('cellTransformation', () => {
       ['tP', { centring: 'F', cell: 1 }],
       ['oS', { centring: 'P' }],
       ['oI', { setting: 'cab', centring: 'P' }],
-      ['hR', { uniqueAxis: 'a' }],
+      ['hR', { uniqueAxis: 'b' }], // the monoclinic cells of hR are named by centring and cell
+      ['hR', { centring: 'C' }],
+      ['hR', { centring: 'A', cell: 1, axes: 'hexagonal' }],
+      ['oP', { setting: null }],
+      ['hR', { cell: null }],
       ['hR', { axes: 'rhombohedral', cell: 2 }],
       ['hR', { axes: 'hexagonal', setting: 'abc' }],
       ['mP', { setting: 'abc' }],
       ['mP', { cellChoice: 0 }],
-      ['cP', { centring: 'P' }],
+      ['cP', { centring: 'I' }],
+      ['tP', { cell: 1 }],
+      ['mS', { centring: 'C' }],
       ['cI', { centring: 'F' }],
       ['hR', null],
       ['hR', 'R1'],

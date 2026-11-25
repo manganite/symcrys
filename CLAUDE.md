@@ -731,7 +731,10 @@ quantities, { tolerance })`, in all three entry points (3 × 3, and 2 × 2 in `s
   product of them, exactly. Chosen while implementing: the triple hexagonal cell R of rows 30–35 is
   R₁ obverse (rows 36–41 are row 16 times rows 30–35, tested); a cell that ITA names among several
   (C₁, C₂ …) needs its `cell`, except the hexagonal axes of `hR`, whose standard is R₁ obverse; the
-  primitive cell of `oI` and `oF` only in the standard setting, which is what ITA gives; in Python the
+  primitive cell of `oI` and `oF` only in the standard setting, which is what ITA gives; the monoclinic
+  cells of `hR` by centring and index (C₁–C₃, A₁–A₃, as ITA's figures name them), not by cell choice,
+  since they keep their centring and differ in the unique axis, which is the opposite of a monoclinic
+  cell choice (review of PR #193; `docs/conventions.md`, "Cells of a lattice"); in Python the
   two cells are mappings (`cell_transformation("hR", {}, {"axes": "rhombohedral"})`), since their
   fields would collide as arguments (api.json, "mappings").
 - **`latticeBasis` only for families with fixed cell angles** (2026-11-09, #14): for monoclinic
