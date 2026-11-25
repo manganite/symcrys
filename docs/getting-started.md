@@ -104,8 +104,12 @@ except symcrys.SymcrysError as e:
 ```
 
 A call costs about a millisecond once its result is cached; the first call for a group takes up to
-about 0.1 s, the form of a rank-4 tensor up to a few tenths of a second. Fetch operations and forms
-once, then compute with NumPy.
+about 0.1 s, the form of a rank-4 tensor up to a few tenths of a second, and the first
+`point_group_of` about 0.3 s, as it builds a table of the groups. A list of operations passed again
+(`tensor_form_of` in a loop) is answered from a cache. Fetch operations and forms once, then compute
+with NumPy. These timings are indicative (one machine, 2026-11-25): the package runs the library in
+an embedded JavaScript engine, and all calls go through that one engine behind one lock, so threads
+do not run them in parallel.
 
 ## What to read next
 

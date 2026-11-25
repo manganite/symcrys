@@ -346,7 +346,10 @@ argsJson) → resultJson` (`_engine.py`, `scripts/bundle-python.mjs`; a name of 
   skipped one is named as skipped. The external links (`npm run docs:linkcheck`) are checked by
   the job `linkcheck` (`linkcheck.yml`: on every PR, weekly and by hand), which is not a gate: a
   site elsewhere that is down for a while must not block a merge (maintainer, 2026-11-21). A red
-  `linkcheck` is still looked at, and a link that is really dead is fixed. Locally: `npm run
+  `linkcheck` is still looked at, and a link that is really dead is fixed. The job `coverage` of
+  `ci.yml` keeps the coverage of the library by the tests as an artefact (`npm run test:coverage`,
+  #69, chosen while implementing on Thomas' go-ahead of 2026-11-25): a report to see which paths no
+  test reaches, not a gate and no percentage to reach. Locally: `npm run
 build && npm run bundle:python`, then in `packages/python` `pip install -e ".[test]"`, `mypy` and `pytest`.
 - **Review by an independent agent** before reporting to Thomas, on every PR without exception:
   an agent that does not know the work gets only repository, branch and purpose and checks the
