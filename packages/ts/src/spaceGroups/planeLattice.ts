@@ -5,6 +5,7 @@
  * entry point is `symcrys/plane`.
  */
 
+import { FLAT_CELL_RATIO, SINGULAR_RATIO } from '../tolerances.js';
 import { checkObject, shown } from '../checks.js';
 import type { PlaneSystem } from './planeGroupData.js';
 import {
@@ -143,7 +144,8 @@ export function planeLatticeFromParameters(p: LatticeParameters, who: string): M
   }
   const c = cosDeg(g);
   const s = Math.sqrt(1 - c * c);
-  if (!(s > 1e-6)) throw new RangeError(`${who}: gamma ${g}° gives no cell (a and b parallel within rounding)`);
+  if (!(s > FLAT_CELL_RATIO))
+    throw new RangeError(`${who}: gamma ${g}° gives no cell (a and b parallel within rounding)`);
   const basis: Mat2 = [
     [p.a + 0, p.b * c + 0],
     [0, p.b * s + 0],
@@ -169,7 +171,7 @@ export function planeBasisColumns(basis: unknown, who: string): [readonly number
   const b = basis as unknown as Mat2;
   const bound = Math.hypot(b[0][0], b[1][0]) * Math.hypot(b[0][1], b[1][1]);
   const det = b[0][0] * b[1][1] - b[0][1] * b[1][0];
-  if (!(Number.isFinite(bound) && bound > 0 && Math.abs(det) > 1e-9 * bound)) {
+  if (!(Number.isFinite(bound) && bound > 0 && Math.abs(det) > SINGULAR_RATIO * bound)) {
     throw new RangeError(`${who}: singular basis ${shown(basis)}`);
   }
   return [

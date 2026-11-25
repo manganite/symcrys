@@ -17,7 +17,7 @@
 
 import { shown } from '../checks.js';
 import { crystalFamily, latticeBasis, type CrystalSystem } from '../lattice.js';
-import { inverse, multiply, snap, type Mat3 } from '../linalg.js';
+import { IDENTITY as LINEAR_IDENTITY, inverse, multiply, snap, type Mat3 } from '../linalg.js';
 import type { PointGroupKey } from './keys.js';
 import { LATTICE_SYMMETRY_DIRECTIONS, type Uvw } from '../symmetryDirections.js';
 import { ITA_GENERATORS, type IntMat3 } from './itaOrder.js';
@@ -240,11 +240,7 @@ const imul = (a: IntMat3, b: IntMat3): IntMat3 =>
 
 const iequal = (a: IntMat3, b: IntMat3): boolean => a.every((row, i) => row.every((x, j) => x === b[i][j]));
 
-const IDENTITY: IntMat3 = [
-  [1, 0, 0],
-  [0, 1, 0],
-  [0, 0, 1],
-];
+const IDENTITY: IntMat3 = LINEAR_IDENTITY;
 
 /** The inverse of an integer matrix of determinant ±1, exactly (the adjugate divided by ±1). */
 function iinverse(m: IntMat3): IntMat3 {

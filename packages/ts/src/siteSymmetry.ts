@@ -5,8 +5,9 @@
 
 import { checkNumbers, checkOptions, shown, TOLERANCE_KEYS } from './checks.js';
 import { apply, multiply, type Vec3 } from './linalg.js';
+import { closeIndices } from './closure.js';
 import { checkCartesianOperations, type CartesianOperation } from './operations.js';
-import { EPSILON, TOLERANCE_BOUND, toleranceOf, type ToleranceOptions } from './tolerances.js';
+import { EPSILON, ROUNDING_EPSILON, TOLERANCE_BOUND, toleranceOf, type ToleranceOptions } from './tolerances.js';
 
 /** The site symmetry of a direction. */
 export interface SiteSymmetry {
@@ -72,24 +73,6 @@ function productLookup(operations: readonly CartesianOperation[], tolerance: num
   };
 }
 
-/** The indices plus those of every product of two of them that is itself in the list, until closed. */
-function closeWithin(product: (i: number, j: number) => number, indices: readonly number[]): number[] {
-  const set = [...indices];
-  const inSet = new Set(set);
-  // Each element is multiplied with every element before it once, in both orders, as it is added.
-  for (let i = 0; i < set.length; i++) {
-    for (let j = 0; j <= i; j++) {
-      for (const k of [product(set[i], set[j]), product(set[j], set[i])]) {
-        if (k >= 0 && !inSet.has(k)) {
-          inSet.add(k);
-          set.push(k);
-        }
-      }
-    }
-  }
-  return set.sort((x, y) => x - y);
-}
-
 /** The normalised mean of the images of v under the operations at `indices`; undefined if it vanishes. */
 function meanImage(operations: readonly CartesianOperation[], indices: readonly number[], v: Vec3): Vec3 | undefined {
   if (indices.length === 0) return v;
@@ -101,7 +84,7 @@ function meanImage(operations: readonly CartesianOperation[], indices: readonly 
     sum[2] += w[2];
   }
   const n = Math.hypot(sum[0], sum[1], sum[2]);
-  return n > 1e-9 * indices.length ? [sum[0] / n, sum[1] / n, sum[2] / n] : undefined;
+  return n > ROUNDING_EPSILON * indices.length ? [sum[0] / n, sum[1] / n, sum[2] / n] : undefined;
 }
 
 const sameIndices = (a: readonly number[], b: readonly number[]): boolean =>
@@ -147,7 +130,7 @@ export function siteSymmetryOf(
   // fixed space of the closure (the mean of its images, the projector for a group), and repeat on the
   // projected direction until the set is stable.
   const product = productLookup(operations, tolerance);
-  let set = closeWithin(product, fixing(v));
+  let set = closeIndices(product, fixing(v));
   let settled: { indices: number[]; projected: Vec3 } | undefined;
   for (let pass = 0; pass < 8 && !settled; pass++) {
     const mean = meanImage(operations, set, v);
@@ -156,7 +139,7 @@ export function siteSymmetryOf(
         `No common fixed direction for the operations fixing ${shown(direction)} within ${tolerance} (tolerance too large?)`,
       );
     }
-    const next = closeWithin(product, fixing(mean));
+    const next = closeIndices(product, fixing(mean));
     if (sameIndices(next, set)) settled = { indices: set, projected: mean };
     else set = next;
   }

@@ -3,11 +3,7 @@
  * the rank. The tolerances are those of birss-app's `linalg.ts`, where the tensor code comes from.
  */
 
-/** An entry below this (absolute) does not serve as a pivot: float noise is never a new direction. */
-export const PIVOT_EPSILON = 1e-7;
-
-/** An entry below this (absolute) is not eliminated, and is set to zero in the result. */
-export const ELIMINATION_EPSILON = 1e-12;
+import { ELIMINATION_EPSILON, PIVOT_EPSILON } from '../tolerances.js';
 
 /**
  * The reduced row echelon form of the span of `vectors` (all of length `dim`), with its pivot

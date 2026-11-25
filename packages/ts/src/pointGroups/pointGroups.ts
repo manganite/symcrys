@@ -7,7 +7,7 @@
 import { SHUBNIKOV } from './shubnikovData.js';
 import { checkOptions, SETTING_KEYS, shown } from '../checks.js';
 import { INVERSION, det, inverse, matricesEqual, multiply, type Mat3 } from '../linalg.js';
-import { EPSILON } from '../tolerances.js';
+import { EPSILON, INTEGER_EPSILON } from '../tolerances.js';
 import { compactSymbol } from '../notation.js';
 import { compose, operation, operationsEqual, type CartesianOperation, type Operation } from '../operations.js';
 import {
@@ -671,7 +671,7 @@ const frozenMatrix = (m: Mat3 | IntMat3): Mat3 =>
 /** An integer matrix from one that should be one; throws if it is not (a data error). Internal. */
 export function integer(m: Mat3, what: string): Mat3 {
   const r = m.map((row) => row.map((v) => Math.round(v) + 0)) as unknown as Mat3;
-  if (!m.every((row, i) => row.every((v, j) => Math.abs(v - r[i][j]) < 1e-9))) {
+  if (!m.every((row, i) => row.every((v, j) => Math.abs(v - r[i][j]) < INTEGER_EPSILON))) {
     throw new Error(`${what} is not an integer matrix in the lattice basis: ${shown(m)}`);
   }
   return r;

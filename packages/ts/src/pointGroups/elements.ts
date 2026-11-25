@@ -5,6 +5,7 @@
  * left to the applications (docs/conventions.md, "Symmetry directions and elements").
  */
 
+import { AXIS_EPSILON } from '../tolerances.js';
 import { SETTING_KEYS, checkOptions } from '../checks.js';
 import { det, trace, type Mat3, type Vec3 } from '../linalg.js';
 import { crystalFamily } from '../lattice.js';
@@ -92,8 +93,6 @@ export interface SymmetryDirection {
   readonly directions: readonly DirectionElements[];
 }
 
-const AXIS_TOLERANCE = 1e-6;
-
 function normalize(v: Vec3): Vec3 {
   const n = Math.hypot(v[0], v[1], v[2]);
   return [v[0] / n, v[1] / n, v[2] / n];
@@ -116,7 +115,7 @@ function rotationPart(m: Mat3): { r: Mat3; n: number } {
   const r = det(m) > 0 ? m : (m.map((row) => row.map((v) => -v)) as unknown as Mat3);
   const cos = Math.max(-1, Math.min(1, (trace(r) - 1) / 2));
   const angle = Math.acos(cos);
-  const n = angle < 1e-6 ? 1 : Math.round((2 * Math.PI) / angle);
+  const n = angle < AXIS_EPSILON ? 1 : Math.round((2 * Math.PI) / angle);
   if (![1, 2, 3, 4, 6].includes(n)) throw new Error(`Not a crystallographic operation (rotation order ${n})`);
   return { r, n };
 }
@@ -148,12 +147,12 @@ export const axialVector = (r: Mat3): Vec3 => [
 ];
 
 function findAxis(axes: readonly Axis[], u: Vec3, what: string): Axis {
-  const a = axes.find((x) => Math.abs(Math.abs(dot(x.cartesian, u)) - 1) < AXIS_TOLERANCE);
+  const a = axes.find((x) => Math.abs(Math.abs(dot(x.cartesian, u)) - 1) < AXIS_EPSILON);
   if (!a) throw new Error(`${what}: axis [${u.map((v) => v.toFixed(4)).join(', ')}] is not a symmetry direction`);
   return a;
 }
 
-const parallel = (a: Vec3, b: Vec3): boolean => Math.abs(Math.abs(dot(a, b)) - 1) < AXIS_TOLERANCE;
+const parallel = (a: Vec3, b: Vec3): boolean => Math.abs(Math.abs(dot(a, b)) - 1) < AXIS_EPSILON;
 
 /**
  * An operation described geometrically. Its axis lies along a symmetry direction of the setting and

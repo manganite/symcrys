@@ -6,9 +6,16 @@
  */
 
 import { shown } from '../checks.js';
+import { closeIndices } from '../closure.js';
 import { compose, equalModLattice, parseOperation, toPlain, type PlainOperation } from './affine.js';
 import { planeGroupEntry, planeGroupOperations } from './planeGroups.js';
-import { toleranceOf, type ToleranceOptions } from '../tolerances.js';
+import {
+  BOUNDARY_EPSILON,
+  ROUNDING_EPSILON,
+  SINGULAR_RATIO,
+  toleranceOf,
+  type ToleranceOptions,
+} from '../tolerances.js';
 
 /** The site symmetry of a point under a plane group. */
 export interface PlaneSiteSymmetry {
@@ -130,20 +137,7 @@ export function planeOrbit(
 /** Indices of `set` closed under products, modulo the lattice, within the operations of the group. */
 function closeWithin(key: string, set: readonly number[]): number[] {
   const { table } = groupData(key);
-  const out = [...new Set(set)];
-  const member = new Set(out);
-  // Every product of two members is a member once each new member has been combined with all others.
-  for (let i = 0; i < out.length; i++) {
-    for (let j = 0; j <= i; j++) {
-      for (const k of [table[out[i]][out[j]], table[out[j]][out[i]]]) {
-        if (!member.has(k)) {
-          member.add(k);
-          out.push(k);
-        }
-      }
-    }
-  }
-  return out.sort((a, b) => a - b);
+  return closeIndices((i, j) => table[i][j], set);
 }
 
 /** The operations of `indices`, each shifted by the lattice translation that brings its image of `p` nearest to `p`. */
@@ -178,7 +172,7 @@ export function planeSiteSymmetry(
     const fixing = fixingOperations(ops, set, p);
     const mean = [0, 1].map((k) => fixing.reduce((s, op) => s + image(op, p)[k], 0) / fixing.length);
     const next = closeWithin(key, fixingAt(mean));
-    const settled = fixing.every((op) => sameModLattice(image(op, mean), mean, 1e-9));
+    const settled = fixing.every((op) => sameModLattice(image(op, mean), mean, ROUNDING_EPSILON));
     if (settled && next.length === set.length && next.every((x, i) => x === set[i])) {
       const q = mean.map(mod1);
       return {
@@ -220,7 +214,8 @@ export interface PositionDistance {
 /** The free directions of a printed coordinate expression (the columns of W that are not zero, independent ones). */
 function freeDirections(op: PlainOperation): number[][] {
   const cols = [0, 1].map((k) => [op.matrix[0][k], op.matrix[1][k]]).filter((v) => v[0] !== 0 || v[1] !== 0);
-  if (cols.length === 2 && Math.abs(cols[0][0] * cols[1][1] - cols[0][1] * cols[1][0]) < 1e-12) return [cols[0]];
+  if (cols.length === 2 && Math.abs(cols[0][0] * cols[1][1] - cols[0][1] * cols[1][0]) < BOUNDARY_EPSILON)
+    return [cols[0]];
   return cols;
 }
 
@@ -270,7 +265,7 @@ export function planeMetric(basis: unknown): Mat2 {
   const na = ok ? Math.hypot(b[0][0], b[1][0]) : 0;
   const nb = ok ? Math.hypot(b[0][1], b[1][1]) : 0;
   const ratio = na > 0 && nb > 0 ? (b[0][0] / na) * (b[1][1] / nb) - (b[0][1] / nb) * (b[1][0] / na) : 0;
-  if (!ok || !(Math.abs(ratio) > 1e-9)) {
+  if (!ok || !(Math.abs(ratio) > SINGULAR_RATIO)) {
     throw new RangeError(
       `The basis of a plane lattice is a non-singular 2 × 2 matrix (columns a, b), not ${shown(basis)}`,
     );

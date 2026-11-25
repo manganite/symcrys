@@ -75,12 +75,6 @@ export function numericHkl(miller: string, values = REPRESENTATIVE_VALUES): Hkl 
   return substituteMillerIndices(miller, values, (m) => new Error(m));
 }
 
-export const IDENTITY: Mat3 = [
-  [1, 0, 0],
-  [0, 1, 0],
-  [0, 0, 1],
-];
-
 /** The face normal of (hkl) as a Cartesian unit vector: h a* + k b* + l c* with the reciprocal basis B⁻ᵀ. */
 export function normal(basis: Mat3, hkl: Hkl): Vec3 {
   const v = apply(transpose(inverse(basis)), hkl);

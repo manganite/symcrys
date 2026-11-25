@@ -6,6 +6,7 @@
  */
 
 import { shown } from '../checks.js';
+import { gcd } from '../integers.js';
 
 /** A rational number n/d: d > 0, gcd(n, d) = 1, both safe integers. */
 export type Rational = readonly [numerator: number, denominator: number];
@@ -15,15 +16,6 @@ export const ZERO: Rational = [0, 1];
 
 /** The rational 1. */
 export const ONE: Rational = [1, 1];
-
-function gcd(a: number, b: number): number {
-  let x = Math.abs(a);
-  let y = Math.abs(b);
-  while (y !== 0) {
-    [x, y] = [y, x % y];
-  }
-  return x;
-}
 
 /** Throws unless `value` is a safe integer. */
 export function checkSafeInteger(value: number, what: string): number {

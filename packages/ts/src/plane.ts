@@ -376,7 +376,7 @@ function settingOf(key: PlaneGroupKey | PointGroupKey, options: SettingOptions |
 }
 
 /** The exact operations for a key: a plane group (setting 1 only) or a point group in a setting. */
-function exact(key: unknown, options: SettingOptions | undefined, generatorsOnly: boolean): ExactOperation[] {
+function exact(key: unknown, options: SettingOptions | undefined, generatorsOnly: boolean): readonly ExactOperation[] {
   if (isGroupKey(key)) {
     const setting = settingOf(key, options);
     if (setting !== undefined && setting !== 1) {

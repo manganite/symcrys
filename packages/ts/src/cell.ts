@@ -7,7 +7,7 @@
 import { checkObject, checkOptions, shown, TOLERANCE_KEYS } from './checks.js';
 import { apply, inverse, isSingular, multiply, transpose, type Mat3, type Vec3 } from './linalg.js';
 import { checkTimeReversal, type CartesianOperation as MagneticOperation } from './operations.js';
-import { toleranceOf, type ToleranceOptions } from './tolerances.js';
+import { FLAT_CELL_RADICAND, INTEGER_EPSILON, toleranceOf, type ToleranceOptions } from './tolerances.js';
 import { deepFreeze } from './freeze.js';
 
 /** The lattice parameters of a cell: edge lengths and angles in degrees (α between b and c, β between a and c, γ between a and b). */
@@ -95,7 +95,7 @@ export function isValidCell(angles: CellAngles, options?: IsValidCellOptions): b
   if (!(typeof min === 'number' && min >= 0 && min <= 1))
     throw new RangeError(`isValidCell: minVolumeRatio must be a number from 0 to 1, not ${String(min)}`);
   const r = radicand(angles);
-  if (!(r > 1e-12)) return false;
+  if (!(r > FLAT_CELL_RADICAND)) return false;
   return Math.sqrt(r) >= min;
 }
 
@@ -259,7 +259,7 @@ export function residualOperations<T extends CellOperation>(
       m.every((r) => Array.isArray(r) && r.length === 3 && r.every((x) => typeof x === 'number' && Number.isFinite(x)));
     if (!ok) throw new RangeError(`residualOperations: operation ${i} has no 3×3 matrix of finite numbers`);
     // W is an integer matrix; a Cartesian matrix (±√3/2) passed as `matrix` would give a wrong answer.
-    if (!(m as number[][]).every((r) => r.every((x) => Math.abs(x - Math.round(x)) <= 1e-9))) {
+    if (!(m as number[][]).every((r) => r.every((x) => Math.abs(x - Math.round(x)) < INTEGER_EPSILON))) {
       throw new RangeError(
         `residualOperations: the matrix of operation ${i} is not an integer matrix in the lattice basis (the field matrix of an operation, not cartesian): ${shown(m)}`,
       );

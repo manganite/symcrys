@@ -3,7 +3,7 @@
  * i, column j, and a matrix acts on a column vector from the left.
  */
 
-import { EPSILON, SNAP_EPSILON } from './tolerances.js';
+import { EPSILON, SINGULAR_RATIO, SNAP_EPSILON } from './tolerances.js';
 
 /** A Cartesian vector. */
 export type Vec3 = readonly [number, number, number];
@@ -119,14 +119,6 @@ export function matricesEqual(a: Mat3, b: Mat3): boolean {
   for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) if (Math.abs(a[i][j] - b[i][j]) > EPSILON) return false;
   return true;
 }
-
-/**
- * Below this ratio of |det| to the product of the column lengths (Hadamard's bound, the largest
- * |det| columns of these lengths can have) a matrix counts as singular. The ratio depends neither
- * on the unit of the entries nor on the lengths of the columns relative to each other; for a cell
- * it is V/(abc).
- */
-const SINGULAR_RATIO = 1e-9;
 
 /**
  * True if `a` is singular within rounding: |det a| at most `SINGULAR_RATIO` times the product of
