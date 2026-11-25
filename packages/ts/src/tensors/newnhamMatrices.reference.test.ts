@@ -10,7 +10,7 @@
  * `findPointGroup` reads it.
  *
  * The Voigt matrices are compared with `toVoigt` of the computed forms with Newnham's factors: none
- * for the stiffnesses (§ 13.2, p. 105, ½(c11 − c12)), those of d for the piezomagnetic matrix
+ * for the stiffnesses (§ 13.1, p. 105; ½(c11 − c12) in Table 13.1), those of d for the piezomagnetic matrix
  * (−2Q22, −2Q11), so the tests check the factors as well.
  */
 
@@ -157,6 +157,16 @@ function magneticTable(
       }
     });
   }
+
+  it('a symbol read in another setting (errata) does not give the printed matrix as printed', () => {
+    for (const [, printed, readAs] of ERRATA.filter((e) => e[0] === table)) {
+      const asPrinted = magnetic.findPointGroup(printed);
+      if (!asPrinted) continue;
+      const row = rows.find((r) => r[0].split(',').some((g) => g.trim() === printed))!;
+      const basis = matrixOf(magnetic.tensorForm(asPrinted.key, property, { setting: asPrinted.setting }).basis);
+      expect(sameSpace(basis, printedSpace(row[1]), dim), `${printed} (read as ${readAs})`).toBe(false);
+    }
+  });
 
   it('the row of the others is zero', () => {
     const others = rows.filter((r) => OTHERS.includes(r[0]));

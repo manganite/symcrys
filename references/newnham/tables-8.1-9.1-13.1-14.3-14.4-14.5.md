@@ -50,7 +50,7 @@ The dielectric constant K_ij. The last column is the number of coefficients as p
 
 ## Table 13.1, pp. 108–109
 
-The elastic stiffnesses c_ij in Voigt's notation, "no factors of two or four" (§ 13.2, p. 105:
+The elastic stiffnesses c_ij in Voigt's notation, "no factors of two or four" (§ 13.1, p. 105:
 c₆₁ = c₁₂₁₁, c₆₆ = c₁₂₁₂).
 
 | System | Point groups | Matrix |
@@ -68,7 +68,9 @@ c₆₁ = c₁₂₁₁, c₆₆ = c₁₂₁₂).
 
 ## Table 14.3, p. 133
 
-The pyromagnetic coefficients (the spontaneous magnetization), printed as a row.
+The pyromagnetic coefficients (the spontaneous magnetization), printed as a row. Print has no comma
+after the `6` that ends the second line of the long group list (`4/mm'm', 6` / `-6, 6/m, …`); the
+line break is read as the separator.
 
 | Magnetic point groups | Pyromagnetic matrix |
 |---|---|
@@ -147,7 +149,7 @@ the 14 magnetic Curie groups."
   (p. 111, operations 2_x, 2_y and 2′_xy, 2′_−xy); likewise the class 432 has one, `4'32'` (p. 112);
   Birss Table 6 (pp. 91–98) writes both so (`references/itc/vol-d-table-1.5.2.3.md`,
   `references/birss/table-6.md`). Newnham writes the second prime in the other groups of the same
-  rows (`4'mm'`, `-4'2m'`), and ITC Vol. D prints `4'22'` and `4'32'` in the blocks with these
+  rows (`4'mm'` in both tables, `-4'2m'` in Table 14.5), and ITC Vol. D prints `4'22'` and `4'32'` in the blocks with these
   matrices (Table 1.5.8.1, p. 139, block 10; Table 1.5.7.1, p. 135, blocks 10 and 16).
 - **The other orientation:** five symbols name a tetragonal or hexagonal group in the orientation
   turned by 45° (by 30° for −6′m′2) against the one of the printed matrix. ITC Vol. D prints the
