@@ -12,7 +12,8 @@ and how each other component follows from them.
 ## The files
 
 Copy `dist/` of the package (from the npm tarball, `node_modules/symcrys/dist/`, or the release on
-GitHub) to `symcrys/` next to the page:
+GitHub) to `symcrys/` next to the page, and serve the folder over HTTP (for instance
+`python3 -m http.server` in it): a browser does not load modules from a page opened as a file.
 
 ```text
 index.html
@@ -20,6 +21,9 @@ main.js       the page: lists, events, output
 form.js       the form as text, without the DOM
 symcrys/      a copy of dist/
 ```
+
+The import map names only `symcrys`; the other entry points are added in the same way
+(`"symcrys/magnetic": "./symcrys/magnetic.js"`, `"symcrys/plane": "./symcrys/plane.js"`).
 
 ```{literalinclude} examples/browser/index.html
 :language: html
@@ -31,7 +35,7 @@ symcrys/      a copy of dist/
 
 `form.js` turns the numbers of `tensorForm` into text: the free components are the index lists of
 `parameters`, and each row of `relations` has 1 at a dependent component and minus its coefficients at
-the free ones ([Tensors and named properties](tensors.md)). Such text is the application's choice,
+the free ones, a row with a single 1 a component that is 0 ([Conventions](conventions.md), "Tensors"). Such text is the application's choice,
 not symcrys' ([Conventions](conventions.md), "Tensors").
 
 ```{literalinclude} examples/browser/form.js

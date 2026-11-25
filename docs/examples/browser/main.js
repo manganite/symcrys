@@ -1,7 +1,7 @@
 // The page script of index.html: a group, a setting and a property chosen, the form shown. It runs
 // unbundled in the browser; 'symcrys' is resolved by the import map of the page to the copied dist/.
 import * as symcrys from 'symcrys';
-import { describeForm } from './form.js';
+import { describeForm, label } from './form.js';
 
 /** @param {string} id */
 const element = (id) => /** @type {HTMLSelectElement} */ (document.getElementById(id));
@@ -42,7 +42,7 @@ function chooseGroup() {
   const key = /** @type {symcrys.PointGroupKey} */ (groups.value);
   fill(
     settings,
-    symcrys.settings(key).map((s) => ({ value: String(s.index), text: `${s.index}: ${s.symbol}` })),
+    symcrys.settings(key).map((s) => ({ value: String(s.index), text: `${s.index}: ${label(s)}` })),
   );
   show();
 }

@@ -459,8 +459,9 @@ Decided by Thomas on 2026-11-20 (#29), asked before implementation, unless a poi
   `TENSOR_PROPERTIES`. A failing example fails the gate `docs`. The browser example (`docs/browser.md`,
   #65; chosen while implementing, 2026-11-25): its logic (`form.js`) takes the module as an argument
   and runs in Node when the site is built, the page script is type-checked against the DOM
-  (`docs:check`), and the site serves the page with a copy of `dist/` under `browser/`; there is no
-  headless browser in the gates.
+  (`docs:check`), and the site serves the page with a copy of `dist/` under `browser/`, the build
+  failing if a file of it is missing; there is no headless browser in the gates (to be decided by
+  Thomas, #188).
 - **Conventions are included, not copied**: `docs/conventions.md` is a page of the site.
 - **Only the newest version** on the site, which names it in its title; versioned pages from 1.0.0
   on, when the API holds still (#57).

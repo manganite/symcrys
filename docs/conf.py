@@ -129,7 +129,11 @@ def _browser_example() -> None:
     dist = ROOT / "packages" / "ts" / "dist"
     if not (dist / "index.js").exists():
         raise RuntimeError("packages/ts/dist is missing: run npm run build before the site")
-    shutil.copytree(dist, target / "symcrys", ignore=shutil.ignore_patterns("*.d.ts", "*.d.ts.map", "*.js.map"))
+    # The declarations are not needed in a page; the source maps are, for the browser's tools.
+    shutil.copytree(dist, target / "symcrys", ignore=shutil.ignore_patterns("*.d.ts", "*.d.ts.map"))
+    for needed in ("index.html", "main.js", "form.js", "symcrys/index.js"):
+        if not (target / needed).exists():
+            raise RuntimeError(f"the browser example lacks {needed}")
 
 
 _browser_example()
