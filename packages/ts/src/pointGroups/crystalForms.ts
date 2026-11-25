@@ -69,7 +69,7 @@ export interface CrystalFormType {
   /** Number of faces. */
   readonly faces: number;
   /**
-   * The eigensymmetry as printed: the point group of the form as a polyhedron, e.g. `4/mmm`, `-62m`;
+   * The eigensymmetry: the point group of the form as a polyhedron, e.g. `4/mmm`, `-62m`;
    * `∞m` for the pedion and `∞/mm` for the pinacoid.
    */
   readonly eigensymmetry: string;
@@ -92,8 +92,8 @@ export interface CrystalForm {
   /** The kind of the form, its key in `CRYSTAL_FORM_TYPES`. */
   readonly formType: CrystalFormTypeKey;
   /**
-   * ITA's first face as printed, components separated by commas, e.g. `h,0,l`, or `h,h,-2h,l`
-   * (Bravais–Miller indices) for hexagonal axes; a leading `-` is an overbar.
+   * The first face of the form in the usual notation, components separated by commas, e.g. `h,0,l`,
+   * or `h,h,-2h,l` (Bravais–Miller indices) for hexagonal axes; a leading `-` is an overbar.
    */
   readonly millerIndices: string;
   /** The condition ITA prints with the form, `|h|<|l|` or `|h|>|l|` (cubic forms (hhl)); absent otherwise. */

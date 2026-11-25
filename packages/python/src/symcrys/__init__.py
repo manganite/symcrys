@@ -315,14 +315,12 @@ class TensorSpec(TypedDict):
 
 @final
 class TensorProperty(TypedDict):
-    """A named property: the tensor that describes it, what it is and where it is defined."""
+    """A named property: the tensor that describes it and what it is."""
 
     spec: TensorSpec
     """The kind of tensor whose non-zero form means that the property is allowed."""
     description: str
     """The physical quantity the tensor relates."""
-    source: str
-    """Print source of the definition, with printed page."""
 
 
 @final
@@ -599,8 +597,8 @@ class CrystalFormType(TypedDict):
     faces: int
     """Number of faces."""
     eigensymmetry: str
-    """The eigensymmetry as printed: the point group of the form as a polyhedron, e.g. ``4/mmm``,
-    ``-62m``; ``∞m`` for the pedion and ``∞/mm`` for the pinacoid.
+    """The eigensymmetry: the point group of the form as a polyhedron, e.g. ``4/mmm``, ``-62m``; ``∞m``
+    for the pedion and ``∞/mm`` for the pinacoid.
     """
 
 
@@ -622,8 +620,8 @@ class CrystalForm(TypedDict):
     form_type: CrystalFormTypeKey
     """The kind of the form, its key in ``CRYSTAL_FORM_TYPES``."""
     miller_indices: str
-    """ITA's first face as printed, components separated by commas, e.g. ``h,0,l``, or ``h,h,-2h,l``
-    (Bravais–Miller indices) for hexagonal axes; a leading ``-`` is an overbar.
+    """The first face of the form in the usual notation, components separated by commas, e.g. ``h,0,l``,
+    or ``h,h,-2h,l`` (Bravais–Miller indices) for hexagonal axes; a leading ``-`` is an overbar.
     """
     condition: NotRequired[str]
     """The condition ITA prints with the form, ``|h|<|l|`` or ``|h|>|l|`` (cubic forms (hhl)); absent
@@ -694,7 +692,7 @@ _S_CoordinateChange = (
     },
 )
 _S_TensorSpec = ("d", {"rank": _I, "kind": _V, "intrinsic": _V, "timeParity": _V})
-_S_TensorProperty = ("d", {"spec": _S_TensorSpec, "description": _V, "source": _V})
+_S_TensorProperty = ("d", {"spec": _S_TensorSpec, "description": _V})
 _S_PointGroup = (
     "d",
     {

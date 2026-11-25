@@ -812,7 +812,7 @@ tetragonal dipyramids of 422, (h0l) and (hhl)).
 - **Groups.** As the Wyckoff positions: the 32 crystal classes only (a RangeError otherwise), and the settings ITA does not print (`mm2` settings 2 and 3, monoclinic unique axis a) are
   setting 1 carried into their frame.
 - **Faces with numbers and their normals:** `millerIndices` and `faceNormal`, as for the Wyckoff
-  positions; the form and its number do not depend on the cell angles.
+  positions; the form and its kind do not depend on the cell angles.
 - **Print anchors.** Table 3.2.3.2 for the forms of each position, Table 3.2.1.3 for the 47 forms. The
   tests check the two tables against each other: every form of Table 3.2.3.2, with the face symmetry
   of its position, is listed among the generating point groups of its form in Table 3.2.1.3, in bold

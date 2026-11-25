@@ -10,8 +10,7 @@ import type { TensorSpec } from './tensorForm.js';
 
 /** A named property: the tensor that describes it and what it is. */
 export interface TensorProperty {
-  /**
-   * The kind of tensor whose non-zero form means that the property is allowed. */
+  /** The kind of tensor whose non-zero form means that the property is allowed. */
   readonly spec: TensorSpec;
   /** The physical quantity the tensor relates. */
   readonly description: string;
@@ -30,7 +29,7 @@ export const TENSOR_PROPERTIES = Object.freeze({
   /**
    * Spontaneous polarization: a time-even polar vector.
    *
-   * Source: ITC Vol. D (2013), § 1.1.4.4.2, p. 12; classes: ITA (2016) Table 3.2.2.1, p. 738.
+   * @remarks Source: ITC Vol. D (2013), § 1.1.4.4.2, p. 12; classes: ITA (2016) Table 3.2.2.1, p. 738.
    */
   pyroelectric: property(
     { rank: 1, kind: 'polar', timeParity: 'even', intrinsic: 'none' },
@@ -39,7 +38,7 @@ export const TENSOR_PROPERTIES = Object.freeze({
   /**
    * Ferroaxial order: a time-even axial vector (not a term of ITC).
    *
-   * Source (not ITC): Hlinka, Privratska, Ondrejkovic & Janovec, Phys. Rev. Lett. 116, 177602
+   * @remarks Source: Hlinka, Privratska, Ondrejkovic & Janovec, Phys. Rev. Lett. 116, 177602
    * (2016); Gallego et al., Acta Cryst. A75, 438 (2019), p. 440 (axial toroidal moment, type eV);
    * classes: Birss (1966), Tables 4a and 4c, pp. 56–58.
    */
@@ -50,7 +49,7 @@ export const TENSOR_PROPERTIES = Object.freeze({
   /**
    * The piezoelectric effect (and second-harmonic generation, which has the same tensor): polar, rank 3, symmetric in j, k.
    *
-   * Source: ITC Vol. D (2013), § 1.1.4.4.3, p. 12, and § 1.1.4.10.1, eqs. (1.1.4.5), (1.1.4.7),
+   * @remarks Source: ITC Vol. D (2013), § 1.1.4.4.3, p. 12, and § 1.1.4.10.1, eqs. (1.1.4.5), (1.1.4.7),
    * p. 24; classes: ITA (2016) Table 3.2.2.1, p. 738.
    */
   piezoelectric: property(
@@ -60,7 +59,7 @@ export const TENSOR_PROPERTIES = Object.freeze({
   /**
    * Optical activity: the symmetric axial tensor of rank 2.
    *
-   * Source: ITC Vol. D (2013), § 1.1.4.10.7.2, p. 30; classes: ITA (2016) Table 3.2.2.1, p. 738.
+   * @remarks Source: ITC Vol. D (2013), § 1.1.4.10.7.2, p. 30; classes: ITA (2016) Table 3.2.2.1, p. 738.
    */
   gyrotropic: property(
     { rank: 2, kind: 'axial', timeParity: 'even', intrinsic: 'symmetric-first-pair' },
@@ -69,7 +68,7 @@ export const TENSOR_PROPERTIES = Object.freeze({
   /**
    * Spontaneous magnetization: a time-odd axial vector (magnetic API only).
    *
-   * Source: ITC Vol. D (2013), § 1.5.2.1 with Table 1.5.2.4, p. 113.
+   * @remarks Source: ITC Vol. D (2013), § 1.5.2.1 with Table 1.5.2.4, p. 113.
    */
   ferromagnetic: property(
     { rank: 1, kind: 'axial', timeParity: 'odd', intrinsic: 'none' },
@@ -78,7 +77,7 @@ export const TENSOR_PROPERTIES = Object.freeze({
   /**
    * A spontaneous toroidal moment: a time-odd polar vector (magnetic API only).
    *
-   * Source: ITC Vol. D (2013), § 1.5.4.3, p. 128 (the term), and § 1.5.8.1, footnote 3, p. 140 (the
+   * @remarks Source: ITC Vol. D (2013), § 1.5.4.3, p. 128 (the term), and § 1.5.8.1, footnote 3, p. 140 (the
    * 31 groups of Table 1.5.8.1 whose magnetoelectric tensor need not be symmetric); Gallego et al.,
    * Acta Cryst. A75, 438 (2019), p. 440 (polar toroidal moment, type aV).
    */
@@ -89,7 +88,7 @@ export const TENSOR_PROPERTIES = Object.freeze({
   /**
    * The linear magnetoelectric effect: a time-odd axial tensor of rank 2 (magnetic API only).
    *
-   * Source: ITC Vol. D (2013), § 1.5.8, eqs. (1.5.8.2), (1.5.8.3), p. 139, and § 1.5.8.1 with Table
+   * @remarks Source: ITC Vol. D (2013), § 1.5.8, eqs. (1.5.8.2), (1.5.8.3), p. 139, and § 1.5.8.1 with Table
    * 1.5.8.1, pp. 139–140.
    */
   magnetoelectric: property(
@@ -99,7 +98,7 @@ export const TENSOR_PROPERTIES = Object.freeze({
   /**
    * The piezomagnetic effect: a time-odd axial tensor of rank 3, symmetric in j, k (magnetic API only).
    *
-   * Source: ITC Vol. D (2013), § 1.5.7, eq. (1.5.7.2), and § 1.5.7.1 with Table 1.5.7.1, pp.
+   * @remarks Source: ITC Vol. D (2013), § 1.5.7, eq. (1.5.7.2), and § 1.5.7.1 with Table 1.5.7.1, pp.
    * 134–135.
    */
   piezomagnetic: property(

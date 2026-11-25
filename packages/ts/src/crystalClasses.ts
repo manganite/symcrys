@@ -149,14 +149,12 @@ export interface CellOperation {
   readonly timeReversal?: false;
 }
 
-/** A named property: the tensor that describes it, what it is and where it is defined. */
+/** A named property: the tensor that describes it and what it is. */
 export interface TensorProperty {
   /** The kind of tensor whose non-zero form means that the property is allowed. */
   readonly spec: TensorSpec;
   /** The physical quantity the tensor relates. */
   readonly description: string;
-  /** Print source of the definition, with printed page. */
-  readonly source: string;
 }
 
 /** Name of a tensor property in `TENSOR_PROPERTIES`. */

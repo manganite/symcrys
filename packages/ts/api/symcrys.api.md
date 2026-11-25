@@ -472,7 +472,6 @@ export type TensorKind = 'polar' | 'axial';
 // @public
 export interface TensorProperty {
     readonly description: string;
-    readonly source: string;
     readonly spec: TensorSpec;
 }
 

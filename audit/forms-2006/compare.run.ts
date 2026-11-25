@@ -51,12 +51,15 @@ it('compares symcrys with the 2006 catalogue', async () => {
   };
   const diffs: string[] = [];
   let formsCompared = 0;
-  for (const t of CRYSTAL_FORM_TYPES) {
+  // The catalogue numbers the forms as ITA does; the kinds of symcrys are in the same order.
+  const numberOf = new Map(Object.keys(CRYSTAL_FORM_TYPES).map((k, i) => [k, i + 1]));
+  for (const [key, t] of Object.entries(CRYSTAL_FORM_TYPES)) {
     formsCompared++;
-    const old = (FORM_TYPES as Record<number, { eig: string }>)[t.number];
-    const faces = (FACE_COUNT as Record<number, number>)[t.number];
+    const number = numberOf.get(key)!;
+    const old = (FORM_TYPES as Record<number, { eig: string }>)[number];
+    const faces = (FACE_COUNT as Record<number, number>)[number];
     if (!old || old.eig !== t.eigensymmetry || faces !== t.faces) {
-      diffs.push(`| form ${t.number} | ${faces} faces, ${old?.eig} | ${t.faces} faces, ${t.eigensymmetry} |`);
+      diffs.push(`| form ${number} (${key}) | ${faces} faces, ${old?.eig} | ${t.faces} faces, ${t.eigensymmetry} |`);
     }
   }
   let rowsCompared = 0;
@@ -65,7 +68,7 @@ it('compares symcrys with the 2006 catalogue', async () => {
     const basic = crystalForms(key, { setting }).filter((f) => f.basic);
     const lib = basic.map(
       (f) =>
-        `${f.multiplicity}${f.letter} ${f.siteSymmetry} ${f.formType} (${symcrysIndices(f.millerIndices, f.condition)})`,
+        `${f.multiplicity}${f.letter} ${f.siteSymmetry} ${numberOf.get(f.formType)} (${symcrysIndices(f.millerIndices, f.condition)})`,
     );
     const cat = rows.map(([wy, fs, type, sym, , mult]) => `${mult}${wy} ${fs} ${type} (${catalogueIndices(sym)})`);
     rowsCompared += cat.length;

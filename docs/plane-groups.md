@@ -20,8 +20,8 @@ TypeScript; in Python they are in snake case (`wyckoffPositions` → `plane.wyck
 
 A key is the symbol ITA prints: `'p2mg'`, `'c2mm'` for a plane group, `'2mm'`, `'4mm'`, `'3m'` for a
 plane point group (the plane point group of a plane group is its linear part). `planeGroup` gives
-the data of a group as ITA prints it (number, point group, crystal system, Patterson symmetry,
-centring, origin) and its Bravais lattice, the symbols come from `symbol`, and
+the data of a group (number, point group, crystal system, Patterson symmetry, centring, the site
+symmetry of the origin) and its Bravais lattice, the symbols come from `symbol`, and
 `findPlaneGroup` reads a symbol in the forms `symbol` writes.
 
 ```{code-cell} ipython3

@@ -560,7 +560,7 @@ operations }`; `undefined`, never `null` (`zoneAxis`); every result frozen and `
   over every function of the three entry points; `residualOperations` freezes its list, not the
   caller's operations); parameter names `direction1`, `direction2`, `plane1`, `plane2`, `symbol`; the
   origin of a plane group as its site symmetry (`2..` for `p2mg`), derived since #194 (Thomas,
-  2026-11-25, asked with options). The Wyckoff `coordinates` of the point groups are the printed list too (Thomas,
+  2026-11-25, asked with options). The Wyckoff `coordinates` of the point groups are the full list of each position (Thomas,
   2026-11-23: transcribed in full from ITA Table 3.2.3.2; the second part of step 7d).
 - **Names of ITA** (#137 C1, C2, decided by Thomas on 2026-11-22; #121 step 7c): the suffix `…Of`
   means "of a list of operations" and only that: `siteSymmetryOf(operations, direction)` beside
@@ -1156,7 +1156,7 @@ while implementing gets its own note here.
   additional check by `audit/plane-groups-2006` (against plane-groups' transcription,
   `js/ebenengruppen.js`), not the reference; printed p. 92 is PDF page 235 (checked at that page
   only). The data of the 17 groups (`src/spaceGroups/planeGroupData.ts`) hold what the pages print
-  except the diagrams, the Patterson symmetry, the symmetry operations as text (kept in `references/`, the anchor of their
+  except the diagrams, the origin (derived since #194), the symmetry operations as text (kept in `references/`, the anchor of their
   description, `describe.reference.test.ts`) and the reflection conditions (not transcribed: plane-groups leaves
   diffraction to the diffraction app); the selected generators must close into the printed general
   position, or `planeGroupOperations` throws, as for the point groups.
