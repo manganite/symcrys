@@ -4,7 +4,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { planSite } from '../../../scripts/assemble-site.mjs';
+import { planSite } from './assemble-site.mjs';
 
 describe('planSite', () => {
   it('puts the newest release at the root and each MINOR under its folder', () => {

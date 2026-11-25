@@ -201,7 +201,8 @@ Carried over from birss-app, where the calculations come from.
 
 ## Tests
 
-- Tests sit next to their module (`foo.ts`, `foo.test.ts`), as in birss-app.
+- Tests sit next to their module (`foo.ts`, `foo.test.ts`), as in birss-app; the test of a repository
+  script next to the script (`scripts/assemble-site.test.mjs`), which vitest collects too.
 - **Test-only code** is `*.test.ts`, `*.fixtures.ts`, `*.pins.json` and anything in a `testUtils/`
   folder (in `packages/ts/src`). It is
   type-checked with Node types (tests read `references/` from disk), may import Node built-ins,
@@ -474,7 +475,10 @@ Decided by Thomas on 2026-11-20 (#29), asked before implementation, unless a poi
   are, and the newest PATCH of each MINOR under `/X.Y/`, with `versions.json` for a small version
   menu of our own in the sidebar (`docs/_templates/sidebar/versions.html`; furo has none). No branch,
   no change of the Pages settings; the title names the version of each page, and every page's
-  canonical link points to the root. Releases before 0.14 carry no site and stay off.
+  canonical link points to the root. Releases before 0.14 carry no site and stay off. Chosen while
+  implementing (review of PR #192): the site is attached in a job of its own with write access and no
+  dependencies, after npm and PyPI; only releases that carry a site are downloaded, and a failed
+  download fails the job; a PATCH of an older MINOR goes under its folder and leaves the root.
 - **Short READMEs** (root, `packages/ts` for npm, `packages/python` for PyPI): what symcrys is, how
   to install, one short example, the link to the site. The root README keeps development and
   releases.

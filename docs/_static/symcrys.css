@@ -21,3 +21,6 @@ table.tensor-properties {
 .sidebar-versions select {
   margin-left: 0.5rem;
 }
+.sidebar-versions button {
+  margin-left: 0.25rem;
+}

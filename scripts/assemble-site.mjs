@@ -6,11 +6,12 @@
 //
 //   node scripts/assemble-site.mjs <folder with the tarballs> <output folder> <version of the tag>
 //
-// It refuses to assemble a site without the tagged version, so a failed download cannot publish
-// an older site.
+// It refuses to assemble without the site of the tagged version, so that a failed download cannot
+// publish a site without it. A PATCH of an older MINOR (0.14.2 after 0.15.0) goes under /0.14/ and
+// leaves the root to the newest release.
 
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -59,18 +60,18 @@ export function planSite(names) {
  * @param {string} required the version of the tag, which must be among the sites
  */
 function assemble(input, output, required) {
-  const { versions, tarballs } = planSite(readdirSync(input));
-  if (!versions.some((v) => v.version === required)) {
-    throw new Error(`assemble-site: no site of ${required} among ${JSON.stringify(readdirSync(input))}`);
+  const names = readdirSync(input);
+  if (!names.includes(`symcrys-site-${required}.tar.gz`)) {
+    throw new Error(`assemble-site: no site of the tagged version ${required} among ${JSON.stringify(names)}`);
   }
-  if (versions[0].version !== required) {
-    throw new Error(`assemble-site: the newest site is ${versions[0].version}, not the tagged ${required}`);
-  }
+  const { versions, tarballs } = planSite(names);
   rmSync(output, { recursive: true, force: true });
   for (const [path, name] of Object.entries(tarballs)) {
     const target = join(output, path);
     mkdirSync(target, { recursive: true });
     execFileSync('tar', ['-xzf', join(input, name), '-C', target]);
+    // Only the root's sitemap is announced; one in a folder would list the root's addresses.
+    if (path !== '' && existsSync(join(target, 'sitemap.xml'))) rmSync(join(target, 'sitemap.xml'));
   }
   writeFileSync(join(output, 'versions.json'), `${JSON.stringify(versions, null, 2)}\n`);
   console.log(`assemble-site: ${versions.map((v) => `${v.path || '/'} ${v.version}`).join(', ')}`);
