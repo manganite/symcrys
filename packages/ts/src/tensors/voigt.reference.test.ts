@@ -177,3 +177,30 @@ describe('ITC Vol. D § 1.1.4.10.3, § 1.1.4.10.5 and eq. (1.5.7.4): third- and 
     });
   }
 });
+
+describe('ITC Vol. D § 1.7.2.2.1.3 (p. 185): the susceptibility of second-harmonic generation', () => {
+  it('is contracted without factors: toVoigt with [1] gives χ_μm = χ_μαβ for each printed pair of m', () => {
+    const rows = tableRows(section(FILE, '## The susceptibility')).slice(1);
+    const letter = (c: string) => 'xyz'.indexOf(c);
+    const spec: TensorSpec = { rank: 3, kind: 'polar', timeParity: 'even', intrinsic: 'symmetric-last-pair' };
+    const t = tensorOf(spec);
+    const v = magnetic.toVoigt(t, spec, { factors: [1] }) as readonly (readonly number[])[];
+    const mu = rows.filter((r) => r[0] === 'μ').map((r) => /^([xyz]) → (\d)$/.exec(r[1])!);
+    const m = rows.filter((r) => r[0] === 'm');
+    expect([mu.length, m.length]).toEqual([3, 6]);
+    for (const [, axis, row] of mu) {
+      for (const [, contraction] of m) {
+        const [pairs, column] = contraction.split(' → ');
+        for (const pair of pairs.split(' = ')) {
+          const value = t[letter(axis) * 9 + letter(pair[0]) * 3 + letter(pair[1])];
+          close(v[Number(row) - 1][Number(column) - 1], value, `χ_${row}${column} = χ_${axis}${pair}`);
+        }
+      }
+    }
+    // Eq. (1.7.2.41): χ₂₅ multiplies e_x e_z + e_z e_x, so it is χ_yxz itself, half of d_25 of the
+    // piezoelectric convention (d_iα = d_ijk + d_ikj).
+    const d = magnetic.toVoigt(t, spec, { factors: [2] }) as readonly (readonly number[])[];
+    close(v[1][4], t[1 * 9 + 0 * 3 + 2], 'χ_25 = χ_yxz');
+    close(d[1][4], 2 * v[1][4], 'd_25 = 2χ_25');
+  });
+});

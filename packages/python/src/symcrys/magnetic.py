@@ -2089,12 +2089,15 @@ def to_voigt(
     ----------
     factors : keyword-only, optional
         The factor of each contracted index pair, in the order of the pairs: 2 where ITC defines the
-        Voigt component as the sum of the two symmetric components, as for the strain (S₄ = 2S₂₃),
-        the piezoelectric d (d_iα = d_ijk + d_ikj), the piezomagnetic Λ and the compliances s (``[2,
-        2]``); 1 where it is the component itself, as for the stress, the piezoelectric e and the
-        stiffnesses c (``[1, 1]``); the piezo-optic π has ``[1, 2]``. Required for a specification;
-        a named property takes ITC's factors where ITC tabulates it in Voigt's notation
-        (``'piezoelectric'``, ``'piezomagnetic'``: ``[2]``).
+        Voigt component as the sum of the two symmetric components, 1 where it is the component
+        itself (ITC Vol. D § 1.1.4.10). So the strain (S₄ = 2S₂₃), the piezoelectric d (d_iα = d_ijk
+        + d_ikj) and the piezomagnetic Λ take ``[2]``, the compliances s and the electrostriction Q
+        ``[2, 2]``; the stress and the piezoelectric e take ``[1]``, the stiffnesses c and the
+        elasto-optic p ``[1, 1]``; the piezo-optic π takes ``[1, 2]``; the susceptibility of
+        second-harmonic generation, which has the tensor of ``'piezoelectric'``, takes ``[1]`` (§
+        1.7.2.2.1.3, p. 185). Required, except for ``'piezomagnetic'``, which takes ITC's ``[2]``
+        (eq. (1.5.7.4)); ``'piezoelectric'`` has none, since its tensor serves both d and
+        second-harmonic generation.
     tolerance : keyword-only, optional
         The index symmetry of the tensor (or of the tensor of a Voigt array) is checked within this
         tolerance, relative to its largest component; default ``EPSILON`` (10⁻⁶).
@@ -2136,12 +2139,15 @@ def from_voigt(
     ----------
     factors : keyword-only, optional
         The factor of each contracted index pair, in the order of the pairs: 2 where ITC defines the
-        Voigt component as the sum of the two symmetric components, as for the strain (S₄ = 2S₂₃),
-        the piezoelectric d (d_iα = d_ijk + d_ikj), the piezomagnetic Λ and the compliances s (``[2,
-        2]``); 1 where it is the component itself, as for the stress, the piezoelectric e and the
-        stiffnesses c (``[1, 1]``); the piezo-optic π has ``[1, 2]``. Required for a specification;
-        a named property takes ITC's factors where ITC tabulates it in Voigt's notation
-        (``'piezoelectric'``, ``'piezomagnetic'``: ``[2]``).
+        Voigt component as the sum of the two symmetric components, 1 where it is the component
+        itself (ITC Vol. D § 1.1.4.10). So the strain (S₄ = 2S₂₃), the piezoelectric d (d_iα = d_ijk
+        + d_ikj) and the piezomagnetic Λ take ``[2]``, the compliances s and the electrostriction Q
+        ``[2, 2]``; the stress and the piezoelectric e take ``[1]``, the stiffnesses c and the
+        elasto-optic p ``[1, 1]``; the piezo-optic π takes ``[1, 2]``; the susceptibility of
+        second-harmonic generation, which has the tensor of ``'piezoelectric'``, takes ``[1]`` (§
+        1.7.2.2.1.3, p. 185). Required, except for ``'piezomagnetic'``, which takes ITC's ``[2]``
+        (eq. (1.5.7.4)); ``'piezoelectric'`` has none, since its tensor serves both d and
+        second-harmonic generation.
     tolerance : keyword-only, optional
         The index symmetry of the tensor (or of the tensor of a Voigt array) is checked within this
         tolerance, relative to its largest component; default ``EPSILON`` (10⁻⁶).

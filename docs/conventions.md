@@ -978,9 +978,11 @@ d_ikj; the piezomagnetic Λ, Λ_i4 = 2Λ_i23, eq. (1.5.7.4); the compliances s a
 Q on both pairs, eq. (1.1.4.12)), or as one component (factor 1: the stress, the piezoelectric e,
 the stiffnesses c, the elasto-optic p); the piezo-optic π has 1 on its first pair and 2 on its
 second. So the specification does not fix the factors, and the caller gives one per pair
-(`factors: [2]`, `[2, 2]`, `[1, 2]`; decided by Thomas on 2026-11-25); the named properties that
-ITC tabulates in this notation take its factors by default (`'piezoelectric'`, `'piezomagnetic'`:
-`[2]`). A tensor that lacks the index symmetry of its specification, or a Voigt array that is no
+(`factors: [2]`, `[2, 2]`, `[1, 2]`; decided by Thomas on 2026-11-25). Only `'piezomagnetic'` takes
+ITC's factors by default (`[2]`, eq. (1.5.7.4)); `'piezoelectric'` has none, since its tensor is
+also the susceptibility of second-harmonic generation, which ITC contracts without the factor 2
+(`[1]`; § 1.7.2.2.1.3, p. 185, eq. (1.7.2.41): χ₂₅ multiplies e_x e_z + e_z e_x), while the
+piezoelectric d takes `[2]` (Thomas, 2026-11-25, after the review). A tensor that lacks the index symmetry of its specification, or a Voigt array that is no
 tensor of it, is refused, within the tolerance relative to its largest component. Gallego et al.
 (2019, p. 440) use unity factors throughout; symcrys follows ITC.
 

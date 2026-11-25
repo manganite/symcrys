@@ -17,7 +17,7 @@ describe('toVoigt and fromVoigt', () => {
     const sym2 = classes.tensorForm('1', spec(2, 'symmetric-last-pair')).basis[0];
     expect(classes.toVoigt(sym2, spec(2, 'symmetric-last-pair'), { factors: [1] })).toHaveLength(6);
     const d = classes.tensorForm('1', 'piezoelectric').basis[0];
-    const v3 = classes.toVoigt(d, 'piezoelectric') as readonly (readonly number[])[];
+    const v3 = classes.toVoigt(d, 'piezoelectric', { factors: [2] }) as readonly (readonly number[])[];
     expect([v3.length, v3[0].length]).toEqual([3, 6]);
     const e = classes.tensorForm('1', spec(3, 'symmetric-first-pair')).basis[0];
     const v3e = classes.toVoigt(e, spec(3, 'symmetric-first-pair'), { factors: [1] }) as readonly (readonly number[])[];
@@ -52,15 +52,17 @@ describe('toVoigt and fromVoigt', () => {
     const t = classes.tensorForm('3', 'piezoelectric').basis;
     // The basis tensor with d_111 = 1: d_11 = 1, d_12 = −1, d_26 = −2 (d), −1 for e_ijk read in the last pair.
     const one = t.find((b) => b[0] === 1)!;
-    const d = classes.toVoigt(one, 'piezoelectric') as readonly (readonly number[])[];
+    const d = classes.toVoigt(one, 'piezoelectric', { factors: [2] }) as readonly (readonly number[])[];
     expect([d[0][0], d[0][1], d[1][5]]).toEqual([1, -1, -2]);
     const e = classes.toVoigt(one, spec(3, 'symmetric-last-pair'), { factors: [1] }) as readonly (readonly number[])[];
     expect([e[0][0], e[0][1], e[1][5]]).toEqual([1, -1, -1]);
   });
 
-  it('the named properties: ITC’s factors for piezoelectric and piezomagnetic, none for the others', () => {
+  it('the named properties: ITC’s factors for piezomagnetic; none for piezoelectric (d or SHG) and the others', () => {
     const d = classes.tensorForm('-43m', 'piezoelectric').basis[0];
-    expect(classes.toVoigt(d, 'piezoelectric')).toEqual(classes.toVoigt(d, 'piezoelectric', { factors: [2] }));
+    expect(() => classes.toVoigt(d, 'piezoelectric')).toThrow(
+      /\[2\] for the piezoelectric d .* \[1\] for second-harmonic/,
+    );
     const g = classes.tensorForm('422', 'gyrotropic').basis[0];
     expect(() => classes.toVoigt(g, 'gyrotropic')).toThrow(/give the factors/);
     expect(classes.toVoigt(g, 'gyrotropic', { factors: [1] })).toHaveLength(6);
@@ -101,10 +103,9 @@ describe('toVoigt and fromVoigt', () => {
   });
 
   it('results are frozen', () => {
-    const v = classes.toVoigt(
-      classes.tensorForm('1', 'piezoelectric').basis[0],
-      'piezoelectric',
-    ) as readonly (readonly number[])[];
+    const v = classes.toVoigt(classes.tensorForm('1', 'piezoelectric').basis[0], 'piezoelectric', {
+      factors: [2],
+    }) as readonly (readonly number[])[];
     expect(Object.isFrozen(v) && Object.isFrozen(v[0])).toBe(true);
   });
 });

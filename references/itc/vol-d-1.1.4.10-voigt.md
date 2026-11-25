@@ -4,8 +4,10 @@ Source: _International Tables for Crystallography_, Vol. D, 2nd edition (2013): 
 (A. Authier, "Introduction to the properties of tensors"), § 1.1.4.10.2 (stress and strain, p. 24),
 § 1.1.4.10.3 (third-rank tensors, pp. 24–25) and § 1.1.4.10.5 (fourth-rank tensors, pp. 26–27);
 Chapter 1.5 (A. S. Borovik-Romanov, H. Grimmer, M. Kenzelmann, "Magnetic properties"), § 1.5.7.1,
-eq. (1.5.7.4), p. 134. Transcribed on 2026-11-25 from page images of the volume in Thomas' Zotero
-(item YQKTNYVN; in this PDF the printed page is the PDF page index + 2), read at 130 and 300 dpi.
+eq. (1.5.7.4), p. 134; Chapter 1.7 ("Nonlinear optical properties"),
+§ 1.7.2.2.1.3, p. 185. Transcribed on 2026-11-25 from page images of the volume in Thomas' Zotero
+(item YQKTNYVN; in this PDF the printed page is the PDF page index + 2), read at 130 and 300 dpi;
+checked again at 250–300 dpi in the review of PR #174, which also pointed to p. 185.
 
 Transcription conventions: indices as printed, subscripts written inline (`S23` for S₂₃, `d_ijk`);
 Greek letters as printed (α, β); one printed relation per row. Where print writes a chain of
@@ -46,6 +48,14 @@ The stress tensor:
 | d (piezoelectric, P_i = d_ijk T_jk) | d_ijk + d_ikj (j ≠ k) = d_iα (α = 4, 5, 6) | p. 24 |
 | e (piezoelectric, T_ij = e_ijk E_k, eq. (1.1.4.8)) | e_αk = e_ijk | p. 25; "Submatrices 2 and 3 are equal" |
 
+Beside the relation, p. 25 prints the e_αk matrix as the block column "(1 / 2+3)" (submatrix 1 above
+the sum of the submatrices 2 and 3); taken literally the lower block would be 2e_ijk, which the
+relation e_αk = e_ijk next to it does not give. Transcribed as printed; the tests read the relation.
+
+The key to the diagrams of § 1.1.4.10.4, p. 25 (group 3): "⊙ means that the component is equal to
+twice minus the value of the component to which it is linked for d_ijk and to minus the value of
+the component to which it is linked for e_ijk".
+
 ## Fourth-rank tensors, § 1.1.4.10.5, p. 27
 
 | Quantity | Relation | Note |
@@ -70,3 +80,26 @@ The stress tensor:
 | Λ (piezomagnetic, μ₀*δM_i = Λ_ijk T_jk = Λ_iα T_α) | Λ_i4 = 2Λ_i23 |
 | Λ (piezomagnetic, μ₀*δM_i = Λ_ijk T_jk = Λ_iα T_α) | Λ_i5 = 2Λ_i31 |
 | Λ (piezomagnetic, μ₀*δM_i = Λ_ijk T_jk = Λ_iα T_α) | Λ_i6 = 2Λ_i12 |
+
+## The susceptibility of second-harmonic generation, § 1.7.2.2.1.3, p. 185
+
+Print: "The tensors χ⁽²⁾_μαβ(−2ω; ω, ω) or d⁽²⁾_μαβ(−2ω; ω, ω) are invariant with respect to (α, β)
+permutation as a consequence of the intrinsic permutation symmetry. […] Therefore, these
+third-rank tensors can be represented in contracted form as 3 × 6 matrices χ_μm(−2ω; ω, ω) and
+d_μm(−2ω; ω, ω), where the suffix m runs over the six possible (α, β) Cartesian index pairs
+according to the classical convention of contraction":
+
+| Index | Contraction |
+|---|---|
+| μ | x → 1 |
+| μ | y → 2 |
+| μ | z → 3 |
+| m | xx → 1 |
+| m | yy → 2 |
+| m | zz → 3 |
+| m | yz = zy → 4 |
+| m | xz = zx → 5 |
+| m | xy = yx → 6 |
+
+Example, eq. (1.7.2.41): P_y⁽²⁾(2ω) = ε₀ χ₂₅(−2ω; ω, ω)[e_x⁺(ω)E⁺(ω)e_z⁻(ω)E⁻(ω) + e_z⁺(ω)E⁺(ω)e_x⁻(ω)E⁻(ω)].
+

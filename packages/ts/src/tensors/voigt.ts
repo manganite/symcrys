@@ -18,12 +18,14 @@ export type VoigtFactor = 1 | 2;
 export interface VoigtOptions extends ToleranceOptions {
   /**
    * The factor of each contracted index pair, in the order of the pairs: 2 where ITC defines the
-   * Voigt component as the sum of the two symmetric components, as for the strain (S₄ = 2S₂₃), the
-   * piezoelectric d (d_iα = d_ijk + d_ikj), the piezomagnetic Λ and the compliances s (`[2, 2]`);
-   * 1 where it is the component itself, as for the stress, the piezoelectric e and the stiffnesses c
-   * (`[1, 1]`); the piezo-optic π has `[1, 2]`. Required for a specification; a named property
-   * takes ITC's factors where ITC tabulates it in Voigt's notation (`'piezoelectric'`,
-   * `'piezomagnetic'`: `[2]`).
+   * Voigt component as the sum of the two symmetric components, 1 where it is the component itself
+   * (ITC Vol. D § 1.1.4.10). So the strain (S₄ = 2S₂₃), the piezoelectric d (d_iα = d_ijk + d_ikj)
+   * and the piezomagnetic Λ take `[2]`, the compliances s and the electrostriction Q `[2, 2]`; the
+   * stress and the piezoelectric e take `[1]`, the stiffnesses c and the elasto-optic p `[1, 1]`;
+   * the piezo-optic π takes `[1, 2]`; the susceptibility of second-harmonic generation, which has
+   * the tensor of `'piezoelectric'`, takes `[1]` (§ 1.7.2.2.1.3, p. 185). Required, except for
+   * `'piezomagnetic'`, which takes ITC's `[2]` (eq. (1.5.7.4)); `'piezoelectric'` has none, since
+   * its tensor serves both d and second-harmonic generation.
    */
   readonly factors?: readonly VoigtFactor[];
   /**
@@ -50,9 +52,12 @@ const ALPHA = [
   [4, 3, 2],
 ];
 
-/** ITC's factors of the named properties that ITC tabulates in Voigt's notation. */
+/**
+ * ITC's factors of the named properties that ITC writes in Voigt's notation with one convention
+ * only; 'piezoelectric' has none, since its tensor is also that of second-harmonic generation, which
+ * ITC contracts without the factor 2 (§ 1.7.2.2.1.3, p. 185).
+ */
 const PROPERTY_FACTORS: Partial<Readonly<Record<TensorPropertyName, readonly VoigtFactor[]>>> = {
-  piezoelectric: [2],
   piezomagnetic: [2],
 };
 
@@ -77,8 +82,9 @@ function layoutOf(spec: TensorSpec, who: string): Layout {
     return { rank, pairs: [0, 2], shape: [6, 6] };
   }
   throw new RangeError(
-    `${who}: Voigt's notation needs a symmetric index pair (rank 2 symmetric, rank 3 'symmetric-last-pair' or ` +
-      `'symmetric-first-pair', rank 4 'symmetric-pairs'), not rank ${rank} '${intrinsic}'`,
+    `${who}: Voigt's notation needs a symmetric index pair (rank 2 'symmetric-first-pair', 'symmetric-last-pair' ` +
+      `or 'totally-symmetric'; rank 3 'symmetric-last-pair', 'symmetric-first-pair' or 'totally-symmetric'; rank 4 ` +
+      `'symmetric-pairs', 'symmetric-pairs-exchangeable' or 'totally-symmetric'), not rank ${rank} '${intrinsic}'`,
   );
 }
 
@@ -92,12 +98,13 @@ function factorsOf(
   const factors =
     given !== undefined ? given : typeof specOrName === 'string' ? PROPERTY_FACTORS[specOrName] : undefined;
   if (factors === undefined) {
+    const piezoelectric =
+      specOrName === 'piezoelectric'
+        ? ': [2] for the piezoelectric d (ITC Vol. D § 1.1.4.10.3), [1] for second-harmonic generation (§ 1.7.2.2.1.3)'
+        : ', 2 where ITC sums the two symmetric components (strain, d, s), 1 where it takes one (stress, e, c)';
     throw new RangeError(
-      `${who}: give the factors of the ${layout.pairs.length === 1 ? 'index pair' : 'index pairs'} ({ factors: [${layout.pairs
-        .map(() => '1 or 2')
-        .join(
-          ', ',
-        )}] }), 2 where ITC sums the two symmetric components (strain, d, s), 1 where it takes one (stress, e, c)`,
+      `${who}: give the factors of the ${layout.pairs.length === 1 ? 'index pair' : 'index pairs'} ` +
+        `({ factors: [${layout.pairs.map(() => '1 or 2').join(', ')}] })${piezoelectric}`,
     );
   }
   if (!Array.isArray(factors) || factors.length !== layout.pairs.length || !factors.every((f) => f === 1 || f === 2)) {

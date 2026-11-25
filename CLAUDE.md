@@ -757,8 +757,9 @@ The conventions are in `docs/conventions.md` ("Tensors"); here, what was decided
   recommendation, 0.12): ITC defines the factor of the components with α = 4, 5, 6 per quantity and
   per index pair (2 for strain, d, Λ, s, Q; 1 for stress, e, c, p; π has 1 and 2), so the
   specification does not fix it: an option `factors`, one 1 or 2 per contracted pair, required for a
-  specification, with ITC's factors as the default of the named properties that ITC tabulates in
-  this notation (`'piezoelectric'`, `'piezomagnetic'`); the layout follows `intrinsic` (rank 2
+  specification and for `'piezoelectric'` (its tensor serves the piezoelectric d, `[2]`, and
+  second-harmonic generation, which ITC contracts with `[1]`, § 1.7.2.2.1.3, p. 185; Thomas,
+  2026-11-25, after the review), with ITC's `[2]` as the default of `'piezomagnetic'`; the layout follows `intrinsic` (rank 2
   symmetric: 6; rank 3: 3 × 6 for the last pair, 6 × 3 for the first; rank 4: 6 × 6), and a tensor
   without the index symmetry of its specification is a RangeError. Chosen while implementing: the
   tolerance of that check is relative to the largest component (bound 1, as the metric); in Python
