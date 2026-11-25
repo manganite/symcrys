@@ -64,6 +64,12 @@ export default defineConfig([
   },
   {
     files: [...TEST_ONLY, 'scripts/**', 'audit/**', 'docs/examples/**', '*.config.{js,ts}'],
+    ignores: ['docs/examples/browser/**'],
     languageOptions: { globals: globals.node },
+  },
+  {
+    // The browser example of the site (docs/browser.md): a page script, with the browser's globals.
+    files: ['docs/examples/browser/**'],
+    languageOptions: { globals: globals.browser },
   },
 ]);

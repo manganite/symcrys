@@ -34,6 +34,7 @@ Where to start:
 - [Plane groups](plane-groups.md): the 17 plane groups and the plane point groups of
   `symcrys/plane`, their operations, Wyckoff positions, asymmetric unit, symmetry elements and
   cells.
+- [In the browser](browser.md): symcrys in a web page without a bundler, with a complete example.
 - [Tensors and named properties](tensors.md): forms of property tensors, and the named properties
   such as piezoelectric or ferromagnetic.
 - [Examples](examples.md), among them second-harmonic generation at surfaces.
@@ -55,6 +56,7 @@ conventions
 forms
 cells
 plane-groups
+browser
 tensors
 examples
 reference/index
