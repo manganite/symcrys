@@ -345,7 +345,7 @@ describe('ITA Table 3.2.3.2: face forms', () => {
     const fromData = CLASS_FORMS.flatMap((e) =>
       e.rows.map((r) => [
         e.symbol,
-        e.uniqueAxis ?? '',
+        e.uniqueAxis ?? e.axes ?? '',
         r[0],
         r[1] ? 'basic' : 'limiting',
         String(r[2]),
@@ -353,17 +353,16 @@ describe('ITA Table 3.2.3.2: face forms', () => {
         (r[4] ?? '').replace(/\|(\w)\|/g, 'abs($1)'),
       ]),
     );
-    const fromPrint = faceRows
-      .slice(1)
-      .map(([short, axes, , letter, form, name, miller, condition]) => [
-        short,
-        /^unique axis (b|c)$/.exec(axes)?.[1] ?? '',
-        letter,
-        form,
-        String(numberOfName(name)),
-        miller,
-        condition,
-      ]);
+    const fromPrint = faceRows.slice(1).map(([short, axes, , letter, form, name, miller, condition]) => [
+      short,
+      // The unique axis of a monoclinic entry, or the rhombohedral axes of a trigonal one.
+      /^unique axis (b|c)$/.exec(axes)?.[1] ?? (axes === 'rhombohedral axes' ? 'rhombohedral' : ''),
+      letter,
+      form,
+      String(numberOfName(name)),
+      miller,
+      condition,
+    ]);
     expect(fromData).toEqual(fromPrint);
   });
 

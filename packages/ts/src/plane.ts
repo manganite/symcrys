@@ -250,8 +250,7 @@ export interface WyckoffPosition {
   /** The oriented site-symmetry symbol, written without spaces, e.g. `'.m.'`, `'2mm'`. */
   readonly siteSymmetry: string;
   /**
-   * The coordinates of the (0,0)+ set, the full list of the position, e.g. `['x,0', '-x,0']`; a
-   * leading `-` is an overbar.
+   * All coordinate triplets of the (0,0)+ set, e.g. `['x,0', '-x,0']`; a leading `-` is an overbar.
    */
   readonly coordinates: readonly string[];
 }

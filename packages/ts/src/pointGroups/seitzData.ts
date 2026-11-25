@@ -111,7 +111,11 @@ const SEITZ_RHOMBOHEDRAL: readonly SeitzRow[] = [
   ['x,z,y', [0, 1, -1], null], // 12: m_{01-1}
 ];
 
-/** The tables by the axes of the setting. */
+/**
+ * The Seitz data by the axes of the setting: `'cubic'` for the orthogonal-type axes of the cubic,
+ * tetragonal, orthorhombic, monoclinic and triclinic families (the operations of m-3m), `'hexagonal'`
+ * for hexagonal axes (6/mmm), `'rhombohedral'` for rhombohedral axes (-3m).
+ */
 export type SeitzAxes = 'cubic' | 'hexagonal' | 'rhombohedral';
 
 const SEITZ_BY_AXES: Readonly<Record<SeitzAxes, readonly SeitzRow[]>> = {
@@ -123,25 +127,25 @@ const SEITZ_BY_AXES: Readonly<Record<SeitzAxes, readonly SeitzRow[]>> = {
 const parsed = new Map<SeitzAxes, readonly { w: IntMat3; axis: SeitzRow[1]; sense: SeitzRow[2] }[]>();
 
 /**
- * The Seitz direction and sense of the matrix W in a table, or undefined if the table has no such W.
+ * The Seitz direction and sense of the matrix W for the given axes, or undefined if they have no such W.
  */
 export function seitzOf(
-  table: SeitzAxes,
+  axes: SeitzAxes,
   w: IntMat3,
 ): { readonly axis: SeitzRow[1]; readonly sense: SeitzRow[2] } | undefined {
-  let rows = parsed.get(table);
+  let rows = parsed.get(axes);
   if (!rows) {
-    rows = SEITZ_BY_AXES[table].map(([t, axis, sense]) => ({
+    rows = SEITZ_BY_AXES[axes].map(([t, axis, sense]) => ({
       w: parseOperation(t).matrix as unknown as IntMat3,
       axis,
       sense,
     }));
-    parsed.set(table, rows);
+    parsed.set(axes, rows);
   }
   return rows.find((r) => r.w.every((row, i) => row.every((v, j) => v === w[i][j])));
 }
 
-/** The rows of a table, for the tests. */
-export function seitzRows(table: SeitzAxes): readonly SeitzRow[] {
-  return SEITZ_BY_AXES[table];
+/** The stored rows for the given axes, for the tests. */
+export function seitzRows(axes: SeitzAxes): readonly SeitzRow[] {
+  return SEITZ_BY_AXES[axes];
 }

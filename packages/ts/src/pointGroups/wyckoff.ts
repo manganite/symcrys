@@ -8,7 +8,7 @@ import { checkOptions, pick, SETTING_KEYS, shown, TOLERANCE_KEYS } from '../chec
 import { apply, inverse, transpose, type Mat3, type Vec3 } from '../linalg.js';
 import { crystalFamily } from '../lattice.js';
 import { substituteMillerIndices } from '../indices.js';
-import { itcBasis, classData, itcSetting as itcClassSetting } from './classData.js';
+import { settingBasis, classData, classSettingData } from './classData.js';
 import {
   settingIndexOf,
   isMagneticPointGroupKey,
@@ -68,7 +68,7 @@ export const RHOMBOHEDRAL_VALUES: Readonly<Record<'h' | 'k' | 'l', number>> = { 
 
 /** The values of h, k, l for the representative faces of a setting. */
 export function representativeValues(key: PointGroupKey, setting: number): Readonly<Record<'h' | 'k' | 'l', number>> {
-  return itcClassSetting(key, setting).axes === 'rhombohedral' ? RHOMBOHEDRAL_VALUES : REPRESENTATIVE_VALUES;
+  return classSettingData(key, setting).axes === 'rhombohedral' ? RHOMBOHEDRAL_VALUES : REPRESENTATIVE_VALUES;
 }
 
 /** Printed Miller indices (three, or four for hexagonal axes) as three numbers, with the given values of h, k, l. */
@@ -125,7 +125,7 @@ function permuteSymbol(symbolText: string, r: Mat3): string {
  * (P⁻¹ = Pᵀ); throws for a setting that is not carried from setting 1 by one.
  */
 export function permutationFromSetting1(key: PointGroupKey, setting: number): Mat3 {
-  const from = itcClassSetting(key, setting).from;
+  const from = classSettingData(key, setting).from;
   if (from?.index !== 1) throw new Error(`Point group ${key}, setting ${setting}: not carried from setting 1`);
   const p = from.basis;
   const signedPermutation = [0, 1, 2].every(
@@ -156,7 +156,7 @@ export function storedEntry<
   );
 }
 
-/** The printed rows of a setting; for a setting ITA does not print, those of setting 1 carried into its frame. */
+/** The stored rows of a setting; for a setting ITA does not list, those of setting 1 carried into its frame. */
 function storedRows(key: PointGroupKey, setting: number): readonly WyckoffRow[] {
   const entry = storedEntry(CLASS_WYCKOFF_POSITIONS, key, setting);
   if (entry) return entry.rows;
@@ -175,12 +175,12 @@ function storedRows(key: PointGroupKey, setting: number): readonly WyckoffRow[] 
 
 /**
  * The lattice basis in which the Cartesian normals of the representatives are computed, that of the
- * setting (classData.ts, `itcBasis`): monoclinic and triclinic a, b, c along x, y, z; rhombohedral
+ * setting (classData.ts, `settingBasis`): monoclinic and triclinic a, b, c along x, y, z; rhombohedral
  * axes in the hexagonal cell of `latticeBasis` (docs/conventions.md, "Site symmetry and Wyckoff
  * positions").
  */
 export function faceBasis(key: PointGroupKey, setting: number): Mat3 {
-  return itcBasis(key, setting);
+  return settingBasis(key, setting);
 }
 
 /** h, k, l of a representative face under the printed condition |h| < |l| (cubic forms (hhl)). */

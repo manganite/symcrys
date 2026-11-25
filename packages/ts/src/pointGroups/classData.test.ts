@@ -9,7 +9,12 @@
 
 import { describe, expect, it } from 'vitest';
 import { matricesEqual, type Mat3 } from '../linalg.js';
-import { CLASSES, itcCartesianGenerators, itcCartesianOperations, itcLatticeOperations } from './classData.js';
+import {
+  CLASSES,
+  settingCartesianGenerators,
+  settingCartesianOperations,
+  settingLatticeOperations,
+} from './classData.js';
 import { POINT_GROUP_KEYS, generators, operations, settings } from './pointGroups.js';
 
 const SETTINGS = CLASSES.flatMap((c) => c.settings.map((s) => [`${c.key} #${s.index} ${s.short}`, c, s] as const));
@@ -37,17 +42,17 @@ describe('the API gives the exact ITC class data', () => {
 
   it.each(SETTINGS)('%s: the same operations, in the same order', (_, c, s) => {
     const current = operations(c.key, { setting: s.index }).map((o) => o.cartesian);
-    expect(sameMatrices(itcCartesianOperations(c.key, s.index), current)).toBe(true);
+    expect(sameMatrices(settingCartesianOperations(c.key, s.index), current)).toBe(true);
   });
 
   it.each(SETTINGS)('%s: the same generators', (_, c, s) => {
     const current = generators(c.key, { setting: s.index }).map((o) => o.cartesian);
-    expect(sameMatrices(itcCartesianGenerators(c.key, s.index), current)).toBe(true);
+    expect(sameMatrices(settingCartesianGenerators(c.key, s.index), current)).toBe(true);
   });
 
   it.each(SETTINGS)('%s: the same lattice operations', (_, c, s) => {
     const current = operations(c.key, { setting: s.index }).map((o) => o.matrix);
-    expect(itcLatticeOperations(c.key, s.index).map((w) => w.map((row) => [...row]))).toEqual(
+    expect(settingLatticeOperations(c.key, s.index).map((w) => w.map((row) => [...row]))).toEqual(
       current.map((m) => m.map((row) => row.map((x) => x + 0))),
     );
   });
@@ -57,17 +62,17 @@ describe('settings by a change of basis (ITA 2016 Table 1.5.4.4)', () => {
   it('2mm and m2m have the twofold axis along a and b', () => {
     const twofold = (ops: readonly (readonly (readonly number[])[])[]) =>
       ops.find((w) => w[0][0] + w[1][1] + w[2][2] === -1 && w[0][0] * w[1][1] * w[2][2] === 1);
-    expect(twofold(itcLatticeOperations('mm2', 1))).toEqual([
+    expect(twofold(settingLatticeOperations('mm2', 1))).toEqual([
       [-1, 0, 0],
       [0, -1, 0],
       [0, 0, 1],
     ]);
-    expect(twofold(itcLatticeOperations('mm2', 2))).toEqual([
+    expect(twofold(settingLatticeOperations('mm2', 2))).toEqual([
       [1, 0, 0],
       [0, -1, 0],
       [0, 0, -1],
     ]);
-    expect(twofold(itcLatticeOperations('mm2', 3))).toEqual([
+    expect(twofold(settingLatticeOperations('mm2', 3))).toEqual([
       [-1, 0, 0],
       [0, 1, 0],
       [0, 0, -1],

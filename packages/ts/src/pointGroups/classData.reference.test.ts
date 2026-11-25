@@ -7,7 +7,7 @@
 
 import { describe, expect, it } from 'vitest';
 import { expectHeader, readReference, tableRows, sameAxes } from '../testUtils/references.js';
-import { CLASSES, itcLatticeOperations } from './classData.js';
+import { CLASSES, settingLatticeOperations } from './classData.js';
 
 const headlineRows = tableRows(readReference('itc/vol-a-table-3.2.3.2-headlines.md'));
 expectHeader(headlineRows, ['System', 'Short', 'Full', 'Schoenflies', 'Axes', 'Page']);
@@ -49,7 +49,7 @@ describe('ITA Table 3.2.3.2 against the exact class data', () => {
     '%s: the printed general position, in printed order',
     (_, r) => {
       const [{ c, s }] = settingOf(r[0], r[1]);
-      expect(itcLatticeOperations(c.key, s.index).map((w) => w.map((row) => [...row]))).toEqual(
+      expect(settingLatticeOperations(c.key, s.index).map((w) => w.map((row) => [...row]))).toEqual(
         r[4].split(/\s+/).map(matrixOf),
       );
     },

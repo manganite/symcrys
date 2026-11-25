@@ -19,7 +19,7 @@
 import { shown } from '../checks.js';
 import { operation, type CartesianOperation } from '../operations.js';
 import type { BlackWhitePointGroupKey, PointGroupKey } from './keys.js';
-import { itcCartesianOperations, classData, itcLatticeGenerators, itcTimeReversal } from './classData.js';
+import { settingCartesianOperations, classData, settingLatticeGenerators, settingTimeReversal } from './classData.js';
 import { primedSymbols } from './magneticSymbols.js';
 
 /** One ITC setting of a black-and-white group. */
@@ -186,13 +186,13 @@ export function blackWhiteOperations(key: BlackWhitePointGroupKey, index: number
     const classIndex = blackWhiteClassSetting(key, index);
     const cls = classData(g.crystalClass);
     const classSetting = cls.settings.find((s) => s.index === classIndex)!;
-    const matrices = itcCartesianOperations(g.crystalClass, classIndex);
-    const n = itcLatticeGenerators(g.crystalClass, classIndex).length;
+    const matrices = settingCartesianOperations(g.crystalClass, classIndex);
+    const n = settingLatticeGenerators(g.crystalClass, classIndex).length;
     const found: CartesianOperation[][] = [];
     // Every assignment of time reversal to the generators but the one without any.
     for (let bits = 1; bits < 1 << n; bits++) {
       const flags = Array.from({ length: n }, (_, k) => (bits & (1 << k)) !== 0);
-      const parity = itcTimeReversal(g.crystalClass, classIndex, flags);
+      const parity = settingTimeReversal(g.crystalClass, classIndex, flags);
       if (!parity) continue;
       const ops = matrices.map((m, i) => ({ ...operation(m), timeReversal: parity[i] }));
       const symbols = primedSymbols(classSetting, cls.crystalSystem, ops);

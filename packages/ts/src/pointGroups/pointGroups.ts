@@ -12,13 +12,13 @@ import { compactSymbol } from '../notation.js';
 import { compose, operation, operationsEqual, type CartesianOperation, type Operation } from '../operations.js';
 import {
   CLASSES,
-  itcBasis,
-  itcCartesianGenerators,
-  itcCartesianOperations,
+  settingBasis,
+  settingCartesianGenerators,
+  settingCartesianOperations,
   classData,
-  itcLatticeGenerators,
-  itcLatticeOperations,
-  itcSetting,
+  settingLatticeGenerators,
+  settingLatticeOperations,
+  classSettingData,
 } from './classData.js';
 import type { IntMat3 } from './generatorData.js';
 import {
@@ -168,8 +168,8 @@ export interface SymbolOptions extends SettingOptions {
    * ITC short symbol; `321'`, the class key and `1'`).
    * `'full'`: full symbol, positions separated by spaces, e.g. `-3 2/m 1`.
    * `'schoenflies'`: Schoenflies symbol, subscripts written inline (`C3v`, `D2d`, `Oh`); `C3i` for
-   * the class -3 in the crystallographic API (ITA), `S6` in the magnetic API (ITC: `S6(C3)`,
-   * `D3d(S6)`).
+   * the class -3 in the crystallographic API, as ITA writes it, `S6` in the magnetic API, in ITC's
+   * notation for the magnetic groups (`S6(C3)`, `D3d(S6)`).
    * `'shubnikov'`: Shubnikov symbol in ITC's notation, with the combining overbar (U+0305) and the
    * combining low line (U+0332, an element combined with time reversal) after their character and
    * `·` for the centred dot: `2̲:m̲` for `2'/m'`, `6̅` for `-3` (Shubnikov's overbar is a
@@ -197,13 +197,13 @@ interface GroupData {
   readonly crystalSystem: CrystalSystem;
   readonly schoenflies: string;
   /** The ITC default setting (classData.ts, blackWhiteData.ts). */
-  readonly itcDefault: number;
+  readonly defaultSetting: number;
   /** The number of settings. */
   readonly settingCount: number;
 }
 
 /** The ITC default setting of a class, from the ITC class data (classData.ts). */
-function itcDefaultOf(key: PointGroupKey): number {
+function defaultSettingOf(key: PointGroupKey): number {
   return classData(key).settings.find((s) => s.isDefault)!.index;
 }
 
@@ -219,7 +219,7 @@ for (const c of CLASSES) {
     },
     crystalSystem: c.crystalSystem,
     schoenflies: c.schoenflies,
-    itcDefault: itcDefaultOf(c.key),
+    defaultSetting: defaultSettingOf(c.key),
     settingCount: c.settings.length,
   };
   BY_KEY.set(c.key, self);
@@ -234,7 +234,7 @@ for (const c of CLASSES) {
     crystalClass,
     crystalSystem: c.crystalSystem,
     schoenflies: greySchoenflies(c.schoenflies),
-    itcDefault: crystalClass.itcDefault,
+    defaultSetting: crystalClass.defaultSetting,
     settingCount: crystalClass.settingCount,
   });
 }
@@ -246,7 +246,7 @@ for (const g of BLACK_WHITE_GROUPS) {
     crystalClass,
     crystalSystem: crystalClass.crystalSystem,
     schoenflies: g.schoenflies,
-    itcDefault: g.settings.find((s) => s.isDefault)!.index,
+    defaultSetting: g.settings.find((s) => s.isDefault)!.index,
     settingCount: g.settings.length,
   });
 }
@@ -285,7 +285,7 @@ function settingsNamed(d: GroupData, text: string): number[] {
   const compactText = compact(text);
   const target = birssCubic(compactText) === d.key ? d.key : compactText;
   return allSettings(d).filter((i) => {
-    if (target === d.key && i === d.itcDefault) return true;
+    if (target === d.key && i === d.defaultSetting) return true;
     const s = settingSymbols(d, i);
     return compact(s.short) === target || compact(derivedSymbols(d, i).short) === target || compact(s.full) === target;
   });
@@ -353,7 +353,7 @@ function choose(
 ): number {
   const met = candidates.filter((i) => meets(d, i, criteria));
   if (met.length === 1) return met[0]!;
-  if (met.includes(d.itcDefault)) return d.itcDefault;
+  if (met.includes(d.defaultSetting)) return d.defaultSetting;
   const crit = [criteria.axes && `${criteria.axes} axes`, criteria.uniqueAxis && `unique axis ${criteria.uniqueAxis}`]
     .filter(Boolean)
     .join(', ');
@@ -435,14 +435,14 @@ function classSetting(d: GroupData, index: number): number {
 function settingUniqueAxis(d: GroupData, index: number): 'a' | 'b' | 'c' | undefined {
   return d.type === 'III'
     ? blackWhiteSetting(d.key as BlackWhitePointGroupKey, index).uniqueAxis
-    : itcSetting(d.crystalClass.key as PointGroupKey, index).uniqueAxis;
+    : classSettingData(d.crystalClass.key as PointGroupKey, index).uniqueAxis;
 }
 
 /** The axes of a trigonal setting, `'hexagonal'` or `'rhombohedral'`; undefined in other systems. */
 function settingAxes(d: GroupData, index: number): 'hexagonal' | 'rhombohedral' | undefined {
   return d.type === 'III'
     ? blackWhiteSetting(d.key as BlackWhitePointGroupKey, index).axes
-    : itcSetting(d.crystalClass.key as PointGroupKey, index).axes;
+    : classSettingData(d.crystalClass.key as PointGroupKey, index).axes;
 }
 
 /**
@@ -458,7 +458,7 @@ export function classSettingOf(
   return { key: d.crystalClass.key as PointGroupKey, index: classSetting(d, settingIndex(d, options)) };
 }
 
-const itaGeneratorCache = new Map<string, readonly CartesianOperation[]>();
+const generatorCache = new Map<string, readonly CartesianOperation[]>();
 
 /**
  * ITA's generators of a setting (see `generators`); for a class from the ITC class data. For a
@@ -467,11 +467,11 @@ const itaGeneratorCache = new Map<string, readonly CartesianOperation[]>();
  */
 function settingGenerators(d: GroupData, index: number): readonly CartesianOperation[] {
   const cacheKey = `${d.key}#${index}`;
-  let result = itaGeneratorCache.get(cacheKey);
+  let result = generatorCache.get(cacheKey);
   if (!result) {
     let gens: CartesianOperation[];
     if (d.type === 'I') {
-      gens = itcCartesianGenerators(d.key as PointGroupKey, index).map((m) => operation(m));
+      gens = settingCartesianGenerators(d.key as PointGroupKey, index).map((m) => operation(m));
     } else {
       const classGens = settingGenerators(d.crystalClass, classSetting(d, index));
       gens =
@@ -480,7 +480,7 @@ function settingGenerators(d: GroupData, index: number): readonly CartesianOpera
           : classGens.map((g) => withMatrix(settingOperations(d, index), g));
     }
     result = Object.freeze(gens.map(freezeOperation));
-    itaGeneratorCache.set(cacheKey, result);
+    generatorCache.set(cacheKey, result);
   }
   return result;
 }
@@ -498,7 +498,7 @@ function settingOperations(d: GroupData, index: number): readonly CartesianOpera
   if (!result) {
     let ordered: CartesianOperation[];
     if (d.type === 'I') {
-      ordered = itcCartesianOperations(d.key as PointGroupKey, index).map((m) => operation(m));
+      ordered = settingCartesianOperations(d.key as PointGroupKey, index).map((m) => operation(m));
     } else if (d.type === 'II') {
       const classOps = settingOperations(d.crystalClass, index);
       ordered = [...classOps, ...classOps.map((op) => compose(TIME_REVERSAL, op))];
@@ -522,7 +522,7 @@ const symbolCache = new Map<string, { readonly short: string; readonly full: str
  */
 function settingSymbols(d: GroupData, index: number): { readonly short: string; readonly full: string } {
   const derived = derivedSymbols(d, index);
-  return d.type !== 'I' && index === d.itcDefault ? { short: d.key, full: derived.full } : derived;
+  return d.type !== 'I' && index === d.defaultSetting ? { short: d.key, full: derived.full } : derived;
 }
 
 /**
@@ -533,7 +533,7 @@ function settingSymbols(d: GroupData, index: number): { readonly short: string; 
  */
 function derivedSymbols(d: GroupData, index: number): { readonly short: string; readonly full: string } {
   if (d.type === 'I') {
-    const s = itcSetting(d.key as PointGroupKey, index);
+    const s = classSettingData(d.key as PointGroupKey, index);
     return Object.freeze({ short: s.short, full: s.full });
   }
   const cacheKey = `${d.key}#${index}`;
@@ -628,7 +628,7 @@ export function pointGroups(): readonly PointGroup[] {
 /**
  * All 122 magnetic point groups, in the order of `POINT_GROUP_KEYS` of the magnetic API: the 32 crystal
  * classes (type I), the 32 grey groups (type II) in the same order, and the 58 black-and-white
- * groups (type III) in the order of ITC's table of the magnetic point groups.
+ * groups (type III) in ITC's order.
  *
  * @remarks Source: ITC Vol. D (2013), Table 1.5.2.3.
  */
@@ -667,14 +667,14 @@ export function settings(key: MagneticPointGroupKey): readonly Setting[] {
       const data =
         d.type === 'III'
           ? blackWhiteSetting(d.key as BlackWhitePointGroupKey, i + 1)
-          : itcSetting(d.crystalClass.key as PointGroupKey, i + 1);
+          : classSettingData(d.crystalClass.key as PointGroupKey, i + 1);
       return Object.freeze({
         index: i + 1,
         symbol: symbols.short,
         fullSymbol: symbols.full,
         ...(data.uniqueAxis ? { uniqueAxis: data.uniqueAxis } : {}),
         ...(data.axes ? { axes: data.axes } : {}),
-        isDefault: i + 1 === d.itcDefault,
+        isDefault: i + 1 === d.defaultSetting,
       });
     }),
   );
@@ -696,7 +696,7 @@ export function integer(m: Mat3, what: string): Mat3 {
  * The records of the API for Cartesian operations of a setting: each with its matrix W in the
  * lattice basis of the setting. A crystal class takes W from the exact ITC class data (`exact`, in
  * the same order); a magnetic group computes W = B⁻¹·R·B in the basis B of the setting of its class
- * (classData.ts, `itcBasis`), which is exact after rounding, since W is an integer matrix.
+ * (classData.ts, `settingBasis`), which is exact after rounding, since W is an integer matrix.
  */
 function records(
   d: GroupData,
@@ -705,7 +705,7 @@ function records(
   exact: readonly IntMat3[] | undefined,
 ): readonly Operation[] {
   const classKey = d.crystalClass.key as PointGroupKey;
-  const b = itcBasis(classKey, classSetting(d, index));
+  const b = settingBasis(classKey, classSetting(d, index));
   const bInv = inverse(b);
   return Object.freeze(
     ops.map((op, i) =>
@@ -738,7 +738,7 @@ export function operations(key: MagneticPointGroupKey, options?: SettingOptions)
   const cacheKey = `${d.key}#${index}`;
   let result = recordCache.get(cacheKey);
   if (!result) {
-    const exact = d.type === 'I' ? itcLatticeOperations(d.key as PointGroupKey, index) : undefined;
+    const exact = d.type === 'I' ? settingLatticeOperations(d.key as PointGroupKey, index) : undefined;
     result = records(d, index, settingOperations(d, index), exact);
     recordCache.set(cacheKey, result);
   }
@@ -759,7 +759,7 @@ export function generators(key: MagneticPointGroupKey, options?: SettingOptions)
   const cacheKey = `${d.key}#${index}#generators`;
   let result = recordCache.get(cacheKey);
   if (!result) {
-    const exact = d.type === 'I' ? itcLatticeGenerators(d.key as PointGroupKey, index) : undefined;
+    const exact = d.type === 'I' ? settingLatticeGenerators(d.key as PointGroupKey, index) : undefined;
     result = records(d, index, settingGenerators(d, index), exact);
     recordCache.set(cacheKey, result);
   }
@@ -772,10 +772,10 @@ export function generators(key: MagneticPointGroupKey, options?: SettingOptions)
  * black-and-white groups store their symbols as Vol. D prints them (`S6(C3)`, `D3d(S6)`,
  * `C6h(S6)`; blackWhiteData.ts).
  */
-const volDSchoenflies = (s: string): string => s.replace(/C3i/g, 'S6');
+const magneticSchoenflies = (s: string): string => s.replace(/C3i/g, 'S6');
 
 /** The Schoenflies symbol of a crystal class as ITA writes it (`C3i`). Internal: for the crystallographic API. */
-export function itaSchoenflies(key: PointGroupKey): string {
+export function classSchoenflies(key: PointGroupKey): string {
   return data(key).schoenflies;
 }
 
@@ -793,7 +793,7 @@ export function symbol(key: MagneticPointGroupKey, options?: SymbolOptions): str
   const d = data(key);
   const form = options?.form ?? 'short';
   const s = settingSymbols(d, settingIndex(d, options));
-  if (form === 'schoenflies') return volDSchoenflies(d.schoenflies);
+  if (form === 'schoenflies') return magneticSchoenflies(d.schoenflies);
   if (form === 'shubnikov') return shubnikov(d);
   if (form === 'short') return s.short;
   if (form === 'full') return s.full;
@@ -867,9 +867,9 @@ function find(
   // orientation (Thomas, 2026-11-23, #96). A symbol of several groups is an error.
   let found = candidates.map((d) => ({ d, named: settingsNamed(d, symbol) })).filter((m) => m.named.length > 0);
   if (found.length === 0) {
-    const inVolD = volDSchoenflies(target);
+    const inVolD = magneticSchoenflies(target);
     found = candidates
-      .filter((d) => volDSchoenflies(d.schoenflies) === inVolD)
+      .filter((d) => magneticSchoenflies(d.schoenflies) === inVolD)
       .map((d) => ({ d, named: allSettings(d) }));
   }
   if (found.length > 1) {
@@ -897,8 +897,8 @@ function birssCubic(compactTarget: string): string | undefined {
 /**
  * Finds a crystal class by a symbol, read tolerantly.
  * It reads, spaces ignored (#96; docs/conventions.md, "Reading symbols"): the key; the short or
- * full symbol of a setting (`312`, `1 1 2`); a Schoenflies symbol in either usual spelling (`D3`,
- * `C3i`, `S6`); Birss's cubic symbols without the overbar on the 3 (`m3m`). A symbol that names
+ * full symbol of a setting (`312`, `1 1 2`); a Schoenflies symbol (`D3`; for -3 either `C3i` or
+ * `S6`); Birss's cubic symbols without the overbar on the 3 (`m3m`). A symbol that names
  * several settings (the key `32`, which is also the symbol of the setting with rhombohedral axes;
  * `2` for unique axis b, c and a; any Schoenflies symbol) gives the standard (ITC default) setting,
  * unless the options `axes` or `uniqueAxis` choose another, as the headlines of ITA name the
@@ -922,8 +922,8 @@ export function findPointGroup(symbol: string, options?: AxesOptions): PointGrou
  * Finds one of the 122 magnetic point groups (the 32 crystal classes included) by a symbol, read
  * tolerantly. A prime marks time reversal: `4'/mmm'`, `2221'`.
  * It reads, spaces ignored (#96; docs/conventions.md, "Reading symbols"): the key; the short or
- * full symbol of a setting (`312`, `1 1 2`); a Schoenflies symbol in either usual spelling (`D3`,
- * `C3i`, `S6`); Birss's cubic symbols without the overbar on the 3 (`m3m`). A symbol that names
+ * full symbol of a setting (`312`, `1 1 2`); a Schoenflies symbol (`D3`; for -3 either `C3i` or
+ * `S6`); Birss's cubic symbols without the overbar on the 3 (`m3m`). A symbol that names
  * several settings (the key `32`, which is also the symbol of the setting with rhombohedral axes;
  * `2` for unique axis b, c and a; any Schoenflies symbol) gives the standard (ITC default) setting,
  * unless the options `axes` or `uniqueAxis` choose another, as the headlines of ITA name the

@@ -12,7 +12,7 @@ import { crystalFamily } from '../lattice.js';
 import type { Operation } from '../operations.js';
 import type { Uvw } from '../symmetryDirections.js';
 import type { IntMat3 } from './generatorData.js';
-import { itcBasis, itcSetting, itcSymmetryDirections } from './classData.js';
+import { settingBasis, classSettingData, settingSymmetryDirections } from './classData.js';
 import { seitzOf, type SeitzAxes } from './seitzData.js';
 import {
   classSettingOf,
@@ -31,7 +31,7 @@ export type OperationKind = 'identity' | 'inversion' | 'rotation' | 'rotoinversi
 export interface Axis {
   /**
    * Integer coordinates in the conventional basis: for the axis of an operation with the sign of its
-   * Seitz symbol, for a symmetry direction with ITA's sign of the symmetry direction.
+   * Seitz symbol, for a symmetry direction with the sign ITA gives the lattice symmetry direction.
    *
    * @remarks Source: ITA (2016), Tables 1.4.2.1–1.4.2.3 (Seitz symbols) and Table 2.1.3.1 (symmetry
    * directions).
@@ -170,7 +170,7 @@ function describe(
   op: Operation,
   axes: readonly Axis[],
   basis: Mat3,
-  table: SeitzAxes,
+  seitzAxes: SeitzAxes,
   what: string,
 ): OperationDescription {
   const proper = det(op.cartesian) > 0;
@@ -178,7 +178,7 @@ function describe(
   const timeReversal = op.timeReversal;
   if (n === 1) return Object.freeze({ kind: proper ? 'identity' : 'inversion', n: 1, timeReversal });
   const direction = findAxis(axes, rotationAxis(r, n), what);
-  const seitz = seitzOf(table, op.matrix as unknown as IntMat3);
+  const seitz = seitzOf(seitzAxes, op.matrix as unknown as IntMat3);
   if (!seitz?.axis) throw new Error(`${what}: no Seitz symbol for the matrix ${shown(op.matrix)}`);
   // A frozen copy: the result must not share the table's array (every result frozen, #137 C4).
   const signed = axisOf(basis, Object.freeze([...seitz.axis]) as unknown as Uvw);
@@ -211,19 +211,19 @@ function analysis(key: MagneticPointGroupKey, options?: SettingOptions): Analysi
   const family = crystalFamily(pointGroup(key).crystalSystem);
   // The basis and the symmetry directions of the setting: for rhombohedral axes those of ITA Table
   // 2.1.3.1 for rhombohedral axes; monoclinic and triclinic a, b, c along x, y, z, exact for the
-  // unique axis, the only symmetry direction that carries an element (classData.ts, `itcBasis`).
+  // unique axis, the only symmetry direction that carries an element (classData.ts, `settingBasis`).
   const c = classSettingOf(key, options);
-  const basis = itcBasis(c.key, c.index);
-  const positions = itcSymmetryDirections(c.key, c.index).map((dirs) => dirs.map((d) => axisOf(basis, d)));
+  const basis = settingBasis(c.key, c.index);
+  const positions = settingSymmetryDirections(c.key, c.index).map((dirs) => dirs.map((d) => axisOf(basis, d)));
   const all = positions.flat();
   const what = `Point group ${key}`;
-  const table: SeitzAxes =
+  const seitzAxes: SeitzAxes =
     family !== 'hexagonal'
       ? 'cubic'
-      : itcSetting(c.key, c.index).axes === 'rhombohedral'
+      : classSettingData(c.key, c.index).axes === 'rhombohedral'
         ? 'rhombohedral'
         : 'hexagonal';
-  const descriptions = Object.freeze(ops.map((op) => describe(op, all, basis, table, what)));
+  const descriptions = Object.freeze(ops.map((op) => describe(op, all, basis, seitzAxes, what)));
 
   // The full symbol of a grey group ends in 1', which is no position of the symbol.
   const tokens =
@@ -280,7 +280,7 @@ export function describeOperations(
  * unique axis is a lattice symmetry direction) and the symmetry elements along them. All positions
  * of the crystal family are listed (for rhombohedral axes the two positions of the rhombohedral
  * lattice), also those the symbol of the class leaves out (then without `symbol`); the triclinic
- * family has none. A direction has ITA's sign of the symmetry direction, the axis of an operation
+ * family has none. A direction has the sign ITA gives the lattice symmetry direction, the axis of an operation
  * along it that of its Seitz symbol, so the two are parallel and may be opposite: match them by
  * direction, up to sign.
  *

@@ -225,7 +225,7 @@ export function classData(key: PointGroupKey): ClassData {
 }
 
 /** The setting of a class with this index. */
-export function itcSetting(key: PointGroupKey, index: number): ClassSetting {
+export function classSettingData(key: PointGroupKey, index: number): ClassSetting {
   const s = classData(key).settings.find((x) => x.index === index);
   if (!s) throw new RangeError(`Point group ${key} has no setting ${index}`);
   return s;
@@ -258,9 +258,9 @@ function iinverse(m: IntMat3): IntMat3 {
 const transform = (w: IntMat3, p: IntMat3): IntMat3 => imul(imul(iinverse(p), w), p);
 
 /** ITA's selected generators of a setting, or those of the printed setting it comes from, carried by P. */
-export function itcLatticeGenerators(key: PointGroupKey, index: number): readonly IntMat3[] {
-  const s = itcSetting(key, index);
-  if (s.from) return itcLatticeGenerators(key, s.from.index).map((w) => transform(w, s.from!.basis));
+export function settingLatticeGenerators(key: PointGroupKey, index: number): readonly IntMat3[] {
+  const s = classSettingData(key, index);
+  if (s.from) return settingLatticeGenerators(key, s.from.index).map((w) => transform(w, s.from!.basis));
   const gens = SELECTED_GENERATORS[`${key}|${s.full}${s.axes === 'rhombohedral' ? '|rhombohedral' : ''}`];
   if (!gens) throw new Error(`No ITA generators for ${key} setting ${index}`);
   return gens;
@@ -273,17 +273,17 @@ const operationCache = new Map<string, readonly IntMat3[]>();
  * the group H generated so far by the cosets gH, g²H, … until a power of g lies in H (ITA 5th ed.,
  * § 2.2.11 (iv), p. 27; § 8.3.5, p. 737). A setting carried from a printed one keeps its order.
  */
-export function itcLatticeOperations(key: PointGroupKey, index: number): readonly IntMat3[] {
+export function settingLatticeOperations(key: PointGroupKey, index: number): readonly IntMat3[] {
   const cacheKey = `${key}#${index}`;
   let ops = operationCache.get(cacheKey);
   if (!ops) {
-    const s = itcSetting(key, index);
+    const s = classSettingData(key, index);
     if (s.from) {
-      ops = itcLatticeOperations(key, s.from.index).map((w) => transform(w, s.from!.basis));
+      ops = settingLatticeOperations(key, s.from.index).map((w) => transform(w, s.from!.basis));
     } else {
       const has = (list: readonly IntMat3[], w: IntMat3) => list.some((x) => iequal(x, w));
       const list: IntMat3[] = [LINEAR_IDENTITY];
-      for (const g of itcLatticeGenerators(key, index)) {
+      for (const g of settingLatticeGenerators(key, index)) {
         const h = list.slice();
         for (let power = g; !has(h, power); power = imul(power, g)) {
           if (list.length > MAX_CLASS_ORDER)
@@ -323,19 +323,19 @@ const RHOMBOHEDRAL_IN_HEXAGONAL: Mat3 = [
  * point operations do not depend on the cell, and those of the Miller indices only through it
  * (docs/conventions.md, "Cartesian frame").
  */
-export function itcBasis(key: PointGroupKey, index: number): Mat3 {
+export function settingBasis(key: PointGroupKey, index: number): Mat3 {
   const family = crystalFamily(classData(key).crystalSystem);
   if (family === 'monoclinic' || family === 'triclinic') return LINEAR_IDENTITY;
   const b = latticeBasis(family);
-  return itcSetting(key, index).axes === 'rhombohedral' ? multiply(b, RHOMBOHEDRAL_IN_HEXAGONAL) : b;
+  return classSettingData(key, index).axes === 'rhombohedral' ? multiply(b, RHOMBOHEDRAL_IN_HEXAGONAL) : b;
 }
 
 /**
  * The symmetry directions of a setting, per position of its full symbol (ITA Table 2.1.3.1): those
  * of its family, and for rhombohedral axes [111]; [1-10], [01-1], [-101].
  */
-export function itcSymmetryDirections(key: PointGroupKey, index: number): readonly (readonly Uvw[])[] {
-  if (itcSetting(key, index).axes === 'rhombohedral') return RHOMBOHEDRAL_DIRECTIONS;
+export function settingSymmetryDirections(key: PointGroupKey, index: number): readonly (readonly Uvw[])[] {
+  if (classSettingData(key, index).axes === 'rhombohedral') return RHOMBOHEDRAL_DIRECTIONS;
   return LATTICE_SYMMETRY_DIRECTIONS[crystalFamily(classData(key).crystalSystem)];
 }
 
@@ -350,21 +350,21 @@ const RHOMBOHEDRAL_DIRECTIONS: readonly (readonly Uvw[])[] = Object.freeze(
   ].map((dirs) => Object.freeze(dirs.map((d) => Object.freeze(d) as unknown as Uvw))),
 );
 
-/** W of a setting as a Cartesian matrix B·W·B⁻¹ in the basis `itcBasis`, snapped to the exact values. */
+/** W of a setting as a Cartesian matrix B·W·B⁻¹ in the basis `settingBasis`, snapped to the exact values. */
 function cartesianOf(w: IntMat3, basis: Mat3): Mat3 {
   return snap(multiply(multiply(basis, w as unknown as Mat3), inverse(basis)));
 }
 
 /** The operations of a setting as Cartesian matrices, in ITA's order. */
-export function itcCartesianOperations(key: PointGroupKey, index: number): readonly Mat3[] {
-  const basis = itcBasis(key, index);
-  return itcLatticeOperations(key, index).map((w) => cartesianOf(w, basis));
+export function settingCartesianOperations(key: PointGroupKey, index: number): readonly Mat3[] {
+  const basis = settingBasis(key, index);
+  return settingLatticeOperations(key, index).map((w) => cartesianOf(w, basis));
 }
 
 /** ITA's selected generators of a setting as Cartesian matrices, in printed order. */
-export function itcCartesianGenerators(key: PointGroupKey, index: number): readonly Mat3[] {
-  const basis = itcBasis(key, index);
-  return itcLatticeGenerators(key, index).map((w) => cartesianOf(w, basis));
+export function settingCartesianGenerators(key: PointGroupKey, index: number): readonly Mat3[] {
+  const basis = settingBasis(key, index);
+  return settingLatticeGenerators(key, index).map((w) => cartesianOf(w, basis));
 }
 
 /**
@@ -373,9 +373,13 @@ export function itcCartesianGenerators(key: PointGroupKey, index: number): reado
  * exists: time reversal is then a homomorphism onto {1, 1'}, and the flags fix it, if they are
  * consistent. Exact, on the integer matrices.
  */
-export function itcTimeReversal(key: PointGroupKey, index: number, flags: readonly boolean[]): boolean[] | undefined {
-  const ops = itcLatticeOperations(key, index);
-  const gens = itcLatticeGenerators(key, index);
+export function settingTimeReversal(
+  key: PointGroupKey,
+  index: number,
+  flags: readonly boolean[],
+): boolean[] | undefined {
+  const ops = settingLatticeOperations(key, index);
+  const gens = settingLatticeGenerators(key, index);
   if (flags.length !== gens.length) throw new RangeError(`${key} setting ${index} has ${gens.length} generators`);
   const indexOf = (w: IntMat3) => ops.findIndex((x) => iequal(x, w));
   const parity: (boolean | undefined)[] = ops.map((_, i) => (i === 0 ? false : undefined));

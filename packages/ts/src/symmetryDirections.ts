@@ -16,9 +16,9 @@ const frozen = (rows: [number, number, number][][]): readonly (readonly Uvw[])[]
 
 /**
  * The symmetry directions of each position of the full symbol, per family, as ITA gives them
- * (hexagonal family: the hexagonal row, which also serves the trigonal classes with hexagonal axes).
- * Triclinic: no position. Monoclinic: the positions of the full symbol, which reads along a, b, c,
- * the orthorhombic row; of these, only the unique axis is a lattice symmetry direction ([010] for
+ * (hexagonal family: the directions of the hexagonal lattice, which also serve the trigonal classes
+ * with hexagonal axes). Triclinic: no position. Monoclinic: the positions of the full symbol, which
+ * reads along a, b, c, the orthorhombic directions [100], [010], [001]; of these, only the unique axis is a lattice symmetry direction ([010] for
  * unique axis b, [001] for unique axis c, [100] for unique axis a), and the full symbol has `1` at
  * the other two positions (`1 2/m 1`).
  *

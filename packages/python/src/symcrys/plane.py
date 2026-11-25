@@ -2,8 +2,8 @@
 
 Coordinates and operations are in the lattice basis (a, b), as ITA gives them for the plane
 groups. Keys are ITA's symbols: ``"p2mg"``, ``"c2mm"`` for the plane groups,
-``"2mm"``, ``"3m"`` for the plane point groups. A matrix is a float64 array of shape (2, 2) with
-integer entries, a translation, a point and a vertex float64 arrays of shape (2,); a direction of a
+``"2mm"``, ``"3m"`` for the plane point groups. A matrix is an int64 array of shape (2, 2), a
+translation, a point and a vertex float64 arrays of shape (2,); a direction of a
 line is an int64 array of shape (2,) (docs/conventions.md, "Plane groups").
 """
 
@@ -229,8 +229,8 @@ class WyckoffPosition(TypedDict):
     site_symmetry: str
     """The oriented site-symmetry symbol, written without spaces, e.g. ``'.m.'``, ``'2mm'``."""
     coordinates: list[str]
-    """The coordinates of the (0,0)+ set, the full list of the position, e.g. ``['x,0', '-x,0']``; a
-    leading ``-`` is an overbar.
+    """All coordinate triplets of the (0,0)+ set, e.g. ``['x,0', '-x,0']``; a leading ``-`` is an
+    overbar.
     """
 
 
@@ -266,8 +266,8 @@ class WyckoffDistance(TypedDict):
     site_symmetry: str
     """The oriented site-symmetry symbol, written without spaces, e.g. ``'.m.'``, ``'2mm'``."""
     coordinates: list[str]
-    """The coordinates of the (0,0)+ set, the full list of the position, e.g. ``['x,0', '-x,0']``; a
-    leading ``-`` is an overbar.
+    """All coordinate triplets of the (0,0)+ set, e.g. ``['x,0', '-x,0']``; a leading ``-`` is an
+    overbar.
     """
     point: NDArray[np.float64]
     """The point of the position nearest to the given one (lattice basis), modulo the lattice, in [0,

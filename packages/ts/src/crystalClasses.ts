@@ -297,8 +297,8 @@ export function pointGroups(): readonly PointGroup[] {
 /**
  * Finds a crystal class by a symbol, read tolerantly.
  * It reads, spaces ignored (#96; docs/conventions.md, "Reading symbols"): the key; the short or
- * full symbol of a setting (`312`, `1 1 2`); a Schoenflies symbol in either usual spelling (`D3`,
- * `C3i`, `S6`); Birss's cubic symbols without the overbar on the 3 (`m3m`). A symbol that names
+ * full symbol of a setting (`312`, `1 1 2`); a Schoenflies symbol (`D3`; for -3 either `C3i` or
+ * `S6`); Birss's cubic symbols without the overbar on the 3 (`m3m`). A symbol that names
  * several settings (the key `32`, which is also the symbol of the setting with rhombohedral axes;
  * `2` for unique axis b, c and a; any Schoenflies symbol) gives the standard (ITC default) setting,
  * unless the options `axes` or `uniqueAxis` choose another, as the headlines of ITA name the
@@ -353,7 +353,7 @@ export function generators(key: PointGroupKey, options?: SettingOptions): readon
 export function symbol(key: PointGroupKey, options?: SymbolOptions): string {
   const result = groups.symbol(classKey(key), options);
   // The Schoenflies symbol as ITA writes it (`C3i`); the magnetic API follows ITC Vol. D (`S6`).
-  return options?.form === 'schoenflies' ? groups.itaSchoenflies(key) : result;
+  return options?.form === 'schoenflies' ? groups.classSchoenflies(key) : result;
 }
 
 // --- properties that follow from operations ---------------------------------------------------------
@@ -479,7 +479,7 @@ export function describeOperations(key: PointGroupKey, options?: SettingOptions)
  * symmetry directions and the symmetry elements along them. All positions of the crystal family are
  * listed (for rhombohedral axes the two positions of the rhombohedral lattice), also those the
  * symbol of the class leaves out (then without `symbol`); the triclinic family has none. A direction
- * has ITA's sign of the symmetry direction, the axis of an operation along it that of its Seitz
+ * has the sign ITA gives the lattice symmetry direction, the axis of an operation along it that of its Seitz
  * symbol, so the two are parallel and may be opposite: match them by direction, up to sign.
  *
  * @remarks Source: ITA (2016), Table 2.1.3.1 (the symmetry directions, their signs, and the row for

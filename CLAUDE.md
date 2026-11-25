@@ -286,8 +286,9 @@ Carried over from birss-app, where the calculations come from.
   `SymcrysError`, `undefined`/`true`/`false` as `None`/`True`/`False`. Hand-written for Python is
   only what Python alone has, the shapes and dtypes of the NumPy arrays
   (`packages/python/docstrings.json`), and the module docstrings. So the summary of a TSDoc comment
-  is written for both languages; what holds for TypeScript only (a frozen result, a test that keeps
-  a value in step) goes into `@remarks`, which the Python docstrings leave out. The docstrings are
+  is written for both languages and describes the content; what holds for TypeScript only (a frozen
+  result, a test that keeps a value in step) and the print sources ("Own structure, named anchors")
+  go into `@remarks`, which the Python docstrings leave out. The docstrings are
   committed, so that editors show them; the gate `docs` fails if one is missing or stale, or if a
   TypeScript name is left in it. A PR that changes a TSDoc comment runs `npm run docs:python`.
 - **The Python modules are generated** (#99, #137 H2; Thomas, 2026-11-24, generator before the

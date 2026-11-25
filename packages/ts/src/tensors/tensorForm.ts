@@ -59,7 +59,7 @@ export type TimeParity = 'even' | 'odd';
 
 /**
  * Symmetry of the tensor under permutation of its own indices, independent of the crystal, with its
- * Jahn symbol in the extended notation (square brackets for a symmetric, curly brackets for an
+ * Jahn symbol in the extended Jahn notation (square brackets for a symmetric, curly brackets for an
  * antisymmetric set of indices):
  * - `'none'`: no index symmetry, Vⁿ;
  * - `'symmetric-first-pair'` (rank 2 and above): the first two indices are interchangeable, [V²]V…;

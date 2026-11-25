@@ -67,9 +67,9 @@ describe('Yariv Table 16.1: forms', () => {
     const resolved = Object.fromEntries(
       YARIV_PANELS.filter((p) => p.groups.length === 1).map((p) => [p.id, resolve(p)[0].setting]),
     );
-    const itcDefault = (key: string) => settings(key as PointGroupKey).find((s) => s.isDefault)!.index;
+    const defaultSetting = (key: string) => settings(key as PointGroupKey).find((s) => s.isDefault)!.index;
     const standard = YARIV_PANELS.filter((p) => p.panel.includes('standard orientation'));
     expect(standard.map((p) => p.groups[0]).sort()).toEqual(['-6m2', '2', '3m', 'm']);
-    for (const p of standard) expect(resolved[p.id], p.id).toBe(itcDefault(p.groups[0]));
+    for (const p of standard) expect(resolved[p.id], p.id).toBe(defaultSetting(p.groups[0]));
   });
 });

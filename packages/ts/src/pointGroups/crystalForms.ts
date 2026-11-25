@@ -168,7 +168,7 @@ export const CRYSTAL_FORM_TYPES: Readonly<Record<CrystalFormTypeKey, CrystalForm
 
 const HKL = 'hkl';
 
-/** The printed rows of a setting; for a setting ITA does not print, those of setting 1 carried into its frame. */
+/** The stored rows of a setting; for a setting ITA does not list, those of setting 1 carried into its frame. */
 function storedRows(key: PointGroupKey, setting: number): readonly FormRow[] {
   const entry = storedEntry(CLASS_FORMS, key, setting);
   if (entry) return entry.rows;

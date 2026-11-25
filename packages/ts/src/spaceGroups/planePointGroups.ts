@@ -11,7 +11,6 @@ import { type PlaneSystem } from './planeGroupData.js';
 import { planeGroupEntry, planeGroupGenerators, planeGroupOperations } from './planeGroups.js';
 import { ZERO } from './rational.js';
 
-/** The keys of the ten plane point groups, in the order of ITA Table 3.2.1.1. */
 /**
  * The key of a plane point group. Written out rather than derived from the list below, so that the
  * declarations keep its name (a derived type is expanded there), by which the Python generator
@@ -19,6 +18,7 @@ import { ZERO } from './rational.js';
  */
 export type PlanePointGroupKey = '1' | '2' | 'm' | '2mm' | '4' | '4mm' | '3' | '3m' | '6' | '6mm';
 
+/** The keys of the ten plane point groups, in ITA's order (ITA 2016, Table 3.2.1.1). */
 export const PLANE_POINT_GROUP_KEYS = [
   '1',
   '2',

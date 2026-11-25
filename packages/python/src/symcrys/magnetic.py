@@ -98,7 +98,7 @@ IntrinsicSymmetry = Literal[
     "totally-symmetric",
 ]
 """Symmetry of the tensor under permutation of its own indices, independent of the crystal, with its
-Jahn symbol in the extended notation (square brackets for a symmetric, curly brackets for an
+Jahn symbol in the extended Jahn notation (square brackets for a symmetric, curly brackets for an
 antisymmetric set of indices): - ``'none'``: no index symmetry, Vⁿ; - ``'symmetric-first-pair'``
 (rank 2 and above): the first two indices are interchangeable, [V²]V…; - ``'symmetric-last-pair'``
 (rank 2 and above): the last two, V…[V²] (at rank 3 second-harmonic generation and the piezoelectric
@@ -266,7 +266,7 @@ class Axis(TypedDict):
 
     lattice: NDArray[np.int64]
     """Integer coordinates in the conventional basis: for the axis of an operation with the sign of its
-    Seitz symbol, for a symmetry direction with ITA's sign of the symmetry direction.
+    Seitz symbol, for a symmetry direction with the sign ITA gives the lattice symmetry direction.
     """
     cartesian: NDArray[np.float64]
     """Unit vector in the Cartesian frame of symcrys. Monoclinic: a, b, c taken along x, y, z, exact for
@@ -302,7 +302,7 @@ class DirectionElements(TypedDict):
 
     lattice: NDArray[np.int64]
     """Integer coordinates in the conventional basis: for the axis of an operation with the sign of its
-    Seitz symbol, for a symmetry direction with ITA's sign of the symmetry direction.
+    Seitz symbol, for a symmetry direction with the sign ITA gives the lattice symmetry direction.
     """
     cartesian: NDArray[np.float64]
     """Unit vector in the Cartesian frame of symcrys. Monoclinic: a, b, c taken along x, y, z, exact for
@@ -801,11 +801,11 @@ LATTICE_SYMMETRY_DIRECTIONS: dict[str, list[NDArray[np.int64]]] = _shared.conver
     ("x", "lattice_symmetry_directions"),
 )
 """The symmetry directions of each position of the full symbol, per family, as ITA gives them
-(hexagonal family: the hexagonal row, which also serves the trigonal classes with hexagonal axes).
-Triclinic: no position. Monoclinic: the positions of the full symbol, which reads along a, b, c, the
-orthorhombic row; of these, only the unique axis is a lattice symmetry direction ([010] for unique
-axis b, [001] for unique axis c, [100] for unique axis a), and the full symbol has ``1`` at the
-other two positions (``1 2/m 1``).
+(hexagonal family: the directions of the hexagonal lattice, which also serve the trigonal classes
+with hexagonal axes). Triclinic: no position. Monoclinic: the positions of the full symbol, which
+reads along a, b, c, the orthorhombic directions [100], [010], [001]; of these, only the unique axis
+is a lattice symmetry direction ([010] for unique axis b, [001] for unique axis c, [100] for unique
+axis a), and the full symbol has ``1`` at the other two positions (``1 2/m 1``).
 
 In Python: family → one int64 array of shape (n, 3) per position, the n directions [uvw] as rows.
 """
@@ -1342,9 +1342,9 @@ def symmetry_directions(
     unique axis is a lattice symmetry direction) and the symmetry elements along them. All positions
     of the crystal family are listed (for rhombohedral axes the two positions of the rhombohedral
     lattice), also those the symbol of the class leaves out (then without ``symbol``); the triclinic
-    family has none. A direction has ITA's sign of the symmetry direction, the axis of an operation
-    along it that of its Seitz symbol, so the two are parallel and may be opposite: match them by
-    direction, up to sign.
+    family has none. A direction has the sign ITA gives the lattice symmetry direction, the axis of
+    an operation along it that of its Seitz symbol, so the two are parallel and may be opposite:
+    match them by direction, up to sign.
 
     Parameters
     ----------
@@ -1586,7 +1586,7 @@ def point_group(key: str) -> PointGroup:
 def point_groups() -> list[PointGroup]:
     """All 122 magnetic point groups, in the order of ``POINT_GROUP_KEYS`` of the magnetic API: the
     32 crystal classes (type I), the 32 grey groups (type II) in the same order, and the 58
-    black-and-white groups (type III) in the order of ITC's table of the magnetic point groups.
+    black-and-white groups (type III) in ITC's order.
     """
     result: list[PointGroup] = _shared.convert(_call("pointGroups"), ("l", _S_PointGroup))
     return result
@@ -1737,15 +1737,15 @@ def symbol(
         symbol (``32'``, the ITC short symbol; ``321'``, the class key and ``1'``). ``'full'``: full
         symbol, positions separated by spaces, e.g. ``-3 2/m 1``. ``'schoenflies'``: Schoenflies
         symbol, subscripts written inline (``C3v``, ``D2d``, ``Oh``); ``C3i`` for the class -3 in
-        the crystallographic API (ITA), ``S6`` in the magnetic API (ITC: ``S6(C3)``, ``D3d(S6)``).
-        ``'shubnikov'``: Shubnikov symbol in ITC's notation, with the combining overbar (U+0305) and
-        the combining low line (U+0332, an element combined with time reversal) after their
-        character and ``·`` for the centred dot: ``2̲:m̲`` for ``2'/m'``, ``6̅`` for ``-3``
-        (Shubnikov's overbar is a rotoreflection). A grey group, for which ITC gives no Shubnikov
-        symbol, has the symbol of its class, a centred dot and an underlined 1, in Shubnikov's own
-        notation (``3:2·1̲`` for ``321'``). The same in every setting, since it names no
-        orientation; ``find_point_group`` does not read it, since it clashes with Hermann–Mauguin
-        (``2̅`` is −1, ``6̅`` is −3).
+        the crystallographic API, as ITA writes it, ``S6`` in the magnetic API, in ITC's notation
+        for the magnetic groups (``S6(C3)``, ``D3d(S6)``). ``'shubnikov'``: Shubnikov symbol in
+        ITC's notation, with the combining overbar (U+0305) and the combining low line (U+0332, an
+        element combined with time reversal) after their character and ``·`` for the centred dot:
+        ``2̲:m̲`` for ``2'/m'``, ``6̅`` for ``-3`` (Shubnikov's overbar is a rotoreflection). A grey
+        group, for which ITC gives no Shubnikov symbol, has the symbol of its class, a centred dot
+        and an underlined 1, in Shubnikov's own notation (``3:2·1̲`` for ``321'``). The same in
+        every setting, since it names no orientation; ``find_point_group`` does not read it, since
+        it clashes with Hermann–Mauguin (``2̅`` is −1, ``6̅`` is −3).
     """
     result: str = _shared.convert(
         _call(
@@ -1767,12 +1767,12 @@ def find_point_group(
     """Finds one of the 122 magnetic point groups (the 32 crystal classes included) by a symbol,
     read tolerantly. A prime marks time reversal: ``4'/mmm'``, ``2221'``. It reads, spaces ignored
     (#96; docs/conventions.md, "Reading symbols"): the key; the short or full symbol of a setting
-    (``312``, ``1 1 2``); a Schoenflies symbol in either usual spelling (``D3``, ``C3i``, ``S6``);
-    Birss's cubic symbols without the overbar on the 3 (``m3m``). A symbol that names several
-    settings (the key ``32``, which is also the symbol of the setting with rhombohedral axes; ``2``
-    for unique axis b, c and a; any Schoenflies symbol) gives the standard (ITC default) setting,
-    unless the options ``axes`` or ``unique_axis`` choose another, as the headlines of ITA name the
-    settings (the option ``axes`` set to ``'rhombohedral'`` for the key ``32``).
+    (``312``, ``1 1 2``); a Schoenflies symbol (``D3``; for -3 either ``C3i`` or ``S6``); Birss's
+    cubic symbols without the overbar on the 3 (``m3m``). A symbol that names several settings (the
+    key ``32``, which is also the symbol of the setting with rhombohedral axes; ``2`` for unique
+    axis b, c and a; any Schoenflies symbol) gives the standard (ITC default) setting, unless the
+    options ``axes`` or ``unique_axis`` choose another, as the headlines of ITA name the settings
+    (the option ``axes`` set to ``'rhombohedral'`` for the key ``32``).
 
     Spellings: the overbar as ``-``, ``−``, a combining overbar or ``¯`` after the digit (``m3̄m``),
     ``bar3`` (also with a backslash and braces, as in LaTeX); the prime as ``'``, ``′``, ``ʹ`` or

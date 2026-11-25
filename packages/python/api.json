@@ -19,7 +19,7 @@
       "ts": "plane",
       "py": "packages/python/src/symcrys/plane.py",
       "prefix": "plane.",
-      "docstring": "symcrys.plane: the plane API, for the 17 plane groups and the 10 plane point groups.\n\nCoordinates and operations are in the lattice basis (a, b), as ITA gives them for the plane\ngroups. Keys are ITA's symbols: ``\"p2mg\"``, ``\"c2mm\"`` for the plane groups,\n``\"2mm\"``, ``\"3m\"`` for the plane point groups. A matrix is a float64 array of shape (2, 2) with\ninteger entries, a translation, a point and a vertex float64 arrays of shape (2,); a direction of a\nline is an int64 array of shape (2,) (docs/conventions.md, \"Plane groups\").\n"
+      "docstring": "symcrys.plane: the plane API, for the 17 plane groups and the 10 plane point groups.\n\nCoordinates and operations are in the lattice basis (a, b), as ITA gives them for the plane\ngroups. Keys are ITA's symbols: ``\"p2mg\"``, ``\"c2mm\"`` for the plane groups,\n``\"2mm\"``, ``\"3m\"`` for the plane point groups. A matrix is an int64 array of shape (2, 2), a\ntranslation, a point and a vertex float64 arrays of shape (2,); a direction of a\nline is an int64 array of shape (2,) (docs/conventions.md, \"Plane groups\").\n"
     }
   },
   "types": {

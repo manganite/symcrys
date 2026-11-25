@@ -11,7 +11,7 @@
 import { describe, expect, it } from 'vitest';
 import { matricesEqual } from '../linalg.js';
 import { BLACK_WHITE_POINT_GROUP_KEYS } from './keys.js';
-import { itcLatticeOperations } from './classData.js';
+import { settingLatticeOperations } from './classData.js';
 import { BLACK_WHITE_GROUPS, blackWhiteClassSetting, blackWhiteOperations } from './blackWhiteData.js';
 import { operations, pointGroup, settings, symbol } from './pointGroups.js';
 
@@ -59,7 +59,7 @@ describe('the ITC data of the black-and-white groups', () => {
 
   it.each(SETTINGS)('%s: one group, half of its class with time reversal', (_, g, s) => {
     const ops = blackWhiteOperations(g.key, s.index);
-    expect(ops).toHaveLength(itcLatticeOperations(g.crystalClass, blackWhiteClassSetting(g.key, s.index)).length);
+    expect(ops).toHaveLength(settingLatticeOperations(g.crystalClass, blackWhiteClassSetting(g.key, s.index)).length);
     expect(ops.filter((o) => o.timeReversal)).toHaveLength(ops.length / 2);
     expect(ops[0].timeReversal).toBe(false);
     expect(blackWhiteClassSetting(g.key, s.index)).toBeGreaterThan(0);
