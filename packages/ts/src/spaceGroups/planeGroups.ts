@@ -4,6 +4,7 @@
  * Internal for now; the entry point `symcrys/plane` comes later.
  */
 
+import { deepFreeze } from '../freeze.js';
 import { shown } from '../checks.js';
 import {
   closure,
@@ -61,7 +62,7 @@ export function planeGroupOperations(key: string | number): readonly ExactOperat
     throw new Error(`The selected generators of ${entry.symbol} do not give its general position`);
   }
   // Frozen, so that a caller inside the library cannot change the cached list (#101).
-  const frozen = Object.freeze(ops.map((op) => Object.freeze(op)));
+  const frozen = deepFreeze(ops);
   cache.set(entry.number, frozen);
   return frozen;
 }

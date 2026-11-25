@@ -5,6 +5,7 @@
  * intermediate product is checked: a result outside the safe integers throws instead of rounding.
  */
 
+import { MAX_FRACTION_DEPTH } from '../tolerances.js';
 import { shown } from '../checks.js';
 import { gcd } from '../integers.js';
 
@@ -155,7 +156,8 @@ export function simplestFraction(value: unknown, tolerance: number, what: string
     // The simplest fraction in the open interval (lo, hi), lo < hi.
     if (lo < 0 && hi > 0) return ZERO;
     if (hi <= 0) return negate(simplest(-hi, -lo, depth));
-    if (depth > 200) throw new RangeError(`The ${what} ${shown(value)} has no fraction within ${tolerance}`);
+    if (depth > MAX_FRACTION_DEPTH)
+      throw new RangeError(`The ${what} ${shown(value)} has no fraction within ${tolerance}`);
     const f = Math.floor(lo);
     if (f + 1 < hi) return rational(checkSafeInteger(f + 1, `The ${what}`));
     // lo and hi lie in [f, f + 1]: f + 1/y with y in (1/(hi − f), 1/(lo − f)).

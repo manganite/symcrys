@@ -4,7 +4,7 @@
  */
 
 import { shown } from './checks.js';
-import type { Mat3 } from './linalg.js';
+import { IDENTITY, type Mat3 } from './linalg.js';
 
 /** One of the seven crystal systems. */
 export type CrystalSystem =
@@ -66,11 +66,8 @@ const S3_2 = Math.sqrt(3) / 2;
 const frozen = (m: [number, number, number][]): Mat3 =>
   Object.freeze(m.map((row) => Object.freeze(row))) as unknown as Mat3;
 
-const ORTHONORMAL = frozen([
-  [1, 0, 0],
-  [0, 1, 0],
-  [0, 0, 1],
-]);
+/** The basis of the families with orthogonal axes of one length: the (frozen) identity of linalg.ts. */
+const ORTHONORMAL = IDENTITY;
 
 const HEXAGONAL = frozen([
   [1, -0.5, 0],

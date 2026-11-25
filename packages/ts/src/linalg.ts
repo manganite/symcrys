@@ -3,6 +3,7 @@
  * i, column j, and a matrix acts on a column vector from the left.
  */
 
+import { deepFreeze } from './freeze.js';
 import { EPSILON, SINGULAR_RATIO, SNAP_EPSILON } from './tolerances.js';
 
 /** A Cartesian vector. */
@@ -11,17 +12,18 @@ export type Vec3 = readonly [number, number, number];
 /** A Cartesian 3×3 matrix, as three rows. */
 export type Mat3 = readonly [Vec3, Vec3, Vec3];
 
-export const IDENTITY: Mat3 = [
+// Frozen: they are shared by the modules and put into cached lists (#101).
+export const IDENTITY: Mat3 = deepFreeze([
   [1, 0, 0],
   [0, 1, 0],
   [0, 0, 1],
-];
+] as const);
 
-export const INVERSION: Mat3 = [
+export const INVERSION: Mat3 = deepFreeze([
   [-1, 0, 0],
   [0, -1, 0],
   [0, 0, -1],
-];
+] as const);
 
 /** Builds a matrix from a row accessor. */
 function build(f: (i: number, j: number) => number): Mat3 {

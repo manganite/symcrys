@@ -6,6 +6,14 @@ All notable changes to symcrys are recorded here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- Two comparisons with a fixed internal tolerance now follow the one convention of the library,
+  "strictly below counts as equal or zero" (#101): `residualOperations` takes an entry of `matrix`
+  as an integer when it lies less than 10⁻⁹ from it (before: at most 10⁻⁹), and the row reduction of
+  the tensor forms eliminates an entry of 10⁻¹² too (before: only above). A result differs only for
+  an input exactly on these bounds.
+
 ## [0.12.0] - 2026-11-25
 
 The completion of the ITC content planned in #126 and #137 (part I): the plane groups get the lookups

@@ -7,7 +7,14 @@ import { checkNumbers, checkOptions, shown, TOLERANCE_KEYS } from './checks.js';
 import { apply, multiply, type Vec3 } from './linalg.js';
 import { closeIndices } from './closure.js';
 import { checkCartesianOperations, type CartesianOperation } from './operations.js';
-import { EPSILON, ROUNDING_EPSILON, TOLERANCE_BOUND, toleranceOf, type ToleranceOptions } from './tolerances.js';
+import {
+  EPSILON,
+  ROUNDING_EPSILON,
+  SITE_PASSES,
+  TOLERANCE_BOUND,
+  toleranceOf,
+  type ToleranceOptions,
+} from './tolerances.js';
 
 /** The site symmetry of a direction. */
 export interface SiteSymmetry {
@@ -132,7 +139,7 @@ export function siteSymmetryOf(
   const product = productLookup(operations, tolerance);
   let set = closeIndices(product, fixing(v));
   let settled: { indices: number[]; projected: Vec3 } | undefined;
-  for (let pass = 0; pass < 8 && !settled; pass++) {
+  for (let pass = 0; pass < SITE_PASSES && !settled; pass++) {
     const mean = meanImage(operations, set, v);
     if (mean === undefined) {
       throw new RangeError(

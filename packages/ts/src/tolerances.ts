@@ -78,11 +78,13 @@ export const MAX_PIVOT_THRESHOLD = 1e-2;
 
 // --- internal tolerances of the computations -------------------------------------------------------
 //
-// The constants below gate numbers that symcrys computes itself, not those of a caller: they sit far
-// below anything a crystallographic quantity can differ by and far above the rounding of a double
-// (about 10⁻¹⁶ relative), so they decide nothing but rounding. One convention: a difference strictly
-// below the constant counts as equal or as zero (`<`), and a bound that refuses (a singular matrix, a
-// flat cell) refuses a value on it too. Every literal tolerance of the library is one of these.
+// The constants below are fixed: no option changes them. Most gate numbers that symcrys computes
+// itself; some gate a caller's input where only rounding is at stake (an integer matrix, a singular
+// basis, a flat cell). They sit far below anything a crystallographic quantity can differ by and far
+// above the rounding of a double (about 10⁻¹⁶ relative), so they decide nothing but rounding. One
+// convention: a difference strictly below the constant counts as equal or as zero (`<`), and a bound
+// that refuses (a singular matrix, a flat cell) refuses a value on it too. Every literal tolerance of
+// the library is one of these.
 
 /**
  * A computed number within this of an integer is that integer: the entries of a matrix W in the
@@ -102,8 +104,7 @@ export const ROUNDING_EPSILON = 1e-9;
 /**
  * The margin of a floor, a ceiling or a closed interval taken of a number that is exact up to
  * rounding (a rational turned into a double): the translates of a symmetry element that meet a box
- * and the class of a line (spaceGroups/cell.ts), the dependence of two integer columns
- * (spaceGroups/positions.ts), so that a boundary value counts as inside.
+ * and the class of a line (spaceGroups/cell.ts), so that a boundary value counts as inside.
  */
 export const BOUNDARY_EPSILON = 1e-12;
 
@@ -126,11 +127,17 @@ export const FLAT_CELL_RATIO = 1e-6;
 export const FLAT_CELL_RADICAND = 1e-12;
 
 /**
- * Two unit vectors whose dot product is within this of ±1 are parallel (the axis of an operation
- * along a symmetry direction, pointGroups/elements.ts), and a rotation by an angle (radians) below
- * this is the identity.
+ * Two unit vectors whose dot product is within this of ±1 are parallel: the axis of an operation
+ * along a symmetry direction (pointGroups/elements.ts). A deviation of 10⁻⁶ is an angle of about
+ * 1.4·10⁻³ rad, far below the angle between two symmetry directions.
  */
 export const AXIS_EPSILON = 1e-6;
+
+/**
+ * A rotation by an angle (radians) below this is the identity (pointGroups/elements.ts); the
+ * smallest rotation of a point group is 60°.
+ */
+export const ANGLE_EPSILON = 1e-6;
 
 /**
  * Row reduction (tensors/rowEchelon.ts): an entry below `PIVOT_EPSILON` does not serve as a pivot,
@@ -142,6 +149,26 @@ export const PIVOT_EPSILON = 1e-7;
 export const ELIMINATION_EPSILON = 1e-12;
 
 // --- bounds --------------------------------------------------------------------------------------
+
+/**
+ * No crystal class has more than 48 operations (m-3m): a coset closure of ITA's generators beyond
+ * that is a data error (pointGroups/itcData.ts).
+ */
+export const MAX_CLASS_ORDER = 48;
+
+/**
+ * The passes of setting a direction or a point onto the fixed space of the operations that fix it
+ * within the tolerance, until the set of them is stable (siteSymmetry.ts, spaceGroups/positions.ts);
+ * it settles in one or two passes for every group, so 8 only stops a loop that does not.
+ */
+export const SITE_PASSES = 8;
+
+/**
+ * The depth of the search for the simplest fraction within a tolerance (spaceGroups/rational.ts,
+ * `simplestFraction`), one step per term of a continued fraction: a double has at most about 40, so
+ * 200 is reached only by a tolerance far too small for the value.
+ */
+export const MAX_FRACTION_DEPTH = 200;
 
 /** No point group has more than 96 operations (m-3m1'): a closure beyond that is no point group. */
 export const MAX_POINT_GROUP_ORDER = 96;

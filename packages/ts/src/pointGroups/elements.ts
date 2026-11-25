@@ -5,8 +5,8 @@
  * left to the applications (docs/conventions.md, "Symmetry directions and elements").
  */
 
-import { AXIS_EPSILON } from '../tolerances.js';
-import { SETTING_KEYS, checkOptions } from '../checks.js';
+import { ANGLE_EPSILON, AXIS_EPSILON } from '../tolerances.js';
+import { SETTING_KEYS, checkOptions, shown } from '../checks.js';
 import { det, trace, type Mat3, type Vec3 } from '../linalg.js';
 import { crystalFamily } from '../lattice.js';
 import type { Operation } from '../operations.js';
@@ -115,7 +115,7 @@ function rotationPart(m: Mat3): { r: Mat3; n: number } {
   const r = det(m) > 0 ? m : (m.map((row) => row.map((v) => -v)) as unknown as Mat3);
   const cos = Math.max(-1, Math.min(1, (trace(r) - 1) / 2));
   const angle = Math.acos(cos);
-  const n = angle < AXIS_EPSILON ? 1 : Math.round((2 * Math.PI) / angle);
+  const n = angle < ANGLE_EPSILON ? 1 : Math.round((2 * Math.PI) / angle);
   if (![1, 2, 3, 4, 6].includes(n)) throw new Error(`Not a crystallographic operation (rotation order ${n})`);
   return { r, n };
 }
@@ -173,7 +173,7 @@ function describe(
   if (n === 1) return Object.freeze({ kind: proper ? 'identity' : 'inversion', n: 1, timeReversal });
   const direction = findAxis(axes, rotationAxis(r, n), what);
   const seitz = seitzOf(table, op.matrix as unknown as IntMat3);
-  if (!seitz?.axis) throw new Error(`${what}: no Seitz symbol for the matrix ${JSON.stringify(op.matrix)}`);
+  if (!seitz?.axis) throw new Error(`${what}: no Seitz symbol for the matrix ${shown(op.matrix)}`);
   // A frozen copy: the result must not share the table's array (every result frozen, #137 C4).
   const signed = axisOf(basis, Object.freeze([...seitz.axis]) as unknown as Uvw);
   if (!parallel(signed.cartesian, direction.cartesian)) {

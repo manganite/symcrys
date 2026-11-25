@@ -5,17 +5,12 @@
  * point groups (`siteSymmetryOf`). Internal for now.
  */
 
+import { deepFreeze } from '../freeze.js';
 import { shown } from '../checks.js';
 import { closeIndices } from '../closure.js';
 import { compose, equalModLattice, parseOperation, toPlain, type PlainOperation } from './affine.js';
 import { planeGroupEntry, planeGroupOperations } from './planeGroups.js';
-import {
-  BOUNDARY_EPSILON,
-  ROUNDING_EPSILON,
-  SINGULAR_RATIO,
-  toleranceOf,
-  type ToleranceOptions,
-} from '../tolerances.js';
+import { ROUNDING_EPSILON, SINGULAR_RATIO, SITE_PASSES, toleranceOf, type ToleranceOptions } from '../tolerances.js';
 
 /** The site symmetry of a point under a plane group. */
 export interface PlaneSiteSymmetry {
@@ -100,7 +95,7 @@ function groupData(key: string): GroupData {
         return i;
       }),
     );
-    data = { ops: exact.map(toPlain), table };
+    data = deepFreeze({ ops: exact.map(toPlain), table });
     groupCache.set(k, data);
   }
   return data;
@@ -135,7 +130,7 @@ export function planeOrbit(
 }
 
 /** Indices of `set` closed under products, modulo the lattice, within the operations of the group. */
-function closeWithin(key: string, set: readonly number[]): number[] {
+function closeSet(key: string, set: readonly number[]): number[] {
   const { table } = groupData(key);
   return closeIndices((i, j) => table[i][j], set);
 }
@@ -167,11 +162,11 @@ export function planeSiteSymmetry(
   const fixingAt = (p: readonly number[]): number[] =>
     ops.flatMap((op, i) => (sameModLattice(image(op, p), p, tol) ? [i] : []));
   let p: readonly number[] = point;
-  let set = closeWithin(key, fixingAt(p));
-  for (let pass = 0; pass < 8; pass++) {
+  let set = closeSet(key, fixingAt(p));
+  for (let pass = 0; pass < SITE_PASSES; pass++) {
     const fixing = fixingOperations(ops, set, p);
     const mean = [0, 1].map((k) => fixing.reduce((s, op) => s + image(op, p)[k], 0) / fixing.length);
-    const next = closeWithin(key, fixingAt(mean));
+    const next = closeSet(key, fixingAt(mean));
     const settled = fixing.every((op) => sameModLattice(image(op, mean), mean, ROUNDING_EPSILON));
     if (settled && next.length === set.length && next.every((x, i) => x === set[i])) {
       const q = mean.map(mod1);
@@ -214,8 +209,7 @@ export interface PositionDistance {
 /** The free directions of a printed coordinate expression (the columns of W that are not zero, independent ones). */
 function freeDirections(op: PlainOperation): number[][] {
   const cols = [0, 1].map((k) => [op.matrix[0][k], op.matrix[1][k]]).filter((v) => v[0] !== 0 || v[1] !== 0);
-  if (cols.length === 2 && Math.abs(cols[0][0] * cols[1][1] - cols[0][1] * cols[1][0]) < BOUNDARY_EPSILON)
-    return [cols[0]];
+  if (cols.length === 2 && Math.abs(cols[0][0] * cols[1][1] - cols[0][1] * cols[1][0]) === 0) return [cols[0]];
   return cols;
 }
 

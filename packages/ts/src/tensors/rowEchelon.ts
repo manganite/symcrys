@@ -30,7 +30,7 @@ export function rowEchelonWithPivots(
     const p = m[row][c];
     for (let j = 0; j < dim; j++) m[row][j] /= p;
     for (let r = 0; r < m.length; r++) {
-      if (r === row || Math.abs(m[r][c]) <= ELIMINATION_EPSILON) continue;
+      if (r === row || Math.abs(m[r][c]) < ELIMINATION_EPSILON) continue;
       const f = m[r][c];
       for (let j = 0; j < dim; j++) m[r][j] -= f * m[row][j];
     }

@@ -15,6 +15,7 @@
  * #137 A4 (`ItcSetting.index`).
  */
 
+import { MAX_CLASS_ORDER } from '../tolerances.js';
 import { shown } from '../checks.js';
 import { crystalFamily, latticeBasis, type CrystalSystem } from '../lattice.js';
 import { IDENTITY as LINEAR_IDENTITY, inverse, multiply, snap, type Mat3 } from '../linalg.js';
@@ -240,8 +241,6 @@ const imul = (a: IntMat3, b: IntMat3): IntMat3 =>
 
 const iequal = (a: IntMat3, b: IntMat3): boolean => a.every((row, i) => row.every((x, j) => x === b[i][j]));
 
-const IDENTITY: IntMat3 = LINEAR_IDENTITY;
-
 /** The inverse of an integer matrix of determinant ±1, exactly (the adjugate divided by ±1). */
 function iinverse(m: IntMat3): IntMat3 {
   const [[a, b, c], [d, e, f], [g, h, i]] = m;
@@ -283,11 +282,12 @@ export function itcLatticeOperations(key: PointGroupKey, index: number): readonl
       ops = itcLatticeOperations(key, s.from.index).map((w) => transform(w, s.from!.basis));
     } else {
       const has = (list: readonly IntMat3[], w: IntMat3) => list.some((x) => iequal(x, w));
-      const list: IntMat3[] = [IDENTITY];
+      const list: IntMat3[] = [LINEAR_IDENTITY];
       for (const g of itcLatticeGenerators(key, index)) {
         const h = list.slice();
         for (let power = g; !has(h, power); power = imul(power, g)) {
-          if (list.length > 48) throw new Error(`The generators of ${key} setting ${index} give no point group`);
+          if (list.length > MAX_CLASS_ORDER)
+            throw new Error(`The generators of ${key} setting ${index} give no point group`);
           for (const x of h) list.push(imul(power, x));
         }
       }
@@ -316,12 +316,6 @@ const RHOMBOHEDRAL_IN_HEXAGONAL: Mat3 = [
   [1 / 3, 1 / 3, 1 / 3],
 ];
 
-const IDENTITY_BASIS: Mat3 = [
-  [1, 0, 0],
-  [0, 1, 0],
-  [0, 0, 1],
-];
-
 /**
  * The conventional basis a, b, c (columns) of a setting in the Cartesian frame: that of
  * `latticeBasis`; for rhombohedral axes the obverse basis in the hexagonal frame of `latticeBasis`;
@@ -331,7 +325,7 @@ const IDENTITY_BASIS: Mat3 = [
  */
 export function itcBasis(key: PointGroupKey, index: number): Mat3 {
   const family = crystalFamily(itcClass(key).crystalSystem);
-  if (family === 'monoclinic' || family === 'triclinic') return IDENTITY_BASIS;
+  if (family === 'monoclinic' || family === 'triclinic') return LINEAR_IDENTITY;
   const b = latticeBasis(family);
   return itcSetting(key, index).axes === 'rhombohedral' ? multiply(b, RHOMBOHEDRAL_IN_HEXAGONAL) : b;
 }

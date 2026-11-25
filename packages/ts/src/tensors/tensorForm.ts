@@ -326,6 +326,7 @@ function project(
  */
 function reduce(spanning: readonly number[][], dim: number, deviation: number, rank: number) {
   const start = Math.max(10 * deviation, PIVOT_EPSILON);
+  // 0.999: the tenfold steps from a power of ten reach PIVOT_EPSILON itself despite rounding.
   for (let threshold = start; threshold >= PIVOT_EPSILON * 0.999; threshold /= 10) {
     const reduced = rowEchelonWithPivots(spanning, dim, threshold);
     if (reduced.pivots.length === rank) return reduced;
