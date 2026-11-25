@@ -103,6 +103,8 @@
     "//": "Number fields and option properties by name: int or float.",
     "int": [
       "order",
+      "cellChoice",
+      "cell",
       "n",
       "index",
       "setting",
@@ -131,7 +133,7 @@
     ]
   },
   "functions": {
-    "//": "What a function's TypeScript type does not say: the dtype of an array it returns, the keys an operation must have, an argument converted otherwise; operationKeys, bare and listOf may be given per module (siteSymmetryOf and orbitOf do not depend on time reversal, docs/conventions.md).",
+    "//": "What a function's TypeScript type does not say: the dtype of an array it returns, the keys an operation must have, an argument converted otherwise; mappings: object parameters passed as one mapping rather than as their fields; operationKeys, bare and listOf may be given per module (siteSymmetryOf and orbitOf do not depend on time reversal, docs/conventions.md).",
     "faceNormal": {
       "returns": "float64"
     },
@@ -181,6 +183,9 @@
     "fromVoigt": {
       "returns": "float64",
       "custom": "tensor"
+    },
+    "cellTransformation": {
+      "mappings": ["fromCell", "toCell"]
     },
     "changeOfCoordinates": {
       "operationKeys": ["matrix"]

@@ -247,6 +247,22 @@ class CoordinateChange(TypedDict):
 
 
 @final
+class CoordinateTransformation(TypedDict):
+    """A change of the coordinate system (P, p) (ITA 2016 § 1.5.1.3, p. 83): (a′, b′, c′) = (a, b,
+    c)·P, origin O′ = O + p.
+    """
+
+    linear_part: NDArray[np.float64]
+    """P, the linear part: its columns are the new basis vectors a′, b′, c′ in the old basis (eq.
+    (1.5.1.4)); det P ≠ 0, also negative.
+    """
+    origin_shift: NotRequired[NDArray[np.float64]]
+    """p, the origin shift: the coordinates of the new origin in the old coordinate system; default
+    zero.
+    """
+
+
+@final
 class Axis(TypedDict):
     """A symmetry direction: as a lattice direction [uvw] and as a Cartesian unit vector."""
 
@@ -580,6 +596,13 @@ _S_CoordinateChange = (
         "operations": ("l", _S_TransformedOperation),
     },
 )
+_S_CoordinateTransformation = (
+    "d",
+    {
+        "linearPart": ("a", np.float64, None),
+        "originShift": ("a", np.float64, None),
+    },
+)
 _S_Axis = ("d", {"lattice": ("a", np.int64, None), "cartesian": ("a", np.float64, None)})
 _S_OperationDescription = (
     "d",
@@ -683,6 +706,7 @@ __all__ = [
     "CartesianAxis",
     "CartesianOperationDescription",
     "CoordinateChange",
+    "CoordinateTransformation",
     "CrystalFamily",
     "CrystalSystem",
     "DirectionElements",
@@ -717,6 +741,7 @@ __all__ = [
     "allows_property_of",
     "angle_between_directions",
     "angle_between_planes",
+    "cell_transformation",
     "change_of_coordinates",
     "crystal_family",
     "describe_operations",
@@ -1203,6 +1228,60 @@ def change_of_coordinates(
             _shared.options(tolerance=tolerance),
         ),
         _S_CoordinateChange,
+    )
+    return result
+
+
+def cell_transformation(
+    bravais_lattice: str,
+    from_cell: Mapping[str, Any],
+    to_cell: Mapping[str, Any],
+) -> CoordinateTransformation:
+    """The change of the coordinate system from one cell of a lattice to another: P with (a′, b′,
+    c′) = (a, b, c)·P, where (a, b, c) is the basis of ``from_cell`` and (a′, b′, c′) that of
+    ``to_cell``, to be passed to ``change_of_coordinates`` (the origin stays). The change back is
+    ``cell_transformation(bravais_lattice, to_cell, from_cell)``.
+
+    A cell is named by its fields; a field left out takes the value of the conventional cell in the
+    standard setting, so an empty cell is that cell. Where a lattice takes ``centring``, the
+    centring of its conventional cell names that cell. The fields by Bravais lattice:
+
+    mP and mS: ``unique_axis`` (``'a'``, ``'b'``, ``'c'``; standard ``'b'``) and ``cell_choice`` (1,
+    2, 3; standard 1); in mS the cell choices of one unique axis are centred C, A, I (unique axis
+    b), A, B, I (c) and B, C, I (a).
+
+    oP, oS, oI and oF: ``setting``, ``'abc'`` (standard), ``'ba-c'``, ``'cab'``, ``'-cba'``,
+    ``'bca'`` or ``'a-cb'``, the basis of the cell in the standard one; oI and oF also ``centring``
+    ``'P'``, the primitive cell of the standard setting.
+
+    tP: ``centring`` ``'C'`` and ``cell`` 1 or 2, the C-centred cells C₁, C₂. tI: ``centring``
+    ``'F'`` and ``cell`` 1 or 2, the F-centred cells F₁, F₂, and ``centring`` ``'P'``, the primitive
+    cell.
+
+    hP: ``centring`` and ``cell``, ``'C'`` for the orthohexagonal cells C₁, C₂, C₃, ``'H'`` for the
+    triple hexagonal cells H₁, H₂, H₃, ``'D'`` for the triple rhombohedral cells D₁, D₂.
+
+    hR: ``axes`` ``'hexagonal'`` (standard) with ``cell`` 1, 2, 3 and ``setting`` ``'obverse'`` or
+    ``'reverse'``, the triple hexagonal cells R₁, R₂, R₃ (standard R₁ obverse); ``axes``
+    ``'rhombohedral'``, the primitive cell; ``centring`` ``'C'`` and ``cell`` 1, 2, 3, the C-centred
+    monoclinic cells C₁, C₂, C₃, whose unique axes b₁, b₂, b₃ are the three twofold axes of the
+    lattice, and ``centring`` ``'A'`` with ``cell``, the A-centred ones A₁, A₂, A₃, with unique axes
+    c₁, c₂, c₃.
+
+    cI and cF: ``centring`` ``'P'``, the primitive cell, the one ITA gives for the conventional
+    cell.
+
+    Fractions such as 1/3 are the nearest numbers, which ``change_of_coordinates`` reads back as
+    fractions.
+    """
+    result: CoordinateTransformation = _shared.convert(
+        _call(
+            "cellTransformation",
+            bravais_lattice,
+            _shared.mapping(from_cell, "from_cell"),
+            _shared.mapping(to_cell, "to_cell"),
+        ),
+        _S_CoordinateTransformation,
     )
     return result
 

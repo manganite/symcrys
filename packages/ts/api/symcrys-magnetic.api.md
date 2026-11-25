@@ -51,6 +51,9 @@ const BLACK_WHITE_POINT_GROUP_KEYS: readonly ["-1'", "2'", "m'", "2'/m'", "2/m'"
 type BlackWhitePointGroupKey = Extract<(typeof BLACK_WHITE_POINT_GROUP_KEYS)[number], string>;
 
 // @public
+export type BravaisLattice = 'aP' | 'mP' | 'mS' | 'oP' | 'oS' | 'oI' | 'oF' | 'tP' | 'tI' | 'hP' | 'hR' | 'cP' | 'cI' | 'cF';
+
+// @public
 export interface CartesianAxis {
     readonly cartesian: Vec3;
 }
@@ -71,6 +74,16 @@ export interface CartesianOperationDescription {
 }
 
 // @public
+export interface Cell {
+    readonly axes?: 'hexagonal' | 'rhombohedral';
+    readonly cell?: number;
+    readonly cellChoice?: number;
+    readonly centring?: 'P' | 'A' | 'C' | 'I' | 'F' | 'H' | 'D';
+    readonly setting?: OrthorhombicSetting | 'obverse' | 'reverse';
+    readonly uniqueAxis?: 'a' | 'b' | 'c';
+}
+
+// @public
 export interface CellAngles {
     readonly alpha: number;
     readonly beta: number;
@@ -81,6 +94,9 @@ export interface CellAngles {
 export interface CellOperation {
     readonly matrix: Mat3;
 }
+
+// @public
+export function cellTransformation(bravaisLattice: BravaisLattice, fromCell: Cell, toCell: Cell): CoordinateTransformation;
 
 // @public
 export function changeOfCoordinates(transformation: CoordinateTransformation, quantities: CoordinateQuantities, options?: ToleranceOptions): CoordinateChange;
@@ -323,6 +339,9 @@ export interface OrbitPole {
     readonly direction: Vec3;
     readonly operations: readonly number[];
 }
+
+// @public
+export type OrthorhombicSetting = 'abc' | 'ba-c' | 'cab' | '-cba' | 'bca' | 'a-cb';
 
 // @public
 export function planeFromFourIndices(hkil: FourIndices): Vec3;

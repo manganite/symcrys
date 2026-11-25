@@ -703,6 +703,7 @@ describe('every result is frozen, nested values included (#137 C4)', () => {
       'piezoelectric',
       { factors: [2] },
     ],
+    cellTransformation: ['hR', {}, { axes: 'rhombohedral' }],
     changeOfCoordinates: [
       {
         linearPart: [

@@ -50,6 +50,7 @@ export {
   type InverseTransformation,
   type TransformedOperation,
 } from './coordinates.js';
+export { cellTransformation, type BravaisLattice, type Cell, type OrthorhombicSetting } from './cellTransformation.js';
 
 export type { PointGroupKey, Setting, AxesOptions, SettingOptions, SymbolOptions } from './pointGroups/pointGroups.js';
 export { LATTICE_SYMMETRY_DIRECTIONS, type Uvw } from './symmetryDirections.js';

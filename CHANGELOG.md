@@ -8,6 +8,14 @@ All notable changes to symcrys are recorded here. The format follows
 
 ### Added
 
+- `cellTransformation(bravaisLattice, fromCell, toCell)` (#120): the transformation matrix P from
+  one cell of a lattice to another, for `changeOfCoordinates`: the monoclinic cell choices and unique
+  axes, the six orthorhombic settings, the primitive cells of centred lattices, the C- and F-centred
+  tetragonal cells, the orthohexagonal and triple cells of a hexagonal lattice, and the rhombohedral,
+  triple hexagonal (obverse, reverse) and monoclinic cells of a rhombohedral lattice, from the
+  matrices of ITA 2016 Table 1.5.1.1, any two cells of a lattice joined exactly; with the types
+  `BravaisLattice`, `Cell` and `OrthorhombicSetting`. In `symcrys` and `symcrys/magnetic`, in Python
+  `cell_transformation`, the cells as dicts.
 - Documentation site: versioned pages from this release on (#57). The newest release stays at
   the root, each MINOR keeps its newest PATCH under `/X.Y/` (e.g. `/0.14/`), and a menu in the
   sidebar opens the same page in another version.
