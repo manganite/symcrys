@@ -4,7 +4,7 @@
  */
 
 import { shown } from './checks.js';
-import { det, inverse, isSingular, transpose, type Mat3, type Vec3 } from './linalg.js';
+import { type Vec3 } from './linalg.js';
 import { deepFreeze } from './freeze.js';
 
 /** A direction [UVTW] or a plane (hkil) in four indices (Bravais–Miller). */
@@ -84,36 +84,6 @@ export function zoneAxis(h1: Vec3, h2: Vec3): Vec3 | undefined {
     throw new RangeError('zoneAxis: the cross product exceeds the safe integers');
   if (c.every((x) => x === 0)) return undefined;
   return deepFreeze(reduceIndices(c) as unknown as Vec3);
-}
-
-/** The matrices that carry coordinates of a direction and indices of a plane to a new basis. */
-export interface AxisChange {
-  /** Q = P⁻¹: the coordinates [uvw]′ = Q·[uvw] of a direction in the new basis. */
-  readonly direction: Mat3;
-  /** Pᵀ: the indices (hkl)′ = Pᵀ·(hkl) of a plane, i.e. (h′ k′ l′) = (h k l)·P. */
-  readonly plane: Mat3;
-}
-
-/**
- * The transformation of indices for a change of basis (a′, b′, c′) = (a, b, c)·P (ITA Vol. A, 2006,
- * Section 5.1.3): the columns of `P` are the new basis vectors in the old one. The coordinates of a
- * direction transform with Q = P⁻¹, the indices of a plane with Pᵀ, so that hu + kv + lw is the same in
- * both bases. Throws a RangeError unless det P > 0 (a right-handed basis), and for a P that is
- * singular within rounding (the absolute value of det P at most 10⁻⁹ times the product of its
- * column lengths).
- */
-export function changeOfAxes(P: Mat3): AxisChange {
-  if (
-    !Array.isArray(P) ||
-    P.length !== 3 ||
-    !P.every((r) => Array.isArray(r) && r.length === 3 && r.every((x) => Number.isFinite(x)))
-  ) {
-    throw new RangeError('changeOfAxes: P must be a 3×3 matrix of finite numbers');
-  }
-  if (!(det(P) > 0)) throw new RangeError('changeOfAxes: det P must be positive (a right-handed basis)');
-  if (isSingular(P)) throw new RangeError('changeOfAxes: P is singular within rounding');
-  const clean = (m: Mat3): Mat3 => m.map((r) => r.map((x) => x + 0)) as unknown as Mat3; // no −0
-  return deepFreeze({ direction: clean(inverse(P)), plane: clean(transpose(P)) });
 }
 
 /** The values of h, k, l substituted into printed Miller indices. */

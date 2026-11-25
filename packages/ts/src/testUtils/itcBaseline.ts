@@ -19,6 +19,7 @@ import * as plane from '../plane.js';
 import type { MagneticPointGroupKey, PointGroupKey } from '../pointGroups/pointGroups.js';
 import { representativeFace } from '../pointGroups/wyckoff.js';
 import type { TensorSpec } from '../tensors/tensorForm.js';
+import type { Mat3, Vec3 } from '../linalg.js';
 
 /** One pin: what was asked (`id`) and what symcrys answered. */
 export interface Pin {
@@ -613,8 +614,19 @@ function generalPins(add: (id: string, f: () => unknown) => void): void {
       [0, 0, 1],
     ],
   ];
+  // changeOfAxes(P) before 0.12 (#137 G2): the direction matrix Q = P⁻¹ and the plane matrix Pᵀ, now
+  // the inverse linear part and the transformed unit planes of changeOfCoordinates.
   P.forEach((m, i) =>
-    add(`changeOfAxes ${i}`, () => classes.changeOfAxes(m as unknown as Parameters<typeof classes.changeOfAxes>[0])),
+    add(`changeOfAxes ${i}`, () => {
+      const unit = [
+        [1, 0, 0],
+        [0, 1, 0],
+        [0, 0, 1],
+      ] as unknown as Vec3[];
+      const result = classes.changeOfCoordinates({ linearPart: m as unknown as Mat3 }, { planes: unit });
+      const rows = result.planes!;
+      return { direction: result.inverse.linearPart, plane: [0, 1, 2].map((r) => [0, 1, 2].map((c) => rows[c][r])) };
+    }),
   );
   add('reduceIndices', () => classes.reduceIndices([4, -2, 6]));
   add('planeToFourIndices', () => classes.planeToFourIndices([1, 2, 3]));

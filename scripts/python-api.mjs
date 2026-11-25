@@ -871,19 +871,43 @@ async function generate(name, cfg) {
         if (alts) {
           // Its fields as arguments; the library gets the object back (only the fields given).
           const fields = objectFields(alts);
+          /** @type {string[]} */
+          const passed = [];
           for (const f of fields) {
-            const ann = isNumArray(f.ir)
-              ? 'ArrayLike'
-              : f.ir.k === 'num'
-                ? numberOrInt(f.name, `${where}.${f.name}`)
+            const name = snake(f.name);
+            // A list of operations as a field (changeOfCoordinates): read as an operations argument.
+            const ops =
+              f.name === 'operations' && f.ir.k === 'arr' && f.ir.of?.k === 'rec'
+                ? argument(ctx, null, 'operations', d.name, `${where}(${p.name}).${f.name}`)
                 : null;
+            const ann = ops
+              ? ops.py
+              : isNumArray(f.ir)
+                ? 'ArrayLike'
+                : f.ir.k === 'num'
+                  ? numberOrInt(f.name, `${where}.${f.name}`)
+                  : null;
             if (!ann) throw new Error(`${where}(${p.name}).${f.name}: a field of kind ${f.ir.k}`);
-            if (f.required) params.push(`${snake(f.name)}: ${ann}`);
-            else keywords.push({ py: snake(f.name), ann: `Optional[${ann}]`, expr: '' });
+            if (f.required) params.push(`${name}: ${ann}`);
+            else keywords.push({ py: name, ann: `Optional[${ann}]`, expr: '' });
+            passed.push(
+              ops && !f.required
+                ? `${name}=None if ${name} is None else ${ops.expr}`
+                : `${name}=${ops ? ops.expr : name}`,
+            );
           }
-          if (objectParam) throw new Error(`${where}: two object parameters, which the overloads do not handle`);
-          objectParam = { tsIndex: i, fields, alts };
-          args.push(`_shared.options(${fields.map((f) => `${snake(f.name)}=${snake(f.name)}`).join(', ')})`);
+          // Several object parameters only without overloads: the overloads are written for one.
+          if (objectParam && sigs.length > 1) {
+            throw new Error(`${where}: two object parameters, which the overloads do not handle`);
+          }
+          objectParam ??= { tsIndex: i, fields, alts };
+          const inline = `_shared.options(${passed.join(', ')})`;
+          // An argument too long for one line (12 columns of indentation in the call) gets a line per field.
+          args.push(
+            inline.length + 13 <= WIDTH
+              ? inline
+              : ['_shared.options(', ...passed.map((x) => `                ${x},`), '            )'].join('\n'),
+          );
           continue;
         }
         // An overloaded function: the parameter's types of all signatures. Operations are read by name.

@@ -416,8 +416,11 @@ def test_cell_metric_and_indices() -> None:
     zone = symcrys.zone_axis([1, 0, 0], [0, 1, 0])
     assert zone is not None and zone.tolist() == [0, 0, 1]
     assert symcrys.zone_axis([1, 1, 0], [2, 2, 0]) is None
-    change = symcrys.change_of_axes([[1, -1, 0], [1, 1, 0], [0, 0, 1]])
-    assert change["direction"].dtype == np.float64 and change["plane"].dtype == np.float64
+    change = symcrys.change_of_coordinates(
+        [[1, -1, 0], [1, 1, 0], [0, 0, 1]], directions=[[1, 0, 0]], planes=[[1, 0, 0]], operations=symcrys.operations("4")
+    )
+    assert change["inverse"]["linear_part"].dtype == np.float64 and change["directions"].shape == (1, 3)
+    assert change["planes"].dtype == np.float64 and change["operations"][1]["matrix"].dtype == np.int64
     with pytest.raises(ValueError):
         symcrys.reduce_indices([0, 0, 0])
     with pytest.raises(symcrys.SymcrysError, match="minVolumeRatio must be a number from 0 to 1"):

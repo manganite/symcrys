@@ -44,12 +44,38 @@
   "arrays": {
     "//": "The dtype of an array of numbers in a result, by the name of its field: float64 or int64. A field of arrays not listed is an error of the generator. symcrys.plane has its own list, since there `direction` is a lattice direction.",
     "symcrys": {
-      "float64": ["cartesian", "direction", "basis", "relations", "plane"],
-      "int64": ["lattice", "hkl", "uvw", "operations", "parameters", "siteSymmetryOperations"]
+      "float64": [
+        "cartesian",
+        "direction",
+        "basis",
+        "relations",
+        "plane",
+        "linearPart",
+        "originShift",
+        "points",
+        "directions",
+        "planes",
+        "metric",
+        "translation"
+      ],
+      "int64": ["lattice", "hkl", "uvw", "operations", "parameters", "siteSymmetryOperations", "matrix"]
     },
     "symcrys.plane": {
-      "float64": ["translation", "location", "glide", "point", "vertices", "centring"],
-      "int64": ["direction", "axis", "operations", "edges", "inequalities"]
+      "float64": [
+        "translation",
+        "location",
+        "glide",
+        "point",
+        "vertices",
+        "centring",
+        "linearPart",
+        "originShift",
+        "points",
+        "directions",
+        "planes",
+        "metric"
+      ],
+      "int64": ["direction", "axis", "operations", "edges", "inequalities", "matrix"]
     }
   },
   "shapes": {
@@ -138,6 +164,9 @@
     },
     "directionFromFourIndices": {
       "returns": "int64"
+    },
+    "changeOfCoordinates": {
+      "operationKeys": ["matrix"]
     },
     "residualOperations": {
       "operationKeys": ["matrix"],

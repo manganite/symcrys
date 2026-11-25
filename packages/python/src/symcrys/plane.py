@@ -405,6 +405,46 @@ class LatticeParameters(TypedDict):
     """Angle γ between a and b, in degrees."""
 
 
+@final
+class InverseTransformation(TypedDict):
+    """The inverse change of the coordinate system (Q, q) = (P, p)⁻¹."""
+
+    linear_part: NDArray[np.float64]
+    """Q = P⁻¹."""
+    origin_shift: NDArray[np.float64]
+    """q = −P⁻¹p."""
+
+
+@final
+class TransformedOperation(TypedDict):
+    """An operation (W′, w′) in the new coordinate system."""
+
+    matrix: NDArray[np.int64]
+    """W′ = P⁻¹WP, integer entries."""
+    translation: NDArray[np.float64]
+    """w′ = P⁻¹(w + (W − I)p), not reduced modulo the lattice."""
+
+
+@final
+class CoordinateChange(TypedDict):
+    """The result of ``change_of_coordinates``: the inverse pair and each given quantity in the new
+    coordinate system.
+    """
+
+    inverse: InverseTransformation
+    """(Q, q) = (P⁻¹, −P⁻¹p), which takes the new coordinates back to the old (eq. (1.5.1.7))."""
+    points: NotRequired[NDArray[np.float64]]
+    """The points, as given, in the new coordinates."""
+    directions: NotRequired[NDArray[np.float64]]
+    """The vector coefficients, as given, in the new basis."""
+    planes: NotRequired[NDArray[np.float64]]
+    """The Miller indices, as given, in the new basis."""
+    metric: NotRequired[NDArray[np.float64]]
+    """The metric tensor in the new basis."""
+    operations: NotRequired[list[TransformedOperation]]
+    """The operations, as given, in the new coordinate system."""
+
+
 _OPERATION_FIELDS = {"matrix": (np.int64, (2, 2)), "translation": (np.float64, (2,))}
 _S_Operations = ("ops", Operations, {"matrix": (np.int64, (2, 2)), "translation": (np.float64, (2,))})
 _S_PlaneGroup = (
@@ -505,6 +545,31 @@ _S_CellRestrictions = (
     },
 )
 _S_LatticeParameters = ("d", {"a": _F, "b": _F, "gamma": _F})
+_S_InverseTransformation = (
+    "d",
+    {
+        "linearPart": ("a", np.float64, None),
+        "originShift": ("a", np.float64, None),
+    },
+)
+_S_TransformedOperation = (
+    "d",
+    {
+        "matrix": ("a", np.int64, None),
+        "translation": ("a", np.float64, (2,)),
+    },
+)
+_S_CoordinateChange = (
+    "d",
+    {
+        "inverse": _S_InverseTransformation,
+        "points": ("a", np.float64, None),
+        "directions": ("a", np.float64, None),
+        "planes": ("a", np.float64, None),
+        "metric": ("a", np.float64, None),
+        "operations": ("l", _S_TransformedOperation),
+    },
+)
 
 __all__ = [
     "VERSION",
@@ -515,6 +580,8 @@ __all__ = [
     "SymcrysInternalError",
     "AsymmetricUnit",
     "CellRestrictions",
+    "CoordinateChange",
+    "InverseTransformation",
     "LatticeParameters",
     "OperationDescription",
     "Operations",
@@ -534,10 +601,12 @@ __all__ = [
     "SiteSymmetry",
     "SymmetryElements",
     "SymmetryLine",
+    "TransformedOperation",
     "WyckoffDistance",
     "WyckoffPosition",
     "asymmetric_unit",
     "cell_restrictions",
+    "change_of_coordinates",
     "describe_operations",
     "describe_operations_of",
     "find_plane_group",
@@ -1090,5 +1159,72 @@ def reciprocal_basis(basis: ArrayLike) -> NDArray[np.float64]:
     result: NDArray[np.float64] = _shared.convert(
         _call("reciprocalBasis", _shared.array(basis, "basis", np.float64)),
         ("a", np.float64, None),
+    )
+    return result
+
+
+def change_of_coordinates(
+    linear_part: ArrayLike,
+    *,
+    origin_shift: Optional[ArrayLike] = None,
+    points: Optional[ArrayLike] = None,
+    directions: Optional[ArrayLike] = None,
+    planes: Optional[ArrayLike] = None,
+    metric: Optional[ArrayLike] = None,
+    operations: Optional[Operations | Sequence[Mapping[str, Any]]] = None,
+    tolerance: Optional[float] = None,
+) -> CoordinateChange:
+    """Changes the coordinate system of the plane by the pair (P, p) of ITA (6th ed., 2016) §
+    1.5.1.3 (p. 83), with 2 × 2 matrices: the new basis is (a′, b′) = (a, b)·P and the new origin
+    lies at p. Transforms the given quantities by ITA's equations (§ 1.5.2, pp. 83–85): point
+    coordinates x′ = P⁻¹(x − p), vector coefficients [uv]′ = P⁻¹[uv], Miller indices (hk)′ = (hk)P,
+    the metric tensor G′ = PᵀGP, and operations W′ = P⁻¹WP, w′ = P⁻¹(w + (W − I)p); and gives the
+    inverse pair (Q, q) = (P⁻¹, −P⁻¹p). det P may be negative.
+
+    P, p and the operations are read as fractions with a denominator of at most 12, within the
+    tolerance (default ``EPSILON``), and transformed exactly; the other quantities are floating
+    point. Raises SymcrysError for a P that is singular or has an entry that is no such fraction,
+    for a quantity of the wrong shape, an unknown quantity, and an operation whose W′ is not
+    integral.
+
+    Parameters
+    ----------
+    linear_part
+        P, the linear part: its columns are the new basis vectors a′, b′ in the old basis; det P ≠
+        0, also negative.
+    origin_shift : keyword-only, optional
+        p, the origin shift: the coordinates of the new origin in the old coordinate system; default
+        zero.
+    points : keyword-only, optional
+        Point coordinates x: x′ = P⁻¹(x − p) (eq. (1.5.1.7)).
+    directions : keyword-only, optional
+        Coefficients [uv] of vectors, e.g. directions: [uv]′ = P⁻¹[uv] (eq. (1.5.2.3)); not changed
+        by the origin shift.
+    planes : keyword-only, optional
+        Miller indices (hk) of lines: (hk)′ = (hk)P (eq. (1.5.2.2)); not changed by the origin
+        shift.
+    metric : keyword-only, optional
+        The metric tensor G: G′ = PᵀGP (eq. (1.5.2.4)).
+    operations : keyword-only, optional
+        Operations (W, w): W′ = P⁻¹WP, w′ = P⁻¹(w + (W − I)p) (eqs. (1.5.2.12), (1.5.2.13)).
+    tolerance : keyword-only, optional
+        Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁶). It is measured per
+        matrix entry for operations, as the distance of unit vectors for directions and per
+        coordinate modulo the lattice for points (docs/conventions.md, "Tolerances").
+    """
+    result: CoordinateChange = _shared.convert(
+        _call(
+            "changeOfCoordinates",
+            _shared.options(linear_part=linear_part, origin_shift=origin_shift),
+            _shared.options(
+                points=points,
+                directions=directions,
+                planes=planes,
+                metric=metric,
+                operations=None if operations is None else _shared.operation_list(operations, ("matrix",)),
+            ),
+            _shared.options(tolerance=tolerance),
+        ),
+        _S_CoordinateChange,
     )
     return result

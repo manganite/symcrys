@@ -5,6 +5,8 @@
  * intermediate product is checked: a result outside the safe integers throws instead of rounding.
  */
 
+import { shown } from '../checks.js';
+
 /** A rational number n/d: d > 0, gcd(n, d) = 1, both safe integers. */
 export type Rational = readonly [numerator: number, denominator: number];
 
@@ -112,4 +114,35 @@ export function parseRational(text: string): Rational {
 /** Writes a rational as ITA prints it: `0`, `1`, `-1/2`, `2/3`. */
 export function formatRational(a: Rational): string {
   return a[1] === 1 ? String(a[0]) : `${a[0]}/${a[1]}`;
+}
+
+/** The largest denominator of a fraction read from a number (`nearestFraction`). */
+export const MAX_DENOMINATOR = 12;
+
+/**
+ * The fraction with a denominator of at most `MAX_DENOMINATOR` within `tolerance` of a number from
+ * a caller, e.g. a translation or an entry of a transformation matrix (`what` names it in the
+ * messages). Two such fractions can lie as close as 1/132 (1/11 and 1/12): a value within the
+ * tolerance of two different ones is refused, not read as either.
+ */
+export function nearestFraction(value: unknown, tolerance: number, what: string): Rational {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    const found: Rational[] = [];
+    for (let d = 1; d <= MAX_DENOMINATOR; d++) {
+      for (const n of [Math.floor(value * d), Math.ceil(value * d)]) {
+        if (!Number.isSafeInteger(n) || Math.abs(value - n / d) >= tolerance) continue;
+        const r = rational(n, d);
+        if (!found.some((f) => f[0] === r[0] && f[1] === r[1])) found.push(r);
+      }
+    }
+    if (found.length === 1) return found[0];
+    if (found.length > 1) {
+      throw new RangeError(
+        `The ${what} ${shown(value)} lies within ${tolerance} of ${found.map((f) => `${f[0]}/${f[1]}`).join(' and ')}: pass a smaller tolerance`,
+      );
+    }
+  }
+  throw new RangeError(
+    `Not within ${tolerance} of a ${what} with a denominator of at most ${MAX_DENOMINATOR}: ${shown(value)}`,
+  );
 }

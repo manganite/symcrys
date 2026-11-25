@@ -894,11 +894,23 @@ T = −(U + V), W = w, scaled to the smallest integers, and back with u = U − 
 reduced. `zoneAxis(h1, h2)` is the reduced cross product h₁ × h₂ (zone law hu + kv + lw = 0), so its
 sign follows the order of the planes; parallel planes give `undefined` (never `null`, #137 C4).
 
-**Change of axes.** For (a′, b′, c′) = (a, b, c)·P (columns of P: the new vectors in the old basis,
-det P > 0), `changeOfAxes(P)` gives Q = P⁻¹ for the coordinates of a direction and Pᵀ for the indices
-of a plane ((h′ k′ l′) = (h k l)·P), so hu + kv + lw is invariant (ITA Vol. A, 2006, Section 5.1.3).
-The matrices P of the named changes (rhombohedral ↔ hexagonal, centrings) are not tabulated here;
-the caller passes them.
+**Change of the coordinate system** (#120, #137 G2, 0.12). `changeOfCoordinates({ linearPart,
+originShift }, quantities, { tolerance })` changes the coordinate system by the pair (P, p) of ITA
+2016 § 1.5.1.3 (p. 83): the new basis is (a′, b′, c′) = (a, b, c)·P (the columns of P are the new basis
+vectors in the old basis) and the new origin lies at p in the old coordinates. It transforms each
+quantity given, by ITA's equations (§ 1.5.2, pp. 83–85): point coordinates x′ = P⁻¹(x − p) (eq.
+(1.5.1.7)), vector coefficients such as directions [uvw]′ = P⁻¹[uvw] (eq. (1.5.2.3)), Miller indices
+(hkl)′ = (hkl)P (eq. (1.5.2.2)), the metric tensor G′ = PᵀGP (eq. (1.5.2.4)), and operations
+W′ = P⁻¹WP, w′ = P⁻¹(w + (W − I)p) (eqs. (1.5.2.12), (1.5.2.13)); hu + kv + lw is invariant, and the
+origin shift changes neither vectors, indices nor the metric. It also gives the inverse pair
+(Q, q) = (P⁻¹, −P⁻¹p), which takes the new coordinates back. det P may be negative (ITA calls a
+positive one preferable, § 1.5.1.2, p. 76); a singular P is refused. P, p and the operations are
+read as fractions with a denominator of at most 12, within the tolerance, and transformed exactly,
+so that W′ is exactly integral; an operation whose W′ is not integral (the new basis spans no lattice
+that the operation maps onto itself) is refused. A translation w′ is not reduced modulo the lattice,
+as ITA writes it. The plane has the same function with 2 × 2 matrices (`symcrys/plane`). The
+matrices P of named changes (ITA Table 1.5.1.1: cell choices, centrings, rhombohedral ↔ hexagonal)
+are not tabulated here; the caller passes them.
 
 ## Tensors
 
@@ -1232,6 +1244,7 @@ the determination of the plane group of a pattern (a later MINOR, #31).
 | plane groups: site symmetry, orbit and Wyckoff position of a point                                                                           | the Wyckoff positions of the same pages: every printed point of every position                                                                                                                                                                                                                                    | `spaceGroups/positions.reference.test.ts`                                                               |
 | plane groups: asymmetric unit, symmetry elements in the cell                                                                                 | the printed vertices and inequalities, the Wyckoff positions (centres and mirror lines) and the printed glides of the same pages; all lines also derived from the printed general position                                                                                                                        | `spaceGroups/cell.reference.test.ts`                                                                    |
 | plane groups: finding a group by its short or full symbol (`findPlaneGroup`)                                                                 | the short and full symbols of the same pages                                                                                                                                                                                                                                                                      | `spaceGroups/planeGroups.reference.test.ts`                                                             |
+| change of the coordinate system: P⁻¹, points, vectors, indices, metric, operations                                                           | ITA 6th ed. (2016), Chapter 1.5: the worked examples of pp. 75–90 (F → P, zircon, GeTe, P2₁/c, I4₁/amd) and rows of Table 1.5.1.1 (pp. 77, 79): `references/itc/vol-a-2016-1.5-transformations.md`                                                                                                                | `coordinates.reference.test.ts`                                                                         |
 | plane lattices: crystal families, Bravais lattices, restrictions on the cell, Laue classes; Patterson symmetry                               | ITA 6th ed. (2016), Table 2.1.1.1 (p. 143), block "Two dimensions": `references/itc/vol-a-table-2.1.1.1.md`; § 3.2.1.1 (p. 720); the headlines of Chapter 2.2                                                                                                                                                     | `spaceGroups/planeLattice.reference.test.ts`                                                            |
 | plane point groups: keys, settings of `3m`, operations                                                                                       | ITA 6th ed. (2016), Table 3.2.1.1 (p. 720), Ch. 3.2, p. 721, item (d); operations: the linear parts of the plane groups (above)                                                                                                                                                                                   | `plane.test.ts`                                                                                         |
 

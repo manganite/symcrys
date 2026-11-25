@@ -641,6 +641,19 @@ operations }`; `undefined`, never `null` (`zoneAxis`); every result frozen and `
   printed faces with a common factor ((4,2,−6), (4,2,0)). The symbols of the magnetic groups in the rhombohedral setting
   follow the rule for all black-and-white symbols (the symbol of the class in that frame with the
   primes of the operations).
+- **Change of the coordinate system** (#120, #137 G2, decided by Thomas on 2026-11-25, asked with
+  proposals and a recommendation): one function, `changeOfCoordinates({ linearPart, originShift },
+quantities, { tolerance })`, in all three entry points (3 × 3, and 2 × 2 in `symcrys/plane`), which
+  transforms the quantities given (points, directions, planes, metric, operations) by ITA 2016 § 1.5
+  and gives the inverse pair; it replaces `changeOfAxes`. P, p and the operations are read as
+  fractions with a denominator of at most 12 and transformed exactly. ITA Table 1.5.1.1 as data comes
+  later, in a step of its own. Chosen while implementing: the fields are `linearPart` and
+  `originShift`, ITA's words for P and p (§§ 1.5.1.2, 1.5.1.3), since `P` and `p` would be one name in
+  Python; an operation whose W′ is not integral is refused (the record's `matrix` has integer
+  entries), and a transformed operation is `{ matrix, translation }` alone, w′ not reduced modulo the
+  lattice, as ITA writes it; the print anchors are ITA's worked examples of Chapter 1.5 and rows of
+  Table 1.5.1.1 (`references/itc/vol-a-2016-1.5-transformations.md`); the Python generator takes
+  two object parameters of one signature, and a list of operations as a field of one.
 - **`latticeBasis` only for families with fixed cell angles** (2026-11-09, #14): for monoclinic
   and triclinic a Cartesian basis would need the cell angles, which a point group does not fix.
 - **Two entry points, `symcrys` and `symcrys/magnetic`** (maintainer, 2026-11-20, #47): the
