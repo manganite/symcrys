@@ -421,6 +421,13 @@ def test_cell_metric_and_indices() -> None:
     )
     assert change["inverse"]["linear_part"].dtype == np.float64 and change["directions"].shape == (1, 3)
     assert change["planes"].dtype == np.float64 and change["operations"][1]["matrix"].dtype == np.int64
+    # ITA Table 1.5.1.1 as data: dicts with float64 (3, 3) arrays, a P that change_of_coordinates takes
+    rows = symcrys.TRANSFORMATION_MATRICES
+    assert len(rows) == len(magnetic.TRANSFORMATION_MATRICES) and isinstance(rows[0]["statements"], list)
+    assert rows[0]["linear_part"].dtype == np.float64 and rows[0]["inverse_linear_part"].shape == (3, 3)
+    assert isinstance(rows[0]["page"], int)
+    back = symcrys.change_of_coordinates(rows[24]["linear_part"])["inverse"]["linear_part"]
+    assert np.allclose(back, rows[24]["inverse_linear_part"])
     with pytest.raises(ValueError):
         symcrys.reduce_indices([0, 0, 0])
     with pytest.raises(symcrys.SymcrysError, match="minVolumeRatio must be a number from 0 to 1"):

@@ -507,6 +507,18 @@ export interface ToleranceOptions {
 export function toVoigt(tensor: readonly number[], specOrName: TensorSpec | TensorPropertyName, options?: VoigtOptions): readonly number[] | readonly (readonly number[])[];
 
 // @public
+export const TRANSFORMATION_MATRICES: readonly TransformationMatrix[];
+
+// @public
+export interface TransformationMatrix {
+    readonly crystalSystem: string;
+    readonly inverseLinearPart: Mat3;
+    readonly linearPart: Mat3;
+    readonly page: number;
+    readonly statements: readonly string[];
+}
+
+// @public
 export interface TransformedOperation {
     readonly matrix: Mat3;
     readonly translation: Vec3;

@@ -708,7 +708,11 @@ quantities, { tolerance })`, in all three entry points (3 × 3, and 2 × 2 in `s
   fractions and transformed exactly: each number as the simplest fraction within the tolerance
   (Thomas, 2026-11-25, after the review showed that a bound of 12 on the denominator, his first
   answer, refuses the function's own inverse pair, q = −1/24 for H₁ with p = 1/8). ITA Table 1.5.1.1
-  as data comes later, in a step of its own. Chosen while implementing: the fields are `linearPart` and
+  as data (#120; Thomas, 2026-11-25, asked with options): `TRANSFORMATION_MATRICES`, one record per
+  printed row in printed order, with the printed statements, P (`linearPart`), Q = P⁻¹
+  (`inverseLinearPart`), the crystal system and the page, no keys of symcrys' own; chosen while
+  implementing: Q is `inverseLinearPart`, since `inverse` is a record of `changeOfCoordinates` and the
+  Python layer reads array fields by name. Chosen while implementing: the fields are `linearPart` and
   `originShift`, ITA's words for P and p (§§ 1.5.1.2, 1.5.1.3), since `P` and `p` would be one name in
   Python; an operation whose W′ is not integral is refused (the record's `matrix` has integer
   entries), and a transformed operation is `{ matrix, translation }` alone, w′ not reduced modulo the

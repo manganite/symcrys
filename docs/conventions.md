@@ -969,8 +969,11 @@ can be passed back (Thomas, 2026-11-25); an operation with det W ≠ ±1, or who
 operation is `{ matrix, translation }` alone, its translation w′ not reduced modulo the lattice, as
 ITA writes it; other fields of an operation record (`cartesian`, `timeReversal`) are not carried
 over. The plane has the same function with 2 × 2 matrices (`symcrys/plane`). The
-matrices P of named changes (ITA Table 1.5.1.1: cell choices, centrings, rhombohedral ↔ hexagonal)
-are not tabulated here; the caller passes them.
+matrices P of named changes are ITA Table 1.5.1.1 as data, `TRANSFORMATION_MATRICES` (both
+point-group entry points; #120): one record per printed row in printed order (pp. 77–80), with the
+printed statements, P (`linearPart`, the argument of `changeOfCoordinates`), Q = P⁻¹
+(`inverseLinearPart`, for the change against the arrow), the printed crystal system and the page;
+no keys of symcrys' own (Thomas, 2026-11-25).
 
 ## Tensors
 

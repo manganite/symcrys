@@ -8,6 +8,12 @@ All notable changes to symcrys are recorded here. The format follows
 
 ### Added
 
+- `TRANSFORMATION_MATRICES` (#120): ITA Table 1.5.1.1 (6th ed., 2016, pp. 77–80) as data, the
+  selected transformation matrices P and Q = P⁻¹ (cell choices, unconventional orthorhombic
+  settings, centrings, rhombohedral ↔ hexagonal, orthohexagonal and triple cells), one record per
+  printed row with its printed statements, `linearPart` (P, for `changeOfCoordinates`),
+  `inverseLinearPart` (Q), the crystal system and the page; in `symcrys` and `symcrys/magnetic`, in
+  Python `TRANSFORMATION_MATRICES` with NumPy arrays.
 - Documentation site: versioned pages from this release on (#57). The newest release stays at
   the root, each MINOR keeps its newest PATCH under `/X.Y/` (e.g. `/0.14/`), and a menu in the
   sidebar opens the same page in another version.

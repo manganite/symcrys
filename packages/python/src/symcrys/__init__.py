@@ -593,6 +593,26 @@ class TensorForm(TypedDict):
     """
 
 
+@final
+class TransformationMatrix(TypedDict):
+    """A row of ITA Table 1.5.1.1."""
+
+    statements: list[str]
+    """The printed statements of the row, in order: one for most rows (``'F → P (Fig. 1.5.1.4)'``),
+    several where print states several transformations with the same P (the changes of cell choice of a
+    monoclinic cell, ``'Cell choice 1 → cell choice 2: P → P, C → A'``, …, ``'Unique axis b invariant
+    (Fig. 1.5.1.2a)'``). An overbar is written as a leading minus sign (``'(b, a, -c) → (a, b, c)'``).
+    """
+    linear_part: NDArray[np.float64]
+    """P: the columns are the new basis vectors in the old basis, (a′, b′, c′) = (a, b, c)·P."""
+    inverse_linear_part: NDArray[np.float64]
+    """Q = P⁻¹, for the transformation against the arrow ("replace P by Q and vice versa")."""
+    crystal_system: str
+    """The column "Crystal system" as printed, its lines joined by a comma and a space."""
+    page: int
+    """The printed page of ITA (6th ed., 2016)."""
+
+
 _OPERATION_FIELDS = {"matrix": (np.int64, (3, 3)), "cartesian": (np.float64, (3, 3))}
 _S_Operations = ("ops", Operations, {"matrix": (np.int64, (3, 3)), "cartesian": (np.float64, (3, 3))})
 _S_LatticeParameters = ("d", {"a": _F, "b": _F, "c": _F, "alpha": _F, "beta": _F, "gamma": _F})
@@ -723,6 +743,16 @@ _S_TensorForm = (
         "relations": ("a", np.float64, None),
     },
 )
+_S_TransformationMatrix = (
+    "d",
+    {
+        "statements": ("l", _V),
+        "linearPart": ("a", np.float64, None),
+        "inverseLinearPart": ("a", np.float64, None),
+        "crystalSystem": _V,
+        "page": _I,
+    },
+)
 
 __all__ = [
     "TENSOR_PROPERTIES",
@@ -730,6 +760,7 @@ __all__ = [
     "POINT_GROUP_KEYS",
     "LATTICE_SYMMETRY_DIRECTIONS",
     "EPSILON",
+    "TRANSFORMATION_MATRICES",
     "VERSION",
     "SymcrysError",
     "SymcrysInternalError",
@@ -764,6 +795,7 @@ __all__ = [
     "TensorProperty",
     "TensorPropertyName",
     "TensorSpec",
+    "TransformationMatrix",
     "TransformedOperation",
     "WyckoffPosition",
     "allowed_properties",
@@ -867,6 +899,19 @@ EPSILON: float = _shared.convert(_value("EPSILON"), _F)
 """The default tolerance of every function that compares numbers a caller passes in (operations,
 directions, points): two numbers closer than this count as equal, in the metric of their kind
 (docs/conventions.md, "Tolerances").
+"""
+TRANSFORMATION_MATRICES: list[TransformationMatrix] = _shared.convert(
+    _value("TRANSFORMATION_MATRICES"),
+    ("l", _S_TransformationMatrix),
+)
+"""ITA Table 1.5.1.1 (6th ed., 2016, pp. 77–80): the selected transformation matrices P and Q = P⁻¹,
+one record per printed row in printed order (``statements``, ``linear_part``,
+``inverse_linear_part``, ``crystal_system``, ``page``). A record's ``linear_part`` is the P that
+``change_of_coordinates`` takes; fractions such as 1/3 are the nearest numbers, which
+``change_of_coordinates`` reads back as fractions.
+
+In Python: a list of dicts, ``linear_part`` and ``inverse_linear_part`` float64 arrays of shape (3,
+3); pass ``linear_part`` to ``change_of_coordinates``.
 """
 VERSION: str = _shared.convert(_value("VERSION"), _V)
 """The version of symcrys, the same for the TypeScript and the Python package."""

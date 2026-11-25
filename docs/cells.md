@@ -40,9 +40,11 @@ len(symcrys.residual_operations(ops, basis)), len(symcrys.residual_operations(op
 ```
 
 ```{code-cell} ipython3
-# The rhombohedral axes of -3m in the hexagonal cell (ITA 2016 Table 1.5.1.1): P from hexagonal to
-# rhombohedral axes, and the operations in the new basis.
-P = [[2 / 3, -1 / 3, -1 / 3], [1 / 3, 1 / 3, -2 / 3], [1 / 3, 1 / 3, 1 / 3]]
-change = symcrys.change_of_coordinates(P, operations=symcrys.operations("-3m"), metric=symcrys.metric_tensor(basis))
+# The rhombohedral axes of -3m in the hexagonal cell, from ITA 2016 Table 1.5.1.1 (TRANSFORMATION_MATRICES):
+# the row "primitive rhombohedral cell → triple hexagonal cell R₁, obverse", read against the arrow, so Q.
+row = next(r for r in symcrys.TRANSFORMATION_MATRICES if "R₁, obverse" in r["statements"][0])
+change = symcrys.change_of_coordinates(
+    row["inverse_linear_part"], operations=symcrys.operations("-3m"), metric=symcrys.metric_tensor(basis)
+)
 change["operations"][1]["matrix"], change["inverse"]["linear_part"]
 ```

@@ -50,6 +50,7 @@
         "basis",
         "relations",
         "linearPart",
+        "inverseLinearPart",
         "originShift",
         "points",
         "directions",
@@ -103,6 +104,7 @@
     "//": "Number fields and option properties by name: int or float.",
     "int": [
       "order",
+      "page",
       "n",
       "index",
       "setting",
