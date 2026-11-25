@@ -17,23 +17,31 @@
     const box = document.getElementById("symcrys-versions");
     const select = document.getElementById("symcrys-version-select");
     const go = document.getElementById("symcrys-version-go");
+    // The addresses of the versions, kept here: the list shows their labels only, and an address
+    // is opened only if it lies under the published root.
+    const urls = [];
     // The entry whose folder holds this page: the longest prefix of the address.
     const current = () => {
       let best = -1;
-      for (let i = 0; i < select.options.length; i++) {
-        const url = select.options[i].value;
-        if (location.href.startsWith(url) && (best < 0 || url.length > select.options[best].value.length)) best = i;
+      for (let i = 0; i < urls.length; i++) {
+        if (location.href.startsWith(urls[i]) && (best < 0 || urls[i].length > urls[best].length)) best = i;
       }
       return best;
     };
     fetch(new URL("versions.json", root))
       .then((response) => (response.ok ? response.json() : Promise.reject(response.status)))
       .then((versions) => {
-        for (const v of versions) select.add(new Option(v.label, new URL(v.path, root).href));
+        for (const v of versions) {
+          const url = new URL(v.path, root).href;
+          if (!url.startsWith(root)) continue;
+          urls.push(url);
+          select.add(new Option(String(v.label), String(urls.length - 1)));
+        }
         const here = current();
         if (here >= 0) select.selectedIndex = here;
         go.addEventListener("click", () => {
-          const base = select.value;
+          const base = urls[select.selectedIndex];
+          if (base === undefined) return;
           fetch(base + page, { method: "HEAD" })
             .then((response) => {
               location.href = response.ok ? base + page : base;
