@@ -225,6 +225,42 @@ describe('pointGroupOf', () => {
 });
 
 describe('describeOperationsOf', () => {
+  it('refuses a matrix far from the operation its trace suggests, near 0° and 180° too', () => {
+    // A rotation by 10⁻³ rad, or by 180° + 10⁻³ rad, about [1,2,3]: entries off by about 10⁻³,
+    // but the trace within 3·10⁻⁵ of an integer. Both were described as the identity and a twofold
+    // rotation.
+    for (const turns of [1e-3 / (2 * Math.PI), 0.5 + 1e-3 / (2 * Math.PI), 1 / 3 + 1e-4]) {
+      const m = rotationAbout([1, 2, 3], turns) as unknown as Mat3;
+      expect(() => describeOperationsOf([{ cartesian: m, timeReversal: false }])).toThrow(RangeError);
+      expect(() =>
+        describeOperationsOf([{ cartesian: m.map((r) => r.map((x) => -x)) as unknown as Mat3, timeReversal: false }]),
+      ).toThrow(RangeError);
+    }
+    // Within the tolerance it is the operation.
+    const near = rotationAbout([1, 2, 3], 1e-7) as unknown as Mat3;
+    expect(describeOperationsOf([{ cartesian: near, timeReversal: false }])[0].kind).toBe('identity');
+  });
+
+  it('accepts every operation of every group in a general orientation, rounded to 6 decimals', () => {
+    const c = Math.cos(0.7), s = Math.sin(0.7); // prettier-ignore
+    const g = multiply(
+      [[1, 0, 0], [0, Math.cos(0.4), -Math.sin(0.4)], [0, Math.sin(0.4), Math.cos(0.4)]], // prettier-ignore
+      [[c, -s, 0], [s, c, 0], [0, 0, 1]], // prettier-ignore
+    );
+    for (const key of MAGNETIC_POINT_GROUP_KEYS) {
+      const ops = operations(key).map((o) => ({
+        cartesian: multiply(multiply(g, o.cartesian), transpose(g)).map((row) =>
+          row.map((x) => Math.round(x * 1e6) / 1e6),
+        ) as unknown as Mat3,
+        timeReversal: o.timeReversal,
+      }));
+      expect(
+        describeOperationsOf(ops).map((d) => [d.kind, d.n]),
+        key,
+      ).toEqual(describeOperations(key).map((d) => [d.kind, d.n]));
+    }
+  });
+
   it('agrees with describeOperations, axes signed with the first non-zero component positive', () => {
     for (const key of MAGNETIC_POINT_GROUP_KEYS) {
       for (const s of settings(key)) {

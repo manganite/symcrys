@@ -893,8 +893,10 @@ list need not belong to a setting whose lattice directions could name it, and a 
 a lattice. The axis is signed so that its first non-zero component, in the order x, y, z, is positive,
 symcrys's own rule for a list without a lattice, and the sense refers to that sign; a component smaller than the tolerance
 counts as zero, so that a matrix with rounding errors keeps the sign of its axis. A matrix that is
-not orthogonal, or whose rotation part does not turn by 360°/n with n = 1, 2, 3, 4, 6 (its trace
-1 + 2 cos θ not an integer), is a RangeError, both within `tolerance` as for `pointGroupOf`.
+not orthogonal, or that is not a crystallographic operation, is a RangeError, both within
+`tolerance` as for `pointGroupOf`: the description (kind, n, axis, sense) is read from the trace
+and the axis, and the matrix must equal, entry by entry within the tolerance, the operation the
+description names, since near 0° and 180° the trace changes only to second order with the angle.
 
 ## Lattice basis and orbits
 

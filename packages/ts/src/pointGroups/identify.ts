@@ -157,13 +157,53 @@ function describe(op: CartesianOperation, i: number, tolerance: number): Cartesi
   const r = (det(op.cartesian) > 0 ? op.cartesian : op.cartesian.map((row) => row.map((v) => -v))) as Mat3;
   const proper = det(op.cartesian) > 0;
   const timeReversal = op.timeReversal;
-  if (n === 1) return Object.freeze({ kind: proper ? 'identity' : 'inversion', n: 1, timeReversal });
+  if (n === 1) {
+    checkIdeal(r, IDENTITY_MATRIX, i, tolerance);
+    return Object.freeze({ kind: proper ? 'identity' : 'inversion', n: 1, timeReversal });
+  }
   const { axis } = signed(rotationAxis(r, n), tolerance);
   const frozenAxis = Object.freeze({ cartesian: Object.freeze(axis) as unknown as Vec3 });
   const kind: OperationKind = proper ? 'rotation' : n === 2 ? 'reflection' : 'rotoinversion';
+  const sense = n === 2 || dot(axialVector(r), axis) > 0 ? '+' : '-';
+  checkIdeal(r, rotation(axis, (sense === '+' ? 2 : -2) * (Math.PI / n)), i, tolerance);
   if (n === 2) return Object.freeze({ kind, n: 2, axis: frozenAxis, timeReversal });
-  const sense = dot(axialVector(r), axis) > 0 ? '+' : '-';
   return Object.freeze({ kind, n, axis: frozenAxis, sense, timeReversal });
+}
+
+const IDENTITY_MATRIX: Mat3 = [
+  [1, 0, 0],
+  [0, 1, 0],
+  [0, 0, 1],
+];
+
+/** The rotation by `angle` (radians, right-handed) about the axis `a` (Rodrigues' formula). */
+function rotation(a: Vec3, angle: number): Mat3 {
+  const norm = Math.hypot(a[0], a[1], a[2]);
+  const [x, y, z] = [a[0] / norm, a[1] / norm, a[2] / norm];
+  const c = Math.cos(angle);
+  const s = Math.sin(angle);
+  const k = 1 - c;
+  return [
+    [c + x * x * k, x * y * k - z * s, x * z * k + y * s],
+    [y * x * k + z * s, c + y * y * k, y * z * k - x * s],
+    [z * x * k - y * s, z * y * k + x * s, c + z * z * k],
+  ];
+}
+
+/**
+ * Throws unless the rotation part of an operation equals, entry by entry within the tolerance, the
+ * rotation its description names (kind, n, axis, sense): the trace alone changes only to second
+ * order with the angle near 0° and 180°, so a matrix far from any crystallographic operation can
+ * have an integer trace within the tolerance.
+ */
+function checkIdeal(r: Mat3, ideal: Mat3, i: number, tolerance: number): void {
+  const deviation = Math.max(...r.flatMap((row, a) => row.map((v, b) => Math.abs(v - ideal[a][b]))));
+  if (!(deviation < Math.max(tolerance, EPSILON))) {
+    throw new RangeError(
+      `Operation ${i} is not a crystallographic point operation within the tolerance ${tolerance}: it differs ` +
+        `from the nearest one by ${deviation.toPrecision(2)} in an entry`,
+    );
+  }
 }
 
 /**
@@ -172,8 +212,9 @@ function describe(op: CartesianOperation, i: number, tolerance: number): Cartesi
  * in the order x, y, z, positive, and for n ≥ 3 the sense about that axis. The axes are not named
  * by lattice directions, since the list need not belong to a setting; for a point group given by its
  * key, `describeOperations` names them. Throws a RangeError for an operation without an orthogonal Cartesian matrix (`cartesian`) or
- * not a crystallographic operation (a rotation part by an angle other than 360°/n, n = 1, 2, 3, 4,
- * 6), both within `tolerance` (default `EPSILON`, as for `pointGroupOf`), and for an operation that
+ * not a crystallographic operation (one whose matrix differs from the operation its description
+ * names, a rotation by 360°/n, n = 1, 2, 3, 4, 6, about its axis), both within `tolerance` (default
+ * `EPSILON`, as for `pointGroupOf`), and for an operation that
  * does not say whether it is combined with time reversal.
  */
 export function describeOperationsOf(
