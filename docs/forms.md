@@ -49,7 +49,8 @@ hkl, symcrys.face_normal(symcrys.lattice_basis("cubic"), hkl)
 
 The faces of a form are the orbit of one face. `orbit` computes it exactly, in integers, from the
 matrices W of the operations in the lattice basis (`matrix` of each operation); `orbitOf` computes it for a Cartesian
-direction under any list of operations, for instance those left after distorting a crystal. In
+direction under any point group given as its list of operations, for instance those left after
+distorting a crystal. In
 hexagonal axes a face transforms otherwise than a lattice direction
 ([Conventions](conventions.md), "Lattice basis and orbits").
 

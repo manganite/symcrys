@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { apply, matricesEqual, multiply, type Vec3 } from '../linalg.js';
 import { siteSymmetryOf } from '../siteSymmetry.js';
-import { POINT_GROUP_KEYS, operations, settings } from './pointGroups.js';
+import { POINT_GROUP_KEYS, generators, operations, settings } from './pointGroups.js';
 import { GREY_POINT_GROUP_KEYS } from './keys.js';
 import { numericHkl, representativeFace, wyckoffPosition, wyckoffPositions } from './wyckoff.js';
 
@@ -150,16 +150,60 @@ describe('siteSymmetry', () => {
     expect(Math.abs(s.direction[0]) + Math.abs(s.direction[1])).toBeLessThan(1e-12);
   });
 
-  it('works on any list of operations, ignoring time reversal', () => {
-    const primed = ops.map((o) => ({ cartesian: o.cartesian, timeReversal: true }));
-    expect(siteSymmetryOf(primed, [0, 0, 1]).operations).toHaveLength(8);
+  it('gives the same result whatever time reversal the operations carry', () => {
+    // 4m'm' has the operations of 4mm in the same order, half of them with time reversal.
+    expect(siteSymmetryOf(operations("4m'm'"), [1, 0, 1]).operations).toEqual(
+      siteSymmetryOf(ops, [1, 0, 1]).operations,
+    );
   });
 
-  it('is not general if a non-identity operation alone fixes the direction', () => {
+  it('is general only if no operation but the identity fixes the direction', () => {
+    const m = operations('m', { setting: 2 });
+    expect(siteSymmetryOf(m, [1, 2, 0]).general).toBe(false);
+    expect(siteSymmetryOf(m, [1, 2, 3]).general).toBe(true);
+  });
+
+  it('refuses a list that is not a group, naming the missing product', () => {
+    // The generators of 4/mmm gave a site symmetry without the identity and the multiplicity 4.
+    expect(() => siteSymmetryOf(generators('4/mmm'), [1, 0, 0])).toThrow(
+      /not a group: the identity is not in the list/,
+    );
+    const withIdentity = [operations('1')[0], ...generators('4/mmm')];
+    expect(() => siteSymmetryOf(withIdentity, [1, 0, 0])).toThrow(
+      /not a group: the product of operations \d+ and \d+ is not in the list/,
+    );
     const mirrorOnly = operations('m', { setting: 2 }).filter((o) => o.cartesian[2][2] === -1);
-    expect(mirrorOnly).toHaveLength(1);
-    expect(siteSymmetryOf(mirrorOnly, [1, 2, 0]).general).toBe(false);
-    expect(siteSymmetryOf(mirrorOnly, [1, 2, 3]).general).toBe(true);
+    expect(() => siteSymmetryOf(mirrorOnly, [1, 2, 0])).toThrow(RangeError);
+    // A group in any order and any frame is accepted.
+    expect(siteSymmetryOf([...operations('4/mmm')].reverse(), [1, 0, 0]).multiplicity).toBe(4);
+  });
+
+  it('refuses an operation twice, a missing identity, and a list closed in its matrices but not in time reversal', () => {
+    const m = operations('m', { setting: 2 });
+    expect(() => siteSymmetryOf([...m, m[1]], [1, 0, 0])).toThrow(/operations 1 and 2 are the same/);
+    expect(() => siteSymmetryOf([m[1]], [1, 0, 0])).toThrow(/the identity is not in the list/);
+    // 1, 1', 2: closed in the matrices, but 1'·2 = 2' is missing (it gave the multiplicity 1.5).
+    const i = { cartesian: m[0].cartesian, timeReversal: false };
+    const two = operations('2', { setting: 2 })[1].cartesian;
+    expect(() =>
+      siteSymmetryOf([i, { ...i, timeReversal: true }, { cartesian: two, timeReversal: false }], [1, 0, 0]),
+    ).toThrow(/product of operations 1 and 2/);
+    // A grey group, every matrix twice with the two time reversals, is a group.
+    expect(siteSymmetryOf(operations("4/mmm1'"), [1, 0, 0]).multiplicity).toBe(4);
+    // Matrices rounded to 6 decimals pass at the default tolerance.
+    const rounded = operations('6/mmm').map((o) => ({
+      cartesian: o.cartesian.map((row) => row.map((x) => Math.round(x * 1e6) / 1e6)) as unknown as Vec3[],
+    }));
+    expect(siteSymmetryOf(rounded as never, [1, 0, 0]).multiplicity).toBe(6);
+  });
+
+  it('reads an empty list as the group 1, as the other functions of a list do', () => {
+    expect(siteSymmetryOf([], [0, 0, 2])).toEqual({
+      operations: [],
+      direction: [0, 0, 1],
+      multiplicity: 1,
+      general: true,
+    });
   });
 
   it('throws if the operations fixing within a far too large tolerance fix no common direction', () => {

@@ -43,6 +43,111 @@ export function closeIndices(product: (i: number, j: number) => number, indices:
   return set.sort((a, b) => a - b);
 }
 
+/** Why a list of operations is not a group, by indices into the list. */
+export type GroupDefect =
+  | { readonly kind: 'identity' }
+  | { readonly kind: 'duplicate'; readonly i: number; readonly j: number }
+  | { readonly kind: 'product'; readonly i: number; readonly j: number };
+
+/**
+ * Why a list of operations is not a group, or undefined if it is one: every operation once, the
+ * identity among them, and the list closed under products. Operations are equal when they agree in
+ * time reversal (`timeReversal === true`) and in every Cartesian matrix entry within `tolerance`.
+ *
+ * @remarks A finite list L that contains the identity and is closed under right multiplication by
+ * a generating set S of the group it generates is that group; with a tolerance, closed within it
+ * under the products with S, which accepts lists within rounding of an exact group. S is chosen greedily in the order of
+ * the list (an operation not yet reached by products of the earlier ones joins it), so the check
+ * takes about |L|·|S| products, with |S| at most 4 for a point group. A product is looked up among
+ * the operations of its kind (rounded trace, sign of the determinant, time reversal), then, if not
+ * found there, among all of them, so that a trace near a half integer is not misplaced.
+ */
+export function groupDefect(
+  operations: readonly { readonly cartesian: Mat3 }[],
+  tolerance: number,
+): GroupDefect | undefined {
+  const n = operations.length;
+  const reversed = operations.map((op) => (op as { readonly timeReversal?: unknown }).timeReversal === true);
+  const kind = (m: Mat3, r: boolean): number => (Math.round(trace(m)) + 3) * 4 + (det(m) > 0 ? 2 : 0) + (r ? 1 : 0);
+  const byKind = new Map<number, number[]>();
+  operations.forEach((op, i) => {
+    const k = kind(op.cartesian, reversed[i]);
+    const list = byKind.get(k);
+    if (list) list.push(i);
+    else byKind.set(k, [i]);
+  });
+  const equal = (a: Mat3, b: Mat3): boolean =>
+    a.every((row, r) => row.every((v, c) => Math.abs(v - b[r][c]) < tolerance));
+  const find = (m: Mat3, r: boolean): number => {
+    const same = (i: number): boolean => reversed[i] === r && equal(operations[i].cartesian, m);
+    const k = (byKind.get(kind(m, r)) ?? []).find(same);
+    if (k !== undefined) return k;
+    for (let i = 0; i < n; i++) if (same(i)) return i;
+    return -1;
+  };
+  // Every pair, not only within a kind: two operations within the tolerance may round to different
+  // traces when the trace lies near a half integer (a group of large order).
+  for (let j = 1; j < n; j++) {
+    for (let i = 0; i < j; i++) {
+      if (reversed[i] === reversed[j] && equal(operations[i].cartesian, operations[j].cartesian)) {
+        return { kind: 'duplicate', i, j };
+      }
+    }
+  }
+  const identity = find(LINEAR_IDENTITY, false);
+  if (identity < 0) return { kind: 'identity' };
+  const reached = new Set([identity]);
+  const order = [identity];
+  const generators: number[] = [];
+  // Every reached operation times every generator: order[next] is the first not yet multiplied by
+  // all generators; a new generator is multiplied with every reached operation.
+  const multiplyBy = (x: number, s: number): GroupDefect | undefined => {
+    const k = find(multiply(operations[x].cartesian, operations[s].cartesian), reversed[x] !== reversed[s]);
+    if (k < 0) return { kind: 'product', i: x, j: s };
+    if (!reached.has(k)) {
+      reached.add(k);
+      order.push(k);
+    }
+    return undefined;
+  };
+  let done = 0; // order[0..done) are multiplied by every generator
+  for (let candidate = 0; candidate < n; candidate++) {
+    if (reached.has(candidate)) continue;
+    generators.push(candidate);
+    for (let a = 0; a < done; a++) {
+      const defect = multiplyBy(order[a], candidate);
+      if (defect) return defect;
+    }
+    for (; done < order.length; done++) {
+      for (const s of generators) {
+        const defect = multiplyBy(order[done], s);
+        if (defect) return defect;
+      }
+    }
+  }
+  return undefined;
+}
+
+/**
+ * Throws a RangeError that says why unless the operations are a group (`groupDefect`), for the
+ * functions whose results are indices into the caller's list.
+ */
+export function checkGroup(operations: readonly { readonly cartesian: Mat3 }[], tolerance: number, name: string): void {
+  const defect = groupDefect(operations, tolerance);
+  if (!defect) return;
+  const why =
+    defect.kind === 'identity'
+      ? 'the identity is not in the list'
+      : defect.kind === 'duplicate'
+        ? `operations ${defect.i} and ${defect.j} are the same`
+        : `the product of operations ${defect.i} and ${defect.j} is not in the list`;
+  throw new RangeError(
+    `${name}: the operations are not a group: ${why} (within the tolerance ${tolerance}). Pass every ` +
+      'operation of the group once, not only its generators (the indices of the result refer to this ' +
+      'list), or, for matrices with rounding errors, a larger tolerance.',
+  );
+}
+
 /** True if the two operations agree in time reversal and in every matrix entry within `tolerance`. */
 export function sameWithin(a: CartesianOperation, b: CartesianOperation, tolerance: number): boolean {
   return (

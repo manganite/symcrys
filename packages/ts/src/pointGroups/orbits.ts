@@ -7,7 +7,8 @@ import { checkNumbers, checkOptions, SETTING_KEYS, shown, TOLERANCE_KEYS } from 
 import { apply, inverse, type Mat3, type Vec3 } from '../linalg.js';
 import { checkCartesianOperations } from '../operations.js';
 import { siteTolerance } from '../siteSymmetry.js';
-import { TOLERANCE_BOUND } from '../tolerances.js';
+import { checkGroup } from '../closure.js';
+import { EPSILON, TOLERANCE_BOUND } from '../tolerances.js';
 import type { ToleranceOptions } from '../tolerances.js';
 import type { Uvw } from '../symmetryDirections.js';
 import {
@@ -143,8 +144,11 @@ export interface OrbitPole {
  * operations, for instance those of a distorted crystal: the images of its unit vector under each
  * operation, coinciding images merged (closer than `tolerance`, default `EPSILON`, as for
  * `siteSymmetryOf`), in the order in which the operations reach them, each with the indices of the
- * operations that map the direction there. The list is taken as it is, not closed into a group.
- * Time reversal is ignored. Throws a RangeError for a zero vector and for an operation without an orthogonal Cartesian matrix (`cartesian`; within `tolerance`, at least `EPSILON`).
+ * operations that map the direction there. The list is a point group given as all its operations;
+ * an empty list is the group 1, whose orbit is the direction itself. Time reversal is ignored.
+ * Throws a RangeError for a zero vector, for an operation without an orthogonal Cartesian matrix
+ * (`cartesian`; within `tolerance`, at least `EPSILON`) and for a list that is not closed under
+ * products (only generators, for instance; the error names the missing product).
  */
 export function orbitOf(
   operations: readonly { readonly cartesian: Mat3 }[],
@@ -154,12 +158,18 @@ export function orbitOf(
   checkOptions(options, TOLERANCE_KEYS, 'orbitOf');
   const tolerance = siteTolerance(options);
   // Operations are checked in their own metric, at most with the bound for operations.
-  checkCartesianOperations(operations, Math.min(tolerance, TOLERANCE_BOUND.operations));
-  if (operations.length === 0) throw new RangeError('orbitOf takes a list of at least one operation');
+  const within = Math.min(tolerance, TOLERANCE_BOUND.operations);
+  checkCartesianOperations(operations, within);
   checkNumbers(direction, 3, 'A direction');
   const n = Math.hypot(direction[0], direction[1], direction[2]);
   if (!(n > 0) || !Number.isFinite(n)) throw new RangeError(`Not a direction: ${shown(direction)}`);
   const u: Vec3 = [direction[0] / n, direction[1] / n, direction[2] / n];
+  if (operations.length === 0) {
+    return Object.freeze([
+      Object.freeze({ direction: Object.freeze(u) as unknown as Vec3, operations: Object.freeze([]) }),
+    ]);
+  }
+  checkGroup(operations, Math.max(within, EPSILON), 'orbitOf');
   const poles: { direction: Vec3; operations: number[] }[] = [];
   operations.forEach((op, i) => {
     const w = apply(op.cartesian, u);

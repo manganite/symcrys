@@ -1,11 +1,11 @@
 /**
- * Site symmetry of a direction under any list of point operations: which operations leave it
- * fixed (docs/conventions.md, "Site symmetry and Wyckoff positions").
+ * Site symmetry of a direction under a point group given as its list of operations: which
+ * operations leave it fixed (docs/conventions.md, "Site symmetry and Wyckoff positions").
  */
 
 import { checkNumbers, checkOptions, shown, TOLERANCE_KEYS } from './checks.js';
 import { apply, multiply, type Vec3 } from './linalg.js';
-import { closeIndices } from './closure.js';
+import { checkGroup, closeIndices } from './closure.js';
 import { checkCartesianOperations, type CartesianOperation } from './operations.js';
 import {
   EPSILON,
@@ -103,16 +103,17 @@ export function siteTolerance(options?: ToleranceOptions): number {
 }
 
 /**
- * The site symmetry of `direction` (any non-zero vector, Cartesian) under `operations`, which may
- * be any list of point operations (for instance those of a distorted crystal). Time reversal is
- * ignored: a direction or a face normal is not changed by it. The operations fixing the direction
- * within the tolerance are closed under the products found in the list and the direction is set onto
- * their fixed space, repeated until stable, so that for a group the result is a subgroup and the
- * set direction lies exactly on its elements. For a list that is not a group, `multiplicity` may
- * not be an integer. Each operation is read by its Cartesian matrix
- * (`cartesian`). Throws a RangeError for an operation without an orthogonal Cartesian matrix (`cartesian`; within
- * `tolerance`, at least `EPSILON`), for a zero vector, and if the closed operations fix no common
- * direction or do not settle into a group (a tolerance far too large, e.g. 0.5).
+ * The site symmetry of `direction` (any non-zero vector, Cartesian) under `operations`, a point
+ * group given as the list of all its operations (for instance those of a distorted crystal). Time
+ * reversal is ignored: a direction or a face normal is not changed by it. The operations fixing the
+ * direction within the tolerance are closed under products and the direction is set onto their
+ * fixed space, repeated until stable, so that the result is a subgroup and the set direction lies
+ * exactly on its elements. An empty list is the group 1. Each operation is read by its Cartesian
+ * matrix (`cartesian`). Throws a RangeError for an operation without an orthogonal Cartesian matrix
+ * (`cartesian`; within `tolerance`, at least `EPSILON`), for a list that is not closed under
+ * products (only generators, for instance; the error names the missing product), for a zero
+ * vector, and if the closed operations fix no common direction or do not settle into a group (a
+ * tolerance far too large, e.g. 0.5).
  */
 export function siteSymmetryOf(
   operations: readonly CartesianOperation[],
@@ -122,9 +123,40 @@ export function siteSymmetryOf(
   checkOptions(options, TOLERANCE_KEYS, 'siteSymmetryOf');
   const tolerance = siteTolerance(options);
   // Operations are checked in their own metric, at most with the bound for operations.
-  checkCartesianOperations(operations, Math.min(tolerance, TOLERANCE_BOUND.operations));
-  if (operations.length === 0) throw new RangeError('siteSymmetryOf takes a list of at least one operation');
+  const within = Math.min(tolerance, TOLERANCE_BOUND.operations);
+  checkCartesianOperations(operations, within);
   const v = unit(direction);
+  if (operations.length === 0) {
+    return Object.freeze({
+      operations: Object.freeze([]),
+      direction: Object.freeze(v),
+      multiplicity: 1,
+      general: true,
+    });
+  }
+  checkGroup(operations, Math.max(within, EPSILON), 'siteSymmetryOf');
+  return siteSymmetryInGroup(operations, v, tolerance, direction);
+}
+
+/**
+ * `siteSymmetryOf` for the operations of a key, which are a group with orthogonal matrices, so that
+ * only the direction is checked.
+ */
+export function siteSymmetryOfGroup(
+  operations: readonly CartesianOperation[],
+  direction: Vec3,
+  tolerance: number,
+): SiteSymmetry {
+  return siteSymmetryInGroup(operations, unit(direction), tolerance, direction);
+}
+
+/** The site symmetry in a group: `v` the unit vector, `direction` the caller's vector for messages. */
+function siteSymmetryInGroup(
+  operations: readonly CartesianOperation[],
+  v: Vec3,
+  tolerance: number,
+  direction: Vec3 = v,
+): SiteSymmetry {
   const fixing = (w: Vec3): number[] => {
     const out: number[] = [];
     operations.forEach((op, i) => {

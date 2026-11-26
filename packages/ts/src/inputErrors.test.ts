@@ -240,6 +240,8 @@ const MAY_ANSWER: Readonly<Record<string, (position: number, value: unknown) => 
   allowsPropertyOf: (p, v) => p === 0 && Array.isArray(v) && v.length === 0,
   allowedPropertiesOf: (p, v) => p === 0 && Array.isArray(v) && v.length === 0,
   residualOperations: (p, v) => p === 0 && Array.isArray(v) && v.length === 0,
+  siteSymmetryOf: (p, v) => p === 0 && Array.isArray(v) && v.length === 0,
+  orbitOf: (p, v) => p === 0 && Array.isArray(v) && v.length === 0,
 };
 
 /** The outcome of a call: 'ok', 'RangeError', or the name and message of another error. */

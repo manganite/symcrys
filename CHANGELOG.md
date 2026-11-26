@@ -6,6 +6,24 @@ All notable changes to symcrys are recorded here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- `siteSymmetryOf` and `orbitOf` (both point-group entry points; in Python `site_symmetry_of`,
+  `orbit_of`) take a point group given as all its operations, each once, and refuse a list that is
+  not a group with a RangeError that says why: a missing product (time reversal included), an
+  operation twice, no identity (#203). An empty list is the group 1, as for `tensorFormOf` and
+  `pointGroupOf`; since 0.11.0 it was a RangeError.
+
+### Fixed
+
+- `siteSymmetryOf` and `orbitOf` answered a list that is not a group, such as the generators of a
+  group, without an error: `siteSymmetryOf(generators('4/mmm'), [1, 0, 0])` gave no operation at all
+  and the multiplicity 4, `orbitOf(generators('4/mmm'), [1, 2, 3])` 4 poles instead of 16 (#203).
+  So did a list with an operation twice, and in the magnetic API a list closed in its matrices but
+  not in time reversal (`1`, `1'`, `2`: multiplicity 1.5). Affected: the site symmetry of a list
+  since 0.3.0 (`siteSymmetry(operations, direction)`, named `siteSymmetryOf` since 0.11.0) and
+  `orbitOf` since 0.7.0; results for a whole group, each operation once, were right.
+
 ## [0.14.0] - 2026-11-26
 
 Changes between the cells of a lattice (#120) and the positions and edge forms of the plane point

@@ -19,8 +19,8 @@ import {
   type PointGroupKey,
   type SettingOptions,
 } from './pointGroups.js';
-import { siteSymmetryOf, siteTolerance, type SiteSymmetry } from '../siteSymmetry.js';
-import type { ToleranceOptions } from '../tolerances.js';
+import { siteSymmetryOfGroup, siteTolerance, type SiteSymmetry } from '../siteSymmetry.js';
+import { EPSILON, type ToleranceOptions } from '../tolerances.js';
 import { CLASS_WYCKOFF_POSITIONS, type WyckoffRow } from './wyckoffData.js';
 
 /** A face (hkl): three Miller indices in the conventional basis (for hexagonal axes without i = −(h + k)). */
@@ -235,7 +235,7 @@ export function wyckoffPositions(key: PointGroupKey, options?: SettingOptions): 
       storedRows(key, setting)
         .filter(([letter]) => letter !== 'o')
         .map(([letter, multiplicity, site, coordinates, millerIndices]) => {
-          const stab = siteSymmetryOf(ops, representativeFace(key, setting, millerIndices).cartesian);
+          const stab = siteSymmetryOfGroup(ops, representativeFace(key, setting, millerIndices).cartesian, EPSILON);
           if (stab.multiplicity !== multiplicity) {
             throw new Error(
               `Point group ${key}, setting ${setting}, position ${letter}: multiplicity differs from print`,
@@ -267,7 +267,7 @@ export function siteSymmetry(
   options?: SettingOptions & ToleranceOptions,
 ): SiteSymmetry {
   checkOptions(options, [...SETTING_KEYS, ...TOLERANCE_KEYS], 'siteSymmetry');
-  return siteSymmetryOf(operations(key, pick(options, SETTING_KEYS)), direction, pick(options, TOLERANCE_KEYS));
+  return siteSymmetryOfGroup(operations(key, pick(options, SETTING_KEYS)), direction, siteTolerance(options));
 }
 
 const sortedKey = (list: readonly number[]): string => [...list].sort((a, b) => a - b).join(',');
@@ -288,10 +288,10 @@ export function wyckoffPosition(
   const setting = tableSetting(key, options);
   const ops = operations(key, { setting });
   const rows = wyckoffPositions(key, { setting });
-  const site = siteSymmetryOf(ops, direction, { tolerance });
+  const site = siteSymmetryOfGroup(ops, direction, tolerance);
   const candidates = rows.filter((r) => r.siteSymmetryOperations.length === site.operations.length);
   for (const g of ops) {
-    const k = sortedKey(siteSymmetryOf(ops, apply(g.cartesian, site.direction), { tolerance }).operations);
+    const k = sortedKey(siteSymmetryOfGroup(ops, apply(g.cartesian, site.direction), tolerance).operations);
     const row = candidates.find((r) => sortedKey(r.siteSymmetryOperations) === k);
     if (row) return row;
   }
