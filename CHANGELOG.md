@@ -6,6 +6,8 @@ All notable changes to symcrys are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.14.0] - 2026-11-26
+
 ### Added
 
 - The Wyckoff positions and edge forms of the ten plane point groups (#81), in `symcrys/plane`:
@@ -1006,7 +1008,8 @@ k=None, l=None)` (new in this version).
 - Project scaffold: TypeScript build to `dist/` (ES modules with type declarations), tests, lint,
   format check, CI and release workflow. The only export so far is `VERSION`.
 
-[Unreleased]: https://github.com/manganite/symcrys/compare/v0.13.0...HEAD
+[Unreleased]: https://github.com/manganite/symcrys/compare/v0.14.0...HEAD
+[0.14.0]: https://github.com/manganite/symcrys/compare/v0.13.0...v0.14.0
 [0.13.0]: https://github.com/manganite/symcrys/compare/v0.12.0...v0.13.0
 [0.12.0]: https://github.com/manganite/symcrys/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/manganite/symcrys/compare/v0.10.1...v0.11.0
