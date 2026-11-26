@@ -1,6 +1,6 @@
 {
-  "note": "Behavioural pins (fixture class (c), CLAUDE.md): the output of symcrys in the ITC convention, the safety net of the ITC migration (#121, #137). Captured by audit/itc-baseline/capture.run.ts (npm run audit:itc-baseline) from the revision below; regenerate only by re-capture, never edit. One pin per line: what was asked (id) and the answer or the error (value); numbers rounded to 12 decimals.",
-  "revision": "fb371cf 2026-11-25",
+  "note": "Behavioural pins (fixture class (c), GUIDE.md): the output of symcrys in the ITC convention, the safety net of the ITC migration (#121, #137). Captured by audit/itc-baseline/capture.run.ts (npm run audit:itc-baseline) from the revision below; regenerate only by re-capture, never edit. One pin per line: what was asked (id) and the answer or the error (value); numbers rounded to 12 decimals.",
+  "revision": "edebbf8 2026-11-26",
   "pins": [
     {"id":"rotateTensor piezoelectric of 6mm, first basis row, by the second operation of 6/mmm","value":[0,0,1,0,0,0,1,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0]},
     {"id":"rotateTensor axial rank 2 by a mirror","value":[-1,2,-3,4,-5,6,-7,8,-9]},

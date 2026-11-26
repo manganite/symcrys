@@ -1,6 +1,6 @@
 {
-  "note": "Behavioural pins (fixture class (c), CLAUDE.md): the output of symcrys in the ITC convention, the safety net of the ITC migration (#121, #137). Captured by audit/itc-baseline/capture.run.ts (npm run audit:itc-baseline) from the revision below; regenerate only by re-capture, never edit. One pin per line: what was asked (id) and the answer or the error (value); numbers rounded to 12 decimals.",
-  "revision": "fb371cf 2026-11-25",
+  "note": "Behavioural pins (fixture class (c), GUIDE.md): the output of symcrys in the ITC convention, the safety net of the ITC migration (#121, #137). Captured by audit/itc-baseline/capture.run.ts (npm run audit:itc-baseline) from the revision below; regenerate only by re-capture, never edit. One pin per line: what was asked (id) and the answer or the error (value); numbers rounded to 12 decimals.",
+  "revision": "edebbf8 2026-11-26",
   "pins": [
     {"id":"p1: planeGroup","value":{"key":"p1","number":1,"pointGroup":"1","pointGroupSetting":1,"crystalSystem":"oblique","centring":[],"origin":"1","fullSymbol":"p1","order":1}},
     {"id":"p1: operations","value":[{"matrix":[[1,0],[0,1]],"translation":[0,0]}]},
