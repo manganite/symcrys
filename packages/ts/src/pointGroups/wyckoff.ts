@@ -1,7 +1,8 @@
 /**
- * Wyckoff positions of the crystal classes for directions (face normals), as ITA gives them:
- * ITA's letters, multiplicities, oriented site-symmetry symbols, coordinates and faces as printed, and the
- * Wyckoff position of any direction (docs/conventions.md, "Site symmetry and Wyckoff positions").
+ * Wyckoff positions of the crystal classes for directions (face normals): ITA's letters,
+ * multiplicities, oriented site-symmetry symbols, coordinates and faces, computed in
+ * wyckoffRows.ts, and the Wyckoff position of any direction (docs/conventions.md, "Site symmetry
+ * and Wyckoff positions").
  */
 
 import { checkOptions, pick, SETTING_KEYS, shown, TOLERANCE_KEYS } from '../checks.js';
@@ -28,7 +29,7 @@ import {
   type DirectionInput,
   type FaceIndices,
 } from './directions.js';
-import { CLASS_WYCKOFF_POSITIONS, type WyckoffRow } from './wyckoffData.js';
+import { computedWyckoffRows, type WyckoffRow } from './wyckoffRows.js';
 
 /** A face (hkl): three Miller indices in the conventional basis (for hexagonal axes without i = −(h + k)). */
 export type Hkl = readonly [number, number, number];
@@ -163,11 +164,13 @@ export function storedEntry<
   );
 }
 
-/** The stored rows of a setting; for a setting ITA does not list, those of setting 1 carried into its frame. */
+/**
+ * The rows of a setting, computed (wyckoffRows.ts); for a setting ITA does not print (one that comes
+ * from setting 1 by a change of basis), those of setting 1 carried into its frame, so that the
+ * letters are those of setting 1.
+ */
 function storedRows(key: PointGroupKey, setting: number): readonly WyckoffRow[] {
-  const entry = storedEntry(CLASS_WYCKOFF_POSITIONS, key, setting);
-  if (entry) return entry.rows;
-  if (setting === 1) throw new Error(`Point group ${key}: no printed Wyckoff positions for setting 1`);
+  if (classSettingData(key, setting).from === undefined) return computedWyckoffRows(key, setting);
   const r = permutationFromSetting1(key, setting);
   // A monoclinic site symmetry (`2`, `m`, `2/m`) names the element on the unique axis, not a position.
   const oriented = crystalFamily(classData(key).crystalSystem) !== 'monoclinic';
@@ -225,7 +228,7 @@ export function tableSetting(key: PointGroupKey, options?: SettingOptions, what 
 }
 
 /**
- * The Wyckoff positions of a point group for directions, in ITA's printed order (general position
+ * The Wyckoff positions of a point group for directions, in ITA's order (general position
  * first), for the 32 crystal classes only (throws a RangeError for a magnetic point group with
  * time reversal). The point at the origin
  * (letter o) is not a direction and is left out. For the settings ITA does not print (`mm2` settings 2 and 3, monoclinic unique axis a), the positions
@@ -308,7 +311,7 @@ const sortedKey = (list: readonly number[]): string => [...list].sort((a, b) => 
 
 /**
  * The Wyckoff position of a face (field `hkl`), a lattice direction (`uvw`) or a Cartesian
- * direction (`cartesian`) in a crystal class: the position whose printed face has a site symmetry conjugate
+ * direction (`cartesian`) in a crystal class: the position whose first face has a site symmetry conjugate
  * to that of the direction (ITA's definition). `tolerance` as for `siteSymmetryOf`. Throws a
  * RangeError as `siteSymmetry` does, and if the operations found within the tolerance do not match
  * any position (a tolerance too large).

@@ -560,8 +560,11 @@ export function siteSymmetry(
 }
 
 /**
- * The Wyckoff positions of a crystal class for directions, as ITA tabulates them (general position
- * first) (docs/conventions.md, "Site symmetry and Wyckoff positions").
+ * The Wyckoff positions of a crystal class for directions, computed from its operations, with ITA's
+ * letters and notation, general position first (docs/conventions.md, "Site symmetry and Wyckoff
+ * positions").
+ *
+ * @remarks Equal to ITA (6th ed., 2016), Table 3.2.3.2, pp. 745–769, for every printed setting.
  */
 export function wyckoffPositions(key: PointGroupKey, options?: SettingOptions): readonly WyckoffPosition[] {
   return wyckoff.wyckoffPositions(classKey(key), options);
