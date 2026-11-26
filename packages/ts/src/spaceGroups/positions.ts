@@ -5,6 +5,7 @@
  * point groups (`siteSymmetryOf`). Internal for now.
  */
 
+import { planeWyckoffRows } from './planeWyckoff.js';
 import { deepFreeze } from '../freeze.js';
 import { shown } from '../checks.js';
 import { closeIndices } from '../closure.js';
@@ -198,7 +199,7 @@ function parsed(expression: string): PlainOperation {
 
 /** The distance of a point to one printed Wyckoff position, and the nearest point of the position. */
 export interface PositionDistance {
-  /** The index of the position in the printed order (`entry.wyckoff`). */
+  /** The index of the position in ITA's order (`planeWyckoffRows`). */
   readonly row: number;
   /** The nearest point of the position's point set, in [0, 1). */
   readonly point: number[];
@@ -285,7 +286,7 @@ export function planeWyckoffDistances(key: string, given: readonly number[], g?:
   const point = given.map(mod1);
   const entry = planeGroupEntry(key);
   const centrings = [[0, 0], ...entry.centring.map((t) => parsed(t).translation)];
-  return entry.wyckoff.map(([, , , coordinates], row) => {
+  return planeWyckoffRows(key).map(([, , , coordinates], row) => {
     let best = { point: [...point], distance: Infinity };
     for (const expression of coordinates) {
       const op = parsed(expression);
@@ -322,9 +323,9 @@ export function planeWyckoffDistances(key: string, given: readonly number[], g?:
  */
 export function planePosition(key: string, point: readonly number[], options?: ToleranceOptions): PositionDistance {
   const tol = tolerance(options);
-  const entry = planeGroupEntry(key);
+  const rows = planeWyckoffRows(key);
   const within = planeWyckoffDistances(key, point).filter((d) => d.distance < tol);
-  within.sort((a, b) => entry.wyckoff[a.row][0] - entry.wyckoff[b.row][0] || a.distance - b.distance);
+  within.sort((a, b) => rows[a.row][0] - rows[b.row][0] || a.distance - b.distance);
   return within[0];
 }
 
@@ -339,7 +340,7 @@ export function planeSiteOfPosition(
   options?: ToleranceOptions,
 ): PlaneSiteSymmetry {
   const { row, point: onPosition } = planePosition(key, point, options);
-  const multiplicity = planeGroupEntry(key).wyckoff[row][0];
+  const multiplicity = planeWyckoffRows(key)[row][0];
   // The site symmetry follows from the position, not from a second tolerance (review of step 10a):
   // the point lies on it, so its |G|/multiplicity operations are those whose images of the point
   // lie nearest to it (all of them at rounding distance).
@@ -375,6 +376,6 @@ export function planeWyckoffPositionOf(
   options?: ToleranceOptions,
 ): PlaneWyckoffPosition {
   const { row } = planePosition(key, point, options);
-  const [multiplicity, letter, siteSymmetry] = planeGroupEntry(key).wyckoff[row];
+  const [multiplicity, letter, siteSymmetry] = planeWyckoffRows(key)[row];
   return { letter, multiplicity, siteSymmetry };
 }

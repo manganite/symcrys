@@ -1,10 +1,13 @@
 /**
  * The 17 plane groups as ITA prints them (6th ed., 2016, Chapter 2.2, pp. 176–192, plane group n on
  * p. 175 + n). The same data are in references/itc/vol-a-2016-plane-groups.md, which the reference
- * test re-parses and compares with this file; change both only by transcription from print.
+ * test re-parses and compares with this file; change both only by transcription from print. The
+ * Wyckoff positions are computed from the group (planeWyckoff.ts); what is still stored here as
+ * printed (the general position, symbols, Patterson symmetry) is computed in a later step (GUIDE.md,
+ * "Own structure").
  *
  * Notation as in the transcription: a leading `-` is an overbar; coordinates in the lattice basis
- * a, b; `<=` for ≤. The oriented site-symmetry symbols without the spaces of the print.
+ * a, b; `<=` for ≤.
  */
 
 /** A crystal system of the plane, as ITA names it. */
@@ -37,8 +40,6 @@ export interface PlaneGroupEntry {
   readonly generalPosition: readonly string[];
   /** "Generators selected": numbers in the general position, after (1) and the integer translations (and the centring). */
   readonly generators: readonly number[];
-  /** The Wyckoff positions in printed order, general position first. */
-  readonly wyckoff: readonly PlaneWyckoffRow[];
 }
 
 /** The 17 plane groups in ITA's order. */
@@ -54,7 +55,6 @@ export const PLANE_GROUP_DATA: readonly PlaneGroupEntry[] = [
     centring: [],
     generalPosition: ['x,y'],
     generators: [],
-    wyckoff: [[1, 'a', '1', ['x,y']]],
   },
   {
     number: 2,
@@ -67,13 +67,6 @@ export const PLANE_GROUP_DATA: readonly PlaneGroupEntry[] = [
     centring: [],
     generalPosition: ['x,y', '-x,-y'],
     generators: [2],
-    wyckoff: [
-      [2, 'e', '1', ['x,y', '-x,-y']],
-      [1, 'd', '2', ['1/2,1/2']],
-      [1, 'c', '2', ['1/2,0']],
-      [1, 'b', '2', ['0,1/2']],
-      [1, 'a', '2', ['0,0']],
-    ],
   },
   {
     number: 3,
@@ -86,11 +79,6 @@ export const PLANE_GROUP_DATA: readonly PlaneGroupEntry[] = [
     centring: [],
     generalPosition: ['x,y', '-x,y'],
     generators: [2],
-    wyckoff: [
-      [2, 'c', '1', ['x,y', '-x,y']],
-      [1, 'b', '.m.', ['1/2,y']],
-      [1, 'a', '.m.', ['0,y']],
-    ],
   },
   {
     number: 4,
@@ -103,7 +91,6 @@ export const PLANE_GROUP_DATA: readonly PlaneGroupEntry[] = [
     centring: [],
     generalPosition: ['x,y', '-x,y+1/2'],
     generators: [2],
-    wyckoff: [[2, 'a', '1', ['x,y', '-x,y+1/2']]],
   },
   {
     number: 5,
@@ -116,10 +103,6 @@ export const PLANE_GROUP_DATA: readonly PlaneGroupEntry[] = [
     centring: ['1/2,1/2'],
     generalPosition: ['x,y', '-x,y'],
     generators: [2],
-    wyckoff: [
-      [4, 'b', '1', ['x,y', '-x,y']],
-      [2, 'a', '.m.', ['0,y']],
-    ],
   },
   {
     number: 6,
@@ -132,17 +115,6 @@ export const PLANE_GROUP_DATA: readonly PlaneGroupEntry[] = [
     centring: [],
     generalPosition: ['x,y', '-x,-y', '-x,y', 'x,-y'],
     generators: [2, 3],
-    wyckoff: [
-      [4, 'i', '1', ['x,y', '-x,-y', '-x,y', 'x,-y']],
-      [2, 'h', '.m.', ['1/2,y', '1/2,-y']],
-      [2, 'g', '.m.', ['0,y', '0,-y']],
-      [2, 'f', '..m', ['x,1/2', '-x,1/2']],
-      [2, 'e', '..m', ['x,0', '-x,0']],
-      [1, 'd', '2mm', ['1/2,1/2']],
-      [1, 'c', '2mm', ['1/2,0']],
-      [1, 'b', '2mm', ['0,1/2']],
-      [1, 'a', '2mm', ['0,0']],
-    ],
   },
   {
     number: 7,
@@ -155,12 +127,6 @@ export const PLANE_GROUP_DATA: readonly PlaneGroupEntry[] = [
     centring: [],
     generalPosition: ['x,y', '-x,-y', '-x+1/2,y', 'x+1/2,-y'],
     generators: [2, 3],
-    wyckoff: [
-      [4, 'd', '1', ['x,y', '-x,-y', '-x+1/2,y', 'x+1/2,-y']],
-      [2, 'c', '.m.', ['1/4,y', '3/4,-y']],
-      [2, 'b', '2..', ['0,1/2', '1/2,1/2']],
-      [2, 'a', '2..', ['0,0', '1/2,0']],
-    ],
   },
   {
     number: 8,
@@ -173,11 +139,6 @@ export const PLANE_GROUP_DATA: readonly PlaneGroupEntry[] = [
     centring: [],
     generalPosition: ['x,y', '-x,-y', '-x+1/2,y+1/2', 'x+1/2,-y+1/2'],
     generators: [2, 3],
-    wyckoff: [
-      [4, 'c', '1', ['x,y', '-x,-y', '-x+1/2,y+1/2', 'x+1/2,-y+1/2']],
-      [2, 'b', '2..', ['1/2,0', '0,1/2']],
-      [2, 'a', '2..', ['0,0', '1/2,1/2']],
-    ],
   },
   {
     number: 9,
@@ -190,14 +151,6 @@ export const PLANE_GROUP_DATA: readonly PlaneGroupEntry[] = [
     centring: ['1/2,1/2'],
     generalPosition: ['x,y', '-x,-y', '-x,y', 'x,-y'],
     generators: [2, 3],
-    wyckoff: [
-      [8, 'f', '1', ['x,y', '-x,-y', '-x,y', 'x,-y']],
-      [4, 'e', '.m.', ['0,y', '0,-y']],
-      [4, 'd', '..m', ['x,0', '-x,0']],
-      [4, 'c', '2..', ['1/4,1/4', '3/4,1/4']],
-      [2, 'b', '2mm', ['0,1/2']],
-      [2, 'a', '2mm', ['0,0']],
-    ],
   },
   {
     number: 10,
@@ -210,12 +163,6 @@ export const PLANE_GROUP_DATA: readonly PlaneGroupEntry[] = [
     centring: [],
     generalPosition: ['x,y', '-x,-y', '-y,x', 'y,-x'],
     generators: [2, 3],
-    wyckoff: [
-      [4, 'd', '1', ['x,y', '-x,-y', '-y,x', 'y,-x']],
-      [2, 'c', '2..', ['1/2,0', '0,1/2']],
-      [1, 'b', '4..', ['1/2,1/2']],
-      [1, 'a', '4..', ['0,0']],
-    ],
   },
   {
     number: 11,
@@ -228,15 +175,6 @@ export const PLANE_GROUP_DATA: readonly PlaneGroupEntry[] = [
     centring: [],
     generalPosition: ['x,y', '-x,-y', '-y,x', 'y,-x', '-x,y', 'x,-y', 'y,x', '-y,-x'],
     generators: [2, 3, 5],
-    wyckoff: [
-      [8, 'g', '1', ['x,y', '-x,-y', '-y,x', 'y,-x', '-x,y', 'x,-y', 'y,x', '-y,-x']],
-      [4, 'f', '..m', ['x,x', '-x,-x', '-x,x', 'x,-x']],
-      [4, 'e', '.m.', ['x,1/2', '-x,1/2', '1/2,x', '1/2,-x']],
-      [4, 'd', '.m.', ['x,0', '-x,0', '0,x', '0,-x']],
-      [2, 'c', '2mm.', ['1/2,0', '0,1/2']],
-      [1, 'b', '4mm', ['1/2,1/2']],
-      [1, 'a', '4mm', ['0,0']],
-    ],
   },
   {
     number: 12,
@@ -249,12 +187,6 @@ export const PLANE_GROUP_DATA: readonly PlaneGroupEntry[] = [
     centring: [],
     generalPosition: ['x,y', '-x,-y', '-y,x', 'y,-x', '-x+1/2,y+1/2', 'x+1/2,-y+1/2', 'y+1/2,x+1/2', '-y+1/2,-x+1/2'],
     generators: [2, 3, 5],
-    wyckoff: [
-      [8, 'd', '1', ['x,y', '-x,-y', '-y,x', 'y,-x', '-x+1/2,y+1/2', 'x+1/2,-y+1/2', 'y+1/2,x+1/2', '-y+1/2,-x+1/2']],
-      [4, 'c', '..m', ['x,x+1/2', '-x,-x+1/2', '-x+1/2,x', 'x+1/2,-x']],
-      [2, 'b', '2.mm', ['1/2,0', '0,1/2']],
-      [2, 'a', '4..', ['0,0', '1/2,1/2']],
-    ],
   },
   {
     number: 13,
@@ -268,12 +200,6 @@ export const PLANE_GROUP_DATA: readonly PlaneGroupEntry[] = [
     centring: [],
     generalPosition: ['x,y', '-y,x-y', '-x+y,-x'],
     generators: [2],
-    wyckoff: [
-      [3, 'd', '1', ['x,y', '-y,x-y', '-x+y,-x']],
-      [1, 'c', '3..', ['2/3,1/3']],
-      [1, 'b', '3..', ['1/3,2/3']],
-      [1, 'a', '3..', ['0,0']],
-    ],
   },
   {
     number: 14,
@@ -287,13 +213,6 @@ export const PLANE_GROUP_DATA: readonly PlaneGroupEntry[] = [
     centring: [],
     generalPosition: ['x,y', '-y,x-y', '-x+y,-x', '-y,-x', '-x+y,y', 'x,x-y'],
     generators: [2, 4],
-    wyckoff: [
-      [6, 'e', '1', ['x,y', '-y,x-y', '-x+y,-x', '-y,-x', '-x+y,y', 'x,x-y']],
-      [3, 'd', '.m.', ['x,-x', 'x,2x', '-2x,-x']],
-      [1, 'c', '3m.', ['2/3,1/3']],
-      [1, 'b', '3m.', ['1/3,2/3']],
-      [1, 'a', '3m.', ['0,0']],
-    ],
   },
   {
     number: 15,
@@ -307,12 +226,6 @@ export const PLANE_GROUP_DATA: readonly PlaneGroupEntry[] = [
     centring: [],
     generalPosition: ['x,y', '-y,x-y', '-x+y,-x', 'y,x', 'x-y,-y', '-x,-x+y'],
     generators: [2, 4],
-    wyckoff: [
-      [6, 'd', '1', ['x,y', '-y,x-y', '-x+y,-x', 'y,x', 'x-y,-y', '-x,-x+y']],
-      [3, 'c', '..m', ['x,0', '0,x', '-x,-x']],
-      [2, 'b', '3..', ['1/3,2/3', '2/3,1/3']],
-      [1, 'a', '3.m', ['0,0']],
-    ],
   },
   {
     number: 16,
@@ -326,12 +239,6 @@ export const PLANE_GROUP_DATA: readonly PlaneGroupEntry[] = [
     centring: [],
     generalPosition: ['x,y', '-y,x-y', '-x+y,-x', '-x,-y', 'y,-x+y', 'x-y,x'],
     generators: [2, 4],
-    wyckoff: [
-      [6, 'd', '1', ['x,y', '-y,x-y', '-x+y,-x', '-x,-y', 'y,-x+y', 'x-y,x']],
-      [3, 'c', '2..', ['1/2,0', '0,1/2', '1/2,1/2']],
-      [2, 'b', '3..', ['1/3,2/3', '2/3,1/3']],
-      [1, 'a', '6..', ['0,0']],
-    ],
   },
   {
     number: 17,
@@ -358,31 +265,5 @@ export const PLANE_GROUP_DATA: readonly PlaneGroupEntry[] = [
       '-x,-x+y',
     ],
     generators: [2, 4, 7],
-    wyckoff: [
-      [
-        12,
-        'f',
-        '1',
-        [
-          'x,y',
-          '-y,x-y',
-          '-x+y,-x',
-          '-x,-y',
-          'y,-x+y',
-          'x-y,x',
-          '-y,-x',
-          '-x+y,y',
-          'x,x-y',
-          'y,x',
-          'x-y,-y',
-          '-x,-x+y',
-        ],
-      ],
-      [6, 'e', '.m.', ['x,-x', 'x,2x', '-2x,-x', '-x,x', '-x,-2x', '2x,x']],
-      [6, 'd', '..m', ['x,0', '0,x', '-x,-x', '-x,0', '0,-x', 'x,x']],
-      [3, 'c', '2mm', ['1/2,0', '0,1/2', '1/2,1/2']],
-      [2, 'b', '3m.', ['1/3,2/3', '2/3,1/3']],
-      [1, 'a', '6mm', ['0,0']],
-    ],
   },
 ];

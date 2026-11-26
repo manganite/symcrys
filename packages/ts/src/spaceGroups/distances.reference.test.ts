@@ -19,7 +19,7 @@ import {
   planeWyckoffPositionOf,
 } from './positions.js';
 import { rational, toNumber } from './rational.js';
-import { planeGroupEntry } from './planeGroups.js';
+import { planeWyckoffRows } from './planeWyckoff.js';
 
 /** General parameter values x = 13/97, y = 29/101, so that no point falls on a more special position by chance. */
 const PARAMETERS = [rational(13, 97), rational(29, 101)];
@@ -78,7 +78,7 @@ const SHIFTS = [
 
 describe('every printed Wyckoff position', () => {
   for (const { symbol, rows } of printed()) {
-    const wyckoff = planeGroupEntry(symbol).wyckoff;
+    const wyckoff = planeWyckoffRows(symbol);
     for (const row of rows) {
       const index = wyckoff.findIndex(([, letter]) => letter === row.letter);
       const fixed = !/[xy]/.test(wyckoff[index][3][0]);
@@ -129,13 +129,11 @@ describe('the position of a point within the tolerance: order, metric and errors
       [1, -0.5],
       [0, Math.sqrt(3) / 2],
     ];
-    const e = planeWyckoffDistances('p6mm', [0.2, 0.35]).find(
-      (d) => planeGroupEntry('p6mm').wyckoff[d.row][1] === 'e',
-    )!;
+    const e = planeWyckoffDistances('p6mm', [0.2, 0.35]).find((d) => planeWyckoffRows('p6mm')[d.row][1] === 'e')!;
     expect(e.distance).toBeCloseTo(1 / 60, 12);
     expect(e.point[0]).toBeCloseTo(0.55 / 3, 12);
     const euclid = planeWyckoffDistances('p6mm', [0.2, 0.35], planeMetric(hexagonal)).find(
-      (d) => planeGroupEntry('p6mm').wyckoff[d.row][1] === 'e',
+      (d) => planeWyckoffRows('p6mm')[d.row][1] === 'e',
     )!;
     expect(euclid.point[0]).toBeCloseTo(0.175, 12);
     expect(euclid.point[1]).toBeCloseTo(0.35, 12);
@@ -157,7 +155,7 @@ describe('the position of a point within the tolerance: order, metric and errors
 
   it('finds the fixed points at the tolerance of an application (10⁻²)', () => {
     for (const { symbol, rows } of printed()) {
-      const wyckoff = planeGroupEntry(symbol).wyckoff;
+      const wyckoff = planeWyckoffRows(symbol);
       for (const row of rows) {
         if (/[xy]/.test(wyckoff.find(([, l]) => l === row.letter)?.[3][0] ?? 'x')) continue;
         for (const p of row.points) {
@@ -190,5 +188,5 @@ describe('the position of a point within the tolerance: order, metric and errors
 });
 
 function wyckoffLetter(symbol: string, row: number): string {
-  return planeGroupEntry(symbol).wyckoff[row][1];
+  return planeWyckoffRows(symbol)[row][1];
 }

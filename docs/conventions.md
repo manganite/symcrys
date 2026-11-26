@@ -1288,6 +1288,29 @@ order (pm for `m`, p3m1 and p31m for the settings of `3m`), so that the point gr
 is the set of its linear parts; this is checked for all 17 plane groups, also for those that are not
 symmorphic (`pg`, `cm`, `p4gm`, …).
 
+**Wyckoff positions.** `wyckoffPositions` computes the positions of a plane group from its
+operations, and they equal ITA's printed ones in every column (tested for the 17 groups):
+
+- the special positions are the orbits of the rotation points and the mirror lines (the fixed sets
+  of the operations with a lattice translation added), the multiplicity the number of operations
+  over the order of the site-symmetry group;
+- the oriented site-symmetry symbol is read along the symmetry directions of the lattice (ITA 2016
+  Table 2.1.3.1, p. 151) by ITA's rule (§ 2.1.3.12, p. 163): the rotation, then per set of
+  directions one `m` for each orbit of its directions under the site group that carries a mirror
+  normal to it, a dot if none does;
+- the letters run from a by increasing multiplicity (ITA § 1.4.4.2, p. 63), then points before
+  lines, then points by their coordinates x, y and lines by the free parameter (x before y), the
+  direction (fewer non-zero components, smaller components, fewer minus signs) and the constant;
+  ITA states no rule beyond the multiplicity, and this one reproduces its letters;
+- a line is written as ITA writes it, the parameter named after the first non-zero component of its
+  direction (`x,-x`, `1/2,y`, `x,x+1/2`); the first representative of a line is the first of its
+  orbit in the order of the letters, that of a point the point of its orbit lowest by y, then x,
+  except four that ITA chose otherwise and that symcrys keeps as convention data (c2mm `0,1/2`;
+  p31m, p6, p6mm `1/3,2/3`): ITA typed its first representatives in by hand (§ 2.1.4, p. 173);
+- the coordinates are the images of the first representative under the operations of the (0,0)+
+  set in their order, an image left out that repeats one before it modulo the lattice and the
+  centring (§ 2.1.3.11 (iv), p. 162).
+
 **Descriptions.** `describeOperations` describes each operation as ITA does under "Symmetry
 operations": its kind (`'identity'`, `'translation'`, `'rotation'`, `'reflection'` or
 `'glide-reflection'`, as ITA names the operations in Table 2.1.2.1, p. 145), the n and sense of a rotation, the centre of a rotation, the direction of a line and one point of

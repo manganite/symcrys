@@ -2,7 +2,8 @@
  * The 17 plane groups against print (fixture class (a)): ITA (6th ed., 2016) Chapter 2.2,
  * pp. 176–192, re-parsed from references/itc/vol-a-2016-plane-groups.md.
  *
- * The data file must equal the transcription. Independent of the data file, each printed page is
+ * The data file must equal the transcription, and the Wyckoff positions computed from the group
+ * (planeWyckoff.ts) the printed ones. Independent of the data file, each printed page is
  * checked for consistency: its selected generators, with the integer translations and the
  * centring, generate exactly its general position; each Wyckoff position has as many points as its
  * multiplicity says, and they form one orbit of the group, with a stabilizer of the order that
@@ -24,6 +25,7 @@ import {
 } from './affine.js';
 import { PLANE_GROUP_DATA } from './planeGroupData.js';
 import { PLANE_GROUP_KEYS, planeGroupGenerators, planeGroupOperations } from './planeGroups.js';
+import { planeWyckoffRows } from './planeWyckoff.js';
 import { isInteger, mod1, parseRational, rational, subtract, type Rational } from './rational.js';
 
 interface PrintedGroup {
@@ -118,11 +120,18 @@ describe('plane groups: transcription', () => {
         centring: g.fields.Centring ? ['1/2,1/2'] : [],
         generalPosition: g.rows[0][3].split('; '),
         generators: gens === 'none' ? [] : [...gens.matchAll(/\((\d+)\)/g)].map((m) => Number(m[1])),
-        wyckoff: g.rows.map((r) => [Number(r[0]), r[1], r[2], r[3].split('; ')]),
       };
     });
     expect(PLANE_GROUP_DATA).toEqual(fromPrint);
     expect(PLANE_GROUP_KEYS).toEqual(PRINT.map((g) => g.symbol));
+  });
+
+  it('gives the Wyckoff positions computed from the group as printed: letters, multiplicities, oriented symbols, coordinates', () => {
+    for (const g of PRINT) {
+      expect(planeWyckoffRows(g.symbol), g.symbol).toEqual(
+        g.rows.map((r) => [Number(r[0]), r[1], r[2], r[3].split('; ')]),
+      );
+    }
   });
 
   it('gives the origin the site symmetry its printed position states', () => {
