@@ -235,12 +235,16 @@ class OperationDescription(TypedDict):
 
 @final
 class WyckoffPosition(TypedDict):
-    """A Wyckoff position of a plane group, in ITA's notation."""
+    """A Wyckoff position of a plane group (points of the plane) or of a plane point group
+    (directions of the plane, with the edges normal to them).
+    """
 
     letter: str
     """The Wyckoff letter."""
     multiplicity: int
-    """The multiplicity: the number of points in the conventional cell."""
+    """The multiplicity: for a plane group the number of points in the conventional cell, for a plane
+    point group the number of equivalent directions (and edges).
+    """
     site_symmetry: str
     """The oriented site-symmetry symbol, written without spaces, e.g. ``'.m.'``, ``'2mm'``."""
     coordinates: list[str]
@@ -250,11 +254,14 @@ class WyckoffPosition(TypedDict):
     miller_indices: NotRequired[str]
     """For a plane point group: the first edge of the position's basic form, its Miller indices in the
     usual notation, e.g. ``h,k``, ``1,0``, or ``h,k,i`` and ``1,1,-2`` (Bravais–Miller indices) for the
-    hexagonal groups.
+    hexagonal groups; a leading ``-`` is an overbar. In the hexagonal groups the first doublet and the
+    first edge of a special position may lie on different, conjugate mirror lines; both belong to the
+    position.
     """
     site_symmetry_operations: NotRequired[NDArray[np.int64]]
     """For a plane point group: the indices into the operations of the group in the same setting
-    (``operations``) of those that fix the first direction of the position, its site symmetry.
+    (``operations``) of those that fix the first edge (``miller_indices``), the site symmetry of the
+    edge, as for the faces of a crystal class.
     """
 
 
@@ -278,7 +285,8 @@ class CrystalForm(TypedDict):
     """The kind of the form, its key in ``CRYSTAL_FORM_TYPES``."""
     miller_indices: str
     """The first edge of the form in the usual notation, components separated by commas, e.g. ``h,k``,
-    ``1,0``, or ``h,k,i`` and ``1,1,-2`` (Bravais–Miller indices) for the hexagonal groups.
+    ``1,0``, or ``h,k,i`` and ``1,1,-2`` (Bravais–Miller indices) for the hexagonal groups; a leading
+    ``-`` is an overbar.
     """
 
 
@@ -310,7 +318,9 @@ class WyckoffDistance(TypedDict):
     letter: str
     """The Wyckoff letter."""
     multiplicity: int
-    """The multiplicity: the number of points in the conventional cell."""
+    """The multiplicity: for a plane group the number of points in the conventional cell, for a plane
+    point group the number of equivalent directions (and edges).
+    """
     site_symmetry: str
     """The oriented site-symmetry symbol, written without spaces, e.g. ``'.m.'``, ``'2mm'``."""
     coordinates: list[str]
@@ -320,11 +330,14 @@ class WyckoffDistance(TypedDict):
     miller_indices: NotRequired[str]
     """For a plane point group: the first edge of the position's basic form, its Miller indices in the
     usual notation, e.g. ``h,k``, ``1,0``, or ``h,k,i`` and ``1,1,-2`` (Bravais–Miller indices) for the
-    hexagonal groups.
+    hexagonal groups; a leading ``-`` is an overbar. In the hexagonal groups the first doublet and the
+    first edge of a special position may lie on different, conjugate mirror lines; both belong to the
+    position.
     """
     site_symmetry_operations: NotRequired[NDArray[np.int64]]
     """For a plane point group: the indices into the operations of the group in the same setting
-    (``operations``) of those that fix the first direction of the position, its site symmetry.
+    (``operations``) of those that fix the first edge (``miller_indices``), the site symmetry of the
+    edge, as for the faces of a crystal class.
     """
     point: NDArray[np.float64]
     """The point of the position nearest to the given one (lattice basis), modulo the lattice, in [0,
@@ -974,11 +987,11 @@ def wyckoff_positions(
     *,
     setting: Optional[Union[int, str]] = None,
 ) -> list[WyckoffPosition]:
-    """The Wyckoff positions of a plane group or of a plane point group in ITA's notation and order,
-    general position first. A plane point group's positions are those of the directions in the
-    plane, in the setting ``setting`` (``3m`` has two), each with the first edge of its basic form
-    and the operations of its site symmetry; the point at the origin is left out. Raises
-    SymcrysError for an unknown key or setting.
+    """The Wyckoff positions of a plane group or of a plane point group, in ITA's order, general
+    position first. A plane point group's positions are those of the directions in the plane, in the
+    setting ``setting`` (``3m`` has two), each with the first edge of its basic form and the
+    operations that fix that edge; the point at the origin is left out. Raises SymcrysError for an
+    unknown key or setting.
 
     Parameters
     ----------

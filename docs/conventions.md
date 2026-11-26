@@ -1338,7 +1338,10 @@ gives the edge forms, the crystal forms of a two-dimensional crystal: per positi
 then a limiting form where print gives one, with `formType`, a key of `CRYSTAL_FORM_TYPES` (the
 ten kinds, from `'single-edge'` to `'dihexagon'`, with their names and numbers of edges), and the
 first edge in the usual notation (`h,k`, `1,0`; `h,k,i`, `1,1,-2` for the hexagonal groups). As for
-the crystal classes, the point at the origin and the point forms are left out (Thomas, 2026-11-26).
+the crystal classes, the point at the origin and the point forms are left out (Thomas, 2026-11-26),
+and `siteSymmetryOperations` fix the first edge: in the hexagonal groups the first doublet and the
+first edge of a special position may lie on different, conjugate mirror lines (3m1, position a: the
+direction x,x̄ and the edge (101̄), normal to 2x̄,x̄).
 The source is ITA 2016 Table 3.2.3.1 (pp. 742–744), which prints `3m` in its two orientations
 `3m1` and `31m`.
 

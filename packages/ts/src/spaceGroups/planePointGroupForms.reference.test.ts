@@ -4,8 +4,12 @@
  * (references/itc/vol-a-table-3.2.3.1.md), without the point at the origin and the point forms. Checks
  * that read print alone: the printed coordinate doublets of each position are the orbit of its first
  * doublet under the operations of the group, in their order; the printed Miller indices of each form
- * are the orbit of its first edge, as a set (and the set after "or" that of the opposite edge); every form has
- * as many edges as its position has directions; the keys of the kinds of forms are their printed names.
+ * are the orbit of its first edge, in their order but for the forms printed by cyclic permutation
+ * within a row (compared as sets), and the set after "or" is that of the opposite edge; the site
+ * symmetry of a position is the stabiliser of its first edge; every form has as many edges as its
+ * position has directions; the keys of the kinds of forms are their printed names; and the oriented
+ * site-symmetry symbols agree with those the symmorphic plane groups print for the same doublets
+ * (Chapter 2.2), a second print anchor.
  */
 
 import { describe, expect, it } from 'vitest';
@@ -57,6 +61,9 @@ const edge = (t: string): M => {
   if (c.length === 3) expect(c[2]).toEqual(c[0].map((x, n) => -(x + c[1][n]) + 0));
   return c.slice(0, 2);
 };
+/** The forms printed by cyclic permutation of the indices within a row. */
+const CYCLIC_ROWS = ['3m1 b Ditrigon', '3m1 b Hexagon', '31m b Ditrigon', '31m b Hexagon', '6mm c Dihexagon'];
+
 const key = (m: M) => JSON.stringify(m.map((r) => r.map((x) => x + 0)));
 const dedup = (list: M[]): string[] => [...new Set(list.map(key))];
 
@@ -97,25 +104,35 @@ describe('ITA 2016 Table 3.2.3.1: the positions and edge forms of the plane poin
   });
 
   for (const g of [...new Set(positions.map((r) => r[0]))]) {
-    it(`${g}: the printed doublets are orbits under the operations in their order, the edges as sets`, () => {
+    it(`${g}: the printed doublets and edges are orbits under the operations, in their order`, () => {
       const [k, setting] = groupOf(g);
       const ops = plane.operations(k, { setting }).map((op) => op.matrix.map((row) => [...row]));
+      // An edge (h k) maps to (h k)·W⁻¹ under W: the component rows of E become W⁻ᵀE.
+      const image = (w: M, e: M) => mul(T(inv2(w)), e);
       for (const r of positions.filter((p) => p[0] === g && p[3] !== 'o')) {
         const printed = r[5].split(';').map((t) => doublet(t.trim()));
         expect(dedup(ops.map((w) => mul(w, printed[0]))), `${g} ${r[3]}`).toEqual(printed.map(key));
-        // The site symmetry: the operations that fix the first doublet, |G|/multiplicity of them.
-        const fixing = ops.flatMap((w, i) => (key(mul(w, printed[0])) === key(printed[0]) ? [i] : []));
+        // The site symmetry is that of the first edge of the basic form (as for the faces of a
+        // crystal class): the operations that fix it, |G|/multiplicity of them.
+        const first = edge(
+          forms
+            .find((f) => f[0] === g && f[1] === r[3] && f[2] === 'basic')![5]
+            .split(';')[0]
+            .trim(),
+        );
+        const fixing = ops.flatMap((w, i) => (key(image(w, first)) === key(first) ? [i] : []));
         expect(fixing.length * Number(r[2])).toBe(ops.length);
         const lib = plane.wyckoffPositions(k, { setting }).find((p) => p.letter === r[3])!;
         expect(lib.siteSymmetryOperations, `${g} ${r[3]}`).toEqual(fixing);
       }
       for (const r of forms.filter((f) => f[0] === g && f[1] !== 'o')) {
-        // An edge (h k) maps to (h k)·W⁻¹ under W: the component rows of E become W⁻ᵀE.
-        const orbit = (e: M) => dedup(ops.map((w) => mul(T(inv2(w)), e)));
+        const label = `${g} ${r[1]} ${r[3]}`;
+        const orbit = dedup(ops.map((w) => image(w, edge(r[5].split(';')[0].trim()))));
         const printed = r[5].split(';').map((t) => edge(t.trim()));
-        // As sets: print arranges a row of edges by cyclic permutation of the indices (in 3m1 the
-        // second row of the ditrigon is (k̄h̄ī) (īk̄h̄) (h̄īk̄)), not always in the order of the operations.
-        expect(orbit(printed[0]).sort(), `${g} ${r[1]} ${r[3]}`).toEqual(printed.map(key).sort());
+        // Print arranges a row of these forms by cyclic permutation of the indices (in 3m1 the second
+        // row of the ditrigon is (k̄h̄ī) (īk̄h̄) (h̄īk̄)), so they are compared as sets.
+        if (CYCLIC_ROWS.includes(label)) expect(orbit.sort(), label).toEqual(printed.map(key).sort());
+        else expect(orbit, label).toEqual(printed.map(key));
         const multiplicity = Number(positions.find((p) => p[0] === g && p[3] === r[1])![2]);
         expect(printed).toHaveLength(multiplicity);
         if (r[6]) {
@@ -125,6 +142,20 @@ describe('ITA 2016 Table 3.2.3.1: the positions and edge forms of the plane poin
       }
     });
   }
+
+  it('gives each position the site symmetry of the same doublets in the symmorphic plane group (ITA Chapter 2.2)', () => {
+    // A second print anchor of the oriented symbols: the plane group p… of the same point group
+    // prints a position with the same coordinate doublets and its site symmetry.
+    for (const g of [...new Set(positions.map((r) => r[0]))]) {
+      const [k, setting] = groupOf(g);
+      const group = plane.wyckoffPositions(`p${g}` as plane.PlaneGroupKey);
+      for (const p of plane.wyckoffPositions(k, { setting })) {
+        const same = group.find((q) => q.coordinates.join(';') === p.coordinates.join(';'));
+        expect(same, `${g} ${p.letter}`).toBeDefined();
+        expect(p.siteSymmetry, `${g} ${p.letter}`).toBe(same!.siteSymmetry);
+      }
+    }
+  });
 
   it('a plane group has no edge forms, and its positions take no other setting', () => {
     expect(() => plane.crystalForms('p4mm' as plane.PointGroupKey)).toThrow(RangeError);

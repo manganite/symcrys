@@ -92,7 +92,11 @@ of `3m`) and gives each position with its coordinate doublets, the first edge of
 the operations of its site symmetry. `crystalForms` gives the edge forms, the crystal forms of a
 two-dimensional crystal: for each position the basic form, then a limiting form where there is one,
 each named by its kind in `CRYSTAL_FORM_TYPES` (`'ditetragon'`, `'pair-of-parallel-edges'`). The
-point at the origin is left out, as for the crystal classes.
+point at the origin is left out, as for the crystal classes. An edge (hk) transforms as Miller
+indices do, to (hk)·W⁻¹; in the hexagonal groups the first doublet and the first edge of a special
+position may lie on different, conjugate mirror lines (in 3m1, position a prints the direction x,x̄
+and the edge (101̄), whose normal is along 2x̄,x̄), and the site symmetry is that of the edge, as
+for the faces of a crystal class.
 
 ```{code-cell} ipython3
 for f in plane.crystal_forms("3m", setting="31m"):

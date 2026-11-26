@@ -1157,15 +1157,7 @@ while implementing gets its own note here.
   operations belong to the determination); **names** `asymmetricUnit(key)` and
   `symmetryElements(key)`, ITA's terms; **plane point groups** with ten keys as in ITA Table
   3.2.1.1 and `3m` in the settings 1 = `3m1` and 2 = `31m` (`{ setting }`, `pointGroup`, `symbol`,
-  as in `symcrys`); their **positions and edge forms** (ITA Table 3.2.3.1, #81; Thomas, 2026-11-26, asked with a
-  design and a recommendation): `wyckoffPositions(key, { setting })` and `crystalForms(key,
-{ setting })` take the key of a plane point group, as for the crystal classes in `symcrys`, the
-  edge forms being the crystal forms of the plane, with `CRYSTAL_FORM_TYPES` of the ten kinds by
-  key (name, number of edges; no eigensymmetry, which ITA does not give for the plane), without the
-  point at the origin and the point forms; chosen while implementing: a position of a plane point
-  group adds `millerIndices` and `siteSymmetryOperations` to the record of the plane groups, optional
-  fields there; the printed edges are compared as sets, since print orders a row by cyclic
-  permutation of the indices. Chosen while
+  as in `symcrys`); their **positions and edge forms** (#81) below. Chosen while
   implementing (PR #82): a Wyckoff position gives all printed coordinates of its (0,0)+ set
   (`coordinates`, a list), since ITA prints them all for the plane groups; fields and functions as
   in `symcrys` where the notion is the same (`crystalSystem`, `settings(key)` as a list of settings
@@ -1178,6 +1170,18 @@ while implementing gets its own note here.
   line, its symmetry direction in the lattice basis (ITA Table 2.1.3.1; sign: #107, #114), in the
   descriptions and in each line of `symmetryElements`, so that an application can assign a line to a
   position of the symbol without a metric.
+- **Positions and edge forms of the plane point groups** (#81; Thomas, 2026-11-26, asked with a
+  design and a recommendation): `wyckoffPositions(key, { setting })` and `crystalForms(key,
+{ setting })` take the key of a plane point group, as for the crystal classes in `symcrys`, the
+  edge forms being the crystal forms of the plane, with `CRYSTAL_FORM_TYPES` of the ten kinds by key
+  (name, number of edges; no eigensymmetry, which ITA does not give for the plane), without the
+  point at the origin and the point forms. Chosen while implementing: a position of a plane point
+  group adds `millerIndices` and `siteSymmetryOperations` to the record of the plane groups,
+  optional fields there; `siteSymmetryOperations` fix the first edge, as for the faces of a crystal
+  class, since in the hexagonal groups the printed doublet and edge may lie on conjugate mirror
+  lines (review of PR #198); the oriented site-symmetry symbols are checked a second time against
+  the positions of the symmorphic plane groups; five forms printed by cyclic permutation within a
+  row are compared with print as sets.
 - **Print anchor: ITA 6th edition (2016), Chapter 2.2** (#31, asked together with the four
   questions; the reference edition and its exception: "Pure ITC"). Plane
   group n is printed on p. 175 + n (checked at 7, 8, 9

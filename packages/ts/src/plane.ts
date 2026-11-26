@@ -252,11 +252,17 @@ export interface OperationDescription {
   readonly glide?: readonly number[];
 }
 
-/** A Wyckoff position of a plane group, in ITA's notation. */
+/**
+ * A Wyckoff position of a plane group (points of the plane) or of a plane point group (directions of
+ * the plane, with the edges normal to them).
+ */
 export interface WyckoffPosition {
   /** The Wyckoff letter. */
   readonly letter: string;
-  /** The multiplicity: the number of points in the conventional cell. */
+  /**
+   * The multiplicity: for a plane group the number of points in the conventional cell, for a plane
+   * point group the number of equivalent directions (and edges).
+   */
   readonly multiplicity: number;
   /** The oriented site-symmetry symbol, written without spaces, e.g. `'.m.'`, `'2mm'`. */
   readonly siteSymmetry: string;
@@ -268,12 +274,15 @@ export interface WyckoffPosition {
   /**
    * For a plane point group: the first edge of the position's basic form, its Miller indices in the
    * usual notation, e.g. `h,k`, `1,0`, or `h,k,i` and `1,1,-2` (Bravais–Miller indices) for the
-   * hexagonal groups.
+   * hexagonal groups; a leading `-` is an overbar. In the hexagonal groups the first doublet and the
+   * first edge of a special position may lie on different, conjugate mirror lines; both belong to
+   * the position.
    */
   readonly millerIndices?: string;
   /**
    * For a plane point group: the indices into the operations of the group in the same setting
-   * (`operations`) of those that fix the first direction of the position, its site symmetry.
+   * (`operations`) of those that fix the first edge (`millerIndices`), the site symmetry of the
+   * edge, as for the faces of a crystal class.
    */
   readonly siteSymmetryOperations?: readonly number[];
 }
@@ -295,7 +304,8 @@ export interface CrystalForm {
   readonly formType: CrystalFormTypeKey;
   /**
    * The first edge of the form in the usual notation, components separated by commas, e.g. `h,k`,
-   * `1,0`, or `h,k,i` and `1,1,-2` (Bravais–Miller indices) for the hexagonal groups.
+   * `1,0`, or `h,k,i` and `1,1,-2` (Bravais–Miller indices) for the hexagonal groups; a leading `-`
+   * is an overbar.
    */
   readonly millerIndices: string;
 }
@@ -694,10 +704,10 @@ export function describeOperationsOf(
 }
 
 /**
- * The Wyckoff positions of a plane group or of a plane point group in ITA's notation and order,
- * general position first. A plane point group's positions are those of the directions in the plane,
- * in the setting `setting` (`3m` has two), each with the first edge of its basic form and the
- * operations of its site symmetry; the point at the origin is left out. Throws a RangeError for an
+ * The Wyckoff positions of a plane group or of a plane point group, in ITA's order, general
+ * position first. A plane point group's positions are those of the directions in the plane, in the
+ * setting `setting` (`3m` has two), each with the first edge of its basic form and the operations
+ * that fix that edge; the point at the origin is left out. Throws a RangeError for an
  * unknown key or setting.
  *
  * @remarks Source: ITA (6th ed., 2016), Chapter 2.2 (the plane groups) and Table 3.2.3.1, pp. 742–744
@@ -718,11 +728,12 @@ export function wyckoffPositions(
         siteSymmetry,
         coordinates: [...coordinates],
         millerIndices: forms[0][2],
-        siteSymmetryOperations: planeSiteSymmetryOperations(key, setting, coordinates[0]),
+        siteSymmetryOperations: planeSiteSymmetryOperations(key, setting, forms[0][2]),
       })),
     );
   }
-  const entry = planeGroupEntry(groupKey(key, 'wyckoffPositions'));
+  if (!isGroupKey(key)) unknownKey(key);
+  const entry = planeGroupEntry(key);
   const setting = settingOf(entry.symbol as PlaneGroupKey, options);
   if (setting !== undefined && setting !== 1) {
     throw new RangeError(`The plane group ${entry.symbol} has no setting ${String(setting)}`);

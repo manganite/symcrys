@@ -7,7 +7,6 @@
  * references/itc/vol-a-table-3.2.3.1.md and compared with it by planePointGroupForms.reference.test.ts.
  */
 
-import { parseOperation, type ExactOperation } from './affine.js';
 import { planePointGroupOperations, planePointGroupSymbol, type PlanePointGroupKey } from './planePointGroups.js';
 
 /**
@@ -139,17 +138,24 @@ export function planePointGroupPositionRows(key: PlanePointGroupKey, setting: nu
   return rows;
 }
 
-// A general direction, so that only the operations of the site symmetry fix the representative.
-const X = 5;
-const Y = 2;
+// General values of h and k, so that only the operations of the site symmetry fix the edge.
+const VALUES: Readonly<Record<string, number>> = { h: 5, k: 2 };
 
-/** The indices of the operations that fix the first direction of a position (its site symmetry). */
-export function planeSiteSymmetryOperations(key: PlanePointGroupKey, setting: number, doublet: string): number[] {
-  const at = (op: ExactOperation, v: readonly number[]) =>
-    op.matrix.map((row) => row.reduce((s, c, j) => s + c * v[j], 0));
-  const point = at(parseOperation(doublet), [X, Y]);
+/** One index of the usual notation as a number: `h`, `-k`, `0`, `1`, `-2`. */
+function indexValue(text: string): number {
+  const m = /^(-?)(\d*)([hk]?)$/.exec(text.trim());
+  if (!m || (!m[2] && !m[3])) throw new Error(`Unreadable Miller index: ${text}`);
+  return (m[1] ? -1 : 1) * (m[2] ? Number(m[2]) : 1) * (m[3] ? VALUES[m[3]] : 1);
+}
+
+/**
+ * The indices of the operations that fix the first edge of a position, (h k)·W⁻¹ = (h k), its site
+ * symmetry; for the hexagonal groups the third index i = −(h + k) follows from the first two.
+ */
+export function planeSiteSymmetryOperations(key: PlanePointGroupKey, setting: number, millerIndices: string): number[] {
+  const e = millerIndices.split(',').slice(0, 2).map(indexValue);
   return planePointGroupOperations(key, setting)
-    .map((op, i) => [i, at(op, point)] as const)
-    .filter(([, p]) => p.every((c, j) => c === point[j]))
+    .map((op, i) => [i, [0, 1].map((j) => e[0] * op.matrix[0][j] + e[1] * op.matrix[1][j])] as const)
+    .filter(([, f]) => f[0] === e[0] && f[1] === e[1])
     .map(([i]) => i);
 }
