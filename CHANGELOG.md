@@ -15,10 +15,11 @@ All notable changes to symcrys are recorded here. The format follows
 
 ### Changed
 
-- `findPointGroup` refuses the Shubnikov symbols of -3 and -1 written with the overbar alone, `6̅`
-  and `2̅`, with a RangeError that names both readings (#206): in Hermann–Mauguin `6̅` is -6, so a
-  Shubnikov symbol that `symbol()` writes was read as another group; `2̅` was not found. The
-  overbar stays, as ITC Vol. D Table 1.5.2.3 and Shubnikov & Belov print it.
+- `findPointGroup` refuses every Shubnikov symbol that `symbol()` writes without Shubnikov's own
+  characters and that does not read as the same group in Hermann–Mauguin, with a RangeError that
+  names both readings (#206): `6̅` (-3) was read as -6; `2̅` (-1) and the cubic `3/2`, `6̅/2`, `3/4`,
+  `3/4̅`, `6̅/4` were not found. The overbar stays, as ITC Vol. D Table 1.5.2.3 and Shubnikov &
+  Belov print it.
 - The default tolerance `EPSILON` is 10⁻⁵, was 10⁻⁶ (#204): operations rounded to 6 decimals, the
   usual output of files and other programs, now pass in any orientation (at 10⁻⁶, 21 of the 50
   settings of the 32 classes failed in the frame of symcrys, up to about 40 in general

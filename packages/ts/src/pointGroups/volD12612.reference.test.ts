@@ -51,6 +51,12 @@ describe('ITC Vol. D Table 1.2.6.12, read by findPointGroup', () => {
   it('does not read the erratum as printed', () => {
     expect(magnetic.findPointGroup("2'2'")).toBeUndefined();
   });
+
+  it('reads the spellings as settings too, and the crystallographic API finds none of them', () => {
+    expect(magnetic.operations("2/m1'", { setting: "21'/m" })).toBe(magnetic.operations("2/m1'"));
+    expect(magnetic.operations("m'-3'm", { setting: "m'-3m" })).toBe(magnetic.operations("m'-3'm"));
+    for (const s of ["21'/m", "1'", "m'-3", "m'-3m'"]) expect(classes.findPointGroup(s), s).toBeUndefined();
+  });
 });
 
 describe('every symbol symcrys writes reads back as its group or is refused', () => {
@@ -84,6 +90,17 @@ describe('every symbol symcrys writes reads back as its group or is refused', ()
       // -4 is the same group in both notations; -6 written with a hyphen is Hermann–Mauguin.
       expect(api.findPointGroup(api.symbol('-4', { form: 'shubnikov' }))?.key).toBe('-4');
       expect(api.findPointGroup('-6')?.key).toBe('-6');
+      // The overbar in its other spellings after the digit (U+0304, the macron) counts as Shubnikov's too.
+      expect(() => api.findPointGroup('6\u0304')).toThrow(/-3 in Shubnikov/);
+      expect(() => api.findPointGroup('6\u00AF')).toThrow(/-3 in Shubnikov/);
+      // The cubic Shubnikov symbols, which name no group in Hermann–Mauguin.
+      for (const key of ['23', 'm-3', '432', '-43m', 'm-3m'] as const) {
+        expect(() => api.findPointGroup(api.symbol(key, { form: 'shubnikov' })), key).toThrow(
+          new RegExp(`${key.replace('-', '\\-')} in Shubnikov`),
+        );
+      }
+      // The options do not decide first: the error is the one of the notation.
+      expect(() => api.findPointGroup('6\u0305', { axes: 'rhombohedral' })).toThrow(/Shubnikov/);
     }
   });
 });

@@ -129,7 +129,7 @@ Library code is everything in `packages/ts/src` except test-only code ("Correctn
 
 - **Keys** are the ITC short symbols (`docs/conventions.md`, "Keys").
 - **Tolerant input** is a pure normalisation before the comparison (spaces, spellings of the
-  overbar and the prime, Birss's printed cubic symbols, Schoenflies symbols). It never changes the
+  overbar and the prime, the printed cubic and grey-group spellings, Schoenflies symbols). It never changes the
   meaning: an input that could name two groups or settings is an error that lists the candidates,
   and a string symcrys writes is read back as the same group or refused, never as another group.
 - **A wrong input is an error, never a silent answer.** A vector in the wrong basis, a list that is

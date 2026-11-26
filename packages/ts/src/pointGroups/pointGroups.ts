@@ -865,20 +865,32 @@ function find(
   }
   const target = compact(symbol);
   const candidates = [...BY_KEY.values()].filter((d) => !classesOnly || d.type === 'I');
-  const found = findIn(candidates, symbol, target, options);
-  // A Shubnikov symbol that symcrys writes with the overbar alone (`6̅` for -3, `2̅` for -1) is
-  // also a Hermann–Mauguin spelling, of another group (`6̅` is -6) or of none; it is refused rather
-  // than read as either. `4̅` means -4 in both and is read.
-  const raw = symbol.normalize('NFD').replace(/\s+/g, '');
+  // A Shubnikov symbol that symcrys writes without the characters only Shubnikov writes is also a
+  // Hermann–Mauguin spelling, of another group or of none: `6̅` (-3; -6 in Hermann–Mauguin), `2̅`
+  // (-1), `3/2` (23), `6̅/2` (m-3), `3/4` (432), `3/4̅` (-43m), `6̅/4` (m-3m). Such a symbol is refused
+  // rather than read as either; `4̅` means -4 in both and is read. Every spelling of the overbar
+  // after a digit counts as Shubnikov's, as it does for reading Hermann–Mauguin symbols.
+  const raw = symbol
+    .normalize('NFD')
+    .replace(/\s+/g, '')
+    .replace(/(\d)[\u0304\u00AF]/g, '$1\u0305');
   const written = candidates.find((d) => shubnikov(d).normalize('NFD') === raw);
-  if (written && found?.key !== written.key) {
-    throw new RangeError(
-      `The symbol ${shown(symbol)} is ${written.key} in Shubnikov's notation` +
-        (found ? ` and ${found.key} in Hermann–Mauguin's` : '') +
-        `: write ${[written.key, ...(found ? [found.key] : [])].map((k) => shown(k)).join(' or ')}`,
-    );
+  if (written) {
+    let reading: PointGroupInSetting<MagneticPointGroupKey> | undefined;
+    try {
+      reading = findIn(candidates, symbol, target, undefined);
+    } catch {
+      reading = undefined;
+    }
+    if (reading?.key !== written.key) {
+      throw new RangeError(
+        `The symbol ${shown(symbol)} is ${written.key} in Shubnikov's notation` +
+          (reading ? ` and ${reading.key} in Hermann–Mauguin's` : '') +
+          `: write ${[written.key, ...(reading ? [reading.key] : [])].map((k) => shown(k)).join(' or ')}`,
+      );
+    }
   }
-  return found;
+  return findIn(candidates, symbol, target, options);
 }
 
 /** The group a symbol names among the candidates, with the setting the symbol and the options choose. */
@@ -931,8 +943,7 @@ function keySpelling(compactTarget: string): string | undefined {
  * Finds a crystal class by a symbol, read tolerantly.
  * It reads, spaces ignored (docs/conventions.md, "Reading symbols"): the key; the short or
  * full symbol of a setting (`312`, `1 1 2`); a Schoenflies symbol (`D3`; for -3 either `C3i` or
- * `S6`); the cubic symbols without the overbar on the 3 or its prime (`m3m`, `m'-3`); the grey
- * groups with `1'` after the first position (`21'/m`, `1'` for `11'`). A symbol that names
+ * `S6`); Birss's cubic symbols without the overbar on the 3 (`m3m`). A symbol that names
  * several settings (the key `32`, which is also the symbol of the setting with rhombohedral axes;
  * `2` for unique axis b, c and a; any Schoenflies symbol) gives the standard (ITC default) setting,
  * unless the options `axes` or `uniqueAxis` choose another, as the headlines of ITA name the

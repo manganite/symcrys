@@ -453,14 +453,15 @@ normalisation before the comparison:
   unique axis, names one; the exception is the Shubnikov form, which is not read: its overbar marks a
   rotoreflection, as ITC Vol. D Table 1.5.2.3 (p. 111) and Shubnikov & Belov (1964, p. 73) print it
   (`6̅` is −3 there and −6 in Hermann–Mauguin). A symbol with a character only Shubnikov writes
-  (the underline, `:`, `·`) is a RangeError, and so are the two Shubnikov symbols written with the
-  overbar alone that read otherwise in Hermann–Mauguin, `6̅` (−3) and `2̅` (−1): the error names
-  both readings. `4̅` is −4 in both and is read. No symbol symcrys writes, in any form, is read as
+  (the underline, `:`, `·`) is a RangeError, and so is every Shubnikov symbol written without them
+  that does not read as the same group in Hermann–Mauguin: `6̅` (−3, which is −6 there), `2̅` (−1),
+  `3/2`, `6̅/2`, `3/4`, `3/4̅`, `6̅/4` (the cubic classes), with the overbar in any of its spellings;
+  the error names both readings. `4̅` is −4 in both and is read. No symbol symcrys writes, in any form, is read as
   another group (tested). A symbol that names several groups is a RangeError that lists them; none
   of the symbols of the library does. The crystallographic API finds no magnetic group, in any
   spelling.
 
-- **`{ setting }`** reads a symbol of a setting with the same spellings, and Birss's cubic symbols,
+- **`{ setting }`** reads a symbol of a setting with the same spellings, and the cubic and grey-group spellings above,
   with the same rule: a symbol of several settings gives the standard, unless `axes` or
   `uniqueAxis` chooses another. A Schoenflies symbol names no setting and is not read here.
 
