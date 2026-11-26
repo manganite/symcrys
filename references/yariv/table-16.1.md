@@ -20,7 +20,8 @@ Transcription, per panel, as printed and before anything is compared:
   link groups; it is not an input.
 - `Evidence`: `blind` (transcribed before the computed form of that class was looked at),
   `engine-known-unambiguous` (the computed form was known, but every mark is unambiguous),
-  `engine-known-print-confirmed` (known, and an ambiguous mark was confirmed against print).
+  `engine-known-print-confirmed` (known, and an ambiguous mark was confirmed by the maintainer against
+  print).
 - `Groups`: point-group keys of symcrys; Yariv prints `-43m` and `23` as one panel. `-6m2` is the
   class Yariv heads `-6m2`.
 

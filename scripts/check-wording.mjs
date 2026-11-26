@@ -6,17 +6,21 @@
 //   node scripts/check-wording.mjs FILE ...   check these files
 
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { readFileSync, realpathSync } from 'node:fs';
+import { relative, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const NAMES = /\b(?:Thomas|Lottermoser)\b/;
 const MAINTAINER = /\bmaintainers?\b/i;
 const DECISION =
-  /\b(?:decided (?:by|on)|chosen while implementing|asked with (?:options|proposals|a design|a recommendation)|asked before implementation|maintainer decision)\b/i;
+  /\b(?:decided (?:by (?:the )?(?:maintainer|owner)\b|on [#\d])|(?:chosen while implementing|asked with (?:options|proposals|a design|a recommendation)|asked before implementation|maintainer decision)\b)/i;
 const INTERNAL_ID = /#\d+\s+(?:item\s+|step\s+|point\s+|question\s+)?[A-H]\d\b/;
-// Not a colour value (`color: #000`), an anchor (`page.md#12`) or an entity (`&#38;`).
-const ISSUE = /(?<![\w&/'"-]|:\s*)#\d{1,4}\b/;
+// An issue of this or another repository (`#12`, `owner/repo#12`); not an anchor (`page.md#12`) or
+// an entity (`&#38;`). Stylesheets are not checked for it, since a colour (`#000`) looks the same.
+const ISSUE = /\b[\w.-]+\/[\w.-]+#\d+\b|(?<![\w&/-])#\d{1,4}\b/;
 const DATE = /\b20\d\d-[01]\d-[0-3]\d\b/;
-const AUTHORSHIP = /©|\bcopyright\b|\bauthors?\b/i;
+// Lines that name the author or the holder of the copyright, as metadata.
+const AUTHORSHIP = /©|^\s*"author"\s*:|^\s*authors?\s*=|^\s*copyright\s*=|^Copyright \(c\)/;
 
 /** Files that record history by their nature, or are not written by hand. */
 const SKIPPED = [
@@ -56,7 +60,8 @@ function rulesFor(path) {
   if (isReference(path)) return rules;
   if (path !== 'CLAUDE.md') rules.push(['"maintainer"', MAINTAINER]);
   if (isTest(path) || isProcess(path)) return rules;
-  rules.push(['an issue number', ISSUE], ['a date', DATE]);
+  if (!path.endsWith('.css')) rules.push(['an issue number', ISSUE]);
+  rules.push(['a date', DATE]);
   return rules;
 }
 
@@ -73,7 +78,6 @@ export function checkText(path, text) {
   const rules = rulesFor(path);
   text.split('\n').forEach((line, index) => {
     for (const [what, pattern] of rules) {
-      // The author of the packages and the holder of the copyright are named, as metadata.
       if (pattern === NAMES && AUTHORSHIP.test(line)) continue;
       const match = pattern.exec(line);
       if (match) findings.push(`${path}:${index + 1}: ${what} ("${match[0]}")`);
@@ -82,18 +86,17 @@ export function checkText(path, text) {
   return findings;
 }
 
-function trackedFiles() {
-  const out = execFileSync('git', ['ls-files', '--cached', '--others', '--exclude-standard'], {
-    encoding: 'utf8',
-  });
-  return out.split('\n').filter(Boolean);
-}
+/** @param {string[]} args - The arguments of `git`. */
+const git = (args) => execFileSync('git', args, { encoding: 'utf8' });
 
 /** @param {string[]} args - Files to check; all files under version control if empty. */
 function main(args) {
-  const files = (args.length > 0 ? args : trackedFiles()).filter(
-    (path) => !SKIPPED.some((pattern) => pattern.test(path)),
-  );
+  // Paths relative to the root of the repository, which decide the rules, wherever this runs.
+  const root = git(['rev-parse', '--show-toplevel']).trim();
+  const given = args.map((arg) => relative(root, resolve(arg)));
+  process.chdir(root);
+  const all = git(['ls-files', '--cached', '--others', '--exclude-standard']).split('\n').filter(Boolean);
+  const files = (given.length > 0 ? given : all).filter((path) => !SKIPPED.some((pattern) => pattern.test(path)));
   /** @type {string[]} */
   const findings = [];
   for (const path of files) {
@@ -103,6 +106,7 @@ function main(args) {
     } catch {
       continue; // deleted in the working tree
     }
+    if (text.includes('\0')) continue; // a binary file
     findings.push(...checkText(path, text));
   }
   if (findings.length > 0) {
@@ -114,4 +118,6 @@ function main(args) {
   }
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) main(process.argv.slice(2));
+if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  main(process.argv.slice(2));
+}

@@ -20,7 +20,7 @@ describes the magnetic API.
 ## ITC
 
 symcrys follows ITC: Vol. A (6th ed., 2016) for the 32 crystal classes, Vol. D (2nd ed., 2013),
-Ch. 1.5, for the magnetic point groups (the reference edition and its exception: "Sources"). There is no other convention: a function given the option `convention` (with which a caller
+Ch. 1.5, for the magnetic point groups (the reference edition and its exception: `GUIDE.md`, "ITC as the standard"). There is no other convention: a function given the option `convention` (with which a caller
 chose Birss's presentation before 0.11) throws a RangeError, so that such a call is not answered in
 ITC's presentation without notice. R. R. Birss, _Symmetry and Magnetism_ (North-Holland, Amsterdam,
 1966), is an independent second print check of the ITC output ("Birss as a second print check").
@@ -95,7 +95,7 @@ function names. The import decides which reading a key has:
 
 **The crystallographic API has no time reversal.** An operation is `{ matrix, cartesian }` ("Operations"), the
 description of an operation has no `timeReversal`, a point group has no `type`, a tensor
-specification has no time parity, and `TENSOR_PROPERTIES` holds the properties of time-even
+specification takes no `timeParity` other than `'even'`, and `TENSOR_PROPERTIES` holds the properties of time-even
 tensors (`'pyroelectric'`, `'ferroaxial'`, `'piezoelectric'`, `'gyrotropic'`). A question that involves time
 reversal is a `RangeError` that names the magnetic API: the key of a magnetic point group, the name
 of a time-odd property (`'ferromagnetic'`), a tensor specification with `timeParity: 'odd'`, and an
@@ -1220,7 +1220,7 @@ as ITC Vol. D prints the same matrices (errata with their reasons in
 ## Plane groups
 
 The 17 plane groups and the 10 plane point groups are in a third entry point, `symcrys/plane` (in
-Python `symcrys.plane`), with the names of the other entry points where the notion is the same
+Python `symcrys.plane`), with the names of the other entry points where the notion is the same.
 They follow ITA (6th ed., 2016), Chapter 2.2 for the plane groups and
 Table 3.2.1.1 (p. 720) for the point groups.
 
@@ -1273,7 +1273,8 @@ shifted by a lattice translation or the operations of a site symmetry; it reads 
 a fraction with a denominator of at most 12 (within the tolerance, default 10⁻⁶) and refuses a matrix that is not the linear
 part of a plane point group.
 
-**Points.** `siteSymmetry`, `wyckoffPosition` and `orbit` take the key of a plane group and a point
+**Points.** `siteSymmetry`, `wyckoffPosition` and `orbit` take the key of a plane group, since the site
+symmetry needs the group modulo the lattice, and a point
 in the lattice basis (`orbit` gives each image as `{ point, operations }`, with the indices of the
 operations that map the point there, as the orbits of the point groups do), with an
 optional `tolerance` measured per coordinate modulo the lattice (default 10⁻⁶, below 1/2). They

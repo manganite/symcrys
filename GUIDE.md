@@ -2,7 +2,8 @@
 
 The binding rules of the library: what symcrys is, how it treats its sources, how its API is
 shaped, and how correctness is secured. They apply to every change, by anyone. A rule that does not
-fit a case is changed here, in the same pull request, not bypassed. The conventions themselves
+fit a case is changed here, once the change is agreed (`CLAUDE.md`), in the same pull request; it
+is not bypassed. The conventions themselves
 (frames, settings, symbols, tolerances) are in [`docs/conventions.md`](docs/conventions.md); how
 work in this repository is done is in [`CLAUDE.md`](CLAUDE.md).
 
@@ -59,7 +60,10 @@ results. It is not a digital interface to printed tables.
   crystal forms, symbols, signs of axes, cell changes, tensor forms.
 - **No library module holds a table in printed form or printed order.** Notation in results
   (`x,-y,z`, `h,0,l`, symbols) is formatted output of computed structures. Library modules that
-  still hold printed tables are rebuilt by this rule; no new one is added.
+  still hold printed tables (`pointGroups/wyckoffData.ts`, `crystalFormsData.ts`, `seitzData.ts`,
+  `shubnikovData.ts`, `blackWhiteData.ts`, `spaceGroups/planeGroupData.ts`,
+  `planePointGroupForms.ts`, `CELL_CHANGES` of `cellTransformation.ts`) are rebuilt by this rule,
+  module by module; no new one is added.
 - **`references/` is only the anchor of the tests**, never the source of an API result.
 - **Names say what a thing is in crystallographic terms**: functions, parameters, fields, types and
   internal identifiers (`cellTransformation`, `formType: 'tetragonal-prism'`). The usual notation of
@@ -97,7 +101,9 @@ Library code is everything in `packages/ts/src` except test-only code ("Correctn
   whether it carries time reversal.
 - **One implementation serves both point-group entry points**: the shared modules compute for all
   122 groups, and `crystalClasses.ts` checks what comes in and leaves time reversal out of what goes
-  back. A new function goes into the shared modules and is exported by both.
+  back. A new point-group function goes into the shared modules and is exported by both, unless it
+  exists for the crystal classes only (as the Wyckoff positions and crystal forms, which ITA
+  tabulates for the classes).
 
 ### Shape of calls and results
 
@@ -128,7 +134,8 @@ Library code is everything in `packages/ts/src` except test-only code ("Correctn
   and a string symcrys writes is read back as the same group or refused, never as another group.
 - **A wrong input is an error, never a silent answer.** A vector in the wrong basis, a list that is
   not a group where a group is needed, an index symmetry that does not apply at the rank, a tolerance
-  that cannot hold: each is refused with a message that says what is wrong and how to pass it.
+  that cannot hold: each is refused with a message that says what is wrong and how to pass it. A
+  function that answers such input silently has a bug.
 - **Operations** are records `{ matrix, cartesian }` (with `timeReversal` in the magnetic API;
   `{ matrix, translation }` in the plane). A function that computes with Cartesian matrices reads
   `cartesian` and refuses a record without it, so that W cannot pass for a Cartesian matrix.
@@ -151,8 +158,10 @@ Library code is everything in `packages/ts/src` except test-only code ("Correctn
 
 - **The Python API follows the TypeScript API by fixed rules** (`_convert.py`): names camelCase →
   snake_case; an options object becomes keyword-only arguments, another object parameter its fields
-  as arguments; arrays of numbers become NumPy arrays, `float64` for Cartesian quantities and
-  `int64` for indices and the matrices W, chosen by the field name (`packages/python/api.json`); a
+  as arguments; arrays of numbers become NumPy arrays, chosen by the field name
+  (`packages/python/api.json`): `int64` for indices, Miller indices, lattice directions and the
+  matrices W, `float64` for every other array (Cartesian matrices and vectors, tensor bases and
+  relations, translations and points of the plane); a
   record becomes a dict typed by a TypedDict of the TypeScript interface's name; a list of
   operations becomes one `Operations` record of arrays; a `RangeError` raises `SymcrysError` (a
   `ValueError`), any other error `SymcrysInternalError` (a `RuntimeError`).
@@ -175,11 +184,12 @@ resultJson`.
   known-good revision. Pins detect regressions and are no authority; they are re-captured, never
   edited to turn green.
 - **Safety net first.** Before a change of data or mathematics, the relevant fixture is extended
-  and green.
+  and green. A change of a pin is listed with its reason in the pull request, then re-captured.
 - **`references/`** holds transcriptions of printed tables with source and printed page. A file
   changes only by transcription from print or by correction against it; its head note states the
   source, when the transcription was made and how it was checked, and follows the state of that
-  source. Prettier and ESLint leave these files alone.
+  source; what symcrys does with the data (which settings it has) belongs in `docs/conventions.md`,
+  not there. Prettier and ESLint leave these files alone.
 - **Tests sit next to their module** (`foo.ts`, `foo.test.ts`). Test-only code is `*.test.ts`,
   `*.fixtures.ts`, `*.pins.json` and `testUtils/`; it may use Node, is type-checked with Node
   types, and is never built into `dist/` or packed.
@@ -187,11 +197,12 @@ resultJson`.
   `*.audit.test.ts` cover exhaustively, `*.pins.test.ts` compare with pins. Consistency tests
   (`invariance.test.ts`, `entryPoints.test.ts`) compare symcrys with itself under a change that must
   not matter; they find contradictions, not wrong values. `npm test` runs all of them.
-- **Captured fixtures are JSON** (`*.pins.json`, one entry per line), so that the tests of both
-  languages read the same files. The ITC baseline pins cover the output of all three entry points; a
-  change of a pin is listed with its reason in the pull request.
-- **Python tests** read the same `references/` and `*.pins.json` and have no expected values of
-  their own; in addition they test the layer itself and run the example notebooks.
+- **Fixtures are JSON** (`*.pins.json`, one entry per line), so that the tests of both languages
+  can read the same files; a hand-written fixture in `.ts` moves to JSON when it is next touched.
+  The ITC baseline pins cover the output of all three entry points.
+- **Python tests** read the same `references/` and pins as the TypeScript tests and have no
+  expected values of their own; in addition they test the layer itself and run the example
+  notebooks. The ITC baseline pins are not read by the Python tests yet.
 
 ## 8. Documentation
 

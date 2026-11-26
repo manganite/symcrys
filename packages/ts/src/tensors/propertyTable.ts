@@ -2,7 +2,7 @@
  * Named tensor properties: physical properties of a crystal that a point group allows if and only
  * if it allows a non-zero tensor of a given kind. The table is data: a name, the kind of tensor
  * (`TensorSpec`) and what it describes; the source of each definition is given with its entry. `allowsProperty` and `tensorForm` look a
- * name up here (docs/conventions.md, "Named tensor properties").
+ * name up here (docs/conventions.md, "Tensors", "Named properties").
  */
 
 import { shown } from '../checks.js';

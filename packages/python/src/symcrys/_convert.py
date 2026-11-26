@@ -1,4 +1,4 @@
-"""Fixed rules between the plain data of the TypeScript API and Python .
+"""Fixed rules between the plain data of the TypeScript API and Python.
 
 - Names: camelCase in JavaScript, snake_case in Python (``timeReversal`` ↔ ``time_reversal``), for
   function names and for the keys of objects.

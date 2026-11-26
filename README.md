@@ -79,7 +79,7 @@ workspace with `packages/ts`).
 npm install
 npm run typecheck      # TypeScript 6: tests and scripts with Node types, library code without
 npm run typecheck:ts7  # the same with TypeScript 7
-npm run lint           # ESLint
+npm run lint           # ESLint and the wording check (scripts/check-wording.mjs)
 npm run format:check   # Prettier (npm run format fixes)
 npm test               # vitest
 npm run build          # packages/ts/dist/: JavaScript, .d.ts, source maps

@@ -41,7 +41,25 @@ describe('check-wording', () => {
   });
 
   it('does not take colours or anchors for issue numbers', () => {
-    expect(checkText('docs/_static/a.css', 'color: #000;')).toEqual([]);
+    expect(checkText('docs/_static/a.css', 'border: 1px solid #333; /* gradient(#123, #456) */')).toEqual([]);
     expect(checkText('docs/x.md', '[link](page.md#123)')).toEqual([]);
+  });
+
+  it('finds issues of other repositories, after a colon and in quotes', () => {
+    expect(checkText('docs/x.md', 'manganite/crystallography-common#99')).toHaveLength(1);
+    expect(checkText('docs/x.md', 'Fixed in: #121')).toHaveLength(1);
+    expect(checkText('docs/x.md', "see '#12'")).toHaveLength(1);
+  });
+
+  it('reads "decided by" as a decision record only with a person or a date', () => {
+    expect(checkText('docs/x.md', 'The sign is decided by the order of the planes.')).toEqual([]);
+    expect(checkText('docs/x.md', 'Decided by the maintainer.')).toHaveLength(2);
+    expect(checkText('docs/x.md', 'Decided on 2026-11-25.')).toHaveLength(2);
+  });
+
+  it('exempts authorship lines only, not prose that mentions authors', () => {
+    expect(checkText('docs/x.md', 'Thomas checked the authors of the table.')).toHaveLength(1);
+    expect(checkText('packages/python/pyproject.toml', 'authors = [{ name = "Thomas Lottermoser" }]')).toEqual([]);
+    expect(checkText('docs/conf.py', 'copyright = "2026 Thomas Lottermoser"')).toEqual([]);
   });
 });

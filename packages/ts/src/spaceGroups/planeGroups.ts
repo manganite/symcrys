@@ -1,7 +1,7 @@
 /**
  * The 17 plane groups as exact operations: the general position of ITA in its numbering, the
- * centring and ITA's selected generators (docs/conventions.md, "Plane groups").
- * Internal for now; the entry point `symcrys/plane` comes later.
+ * centring and ITA's selected generators (docs/conventions.md, "Plane groups"); exported by the
+ * entry point `symcrys/plane`.
  */
 
 import { deepFreeze } from '../freeze.js';

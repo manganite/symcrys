@@ -74,16 +74,16 @@ records: reasons live in issues and pull requests.
 - **Where the sources are** (Zotero item, PDF, printed page p from the PDF page n or the page index i
   counted from 0):
 
-  | Source                     | Item / PDF              | Printed page                                                                                                              |
-  | -------------------------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-  | ITA 6th ed. (2016)         | `7NZ258UB` / `NFV3Z3M9` | p = n − 5 for pp. 2–139; p = n − 3 for Ch. 2.1 (pp. 142–174); plane group N on n = 177 + N; p = n + 503 for pp. 720–865   |
-  | ITA 5th ed. (2006)         | `3SDKZZFX` / `9PB3CSII` | p = n − 11 in Part 6 (pp. 92–109); p = n − 7 in Part 7                                                                    |
-  | ITC Vol. D, 2nd ed. (2013) | `YQKTNYVN` / `8TM6DPPM` | p = n + 1 = i + 2                                                                                                         |
-  | Birss (1966)               | `WKMPAPCY` / `ATQHPS7X` | two printed pages per PDF page; Table 6 (pp. 91–98) on n = 55–59, Table 7 (pp. 103–108) on n = 61–64, both rotated by 90° |
-  | Newnham (2005)             | `G32GB96M` / `UKXAALX2` | p = n − 13                                                                                                                |
-  | Paufler (1986)             | `6WFKM9X8` / `7SL8TECS` | the scan repeats pages, so the offset grows (22 at p. 60, 40 at p. 316): read the printed number                          |
-  | Frank (1965)               | `JUFIBJSH` / `HCKTL6NT` | p = n + 861                                                                                                               |
-  | Shubnikov & Belov (1964)   | `PD7DF9V6` / `3WP3F6T6` | p = i − 29                                                                                                                |
+  | Source                     | Item / PDF              | Printed page                                                                                                                                                                                                                                                            |
+  | -------------------------- | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+  | ITA 6th ed. (2016)         | `7NZ258UB` / `NFV3Z3M9` | p = n − 5 for pp. 2–139; p = n − 3 for Ch. 2.1 (pp. 142–174); plane group N on n = 177 + N; p = n + 503 for pp. 720–865                                                                                                                                                 |
+  | ITA 5th ed. (2006)         | `3SDKZZFX` / `9PB3CSII` | p = n − 11 in Part 6 (pp. 92–109); p = n − 7 in Part 7                                                                                                                                                                                                                  |
+  | ITC Vol. D, 2nd ed. (2013) | `YQKTNYVN` / `8TM6DPPM` | p = n + 1 = i + 2                                                                                                                                                                                                                                                       |
+  | Birss (1966)               | `WKMPAPCY` / `ATQHPS7X` | two printed pages per PDF page; Tables 3, 6 (pp. 91–98, n = 55–59) and 7 (pp. 103–108, n = 61–64) rotated by 90°                                                                                                                                                        |
+  | Newnham (2005)             | `G32GB96M` / `UKXAALX2` | p = n − 13; IEEE axes (orthorhombic c < a < b; trigonal and hexagonal Z₁ ∥ a, Z₃ ∥ c)                                                                                                                                                                                   |
+  | Paufler (1986)             | `6WFKM9X8` / `7SL8TECS` | the scan repeats pages, so the offset grows (22 at p. 60, 40 at p. 316): read the printed number. Counts of the magnetic properties (31, 58, 66; pp. 66, 140, 240) as ITC Vol. D; Tables 6.11 (p. 141) and 7.6 (pp. 240 ff.) give the forms after Bhagavantam and Birss |
+  | Frank (1965)               | `JUFIBJSH` / `HCKTL6NT` | p = n + 861                                                                                                                                                                                                                                                             |
+  | Shubnikov & Belov (1964)   | `PD7DF9V6` / `3WP3F6T6` | p = i − 29                                                                                                                                                                                                                                                              |
 
 - **Reading print.** The text layers lose primes, overbars and underlines (ITC Vol. D prints a
   prime as `0`), signs and factors, and take fractions apart: tables are read from the page image,
@@ -92,23 +92,22 @@ records: reasons live in issues and pull requests.
   Chapters 2.2 and 3.2, ITA 2006), as a second check. Crossing lines in diagrams (ITC Vol. D
   § 1.1.4.10.6) are read at about 550 dpi and followed end to end; the reading is noted in the
   transcription.
-- The head note of a file in `references/` cites its source as a reference (authors, work,
-  edition, year, chapter, table, printed page), says when and how the transcription was checked,
-  and leaves the working details of reading (files, PDF pages, resolutions) to the table above.
+- The head note of a file in `references/` (`GUIDE.md`, "Correctness and tests") cites its source
+  as a reference (authors, work, edition, year, chapter, table, printed page) and leaves the working
+  details of reading (files, PDF pages, resolutions) to the table above.
 
 ## Making a change
 
-- **Safety net first** for data or mathematics: extend the fixture, see it green, then change the
-  code. A change of an ITC baseline pin lists every changed entry and why in the pull request, then
-  re-captures (`npm run audit:itc-baseline`); a change of the API's shape alone changes
+The rules are in `GUIDE.md`; here the commands and the places in the code.
+
+- **Pins:** the ITC baseline pins are re-captured from a clean checkout with
+  `npm run audit:itc-baseline`; a change of the API's shape alone changes
   `testUtils/itcBaseline.ts`, which maps the current API back to the shape of the pins.
-- **A new export** goes into the shared modules and is exported by both point-group entry points
-  (with its wrapper in `crystalClasses.ts` if a key, an operation or a tensor passes through it).
+- **A new point-group function:** its wrapper goes into `crystalClasses.ts` if a key, an operation
+  or a tensor passes through it.
 - **After changing a TSDoc comment or an export**: `npm run build && npm run docs:python`, and
   commit the generated Python modules; `npm run api:report` for the API reports.
-- **A correction of calculated results** gets a `CHANGELOG.md` entry that says what was wrong and
-  since which version.
-- Keep wording neutral (`GUIDE.md`, "Documentation"); `npm run lint` runs `check-wording.mjs`.
+- `npm run lint` runs `scripts/check-wording.mjs` besides ESLint.
 
 ## Git and pull requests
 
