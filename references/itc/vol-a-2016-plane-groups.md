@@ -2,10 +2,7 @@
 
 Source: _International Tables for Crystallography_, Vol. A, 6th edition (2016), Chapter 2.2 (The 17
 plane groups), one page per plane group, printed pp. 176–192 (plane group n on p. 175 + n).
-Transcribed 2026-11-22 from the page PDFs in Thomas' Zotero (item `7NZ258UB`, attachments
-`sgtable2o2o001` to `sgtable2o2o017`), rendered at 220 dpi; every entry checked against the
-rendered page, overbars and fractions included (the text layer of these PDFs takes fractions
-apart, so it was not used).
+Transcribed 2026-11-22; every entry checked against print, overbars and fractions included.
 
 For each plane group: number, short and full symbol, point group, crystal system and Patterson
 symmetry from the headline; the blocks "Origin", "Asymmetric unit" (with "Vertices" where printed),
@@ -21,9 +18,9 @@ Transcription conventions: a leading minus sign is an overbar (`-x` for x̄, `-2
 of an oriented site-symmetry symbol (`. m .`) are left out (`.m.`), and so are the thin spaces the
 print sets between the characters of every Hermann–Mauguin symbol, except in "Origin", where they
 are kept as spaces between the positions (`at 2 1 g`, so that `21g` is not read as a screw axis;
-read again from the page images on 2026-11-23, #137 C4). "Generators selected" leaves out
-the identity (1) and the integer translations t(1,0), t(0,1) that begin every line in print; a
-centring translation is kept.
+read again from print on 2026-11-23, #137 C4). "Generators selected" leaves out the identity (1) and
+the integer translations t(1,0), t(0,1) that begin every line in print; a centring translation is
+kept.
 
 ## 1 — p1, p. 176
 Full symbol: p1  

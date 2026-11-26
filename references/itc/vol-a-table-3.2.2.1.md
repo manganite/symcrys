@@ -3,16 +3,15 @@
 Source: _International Tables for Crystallography_, Vol. A, 6th edition (2016), Chapter 3.2 (Point
 groups and crystal classes), Table 3.2.2.1, printed p. 738.
 
-Transcribed in birss-app (2026-07-11) from a screenshot provided by Thomas, the page scan and the
-OCR text; checked against the printed page in the chapter PDF on 2026-11-09.
+Transcribed in birss-app (2026-07-11); checked against the printed page on 2026-11-09.
 
 Transcription conventions: a leading minus sign is an overbar (`-4`); `inf` is the infinity symbol.
 Numbers in parentheses are the numbers of independent nonzero tensor components as printed. `+`:
 the property occurs; `-`: it is forbidden. `(a)`, `(b)`: printed footnotes.
 
-Printed header notes: for first-rank tensors the direction [uvw] of the
-property vector is given. There are 10 pyroelectric, 20 piezoelectric,
-11 enantiomorphic and 15 optically active crystal classes.
+Printed header notes: for first-rank tensors the direction [uvw] of the property vector is given.
+There are 10 pyroelectric, 20 piezoelectric, 11 enantiomorphic and 15 optically active crystal
+classes.
 
 | System       | Laue class   | Group | Rank-1 (pyroelectricity)   | Rank-3 (piezo/SHG) | Enantiomorphism | Axial rank-2 (optical activity) |
 |--------------|--------------|-------|----------------------------|--------------------|-----------------|---------------------------------|

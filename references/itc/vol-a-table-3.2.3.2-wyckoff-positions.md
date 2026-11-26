@@ -1,33 +1,31 @@
 # ITA Table 3.2.3.2: Wyckoff positions of the 32 crystallographic point groups
 
 Source: _International Tables for Crystallography_, Vol. A, 6th edition (2016), Chapter 3.2 (Point
-groups and crystal classes), Table 3.2.3.2, printed pp. 745–769. Transcribed 2026-11-19 from the
-chapter PDF provided by Thomas; every row checked against the rendered pages, overbars included.
-General positions of the same entries: `vol-a-table-3.2.3.2-general-positions.md`; headlines:
-`vol-a-table-3.2.3.2-headlines.md`. The five entries with rhombohedral axes (3, -3, 32, 3m, -3m;
-pp. 753, 753, 755, 756, 759) were added 2026-11-23 from the page images of the chapter PDF (Zotero
-item `7NZ258UB`, attachment `Y6Z8P8NR`, PDF pages 34, 36, 37, 40; printed page = PDF page + 719),
-read at 300–500 dpi, the points checked a second time against the text layer of the same pages.
-All coordinate triplets of column 4 (not only the first) were added 2026-11-23 from the text layer
-of the same pages (#121 step 7d), in which an overbar is a glyph of its own over the letter and the
-minus and plus signs are glyphs of a symbol font. On each of the 25 pages the triplets read so
-equal, one by one and in printed order, the first triplet of each row carried by the general
-position of `vol-a-table-3.2.3.2-general-positions.md` in its printed order. All triplets of
-pages 750–769 were also compared with the page images, rendered at 200 dpi (pages 759, 764 and 769
-while transcribing, the others by the review of the same day); pages 745–749 (triclinic,
-monoclinic, orthorhombic, with at most eight triplets of 0, x, y, z and their overbars per
-position) by the text layer and the general position only.
+groups and crystal classes), Table 3.2.3.2, printed pp. 745–769. Transcribed 2026-11-19; every row
+checked against print, overbars included. General positions of the same entries:
+`vol-a-table-3.2.3.2-general-positions.md`; headlines: `vol-a-table-3.2.3.2-headlines.md`. The five
+entries with rhombohedral axes (3, -3, 32, 3m, -3m; pp. 753, 753, 755, 756, 759) were added
+2026-11-23, the points checked a second time against the full text of the same pages. All coordinate
+triplets of column 4 (not only the first) were added 2026-11-23 from the full text of the same pages
+(#121 step 7d). On each of the 25 pages the triplets read so equal, one by one and in printed order,
+the first triplet of each row carried by the general position of
+`vol-a-table-3.2.3.2-general-positions.md` in its printed order. All triplets of pages 750–769 were
+also compared with print (pages 759, 764 and 769 while transcribing, the others by the review of the
+same day); pages 745–749 (triclinic, monoclinic, orthorhombic, with at most eight triplets of 0, x,
+y, z and their overbars per position) were checked against the general position only, not compared
+with print.
 
-One row per Wyckoff position, in the printed order (general position first): multiplicity,
-Wyckoff letter, oriented site-symmetry symbol (columns 1 to 3 of the print), the coordinate
-triplets of column 4 in printed order, separated by spaces (the first is a representative point),
-and the Miller indices of the first face in the last column (a representative face of the first,
-characteristic face form). The point in the origin (letter o) has no face. The face forms, point forms and further faces are not transcribed here.
+One row per Wyckoff position, in the printed order (general position first): multiplicity, Wyckoff
+letter, oriented site-symmetry symbol (columns 1 to 3 of the print), the coordinate triplets of
+column 4 in printed order, separated by spaces (the first is a representative point), and the Miller
+indices of the first face in the last column (a representative face of the first, characteristic
+face form). The point in the origin (letter o) has no face. The face forms, point forms and further
+faces are not transcribed here.
 
 Transcription conventions: a leading minus sign is an overbar (`-x` for x̄, `-2x` for 2x̄, `-4..`
-for 4̄..), and `x-y` is x − y; the components of a triplet and the Miller indices are separated by commas (`h,h,-2h,l` for
-(hh2̄hl)); Bravais–Miller indices (hkil) have four components, as printed for hexagonal axes;
-Miller indices (hkl) for rhombohedral axes have three, as printed.
+for 4̄..), and `x-y` is x − y; the components of a triplet and the Miller indices are separated by
+commas (`h,h,-2h,l` for (hh2̄hl)); Bravais–Miller indices (hkil) have four components, as printed
+for hexagonal axes; Miller indices (hkl) for rhombohedral axes have three, as printed.
 
 Where the print offers two faces with "or" (e.g. `(010) or (01̄0)` for a pedion), the first is
 transcribed. As printed: the site symmetry of the origin of 6/mmm (letter o, p. 764) reads `6mmm`,

@@ -2,9 +2,8 @@
 
 Source: _International Tables for Crystallography_, Vol. D, 2nd edition (2013), Chapter 1.5
 (A. S. Borovik-Romanov, H. Grimmer, M. Kenzelmann, "Magnetic properties"), Table 1.5.2.4 "List of
-the magnetic classes in which ferromagnetism is admitted", printed p. 113. Transcribed 2026-11-20
-from the volume in Thomas' Zotero (item YQKTNYVN), read from page images at 200 and 450 dpi (the
-text layer of the PDF loses primes and overbars).
+the magnetic classes in which ferromagnetism is admitted", printed p. 113. Transcribed 2026-11-20,
+primes and overbars as printed.
 
 The table has six parts, (a) triclinic to (f) hexagonal, with 31 groups in all; no cubic group
 admits ferromagnetism. The text beside it (p. 113): "Only 31 magnetic point groups allow

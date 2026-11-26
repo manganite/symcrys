@@ -1,16 +1,14 @@
 # ITA Table 2.1.1.1: crystal families, crystal systems, conventional coordinate systems and Bravais lattices
 
 Source: _International Tables for Crystallography_, Vol. A, 6th edition (2016), Chapter 2.1 (Guide
-to the use of the space-group tables), Table 2.1.1.1, printed p. 143. Transcribed in birss-app from
-a screenshot provided by Thomas (2026-07-11); checked against the printed page in the chapter PDF
-on 2026-11-09.
+to the use of the space-group tables), Table 2.1.1.1, printed p. 143. Transcribed in birss-app
+(2026-07-11); checked against the printed page on 2026-11-09.
 
 Transcription conventions: a leading minus sign is an overbar (`-3`). The point-group symbols carry
 the printed box markers as suffixes: `(L)` dashed box, a Laue group; `(H)` full box, a Laue group
 that is also a lattice point symmetry (holohedry). "deg" means degrees. The three-dimensional block
-is the first table; the two-dimensional block, transcribed on 2026-11-24 from the page image of the
-chapter PDF (Zotero `9W72G6EC`, rendered at 400 dpi), is the section "Two dimensions" below the
-footnotes. The one-dimensional row is not transcribed.
+is the first table; the two-dimensional block, transcribed on 2026-11-24, is the section "Two
+dimensions" below the footnotes. The one-dimensional row is not transcribed.
 
 | Crystal family | Symbol | Crystal system | Crystallographic point groups | No. of space groups | Restrictions on cell parameters | Parameters to be determined | Bravais lattices |
 |----------------|--------|----------------|-------------------------------|---------------------|---------------------------------|-----------------------------|------------------|

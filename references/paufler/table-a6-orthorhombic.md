@@ -2,8 +2,7 @@
 
 Source: P. Paufler, _Physikalische Kristallographie_ (Akademie-Verlag, Berlin, 1986), Table A 6
 "Kristallographische magnetische Punktgruppen", printed p. 316, rows 12 to 20 (the orthorhombic
-groups). Transcribed 2026-11-20 from the scan in Thomas' Zotero (item 6WFKM9X8), read from a page
-image at 300 dpi; PDF page 356 (the scan repeats pages, so the offset to the printed page varies).
+groups). Transcribed 2026-11-20.
 
 The table lists the 90 magnetic point groups, the 32 without and the 58 with operations combined
 with time reversal, each with its symmetry operations. Only the orthorhombic rows are transcribed:

@@ -1,13 +1,11 @@
 # ITA Table 3.2.3.2: face forms of the 32 crystallographic point groups
 
 Source: _International Tables for Crystallography_, Vol. A, 6th edition (2016), Chapter 3.2 (Point
-groups and crystal classes), Table 3.2.3.2, printed pp. 745–769. Transcribed 2026-11-21 from the
-page images of the chapter PDF (Zotero item `7NZ258UB`, attachment `Y6Z8P8NR`, PDF pages 26–50),
-overbars included. Wyckoff letters, multiplicities and site symmetries of the same entries:
+groups and crystal classes), Table 3.2.3.2, printed pp. 745–769. Transcribed 2026-11-21, overbars
+included, as printed. Wyckoff letters, multiplicities and site symmetries of the same entries:
 `vol-a-table-3.2.3.2-wyckoff-positions.md`; names, numbers of faces and eigensymmetries of the 47
 forms: `vol-a-table-3.2.1.3-crystal-forms.md`. The five entries with rhombohedral axes (3, -3, 32,
-3m, -3m; pp. 753, 753, 755, 756, 759) were added 2026-11-23 from the page images of the same PDF
-(PDF pages 34, 36, 37, 40; printed page = PDF page + 719), read at 300–500 dpi.
+3m, -3m; pp. 753, 753, 755, 756, 759) were added 2026-11-23.
 
 One row per face form printed in the fifth column ("face forms (in roman type)"), in printed order:
 the Wyckoff letter of the row it belongs to, whether it is the first entry of that row (`basic`) or

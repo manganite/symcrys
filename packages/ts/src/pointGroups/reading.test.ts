@@ -28,7 +28,8 @@ describe('normalizeSymbol', () => {
     // A space after a bar word is kept (review of #151): `bar3 2/m` is the full symbol `-3 2/m`.
     expect(normalizeSymbol('bar3 2/m')).toBe('-3 2/m');
     expect(normalizeSymbol('\\bar 3 2')).toBe('-3 2');
-    expect(normalizeSymbol('m3' + String.fromCharCode(0xaf) + 'm')).toBe('m-3m'); // macron, ITA's text layer
+    // The macron, as text copied from the PDF edition of ITA 2016 writes it.
+    expect(normalizeSymbol('m3' + String.fromCharCode(0xaf) + 'm')).toBe('m-3m');
     expect(normalizeSymbol(String.fromCharCode(0x2010) + '42m')).toBe('-42m'); // hyphen
     expect(normalizeSymbol(String.fromCharCode(0x2011) + '6m2')).toBe('-6m2'); // non-breaking hyphen
     expect(normalizeSymbol('C_{3v}')).toBe('C3v');

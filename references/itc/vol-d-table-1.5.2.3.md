@@ -4,8 +4,7 @@ Source: _International Tables for Crystallography_, Vol. D, 2nd edition (2013), 
 (Magnetic properties; A. S. Borovik-Romanov, H. Grimmer and M. Kenzelmann), Table 1.5.2.3, printed
 pp. 111–112 (triclinic to tetragonal on p. 111, trigonal to cubic on p. 112).
 
-Transcribed on 2026-11-19 from the page images of the volume in Thomas' Zotero (the text layer of
-the PDF loses primes, overbars and underlines, so it was not used).
+Transcribed on 2026-11-19, primes, overbars and underlines as printed.
 
 What the table covers: the chapter numbers the types of magnetic point groups differently from the
 usual I, II, III. Its first type are the 32 grey groups (§ 1.5.2.1, eq. (1.5.2.1)), its second type

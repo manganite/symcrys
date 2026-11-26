@@ -89,6 +89,29 @@ convention or the process updates this file (or the `docs/` file) in the same PR
   import it by DOI or ISBN and check its metadata against the printed source (for a book: authors,
   year, edition and publisher against the title page).
   Ask Thomas for a volume that is not at hand.
+- **Where the sources are** (working notes, state of 2026-11-26; the files of the repository cite
+  their sources plainly, "Correctness and provenance"). Zotero items, their PDFs, and the printed
+  page p from the PDF page number n or the page index i counted from 0:
+  - ITA 6th ed. (2016), item `7NZ258UB`: one PDF of the chapters used (`NFV3Z3M9`, 362 pages):
+    p = n − 5 for pp. 2–139 (Part 1, Chapter 1.5 on pp. 75–106), p = n − 3 for Chapter 2.1
+    (pp. 142–174), plane group N on PDF page 177 + N (printed p. 175 + N, Chapter 2.2), p = n + 503
+    for pp. 720–865 (Chapter 3.2 on pp. 720–776).
+  - ITA 5th ed. (2006), item `3SDKZZFX`: one PDF (`9PB3CSII`, 912 pages): p = n − 11 in Part 6 (the
+    plane groups, pp. 92–109), p = n − 7 in Part 7 (the space groups).
+  - ITC Vol. D, 2nd ed. (2013), item `YQKTNYVN`: one PDF (`8TM6DPPM`, 541 pages): p = n + 1 = i + 2,
+    checked at pp. 26, 49, 66, 106, 111–113, 135, 140 and 174.
+  - Birss (1966), item `WKMPAPCY`: the scan `ATQHPS7X`, two printed pages on each PDF page, Tables 3,
+    6 and 7 rotated by 90° ("Reading Birss" below).
+  - Newnham (2005), item `G32GB96M`, PDF `UKXAALX2`; Paufler (1986), item `6WFKM9X8`, PDF `7SL8TECS`:
+    their page offsets with their entries below.
+  - Frank (1965), item `JUFIBJSH`, PDF `HCKTL6NT`: p = n + 861.
+  - Shubnikov & Belov (1964), item `PD7DF9V6`, PDF `3WP3F6T6`: p = i − 29.
+  - Reading: the text layers lose primes, overbars and underlines (ITC Vol. D prints a prime as `0`),
+    signs and factors (Hoshi 1995, Eq. (12)), and take fractions apart, so tables are read from the
+    page, enlarged where a prime, an overbar or an underline matters. The text layer serves to find
+    candidate pages and, where it keeps the overbars, as a second check: ITA 2016 Chapter 2.2 (as `¯`
+    after the letter) and Chapter 3.2, and ITA 2006, whose rendered overbars are displaced towards
+    the line above.
 - **Further books for questions of convention and group theory** (Thomas, 2026-11-20), all in his
   Zotero; consult them, beside ITC and Birss, before putting such a question to him: Litvin
   (magnetic groups; _Acta Cryst._ A**64**, 419 (2008)), Koster, Dimmock, Wheeler & Statz,
@@ -195,7 +218,10 @@ Carried over from birss-app, where the calculations come from.
 - Files in `references/` change only by transcription from print or by correction against it
   (maintainer, 2026-11-18). The one exception is the note on provenance in a file's head (where a
   transcription came from, what was reported where): it follows the current state of the source it
-  names (maintainer, 2026-11-20). Notes on the state of symcrys do not belong there (which settings
+  names (maintainer, 2026-11-20). It cites the source as a reference (authors, work, edition, year,
+  chapter, table or section, printed page), says when the transcription was made and how it was
+  checked against print, and leaves the working details of reading it (files, PDF pages,
+  resolutions) to "Where the sources are" (Thomas, 2026-11-25, #194). Notes on the state of symcrys do not belong there (which settings
   it has); they are in `docs/conventions.md` (maintainer, 2026-11-23, removed from
   `references/itc/orientations.md`). Prettier and ESLint leave these files alone.
 
@@ -1145,18 +1171,14 @@ while implementing gets its own note here.
   descriptions and in each line of `symmetryElements`, so that an application can assign a line to a
   position of the symbol without a metric.
 - **Print anchor: ITA 6th edition (2016), Chapter 2.2** (#31, asked together with the four
-  questions; the reference edition and its exception: "Pure ITC"). The
-  2016 volume in Zotero (`7NZ258UB`) holds Chapters 2.1 (`9W72G6EC`) and 3.2 (`Y6Z8P8NR`), and
-  Thomas added Chapter 2.2 on 2026-11-22 as one PDF per plane group (attachments
-  `sgtable2o2o001` to `sgtable2o2o017`); plane group n is printed on p. 175 + n (checked at 7, 8, 9
+  questions; the reference edition and its exception: "Pure ITC"). Plane
+  group n is printed on p. 175 + n (checked at 7, 8, 9
   and 17; "the 17 types of plane groups (Chapter 2.2)", Ch. 2.1, p. 142, which also says that the
-  data of Chapters 2.2 and 2.3 closely follow the earlier edition). Their text layer keeps overbars
-  (as `¯` after the letter) but takes fractions apart, so the tables are transcribed from page
-  images. The 5th
+  data of Chapters 2.2 and 2.3 closely follow the earlier edition); the PDFs: "Where the sources
+  are". The 5th
   edition (2006, `3SDKZZFX`), Part 6, pp. 92–109, against which plane-groups is tested, becomes an
   additional check by `audit/plane-groups-2006` (against plane-groups' transcription,
-  `js/ebenengruppen.js`), not the reference; printed p. 92 is PDF page 235 (checked at that page
-  only). The data of the 17 groups (`src/spaceGroups/planeGroupData.ts`) hold what the pages print
+  `js/ebenengruppen.js`), not the reference. The data of the 17 groups (`src/spaceGroups/planeGroupData.ts`) hold what the pages print
   except the diagrams, the origin (derived since #194), the symmetry operations as text (kept in `references/`, the anchor of their
   description, `describe.reference.test.ts`) and the reflection conditions (not transcribed: plane-groups leaves
   diffraction to the diffraction app); the selected generators must close into the printed general

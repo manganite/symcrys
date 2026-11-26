@@ -8,37 +8,35 @@ that orientation anywhere in ITC").
 
 Sources:
 
-- ITC Vol. D, 2nd edition (2013), Zotero item `YQKTNYVN` (attachment `8TM6DPPM`, one PDF of 541
-  pages). Printed page = PDF page + 1, checked at pp. 26, 49, 66, 106, 113, 135, 140 and 174.
-- ITA (Vol. A), 6th edition (2016), Zotero item `7NZ258UB`: Chapter 1.5 (attachment `AHHQY85L`,
-  pp. 75–106, printed = PDF + 74), Chapter 1.6 (`YXY538BN`, pp. 107–131, printed = PDF + 106),
-  Chapter 3.2 (`Y6Z8P8NR`, pp. 720–776, printed = PDF + 719).
+- ITC Vol. D, 2nd edition (2013).
+- ITA (Vol. A), 6th edition (2016): Chapter 1.5 (pp. 75–106), Chapter 1.6 (pp. 107–131),
+  Chapter 3.2 (pp. 720–776).
 
-Read on 2026-11-23. Page images rendered at 110–130 dpi for the page, 300–500 dpi for every symbol
-transcribed here with a prime or an overbar (the text layer of the PDFs loses overbars and prints
-primes as `0`, so it served only to find candidate pages). Rows marked "text layer" were not read
-from a page image; they carry no prime and no overbar. The ITA Table 3.2.3.2 rows rest on the
-print-checked transcriptions `vol-a-table-3.2.3.2-headlines.md` and
-`vol-a-table-3.2.3.2-wyckoff-positions.md`, Table 3.2.2.2 on `vol-a-table-3.2.2.2.md`.
+Read on 2026-11-23. Every symbol transcribed here with a prime or an overbar was read from print; a
+full-text search does not show primes and overbars reliably, so it served only to find candidate
+pages. Rows marked "search only" were found by a full-text search of the volume and not read from
+print; they carry no prime and no overbar. The ITA Table 3.2.3.2 rows rest on the print-checked
+transcriptions `vol-a-table-3.2.3.2-headlines.md` and `vol-a-table-3.2.3.2-wyckoff-positions.md`,
+Table 3.2.2.2 on `vol-a-table-3.2.2.2.md`.
 
 What was searched:
 
 - ITC Vol. D Chapter 1.5 (pp. 106–152) completely: every page with a group symbol (pp. 110–113,
-  119–124, 128–144) from its image, the others (pp. 106–109, 114–118, 125–127, 145–152, the last
-  four references) by their text layer.
+  119–124, 128–144) read from print, the others (pp. 106–109, 114–118, 125–127, 145–152, the last
+  four references) by full-text search.
 - ITC Vol. D Chapter 1.2 where it tabulates point groups: Tables 1.2.3.1 and 1.2.3.2 (p. 49),
   1.2.5.1 (p. 54), 1.2.6.2 (p. 57), 1.2.6.5 (pp. 58–59), 1.2.6.6 (p. 60), 1.2.6.11 (pp. 65–66),
   1.2.6.12 (p. 66).
-- ITC Vol. D Chapter 1.1, § 1.1.4.7 to § 1.1.4.10 (pp. 16–31): headings of the reductions, text
-  layer, and pp. 25–26 from the image.
-- ITC Vol. D Chapters 1.3–1.11 and Parts 2–3: text layer only, searched for oriented symbols
+- ITC Vol. D Chapter 1.1, § 1.1.4.7 to § 1.1.4.10 (pp. 16–31): headings of the reductions, by
+  full-text search, and pp. 25–26 read from print.
+- ITC Vol. D Chapters 1.3–1.11 and Parts 2–3: full-text search only, for oriented symbols
   (`2mm`, `m2m`, `211`, `m11`, `112`, `11m`, `312`, `31m`, `-4m2`, primed orthorhombic symbols) and
   for orientations stated in words ("parallel to Ox", "⊥ x", "unique axis"). Hits in Chapter 1.6
-  were read from the image (Table 1.6.6.1, p. 174); hits in Part 3 are listed at the end, not
+  were read from print (Table 1.6.6.1, p. 174); hits in Part 3 are listed at the end, not
   inventoried row by row.
-- ITA 2016: § 1.6.4 (p. 114) and § 1.6.5 (p. 126) from the image; Chapter 3.2 through the
-  transcriptions named above and the text layer (Table 3.2.1.3, p. 724); Table 1.5.4.4 (pp. 97–106)
-  from the image of p. 97 and the text layer.
+- ITA 2016: § 1.6.4 (p. 114) and § 1.6.5 (p. 126) read from print; Chapter 3.2 through the
+  transcriptions named above and full-text search (Table 3.2.1.3, p. 724); Table 1.5.4.4 (pp. 97–106)
+  with p. 97 read from print, the rest by full-text search.
 
 "Not found" means not found in these pages; it is no statement about the rest of ITC.
 
@@ -62,11 +60,11 @@ orientation is not listed.
 | 2 | 112 | 1 1 2 | ITC D Table 1.2.6.11 (e), (f) | 65 | little cogroup K_k; Kovalev's tables |
 | 2 | 2 | 1 1 2 | ITC D Table 1.2.6.5 (b) | 58 | α = C_2z |
 | 2 | 2 | 1 1 2 | ITC D Table 1.2.6.11 (b), (c) | 65 | monoclinic P and A: K = 2 at k = 00γ, so the axis is c (inferred) |
-| 2 | 2 | 1 1 2 | ITC D § 1.1.4.8.2.1 | 18 | "Choosing the twofold axis parallel to Ox3"; Ox2 given after it; text layer |
+| 2 | 2 | 1 1 2 | ITC D § 1.1.4.8.2.1 | 18 | "Choosing the twofold axis parallel to Ox3"; Ox2 given after it; search only |
 | 2 | 2 | 1 1 2 | ITC D § 1.1.4.10.7.1 (ii)(a), § 1.1.4.10.7.2 (ii)(a) | 29–30 | frame "parallel to Ox3" beside "parallel to Ox2" (`vol-d-1.1.4.10.7-axial-rank-2.md`) |
 | 2 | 2 (2 ∥ x3) | 1 1 2 | ITC D Table 1.6.6.1 | 174 | beside 2 (2 ∥ x2) |
-| 2 | 2 (2 ∥ x3) | 1 1 2 | ITC D Table 1.6.5.1 | 172 | text layer |
-| 2 | C2 (2) (twofold axis parallel to z) | 1 1 2 | ITC D Tables 1.7.2.2, 1.7.2.3 | 185–186 | the only monoclinic orientation there; text layer |
+| 2 | 2 (2 ∥ x3) | 1 1 2 | ITC D Table 1.6.5.1 | 172 | search only |
+| 2 | C2 (2) (twofold axis parallel to z) | 1 1 2 | ITC D Tables 1.7.2.2, 1.7.2.3 | 185–186 | the only monoclinic orientation there; search only |
 | 2 | 211 | 2 1 1 | ITC D § 1.5.7.1, list (3) | 134 | "unique axis x" |
 | 2 | 211 | 2 1 1 | ITC D § 1.5.8.1, list (3) | 140 | "unique axis x" |
 | 2 | 211 | 2 1 1 | ITC D Table 1.2.6.11 (f) | 65 | orthorhombic I, k = (α ½ ½) |
@@ -77,8 +75,8 @@ orientation is not listed.
 | m | 11m | 1 1 m | ITC D Table 1.2.6.11 (d)–(i), (l)–(n) | 65–66 | little cogroups |
 | m | m | 1 1 m | ITC D Table 1.2.6.5 (b) | 58 | α = σ_z |
 | m | m (m ⊥ x3) | 1 1 m | ITC D Table 1.6.6.1 | 174 | beside m (m ⊥ x2) |
-| m | m (m ⊥ x3) | 1 1 m | ITC D Table 1.6.5.1 | 172 | text layer |
-| m | Cs (m) (twofold axis parallel to z) | 1 1 m | ITC D Tables 1.7.2.4, 1.7.2.5 | 187–188 | text layer |
+| m | m (m ⊥ x3) | 1 1 m | ITC D Table 1.6.5.1 | 172 | search only |
+| m | Cs (m) (twofold axis parallel to z) | 1 1 m | ITC D Tables 1.7.2.4, 1.7.2.5 | 187–188 | search only |
 | m | m11 | m 1 1 | ITC D § 1.5.7.1, list (3) | 134 | "unique axis x" |
 | m | m11 | m 1 1 | ITC D § 1.5.8.1, list (4) | 140 | "unique axis x" |
 | m | m11 | m 1 1 | ITC D Table 1.2.3.1 | 49 | elements E, m_x |
@@ -88,7 +86,7 @@ orientation is not listed.
 | 2/m | 11 2/m | 1 1 2/m | ITC D § 1.5.7.1, list (1) | 134 | "unique axis z" |
 | 2/m | 112/m | 1 1 2/m | ITC D Table 1.2.6.11 (f) | 65 | orthorhombic I |
 | 2/m | 2/m | 1 1 2/m | ITC D Table 1.2.6.5 (b) | 58 | α = C_2z, β = σ_z |
-| 2/m | C2h 2/m (twofold axis parallel to z) | 1 1 2/m | ITC D Tables 1.7.2.4, 1.7.2.5 | 187–188 | text layer |
+| 2/m | C2h 2/m (twofold axis parallel to z) | 1 1 2/m | ITC D Tables 1.7.2.4, 1.7.2.5 | 187–188 | search only |
 | 2/m | 2/m11 | 2/m 1 1 | ITC D § 1.5.7.1, list (3) | 134 | "unique axis x" |
 | 2/m | 2/m11 | 2/m 1 1 | ITC D Table 1.2.6.11 (f) | 65 | orthorhombic I |
 | 2/m | C2h = 2/m | 2/m 1 1 | ITC D Table 1.5.3.4 | 120 | moments along x (F) and y (A3); twofold axis U_2^1 = 2_x (Table 1.5.3.2, p. 120) |
@@ -96,7 +94,7 @@ orientation is not listed.
 | mm2 | 2mm | 2 m m | ITA § 1.6.4 | 114 | "the three point groups 2mm, m2m and mm2" |
 | mm2 | 2mm | 2 m m | ITA § 1.6.5, text and Table 1.6.5.1 | 126 | column heads mmm, 2mm, m2m, mm2, 222 |
 | mm2 | 2mm | 2 m m | ITA Table 3.2.3.2 | 748 | site symmetry of 2a (x,0,0) in mmm |
-| mm2 | 2mm | 2 m m | ITA Table 3.2.1.3 | 724 | pinacoid in mmm: "mmm (2mm; m2m; mm2)"; text layer |
+| mm2 | 2mm | 2 m m | ITA Table 3.2.1.3 | 724 | pinacoid in mmm: "mmm (2mm; m2m; mm2)"; search only |
 | mm2 | [2mm] | 2 m m | ITC D Table 1.5.7.1 | 135 | in brackets after mm2 |
 | mm2 | 2mm | 2 m m | ITC D § 1.5.8.1, list (5) | 140 | |
 | mm2 | 2mm | 2 m m | ITC D Table 1.2.3.1 | 49 | elements E, m_y, m_z, 2_x |
@@ -105,7 +103,7 @@ orientation is not listed.
 | mm2 | m2m | m 2 m | ITA § 1.6.4 | 114 | |
 | mm2 | m2m | m 2 m | ITA § 1.6.5, text and Table 1.6.5.1 | 126 | |
 | mm2 | m2m | m 2 m | ITA Table 3.2.3.2 | 748 | site symmetry of 2b (0,y,0) in mmm |
-| mm2 | m2m | m 2 m | ITA Table 3.2.1.3 | 724 | pinacoid in mmm; text layer |
+| mm2 | m2m | m 2 m | ITA Table 3.2.1.3 | 724 | pinacoid in mmm; search only |
 | mm2 | [m2m] | m 2 m | ITC D Table 1.5.7.1 | 135 | in brackets |
 | mm2 | m2m | m 2 m | ITC D § 1.5.8.1, list (6) | 140 | |
 | mm2 | m2m | m 2 m | ITC D Table 1.2.3.1 | 49 | elements E, m_x, m_z, 2_y |
@@ -136,7 +134,7 @@ orientation is not listed.
 | mm21' | 2mm1' | 2 m m 1' | ITC D Table 1.2.6.12 | 66 | type II; see note (a) |
 | mm21' | 2mm1' | 2 m m 1' | ITC D Table 1.2.6.6 (b) | 60 | "cf. 2mm"; see note (a) |
 | -6m21' | -62m1' | -6 2 m 1' | ITC D Table 1.2.6.12 | 66 | type II; see note (a) |
-| -6m21' | -62m1' | -6 2 m 1' | ITC D Table 1.2.6.6 (b) | 60 | text layer; see note (a) |
+| -6m21' | -62m1' | -6 2 m 1' | ITC D Table 1.2.6.6 (b) | 60 | search only; see note (a) |
 | 2' | 112' | 1 1 2' | ITC D § 1.5.7.1, list (2) | 134 | "unique axis z" |
 | 2' | 112' | 1 1 2' | ITC D § 1.5.8.1, list (2) | 140 | "unique axis z" |
 | 2' | 2'11 | 2' 1 1 | ITC D § 1.5.7.1, list (4) | 134 | "unique axis x" |
@@ -301,15 +299,15 @@ ITC prints the grey groups with their standard symbol only (ITC D Tables 1.2.6.6
 
 ## Occurrences in ITC Vol. D Part 3, not inventoried
 
-Found by the text layer only (no page image read except where stated); listed so that the search
+Found by full-text search only (not read from print except where stated); listed so that the search
 can be completed:
 
 - Chapter 3.3 (twinning): `112/m` as intersection symmetry (pp. 417–418, 449); the black–white
-  twin symbol K* = 2'/m' 2'/m' 2/m (p. 418, read from the image) and "orthorhombic 2'22' ↔
-  monoclinic 121" for Rochelle salt (p. 443, read from the image) — dichromatic (twin) groups, of
+  twin symbol K* = 2'/m' 2'/m' 2/m (p. 418, read from print) and "orthorhombic 2'22' ↔
+  monoclinic 121" for Rochelle salt (p. 443, read from print) — dichromatic (twin) groups, of
   the types of mm'm' and 2'2'2 in non-standard orientations; `m2m` for NH4LiSO4 and another
   ferroelectric (pp. 452, 455); `2mm`, `m2m` (pp. 472–473); the twin groups K* = `312'` and
-  `31m'` and the composite `-312'/m'` (p. 427, read from the image by the review of #121 step 6a).
+  `31m'` and the composite `-312'/m'` (p. 427, read from print by the review of #121 step 6a).
 - Chapter 3.1: "C2v (2mm)" (p. 383).
-- Chapter 3.4: `112`, `11m`, `112/m`, `211`, `m11` (p. 526, read from the image) are layer-group
+- Chapter 3.4: `112`, `11m`, `112/m`, `211`, `m11` (p. 526, read from print) are layer-group
   and sectional-group symbols relative to a plane, not point-group settings.

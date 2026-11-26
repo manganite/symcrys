@@ -1,8 +1,7 @@
 # ITA Table 1.3.4.1: lattice systems in three-dimensional space
 
 Source: _International Tables for Crystallography_, Vol. A, 6th edition (2016), Chapter 1.3
-(General introduction to space groups), Table 1.3.4.1, printed p. 39 (Zotero `RAC6PA2Y`, PDF page
-18). Transcribed from the page image at 300 and 600 dpi on 2026-11-24.
+(General introduction to space groups), Table 1.3.4.1, printed p. 39. Transcribed on 2026-11-24.
 
 Transcription conventions: a leading minus sign is an overbar (`-1`, `-3m`, `m-3m`).
 

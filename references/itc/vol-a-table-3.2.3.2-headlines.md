@@ -2,8 +2,7 @@
 
 Source: _International Tables for Crystallography_, Vol. A, 6th edition (2016), Chapter 3.2 (Point
 groups and crystal classes; Hahn, Klapper, Müller, Aroyo), Table 3.2.3.2, printed pp. 745–769.
-Transcribed 2026-11-09 from the chapter PDF provided by Thomas (rendered pages, not the text layer,
-so the overbars are read from the print).
+Transcribed 2026-11-09; the overbars are read from print.
 
 Only the headline of each entry is transcribed: the short Hermann–Mauguin symbol, the full symbol
 where the table prints one (below the short symbol, § 3.2.1.2.1, p. 721), the Schoenflies symbol,

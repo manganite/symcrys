@@ -1,9 +1,8 @@
 # ITA Table 2.1.3.1: lattice symmetry directions (two dimensions)
 
 Source: _International Tables for Crystallography_, Vol. A, 6th edition (2016), Chapter 2.1 (Guide
-to the use of the space-group tables), Table 2.1.3.1, printed p. 151 (Zotero `9W72G6EC`, PDF page
-10). Transcribed from the page image at 300 dpi on 2026-11-22, overbars included; the text layer of
-the PDF loses them. The three-dimensional rows of the same table are in
+to the use of the space-group tables), Table 2.1.3.1, printed p. 151. Transcribed on 2026-11-22,
+overbars included, as printed. The three-dimensional rows of the same table are in
 `vol-a-table-2.1.3.1.md`.
 
 Transcription conventions: a leading minus sign is an overbar. Directions in one brace set are

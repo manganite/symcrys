@@ -1,13 +1,11 @@
 # ITA Table 3.2.3.2: general positions of the 32 crystallographic point groups
 
 Source: _International Tables for Crystallography_, Vol. A, 6th edition (2016), Chapter 3.2 (Point
-groups and crystal classes), Table 3.2.3.2, printed pp. 745–769. Transcribed 2026-11-09 from the
-chapter PDF provided by Thomas; every row checked triplet by triplet against the rendered pages.
-The five entries with rhombohedral axes (3, -3, 32, 3m, -3m; pp. 753, 753, 755, 756, 759) were
-added 2026-11-23 from the page images of the chapter PDF (Zotero item `7NZ258UB`, attachment
-`Y6Z8P8NR`, PDF pages 34, 36, 37, 40; printed page = PDF page + 719), read at 300–500 dpi, and
-checked a second time against the text layer of the same pages, which keeps the overbars.
-Headlines of the same entries: `vol-a-table-3.2.3.2-headlines.md`.
+groups and crystal classes), Table 3.2.3.2, printed pp. 745–769. Transcribed 2026-11-09; every row
+checked triplet by triplet against print. The five entries with rhombohedral axes (3, -3, 32, 3m,
+-3m; pp. 753, 753, 755, 756, 759) were added 2026-11-23 and checked a second time against the full
+text of the same pages, overbars included. Headlines of the same entries:
+`vol-a-table-3.2.3.2-headlines.md`.
 
 Each row is the general position (the first Wyckoff position, site symmetry 1) of one entry: the
 coordinate triplets x̃, ỹ, z̃ of the images of a point x, y, z, in the basis of the conventional

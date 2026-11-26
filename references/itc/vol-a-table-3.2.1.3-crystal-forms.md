@@ -3,9 +3,8 @@
 Source: _International Tables for Crystallography_, Vol. A, 6th edition (2016), Chapter 3.2 (Point
 groups and crystal classes), Table 3.2.1.3, "The 47 crystallographic face and point forms, their
 names, eigensymmetries, and their occurrence in the crystallographic point groups (generating point
-groups)", printed pp. 724–726. Transcribed 2026-11-21 from the page images of the chapter PDF
-(Zotero item `7NZ258UB`, attachment `Y6Z8P8NR`, PDF pages 5–7); bold and normal type of column 6
-read at 200 and 300 dpi.
+groups)", printed pp. 724–726. Transcribed 2026-11-21; bold and normal type of column 6
+as printed.
 
 ## Forms
 
