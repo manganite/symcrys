@@ -1,7 +1,8 @@
 {
   // Library code only, as shipped in dist/ (npm run build; npm run typecheck with --noEmit).
   // No DOM and no Node types: symcrys runs in browsers and in Node and may use neither API.
-  // Test-only code is left out: *.test.ts, *.fixtures.ts and testUtils/ (CLAUDE.md, "Tests").
+  // Test-only code is left out: *.test.ts, *.fixtures.ts and testUtils/ (GUIDE.md, "Correctness
+  // and tests").
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "types": [],

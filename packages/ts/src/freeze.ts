@@ -1,6 +1,6 @@
 /**
- * Freezing of results: every result of the API is frozen, nested arrays and objects included
- * (#137 C4), so that a caller who wants to change one copies it. Internal.
+ * Freezing of results: every result of the API is frozen, nested arrays and objects included,
+ * so that a caller who wants to change one copies it. Internal.
  */
 
 /** `value`, frozen with everything it holds (plain arrays and objects). */

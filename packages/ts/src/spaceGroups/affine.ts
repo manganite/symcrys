@@ -2,7 +2,7 @@
  * Exact affine operations of plane and space groups, x' = W·x + w in the lattice basis (ITA
  * notation (W, w)): the matrix W with integer entries and determinant ±1, the translation w with
  * rational components. Written for any dimension d from 1 to 3 (2 for the plane groups, 3 for the
- * space groups). CLAUDE.md, "Plane groups (and later space groups)".
+ * space groups). docs/conventions.md, "Plane groups".
  */
 
 import { shown } from '../checks.js';

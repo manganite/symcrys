@@ -9,7 +9,7 @@ permissions:
   contents: read
 
 jobs:
-  # The gates of CLAUDE.md, in this order. Node 22 and 24: the library targets both.
+  # The gates, in this order. Node 22 and 24: the library targets both.
   gates:
     runs-on: ubuntu-latest
     strategy:

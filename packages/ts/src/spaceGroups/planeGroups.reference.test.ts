@@ -81,10 +81,10 @@ describe('plane groups: transcription', () => {
     for (const g of PRINT) expect(g.page).toBe(175 + g.number);
   });
 
-  it("gives symbol(key) and symbol(key, { form: 'full' }) of symcrys/plane as printed (#137 F4)", () => {
+  it("gives symbol(key) and symbol(key, { form: 'full' }) of symcrys/plane as printed", () => {
     for (const g of PRINT) {
       expect(plane.symbol(g.symbol as plane.PlaneGroupKey)).toBe(g.symbol);
-      // The full symbol with its positions separated by spaces (Thomas, 2026-11-24).
+      // The full symbol with its positions separated by spaces.
       expect(plane.symbol(g.symbol as plane.PlaneGroupKey, { form: 'full' })).toBe(
         [...g.fields['Full symbol']].join(' '),
       );

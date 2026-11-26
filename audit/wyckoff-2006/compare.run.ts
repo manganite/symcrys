@@ -3,7 +3,7 @@
  * (ITA 5th ed., 2006, Table 10.1.2.2), symcrys#24 item 1.
  *
  * An additional, independent check of the transcription, not its anchor (the anchor is the 2016
- * print; CLAUDE.md, "Correctness and provenance"). Reads js/formen.js and the second settings of
+ * print; GUIDE.md, "Correctness and tests"). Reads js/formen.js and the second settings of
  * js/sitesym.js of the sibling checkout ../stereography at the revision of `../stereography-2006.ts`
  * (its last own transcription of ITA 2006) and writes report.md next to this file.
  * Run by hand: npm run audit:wyckoff-2006. Not part of the build, the tests or CI.

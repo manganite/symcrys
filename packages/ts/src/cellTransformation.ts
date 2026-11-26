@@ -1,5 +1,5 @@
 /**
- * Changes between the cells of a lattice (#120; decided by Thomas on 2026-11-25): the transformation
+ * Changes between the cells of a lattice: the transformation
  * matrix P from one named cell of a Bravais lattice to another, for `changeOfCoordinates`. The data
  * are the matrices of ITA (6th ed., 2016) Table 1.5.1.1, pp. 77–80, transcribed in
  * references/itc/vol-a-2016-table-1.5.1.1.md and compared with it by

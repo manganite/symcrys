@@ -18,7 +18,7 @@ Transcription conventions: a leading minus sign is an overbar (`-x` for x̄, `-2
 of an oriented site-symmetry symbol (`. m .`) are left out (`.m.`), and so are the thin spaces the
 print sets between the characters of every Hermann–Mauguin symbol, except in "Origin", where they
 are kept as spaces between the positions (`at 2 1 g`, so that `21g` is not read as a screw axis;
-read again from print on 2026-11-23, #137 C4). "Generators selected" leaves out the identity (1) and
+read again from print on 2026-11-23). "Generators selected" leaves out the identity (1) and
 the integer translations t(1,0), t(0,1) that begin every line in print; a centring translation is
 kept.
 

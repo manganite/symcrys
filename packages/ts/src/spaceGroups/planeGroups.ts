@@ -1,6 +1,6 @@
 /**
  * The 17 plane groups as exact operations: the general position of ITA in its numbering, the
- * centring and ITA's selected generators (CLAUDE.md, "Plane groups (and later space groups)").
+ * centring and ITA's selected generators (docs/conventions.md, "Plane groups").
  * Internal for now; the entry point `symcrys/plane` comes later.
  */
 
@@ -61,7 +61,7 @@ export function planeGroupOperations(key: string | number): readonly ExactOperat
   if (!same) {
     throw new Error(`The selected generators of ${entry.symbol} do not give its general position`);
   }
-  // Frozen, so that a caller inside the library cannot change the cached list (#101).
+  // Frozen, so that a caller inside the library cannot change the cached list.
   const frozen = deepFreeze(ops);
   cache.set(entry.number, frozen);
   return frozen;

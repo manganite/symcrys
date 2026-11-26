@@ -3,7 +3,7 @@
  * reversal. The magnetic point groups, time-odd tensors and operations with time reversal are in
  * the magnetic API, `symcrys/magnetic` (`magnetic.ts`), under the same function names
  * (docs/conventions.md, "Two entry points"). Everything exported here and there is covered by
- * SemVer (see CLAUDE.md); everything else is internal.
+ * SemVer (see GUIDE.md, "Versions and changes"); everything else is internal.
  */
 export { VERSION } from './version.js';
 export { EPSILON, type ToleranceOptions } from './tolerances.js';

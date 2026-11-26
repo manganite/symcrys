@@ -1,6 +1,6 @@
 /**
- * The asymmetric unit of a plane group and its symmetry elements, as numbers (CLAUDE.md, "Elements
- * and the asymmetric unit as data"): the asymmetric unit as its printed inequalities with the
+ * The asymmetric unit of a plane group and its symmetry elements, as numbers (docs/conventions.md,
+ * "Plane groups"): the asymmetric unit as its printed inequalities with the
  * polygon they bound, the elements as rotation points with their n and as mirror and glide lines
  * by a point and a direction, once modulo the lattice or all translates in a box. Exact, in the
  * lattice basis; drawing them stays with the applications. Internal for now.
@@ -219,7 +219,7 @@ const samePoint = (p: readonly Rational[], q: readonly Rational[]): boolean =>
 const unitCache = new Map<string, AsymmetricUnit>();
 
 /**
- * The asymmetric unit of a plane group as ITA prints it (#137 F3): the printed inequalities
+ * The asymmetric unit of a plane group as ITA prints it: the printed inequalities
  * a·x + b·y ≤ c, all of them in printed order (a double inequality and a `min` give one each), and
  * the convex polygon they bound: its vertices and, per edge, the index of the inequality that holds
  * it. Frozen.
@@ -425,7 +425,7 @@ const MAX_ELEMENTS = 1_000_000;
 /**
  * The symmetry elements of a plane group, each once modulo the lattice translations (the centring
  * included), as ITA
- * describes them (#137 F2): every rotation point in [0, 1)² with the highest n of a rotation about
+ * describes them: every rotation point in [0, 1)² with the highest n of a rotation about
  * it, and every mirror and glide line, as a point and a direction. A line that carries a glide is a
  * glide line with its shortest glide vector along the line (between 0 and the lattice vector). Frozen.
  */
@@ -453,7 +453,7 @@ export function planeElementsInBox(key: string | number, box: Box): CellElements
   const entry = planeGroupEntry(key);
   const { rotations, lines } = elementClasses(entry.symbol);
   const taus = [[ZERO, ZERO], ...centrings(entry)];
-  // A bound on the output (#121 step 10b review): the rotation points of a class in the box.
+  // A bound on the output: the rotation points of a class in the box.
   const estimate = rotations.length * taus.length * (x1 - x0 + 2) * (y1 - y0 + 2);
   if (!(estimate <= MAX_ELEMENTS)) {
     throw new RangeError(

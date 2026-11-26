@@ -48,7 +48,7 @@ describe('ITC Vol. D Table 1.5.2.3 against the ITC data of the black-and-white g
     const g = BLACK_WHITE_GROUPS.find((x) => x.key === key)!;
     const s = g.settings.find((x) => x.isDefault)!;
     expect(s.full).toBe(r[4]);
-    expect(g.schoenflies).toBe(r[1]); // stored as printed, S6 included (#137 B3)
+    expect(g.schoenflies).toBe(r[1]); // stored as printed, S6 included
     expect(classData(g.crystalClass).crystalSystem).toBe(r[0].toLowerCase());
     const ops = blackWhiteOperations(g.key, s.index);
     expect(ops.filter((o) => o.timeReversal)).toHaveLength(primedCount(r[5]));

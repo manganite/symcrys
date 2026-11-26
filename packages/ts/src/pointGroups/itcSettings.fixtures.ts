@@ -1,9 +1,9 @@
 /**
  * ITC symbols of every setting of the 32 crystal classes, with their sources. Expected values for
- * itc.reference.test.ts; independent of the library data (CLAUDE.md, "Anti-circularity").
+ * itc.reference.test.ts; independent of the library data (GUIDE.md, "Correctness and tests").
  *
- * Sources of a symbol (`shortSource`, `fullSource`), by fixture class (CLAUDE.md, "Correctness and
- * provenance"):
+ * Sources of a symbol (`shortSource`, `fullSource`), by fixture class (GUIDE.md, "Correctness and
+ * tests"):
  * - (a) `vol-a-table-3.2.3.2`: printed in the headline of the entry in ITA (6th ed.) Table 3.2.3.2,
  *   pp. 745–769; itc.reference.test.ts re-parses references/itc/vol-a-table-3.2.3.2-headlines.md
  *   and fails if a cited symbol is missing. Where the table prints no full symbol, the full symbol

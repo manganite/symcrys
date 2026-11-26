@@ -1,8 +1,8 @@
-// Checks the API reports of packages/ts/api/ (#56, #190), after api-extractor has compared them:
+// Checks the API reports of packages/ts/api/, after api-extractor has compared them:
 // every type a public signature uses is written out in its report, and nothing internal comes in
 // with it. api-extractor writes out a type that an entry point does not export by name under its
 // internal name (includeForgottenExports) and marks it `ae-forgotten-export`; the aliases of
-// symcrys/magnetic and symcrys/plane rest on that (Thomas, 2026-11-25, PR #191). Such types are
+// symcrys/magnetic and symcrys/plane rest on that. Such types are
 // listed here, so that a new one is a decision, not an accident: a signature that names a type
 // through an internal namespace would pull the whole module, internal functions included, into
 // the report. Fails on an unlisted forgotten type, a namespace, and a warning that names a source

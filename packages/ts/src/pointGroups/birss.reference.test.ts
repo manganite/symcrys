@@ -131,7 +131,7 @@ describe('Birss Table 3 (printed pp. 36–38) against symcrys, in the ITC frame'
       it('order, crystal system and Schoenflies symbol as printed', () => {
         expect(pointGroup(row.key).order).toBe(row.order);
         expect(pointGroup(row.key).crystalSystem).toBe(row.system);
-        // Birss writes C3i, as ITA does and the crystallographic API (#137 B3).
+        // Birss writes C3i, as ITA does and the crystallographic API.
         expect(itaSymbol(row.key, { form: 'schoenflies' })).toBe(row.schoenflies);
       });
     });

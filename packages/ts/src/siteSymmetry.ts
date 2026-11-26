@@ -54,10 +54,10 @@ function isIdentity(op: CartesianOperation): boolean {
 /**
  * The products of a list of operations, looked up as needed: `i * n + j` → index of op[i]·op[j] in
  * the list, or -1. The product is the whole operation, time reversal included, so that in a grey
- * group, where every matrix occurs twice, it finds the copy with the right time reversal (#133).
+ * group, where every matrix occurs twice, it finds the copy with the right time reversal.
  * Matrices count as equal per entry within the tolerance, at least `EPSILON` and at most the bound
  * for operations (a tolerance for directions may be larger). Made per call, not kept between
- * calls: a caller may change its list in place (#90).
+ * calls: a caller may change its list in place.
  */
 function productLookup(operations: readonly CartesianOperation[], tolerance: number): (i: number, j: number) => number {
   const table = new Map<number, number>();
@@ -152,7 +152,7 @@ export function siteSymmetryOf(
   }
   if (!settled) {
     // Only for a tolerance far too large; the site symmetry would be neither closed nor its direction
-    // projected (#91).
+    // projected.
     throw new RangeError(
       `The site symmetry of ${shown(direction)} does not settle within ${tolerance} (tolerance too large?)`,
     );

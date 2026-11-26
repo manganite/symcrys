@@ -1,5 +1,5 @@
 /**
- * The 58 black-and-white magnetic point groups in the ITC frame (#122, PR 2c): each setting is given
+ * The 58 black-and-white magnetic point groups in the ITC frame: each setting is given
  * by its ITC full symbol with primes, nothing else. A black-and-white group is its crystal class
  * with half of the operations combined with time reversal (ITC Vol. D, § 1.5.2.1); its symbol in a
  * setting is the class's symbol in that setting with the primes of the operations it names
@@ -10,8 +10,8 @@
  * Print anchors (tests): the symbols of the ITC default settings and their operations are those of
  * ITC Vol. D Table 1.5.2.3 (pp. 111–112; `blackWhiteData.reference.test.ts`,
  * `magnetic.reference.test.ts`). Every other setting is an orientation ITC prints
- * (`references/itc/orientations.md`; CLAUDE.md, "Pure ITC"); where a transcribed table prints it
- * (Tables 1.5.2.4, 1.5.7.1, 1.5.8.1) the tests compare it with print.
+ * (`references/itc/orientations.md`; GUIDE.md, "ITC as the standard"); where a transcribed table
+ * prints it (Tables 1.5.2.4, 1.5.7.1, 1.5.8.1) the tests compare it with print.
  *
  * Internal.
  */
@@ -24,7 +24,7 @@ import { primedSymbols } from './magneticSymbols.js';
 
 /** One ITC setting of a black-and-white group. */
 export interface BlackWhiteSetting {
-  /** 1-based, in the order of #137 A4 (`bw` below). */
+  /** 1-based, in the order of the settings (`bw` below). */
   readonly index: number;
   /** The ITC full symbol with primes, positions separated by single spaces. */
   readonly full: string;
@@ -46,7 +46,7 @@ export interface BlackWhiteGroup {
 }
 
 /**
- * A group with its settings, given by their ITC full symbols in the order of #137 A4: the ITC
+ * A group with its settings, given by their ITC full symbols in this order: the ITC
  * default first; monoclinic unique axis b, then c, then a; orthorhombic the orientations of the default in
  * the column order of ITA 2016 Table 1.5.4.4 (abc, ba-c, cab, -cba, bca, a-cb), each once; otherwise
  * the other orientation; for a trigonal group, last, the setting with rhombohedral axes (marked so)

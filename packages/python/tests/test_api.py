@@ -34,7 +34,7 @@ def test_every_export_of_the_library_has_its_python_name() -> None:
         for name in types:
             obj = getattr(module, name)
             # A TypedDict of the generated module, or one of its Literal types.
-            # A TypedDict of the generated module, one of its Literal types, or its Operations (#137 H1).
+            # A TypedDict of the generated module, one of its Literal types, or its Operations.
             ok = typing.is_typeddict(obj) or typing.get_origin(obj) is typing.Literal or name == "Operations"
             assert ok, f"{module.__name__}.{name}"
         assert TYPES - {"SymcrysError", "SymcrysInternalError"} <= types or module is plane, module.__name__
@@ -172,7 +172,7 @@ def test_name_rule_both_ways(js: str, py: str) -> None:
 
 def test_matrices_are_float_arrays_and_indices_int_arrays() -> None:
     op = symcrys.operations("4")[1]
-    # The matrix W is integer since #137 H1 (Operations), float64 before.
+    # The matrix W is integer in Operations.
     assert op["matrix"].dtype == np.int64 and op["matrix"].shape == (3, 3)
     assert op["cartesian"].dtype == np.float64 and op["cartesian"].shape == (3, 3)
     assert isinstance(magnetic.operations("4")[1]["time_reversal"], bool)
@@ -220,7 +220,7 @@ def test_point_group_of_a_list_of_operations() -> None:
 
 def test_tensor_form_arrays_have_fixed_shapes_also_when_empty() -> None:
     f = symcrys.tensor_form("mm2", SHG)
-    # Each basis tensor in its shape (3, 3, 3) since #137 H2; the relations are rows over the flat
+    # Each basis tensor in its shape (3, 3, 3); the relations are rows over the flat
     # components.
     assert f["basis"].shape == (5, 3, 3, 3) and f["relations"].shape == (22, 27) and f["parameters"].shape == (5, 3)
     assert np.allclose(f["relations"] @ f["basis"].reshape(5, -1).T, 0)
@@ -300,7 +300,7 @@ def test_rotate_tensor_takes_arrays_of_any_shape() -> None:
     t = np.arange(27, dtype=float).reshape(3, 3, 3)
     rz = np.array([[0.0, -1.0, 0.0], [1.0, 0.0, 0.0], [0.0, 0.0, 1.0]])
     rotated = symcrys.rotate_tensor(t, rz, SHG)
-    # The shape is kept since #137 H2: (3, 3, 3) in, (3, 3, 3) out; flat in, flat out.
+    # The shape is kept: (3, 3, 3) in, (3, 3, 3) out; flat in, flat out.
     assert rotated.shape == (3, 3, 3)
     assert np.allclose(rotated, np.einsum("ia,jb,kc,abc->ijk", rz, rz, rz, t))
     assert symcrys.rotate_tensor(t.reshape(-1), rz, SHG).shape == (27,)
@@ -348,8 +348,8 @@ def test_nan_and_wrong_shapes_give_readable_errors() -> None:
         assert e.value.js_name == "RangeError"
     with pytest.raises(symcrys.SymcrysError, match="must be finite"):
         plane.orbit("p4", [np.nan, 0.0])
-    # An array of Cartesian matrices is read as operations in symcrys (#137 H1); symcrys.magnetic
-    # refuses it, since it does not say which operations carry time reversal (Thomas, 2026-11-24).
+    # An array of Cartesian matrices is read as operations in symcrys; symcrys.magnetic
+    # refuses it, since it does not say which operations carry time reversal.
     matrices = ops.cartesian
     assert symcrys.point_group_of(matrices) == symcrys.point_group_of(ops) == {"key": "4mm", "setting": 1}
     assert symcrys.tensor_form_of(list(matrices), SHG)["parameters"].tolist() == symcrys.tensor_form("4mm", SHG)["parameters"].tolist()
@@ -485,7 +485,7 @@ def test_find_point_group_reads_symbols_tolerantly() -> None:
         assert symcrys.find_point_group(hm) == {"key": "m-3m", "setting": 1}
     assert magnetic.find_point_group("4′/mmm′") == {"key": "4'/mmm'", "setting": 1}
     assert magnetic.find_point_group("D₃d(S₆)") == {"key": "-3m'", "setting": 1}
-    # Spaces carry no meaning; the axes choose the rhombohedral setting (#96, Thomas 2026-11-23).
+    # Spaces carry no meaning; the axes choose the rhombohedral setting (#96).
     assert symcrys.find_point_group("3 2") == {"key": "32", "setting": 1}
     assert symcrys.find_point_group("32", axes="rhombohedral") == {"key": "32", "setting": 3}
     assert magnetic.find_point_group("2'", unique_axis="c") == {"key": "2'", "setting": 2}
@@ -497,7 +497,7 @@ def test_find_point_group_reads_symbols_tolerantly() -> None:
 
 
 def test_site_symmetry_of_a_key_and_of_a_list() -> None:
-    # #137 C1: site_symmetry takes a key, site_symmetry_of a list of operations.
+    # site_symmetry takes a key, site_symmetry_of a list of operations.
     by_key = symcrys.site_symmetry("4mm", [1, 1, 0], setting=1)
     by_list = symcrys.site_symmetry_of(symcrys.operations("4mm"), [1, 1, 0])
     assert by_key["operations"].tolist() == by_list["operations"].tolist() and by_key["multiplicity"] == 4
@@ -505,7 +505,7 @@ def test_site_symmetry_of_a_key_and_of_a_list() -> None:
     assert magnetic.site_symmetry("2'", [1, 0, 0])["multiplicity"] == 2
     assert magnetic.site_symmetry("2'", [1, 0, 0], unique_axis="a")["multiplicity"] == 1
     assert symcrys.wyckoff_position("4mm", [0, 0, 1])["letter"] == "a"
-    # The coordinates of a Wyckoff position are the printed triplets, a list of strings (#137 C4).
+    # The coordinates of a Wyckoff position are the printed triplets, a list of strings.
     assert symcrys.wyckoff_positions("mm2")[1]["coordinates"] == ["0,y,z", "0,-y,z"]
     assert plane.symmetry_elements("p4")["rotation_points"][0]["n"] == 4
     assert [d["n"] for d in plane.describe_operations("p4")] == [1, 2, 4, 4]
@@ -539,7 +539,7 @@ def test_one_tolerance_contract() -> None:
 
 
 def test_wrong_input_is_a_symcrys_error_and_a_fault_of_symcrys_is_not_a_value_error() -> None:
-    # #137 D2, #92: only a RangeError of the library is SymcrysError (a ValueError); anything else is
+    # #92: only a RangeError of the library is SymcrysError (a ValueError); anything else is
     # SymcrysInternalError (a RuntimeError), so that ``except ValueError`` does not hide a bug.
     with pytest.raises(symcrys.SymcrysError, match="takes the options setting, axes, uniqueAxis") as e:
         _engine.invoke("operations", "32", {"uniqueaxis": "a"})
@@ -566,7 +566,7 @@ def test_input_of_the_wrong_type_is_a_symcrys_error_that_names_the_argument() ->
     ops = symcrys.operations("4mm")
     cases = [
         (lambda: symcrys.rotate_tensor([1, 2, 3], [[1, 0, 0], [0, 1], [0, 0, 1]], "pyroelectric"), "rotation"),
-        # The fields of an object as arguments since #137 H2: the library names the wrong one.
+        # The fields of an object as arguments: the library names the wrong one.
         (lambda: symcrys.orbit("32", hkl=[1, 0]), "hkl must be three"),
         (lambda: symcrys.is_valid_cell("90", 90, 90), "angle alpha must be a finite number"),  # type: ignore[arg-type]
         (lambda: symcrys.lattice_from_parameters(1, 2, "3", 90, 90, 90), "edge c must be a positive number"),  # type: ignore[arg-type]
@@ -606,7 +606,7 @@ def test_miller_indices_and_face_normal() -> None:
 
 
 def test_operations_are_a_record_of_arrays() -> None:
-    # #137 H1: operations() and generators() give one record of arrays, frozen, one row per operation.
+    # operations() and generators() give one record of arrays, frozen, one row per operation.
     ops = symcrys.operations("4mm")
     assert isinstance(ops, symcrys.Operations) and len(ops) == 8
     assert ops.matrix.dtype == np.int64 and ops.matrix.shape == (8, 3, 3)

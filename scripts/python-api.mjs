@@ -1,8 +1,8 @@
-// Writes the Python layer from the TypeScript API (#29, #99; #121 step 12a): the modules
+// Writes the Python layer from the TypeScript API: the modules
 // symcrys/__init__.py (index.ts), symcrys/magnetic.py (magnetic.ts) and symcrys/plane.py (plane.ts),
 // each in full: the signatures, the bodies, the docstrings, a TypedDict for every record a function
 // returns, and `__all__`. One description of every export, its TSDoc comment, converted by the fixed
-// rules of the Python layer (CLAUDE.md, "The Python API follows the TypeScript API by fixed rules"):
+// rules of the Python layer (GUIDE.md, "The Python layer"):
 // names camelCase → snake_case, an options object → keyword-only arguments, RangeError →
 // SymcrysError, undefined/null/true/false → None/None/True/False. What the TypeScript types do not
 // say (dtypes of arrays, int or float, the module docstrings) is in packages/python/api.json; the
@@ -599,7 +599,7 @@ function schema(ctx, ir, field, where, dtype) {
 // --- object parameters ------------------------------------------------------------------------------
 //
 // A parameter that is an object of plain fields (the cell parameters, the angles, the values of h, k,
-// l, the face {hkl} or direction {uvw} of orbit) becomes its fields as arguments (#137 H2): a field
+// l, the face {hkl} or direction {uvw} of orbit) becomes its fields as arguments: a field
 // every signature requires a parameter, the others keyword-only. Operations, tensor specifications,
 // options objects and the parameters listed in api.json as "mappings" (two records with the same
 // fields, the cells of cellTransformation) are not such objects.
@@ -947,7 +947,7 @@ async function generate(name, cfg) {
       }
       // A generic result (residualOperations gives back the caller's operations): the list of a
       // record of the entry point named in api.json.
-      // The name of that record: one for every module, or per module an object (#119).
+      // The name of that record: one for every module, or per module an object.
       const listOfName = perModule(own.listOf, ctx.name);
       const listOf = listOfName && tsModule.children.find((/** @type {Json} */ c) => c.name === listOfName);
       const returns = listOf

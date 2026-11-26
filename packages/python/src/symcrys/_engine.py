@@ -1,7 +1,7 @@
 """The boundary to the JavaScript engine: one function, ``call(name, args_json) -> result_json``.
 
 The TypeScript library of the same version, bundled into ``_bundle.js``, runs in quickjs-ng. Only
-this module knows the engine, so another backend (e.g. Pyodide in JupyterLite, #30) replaces this
+this module knows the engine, so another backend (e.g. Pyodide in JupyterLite) replaces this
 module and nothing else.
 """
 
@@ -33,7 +33,7 @@ class SymcrysError(ValueError):
 
 class SymcrysInternalError(RuntimeError):
     """A fault of symcrys itself, not of its input: any error of the library other than a
-    ``RangeError``. It is not a ``ValueError``, so that ``except ValueError`` does not hide it (#92);
+    ``RangeError``. It is not a ``ValueError``, so that ``except ValueError`` does not hide it;
     please report it. ``js_name`` is the name of the JavaScript error (``TypeError``, ``Error``).
     """
 
@@ -82,7 +82,7 @@ def invoke(name: str, *args: Any) -> Any:
         args_json = json.dumps(args, allow_nan=False)
     except (TypeError, ValueError):
         # JSON has no NaN or infinity, and no other Python objects; without this check the engine's
-        # parser reported "unexpected token" (#92). The message names the argument.
+        # parser would report "unexpected token". The message names the argument.
         for i, arg in enumerate(args):
             try:
                 json.dumps(arg, allow_nan=False)

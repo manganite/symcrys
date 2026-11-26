@@ -3,7 +3,7 @@
  * a group as Birss prints it (Tables 3, 6 and 7, with the generating matrices σ(N) of eq. (2.17),
  * pp. 48–49) onto the same group in the ITC default setting of symcrys, W_ITC = R·W_Birss·Rᵀ, so
  * that Birss's print stays an independent second check of the ITC output after the Birss
- * convention is gone (CLAUDE.md, "Pure ITC"; #121, step 4).
+ * convention is gone (GUIDE.md, "ITC as the standard").
  *
  * Both frames put x along a and z along c. They differ where the two print the same group in
  * another orientation, which their symbols show:

@@ -1,0 +1,117 @@
+// Fails on personal wording and on traces of history in the files of the repository (GUIDE.md,
+// "Documentation"): the rules, the documentation, comments and TSDoc state what holds, not who said
+// it, when, or in which issue. Run as part of `npm run lint`.
+//
+//   node scripts/check-wording.mjs            check every file under version control
+//   node scripts/check-wording.mjs FILE ...   check these files
+
+import { execFileSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
+
+const NAMES = /\b(?:Thomas|Lottermoser)\b/;
+const MAINTAINER = /\bmaintainers?\b/i;
+const DECISION =
+  /\b(?:decided (?:by|on)|chosen while implementing|asked with (?:options|proposals|a design|a recommendation)|asked before implementation|maintainer decision)\b/i;
+const INTERNAL_ID = /#\d+\s+(?:item\s+|step\s+|point\s+|question\s+)?[A-H]\d\b/;
+// Not a colour value (`color: #000`), an anchor (`page.md#12`) or an entity (`&#38;`).
+const ISSUE = /(?<![\w&/'"-]|:\s*)#\d{1,4}\b/;
+const DATE = /\b20\d\d-[01]\d-[0-3]\d\b/;
+const AUTHORSHIP = /©|\bcopyright\b|\bauthors?\b/i;
+
+/** Files that record history by their nature, or are not written by hand. */
+const SKIPPED = [
+  /^CHANGELOG\.md$/,
+  /(?:^|\/)LICENSE$/,
+  /^package-lock\.json$/,
+  /\.pins\.json$/,
+  /^packages\/ts\/api\/.*\.api\.md$/,
+  /^audit\/.*\/report\.md$/,
+  /^packages\/python\/src\/symcrys\/_bundle\.js$/,
+  /\.(?:png|svg|ico|woff2?|gz|tgz)$/,
+  /^scripts\/check-wording(?:\.test)?\.mjs$/,
+];
+
+const isTest = (/** @type {string} */ path) =>
+  /\.test\.(?:ts|mjs)$/.test(path) ||
+  /\.fixtures\.ts$/.test(path) ||
+  /\/testUtils\//.test(path) ||
+  /^packages\/python\/tests\//.test(path) ||
+  /^audit\//.test(path);
+const isReference = (/** @type {string} */ path) => path.startsWith('references/');
+const isProcess = (/** @type {string} */ path) => path === 'CLAUDE.md' || path.startsWith('.github/');
+
+/**
+ * The rules that apply to a file.
+ *
+ * @param {string} path - The path relative to the repository root.
+ * @returns {[string, RegExp][]} What each rule finds, and its pattern.
+ */
+function rulesFor(path) {
+  /** @type {[string, RegExp][]} */
+  const rules = [
+    ['a person named', NAMES],
+    ['a decision record', DECISION],
+    ['an internal issue id', INTERNAL_ID],
+  ];
+  if (isReference(path)) return rules;
+  if (path !== 'CLAUDE.md') rules.push(['"maintainer"', MAINTAINER]);
+  if (isTest(path) || isProcess(path)) return rules;
+  rules.push(['an issue number', ISSUE], ['a date', DATE]);
+  return rules;
+}
+
+/**
+ * The findings in one file's text, as `path:line: message`.
+ *
+ * @param {string} path - The path relative to the repository root, which decides the rules.
+ * @param {string} text - The content of the file.
+ * @returns {string[]} One entry per rule broken on a line.
+ */
+export function checkText(path, text) {
+  /** @type {string[]} */
+  const findings = [];
+  const rules = rulesFor(path);
+  text.split('\n').forEach((line, index) => {
+    for (const [what, pattern] of rules) {
+      // The author of the packages and the holder of the copyright are named, as metadata.
+      if (pattern === NAMES && AUTHORSHIP.test(line)) continue;
+      const match = pattern.exec(line);
+      if (match) findings.push(`${path}:${index + 1}: ${what} ("${match[0]}")`);
+    }
+  });
+  return findings;
+}
+
+function trackedFiles() {
+  const out = execFileSync('git', ['ls-files', '--cached', '--others', '--exclude-standard'], {
+    encoding: 'utf8',
+  });
+  return out.split('\n').filter(Boolean);
+}
+
+/** @param {string[]} args - Files to check; all files under version control if empty. */
+function main(args) {
+  const files = (args.length > 0 ? args : trackedFiles()).filter(
+    (path) => !SKIPPED.some((pattern) => pattern.test(path)),
+  );
+  /** @type {string[]} */
+  const findings = [];
+  for (const path of files) {
+    let text;
+    try {
+      text = readFileSync(path, 'utf8');
+    } catch {
+      continue; // deleted in the working tree
+    }
+    findings.push(...checkText(path, text));
+  }
+  if (findings.length > 0) {
+    console.error(findings.join('\n'));
+    console.error(
+      `\n${findings.length} finding(s). State what holds, without persons, dates or issue numbers (GUIDE.md, "Documentation").`,
+    );
+    process.exit(1);
+  }
+}
+
+if (import.meta.url === `file://${process.argv[1]}`) main(process.argv.slice(2));

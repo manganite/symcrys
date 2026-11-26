@@ -1,4 +1,4 @@
-# Tools for the documentation site only (docs/, #29); not dependencies of the packages.
+# Tools for the documentation site only (docs/); not dependencies of the packages.
 sphinx==9.2.0
 myst-parser==5.2.0
 myst-nb==1.4.0

@@ -38,7 +38,7 @@ for (const target of new Set([pkg.main, pkg.types, ...entries.flatMap(([, e]) =>
   if (!existsSync(join(root, target))) errors.push(`entry point ${target} does not exist`);
 }
 
-// No test-only code in the build (CLAUDE.md, "Tests")
+// No test-only code in the build (GUIDE.md, "Correctness and tests")
 for (const file of all) {
   if (/\.(test|fixtures)\.(js|d\.ts)(\.map)?$|\.pins\.json$/.test(file) || file.includes(`${sep}testUtils${sep}`)) {
     errors.push(`test-only file in dist: ${rel(file)}`);

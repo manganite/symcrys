@@ -1,5 +1,5 @@
 /**
- * Checks of what a caller passes in, shared by the entry points (#137 D2): wrong input is a
+ * Checks of what a caller passes in, shared by the entry points: wrong input is a
  * RangeError that names what is wrong, never a TypeError from deep inside the library.
  */
 

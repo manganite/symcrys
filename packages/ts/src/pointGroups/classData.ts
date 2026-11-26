@@ -1,5 +1,5 @@
 /**
- * The 32 crystal classes in the ITC frame, exactly (#122, #137 A1): per class and ITC setting its
+ * The 32 crystal classes in the ITC frame, exactly: per class and ITC setting its
  * symbols, and the operations as ITA prints them, integer matrices W in the conventional basis
  * (x̃ = W·x), in ITA's order, built from ITA's selected generators. The Cartesian matrices are
  * derived, B·W·B⁻¹. Nothing here is derived from the Birss frame: the source is ITA's selected
@@ -11,8 +11,8 @@
  * `m2m` come from `mm2` by the settings cab and bca of ITA 2016 Table 1.5.4.4 (§ 1.5.4.3, p. 96:
  * cab turns Pmm2 into P2mm); their operations keep the order of the printed setting.
  *
- * Internal; read by pointGroups.ts and orbits.ts (#122). The settings are numbered by the rule of
- * #137 A4 (`ClassSetting.index`).
+ * Internal; read by pointGroups.ts and orbits.ts. The settings are numbered by the rule
+ * given at `ClassSetting.index`.
  */
 
 import { MAX_CLASS_ORDER } from '../tolerances.js';
@@ -26,7 +26,7 @@ import { SELECTED_GENERATORS, type IntMat3 } from './generatorData.js';
 /** One ITC setting of a class. */
 export interface ClassSetting {
   /**
-   * 1-based, by the rule of #137 A4: the ITC default first; then monoclinic unique axis c (b is the
+   * 1-based: the ITC default first; then monoclinic unique axis c (b is the
    * default); orthorhombic the orientations in the column order of ITA 2016 Table 1.5.4.4; the other
    * orientation of `-42m`, `-6m2` and the trigonal classes.
    */

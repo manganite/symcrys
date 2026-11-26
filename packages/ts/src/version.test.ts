@@ -14,7 +14,7 @@ describe('VERSION', () => {
     expect(VERSION).toMatch(/^\d+\.\d+\.\d+$/);
   });
 
-  it('equals the version of the Python package (one version for both, CLAUDE.md)', () => {
+  it('equals the version of the Python package (one version for both, GUIDE.md)', () => {
     expect(repo('packages/python/pyproject.toml').match(/^version = "([^"]+)"$/m)?.[1]).toBe(pkg.version);
   });
 });

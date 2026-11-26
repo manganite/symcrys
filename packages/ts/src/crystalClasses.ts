@@ -296,7 +296,7 @@ export function pointGroups(): readonly PointGroup[] {
 
 /**
  * Finds a crystal class by a symbol, read tolerantly.
- * It reads, spaces ignored (#96; docs/conventions.md, "Reading symbols"): the key; the short or
+ * It reads, spaces ignored (docs/conventions.md, "Reading symbols"): the key; the short or
  * full symbol of a setting (`312`, `1 1 2`); a Schoenflies symbol (`D3`; for -3 either `C3i` or
  * `S6`); Birss's cubic symbols without the overbar on the 3 (`m3m`). A symbol that names
  * several settings (the key `32`, which is also the symbol of the setting with rhombohedral axes;
@@ -515,7 +515,7 @@ export function siteSymmetryOf(
 /**
  * The site symmetry of a direction (any non-zero Cartesian vector) under a crystal class in a
  * setting: `siteSymmetryOf` applied to `operations(key, options)`, so the indices refer to those
- * operations (#137 C1). Throws a RangeError as `siteSymmetryOf` does.
+ * operations. Throws a RangeError as `siteSymmetryOf` does.
  */
 export function siteSymmetry(
   key: PointGroupKey,

@@ -138,11 +138,11 @@ class Operation(TypedDict):
 @dataclass(frozen=True, eq=False)
 class Operations:
     """The operations of a magnetic point group as arrays, one row per operation, in the order of
-    ``operations`` (#137 H1): what ``operations``, ``generators`` and ``residual_operations``
-    return, and what every function that takes operations accepts, beside a list of dicts
-    ``{"cartesian", "time_reversal"}``. An array of matrices alone is refused here, since it does
-    not say which operations carry time reversal. Frozen, its arrays read-only; ``len(ops)`` is the
-    number of operations.
+    ``operations``: what ``operations``, ``generators`` and ``residual_operations`` return, and what
+    every function that takes operations accepts, beside a list of dicts ``{"cartesian",
+    "time_reversal"}``. An array of matrices alone is refused here, since it does not say which
+    operations carry time reversal. Frozen, its arrays read-only; ``len(ops)`` is the number of
+    operations.
     """
 
     matrix: NDArray[np.int64]
@@ -513,7 +513,7 @@ class SiteSymmetry(TypedDict):
 
 @final
 class TensorSpec(TypedDict):
-    """The kind of tensor (#137 E1, E2)."""
+    """The kind of tensor."""
 
     rank: int
     """Number of indices, 0 to 4."""
@@ -928,10 +928,10 @@ def angle_between_planes(basis: ArrayLike, plane1: ArrayLike, plane2: ArrayLike)
 
 def face_normal(basis: ArrayLike, hkl: ArrayLike) -> NDArray[np.float64]:
     """The unit normal of a plane (hkl) in a cell, a Cartesian vector: h·a* + k·b* + l·c*
-    normalised, the pole of the face (#137 G4). With ``lattice_basis(family)`` for a family with
-    fixed cell angles, or ``lattice_from_parameters`` for a real cell; Miller indices of hexagonal
-    axes are three, without i. Raises SymcrysError for a basis that is not a regular 3 × 3 matrix
-    and for a zero vector.
+    normalised, the pole of the face. With ``lattice_basis(family)`` for a family with fixed cell
+    angles, or ``lattice_from_parameters`` for a real cell; Miller indices of hexagonal axes are
+    three, without i. Raises SymcrysError for a basis that is not a regular 3 × 3 matrix and for a
+    zero vector.
     """
     result: NDArray[np.float64] = _shared.convert(
         _call("faceNormal", _shared.array(basis, "basis", np.float64), _shared.array(hkl, "hkl")),
@@ -1100,8 +1100,8 @@ def miller_indices(
     k: Optional[int] = None,
     l: Optional[int] = None,
 ) -> NDArray[np.int64]:
-    """The face (hkl) of symbolic Miller indices with the caller's values of h, k, l substituted
-    (#137 G3): ``h,h,-2h,l`` with h = 3 and l = 1 gives (3, 3, 1). The indices are those of
+    """The face (hkl) of symbolic Miller indices with the caller's values of h, k, l substituted:
+    ``h,h,-2h,l`` with h = 3 and l = 1 gives (3, 3, 1). The indices are those of
     ``wyckoff_positions`` and ``crystal_forms`` (``miller_indices``), in the usual notation: three
     indices, or four for hexagonal axes, of which i = −(h + k) is dropped, so that the face can be
     passed to ``orbit`` (``plane_to_four_indices`` gives the four). Each value is an integer; only
@@ -1766,7 +1766,7 @@ def find_point_group(
 ) -> Optional[PointGroupInSetting]:
     """Finds one of the 122 magnetic point groups (the 32 crystal classes included) by a symbol,
     read tolerantly. A prime marks time reversal: ``4'/mmm'``, ``2221'``. It reads, spaces ignored
-    (#96; docs/conventions.md, "Reading symbols"): the key; the short or full symbol of a setting
+    (docs/conventions.md, "Reading symbols"): the key; the short or full symbol of a setting
     (``312``, ``1 1 2``); a Schoenflies symbol (``D3``; for -3 either ``C3i`` or ``S6``); Birss's
     cubic symbols without the overbar on the 3 (``m3m``). A symbol that names several settings (the
     key ``32``, which is also the symbol of the setting with rhombohedral axes; ``2`` for unique
@@ -1866,8 +1866,7 @@ def site_symmetry(
 ) -> SiteSymmetry:
     """The site symmetry of a direction (any non-zero Cartesian vector) under a point group in a
     setting: ``site_symmetry_of`` applied to ``operations(key, options)``, so the indices refer to
-    those operations (#137 C1). Time reversal is ignored. Raises SymcrysError as
-    ``site_symmetry_of`` does.
+    those operations. Time reversal is ignored. Raises SymcrysError as ``site_symmetry_of`` does.
 
     Parameters
     ----------

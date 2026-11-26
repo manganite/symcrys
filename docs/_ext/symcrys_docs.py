@@ -1,4 +1,4 @@
-"""Sphinx extension of the symcrys site (#29).
+"""Sphinx extension of the symcrys site.
 
 - ``ts-example``: shows a TypeScript example from ``docs/examples`` and the output of running it with
   Node against the build of this checkout, so that every example on the site runs; a failing example
@@ -7,7 +7,7 @@
   library (through the Python package), not written by hand.
 - The example notebooks of the Python package are copied into the source tree at build time
   (``examples/notebooks/``, ignored by git), so that MyST-NB executes and renders them where they live.
-- Findability (#72): every page gets its description (``symcrys_page_descriptions`` in ``conf.py``;
+- Findability: every page gets its description (``symcrys_page_descriptions`` in ``conf.py``;
   a page without one is a warning, so the gate ``docs`` fails) and Open Graph tags for link
   previews; the canonical link of the landing page is the site's address, not ``index.html``; the
   build writes ``sitemap.xml`` with every page.

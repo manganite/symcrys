@@ -138,7 +138,7 @@ def test_itc_vol_d_1523_symbols_and_order(row: list[str]) -> None:
     assert group["crystal_system"] == system.lower()
     assert group["order"] == printed_count(operators)
     assert magnetic.symbol(key, form="full") == full
-    assert magnetic.symbol(key, form="schoenflies") == schoenflies  # as printed, S6 included (#137 B3)
+    assert magnetic.symbol(key, form="schoenflies") == schoenflies  # as printed, S6 included
     ops = magnetic.operations(key)
     primed = sum(1 for o in ops if o["time_reversal"])
     assert primed == (len(ops) // 2 if "(" in schoenflies else 0)

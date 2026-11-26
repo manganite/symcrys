@@ -3,7 +3,7 @@ import { defineConfig } from 'eslint/config';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
-// Environment APIs the library must not use (CLAUDE.md, "Hard constraints"). Most of them already
+// Environment APIs the library must not use (GUIDE.md, "Library code"). Most of them already
 // fail the type check of the library code (no DOM, no Node types); this list also catches access
 // through globalThis or self.
 const RESTRICTED_GLOBALS = [
@@ -23,7 +23,7 @@ const RESTRICTED_GLOBALS = [
   '__filename',
 ].map((name) => ({ name, message: 'symcrys runs in browsers and in Node: no environment APIs in library code.' }));
 
-// Test-only code (CLAUDE.md, "Tests"): not shipped, may use Node.
+// Test-only code (GUIDE.md, "Correctness and tests"): not shipped, may use Node.
 const TEST_ONLY = [
   'packages/ts/src/**/*.test.ts',
   'packages/ts/src/**/*.fixtures.ts',

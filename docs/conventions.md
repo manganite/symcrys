@@ -20,8 +20,7 @@ describes the magnetic API.
 ## ITC
 
 symcrys follows ITC: Vol. A (6th ed., 2016) for the 32 crystal classes, Vol. D (2nd ed., 2013),
-Ch. 1.5, for the magnetic point groups (the reference edition and its exception: CLAUDE.md, "Pure
-ITC"). There is no other convention: a function given the option `convention` (with which a caller
+Ch. 1.5, for the magnetic point groups (the reference edition and its exception: "Sources"). There is no other convention: a function given the option `convention` (with which a caller
 chose Birss's presentation before 0.11) throws a RangeError, so that such a call is not answered in
 ITC's presentation without notice. R. R. Birss, _Symmetry and Magnetism_ (North-Holland, Amsterdam,
 1966), is an independent second print check of the ITC output ("Birss as a second print check").
@@ -34,8 +33,7 @@ classes with several settings, `symbol()` gives the symbol of a setting (`321`, 
 
 For D3h the key is `-6m2`, as in ITC Vol. D Table 1.5.2.3. ITA lists both orientations, `-6m2`
 first (§ 3.2.1.2.1 (b), p. 721; Table 3.2.3.2, pp. 762–763), but its tables of classes print `-62m`
-(Tables 2.1.1.1, 3.2.1.2, 3.2.2.1). symcrys keeps `-6m2`, the symbol of the magnetic table (#137
-B1).
+(Tables 2.1.1.1, 3.2.1.2, 3.2.2.1). symcrys keeps `-6m2`, the symbol of the magnetic table.
 
 The 32 class keys are the `POINT_GROUP_KEYS` of the crystallographic API. The `POINT_GROUP_KEYS` of
 the magnetic API are all 122 keys: the 32 classes, the 32 grey groups in the same order, and the 58
@@ -63,7 +61,7 @@ black-and-white groups in the order of ITC Vol. D Table 1.5.2.3.
 | `'III'` | black-and-white group                       | half of the operations of a crystal class combined with time reversal |     58 |
 
 **Crystal class and white group.** A key of type `'I'` stands for two things that have the same
-operations and are not to be equated (maintainer, 2026-11-20):
+operations and are not to be equated:
 
 - the **crystal class**, as crystallography uses it: time reversal is not considered at all. Quartz
   has the class `32`;
@@ -80,7 +78,7 @@ apart by its two entry points ("Two entry points", below).
 The **crystal class** of a magnetic group is the class it becomes when time reversal is dropped
 from every operation. The numbers I, II, III are those of ITC Vol. D Table 1.2.6.12 (p. 66,
 "Magnetic point groups": type I the 32 classes, type II the grey groups, printed `1'`, `21'`, …, type III
-the black-and-white groups; #137 B5). ITC Vol. D Ch. 1.5 numbers differently: its first type are the grey groups (§ 1.5.2.1, eq. (1.5.2.1)), its
+the black-and-white groups). ITC Vol. D Ch. 1.5 numbers differently: its first type are the grey groups (§ 1.5.2.1, eq. (1.5.2.1)), its
 second type the crystal classes, its third type the black-and-white groups; its Table 1.5.2.3,
 "The 90 magnetic point groups of types 2 and 3", therefore lists the 32 classes and the 58
 black-and-white groups, not the grey groups. Birss's Table 6 lists the same 90 groups.
@@ -88,7 +86,7 @@ black-and-white groups, not the grey groups. Birss's Table 6 lists the same 90 g
 ## Two entry points
 
 The two readings of a class key ("Types") are two entry points of the library, with the same
-function names (maintainer, 2026-11-20, #47). The import decides which reading a key has:
+function names. The import decides which reading a key has:
 
 | Entry point                                                     | Groups                        | The key `'32'`                                              |
 | --------------------------------------------------------------- | ----------------------------- | ----------------------------------------------------------- |
@@ -166,12 +164,11 @@ crystal's own cell is given by `latticeFromParameters`.
 
 The hexagonal frame puts the secondary symmetry directions of the trigonal classes (the a axes) on
 x, as ITC Vol. D does in its tensor tables (§ 1.1.4.10.4.4: group 32 with the twofold axis
-parallel to Ox₁, group 3m with the mirror perpendicular to Ox₁). This was decided on #6.
+parallel to Ox₁, group 3m with the mirror perpendicular to Ox₁).
 
 ## Operations
 
-An operation of a point group in a setting is one record with both of its matrices (#137 A2,
-maintainer 2026-11-22; #94):
+An operation of a point group in a setting is one record with both of its matrices:
 
 | Field          | Meaning                                                                                                                                                                              |
 | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -203,12 +200,20 @@ basis is not orthonormal (hexagonal and rhombohedral axes).
 A class may be placed in the Cartesian frame in more than one way: a **setting**. Settings are
 numbered from 1, and one of them is the ITC default.
 
+symcrys has the settings that ITC prints: an orientation is a setting if ITC prints the symbol of
+the group in that orientation anywhere, not only in ITA Table 3.2.3.2 (so `mm2` also has `2mm` and
+`m2m`: ITA 2016 § 1.6.4, p. 114; ITC Vol. D Tables 1.2.3.1, p. 49, and 1.5.7.1, p. 135). A symbol in
+a list of group types counts in the orientation its positions name (`6'/mm'm`, ITC Vol. D Table
+1.2.6.12, p. 66); an orientation that ITC prints only as a site symmetry in another lattice (`2.mm`,
+`mm2` turned by 30° in a hexagonal cell) is not a setting. The inventory of what ITC prints is
+`references/itc/orientations.md`.
+
 The operations, generators, symbols and lattice operations of the classes come from ITA's selected
 generators, exact integer matrices in the conventional basis (`pointGroups/classData.ts`); a setting
 ITA does not print is a printed one in another basis. A black-and-white group is given by its ITC
 symbol in each setting, from which its operations follow (`pointGroups/blackWhiteData.ts`).
 
-**Numbering** (#137 A4): the ITC default is setting 1; then, for the monoclinic classes, unique
+**Numbering:** the ITC default is setting 1; then, for the monoclinic classes, unique
 axis c and unique axis a; for the orthorhombic groups, the further orientations in the order of the columns of ITA
 (2016) Table 1.5.4.4 (abc, ba-c, cab, -cba, bca, a-cb), each orientation once; otherwise the other
 orientation; for the trigonal groups the setting with rhombohedral axes last. A setting is chosen
@@ -218,7 +223,7 @@ setting with rhombohedral axes; `'2'` for unique axis b, c and a) gives the stan
 setting; the others are chosen as ITA's headlines name them (Table 3.2.3.2: "unique axis c",
 "rhombohedral axes"), by the options `uniqueAxis` (`'a'`, `'b'`, `'c'`) and `axes`
 (`'hexagonal'`, `'rhombohedral'`), alone or with a symbol: `{ axes: 'rhombohedral' }`,
-`{ setting: '2', uniqueAxis: 'c' }` (Thomas, 2026-11-23, #96). `uniqueAxis` applies to the monoclinic
+`{ setting: '2', uniqueAxis: 'c' }`. `uniqueAxis` applies to the monoclinic
 groups, `axes` to the hexagonal family (`'hexagonal'` holds for all its groups); criteria that no
 setting meets are an error that lists the settings. The record of a setting (`settings(key)`) has
 `index`, `symbol`, `fullSymbol`, `isDefault`, and `uniqueAxis` for a monoclinic setting, `axes`
@@ -268,10 +273,10 @@ The ITC defaults of symcrys:
 
 - unique axis b: the IUCr accepts the b-axis setting as standard for morphological and structural
   studies (ITA § 2.1.3.15, p. 171);
-- `321` and `3m1`: the frame of the tensor tables of ITC Vol. D (§ 1.1.4.10.4.4, #6);
+- `321` and `3m1`: the frame of the tensor tables of ITC Vol. D (§ 1.1.4.10.4.4);
 - `-3m1`: their Laue class in the same frame (a consistency choice; ITC Vol. D Table 1.5.2.3 prints
   its full symbol `-3 2/m 1`);
-- `-6m2`: ITC Vol. D Table 1.5.2.3, and the first entry in ITA (#137 B1);
+- `-6m2`: ITC Vol. D Table 1.5.2.3, and the first entry in ITA;
 - `-42m`, `mm2`: the first or only entry in ITA.
 
 Frames: the monoclinic settings have the unique axis along y, z and x (unique axis a: from b by
@@ -293,7 +298,7 @@ The classes `222` and `mmm` have one setting only: their three axes are equivale
 
 A **grey group** has the settings of its class, with the same indices, frames and defaults; ITC
 prints grey groups in their standard orientation only, but a grey group is its class with time
-reversal (CLAUDE.md, "Pure ITC").
+reversal (ITC Vol. D eq. (1.5.2.1)).
 
 A **black-and-white group** has the orientations ITC prints (`references/itc/orientations.md`),
 numbered as above:
@@ -310,7 +315,7 @@ numbered as above:
 - trigonal `32'`, `3m'`, `-3m'`, `-3'm'`, `-3'm`: two settings 30° apart about z, and as setting 3
   the setting with rhombohedral axes in the frame of setting 1 (`3 2'`, `3 m'`, `-3 2'/m'`,
   `-3' 2/m'`, `-3' 2'/m`); `-3'`: hexagonal and rhombohedral axes, as its class (every trigonal
-  group gets the rhombohedral setting of its class; Thomas, 2026-11-23, CLAUDE.md, "Pure ITC");
+  group gets the rhombohedral setting of its class);
 - hexagonal `6'22'`, `6'mm'`, `-6'2m'`, `-6'm2'`, `-6m'2'`, `6'/m'mm'`, `6'/mmm'`: two settings 30°
   apart about z;
 - all other groups: one setting.
@@ -373,7 +378,7 @@ writes; ITC Vol. D and the magnetic API write `S6`).
   and the operations; the ITC full symbols of the default settings equal the printed ones for all
   58 groups. A grey group has the symbols of its class followed by `1'` (short `mm21'`, full
   `m m 2 1'`).
-- **Short symbols of the magnetic groups** (#137 B2): the default setting of a grey or
+- **Short symbols of the magnetic groups:** the default setting of a grey or
   black-and-white group has its key as short symbol: for a black-and-white group the short symbol
   of ITC Vol. D Table 1.5.2.3 (`32'`, `-3'm'`), for a grey group the key of its class followed by
   `1'` (`321'`, `-3m1'`). Table 1.2.6.12 prints some grey groups otherwise (`1'`, `21'/m`, `2mm1'`,
@@ -396,11 +401,11 @@ writes; ITC Vol. D and the magnetic API write `S6`).
 - **Schoenflies** (`form: 'schoenflies'`): subscripts written inline (`C3v`, `D2d`, `Oh`). A
   black-and-white group is `G(H)`, G the crystal class and H the subgroup of the operations without
   time reversal (`D4h(D2d)`), as in ITC Vol. D Table 1.5.2.3; a grey group is `GR` (`D4R`; ITC
-  Vol. D Table 1.5.2.1). Each entry point follows the volume it is anchored in (#137 B3): the
+  Vol. D Table 1.5.2.1). Each entry point follows the volume it is anchored in: the
   crystallographic API writes `C3i` for `-3`, as ITA does (Tables 3.2.1.2, 3.2.3.2), the magnetic API
   `S6` throughout, as ITC Vol. D does (`S6`, `S6(C3)`, `D3d(S6)`, `C6h(S6)`; Table 1.5.2.3), and so
   `S6R` for the grey group.
-- **Shubnikov** (`form: 'shubnikov'`; #137 B4, decided by Thomas on 2026-11-25): the symbol of ITC
+- **Shubnikov** (`form: 'shubnikov'`): the symbol of ITC
   Vol. D Table 1.5.2.3, column 3 (pp. 111–112), for the 32 classes (in both entry points) and the 58
   black-and-white groups, written as print shows it: the overbar as the combining overbar U+0305
   and the underline (an element combined with time reversal) as the combining low line U+0332, each
@@ -419,17 +424,17 @@ writes; ITC Vol. D and the magnetic API write `S6`).
 ## Reading symbols
 
 `findPointGroup` (in the point-group entry points) and the option `setting` read a symbol tolerantly, as a pure
-normalisation before the comparison (#96; decided by Thomas on 2026-11-22 and 2026-11-23):
+normalisation before the comparison:
 
 - **Spellings** (`notation.ts`): the overbar as `-`, `−` (U+2212), a combining overbar or overline
   after the digit (`m3̄m`), the macron `¯` after the digit (as text copied from the PDF edition of
   ITA 2016 writes it), `bar3`, or LaTeX's `\bar{3}` and `\overline{3}`; the prime as `'`, `′`
   (U+2032), `ʹ` (U+02B9) or `’` (U+2019, which editors put for an apostrophe); Schoenflies subscripts
   also as Unicode subscripts (`C₃ᵥ`, `D₃d(S₆)`) or LaTeX's (`C_{3v}`, `C_3`). Spaces carry no
-  meaning: `3 2` is `32` (Thomas, 2026-11-23), as print writes the short symbols without them.
+  meaning: `3 2` is `32`, as print writes the short symbols without them.
 - **What `findPointGroup` reads:** the key; the short or full symbol of a setting (and the short
   symbol by the rule, `32'1`); a Schoenflies symbol, with `C3i` or `S6` alike (`D3`, `D4h(D2h)`,
-  `D4R`), which names the group, not an orientation (Thomas, 2026-11-23); Birss's cubic symbols,
+  `D4R`), which names the group, not an orientation; Birss's cubic symbols,
   printed without the overbar on the 3, which takes the prime of the mirror before it (`m3m`, `m'3m`
   for `m-3m`, `m'-3'm`; Birss Tables 3 and 6). A symbol that names several settings (the key `32`,
   also the symbol of the setting with rhombohedral axes; `2` for unique axis b, c and a; `3 1'`;
@@ -440,8 +445,7 @@ normalisation before the comparison (#96; decided by Thomas on 2026-11-22 and 20
   Every symbol `symbol()` writes is read back to its group (tested over all settings and forms of
   both entry points), and to its setting where the symbol, or the symbol with the setting's axes or
   unique axis, names one; the one exception is the Shubnikov form, which is not read, since its
-  overbar means something else (`6̅` is −3 there, `-6` is C3h in Hermann–Mauguin; Thomas,
-  2026-11-25): a symbol with a character only Shubnikov writes (the underline, `:`, `·`) is a
+  overbar means something else (`6̅` is −3 there, `-6` is C3h in Hermann–Mauguin): a symbol with a character only Shubnikov writes (the underline, `:`, `·`) is a
   RangeError, and one without (`6̅`, `2̅`) is read as Hermann–Mauguin. A symbol that names several groups is a RangeError that lists them; none
   of the symbols of the library does. The crystallographic API finds no magnetic group, in any
   spelling.
@@ -450,7 +454,7 @@ normalisation before the comparison (#96; decided by Thomas on 2026-11-22 and 20
   with the same rule: a symbol of several settings gives the standard, unless `axes` or
   `uniqueAxis` chooses another. A Schoenflies symbol names no setting and is not read here.
 
-`symcrys/plane` reads its symbols with the same spellings, spaces ignored (#97, 0.12); it has no
+`symcrys/plane` reads its symbols with the same spellings, spaces ignored; it has no
 Schoenflies or Birss symbols to read: `findPlaneGroup` the key or the full
 symbol of a plane group (`'pm'`, `'p1m1'`, `'p 1 m 1'`) and gives `{ key }`; `findPointGroup` the key
 or the symbol of a setting of a plane point group (`'31m'`, `'3 1 m'`) and gives `{ key, setting }`,
@@ -461,14 +465,12 @@ space group is not read as one of a plane group.
 ## Results
 
 Every result of the API is frozen, nested arrays and objects included, and typed `readonly`; a
-caller who wants to change one copies it (#137 C4; `entryPoints.test.ts` calls every function of
-the three entry points). `residualOperations` freezes its list, not the operations in it, which are
+caller who wants to change one copies it (`entryPoints.test.ts` calls every function of the three
+entry points). `residualOperations` freezes its list, not the operations in it, which are
 the caller's. "Not found" is `undefined`, never `null` (`findPointGroup`, `pointGroupOf`,
 `zoneAxis`; in Python `None`).
 
 ## Indices and numbering
-
-(Thomas, 2026-11-25, #115 item 4.)
 
 - **Indices into a list are 0-based.** A field that points into a list of operations holds
   indices into the list it refers to: `operations(key, …)` in the same setting for a function of a
@@ -501,7 +503,7 @@ Wrong input is a `RangeError` whose message says what is wrong, in every functio
 entry points: an unknown key or setting, a vector of the wrong length or with a number that is not
 finite, an options argument that is not an object, an option the function does not know (a
 misspelling such as `uniqueaxis` is not ignored), a tolerance outside its bounds ("Tolerances"). A
-`TypeError` or a plain `Error` is a fault of symcrys (#137 D2; `inputErrors.test.ts` calls every
+`TypeError` or a plain `Error` is a fault of symcrys (`inputErrors.test.ts` calls every
 function with wrong values in every position). In Python a `RangeError` raises `SymcrysError`, a
 `ValueError`, and any other error `SymcrysInternalError`, a `RuntimeError`.
 
@@ -517,7 +519,7 @@ tolerance of the call ("Tolerances"). The matrix W of an operation in the lattic
 
 Every function that compares numbers a caller passes in (operations, directions, points) takes one
 option, `tolerance` (`ToleranceOptions`; in Python the keyword `tolerance`), with the default
-`EPSILON` = 10⁻⁶, which all three entry points export (#137 D1, #93). Two numbers count as equal
+`EPSILON` = 10⁻⁶, which all three entry points export. Two numbers count as equal
 when they differ by less than the tolerance, in the metric of their kind:
 
 | Kind of object                            | Metric                                                  | Bound | Functions                                                                                                                                                                                                                                                                 |
@@ -547,7 +549,7 @@ when they differ by less than the tolerance, in the metric of their kind:
   invariant metric. The rank of a tensor form is the trace of the group average of the exact
   group, exact in any frame, and its free parameters are sought first among components larger
   than ten times the distance between the caller's matrices and the exact group, so that a component of the order of that error is not
-  taken for an independent one (#89). Operations rounded to 4, 5 or 6 decimals give the form of
+  taken for an independent one. Operations rounded to 4, 5 or 6 decimals give the form of
   the exact group for every class in every setting, and its number of free parameters in a general
   orientation, for all 122 groups (`tensors/tolerance.test.ts`). `isCentrosymmetricOf` only closes
   the list within the tolerance and seeks the inversion in it.
@@ -564,7 +566,7 @@ when they differ by less than the tolerance, in the metric of their kind:
 
 What is fixed once the group is named is a field of `pointGroup(key)`: `crystalSystem`, `order`,
 `centrosymmetric`, `polar`, `enantiomorphic`, `laueClass`, and in the magnetic API also `type` and
-`crystalClass` (maintainer, 2026-11-20, #41). They follow from the operations alone; none depends
+`crystalClass`. They follow from the operations alone; none depends
 on the setting. For a magnetic point group:
 
 - `centrosymmetric`: the group contains the inversion without time reversal. `m'm'm'`, which
@@ -582,7 +584,7 @@ Polar is there the named property: `allowsPropertyOf(operations, 'pyroelectric')
 ("Point group of a list of operations").
 
 **Holohedry and lattice systems.** The holohedry belongs to the lattice system (ITA 2016
-§ 1.3.4.4.2 and Table 1.3.4.1, p. 39; #137 G1): `holohedry(latticeSystem)` gives the point symmetry
+§ 1.3.4.4.2 and Table 1.3.4.1, p. 39): `holohedry(latticeSystem)` gives the point symmetry
 of the lattices of one of the seven lattice systems, `-1`, `2/m`, `mmm`, `4/mmm`, `6/mmm`
 (`'hexagonal'`, hP), `-3m` (`'rhombohedral'`, hR) and `m-3m`. Lattice systems classify lattices,
 not point groups: a trigonal class acts on a primitive hexagonal (hP) or on a rhombohedrally centred
@@ -608,7 +610,7 @@ H. For the settings ITA does not list, `mm2` settings 2 (`2mm`) and 3 (`m2m`) an
 axis a, the order is that of setting 1, carried into their frame by the change of basis of ITA
 (2016) Table 1.5.4.4 (cab, bca; for unique axis a, a′ = b, b′ = c, c′ = a, see "Settings"). `describeOperations` follows the order of `operations`.
 
-**Magnetic groups** (maintainer, 2026-11-19). ITC Vol. D prints no order of the
+**Magnetic groups.** ITC Vol. D prints no order of the
 individual operations: Table 1.5.2.3 lists them grouped (`±4_z`, `3(2_⊥)`, `4(±3)`). symcrys keeps
 ITA's numbers of the crystal class: operation k of a black-and-white group is operation k of its
 class in the same frame, with or without time reversal, so that numbers, poles and descriptions
@@ -637,8 +639,8 @@ with hexagonal axes). The monoclinic full symbol reads along a, b, c (ITA § 2.1
 the monoclinic family has the orthorhombic positions; of these, only the unique axis is a lattice
 symmetry direction in Table 2.1.3.1 ([010] for unique axis b, [001] for unique axis c; [100] for
 unique axis a, which the table does not list), and the full symbol has `1` at the other two
-(`1 2/m 1`; in a space group `P 1 2/m 1`), as `symmetryDirections` gives them (Thomas, 2026-11-25,
-#115 item 1: the positions of the full symbol are kept, not only the unique axis). The triclinic
+(`1 2/m 1`; in a space group `P 1 2/m 1`), as `symmetryDirections` gives them: the positions of
+the full symbol, not only the unique axis. The triclinic
 family has none. A setting with rhombohedral axes has the
 two positions of the row "Rhombohedral (rhombohedral axes)": [111], and [1-10], [01-1], [-101].
 
@@ -660,7 +662,7 @@ perpendicular.
 - **Axis.** Every axis and mirror normal of a crystal class lies along one of its symmetry
   directions; the axis is that direction, as [uvw] and as a Cartesian unit vector in the frame of
   the setting, with the sign of the operation's **Seitz symbol** (ITA 6th ed., Tables 1.4.2.1–1.4.2.3,
-  p. 52; "Pure ITC", #114): the direction its subscript names, for every matrix W of the setting.
+  p. 52): the direction its subscript names, for every matrix W of the setting.
   Where Table 2.1.3.1 lists the opposite representative, the two differ in sign: in the hexagonal
   family the twofold axes and mirror normals 2₁₁₀, m₁₁₀ and 2₂₁₀, m₂₁₀ are [1, 1, 0] and [2, 1, 0],
   where the table lists [1̄, 1̄, 0] and [2̄, 1̄, 0]; for the other families and for n ≥ 3 the two
@@ -704,7 +706,7 @@ divided by its order. For a list that is not a group, the closure keeps only pro
 and the multiplicity may not be an integer. Time reversal is ignored, since it does not change a
 direction. `siteSymmetry(key, direction, { setting, axes, uniqueAxis, tolerance })` is the same for
 the operations of a point group in a setting, `siteSymmetryOf(operations(key, options), …)`; the
-suffix `…Of` marks the functions of a list of operations (#137 C1).
+suffix `…Of` marks the functions of a list of operations.
 
 **Wyckoff positions** are ITA's: a Wyckoff position is the set of directions whose site
 symmetries are conjugate in the point group (ITA, 6th ed., § 3.2.1.2.2, "Definition", p. 722).
@@ -732,8 +734,8 @@ prints them for that setting (ITA 6th ed., Table 3.2.3.2, pp. 745–769):
   elements**: in 321, position b prints the point x,0,0 (on the twofold axis along a) and the face
   (112̄0) (on the twofold axis along [110]). Both belong to the position; `siteSymmetryOperations`
   are those of the face, as the applications work with face poles.
-- **Faces with numbers** (#137 G3, G4): the records give the faces as ITA prints them, with
-  letters. `millerIndices(printed, { h, k, l })` substitutes a caller's values (three indices; for
+- **Faces with numbers:** the records give the faces as ITA prints them, with
+  letters. `millerIndices(indices, { h, k, l })` substitutes a caller's values (three indices; for
   hexagonal axes i = −(h + k) is dropped, as `orbit` takes them; rhombohedral axes print sums such
   as `h,k,-h-k` and `h,k,2k-h`), and `faceNormal(basis, hkl)` gives the unit normal
   h a\* + k b\* + l c\* of a face in a cell. A normal exists only for a cell: `latticeBasis(family)`
@@ -751,11 +753,11 @@ prints them for that setting (ITA 6th ed., Table 3.2.3.2, pp. 745–769):
   axis a, whose site symmetries `2`, `m`, `2/m` name the element on the unique axis and are not
   permuted): the positions of
   setting 1 carried into their frame, a permutation of the axes (the settings cab and bca of ITA
-  (2016) Table 1.5.4.4; maintainer decision, 2026-11-18, #24): same letters and multiplicities, the
+  (2016) Table 1.5.4.4): same letters and multiplicities, the
   positions of the oriented symbol permuted, the coordinates and Miller indices permuted and their
   letters renamed after their new position (`m..`, `0,y,z`, `0,k,l` in `mm2` become `.m.`, `x,0,z`,
   `h,0,l` in `2mm`), every triplet of a position in the order printed for setting 1.
-- The **coordinates** are ITA's in full (#137 C4, #121 step 7d): the triplets of a position are the
+- The **coordinates** are ITA's in full: the triplets of a position are the
   images of its first under the general position, in the order of the general position, which a
   test checks for all 45 printed entries against the transcription of both
   (`wyckoff.reference.test.ts`).
@@ -777,10 +779,10 @@ A **crystal form** is a set of faces equivalent under a point group: the orbit o
 **eigensymmetry**, the symmetry of the form as a polyhedron, and lists them in Table 3.2.1.3
 (pp. 724–726). symcrys gives the 47 kinds as `CRYSTAL_FORM_TYPES`, by a key made of the first of
 their usual names in lower case, words joined by `-` (`'pedion'`, `'tetragonal-prism'`,
-`'rhomb-dodecahedron'`; Thomas, 2026-11-25, #194): the usual English names, the number of faces and
+`'rhomb-dodecahedron'`): the usual English names, the number of faces and
 the eigensymmetry (`4/mmm`, `-62m`; `∞m` and `∞/mm` for pedion and pinacoid). Names in other
 languages, and the names an application derives from the generating group (sphenoid in 2, dome in
-m), are left to the applications, which look a form up by its key (maintainer, 2026-11-21, #24).
+m), are left to the applications, which look a form up by its key.
 
 `crystalForms(key, { setting })` lists the forms of a crystal class as ITA 6th ed. Table 3.2.3.2
 prints them in its fifth column (pp. 745–769): by Wyckoff position, general position first, and for
@@ -840,8 +842,8 @@ tetragonal dipyramids of 422, (h0l) and (hhl)).
 ## Point group of a list of operations
 
 `pointGroupOf(operations, { tolerance })` names the point group that a list of Cartesian
-operations generates, for instance the operations of a crystal that keep its distorted lattice
-(maintainer, 2026-11-21, #24). The list is closed into a group, two matrices being equal when no
+operations generates, for instance the operations of a crystal that keep its distorted lattice.
+The list is closed into a group, two matrices being equal when no
 entry differs by `tolerance` (default `EPSILON`, below 0.1) or more; a caller whose matrices
 carry rounding errors passes a value well above them, and the matrices need only be orthogonal, and
 their traces integers, within it. The result is the
@@ -853,7 +855,7 @@ order 5, a group of more than 96 operations). The setting is found from the oper
 which generate the group, not from their products, whose errors add up. The first call builds a
 table of the 122 groups (about 0.1 s in Node, 0.3 s in the Python package); after that a call takes
 about 1 ms for the 48 operations of m-3m in Node (`npm run benchmark`), about 4 ms in Python
-(measured by hand; both 2026-11-25), since the closure multiplies only by the operations passed in
+(measured by hand), since the closure multiplies only by the operations passed in
 and compares a product only with the operations of its kind.
 
 **How the group is named.** Each operation contributes its determinant, its trace and, in the
@@ -869,7 +871,7 @@ the 122 groups (a list of white operations is the white group, as everywhere in 
 does for a key (kind, n, sense), but with the axis as a Cartesian unit vector only, because the
 list need not belong to a setting whose lattice directions could name it, and a Seitz symbol needs
 a lattice. The axis is signed so that its first non-zero component, in the order x, y, z, is positive,
-symcrys's own rule for a list without a lattice (Thomas, 2026-11-24), and the sense refers to that sign; a component smaller than the tolerance
+symcrys's own rule for a list without a lattice, and the sense refers to that sign; a component smaller than the tolerance
 counts as zero, so that a matrix with rounding errors keeps the sign of its axis. A matrix that is
 not orthogonal, or whose rotation part does not turn by 360°/n with n = 1, 2, 3, 4, 6 (its trace
 1 + 2 cos θ not an integer), is a RangeError, both within `tolerance` as for `pointGroupOf`.
@@ -885,11 +887,9 @@ W acts on the coordinates of a lattice direction [uvw].
 The matrices W do not depend on the cell angles: a point operation maps the lattice onto itself, and its
 matrix in the lattice basis is the same for every metric the point group allows (2 along b is
 diag(−1, 1, −1) for every β). So they exist for every family, the monoclinic and triclinic ones
-included, where a, b, c are taken along x, y, z as for the Wyckoff positions (maintainer,
-2026-11-21, #24). They are, in order, the matrices of ITA's general position
+included, where a, b, c are taken along x, y, z as for the Wyckoff positions. They are, in order, the matrices of ITA's general position
 (6th ed., Table 3.2.3.2): its coordinate triplets are the rows of W. Cartesian matrices of a real
-monoclinic or triclinic cell need the cell parameters and belong to the geometry of a crystal
-(#24 item 4).
+monoclinic or triclinic cell need the cell parameters and belong to the geometry of a crystal.
 
 **Orbits.** `orbit(key, { hkl } | { uvw }, options)` gives the orbit of a face (hkl) or of a lattice
 direction [uvw] exactly, in integers: the distinct faces (directions), in the order in which the
@@ -907,7 +907,7 @@ by one (`references/itc/vol-a-table-3.2.3.2-general-faces.md`).
 `orbitOf(operations, direction, { tolerance })` does the same for a Cartesian direction (a face
 normal, a pole) under any list of Cartesian operations, for instance those left after distorting a
 crystal: the images of its unit vector, coinciding images merged when closer than `tolerance`
-(default `EPSILON`, as for `siteSymmetryOf`; maintainer, 2026-11-21), each with the operations that
+(default `EPSILON`, as for `siteSymmetryOf`), each with the operations that
 lead there. The list is not closed into a group. For a group and a face of a crystal form, `orbit`
 and `orbitOf` give the same entries with the same operations.
 
@@ -919,9 +919,8 @@ basis as the columns a, b, c of a Cartesian matrix: **a along x, b in the xy pla
 a = (a, 0, 0), b = (b cos γ, b sin γ, 0), c = (c cos β, c (cos α − cos β cos γ)/sin γ, V/(ab sin γ)). It
 agrees with `latticeBasis` where that exists (hexagonal axes: b at 120° from a, c ∥ z) and holds
 for the monoclinic settings (unique axis b: b ∥ y, c in the xz plane; unique axis c: c ∥ z; unique
-axis a: a ∥ x, b and c in the yz plane). Chosen
-by the maintainer's rule (2026-11-21) that symcrys follows the ITC standard and an application whose
-frame differs converts in the application (stereography, for instance, rotates into its own frame).
+axis a: a ∥ x, b and c in the yz plane). symcrys follows the ITC standard, and an application
+whose frame differs converts in the application.
 Not checked against a printed page: the orthogonalization of ITA Vol. B is not yet read; a printed
 difference would be corrected here.
 
@@ -939,7 +938,7 @@ application that wants to avoid nearly flat cells passes its own limit (stereogr
 **Residual operations.** `residualOperations(operations, basis, { tolerance })` keeps the operations
 whose matrix W in the lattice basis (`matrix`, as `operations` gives it) has WᵀGW = G; a matrix that
 is not integer is refused, so that a Cartesian matrix passed as `matrix` gives an error, not a wrong
-answer (#94). The
+answer. The
 deviation is relative to the largest entry of G, so the unit of the lengths does not matter; the
 default is `EPSILON`.
 
@@ -947,11 +946,11 @@ default is `EPSILON`.
 T = −(U + V), W = w, scaled to the smallest integers, and back with u = U − T, v = V − T, w = W,
 reduced. The print anchor is Frank, _Acta Cryst._ **18**, 862 (1965), Eqs. (19)–(22), p. 864, for the
 conventional hexagonal cell (his Eq. (18)): [uvw] → [2u − v, −u + 2v, −u − v, 3w] and
-[uvtw] → [u − t, v − t, w], up to a constant factor; (hkl) → (h, k, −h − k, l) (#112). ITA 2016
+[uvtw] → [u − t, v − t, w], up to a constant factor; (hkl) → (h, k, −h − k, l). ITA 2016
 gives the four indices of planes (reflections) only (Ch. 2.1, p. 165). `zoneAxis(h1, h2)` is the reduced cross product h₁ × h₂ (zone law hu + kv + lw = 0), so its
-sign follows the order of the planes; parallel planes give `undefined` (never `null`, #137 C4).
+sign follows the order of the planes; parallel planes give `undefined` (never `null`).
 
-**Change of the coordinate system** (#120, #137 G2, 0.12). `changeOfCoordinates({ linearPart,
+**Change of the coordinate system.** `changeOfCoordinates({ linearPart,
 originShift }, quantities, { tolerance })` changes the coordinate system by the pair (P, p) of ITA
 2016 § 1.5.1.3 (p. 83): the new basis is (a′, b′, c′) = (a, b, c)·P (the columns of P are the new basis
 vectors in the old basis) and the new origin lies at p in the old coordinates. It transforms each
@@ -964,7 +963,7 @@ origin shift changes neither vectors, indices nor the metric. It also gives the 
 positive one preferable, § 1.5.1.2, p. 76); a singular P is refused. P, p and the operations are
 read each number as the simplest fraction within the tolerance (0.3333333 is 1/3, 0.0625 is 1/16)
 and transformed exactly, so that W′ is exactly integral and every result, the inverse pair included,
-can be passed back (Thomas, 2026-11-25); an operation with det W ≠ ±1, or whose W′ is not integral
+can be passed back; an operation with det W ≠ ±1, or whose W′ is not integral
 (the new basis spans no lattice that the operation maps onto itself), is refused. A transformed
 operation is `{ matrix, translation }` alone, its translation w′ not reduced modulo the lattice, as
 ITA writes it; other fields of an operation record (`cartesian`, `timeReversal`) are not carried
@@ -973,8 +972,8 @@ over. The plane has the same function with 2 × 2 matrices (`symcrys/plane`).
 ### Cells of a lattice
 
 `cellTransformation(bravaisLattice, fromCell, toCell)` gives P from one cell of a lattice to
-another, `{ linearPart }`, to be passed to `changeOfCoordinates` (both point-group entry points;
-#120). The lattice is named by its Bravais symbol (ITA 2016 Table 1.3.4.1, p. 39: `aP`, `mP`, `mS`,
+another, `{ linearPart }`, to be passed to `changeOfCoordinates` (both point-group entry points).
+The lattice is named by its Bravais symbol (ITA 2016 Table 1.3.4.1, p. 39: `aP`, `mP`, `mS`,
 `oP`, `oS`, `oI`, `oF`, `tP`, `tI`, `hP`, `hR`, `cP`, `cI`, `cF`), a cell by the fields of `Cell`;
 `{}` is the conventional cell in the standard setting:
 
@@ -1014,12 +1013,12 @@ on each other. `tensorFormOf(operations, spec)` does the same for any list of op
 into a group first), e.g. the site symmetry of a surface normal from `siteSymmetry`. In place of
 `spec`, both take the name of a property ("Named properties" below).
 
-**Kind of tensor** (`TensorSpec`, #137 E1, E2): `rank` 0 to 4; `kind` `'polar'` (transforms with
+**Kind of tensor** (`TensorSpec`): `rank` 0 to 4; `kind` `'polar'` (transforms with
 R) or `'axial'` (with det(R)·R; ITC calls the behaviour under inversion "parity", under which a polar
 vector is odd, so the field is not named `parity`); in the magnetic API `timeParity` `'even'` or
 `'odd'` (ITC Vol. D: time-even, time-odd; a time-odd tensor changes sign under an operation with
-time reversal), while a specification of the crystallographic API has no time parity and means a
-time-even tensor ("Two entry points"); and `intrinsic`, the symmetry of the tensor under
+time reversal), while a specification of the crystallographic API means a time-even tensor and
+takes no `timeParity` other than `'even'` ("Two entry points"); and `intrinsic`, the symmetry of the tensor under
 permutation of its own indices, independent of the crystal, named descriptively with its symbol in
 Jahn symbol as Gallego et al. (_Acta Cryst._ A75, 438 (2019), pp. 439–440) write it after Jahn
 (1949) in the TSDoc of `IntrinsicSymmetry`: `'none'`,
@@ -1036,7 +1035,7 @@ is a specification with the names of Birss and of symcrys before 0.11 (`parity`,
 i₁·3ⁿ⁻¹ + … + iₙ, the first index varying slowest (the order of a NumPy array of shape (3,)·n in C
 order). For rank 3, xyz is 0·9 + 1·3 + 2 = 5.
 
-**The form** (`TensorForm`) is plain numbers (CLAUDE.md, "Tensors"):
+**The form** (`TensorForm`) is plain numbers:
 
 - `basis`: the allowed tensors as the span of rows of length 3ⁿ, in reduced row echelon form: one
   row per free parameter, 1 at its own component and 0 at the components of the other parameters.
@@ -1044,7 +1043,7 @@ order). For rank 3, xyz is 0·9 + 1·3 + 2 = 5.
   unique for the span, so it does not depend on how the span was found.
 - `parameters`: the free parameters as index lists (`[0, 1, 1]` for xyy), one per basis row: each is
   the lowest component that is independent of those before it (the pivot). This is symcrys's rule,
-  not ITC's choice (#137 E3): the tables of ITC Vol. D name the components of a form by other
+  not ITC's choice: the tables of ITC Vol. D name the components of a form by other
   criteria, sometimes others for the same span (e.g. Λ₂₂ where symcrys gives xxy); the span, and so
   the number of parameters and every relation between components, is the same. A rule rather than
   a table per group and tensor keeps every form reproducible.
@@ -1055,7 +1054,7 @@ order). For rank 3, xyz is 0·9 + 1·3 + 2 = 5.
 Relation strings (`\chi_{xxx} = -\chi_{xyy}`), Nye diagrams and LaTeX are presentation and stay
 in the applications; they follow from these numbers.
 
-**Voigt's notation** (#137 E3, 0.12). `toVoigt(tensor, spec, { factors })` writes a tensor with
+**Voigt's notation.** `toVoigt(tensor, spec, { factors })` writes a tensor with
 symmetric index pairs in the two-index notation of ITC Vol. D § 1.1.4.10 (pp. 24–27), and
 `fromVoigt(voigt, spec, { factors })` takes it back. Each contracted pair ij becomes α = 1…6 for 11,
 22, 33, 23, 31, 12 (eq. (1.1.4.6)). The shape follows the specification: a symmetric tensor of rank 2
@@ -1067,11 +1066,11 @@ d_ikj; the piezomagnetic Λ, Λ_i4 = 2Λ_i23, eq. (1.5.7.4); the compliances s a
 Q on both pairs, eq. (1.1.4.12)), or as one component (factor 1: the stress, the piezoelectric e,
 the stiffnesses c, the elasto-optic p); the piezo-optic π has 1 on its first pair and 2 on its
 second. So the specification does not fix the factors, and the caller gives one per pair
-(`factors: [2]`, `[2, 2]`, `[1, 2]`; decided by Thomas on 2026-11-25). Only `'piezomagnetic'` takes
+(`factors: [2]`, `[2, 2]`, `[1, 2]`). Only `'piezomagnetic'` takes
 ITC's factors by default (`[2]`, eq. (1.5.7.4)); `'piezoelectric'` has none, since its tensor is
 also the susceptibility of second-harmonic generation, which ITC contracts without the factor 2
 (`[1]`; § 1.7.2.2.1.3, p. 185, eq. (1.7.2.41): χ₂₅ multiplies e_x e_z + e_z e_x), while the
-piezoelectric d takes `[2]` (Thomas, 2026-11-25, after the review). A tensor that lacks the index symmetry of its specification, or a Voigt array that is no
+piezoelectric d takes `[2]`. A tensor that lacks the index symmetry of its specification, or a Voigt array that is no
 tensor of it, is refused, within the tolerance relative to its largest component. Gallego et al.
 (2019, p. 440) use unity factors throughout; symcrys follows ITC.
 
@@ -1148,7 +1147,7 @@ antisymmetric part is the dual of a time-odd polar vector, so the two agree by c
 print anchor is the table: the 31 groups whose printed matrix is not symmetric
 (`itcMagnetic.reference.test.ts`). In the magnetic API only.
 
-**Ferroaxial** (not a term of ITC; #137 E4). A crystal is ferroaxial if its symmetry allows an axial vector that does not change
+**Ferroaxial** (not a term of ITC). A crystal is ferroaxial if its symmetry allows an axial vector that does not change
 sign under time reversal, e.g. a net rotation of structural units about an axis (NiTiO₃, class
 `-3`). The tensor is that of `'ferromagnetic'` with the other time parity, so the 13 classes are
 the white groups among the 31 ferromagnetic groups: `1`, `-1`, `2`, `m`, `2/m`, `4`, `-4`, `4/m`,
@@ -1159,8 +1158,7 @@ vector lies along that symmetry direction (any direction in `1` and `-1`). Seven
 Rev. Lett._ **116**, 177602 (2016); Gallego et al. (2019, p. 440) call the vector the axial toroidal
 moment. ITC Vol. D does not tabulate the property, so the print anchor
 of the classes is Birss: Table 4a (pp. 56–57) gives each class its form of an axial tensor of odd
-rank, Table 4c (p. 58) that form at rank 1. The name is `'ferroaxial'` and not "axial" (maintainer,
-2026-11-20): "axial" already names the kind of a tensor (`kind: 'axial'`), and five of the
+rank, Table 4c (p. 58) that form at rank 1. The name is `'ferroaxial'` and not "axial": "axial" already names the kind of a tensor (`kind: 'axial'`), and five of the
 eight properties have an axial tensor.
 
 **Rotation.** `rotateTensor(tensor, R, spec)` gives the components in a frame rotated by the
@@ -1196,7 +1194,7 @@ piezoelectric matrices in Voigt's notation, which also check the factor 2 of d t
 and the gyration tensors of the 32 classes), Table 30.2 (which acentric classes are optically
 active, enantiomorphic, piezo- and pyroelectric), Tables 8.1 and 9.1 (pyroelectric and dielectric
 forms) and Table 13.1 (the elastic stiffnesses c_αβ, without factors, ½(c₁₁ − c₁₂) as c₆₆), all in
-the ITC default settings. The surface use case of #30 is checked against Yariv: an m-3m crystal has no SHG in
+the ITC default settings. The use at a surface is checked against Yariv: an m-3m crystal has no SHG in
 the bulk, its (001), (110) and (111) surfaces have the forms of 4mm, mm2 and 3m with 3, 5 and 4
 independent components.
 
@@ -1223,7 +1221,7 @@ as ITC Vol. D prints the same matrices (errata with their reasons in
 
 The 17 plane groups and the 10 plane point groups are in a third entry point, `symcrys/plane` (in
 Python `symcrys.plane`), with the names of the other entry points where the notion is the same
-(maintainer, 2026-11-22, #31). They follow ITA (6th ed., 2016), Chapter 2.2 for the plane groups and
+They follow ITA (6th ed., 2016), Chapter 2.2 for the plane groups and
 Table 3.2.1.1 (p. 720) for the point groups.
 
 **Keys.** The short symbols ITA prints: `'p1'` … `'p6mm'` for the plane groups, in ITA's order, and
@@ -1232,9 +1230,9 @@ in the order of Table 3.2.1.1. The two sets do not overlap: a plane group's symb
 lattice letter. `3m` has two settings, `3m1` (setting 1, the default) and `31m` (setting 2), as ITA
 describes the trigonal groups with hexagonal axes in two orientations and says so for the plane
 point group (Ch. 3.2, p. 721, item (d)); the other groups have one. `settings(key)` lists them,
-`symbol(key, { setting })` gives the symbol of one. `symbol` takes the key of a plane group too
-(#137 F4): its short symbol, the key, or in the form `'full'` the full symbol with its positions
-separated by spaces, as the other entry points write full symbols (Thomas, 2026-11-24): `p 1 m 1`
+`symbol(key, { setting })` gives the symbol of one. `symbol` takes the key of a plane group too:
+its short symbol, the key, or in the form `'full'` the full symbol with its positions
+separated by spaces, as the other entry points write full symbols: `p 1 m 1`
 for `pm`, where ITA prints `p1m1`, and `p 2 m g`. ITA prints no other full symbol for a plane point
 group ("The full Hermann–Mauguin symbol, if different, is given below the short symbol", Ch. 3.2,
 p. 721; Table 3.2.3.1 gives none), so its full form is its symbol with the positions spaced:
@@ -1261,25 +1259,25 @@ operations": its kind (`'identity'`, `'translation'`, `'rotation'`, `'reflection
 it (on y = 0, or on x = 0 for a line along a), and the glide vector (w + W·w)/2. An operation whose
 glide vector is a non-zero lattice vector is a glide, as it is geometrically. A reflection or glide
 reflection also carries its `axis`, the normal of its line, a symmetry direction of ITA Table 2.1.3.1
-(p. 151), under the name the axis of an operation has in the point groups (#137 C3, where the `axis`
-of a reflection is the normal of its plane), with the sign of its Seitz symbol (ITA 2016 Tables
-1.4.2.4, 1.4.2.5, p. 53: m₁₀, m₁₂, m₂₁; #107, #114): the shortest integer vector along W − I, first
+(p. 151), under the name the axis of an operation has in the point groups (where the `axis` of a
+reflection is the normal of its plane), with the sign of its Seitz symbol (ITA 2016 Tables
+1.4.2.4, 1.4.2.5, p. 53: m₁₀, m₁₂, m₂₁): the shortest integer vector along W − I, first
 non-zero component positive, which gives the printed Seitz direction for every operation of the 17
 groups (tested). Without a metric it is not
 the perpendicular of the direction: in a hexagonal basis the line along [10] has the normal [12]. The
 normals of a group are the printed symmetry directions at the positions where its full symbol has
 `m` or `g` (tested for all 17), so they say to which position of the symbol a line belongs; the lines
-of `symmetryElements` carry them too (maintainer, 2026-11-22, #84). `describeOperationsOf` describes
+of `symmetryElements` carry them too. `describeOperationsOf` describes
 any list of operations of the plane in the same way, such as a product of operations, an operation
 shifted by a lattice translation or the operations of a site symmetry; it reads each translation as
 a fraction with a denominator of at most 12 (within the tolerance, default 10⁻⁶) and refuses a matrix that is not the linear
-part of a plane point group (maintainer, 2026-11-22, #84).
+part of a plane point group.
 
 **Points.** `siteSymmetry`, `wyckoffPosition` and `orbit` take the key of a plane group and a point
 in the lattice basis (`orbit` gives each image as `{ point, operations }`, with the indices of the
-operations that map the point there, as the orbits of the point groups do; #137 C4), with an
+operations that map the point there, as the orbits of the point groups do), with an
 optional `tolerance` measured per coordinate modulo the lattice (default 10⁻⁶, below 1/2). They
-answer one question with one criterion (#137 F1, #108; Thomas, 2026-11-24): on which Wyckoff
+answer one question with one criterion: on which Wyckoff
 position does the point lie? `wyckoffDistances(key, point, { basis })` gives the numbers: for every
 printed position, in printed order, the nearest point of its point set (the printed coordinates with
 every centring and lattice translation: a point, a line or the plane) and the distance to it, per
@@ -1296,11 +1294,11 @@ on screen) is a policy of the application, built on `wyckoffDistances`. "Most sp
 smallest multiplicity, so at a large tolerance a line can win against a point of the same
 multiplicity (c2mm: 4c, a point, against 4d and 4e, lines).
 
-**The cell.** `asymmetricUnit` gives ITA's printed block "Asymmetric unit" as data (#137 F3): the
+**The cell.** `asymmetricUnit` gives ITA's printed block "Asymmetric unit" as data: the
 printed inequalities a·x + b·y ≤ c, all of them in printed order, also bounds that hold no edge
 (p3: x ≤ 2/3, y ≤ 2/3; a double inequality and a `min` give one each), and the convex polygon they
 bound, its vertices counter-clockwise from the lowest and per edge the index of the inequality that
-holds it. `symmetryElements` gives the symmetry elements as ITA describes them (#137 F2): each once
+holds it. `symmetryElements` gives the symmetry elements as ITA describes them: each once
 modulo the lattice translations, the centring (1/2, 1/2) included (cm: the mirror line 0,y and the
 glide line 1/4,y, as ITA lists them), every rotation point in [0, 1)² with the highest n of a rotation
 about it (`rotationPoints`, ITA Table 2.1.2.1: the rotation point is the symmetry element of a
@@ -1312,7 +1310,7 @@ lattice translates that meet the box, boundary included, the lines not clipped: 
 twofold points modulo the lattice and nine in the closed cell [0, 1]²; a box with more than a
 million rotation points is refused. Clipping and drawing are left to the application.
 
-**Lattices and cells** (#119, #137 G5, 0.12). `planeGroup(key)` gives the Bravais lattice
+**Lattices and cells.** `planeGroup(key)` gives the Bravais lattice
 (`bravaisLattice`: `'mp'`, `'op'`, `'oc'`, `'tp'`, `'hp'`, the family symbol of ITA Table 2.1.1.1
 followed by the lattice letter of the group) and the Patterson symmetry as the headline of the
 group prints it (`pattersonSymmetry`, a plane group: `'p2mm'` for `p2mg`, `'c2mm'` for `cm`,
@@ -1330,7 +1328,7 @@ and, since 0.13, `residualOperations(operations, basis)`, the operations of a li
 `matrix` W keeps the metric, WᵀGW = G, relative to the largest entry of G (the metric tolerance, as
 in 3D).
 
-**Positions and edge forms of the plane point groups** (since 0.14, #81). `wyckoffPositions(key,
+**Positions and edge forms of the plane point groups.** `wyckoffPositions(key,
 { setting })` takes the key of a plane point group and gives the Wyckoff positions of the
 directions of the plane, general position first, each with its coordinate doublets, `millerIndices`
 (the first edge of its basic form) and `siteSymmetryOperations`; `crystalForms(key, { setting })`
@@ -1338,22 +1336,22 @@ gives the edge forms, the crystal forms of a two-dimensional crystal: per positi
 then a limiting form where print gives one, with `formType`, a key of `CRYSTAL_FORM_TYPES` (the
 ten kinds, from `'single-edge'` to `'dihexagon'`, with their names and numbers of edges), and the
 first edge in the usual notation (`h,k`, `1,0`; `h,k,i`, `1,1,-2` for the hexagonal groups). As for
-the crystal classes, the point at the origin and the point forms are left out (Thomas, 2026-11-26),
+the crystal classes, the point at the origin and the point forms are left out,
 and `siteSymmetryOperations` fix the first edge: in the hexagonal groups the first doublet and the
 first edge of a special position may lie on different, conjugate mirror lines (3m1, position a: the
 direction x,x̄ and the edge (101̄), normal to 2x̄,x̄).
 The source is ITA 2016 Table 3.2.3.1 (pp. 742–744), which prints `3m` in its two orientations
 `3m1` and `31m`.
 
-**Not yet.** The determination of the plane group of a pattern (a later MINOR, #31).
+**Not yet.** The determination of the plane group of a pattern.
 
 ## Sources
 
 | What                                                                                                                                                                                                                  | Print source                                                                                                                                                                                                                                                                                                                                               | Test                                                                                                    |
 | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
 | Crystal classes, second print check: operations in the ITC frame (`testUtils/birssFrame.ts`), Birss's symbols, Schoenflies, orders                                                                                    | Birss Table 3 (pp. 36–38), generating matrices eq. (2.17) (pp. 48–49): `references/birss/`                                                                                                                                                                                                                                                                 | `birss.reference.test.ts`                                                                               |
-| ITC symbols of the settings                                                                                                                                                                                           | ITA Table 3.2.3.2 (headlines, pp. 745–769); ITC Vol. D Table 1.5.2.3 for monoclinic full symbols; the symbol rule (positions: ITA § 2.1.3.4, p. 151; `1` for a direction without symmetry: 5th ed. § 2.2.4.1 (iv), p. 18; monoclinic full symbols: § 2.1.3.15, p. 171) for `2mm`, `m2m` and unique axis c                                                  | `itc.reference.test.ts`                                                                                 |
-| ITC operations of every setting                                                                                                                                                                                       | the general positions of ITA Table 3.2.3.2 (pp. 745–769), in the frame of #6; `2mm`, `m2m`, which ITA does not list: their ITC symbol along the symmetry directions of ITA Table 2.1.3.1 (p. 151)                                                                                                                                                          | `itcGeneralPositions.reference.test.ts`, `itc.reference.test.ts`                                        |
+| ITC symbols of the settings                                                                                                                                                                                           | ITA Table 3.2.3.2 (headlines, pp. 745–769); ITC Vol. D Table 1.5.2.3 for monoclinic full symbols; the symbol rule (positions: ITA § 2.1.3.4, p. 151; `1` for a direction without symmetry: 5th ed. § 2.2.4.1 (iv), p. 18; monoclinic full symbols: § 2.1.3.15, p. 171) for `2mm`, `m2m` and unique axes c and a                                            | `itc.reference.test.ts`                                                                                 |
+| ITC operations of every setting                                                                                                                                                                                       | the general positions of ITA Table 3.2.3.2 (pp. 745–769), in the frame of "Cartesian frame"; `2mm`, `m2m` and monoclinic unique axis a, which ITA does not list: their ITC symbol along the symmetry directions of ITA Table 2.1.3.1 (p. 151)                                                                                                              | `itcGeneralPositions.reference.test.ts`, `itc.reference.test.ts`                                        |
 | ITC default settings                                                                                                                                                                                                  | see "Settings" above                                                                                                                                                                                                                                                                                                                                       | `itcSettings.fixtures.ts`                                                                               |
 | centrosymmetric, polar, enantiomorphic, Laue class, holohedry, lattice systems, Schoenflies                                                                                                                           | ITA Table 1.3.4.1 (p. 39, lattice systems and holohedries), Table 2.1.1.1 (p. 143, Laue groups and holohedries), Table 3.2.2.1 (p. 738), Table 3.2.3.2                                                                                                                                                                                                     | `properties.reference.test.ts`, `itc.reference.test.ts`                                                 |
 | symmetry directions                                                                                                                                                                                                   | ITA Table 2.1.3.1 (p. 151)                                                                                                                                                                                                                                                                                                                                 | `symmetryDirections.reference.test.ts`                                                                  |

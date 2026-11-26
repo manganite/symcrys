@@ -1,5 +1,5 @@
 /**
- * Tolerant reading of symbols (#96): the spellings of the overbar, the prime and the Schoenflies
+ * Tolerant reading of symbols: the spellings of the overbar, the prime and the Schoenflies
  * subscripts that occur in print, on the web and in pasted text, brought to the one spelling of
  * this library before a symbol is compared (docs/conventions.md, "Reading symbols"). A pure
  * normalisation: it changes how a symbol is written, never which symbol it is. Internal; shared by

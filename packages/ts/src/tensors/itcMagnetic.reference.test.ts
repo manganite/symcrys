@@ -39,13 +39,13 @@ interface Orientation {
 /** Groups without time reversal as an element of its own: the 90 groups of ITC Vol. D Chapter 1.5. */
 const GROUPS = MAGNETIC_POINT_GROUP_KEYS.filter((k) => pointGroup(k).type !== 'II');
 const compact = (s: string) => s.replace(/\s+/g, '');
-/** The magnetic API writes Schoenflies symbols as ITC Vol. D does (`S6`, #137 B3). */
+/** The magnetic API writes Schoenflies symbols as ITC Vol. D does (`S6`). */
 const schoenflies = (key: MagneticPointGroupKey) => symbol(key, { form: 'schoenflies' });
 
 /**
  * The short symbol with all three positions, read from the full symbol by ITA's rule (the first
  * position as it stands, every other one by its element after the `/`): `-3 2'/m' 1` → `-3m'1`. The
- * tables print it beside the key (`-3m' (= -3m'1)`), and since #137 B2 the default setting of a
+ * tables print it beside the key (`-3m' (= -3m'1)`), and the default setting of a
  * magnetic group has the key as its short symbol.
  */
 const threePositions = (full: string) =>
@@ -203,7 +203,7 @@ describe('ITC Vol. D Table 1.5.7.1: piezomagnetic effect', () => {
   describeFormTable('itc/vol-d-table-1.5.7.1.md', 'piezomagnetic', 66, 27, placeVoigt);
 });
 
-describe('ITC Vol. D Table 1.5.7.1 in Voigt notation: toVoigt with the factors of the piezomagnetic tensor (#137 E3)', () => {
+describe('ITC Vol. D Table 1.5.7.1 in Voigt notation: toVoigt with the factors of the piezomagnetic tensor', () => {
   // The printed 3 × 6 matrices read as they stand, Λ_iα, against toVoigt of the computed forms with
   // the default factors of 'piezomagnetic' (Λ_i4 = 2Λ_i23, eq. (1.5.7.4)).
   const content = readReference('itc/vol-d-table-1.5.7.1.md');
@@ -252,7 +252,7 @@ describe('ITC Vol. D Table 1.5.8.1: linear magnetoelectric effect', () => {
 
 describe('ITC Vol. D § 1.5.8.1, footnote 3: the toroidal moment', () => {
   it('is allowed in exactly the 31 groups whose printed magnetoelectric tensor need not be symmetric', () => {
-    // The print anchor of 'ferrotoroidic' (#137 E4): "Table 1.5.8.1 shows that the tensor α_ij ...
+    // The print anchor of 'ferrotoroidic': "Table 1.5.8.1 shows that the tensor α_ij ...
     // does not need to be symmetric for 31 of the 58 point groups. ... These 31 groups coincide with
     // those that admit a spontaneous toroidal moment" (p. 140). A printed matrix is symmetric if
     // every cell is printed as its mirror cell (a12 and a12; not a12 and a21, nor a12 and -a12).

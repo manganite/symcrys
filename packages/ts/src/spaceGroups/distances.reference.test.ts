@@ -1,6 +1,6 @@
 /**
  * The distance of a point to a Wyckoff position, and the position a point lies on within the
- * tolerance (#137 F1, #108), against print (fixture class (a)): the "Positions" of ITA (6th ed.,
+ * tolerance, against print (fixture class (a)): the "Positions" of ITA (6th ed.,
  * 2016) Chapter 2.2, pp. 176–192, re-parsed from references/itc/vol-a-2016-plane-groups.md. Every
  * printed point of every Wyckoff position, the centring included, is evaluated here for general
  * parameter values; it has distance 0 to its position, and displaced by less than the tolerance it
@@ -113,7 +113,7 @@ describe('the position of a point within the tolerance: order, metric and errors
 
   it('measures the distance to the position, not to the images; the site symmetry is that of the position', () => {
     // 0.012 from the mirror line x = 0 of pm: its image -x,y is 0.024 away, beyond 0.02, but the
-    // distance to the line is 0.012, so the point lies on it (#108: one criterion; #137 F1).
+    // distance to the line is 0.012, so the point lies on it (#108: one criterion).
     expect(planeWyckoffPositionOf('pm', [0.012, 0.3], { tolerance: 0.02 }).letter).toBe('a');
     const site = planeSiteOfPosition('pm', [0.012, 0.3], { tolerance: 0.02 });
     expect(site.multiplicity).toBe(1);

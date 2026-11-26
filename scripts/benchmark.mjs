@@ -1,8 +1,7 @@
 // Times the heavy calls of the built library (packages/ts/dist/; npm run build first) in Node, so
-// that a regression shows (#100): npm run benchmark. The numbers depend on the machine; compare
+// that a regression shows: npm run benchmark. The numbers depend on the machine; compare
 // them with a run of the previous version on the same machine, not with fixed values. The Python
-// package runs the same code in QuickJS, several times slower (3 to 4 times for these calls,
-// measured on 2026-11-25).
+// package runs the same code in QuickJS, several times slower (3 to 4 times for these calls).
 
 import { pathToFileURL } from 'node:url';
 import { fileURLToPath } from 'node:url';

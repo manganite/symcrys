@@ -124,14 +124,15 @@ Audits under `audit/` are run by hand. `npm run audit:wyckoff-2006`, `audit:form
 [plane-groups](https://github.com/manganite/plane-groups), checked out next to this repository.
 stereography now takes these data from symcrys, so the two audits of its catalogue read its own
 transcription at a fixed revision (`audit/stereography-2006.ts`); a full clone is needed.
-`npm run audit:itc-baseline` captures the ITC baseline pins (CLAUDE.md, "Tests").
+`npm run audit:itc-baseline` captures the ITC baseline pins (GUIDE.md, "Correctness and tests").
 
 CI runs these eight gates on every pull request, on Node 22 and 24, the gate `python` (bundle,
 build sdist and wheel, install the wheel, `mypy`, `pytest`) on Python 3.10 and the newest, and the
 gate `docs` (`docs:check` and `docs:site` above); the external links (`docs:linkcheck`) are
 checked by the workflow Links, which is not a gate, and the job `coverage` keeps a coverage report
 of the tests (`npm run test:coverage`, `build/coverage/`) as an artefact, not a gate either. Tests sit next to their
-module (`foo.ts`, `foo.test.ts`). Working rules for contributors, human or agent: `CLAUDE.md`.
+module (`foo.ts`, `foo.test.ts`). The rules for code and documentation: `GUIDE.md`; the working
+process for contributors, human or agent: `CLAUDE.md`.
 
 ## Releases
 
@@ -156,7 +157,7 @@ releases (the newest at the root, the newest PATCH of each MINOR under `/X.Y/`, 
 `scripts/assemble-site.mjs`) and publishes them on GitHub Pages (environment `github-pages`, no
 approval). Afterwards the site shows the new version in its title and in its version menu:
 [manganite.github.io/symcrys](https://manganite.github.io/symcrys/).
-This rests on two settings (Thomas): Settings › Pages, source "GitHub Actions"; Settings ›
+This rests on two repository settings: Settings › Pages, source "GitHub Actions"; Settings ›
 Environments › `github-pages`, a deployment rule for tags `v*.*.*` (without it the deployment from
 a tag is refused).
 
@@ -183,7 +184,7 @@ publishing (no token). Check `pip index versions symcrys` afterwards.
 
 What this rests on (set up for 0.5.0, the first release with the Python package):
 
-1. GitHub, Settings › Environments: the environment `pypi` with Thomas as required reviewer,
+1. GitHub, Settings › Environments: the environment `pypi` with a required reviewer,
    deployment branches and tags limited to tags `v*.*.*`.
 2. pypi.org, project `symcrys` › Publishing: the trusted publisher with owner `manganite`,
    repository `symcrys`, workflow `release.yml`, environment `pypi`.

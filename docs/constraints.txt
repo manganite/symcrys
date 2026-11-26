@@ -1,4 +1,4 @@
-# The complete set of packages of the documentation build, pinned (#128): used as PIP_CONSTRAINT by
+# The complete set of packages of the documentation build, pinned: used as PIP_CONSTRAINT by
 # the gate docs (ci.yml), linkcheck.yml and the job site of release.yml, with Python 3.13, so that a new
 # release of a transitive dependency cannot break the gate or the site at tag time. Regenerate after
 # changing docs/requirements.txt: in a fresh Python 3.13 venv, pip install -e packages/python

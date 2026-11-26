@@ -151,7 +151,7 @@ export function substituteMillerIndices(indices: string, values: MillerValues, f
 }
 
 /**
- * The face (hkl) of symbolic Miller indices with the caller's values of h, k, l substituted (#137 G3):
+ * The face (hkl) of symbolic Miller indices with the caller's values of h, k, l substituted:
  * `h,h,-2h,l` with h = 3 and l = 1 gives (3, 3, 1). The indices are those of `wyckoffPositions` and
  * `crystalForms` (`millerIndices`), in the usual notation: three indices, or four
  * for hexagonal axes, of which i = −(h + k) is dropped, so that the face can be passed to `orbit`

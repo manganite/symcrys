@@ -187,10 +187,10 @@ export function faceBasis(key: PointGroupKey, setting: number): Mat3 {
 export const SMALL_H: Readonly<Record<'h' | 'k' | 'l', number>> = Object.freeze({ h: 1, k: 2, l: 3 });
 
 /**
- * A face of a position or form with numbers, internal (#137 G3: the API gives the printed indices
+ * A face of a position or form with numbers, internal (the API gives the printed indices
  * only): h, k, l = 3, 2, 1 (rhombohedral axes: 5, 2, 1; 1, 2, 3 under the condition |h| < |l|), and
  * its normal in the basis of the setting (`faceBasis`; monoclinic and triclinic a, b, c along x, y,
- * z, which gives the correct site symmetry but not the pole of a real cell, #137 G4).
+ * z, which gives the correct site symmetry but not the pole of a real cell).
  */
 export function representativeFace(
   key: PointGroupKey,
@@ -259,7 +259,7 @@ export function wyckoffPositions(key: PointGroupKey, options?: SettingOptions): 
 /**
  * The site symmetry of a direction (any non-zero Cartesian vector) under a point group in a
  * setting: `siteSymmetryOf` applied to `operations(key, options)`, so the indices refer to those
- * operations (#137 C1). Time reversal is ignored. Throws a RangeError as `siteSymmetryOf` does.
+ * operations. Time reversal is ignored. Throws a RangeError as `siteSymmetryOf` does.
  */
 export function siteSymmetry(
   key: MagneticPointGroupKey,

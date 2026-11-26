@@ -169,7 +169,7 @@ describe('a setting by its symbol', () => {
   });
 });
 
-describe('the numbering of the settings (#137 A4)', () => {
+describe('the numbering of the settings', () => {
   it('the ITC default first, then monoclinic c and a, the other orientation, trigonal rhombohedral axes last, orthorhombic in the column order of ITA Table 1.5.4.4', () => {
     const symbols = (key: PointGroupKey) => settings(key).map((s) => s.symbol);
     for (const key of POINT_GROUP_KEYS) expect(settings(key)[0].isDefault).toBe(true);
@@ -218,7 +218,7 @@ describe('findPointGroup', () => {
     expect(findPointGroup('m3m')).toEqual({ key: 'm-3m', setting: 1 }); // Birss's spelling (#96)
     expect(findPointGroup('m3m3')).toBeUndefined();
     expect(findPointGroup('P4mm')).toBeUndefined();
-    // Not a symbol at all: wrong input, not "not found" (#137 D2).
+    // Not a symbol at all: wrong input, not "not found".
     expect(() => findPointGroup(42 as unknown as string)).toThrow(RangeError);
   });
 });

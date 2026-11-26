@@ -2,7 +2,7 @@
  * ITC operations against print (fixture class (a)): the general positions of ITA (6th ed.) Table
  * 3.2.3.2, pp. 745–769, re-parsed from references/itc/vol-a-table-3.2.3.2-general-positions.md.
  *
- * Each coordinate triplet is an operation W in the lattice basis; with the frame decided on #6
+ * Each coordinate triplet is an operation W in the lattice basis; with the frame of symcrys
  * (x ∥ a, z ∥ c, y = z × x; typed here, not imported) it becomes the Cartesian matrix B·W·B⁻¹.
  * The printed set must be exactly the operations of the matching ITC setting of symcrys.
  */

@@ -5,8 +5,8 @@
  * symbols of the setting (itcSettings.fixtures.ts, each printed one checked against the headlines
  * of ITA Table 3.2.3.2, references/itc/vol-a-table-3.2.3.2-headlines.md) are read position by
  * position along the symmetry directions of ITA Table 2.1.3.1
- * (references/itc/vol-a-table-2.1.3.1.md), converted to Cartesian with the frame decided on #6
- * (x ∥ a, z ∥ c, y = z × x; typed here from the decision, not imported), and closed with the
+ * (references/itc/vol-a-table-2.1.3.1.md), converted to Cartesian with the frame of symcrys
+ * (x ∥ a, z ∥ c, y = z × x; typed here, not imported), and closed with the
  * independent algebra of testUtils. The library's symbols must equal the fixture's.
  */
 
@@ -194,7 +194,7 @@ describe('ITC settings fixture against print', () => {
   it('Schoenflies symbols as printed in Table 3.2.3.2', () => {
     for (const [key, f] of FIXTURE) {
       const h = headlineOf(f);
-      // The crystallographic API writes ITA's Schoenflies symbols (#137 B3).
+      // The crystallographic API writes ITA's Schoenflies symbols.
       if (h) expect(itaSymbol(key, { form: 'schoenflies' }), key).toBe(h.schoenflies);
     }
   });
@@ -252,7 +252,7 @@ describe('ITC symbols and operations of every setting', () => {
 
         it(`${label}: findPointGroup finds this setting by its full symbol`, () => {
           // Spaces are ignored; a symbol that is the key (`3 2`, `3` with rhombohedral axes) gives the
-          // standard setting, and the axes choose the other (#96, Thomas 2026-11-23).
+          // standard setting, and the axes choose the other (#96).
           const isKey = setting().fullSymbol.replace(/\s+/g, '') === key;
           const def = settings(key).find((s) => s.isDefault)!.index;
           expect(findPointGroup(setting().fullSymbol)).toEqual({ key, setting: isKey ? def : setting().index });

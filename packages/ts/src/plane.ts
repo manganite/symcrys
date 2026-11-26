@@ -1,7 +1,7 @@
 /**
  * The plane API of symcrys (`symcrys/plane`): the 17 plane groups and the 10 plane point groups, in
  * the lattice basis, as ITA (6th ed., 2016) prints them in Chapter 2.2 and Table 3.2.1.1.
- * Everything exported here is covered by SemVer (see CLAUDE.md), like the exports of `index.ts`.
+ * Everything exported here is covered by SemVer (see GUIDE.md), like the exports of `index.ts`.
  *
  * Inside, the operations are exact (integer matrices, rational translations); here they are plain
  * numbers: a translation of 1/3 is the nearest double. Keys are the symbols ITA prints: `'p2mg'`,
@@ -239,13 +239,13 @@ export interface OperationDescription {
   readonly direction?: readonly number[];
   /**
    * For a reflection or glide reflection: its axis, the normal of its line in the lattice basis (as
-   * the `axis` of a reflection of the point groups is the normal of its plane, #137 C3), its symmetry
+   * the `axis` of a reflection of the point groups is the normal of its plane), its symmetry
    * direction with the sign of its Seitz symbol (`m₁₀`, `m₁₂`): the shortest integer vector along the
    * columns of W − I, first non-zero component positive, which is the Seitz direction for every plane
    * group (tested). Without a metric it is not the perpendicular of `direction`: in a hexagonal basis
    * the normal of a line along [1,0] is [1,2].
    *
-   * @remarks Source: ITA (2016), Tables 1.4.2.4 and 1.4.2.5, p. 53 (#107, #114).
+   * @remarks Source: ITA (2016), Tables 1.4.2.4 and 1.4.2.5, p. 53.
    */
   readonly axis?: readonly number[];
   /** For a glide: the glide vector (w + W·w)/2, not reduced modulo the lattice. */
@@ -614,7 +614,7 @@ export function settings(key: PointGroupKey): readonly Setting[] {
 }
 
 /**
- * The symbol of a plane group or a plane point group (#137 F4). In the short form (the default) the
+ * The symbol of a plane group or a plane point group. In the short form (the default) the
  * Hermann–Mauguin symbol as one word: for a plane group the key (`'p2mg'`, `'pm'`), for a plane
  * point group in a setting `'3m1'` or `'31m'` for `3m`, otherwise the key. In the form `'full'`
  * the full symbol with its positions separated by spaces, as in the other entry points: `'p 1 m 1'`
@@ -774,7 +774,7 @@ export function crystalForms(key: PointGroupKey, options?: SettingOptions): read
 
 /**
  * The site symmetry of a point (lattice basis) under a plane group, as one notion with its Wyckoff
- * position (#137 F1): the point is set onto the position it lies on within the tolerance
+ * position: the point is set onto the position it lies on within the tolerance
  * (`wyckoffPosition`), and the site symmetry is that of the point there; `point` is the point on the
  * position. Throws a RangeError for an unknown key, a point that is not two finite numbers, or a
  * tolerance outside (0, 1/2).
@@ -812,7 +812,7 @@ export function wyckoffPosition(
 
 /**
  * The distance of a point (lattice basis) to every Wyckoff position of a plane group, in the order
- * of `wyckoffPositions`, each with the nearest point of the position (#137 F1, #108). The point set
+ * of `wyckoffPositions`, each with the nearest point of the position. The point set
  * of a position is the union of the points of its coordinates with every centring and
  * lattice translation: a point, a line or the plane. Without a basis the distance is the larger of
  * the two coordinate differences modulo the lattice, the metric of the tolerance of
@@ -870,7 +870,7 @@ export function orbit(
 }
 
 /**
- * The asymmetric unit of a plane group as ITA gives it (#137 F3): ITA's inequalities, all of them
+ * The asymmetric unit of a plane group as ITA gives it: ITA's inequalities, all of them
  * in ITA's order (a double inequality and a `min` give one each), and the convex polygon
  * they bound, with its vertices and, per edge, the index of the inequality that holds it. Throws a
  * RangeError for an unknown key.
@@ -885,7 +885,7 @@ export function asymmetricUnit(key: PlaneGroupKey): AsymmetricUnit {
 }
 
 /**
- * The symmetry elements of a plane group (#137 F2). Without a box, each element once modulo the
+ * The symmetry elements of a plane group. Without a box, each element once modulo the
  * lattice translations, the centring (1/2, 1/2) included, as ITA describes them (cm: the mirror line
  * 0,y and the glide line 1/4,y): every rotation point in [0, 1)² with the highest n of a rotation
  * about it, and every mirror and glide line, as a point in [0, 1)² and a direction. With a box, all
@@ -933,7 +933,7 @@ export function symmetryElements(key: PlaneGroupKey, options?: SymmetryElementsO
   });
 }
 
-// --- lattices and cells (#119, #137 G5) ---------------------------------------------------------------
+// --- lattices and cells --------------------------------------------------------------------------
 
 const PLANE_SYSTEMS = Object.keys(PLANE_FAMILIES) as PlaneSystem[];
 
@@ -1022,7 +1022,7 @@ export function residualOperations<T extends PlaneCellOperation>(
   return Object.freeze(planeResidualOperations(operations, basis, tolerance, 'residualOperations'));
 }
 
-// --- change of the coordinate system (#120, #137 G2) ---------------------------------------------------
+// --- change of the coordinate system -------------------------------------------------------------
 
 /**
  * A change of the coordinate system (P, p) of the plane: (a′, b′) = (a, b)·P, origin O′ = O + p.

@@ -1,5 +1,5 @@
 /**
- * The Wyckoff positions and edge forms of the ten plane point groups (#81): the positions of the
+ * The Wyckoff positions and edge forms of the ten plane point groups: the positions of the
  * directions in the plane with their coordinate doublets, and for each position its edge forms,
  * the crystal forms of a two-dimensional crystal (basic form first, then a limiting form). The point
  * at the origin and the point forms, which concern molecules, are left out, as for the crystal

@@ -1,6 +1,6 @@
 /**
- * Exact rational numbers for the translations of space and plane groups (CLAUDE.md, "Plane groups
- * (and later space groups)"). A rational is a pair [numerator, denominator] of safe integers with
+ * Exact rational numbers for the translations of space and plane groups (docs/conventions.md,
+ * "Plane groups"). A rational is a pair [numerator, denominator] of safe integers with
  * a positive denominator and no common factor, so that two equal numbers have equal pairs. Every
  * intermediate product is checked: a result outside the safe integers throws instead of rounding.
  */

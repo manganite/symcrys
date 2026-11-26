@@ -123,9 +123,9 @@ jobs:
           if-no-files-found: error
 
   # Submits the version to npm for approval (staged publishing). The trusted publisher on npmjs.com
-  # allows only `npm stage publish`; Thomas approves the staged version with 2FA (README,
-  # "Releases"). It stages the same tarball that is attached to the GitHub release. No dependency
-  # cache in this job (npm trusted-publishing guidance for release builds).
+  # allows only `npm stage publish`; the staged version goes live after approval with two-factor
+  # authentication (README, "Releases"). It stages the same tarball that is attached to the GitHub
+  # release. No dependency cache in this job (npm trusted-publishing guidance for release builds).
   npm:
     needs: release
     runs-on: ubuntu-latest
@@ -154,8 +154,8 @@ jobs:
         run: npm stage publish "./${{ needs.release.outputs.file }}" --loglevel verbose
 
   # Publishes sdist and wheel to PyPI by trusted publishing (no token). The environment `pypi`
-  # requires Thomas' approval of each run (GitHub, Settings › Environments), so nothing reaches PyPI
-  # without it; the trusted publisher on pypi.org names this repository, release.yml and `pypi`.
+  # has a required reviewer who approves each run (GitHub, Settings › Environments), so nothing
+  # reaches PyPI without it; the trusted publisher on pypi.org names this repository, release.yml and `pypi`.
   # Same files as attached to the GitHub release.
   pypi:
     needs: release

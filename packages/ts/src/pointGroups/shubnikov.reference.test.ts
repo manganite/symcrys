@@ -3,7 +3,7 @@
  * column 3 (pp. 111–112), re-parsed from references/itc/vol-d-table-1.5.2.3.md and written with
  * combining characters by this test's own reading of the transcription's notation (`_` underline,
  * `-` overbar, `.` centred dot). The grey groups, which ITC does not print, follow symcrys's rule
- * (the class's symbol and an underlined 1, Thomas 2026-11-25).
+ * (the class's symbol and an underlined 1).
  */
 
 import { describe, expect, it } from 'vitest';

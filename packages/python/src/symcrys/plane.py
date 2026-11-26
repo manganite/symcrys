@@ -79,7 +79,7 @@ class PlaneOperation(TypedDict):
 @dataclass(frozen=True, eq=False)
 class Operations:
     """The operations of a plane group or plane point group as arrays, one row per operation, in the
-    order of ``operations`` (#137 H1): what ``operations`` and ``generators`` return, and what
+    order of ``operations``: what ``operations`` and ``generators`` return, and what
     ``describe_operations_of`` accepts, beside a list of dicts ``{"matrix", "translation"}``.
     Frozen, its arrays read-only; ``len(ops)`` is the number of operations.
     """
@@ -223,11 +223,11 @@ class OperationDescription(TypedDict):
     """
     axis: NotRequired[NDArray[np.int64]]
     """For a reflection or glide reflection: its axis, the normal of its line in the lattice basis (as
-    the ``axis`` of a reflection of the point groups is the normal of its plane, #137 C3), its symmetry
-    direction with the sign of its Seitz symbol (``m₁₀``, ``m₁₂``): the shortest integer vector along
-    the columns of W − I, first non-zero component positive, which is the Seitz direction for every
-    plane group (tested). Without a metric it is not the perpendicular of ``direction``: in a hexagonal
-    basis the normal of a line along [1,0] is [1,2].
+    the ``axis`` of a reflection of the point groups is the normal of its plane), its symmetry direction
+    with the sign of its Seitz symbol (``m₁₀``, ``m₁₂``): the shortest integer vector along the columns
+    of W − I, first non-zero component positive, which is the Seitz direction for every plane group
+    (tested). Without a metric it is not the perpendicular of ``direction``: in a hexagonal basis the
+    normal of a line along [1,0] is [1,2].
     """
     glide: NotRequired[NDArray[np.float64]]
     """For a glide: the glide vector (w + W·w)/2, not reduced modulo the lattice."""
@@ -832,8 +832,8 @@ def symbol(
     setting: Optional[Union[int, str]] = None,
     form: Optional[Literal["short", "full"]] = None,
 ) -> str:
-    """The symbol of a plane group or a plane point group (#137 F4). In the short form (the default)
-    the Hermann–Mauguin symbol as one word: for a plane group the key (``'p2mg'``, ``'pm'``), for a
+    """The symbol of a plane group or a plane point group. In the short form (the default) the
+    Hermann–Mauguin symbol as one word: for a plane group the key (``'p2mg'``, ``'pm'``), for a
     plane point group in a setting ``'3m1'`` or ``'31m'`` for ``3m``, otherwise the key. In the form
     ``'full'`` the full symbol with its positions separated by spaces, as in the other entry points:
     ``'p 1 m 1'`` for ``pm`` (ITA writes ``p1m1``), ``'p 2 m g'``, ``'3 m 1'``; a plane point group
@@ -1031,7 +1031,7 @@ def crystal_forms(key: str, *, setting: Optional[Union[int, str]] = None) -> lis
 
 def site_symmetry(key: str, point: ArrayLike, *, tolerance: Optional[float] = None) -> SiteSymmetry:
     """The site symmetry of a point (lattice basis) under a plane group, as one notion with its
-    Wyckoff position (#137 F1): the point is set onto the position it lies on within the tolerance
+    Wyckoff position: the point is set onto the position it lies on within the tolerance
     (``wyckoff_position``), and the site symmetry is that of the point there; ``point`` is the point
     on the position. Raises SymcrysError for an unknown key, a point that is not two finite numbers,
     or a tolerance outside (0, 1/2).
@@ -1099,18 +1099,17 @@ def wyckoff_distances(
     basis: Optional[ArrayLike] = None,
 ) -> list[WyckoffDistance]:
     """The distance of a point (lattice basis) to every Wyckoff position of a plane group, in the
-    order of ``wyckoff_positions``, each with the nearest point of the position (#137 F1, #108). The
-    point set of a position is the union of the points of its coordinates with every centring and
-    lattice translation: a point, a line or the plane. Without a basis the distance is the larger of
-    the two coordinate differences modulo the lattice, the metric of the tolerance of
-    ``wyckoff_position``; with a basis (columns a, b) it is Euclidean, and the nearest point is the
-    Euclidean nearest one; per coordinate the nearest point of a line need not be unique (on x,0
-    every x within the distance is as near), and then it is one of them. The basis should be a
-    reduced cell, such as the conventional one: the nearest lattice translate is sought near the
-    rounded coordinates. How to snap a dragged point onto a position (which position wins, within
-    which radius) is the application's choice; this gives the numbers for it. Raises SymcrysError
-    for an unknown key, a point that is not two finite numbers, and a basis that is not a
-    non-singular 2 × 2 matrix.
+    order of ``wyckoff_positions``, each with the nearest point of the position. The point set of a
+    position is the union of the points of its coordinates with every centring and lattice
+    translation: a point, a line or the plane. Without a basis the distance is the larger of the two
+    coordinate differences modulo the lattice, the metric of the tolerance of ``wyckoff_position``;
+    with a basis (columns a, b) it is Euclidean, and the nearest point is the Euclidean nearest one;
+    per coordinate the nearest point of a line need not be unique (on x,0 every x within the
+    distance is as near), and then it is one of them. The basis should be a reduced cell, such as
+    the conventional one: the nearest lattice translate is sought near the rounded coordinates. How
+    to snap a dragged point onto a position (which position wins, within which radius) is the
+    application's choice; this gives the numbers for it. Raises SymcrysError for an unknown key, a
+    point that is not two finite numbers, and a basis that is not a non-singular 2 × 2 matrix.
 
     Parameters
     ----------
@@ -1171,9 +1170,9 @@ def orbit(
 
 
 def asymmetric_unit(key: str) -> AsymmetricUnit:
-    """The asymmetric unit of a plane group as ITA gives it (#137 F3): ITA's inequalities, all of
-    them in ITA's order (a double inequality and a ``min`` give one each), and the convex polygon
-    they bound, with its vertices and, per edge, the index of the inequality that holds it. Raises
+    """The asymmetric unit of a plane group as ITA gives it: ITA's inequalities, all of them in
+    ITA's order (a double inequality and a ``min`` give one each), and the convex polygon they
+    bound, with its vertices and, per edge, the index of the inequality that holds it. Raises
     SymcrysError for an unknown key.
 
     Returns
@@ -1187,14 +1186,14 @@ def asymmetric_unit(key: str) -> AsymmetricUnit:
 
 
 def symmetry_elements(key: str, *, box: Optional[ArrayLike] = None) -> SymmetryElements:
-    """The symmetry elements of a plane group (#137 F2). Without a box, each element once modulo the
-    lattice translations, the centring (1/2, 1/2) included, as ITA describes them (cm: the mirror
-    line 0,y and the glide line 1/4,y): every rotation point in [0, 1)² with the highest n of a
-    rotation about it, and every mirror and glide line, as a point in [0, 1)² and a direction. With
-    a box, all their lattice translates that meet it, boundary included; the lines are not clipped,
-    since clipping is drawing. Raises SymcrysError for an unknown key, a box that is not two corners
-    of finite numbers, the first not above or right of the second, and a box with more than a
-    million rotation points.
+    """The symmetry elements of a plane group. Without a box, each element once modulo the lattice
+    translations, the centring (1/2, 1/2) included, as ITA describes them (cm: the mirror line 0,y
+    and the glide line 1/4,y): every rotation point in [0, 1)² with the highest n of a rotation
+    about it, and every mirror and glide line, as a point in [0, 1)² and a direction. With a box,
+    all their lattice translates that meet it, boundary included; the lines are not clipped, since
+    clipping is drawing. Raises SymcrysError for an unknown key, a box that is not two corners of
+    finite numbers, the first not above or right of the second, and a box with more than a million
+    rotation points.
 
     Parameters
     ----------

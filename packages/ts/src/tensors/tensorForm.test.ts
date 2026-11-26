@@ -226,7 +226,7 @@ describe('index symmetries, counts for class 1 and between symmetries', () => {
   });
 });
 
-describe("the index symmetries 'antisymmetric' and 'totally-symmetric' (#137 E2)", () => {
+describe("the index symmetries 'antisymmetric' and 'totally-symmetric'", () => {
   const MAGNETIC = [...POINT_GROUP_KEYS, "4'mm'", "6'/m'mm'", "mm'm'", "-3'm", "2221'", "m-3m1'"] as const;
   const count = (key: string, s: TensorSpec, setting = 1) =>
     tensorForm(key as PointGroupKey, s, { setting }).parameters.length;
@@ -355,7 +355,7 @@ describe("the index symmetries 'antisymmetric' and 'totally-symmetric' (#137 E2)
   });
 });
 
-describe('the names of a tensor specification up to 0.10 (#137 E1, E2)', () => {
+describe('the names of a tensor specification up to 0.10', () => {
   it('are refused with the names that replace them', () => {
     const old = { rank: 3, parity: 'polar', timeParity: 'i', intrinsic: 'jk' } as unknown as TensorSpec;
     expect(() => tensorForm('1', old)).toThrow(/named kind since symcrys 0.11/);

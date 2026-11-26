@@ -10,7 +10,7 @@
   "scripts": {
     "typecheck": "node node_modules/typescript/bin/tsc -p tsconfig.json && node node_modules/typescript/bin/tsc -p packages/ts/tsconfig.build.json --noEmit",
     "typecheck:ts7": "node node_modules/typescript7/bin/tsc -p tsconfig.json && node node_modules/typescript7/bin/tsc -p packages/ts/tsconfig.build.json --noEmit",
-    "lint": "eslint .",
+    "lint": "eslint . && node scripts/check-wording.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run",

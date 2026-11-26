@@ -3,7 +3,7 @@
  * catalogue (ITA 5th ed., 2006, Tables 10.1.2.2 and 10.1.2.3), symcrys#24 item 2.
  *
  * An additional, independent check of the transcription, not its anchor (the anchor is the 2016
- * print; CLAUDE.md, "Correctness and provenance"). Reads js/formen.js of the sibling checkout
+ * print; GUIDE.md, "Correctness and tests"). Reads js/formen.js of the sibling checkout
  * ../stereography at the revision of `../stereography-2006.ts` (its last own transcription of ITA
  * 2006) and writes report.md next to this file. Run by hand: npm run audit:forms-2006. Not
  * part of the build, the tests or CI.

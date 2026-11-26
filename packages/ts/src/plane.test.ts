@@ -93,7 +93,7 @@ describe('plane point groups', () => {
     expect(plane.symbol('3m', { setting: 2 })).toBe('31m');
     expect(plane.symbol('2mm')).toBe('2mm');
     expect(plane.symbol('m')).toBe('m');
-    // Plane groups too (#137 F4): the short symbol is the key, the full one as ITA prints it.
+    // Plane groups too: the short symbol is the key, the full one as ITA prints it.
     expect(plane.symbol('pm')).toBe('pm');
     expect(plane.symbol('pm', { form: 'full' })).toBe('p 1 m 1');
     expect(plane.symbol('cm', { form: 'full' })).toBe('c 1 m 1');
@@ -206,7 +206,7 @@ describe('plain numbers at the API', () => {
     });
   });
 
-  it('the orbit of a point gives each image with the operations that map the point there (#137 C4)', () => {
+  it('the orbit of a point gives each image with the operations that map the point there', () => {
     const orbit = plane.orbit('p4', [0.1, 0.2]);
     expect(orbit).toHaveLength(4);
     expect(orbit.flatMap((e) => e.operations).sort((a, b) => a - b)).toEqual([0, 1, 2, 3]);
@@ -265,7 +265,7 @@ describe('plain numbers at the API', () => {
   });
 });
 
-describe('symmetryElements and asymmetricUnit (#137 F2, F3)', () => {
+describe('symmetryElements and asymmetricUnit', () => {
   it('give each element once modulo the lattice, and the translates in a box on request', () => {
     // p2: the four twofold points 0,0; 1/2,0; 0,1/2; 1/2,1/2, each once (in the cell [0, 1]² there are nine).
     const once = plane.symmetryElements('p2');
@@ -338,7 +338,7 @@ describe('wyckoffDistances', () => {
     expect(a.point[1]).toBeCloseTo(0.3, 12);
   });
 
-  it('agrees with wyckoffPosition and siteSymmetry: one notion (#137 F1)', () => {
+  it('agrees with wyckoffPosition and siteSymmetry: one notion', () => {
     // 0.012 from the mirror line of pm; its image is 0.024 away, beyond the tolerance 0.02.
     expect(plane.wyckoffPosition('pm', [0.012, 0.3], { tolerance: 0.02 }).letter).toBe('a');
     const site = plane.siteSymmetry('pm', [0.012, 0.3], { tolerance: 0.02 });
@@ -533,7 +533,7 @@ describe('errors', () => {
   });
 });
 
-describe('plane cells (#119, #137 G5)', () => {
+describe('plane cells (#119)', () => {
   const close = (x: readonly (readonly number[])[], y: readonly (readonly number[])[]) =>
     x.every((r, i) => r.every((v, j) => Math.abs(v - y[i][j]) < 1e-12));
 

@@ -23,7 +23,7 @@ const property = (spec: TensorSpec, description: string): TensorProperty =>
  * The named tensor properties. For each name, the tensor that describes the property and what it
  * is. `'gyrotropic'` is optical activity.
  *
- * @remarks Names are adjectives, one lower-case word each (maintainer, 2026-11-19, #41).
+ * @remarks Names are adjectives, one lower-case word each.
  */
 export const TENSOR_PROPERTIES = Object.freeze({
   /**
