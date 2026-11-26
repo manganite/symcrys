@@ -26,8 +26,9 @@ import {
 } from './affine.js';
 import { planeElements } from './cell.js';
 import { describePlaneOperation } from './describe.js';
-import { centringOperations, planeGroupEntry, planeGroupOperations } from './planeGroups.js';
+import { centringOperations, planeGroupEntry, planeGroupOperations, planeGroupSystem } from './planeGroups.js';
 import type { PlaneSystem } from './planeGroupData.js';
+import { PLANE_SYMMETRY_DIRECTIONS } from './planeSymmetryDirections.js';
 import {
   add,
   isInteger,
@@ -52,38 +53,6 @@ type Element =
   | { readonly kind: 'point'; readonly point: Vec }
   | { readonly kind: 'line'; readonly point: Vec; readonly direction: Direction };
 type Line = Element & { readonly kind: 'line' };
-
-/**
- * The symmetry directions of the plane lattices after the rotation point, by set: convention data of
- * ITA (2016 Table 2.1.3.1, p. 151, "Two dimensions"), which fix the order of the positions of the
- * symbols; compared with the transcription by `planeWyckoff.reference.test.ts`.
- */
-export const PLANE_SYMMETRY_DIRECTIONS: Readonly<Record<PlaneSystem, readonly (readonly Direction[])[]>> = deepFreeze({
-  oblique: [],
-  rectangular: [[[1, 0]], [[0, 1]]],
-  square: [
-    [
-      [1, 0],
-      [0, 1],
-    ],
-    [
-      [1, -1],
-      [1, 1],
-    ],
-  ],
-  hexagonal: [
-    [
-      [1, 0],
-      [0, 1],
-      [-1, -1],
-    ],
-    [
-      [1, -1],
-      [1, 2],
-      [-2, -1],
-    ],
-  ],
-});
 
 /**
  * The first representative of a point position where ITA prints another point of the orbit than the
@@ -311,7 +280,12 @@ export function planeWyckoffRows(key: string | number): readonly PlaneWyckoffRow
       const im = reduceModLattice(compose(op, param));
       if (!images.some((x) => centrings.some((c) => equalModLattice(compose(c, x), im)))) images.push(im);
     }
-    return [p.multiplicity, letters[i], orientedSymbol(entry.system, p.site), images.map(formatOperation)];
+    return [
+      p.multiplicity,
+      letters[i],
+      orientedSymbol(planeGroupSystem(entry.symbol), p.site),
+      images.map(formatOperation),
+    ];
   });
   const general: PlaneWyckoffRow = [ops.length, letters[positions.length], '1', ownOps.map(formatOperation)];
   const result = deepFreeze([general, ...rows.reverse()]);

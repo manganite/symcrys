@@ -16,7 +16,7 @@ import { describe, expect, it } from 'vitest';
 import { readReference, tableRows } from '../testUtils/references.js';
 import { applyToPoint, compose, parseOperation, translationOperation, type ExactOperation } from './affine.js';
 import { describePlaneOperation, type PlaneOperationDescription } from './describe.js';
-import { PLANE_GROUP_KEYS, planeGroupEntry, planeGroupOperations } from './planeGroups.js';
+import { PLANE_GROUP_KEYS, planeGroupOperations } from './planeGroups.js';
 import { planeElements } from './cell.js';
 import { add, formatRational, rational, scale, type Rational } from './rational.js';
 
@@ -54,6 +54,19 @@ function symbol(d: PlaneOperationDescription): string {
       return `${letter} ${line(d)}`;
     }
   }
+}
+
+/** The printed full symbol and crystal system of each plane group. */
+function printedHeadlines(): Map<string, { fullSymbol: string; system: string }> {
+  const md = readReference('itc/vol-a-2016-plane-groups.md');
+  const out = new Map<string, { fullSymbol: string; system: string }>();
+  for (const section of md.split('\n## ').slice(1)) {
+    const symbol = /^\d+ — (\S+),/.exec(section)![1];
+    const fullSymbol = /^Full symbol: (\S+)/m.exec(section)![1];
+    const system = /^System: (\S+)/m.exec(section)![1].toLowerCase();
+    out.set(symbol, { fullSymbol, system });
+  }
+  return out;
 }
 
 function printedOperations(): Map<string, string[]> {
@@ -199,12 +212,12 @@ describe('normals of mirror and glide lines against ITA Table 2.1.3.1 and the fu
   });
 
   it.each(PLANE_GROUP_KEYS)('%s: the normals are the printed directions where the full symbol has m or g', (key) => {
-    const entry = planeGroupEntry(key);
-    // The full symbol: lattice letter, then primary (rotation), secondary and tertiary positions.
-    const positions = entry.fullSymbol.slice(1).split('');
+    const headline = printedHeadlines().get(key)!;
+    // The printed full symbol: lattice letter, then primary (rotation), secondary and tertiary positions.
+    const positions = headline.fullSymbol.slice(1).split('');
     const expected = new Set<string>();
-    positions.slice(1).forEach((c, i) => {
-      if (c === 'm' || c === 'g') for (const d of lattice[entry.system][i]) expected.add(d);
+    positions.slice(1).forEach((c: string, i: number) => {
+      if (c === 'm' || c === 'g') for (const d of lattice[headline.system][i]) expected.add(d);
     });
     const fromOperations = new Set<string>();
     for (const op of planeGroupOperations(key)) {

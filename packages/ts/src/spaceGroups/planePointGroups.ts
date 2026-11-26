@@ -6,9 +6,17 @@
  * Internal; exported through `symcrys/plane`.
  */
 
-import { type ExactOperation } from './affine.js';
+import { compose, type ExactOperation } from './affine.js';
 import { type PlaneSystem } from './planeGroupData.js';
-import { planeGroupEntry, planeGroupGenerators, planeGroupOperations } from './planeGroups.js';
+import {
+  PLANE_GROUP_KEYS,
+  latticeLetter,
+  planeGroupEntry,
+  planeGroupFullSymbol,
+  planeGroupGenerators,
+  planeGroupOperations,
+  planeGroupSystem,
+} from './planeGroups.js';
 import { ZERO } from './rational.js';
 
 /**
@@ -51,15 +59,60 @@ const SOURCE: Record<PlanePointGroupKey, readonly string[]> = {
   '6mm': ['p6mm'],
 };
 
-/** The point group of a plane group and its setting: the key under which the plane group's symbol appears in `SOURCE`. */
+/** The linear parts of a list of operations as a sorted list of strings, to compare them as sets. */
+function linearSet(ops: readonly ExactOperation[]): string {
+  return [...new Set(ops.map((op) => JSON.stringify(op.matrix)))].sort().join(';');
+}
+
+/**
+ * The plane point group and setting whose operations are the given linear parts, as a set; for a
+ * plane group that is not symmorphic the first setting whose operations they are.
+ */
+function pointGroupOfLinearParts(ops: readonly ExactOperation[]): { key: PlanePointGroupKey; setting: number } {
+  const wanted = linearSet(ops);
+  for (const key of PLANE_POINT_GROUP_KEYS) {
+    const i = SOURCE[key].findIndex((symbol) => linearSet(planeGroupOperations(symbol)) === wanted);
+    if (i >= 0) return { key, setting: i + 1 };
+  }
+  throw new Error(`No plane point group has the operations ${wanted}`);
+}
+
+/**
+ * The point group of a plane group and its setting: the symmorphic group's own entry in `SOURCE`,
+ * or the point group whose operations are the plane group's linear parts.
+ */
 export function planePointGroupOf(groupSymbol: string): { key: PlanePointGroupKey; setting: number } {
   for (const key of PLANE_POINT_GROUP_KEYS) {
     const i = SOURCE[key].indexOf(groupSymbol);
     if (i >= 0) return { key, setting: i + 1 };
   }
-  // A plane group that is not symmorphic has the setting of the symmorphic group of its point group.
-  const entry = planeGroupEntry(groupSymbol);
-  return { key: entry.pointGroup as PlanePointGroupKey, setting: 1 };
+  return pointGroupOfLinearParts(planeGroupOperations(groupSymbol));
+}
+
+/**
+ * The Patterson symmetry of a plane group: the symmorphic plane group of its lattice whose point
+ * group is its Laue class (ITA 2016 § 2.1.3.5, p. 152), the point group with the twofold rotation,
+ * the symmetry centre of the plane, added (§ 3.2.1.1, p. 720).
+ */
+export function planeGroupPatterson(groupSymbol: string): string {
+  const twofold: ExactOperation = {
+    matrix: [
+      [-1, 0],
+      [0, -1],
+    ],
+    translation: [ZERO, ZERO],
+  };
+  const ops = planeGroupOperations(groupSymbol);
+  const withCentre = [...ops, ...ops.map((op) => compose(twofold, op))];
+  const laue = pointGroupOfLinearParts(withCentre).key;
+  const letter = latticeLetter(planeGroupEntry(groupSymbol));
+  if (letter === 'p') return SOURCE[laue][0];
+  // A centred lattice: the centred plane group of the Laue class without glide lines.
+  const found = PLANE_GROUP_KEYS.find(
+    (k) => k[0] === letter && planePointGroupOf(k).key === laue && !planeGroupFullSymbol(k).includes('g'),
+  );
+  if (!found) throw new Error(`No Patterson symmetry for ${groupSymbol}`);
+  return found;
 }
 
 /** True if `key` is the key of a plane point group. */
@@ -83,13 +136,13 @@ export function planePointGroupSettingCount(key: PlanePointGroupKey): number {
 
 /** The symbol of a plane point group in a setting: `3m1` or `31m` for `3m`, otherwise the key. */
 export function planePointGroupSymbol(key: PlanePointGroupKey, setting = 1): string {
-  const full = planeGroupEntry(source(key, setting)).fullSymbol.slice(1);
+  const full = planeGroupFullSymbol(source(key, setting)).slice(1);
   return key === '3m' ? full : key;
 }
 
 /** The crystal system of a plane point group. */
 export function planePointGroupSystem(key: PlanePointGroupKey): PlaneSystem {
-  return planeGroupEntry(source(key)).system;
+  return planeGroupSystem(source(key));
 }
 
 const linear = (op: ExactOperation): ExactOperation => ({
