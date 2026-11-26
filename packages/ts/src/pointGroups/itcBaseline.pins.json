@@ -1,6 +1,6 @@
 {
   "note": "Behavioural pins (fixture class (c), GUIDE.md): the output of symcrys in the ITC convention, the safety net of the ITC migration (#121, #137). Captured by audit/itc-baseline/capture.run.ts (npm run audit:itc-baseline) from the revision below; regenerate only by re-capture, never edit. One pin per line: what was asked (id) and the answer or the error (value); numbers rounded to 12 decimals.",
-  "revision": "edebbf8 2026-11-26",
+  "revision": "61133c5 2026-11-26",
   "pins": [
     {"id":"classes.POINT_GROUP_KEYS","value":["1","-1","2","m","2/m","222","mm2","mmm","4","-4","4/m","422","4mm","-42m","4/mmm","3","-3","32","3m","-3m","6","-6","6/m","622","6mm","-6m2","6/mmm","23","m-3","432","-43m","m-3m"]},
     {"id":"magnetic.POINT_GROUP_KEYS","value":["1","-1","2","m","2/m","222","mm2","mmm","4","-4","4/m","422","4mm","-42m","4/mmm","3","-3","32","3m","-3m","6","-6","6/m","622","6mm","-6m2","6/mmm","23","m-3","432","-43m","m-3m","11'","-11'","21'","m1'","2/m1'","2221'","mm21'","mmm1'","41'","-41'","4/m1'","4221'","4mm1'","-42m1'","4/mmm1'","31'","-31'","321'","3m1'","-3m1'","61'","-61'","6/m1'","6221'","6mm1'","-6m21'","6/mmm1'","231'","m-31'","4321'","-43m1'","m-3m1'","-1'","2'","m'","2'/m'","2/m'","2'/m","2'2'2","m'm'2","2'm'm","mm'm'","m'm'm'","mmm'","4'","-4'","4'/m","4/m'","4'/m'","4'22'","42'2'","4'mm'","4m'm'","-4'2m'","-4'm2'","-42'm'","4'/mmm'","4/mm'm'","4/m'm'm'","4/m'mm","4'/m'm'm","-3'","32'","3m'","-3m'","-3'm'","-3'm","6'","-6'","6'/m'","6/m'","6'/m","6'22'","62'2'","6'mm'","6m'm'","-6'2m'","-6'm2'","-6m'2'","6'/m'mm'","6/mm'm'","6/m'm'm'","6/m'mm","6'/mmm'","m'-3'","4'32'","-4'3m'","m-3m'","m'-3'm'","m'-3'm"]},
@@ -109,7 +109,7 @@
     {"id":"error: classes.allowsProperty time-odd name","value":{"error":"RangeError: \"ferromagnetic\" is the property of a time-odd tensor: the crystallographic API has no time reversal; use the magnetic API ('symcrys/magnetic', in Python symcrys.magnetic)"}},
     {"id":"error: classes.siteSymmetry zero vector","value":{"error":"RangeError: Not a direction: [0,0,0]"}},
     {"id":"error: classes.siteSymmetry tolerance 0","value":{"error":"RangeError: The tolerance must be a number above 0 and below 1, not 0"}},
-    {"id":"error: classes.tensorFormOf not orthogonal","value":{"error":"RangeError: Operation 0 is not an orthogonal (Cartesian) matrix within the tolerance 0.00001: [[2,0,0],[0,1,0],[0,0,1]]"}},
+    {"id":"error: classes.tensorFormOf not orthogonal","value":{"error":"RangeError: Operation 0 is not an orthogonal (Cartesian) matrix within the tolerance 0.00001 (at least EPSILON): [[2,0,0],[0,1,0],[0,0,1]]"}},
     {"id":"error: classes.isCentrosymmetricOf infinite group","value":{"error":"RangeError: The operations generate no finite point group within the tolerance 0.00001 (more than 200 elements): matrices with errors too large for the tolerance (pass a larger one, about ten times their rounding), or a rotation by an angle that is not 360°/n"}},
     {"id":"error: magnetic.tensorFormOf without time reversal","value":{"error":"RangeError: Operation 0: timeReversal must be true or false, not undefined; an operation of the magnetic API says whether it is combined with time reversal"}},
     {"id":"error: plane.operations point group key with setting 3","value":{"error":"RangeError: The plane point group 3m has no setting 3"}},
