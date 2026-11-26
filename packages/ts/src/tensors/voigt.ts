@@ -2,7 +2,7 @@
  * Voigt's two-index notation of tensors with symmetric index pairs, as ITC Vol. D (2013) writes it
  * (§ 1.1.4.10, pp. 24–27; eq. (1.5.7.4), p. 134): an index pair ij becomes one index α = 1…6 for
  * 11, 22, 33, 23, 31, 12 (eq. (1.1.4.6)), and the components with α = 4, 5, 6 carry a factor 1 or 2
- * per pair, as ITC defines the quantity (#137 E3, decided by Thomas on 2026-11-25).
+ * per pair, as ITC defines the quantity.
  */
 
 import { checkOptions, shown } from '../checks.js';

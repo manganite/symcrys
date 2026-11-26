@@ -1,5 +1,5 @@
 /**
- * Integer helpers shared by the modules (the one place for them, #101).
+ * Integer helpers shared by the modules (the one place for them).
  */
 
 /**

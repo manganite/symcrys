@@ -1,7 +1,7 @@
 // The form of a property tensor as text to show: the free components, how each other component
 // follows from them, and that the rest are 0. Pure: it takes the module symcrys as an argument, so that the page (main.js)
 // and a run in Node (browser-form.ts, when the site is built) share it. Display strings belong to
-// the application, not to symcrys (CLAUDE.md, "Results as numbers, not text").
+// the application, not to symcrys (GUIDE.md, "The API").
 
 const AXES = ['x', 'y', 'z'];
 

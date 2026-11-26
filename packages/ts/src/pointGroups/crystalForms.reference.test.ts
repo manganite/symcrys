@@ -533,7 +533,7 @@ describe('ITA Table 3.2.3.2: face forms', () => {
         expect([f.multiplicity, f.siteSymmetry]).toEqual([Number(position?.[3]), position?.[5]]);
         expect(f.condition ?? '').toBe(r[7].replace(/abs\((\w)\)/g, '|$1|'));
         const printed = hklOf(r[6], valuesFor(r[7], e.axes));
-        // The public millerIndices gives the face the test reads from print (#137 G3).
+        // The public millerIndices gives the face the test reads from print.
         expect(millerIndices(f.millerIndices, valuesFor(r[7], e.axes))).toEqual(printed);
         const face = representativeFace(found[0].key, found[0].index, f.millerIndices, f.condition);
         expect(sameV(face.cartesian, faceNormal(e.basis, printed))).toBe(true);

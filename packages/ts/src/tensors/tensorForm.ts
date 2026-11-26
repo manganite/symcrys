@@ -1,8 +1,8 @@
 /**
  * Symmetry-reduced forms of property tensors: which Cartesian components of a tensor of rank 0 to 4
  * a point group allows, and how they depend on each other. Results are plain numbers (coefficient
- * matrices and index lists); formulas, LaTeX and diagrams stay in the applications (CLAUDE.md,
- * "Tensors").
+ * matrices and index lists); formulas, LaTeX and diagrams stay in the applications
+ * (docs/conventions.md, "Tensors").
  *
  * Components are numbered by their flat index: for indices (i₁, …, iₙ) with x, y, z = 0, 1, 2 the
  * flat index is i₁·3ⁿ⁻¹ + … + iₙ, so the first index varies slowest (row-major, the order of a
@@ -85,7 +85,7 @@ export type IntrinsicSymmetry =
   | 'antisymmetric'
   | 'totally-symmetric';
 
-/** The kind of tensor (#137 E1, E2). */
+/** The kind of tensor. */
 export interface TensorSpec {
   /** Number of indices, 0 to 4. */
   readonly rank: TensorRank;
@@ -134,7 +134,7 @@ export interface SignedPermutation {
   readonly sign: 1 | -1;
 }
 
-/** The names of the fields and values up to 0.10, with those that replace them (#137 E1, E2). */
+/** The names of the fields and values up to 0.10, with those that replace them. */
 const RENAMED_INTRINSIC: Readonly<Record<string, IntrinsicSymmetry>> = {
   ij: 'symmetric-first-pair',
   jk: 'symmetric-last-pair',
@@ -256,7 +256,7 @@ function freezeRows(rows: readonly (readonly number[])[]): readonly (readonly nu
  * averaged vectors and their row reduction. Each orbit of the index symmetry adds a diagonal
  * element of the average, which is an orthogonal projector, so each adds a number from 0 to 1; the
  * sum is the dimension, a whole number up to rounding, and it is at least 1 as soon as a partial sum
- * reaches 1/2. For the yes/no questions of the named properties (#100).
+ * reaches 1/2. For the yes/no questions of the named properties.
  */
 export function allowsTensor(
   group: readonly CartesianOperation[],
@@ -373,7 +373,7 @@ function project(
  * them, a component smaller than about that is not known to be independent: the pivots are first
  * sought at 10 × `deviation` (at least `PIVOT_EPSILON`) and the threshold is lowered tenfold until
  * the pivots reach the rank, so that the free parameters are those of the exact form unless one of
- * its pivots is itself of the order of the deviation (#89). Should the pivots exceed the rank even
+ * its pivots is itself of the order of the deviation. Should the pivots exceed the rank even
  * at `PIVOT_EPSILON` (a component of the order of 10⁻⁷ in a general orientation), the threshold is
  * raised instead until they reach it.
  */
@@ -473,7 +473,7 @@ export function tensorFormOf(
  * The groups of the last `CALLER_CACHE_SIZE` lists of operations a caller passed in, keyed by the
  * numbers the functions read (`cartesian`, `timeReversal`, in the order given) and the tolerance,
  * and the forms computed for each group: a list passed again, as a Python loop does, costs no
- * closure and no projection (#100). The checks of the input run on every call, before the lookup.
+ * closure and no projection. The checks of the input run on every call, before the lookup.
  * Groups and forms are frozen, so sharing them is safe; the groups are dropped oldest first, and
  * their forms with them. The key is the list as given, so the same group in another order or with
  * other rounding is computed anew (correct, just not shared).
@@ -556,7 +556,7 @@ export function rotateTensor(
   const m = rotation.flat();
   const f = resolved.kind === 'axial' ? Math.sign(det(rotation)) : 1;
   // One index at a time: t′ = R along index 1, then along index 2, …, rank·3^(rank+1) products
-  // instead of rank·9^rank (#100); index k of the flat position has the stride 3^(rank−1−k).
+  // instead of rank·9^rank; index k of the flat position has the stride 3^(rank−1−k).
   let current: number[] = tensor.map((x) => x + 0);
   for (let k = 0; k < rank; k++) {
     const stride = 3 ** (rank - 1 - k);

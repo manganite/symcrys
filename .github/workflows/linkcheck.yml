@@ -1,7 +1,7 @@
 name: Links
 
 # The external links of the documentation site (docs/, #29). Not a gate: a site elsewhere that is
-# down for a while must not block a merge (maintainer, 2026-11-21). It runs on every pull request,
+# down for a while must not block a merge. It runs on every pull request,
 # so that a broken link shows beside the change that made it, and weekly and by hand, so that a
 # link that dies without any change here is found too.
 

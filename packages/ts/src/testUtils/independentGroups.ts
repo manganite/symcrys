@@ -1,7 +1,7 @@
 /**
  * Independent matrix algebra for the reference tests (test-only code). Deliberately shares nothing
  * with the library (no import from src/ outside testUtils), so an error in the library's linear
- * algebra, closure or data cannot cancel out in a comparison (CLAUDE.md, "Anti-circularity").
+ * algebra, closure or data cannot cancel out in a comparison (GUIDE.md, "Correctness and tests").
  */
 
 export type M = number[][];

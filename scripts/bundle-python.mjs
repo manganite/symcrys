@@ -1,7 +1,7 @@
 // Bundles the built TypeScript package (packages/ts/dist/, npm run build first) into one script for
 // the Python package (npm run bundle:python). The script runs in the JavaScript engine of the
 // Python package (quickjs-ng) and defines one global object, `__symcrys`, the whole boundary
-// between the two languages (#30):
+// between the two languages:
 //
 //   __symcrys.call(name, argsJson) → resultJson   calls an exported function with JSON arguments;
 //                                                  the result is {"result": …} or {"error": {name, message}}

@@ -12,7 +12,7 @@ import { ELIMINATION_EPSILON, PIVOT_EPSILON } from '../tolerances.js';
  * parameters unambiguously: each is the lowest-index component that is independent of the ones
  * before it. For operations with float noise a row can keep entries too small to be a pivot
  * (below `PIVOT_EPSILON`, or `pivotThreshold`) before its pivot, so the pivots are returned rather
- * than read off the rows (#88); entries below `ELIMINATION_EPSILON` are set to zero.
+ * than read off the rows; entries below `ELIMINATION_EPSILON` are set to zero.
  */
 export function rowEchelonWithPivots(
   vectors: readonly (readonly number[])[],

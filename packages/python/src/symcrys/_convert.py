@@ -1,4 +1,4 @@
-"""Fixed rules between the plain data of the TypeScript API and Python (#30, #99).
+"""Fixed rules between the plain data of the TypeScript API and Python.
 
 - Names: camelCase in JavaScript, snake_case in Python (``timeReversal`` ↔ ``time_reversal``), for
   function names and for the keys of objects.
@@ -40,7 +40,7 @@ def to_js(x: Any) -> Any:
     return x
 
 
-# --- results by schema (#99, #121 step 12a) -------------------------------------------------------
+# --- results by schema -------------------------------------------------------------------------
 #
 # The generated modules convert each result by a schema written from its TypeScript type
 # (scripts/python-api.mjs): what is an array, of which dtype and shape, what a record with which
@@ -55,7 +55,7 @@ def to_js(x: Any) -> Any:
 #   ("m", schema)                a mapping with keys kept as they are (names, families)
 #   ("x", name)                  a converter of its own (CUSTOM below)
 #   ("ops", cls, fields)         a list of operation records as one record of arrays, the class
-#                                ``Operations`` of the module (#137 H1); fields {jsKey: (dtype, shape)}
+#                                ``Operations`` of the module; fields {jsKey: (dtype, shape)}
 
 
 def convert(x: Any, schema: tuple[Any, ...]) -> Any:
@@ -99,7 +99,7 @@ def _tensor_form(x: Any) -> Any:
     n = len(x["basis"])
     return {
         "rank": rank,
-        # Each basis tensor in its shape (3, …, 3), rank times (#137 H2); the relations stay rows over
+        # Each basis tensor in its shape (3, …, 3), rank times; the relations stay rows over
         # the components in C order, r @ t.reshape(-1) == 0.
         "basis": np.asarray(x["basis"], dtype=np.float64).reshape((n, *(3,) * rank)),
         "parameters": np.asarray(x["parameters"], dtype=np.int64).reshape(n, rank),

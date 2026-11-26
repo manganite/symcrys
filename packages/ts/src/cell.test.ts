@@ -2,7 +2,7 @@
  * Unit cell, metric and angles. Expected values are hand calculations from the definitions (ITA
  * Vol. A, 2006, Section 8.1.4 for the lattice parameters; Part 9.1, Tables 9.1.7.1 and 9.1.7.2 for
  * the metric tensors of the Bravais lattices; Borchardt-Ott & Sowa, Chapter 5 for the angles),
- * class (b) of CLAUDE.md "Correctness and provenance": not library output.
+ * class (b) of GUIDE.md "Correctness and tests": not library output.
  */
 
 import { describe, expect, it } from 'vitest';
@@ -198,7 +198,7 @@ describe('isValidCell', () => {
     expect(isValidCell({ alpha: 60, beta: 60, gamma: 120 })).toBe(false); // exactly flat
     expect(isValidCell({ alpha: 90, beta: 90, gamma: 180 })).toBe(false);
     expect(isValidCell({ alpha: 0, beta: 90, gamma: 90 })).toBe(false);
-    // A value that is no finite number is wrong input, not a cell that does not exist (#137 D2).
+    // A value that is no finite number is wrong input, not a cell that does not exist.
     expect(() => isValidCell({ alpha: Number.NaN, beta: 90, gamma: 90 })).toThrow(RangeError);
     expect(() => isValidCell({ alpha: '90' as never, beta: 90, gamma: 90 })).toThrow(RangeError);
   });
@@ -399,7 +399,7 @@ describe('residualMagneticOperations', () => {
   });
 });
 
-describe('faceNormal (#137 G4)', () => {
+describe('faceNormal', () => {
   const close = (u: readonly number[], v: readonly number[]) => u.every((x, i) => Math.abs(x - v[i]) < 1e-12);
 
   it('is the unit vector h·a* + k·b* + l·c*', () => {

@@ -162,8 +162,8 @@ const parallel = (a: Vec3, b: Vec3): boolean => Math.abs(Math.abs(dot(a, b)) - 1
 
 /**
  * An operation described geometrically. Its axis lies along a symmetry direction of the setting and
- * carries the sign of the operation's Seitz symbol (ITA 2016 Tables 1.4.2.1–1.4.2.3; "Pure ITC",
- * #114), which for n ≥ 3 fixes what the sense refers to; the sense, computed from the matrix, is
+ * carries the sign of the operation's Seitz symbol (ITA 2016 Tables 1.4.2.1–1.4.2.3),
+ * which for n ≥ 3 fixes what the sense refers to; the sense, computed from the matrix, is
  * checked against the printed one.
  */
 function describe(
@@ -180,7 +180,7 @@ function describe(
   const direction = findAxis(axes, rotationAxis(r, n), what);
   const seitz = seitzOf(seitzAxes, op.matrix as unknown as IntMat3);
   if (!seitz?.axis) throw new Error(`${what}: no Seitz symbol for the matrix ${shown(op.matrix)}`);
-  // A frozen copy: the result must not share the table's array (every result frozen, #137 C4).
+  // A frozen copy: the result must not share the table's array (every result frozen).
   const signed = axisOf(basis, Object.freeze([...seitz.axis]) as unknown as Uvw);
   if (!parallel(signed.cartesian, direction.cartesian)) {
     throw new Error(`${what}: the Seitz direction [${seitz.axis.join(',')}] is not along the axis of the operation`);

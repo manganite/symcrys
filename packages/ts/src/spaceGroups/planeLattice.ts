@@ -1,7 +1,7 @@
 /**
  * The lattices of the plane: the crystal families with their Bravais lattices and cell restrictions
  * (ITA 2016 Table 2.1.1.1, p. 143, block "Two dimensions"), the Laue class of a plane point group
- * (ITA 2016 § 3.2.1.1, p. 720), and the cell functions for d = 2 (#119, #137 G5). Internal; the
+ * (ITA 2016 § 3.2.1.1, p. 720), and the cell functions for d = 2. Internal; the
  * entry point is `symcrys/plane`.
  */
 
@@ -218,7 +218,7 @@ export function planeMetricTensor(basis: unknown, who: string): Mat2 {
  * The operations of a list whose integer matrix W keeps the metric of a cell, WᵀGW = G, compared
  * relative to the largest entry of G within `tolerance`; the list is taken as it is and the kept
  * operations are the ones of the list, in its order (the plane form of `residualOperations` of
- * cell.ts, #119). Throws a RangeError for a list that is not one, an operation without a 2 × 2
+ * cell.ts). Throws a RangeError for a list that is not one, an operation without a 2 × 2
  * matrix of integers (`matrix`, not a Cartesian matrix) and a basis as `planeBasisColumns`.
  */
 export function planeResidualOperations<T extends { readonly matrix: readonly (readonly number[])[] }>(

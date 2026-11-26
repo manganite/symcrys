@@ -3,7 +3,7 @@
  * Part 6, pp. 92–109), symcrys#31.
  *
  * An additional, independent check of the transcription, not its anchor (the anchor is the 2016
- * print; CLAUDE.md, "Correctness and provenance"). Reads js/ebenengruppen.js from the sibling
+ * print; GUIDE.md, "Correctness and tests"). Reads js/ebenengruppen.js from the sibling
  * checkout ../plane-groups and writes report.md next to this file. Run by hand: npm run
  * audit:plane-groups-2006. Not part of the build, the tests or CI.
  *

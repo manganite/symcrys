@@ -183,7 +183,7 @@ describe('ITA Table 2.1.1.1: holohedries (Laue groups in full boxes)', () => {
   }
 });
 
-describe('ITA Table 1.3.4.1: lattice systems and their holohedries (#137 G1)', () => {
+describe('ITA Table 1.3.4.1: lattice systems and their holohedries', () => {
   const rows = tableRows(readReference('itc/vol-a-table-1.3.4.1.md'));
   expectHeader(rows, ['Lattice system', 'Bravais types of lattices', 'Holohedry']);
   /** The printed name, lower case and without "(anorthic)", and the printed holohedry. */

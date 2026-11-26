@@ -1,7 +1,7 @@
 /**
  * The output of symcrys in the ITC convention, collected over the public API of all three entry
  * points, as the safety net of the ITC migration (#121, #137): `audit/itc-baseline` writes it as
- * behavioural pins (fixture class (c), CLAUDE.md) from a known-good revision, and
+ * behavioural pins (fixture class (c), GUIDE.md) from a known-good revision, and
  * `itcBaseline.pins.test.ts` compares the current output with them. A pin that changes during the
  * migration is either an intended change, listed in its PR, or a bug.
  *
@@ -176,7 +176,7 @@ function errorPins(add: (id: string, f: () => unknown) => void): void {
 }
 
 /**
- * Descriptions in the shape of the pins (captured before #121 step 7c, #137 C2): `order` for `n`,
+ * Descriptions in the shape of the pins (captured before #121 step 7c): `order` for `n`,
  * `'mirror'` for `'reflection'`, `'glide'` for `'glide-reflection'`.
  */
 const oldDescriptions = (list: readonly { readonly kind: string; readonly n: number; readonly axis?: unknown }[]) =>
@@ -184,7 +184,7 @@ const oldDescriptions = (list: readonly { readonly kind: string; readonly n: num
     kind: kind === 'reflection' ? 'mirror' : kind === 'glide-reflection' ? 'glide' : kind,
     order: n,
     ...rest,
-    // The plane groups gave the axis of a reflection as `normal` (before #121 step 7d, #137 C3).
+    // The plane groups gave the axis of a reflection as `normal` (before #121 step 7d).
     ...(axis === undefined ? {} : Array.isArray(axis) ? { normal: axis } : { axis }),
   }));
 
@@ -196,7 +196,7 @@ const oldWyckoff = <W extends { readonly coordinates: readonly string[] }>({ coo
 
 /**
  * A Wyckoff position or crystal form with the field `representative` of the pins (removed in #121
- * step 11b, #137 G3, G4): the face with h, k, l = 3, 2, 1 (as before) and its normal in the basis of
+ * step 11b): the face with h, k, l = 3, 2, 1 (as before) and its normal in the basis of
  * the setting, from the internal function that gave them.
  */
 const withRepresentative =
@@ -351,7 +351,7 @@ function pointGroupPins(add: (id: string, f: () => unknown) => void, key: Magnet
   }
 }
 
-/** Index symmetries per rank, by the names of the pins (up to #121 step 9a, #137 E2). */
+/** Index symmetries per rank, by the names of the pins (up to #121 step 9a). */
 const INTRINSIC_BY_RANK: Readonly<Record<number, readonly string[]>> = {
   0: ['none'],
   1: ['none'],
@@ -360,7 +360,7 @@ const INTRINSIC_BY_RANK: Readonly<Record<number, readonly string[]>> = {
   4: ['none', 'ij', 'jk', 'ij_kl', 'voigt'],
 };
 
-/** The names of the pins and the names since #121 step 9a (#137 E1, E2). */
+/** The names of the pins and the names since #121 step 9a. */
 const NEW_INTRINSIC: Readonly<Record<string, TensorSpec['intrinsic']>> = {
   none: 'none',
   ij: 'symmetric-first-pair',
@@ -479,9 +479,9 @@ const NEAR_POINTS: readonly (readonly [number, number])[] = [
 /** The pins of one plane group. */
 function planeGroupPins(add: (id: string, f: () => unknown) => void, key: plane.PlaneGroupKey): void {
   const ops = plane.operations(key);
-  // The pins carry the field fullSymbol, removed in #121 step 10c (#137 F4): now symbol(key, { form: 'full' }),
+  // The pins carry the field fullSymbol, removed in #121 step 10c: now symbol(key, { form: 'full' }),
   // with spaces between the positions.
-  // bravaisLattice and pattersonSymmetry came in 0.12 (#137 G5), after the pins.
+  // bravaisLattice and pattersonSymmetry came in 0.12, after the pins.
   add(`${key}: planeGroup`, () => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { bravaisLattice, pattersonSymmetry, ...rest } = plane.planeGroup(key);
@@ -510,7 +510,7 @@ function planeGroupPins(add: (id: string, f: () => unknown) => void, key: plane.
   for (const p of POINTS) {
     add(`${key}: siteSymmetry (${p})`, () => plane.siteSymmetry(key, p));
     add(`${key}: wyckoffPositionOf (${p})`, () => plane.wyckoffPosition(key, p));
-    // Bare points before #121 step 7d (#137 C4).
+    // Bare points before #121 step 7d.
     add(`${key}: orbit (${p})`, () => plane.orbit(key, p).map((e) => e.point));
   }
   for (const p of NEAR_POINTS) {
@@ -525,13 +525,13 @@ function planeGroupPins(add: (id: string, f: () => unknown) => void, key: plane.
 
 /** The pins of one plane point group in every setting. */
 function planePointGroupPins(add: (id: string, f: () => unknown) => void, key: plane.PointGroupKey): void {
-  // laueClass came in 0.12 (#137 G5), after the pins.
+  // laueClass came in 0.12, after the pins.
   add(`${key}: pointGroup`, () => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { laueClass, ...rest } = plane.pointGroup(key);
     return rest;
   });
-  // `default` before #121 step 7d (#137 C4).
+  // `default` before #121 step 7d.
   add(`${key}: settings`, () => plane.settings(key).map(({ isDefault, ...rest }) => ({ ...rest, default: isDefault })));
   for (const s of plane.settings(key)) {
     const id = (what: string) => `${key} | ${s.symbol}: ${what}`;
@@ -582,7 +582,7 @@ function generalPins(add: (id: string, f: () => unknown) => void): void {
     'hexagonal',
     'cubic',
   ] as const) {
-    // holohedry took a crystal system until #121 step 11a (#137 G1); the trigonal system gave -3m,
+    // holohedry took a crystal system until #121 step 11a; the trigonal system gave -3m,
     // the holohedry of the rhombohedral lattice system.
     add(`crystalFamily, holohedry ${s}`, () => [
       classes.crystalFamily(s),
@@ -622,7 +622,7 @@ function generalPins(add: (id: string, f: () => unknown) => void): void {
       [0, 0, 1],
     ],
   ];
-  // changeOfAxes(P) before 0.12 (#137 G2): the direction matrix Q = P⁻¹ and the plane matrix Pᵀ, now
+  // changeOfAxes(P) before 0.12: the direction matrix Q = P⁻¹ and the plane matrix Pᵀ, now
   // the inverse linear part and the transformed unit planes of changeOfCoordinates.
   P.forEach((m, i) =>
     add(`changeOfAxes ${i}`, () => {

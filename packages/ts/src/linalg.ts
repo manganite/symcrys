@@ -12,7 +12,7 @@ export type Vec3 = readonly [number, number, number];
 /** A Cartesian 3×3 matrix, as three rows. */
 export type Mat3 = readonly [Vec3, Vec3, Vec3];
 
-// Frozen: they are shared by the modules and put into cached lists (#101).
+// Frozen: they are shared by the modules and put into cached lists.
 export const IDENTITY: Mat3 = deepFreeze([
   [1, 0, 0],
   [0, 1, 0],

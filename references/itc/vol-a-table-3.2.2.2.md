@@ -3,8 +3,8 @@
 Source: _International Tables for Crystallography_, Vol. A, 6th edition (2016), Chapter 3.2 (Point
 groups and crystal classes), Table 3.2.2.2, printed p. 739.
 
-Transcribed in birss-app (2026-07-11). Thomas compared the transcription with the printed original
-(2026-07-11), including the 622 row; checked again against the printed page on 2026-11-09.
+Transcribed in birss-app (2026-07-11). The maintainer compared the transcription with the printed
+original (2026-07-11), including the 622 row; checked again against the printed page on 2026-11-09.
 
 Transcription conventions: a leading minus sign inside a direction is an overbar on that index
 (`[-1-10]`); indices are written without separators as printed (`[u2uw]` is the family [u, 2u, w]).
@@ -57,8 +57,8 @@ The 622 row is transcribed as printed: its nonpolar cell lists only the six plan
 twofold axes and has no semicolons. By the table's header rule all [uv0] are nonpolar in 622 as
 well (the sixfold axis is evenfold), as the 422 row states with its leading `[uv0];`. Following
 the order of symmetry directions the cell would read `[uv0]; [u2uw] [-2u-uw] [u-uw]; [uuw] [-u0w]
-[0-vw]`: the print lacks the primary set and both separators. Thomas confirmed the printed reading
-against the original (2026-07-11). Users of this file must treat [uv0] as nonpolar in 622.
+[0-vw]`: the print lacks the primary set and both separators. The maintainer confirmed the printed
+reading against the original (2026-07-11). Users of this file must treat [uv0] as nonpolar in 622.
 
 ## Reading of the -6 row
 

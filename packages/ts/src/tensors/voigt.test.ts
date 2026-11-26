@@ -1,5 +1,5 @@
 /**
- * toVoigt and fromVoigt (#137 E3): shapes, the round trip, the defaults of the named properties and
+ * toVoigt and fromVoigt: shapes, the round trip, the defaults of the named properties and
  * the errors. The factors against print are in voigt.reference.test.ts, itcVolD.reference.test.ts
  * (§ 1.1.4.10.6) and itcMagnetic.reference.test.ts (Table 1.5.7.1).
  */

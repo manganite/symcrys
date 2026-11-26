@@ -1,5 +1,5 @@
 /**
- * Wrong input is a RangeError (#137 D2): every exported function of the three entry points, called
+ * Wrong input is a RangeError: every exported function of the three entry points, called
  * with a wrong value in each of its positions, either answers (a predicate such as `isPointGroupKey`
  * answers false) or throws a RangeError; never a TypeError or a plain Error, which mark a fault of
  * symcrys itself. An options object with a key the function does not know, or an options argument
@@ -253,7 +253,7 @@ function outcome(f: (...a: unknown[]) => unknown, args: readonly unknown[]): str
   }
 }
 
-describe('wrong input is a RangeError (#137 D2)', () => {
+describe('wrong input is a RangeError', () => {
   for (const [entry, [module, calls]] of Object.entries(CALLS)) {
     it(`${entry}: the table covers every exported function`, () => {
       const functions = Object.keys(module).filter((k) => typeof module[k] === 'function');

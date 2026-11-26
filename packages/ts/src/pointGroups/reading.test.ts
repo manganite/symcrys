@@ -39,7 +39,7 @@ describe('normalizeSymbol', () => {
 
 describe('findPointGroup reads every symbol symbol() writes', () => {
   // The setting a symbol gives back: a key, a Schoenflies symbol and a symbol several settings share
-  // give the standard (default); spaces are ignored (#96, Thomas 2026-11-23).
+  // give the standard (default); spaces are ignored (#96).
   const roundTrip = (
     keys: readonly string[],
     settings: (key: never) => readonly { index: number; isDefault: boolean; symbol: string; fullSymbol: string }[],
@@ -109,7 +109,7 @@ describe('findPointGroup reads the spellings of print and pasted text', () => {
     expect(magnetic.findPointGroup("m3m1'")).toEqual({ key: "m-3m1'", setting: 1 });
   });
 
-  it('spaces are ignored; the axes choose the rhombohedral setting (#96, Thomas 2026-11-23)', () => {
+  it('spaces are ignored; the axes choose the rhombohedral setting (#96)', () => {
     expect(classes.findPointGroup('3 2')).toEqual({ key: '32', setting: 1 });
     expect(classes.findPointGroup('32')).toEqual({ key: '32', setting: 1 });
     expect(classes.findPointGroup('3 2', { axes: 'rhombohedral' })).toEqual({ key: '32', setting: 3 });

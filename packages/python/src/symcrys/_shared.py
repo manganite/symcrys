@@ -1,5 +1,5 @@
 """What the generated modules of the Python layer share: the checks of the arguments and the call
-into the library (scripts/python-api.mjs, #99)."""
+into the library (scripts/python-api.mjs)."""
 
 from __future__ import annotations
 
@@ -26,12 +26,12 @@ def _is_operations(x: Any) -> bool:
 
 
 def operation_list(operations: Any, keys: tuple[str, ...] = ("cartesian",), bare: str | None = None) -> list[Any]:
-    """A list of operations as the library takes it, checked: the ``Operations`` of a module (#137 H1),
+    """A list of operations as the library takes it, checked: the ``Operations`` of a module,
     a sequence of mappings with ``keys``, or, where ``bare`` names the field (``"cartesian"``), an
     array of matrices of shape (n, 3, 3).
 
-    Without the check, an array of matrices reached the library and failed there with "cannot read
-    property '0' of undefined" (#92).
+    Without the check, an array of matrices would reach the library and fail there with "cannot read
+    property '0' of undefined".
     """
     if _is_operations(operations):
         return records(operations)
@@ -144,7 +144,7 @@ def operation_at(operations: Any, index: Any) -> Any:
 
 
 def _checked(name: str, value: Any, dtype: Any, shape: tuple[int, ...]) -> NDArray[Any]:
-    """One field of ``Operations``: an array of shape (n, …) of the dtype, checked (#137 H1)."""
+    """One field of ``Operations``: an array of shape (n, …) of the dtype, checked."""
 
     def error(what: str) -> _engine.SymcrysError:
         return _engine.SymcrysError(f"Operations.{name} {what}", "RangeError")
@@ -183,7 +183,7 @@ def _checked(name: str, value: Any, dtype: Any, shape: tuple[int, ...]) -> NDArr
 
 def freeze(operations: Any, fields: Mapping[str, tuple[Any, tuple[int, ...]]]) -> None:
     """Checks and freezes the arrays of ``Operations``: dtype, shape (n, …) with one n for all, and no
-    writes (#137 H1): each is a read-only view of a read-only copy, which numpy does not let anyone
+    writes: each is a read-only view of a read-only copy, which numpy does not let anyone
     make writable again."""
     n = None
     for name, (dtype, shape) in fields.items():
@@ -198,7 +198,7 @@ def freeze(operations: Any, fields: Mapping[str, tuple[Any, tuple[int, ...]]]) -
 
 
 def rotate_tensor(call: Any, value: Any, tensor: Any, rotation: Any, spec_or_name: Any, options: Any) -> NDArray[np.float64]:
-    """``rotate_tensor`` of the generated modules (#137 H2): the tensor keeps its shape, (3, …, 3) or
+    """``rotate_tensor`` of the generated modules: the tensor keeps its shape, (3, …, 3) or
     the flat (3**rank,), and leading axes of the tensor and of the rotation (…, 3, 3) are stacks,
     broadcast against each other as NumPy does. The library rotates one tensor by one rotation per
     call; this only loops."""
@@ -254,7 +254,7 @@ def spec(spec_or_name: Mapping[str, Any] | str) -> Any:
 
 def array(value: Any, what: str, dtype: Any = None) -> NDArray[Any]:
     """An argument as a NumPy array of real numbers, or SymcrysError naming it (a ragged list, a
-    string, complex numbers): the library checks the shape and the values (#92)."""
+    string, complex numbers): the library checks the shape and the values."""
     try:
         result = np.asarray(value, dtype=dtype)
     except (TypeError, ValueError) as e:

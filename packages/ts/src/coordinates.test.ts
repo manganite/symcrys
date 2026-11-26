@@ -1,5 +1,5 @@
 /**
- * changeOfCoordinates (#120, #137 G2): properties that do not depend on a printed example (the
+ * changeOfCoordinates: properties that do not depend on a printed example (the
  * printed ones are in coordinates.reference.test.ts): the inverse pair takes everything back,
  * hu + kv + lw is invariant, the metric is that of the new basis, det P < 0 is allowed, and wrong
  * input is a RangeError.

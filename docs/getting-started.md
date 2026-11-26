@@ -115,7 +115,7 @@ about 0.1 s, the form of a rank-4 tensor up to a few tenths of a second, and the
 `point_group_of` builds a table of the groups ([Conventions](conventions.md), "Point group of a
 list of operations"). A list of operations passed again
 (`tensor_form_of` in a loop) is answered from a cache. Fetch operations and forms once, then compute
-with NumPy. These timings are indicative (one machine, 2026-11-25): the package runs the library in
+with NumPy. These timings are indicative (measured on one machine): the package runs the library in
 an embedded JavaScript engine, and all calls go through that one engine behind one lock, so threads
 do not run them in parallel.
 

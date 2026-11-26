@@ -106,7 +106,7 @@ describe('edge cases', () => {
   });
 });
 
-describe('millerIndices (#137 G3)', () => {
+describe('millerIndices', () => {
   it('substitutes the values into printed indices, ITA Table 3.2.3.2 style', () => {
     expect(millerIndices('h,k,l', { h: 3, k: 2, l: 1 })).toEqual([3, 2, 1]);
     expect(millerIndices('h,-h,0', { h: 2 })).toEqual([2, -2, 0]);

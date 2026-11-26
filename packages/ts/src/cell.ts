@@ -223,7 +223,7 @@ export function angleBetweenPlanes(basis: Mat3, plane1: Vec3, plane2: Vec3): num
 
 /**
  * The unit normal of a plane (hkl) in a cell, a Cartesian vector: h·a* + k·b* + l·c* normalised, the
- * pole of the face (#137 G4). With `latticeBasis(family)` for a family with fixed cell angles, or
+ * pole of the face. With `latticeBasis(family)` for a family with fixed cell angles, or
  * `latticeFromParameters` for a real cell; Miller indices of hexagonal axes are three, without i.
  * Throws a RangeError for a basis that is not a regular 3 × 3 matrix and for a zero vector.
  */

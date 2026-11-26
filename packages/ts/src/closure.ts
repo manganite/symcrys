@@ -3,7 +3,7 @@
  * exact (docs/conventions.md, "Tolerances"). Operations read from a file or computed elsewhere carry
  * rounding errors (√3/2 written as 0.866025); compared within the tolerance they still generate the
  * right group, but its matrices are not exactly a group, and a tensor form computed from them has
- * the wrong number of free parameters (#89). `idealGroup` therefore replaces them by the exact group
+ * the wrong number of free parameters. `idealGroup` therefore replaces them by the exact group
  * nearest to them before anything is computed from them.
  */
 
@@ -24,7 +24,7 @@ const IDENTITY: CartesianOperation = { cartesian: LINEAR_IDENTITY, timeReversal:
  * The indices of a subset of a group, closed under the group's product (`product(i, j)`, the index
  * of the product of the elements at i and j, or a negative number for a product outside the list),
  * ascending. Each element is multiplied with every element before it, in both orders, as it is
- * added, so the result is closed once the loop ends. The one closure by index (#101), for a site
+ * added, so the result is closed once the loop ends. The one closure by index, for a site
  * symmetry in a point group (siteSymmetry.ts) and in a plane group (spaceGroups/positions.ts).
  */
 export function closeIndices(product: (i: number, j: number) => number, indices: readonly number[]): number[] {

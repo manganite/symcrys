@@ -1,6 +1,6 @@
 /**
  * The magnetic API of symcrys (`symcrys/magnetic`): the 122 magnetic point groups, with time
- * reversal. Everything exported here is covered by SemVer (see CLAUDE.md), like the exports of
+ * reversal. Everything exported here is covered by SemVer (see GUIDE.md), like the exports of
  * `index.ts`.
  *
  * The functions have the names they have in the crystallographic API (`index.ts`); the import

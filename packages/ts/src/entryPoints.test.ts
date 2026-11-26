@@ -148,7 +148,7 @@ describe('the crystallographic API returns nothing about time reversal', () => {
       for (const form of ['short', 'full'] as const) {
         expect(classes.symbol(key, { form })).toBe(magnetic.symbol(key, { form }));
       }
-      // Schoenflies: ITA's in the crystallographic API, ITC Vol. D's in the magnetic API (#137 B3),
+      // Schoenflies: ITA's in the crystallographic API, ITC Vol. D's in the magnetic API,
       // which differ for -3 only.
       const ita = classes.symbol(key, { form: 'schoenflies' });
       expect(magnetic.symbol(key, { form: 'schoenflies' })).toBe(key === '-3' ? 'S6' : ita);
@@ -628,7 +628,7 @@ describe('a time-even question has one answer: class, white group and grey group
   });
 });
 
-describe('siteSymmetry of a key (#137 C1)', () => {
+describe('siteSymmetry of a key', () => {
   it('is siteSymmetryOf of the operations of the key in the same setting, in both entry points', () => {
     const directions: classes.Vec3[] = [
       [0, 0, 1],
@@ -659,7 +659,7 @@ describe('siteSymmetry of a key (#137 C1)', () => {
   });
 });
 
-describe('every result is frozen, nested values included (#137 C4)', () => {
+describe('every result is frozen, nested values included', () => {
   /** The paths of the values in `x` that are not frozen. */
   const unfrozen = (x: unknown, path = '.'): string[] => {
     if (x === null || typeof x !== 'object') return [];
@@ -859,7 +859,7 @@ describe('every result is frozen, nested values included (#137 C4)', () => {
   });
 });
 
-describe('one tolerance contract (#137 D1, #93)', () => {
+describe('one tolerance contract (#93)', () => {
   const cubic = classes.operations('m-3m');
   const magneticOps = magnetic.operations("4/m'mm");
   const basis = classes.latticeBasis('cubic');

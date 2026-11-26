@@ -1,6 +1,6 @@
 /**
- * Points of a plane group: their orbit, site symmetry and Wyckoff position (CLAUDE.md, "Plane
- * groups (and later space groups)"). Points come from callers as floating-point coordinates in the
+ * Points of a plane group: their orbit, site symmetry and Wyckoff position (docs/conventions.md,
+ * "Plane groups"). Points come from callers as floating-point coordinates in the
  * lattice basis; whether an operation fixes a point is decided within a tolerance, as for the
  * point groups (`siteSymmetryOf`). Internal for now.
  */
@@ -74,7 +74,7 @@ function sameModLattice(p: readonly number[], q: readonly number[], tol: number)
 /**
  * Per plane group, computed once: its operations as plain numbers and its group table modulo the
  * lattice (`table[a][b]` is the index of the operation that equals a∘b modulo the lattice), so that
- * closing a set of operations works on indices (#86).
+ * closing a set of operations works on indices.
  */
 interface GroupData {
   readonly ops: readonly PlainOperation[];
@@ -113,9 +113,9 @@ export function planeOrbit(
   point: readonly number[],
   options?: ToleranceOptions,
 ): { point: number[]; operations: number[] }[] {
-  // The point is first set onto its Wyckoff position (#137 F1), and the entries are the left cosets
+  // The point is first set onto its Wyckoff position, and the entries are the left cosets
   // g·H of its site symmetry H: merging images by a distance is not transitive and depends on a
-  // threshold (reviews of #153 and of step 10a).
+  // threshold.
   const site = planeSiteOfPosition(key, point, options);
   const { ops, table } = groupData(key);
   const done = new Set<number>();
@@ -315,7 +315,7 @@ export function planeWyckoffDistances(key: string, given: readonly number[], g?:
 }
 
 /**
- * The Wyckoff position a point lies on within the tolerance (#137 F1): the most special printed
+ * The Wyckoff position a point lies on within the tolerance: the most special printed
  * position (the smallest multiplicity) whose point set lies within the tolerance of the point,
  * measured per coordinate modulo the lattice, the nearest among positions of equal multiplicity;
  * the general position always holds the point. Returns the row and the nearest point on it.
@@ -329,8 +329,8 @@ export function planePosition(key: string, point: readonly number[], options?: T
 }
 
 /**
- * The site symmetry of a point under a plane group, as one notion with its Wyckoff position
- * (#137 F1): the point is set onto the position it lies on within the tolerance (`planePosition`),
+ * The site symmetry of a point under a plane group, as one notion with its Wyckoff position:
+ * the point is set onto the position it lies on within the tolerance (`planePosition`),
  * and the site symmetry is that of the point there.
  */
 export function planeSiteOfPosition(

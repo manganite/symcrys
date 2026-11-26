@@ -28,7 +28,7 @@ describe('the ITC data of the black-and-white groups', () => {
     }
   });
 
-  it('numbers the settings by #137 A4: the default first, orthorhombic in the column order of ITA Table 1.5.4.4', () => {
+  it('numbers the settings: the default first, orthorhombic in the column order of ITA Table 1.5.4.4', () => {
     // abc, ba-c, cab, -cba, bca, a-cb: the positions of the new symbol taken from these of the default.
     const columns = [
       [0, 1, 2],

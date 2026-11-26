@@ -1,7 +1,7 @@
 /**
  * Captures the output of symcrys in the ITC convention as behavioural pins (fixture class (c),
- * CLAUDE.md): the safety net of the ITC migration (#121, #137). What is collected is defined once,
- * in packages/ts/src/testUtils/itcBaseline.ts, which `itcBaseline.pins.test.ts` also uses. Writes
+ * GUIDE.md, "Correctness and tests"): the safety net of the ITC migration (#121, #137). What is
+ * collected is defined once, in packages/ts/src/testUtils/itcBaseline.ts, which `itcBaseline.pins.test.ts` also uses. Writes
  * three JSON files, one entry per line:
  *
  * - packages/ts/src/pointGroups/itcBaseline.pins.json: every key of the magnetic API in every ITC
@@ -36,7 +36,7 @@ const root = fileURLToPath(new URL('../../', import.meta.url));
 const src = `${root}packages/ts/src/`;
 
 const NOTE =
-  'Behavioural pins (fixture class (c), CLAUDE.md): the output of symcrys in the ITC convention, the safety net of the ITC migration (#121, #137). Captured by audit/itc-baseline/capture.run.ts (npm run audit:itc-baseline) from the revision below; regenerate only by re-capture, never edit. One pin per line: what was asked (id) and the answer or the error (value); numbers rounded to 12 decimals.';
+  'Behavioural pins (fixture class (c), GUIDE.md): the output of symcrys in the ITC convention, the safety net of the ITC migration (#121, #137). Captured by audit/itc-baseline/capture.run.ts (npm run audit:itc-baseline) from the revision below; regenerate only by re-capture, never edit. One pin per line: what was asked (id) and the answer or the error (value); numbers rounded to 12 decimals.';
 
 /** Writes a pin file: the header, then the pins, one `{ id, value }` per line. */
 function write(path: string, revision: string, pins: readonly Pin[]): void {

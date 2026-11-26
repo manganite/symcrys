@@ -325,7 +325,7 @@ describe('ITC Vol. D § 1.1.4.10.6: fourth-rank tensors, forms of the matrices',
           const spec = { rank: 4, kind: 'polar', timeParity: 'even', intrinsic } as const;
           const basis = tensorForm(key, spec).basis;
           expectDiagram(d, tensor, basis, key);
-          // toVoigt with ITC's factors of the tensor draws the same diagram (#137 E3).
+          // toVoigt with ITC's factors of the tensor draws the same diagram.
           expectDiagram(d, tensor, basis, `${key}, toVoigt`, (b, t) => voigtRows(b, t, spec));
         }
       });

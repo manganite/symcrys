@@ -2,7 +2,7 @@
  * The geometric description of an operation of a plane group, as ITA gives it under "Symmetry
  * operations" (ITA 2016, § 2.1.3.9, pp. 160–161): what it is, its n and sense, where its
  * symmetry element lies and its glide part. Structured data; the symbols such as `g(1/2,1/2) x,x`
- * stay with the applications (CLAUDE.md, "Symmetry elements as structured data").
+ * stay with the applications (docs/conventions.md, "Symmetry directions and elements").
  */
 
 import { gcd } from '../integers.js';
@@ -38,9 +38,9 @@ export interface PlaneOperationDescription {
   readonly direction?: readonly [number, number];
   /**
    * For a reflection or glide reflection: its axis, the normal of its line in the lattice basis (as
-   * the `axis` of a reflection of the point groups is the normal of its plane, #137 C3), its symmetry
-   * direction with the sign of its Seitz symbol (ITA 2016 Tables 1.4.2.4, 1.4.2.5, p. 53: `m₁₀`, `m₁₂`,
-   * #107, #114): the shortest integer vector along the columns of W − I, first non-zero component
+   * the `axis` of a reflection of the point groups is the normal of its plane), its symmetry
+   * direction with the sign of its Seitz symbol (ITA 2016 Tables 1.4.2.4, 1.4.2.5, p. 53: `m₁₀`,
+   * `m₁₂`): the shortest integer vector along the columns of W − I, first non-zero component
    * positive, which is the Seitz direction for every plane group (tested). Without a metric it is not the perpendicular of `direction`: in a
    * hexagonal basis the normal of a line along [1,0] is [1,2].
    */

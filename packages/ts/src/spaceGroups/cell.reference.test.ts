@@ -101,7 +101,7 @@ describe('asymmetric unit', () => {
       }
       const lowest = [...vertices].sort((p, q) => p[1] - q[1] || p[0] - q[0])[0];
       expect(key(vertices[0])).toBe(key(lowest));
-      // The inequalities are all printed ones, in printed order (#137 F3); edges[i] holds the edge
+      // The inequalities are all printed ones, in printed order; edges[i] holds the edge
       // from vertex i to vertex i + 1.
       expect(unit.inequalities).toEqual(parseAsymmetricUnit(g.asymmetricUnit));
       expect(unit.edges).toHaveLength(vertices.length);
@@ -220,7 +220,7 @@ describe('symmetry elements in the cell (the translates that meet the box [0, 1]
         [1, 1],
       ]);
       // The lines with a segment of non-zero length in the cell, as they were compared before the
-      // segments went (#137 F2): clipped here.
+      // segments went: clipped here.
       const elements = {
         rotationPoints: all.rotationPoints,
         lines: all.lines.filter((l) => clip(num(l.point), l.direction)),
@@ -365,7 +365,7 @@ describe('symmetry elements in the cell (the translates that meet the box [0, 1]
   }
 });
 
-describe('symmetry elements modulo the lattice, centring included (#137 F2)', () => {
+describe('symmetry elements modulo the lattice, centring included', () => {
   for (const g of PRINT) {
     it(`${g.symbol}: each element once, and the translates of these are exactly those that meet a box`, () => {
       const classes = planeElements(g.symbol);

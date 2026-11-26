@@ -1,7 +1,7 @@
 /**
  * Public API for the point groups: the 32 crystallographic point groups (crystal classes) and the
  * 90 magnetic point groups with time reversal (32 grey, 58 black-and-white). Lookup, settings,
- * operations, generators and symbols, as ITC gives them (CLAUDE.md, "Pure ITC").
+ * operations, generators and symbols, as ITC gives them (GUIDE.md, "ITC as the standard").
  */
 
 import { SHUBNIKOV } from './shubnikovData.js';
@@ -342,8 +342,8 @@ function meets(d: GroupData, i: number, c: ReturnType<typeof criteriaOf>): boole
 
 /**
  * The setting among `candidates` that meets the criteria: the only one, or the standard (ITC
- * default) where it is one of several, as a name without a criterion means the standard (Thomas,
- * 2026-11-23, #96). None, or several without the standard, is a RangeError that lists them.
+ * default) where it is one of several, as a name without a criterion means the standard.
+ * None, or several without the standard, is a RangeError that lists them.
  */
 function choose(
   d: GroupData,
@@ -514,7 +514,7 @@ function settingOperations(d: GroupData, index: number): readonly CartesianOpera
 const symbolCache = new Map<string, { readonly short: string; readonly full: string }>();
 
 /**
- * Short and full symbol of a setting as symcrys gives them (#137 B2): those of `derivedSymbols`,
+ * Short and full symbol of a setting as symcrys gives them: those of `derivedSymbols`,
  * except that the default setting of a grey or black-and-white group has its key as short symbol:
  * that of ITC Vol. D Table 1.5.2.3 for a black-and-white group (`32'`, not `32'1`), the class key
  * followed by `1'` for a grey group (`321'`, not `3211'`). A crystal class keeps
@@ -767,7 +767,7 @@ export function generators(key: MagneticPointGroupKey, options?: SettingOptions)
 }
 
 /**
- * A Schoenflies symbol as ITC Vol. D writes it (#137 B3): `S6` for the class -3, where ITA writes
+ * A Schoenflies symbol as ITC Vol. D writes it: `S6` for the class -3, where ITA writes
  * `C3i` (Table 3.2.1.2), as the crystallographic API does, and so `S6R` for its grey group. The
  * black-and-white groups store their symbols as Vol. D prints them (`S6(C3)`, `D3d(S6)`,
  * `C6h(S6)`; blackWhiteData.ts).
@@ -853,7 +853,7 @@ function find(
   if (typeof symbol !== 'string')
     throw new RangeError(`findPointGroup takes a symbol (a string), not ${shown(symbol)}`);
   // Shubnikov's notation is written (symbol, form 'shubnikov') but not read: its overbar is a
-  // rotoreflection, so 6̅ is −3 there and C3h in Hermann–Mauguin (Thomas, 2026-11-25). A symbol with
+  // rotoreflection, so 6̅ is −3 there and C3h in Hermann–Mauguin. A symbol with
   // a character that only it writes is refused rather than read as something else.
   if (/[\u0332:·\u22C5\u2219]/.test(symbol)) {
     throw new RangeError(
@@ -864,7 +864,7 @@ function find(
   const candidates = [...BY_KEY.values()].filter((d) => !classesOnly || d.type === 'I');
   // The key, a short or full symbol of a setting (spaces ignored), Birss's cubic form; then a
   // Schoenflies symbol, ITA's `C3i` or ITC Vol. D's `S6` alike, which names the group and not an
-  // orientation (Thomas, 2026-11-23, #96). A symbol of several groups is an error.
+  // orientation. A symbol of several groups is an error.
   let found = candidates.map((d) => ({ d, named: settingsNamed(d, symbol) })).filter((m) => m.named.length > 0);
   if (found.length === 0) {
     const inVolD = magneticSchoenflies(target);
@@ -896,7 +896,7 @@ function birssCubic(compactTarget: string): string | undefined {
 
 /**
  * Finds a crystal class by a symbol, read tolerantly.
- * It reads, spaces ignored (#96; docs/conventions.md, "Reading symbols"): the key; the short or
+ * It reads, spaces ignored (docs/conventions.md, "Reading symbols"): the key; the short or
  * full symbol of a setting (`312`, `1 1 2`); a Schoenflies symbol (`D3`; for -3 either `C3i` or
  * `S6`); Birss's cubic symbols without the overbar on the 3 (`m3m`). A symbol that names
  * several settings (the key `32`, which is also the symbol of the setting with rhombohedral axes;
@@ -921,7 +921,7 @@ export function findPointGroup(symbol: string, options?: AxesOptions): PointGrou
 /**
  * Finds one of the 122 magnetic point groups (the 32 crystal classes included) by a symbol, read
  * tolerantly. A prime marks time reversal: `4'/mmm'`, `2221'`.
- * It reads, spaces ignored (#96; docs/conventions.md, "Reading symbols"): the key; the short or
+ * It reads, spaces ignored (docs/conventions.md, "Reading symbols"): the key; the short or
  * full symbol of a setting (`312`, `1 1 2`); a Schoenflies symbol (`D3`; for -3 either `C3i` or
  * `S6`); Birss's cubic symbols without the overbar on the 3 (`m3m`). A symbol that names
  * several settings (the key `32`, which is also the symbol of the setting with rhombohedral axes;

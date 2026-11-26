@@ -435,7 +435,7 @@ describe('ITA Table 3.2.3.2: Wyckoff positions', () => {
       ).toEqual(faces.map((x) => [x[4], x[3], x[5], x[6], x[7]]));
       lib.forEach((w, i) => {
         const n = faceNormal(e.basis, hklOf(faces[i][7], e.axes));
-        // The public millerIndices with these values gives the face the test reads from print (#137 G3).
+        // The public millerIndices with these values gives the face the test reads from print.
         const values = e.axes === 'rhombohedral axes' ? { h: 5, k: 2, l: 1 } : { h: 3, k: 2, l: 1 };
         expect(millerIndices(w.millerIndices, values)).toEqual(hklOf(faces[i][7], e.axes));
         expect(sameV(representativeFace(key, index, w.millerIndices).cartesian, n)).toBe(true);

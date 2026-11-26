@@ -102,8 +102,8 @@ describe('ITC Vol. D Table 1.5.2.3 (printed pp. 111–112) against symcrys, ITC 
         expect(pointGroup(key).crystalSystem).toBe(system.toLowerCase());
         expect(symbol(key, { form: 'schoenflies' })).toBe(schoenflies);
         expect(symbol(key, { form: 'full' })).toBe(full);
-        // The short symbol as printed for a black-and-white group (#137 B2); a crystal class keeps
-        // ITA's symbol (`321` where the table prints `32`; CLAUDE.md, "Symbols per volume").
+        // The short symbol as printed for a black-and-white group; a crystal class keeps
+        // ITA's symbol (`321` where the table prints `32`; docs/conventions.md, "Symbols").
         if (pointGroup(key).type === 'III') expect(symbol(key)).toBe(short);
         // The printed symbols find the group (#96): Schoenflies gives the default setting.
         const def = settings(key).find((s) => s.isDefault)!.index;
@@ -427,7 +427,7 @@ describe('orthorhombic groups: a setting for every orientation of the axes', () 
    * print names them. Operations as sign patterns of x, y, z, a prime for time reversal.
    */
   const C2V_CS: [symbolText: string, setting: number, axis: 'a' | 'b' | 'c', ops: string, source: string][] = [
-    // In the column order of ITA 2016 Table 1.5.4.4 applied to 2'm'm: abc, ba-c, cab, -cba, bca, a-cb (#137 A4).
+    // In the column order of ITA 2016 Table 1.5.4.4 applied to 2'm'm: abc, ba-c, cab, -cba, bca, a-cb.
     ["2'm'm", 1, 'c', "1,-1,-1' 1,-1,1' 1,1,-1 1,1,1", 'Birss Table 6; ITC Vol. D Table 1.5.2.3'],
     ["m'2'm", 2, 'c', "-1,1,-1' -1,1,1' 1,1,-1 1,1,1", 'ITC Vol. D Table 1.5.7.1'],
     ["m2'm'", 3, 'a', "-1,1,-1' -1,1,1 1,1,-1' 1,1,1", 'ITC Vol. D Table 1.5.8.1 (in brackets)'],
@@ -442,7 +442,7 @@ describe('orthorhombic groups: a setting for every orientation of the axes', () 
     expect(symbol("2'm'm", { setting })).toBe(symbolText);
     expect(signature(operations("2'm'm", { setting }), SAME_AXES)).toBe(ops);
     // `axis` is the normal of the mirror plane without time reversal; an orthorhombic setting has no
-    // unique axis (#137 C4).
+    // unique axis.
     const s = settings("2'm'm").find((x) => x.index === setting)!;
     expect(s.uniqueAxis).toBeUndefined();
     const mirror = operations("2'm'm", { setting }).find(
@@ -493,7 +493,7 @@ describe('the 122 magnetic point groups', () => {
         classSettings.map((s) => [s.index, s.isDefault, s.uniqueAxis]),
       );
       // The class symbol followed by 1'; the default setting has the key, as ITC Vol. D writes the
-      // grey groups (#137 B2: `321'`, not `3211'`).
+      // grey groups (`321'`, not `3211'`).
       expect(greySettings.map((s) => s.symbol)).toEqual(
         classSettings.map((s) => (s.isDefault ? key : `${s.symbol}1'`)),
       );
@@ -625,7 +625,7 @@ describe('the 122 magnetic point groups', () => {
     }
     // Settings that share a short symbol: the monoclinic ones (unique axis b, c and a); the
     // hexagonal and rhombohedral axes of 3, -3 and their magnetic groups; and, since the default
-    // setting of a grey or black-and-white group has its key as short symbol (#137 B2), the default
+    // setting of a grey or black-and-white group has its key as short symbol, the default
     // and the rhombohedral setting of the magnetic groups of 32, 3m and -3m (`32'`: `3 2' 1` and
     // `3 2'`), which their full symbols tell apart.
     const sharing = MAGNETIC_POINT_GROUP_KEYS.filter((key) => {

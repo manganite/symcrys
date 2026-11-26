@@ -4,7 +4,7 @@
  * for each matrix W, as its coordinate triplet, the characteristic direction of its Seitz symbol
  * (the axis of a rotation or rotoinversion, the normal of a reflection) and the sense of a rotation
  * of order 3 or more. The axis of an operation in `describeOperations` takes this direction, with
- * its sign ("Pure ITC", #114; docs/conventions.md, "Symmetry directions and elements"). Table
+ * its sign (docs/conventions.md, "Symmetry directions and elements"). Table
  * 1.4.2.1 serves the cubic, tetragonal, orthorhombic, monoclinic and triclinic systems, 1.4.2.2 the
  * hexagonal family in hexagonal axes, 1.4.2.3 rhombohedral axes.
  */

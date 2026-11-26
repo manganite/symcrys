@@ -3,8 +3,8 @@
 Inventory of every place found in the _International Tables for Crystallography_ where the symbol
 of a point group (crystal class, grey or black-and-white magnetic point group) is printed in an
 orientation other than its standard one, so that symcrys keeps exactly the settings ITC prints
-(step 6 of #121; criterion of `CLAUDE.md`, "Pure ITC": "printed as the symbol of the point group in
-that orientation anywhere in ITC").
+(criterion of `GUIDE.md`, "ITC as the standard": an orientation is a setting if ITC prints the
+symbol of the group in that orientation in any volume).
 
 Sources:
 

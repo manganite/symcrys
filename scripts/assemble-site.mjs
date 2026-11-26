@@ -1,4 +1,4 @@
-// Assembles the documentation site of all releases (#57; Thomas, 2026-11-25): each release from 0.14
+// Assembles the documentation site of all releases: each release from 0.14
 // attaches its built site as symcrys-site-X.Y.Z.tar.gz (job site of release.yml). The newest release
 // goes to the root, so that the URLs stay as they are; each MINOR keeps its newest PATCH under
 // /X.Y/; versions.json at the root lists them for the version menu of the sidebar

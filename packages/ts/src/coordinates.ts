@@ -1,6 +1,6 @@
 /**
  * The change of the coordinate system by a matrix–column pair (P, p) after ITA (6th ed., 2016)
- * Chapter 1.5 (§§ 1.5.1.3, 1.5.2, pp. 83–85), for d = 2 and d = 3 (#120, #137 G2). Internal; the
+ * Chapter 1.5 (§§ 1.5.1.3, 1.5.2, pp. 83–85), for d = 2 and d = 3. Internal; the
  * entry points wrap it with their matrix types (docs/conventions.md, "Change of the coordinate
  * system").
  *

@@ -1,4 +1,4 @@
-"""Sphinx configuration of the symcrys site (#29): MyST for Markdown, MyST-NB for the notebooks and
+"""Sphinx configuration of the symcrys site: MyST for Markdown, MyST-NB for the notebooks and
 the pages with Python code cells (executed at every build), autodoc with napoleon for the Python
 reference (docstrings written from the TSDoc comments, scripts/python-api.mjs), and the
 TypeDoc reference copied in as ts/ (html_extra_path). Build: README.md, "Documentation"."""
@@ -80,9 +80,9 @@ def setup(app):  # noqa: ANN001, ANN201
 
 
 html_theme = "furo"
-# The site's address: canonical links, Open Graph and sitemap.xml (docs/_ext/symcrys_docs.py, #72).
+# The site's address: canonical links, Open Graph and sitemap.xml (docs/_ext/symcrys_docs.py).
 html_baseurl = "https://manganite.github.io/symcrys/"
-# The version menu (#57): furo's sidebar with docs/_templates/sidebar/versions.html below the
+# The version menu: furo's sidebar with docs/_templates/sidebar/versions.html below the
 # name of the site; it reads versions.json at the published root (scripts/assemble-site.mjs).
 html_sidebars = {
     "**": [
@@ -130,7 +130,7 @@ symcrys_page_descriptions = {
 html_title = f"symcrys {release}"
 html_static_path = ["_static"]
 html_css_files = ["symcrys.css"]
-# The browser example (browser.md, #65) as a page of the site: its files and a copy of the build of
+# The browser example (browser.md) as a page of the site: its files and a copy of the build of
 # this checkout, the package's dist/, under browser/; the page loads symcrys from there unbundled.
 BROWSER = ROOT / "build" / "docs" / "browser-extra"
 
