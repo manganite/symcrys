@@ -785,6 +785,7 @@ describe('every result is frozen, nested values included (#137 C4)', () => {
     describeOperations: ['p4gm'],
     describeOperationsOf: [plane.operations('p4')],
     wyckoffPositions: ['p4'],
+    crystalForms: ['3m', { setting: 2 }],
     siteSymmetry: ['p4', [0, 0]],
     wyckoffPosition: ['p4', [0, 0]],
     wyckoffDistances: ['p4', [0.01, 0]],

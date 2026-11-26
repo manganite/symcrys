@@ -75,7 +75,7 @@
         "planes",
         "metric"
       ],
-      "int64": ["direction", "axis", "operations", "edges", "inequalities", "matrix"]
+      "int64": ["direction", "axis", "operations", "edges", "inequalities", "matrix", "siteSymmetryOperations"]
     }
   },
   "shapes": {
@@ -104,6 +104,7 @@
     "//": "Number fields and option properties by name: int or float.",
     "int": [
       "order",
+      "edges",
       "cellChoice",
       "cell",
       "n",

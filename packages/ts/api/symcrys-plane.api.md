@@ -60,6 +60,31 @@ export interface CoordinateTransformation {
 }
 
 // @public
+export const CRYSTAL_FORM_TYPES: Readonly<Record<CrystalFormTypeKey, CrystalFormType>>;
+
+// @public
+export interface CrystalForm {
+    readonly basic: boolean;
+    readonly formType: CrystalFormTypeKey;
+    readonly letter: string;
+    readonly millerIndices: string;
+    readonly multiplicity: number;
+    readonly siteSymmetry: string;
+}
+
+// @public
+export function crystalForms(key: PointGroupKey, options?: SettingOptions): readonly CrystalForm[];
+
+// @public
+export interface CrystalFormType {
+    readonly edges: number;
+    readonly name: string;
+}
+
+// @public
+export type CrystalFormTypeKey = 'single-edge' | 'pair-of-parallel-edges' | 'pair-of-edges' | 'rhomb' | 'square' | 'ditetragon' | 'trigon' | 'ditrigon' | 'hexagon' | 'dihexagon';
+
+// @public
 export function describeOperations(key: PlaneGroupKey | PointGroupKey, options?: SettingOptions): readonly OperationDescription[];
 
 // @public
@@ -322,15 +347,17 @@ export function wyckoffDistances(key: PlaneGroupKey, point: readonly number[], o
 export interface WyckoffPosition {
     readonly coordinates: readonly string[];
     readonly letter: string;
+    readonly millerIndices?: string;
     readonly multiplicity: number;
     readonly siteSymmetry: string;
+    readonly siteSymmetryOperations?: readonly number[];
 }
 
 // @public
 export function wyckoffPosition(key: PlaneGroupKey, point: readonly number[], options?: ToleranceOptions): WyckoffPosition;
 
 // @public
-export function wyckoffPositions(key: PlaneGroupKey): readonly WyckoffPosition[];
+export function wyckoffPositions(key: PlaneGroupKey | PointGroupKey, options?: SettingOptions): readonly WyckoffPosition[];
 
 // (No @packageDocumentation comment for this package)
 

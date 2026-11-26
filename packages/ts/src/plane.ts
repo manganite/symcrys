@@ -56,9 +56,20 @@ import {
   planeWyckoffPositionOf,
 } from './spaceGroups/positions.js';
 import { nearestFraction, parseRational, toNumber, type Rational } from './spaceGroups/rational.js';
+import {
+  CRYSTAL_FORM_TYPES,
+  planePointGroupPositionRows,
+  planeSiteSymmetryOperations,
+  type CrystalFormTypeKey,
+} from './spaceGroups/planePointGroupForms.js';
 
 export { VERSION } from './version.js';
 export { EPSILON, type ToleranceOptions } from './tolerances.js';
+export {
+  CRYSTAL_FORM_TYPES,
+  type CrystalFormType,
+  type CrystalFormTypeKey,
+} from './spaceGroups/planePointGroupForms.js';
 import { toleranceOf, type ToleranceOptions } from './tolerances.js';
 import { compactSymbol } from './notation.js';
 export type { PlaneSystem } from './spaceGroups/planeGroupData.js';
@@ -250,9 +261,43 @@ export interface WyckoffPosition {
   /** The oriented site-symmetry symbol, written without spaces, e.g. `'.m.'`, `'2mm'`. */
   readonly siteSymmetry: string;
   /**
-   * All coordinate triplets of the (0,0)+ set, e.g. `['x,0', '-x,0']`; a leading `-` is an overbar.
+   * All coordinate doublets of the position, for a plane group those of the (0,0)+ set, e.g.
+   * `['x,0', '-x,0']`; a leading `-` is an overbar.
    */
   readonly coordinates: readonly string[];
+  /**
+   * For a plane point group: the first edge of the position's basic form, its Miller indices in the
+   * usual notation, e.g. `h,k`, `1,0`, or `h,k,i` and `1,1,-2` (Bravais–Miller indices) for the
+   * hexagonal groups.
+   */
+  readonly millerIndices?: string;
+  /**
+   * For a plane point group: the indices into the operations of the group in the same setting
+   * (`operations`) of those that fix the first direction of the position, its site symmetry.
+   */
+  readonly siteSymmetryOperations?: readonly number[];
+}
+
+/** An edge form of a plane point group, the crystal form of a two-dimensional crystal: a set of edges equivalent under the group. */
+export interface CrystalForm {
+  /** The Wyckoff letter of the position the edges belong to. */
+  readonly letter: string;
+  /** The number of edges: the multiplicity of the position. */
+  readonly multiplicity: number;
+  /** The oriented site-symmetry symbol of the position (the edge symmetry). */
+  readonly siteSymmetry: string;
+  /**
+   * `true` for the basic form of the position, `false` for a limiting form: its edges have the edge
+   * symmetry of the position, but the form has a higher symmetry.
+   */
+  readonly basic: boolean;
+  /** The kind of the form, its key in `CRYSTAL_FORM_TYPES`. */
+  readonly formType: CrystalFormTypeKey;
+  /**
+   * The first edge of the form in the usual notation, components separated by commas, e.g. `h,k`,
+   * `1,0`, or `h,k,i` and `1,1,-2` (Bravais–Miller indices) for the hexagonal groups.
+   */
+  readonly millerIndices: string;
 }
 
 /** The distance of a point to a Wyckoff position: the position, as `wyckoffPositions` gives it, the nearest point of it, and the distance. */
@@ -649,15 +694,69 @@ export function describeOperationsOf(
 }
 
 /**
- * The Wyckoff positions of a plane group in ITA's notation and order, general position first. Throws a
- * RangeError for an unknown key and for a plane point group, whose positions are not in symcrys
- * yet.
+ * The Wyckoff positions of a plane group or of a plane point group in ITA's notation and order,
+ * general position first. A plane point group's positions are those of the directions in the plane,
+ * in the setting `setting` (`3m` has two), each with the first edge of its basic form and the
+ * operations of its site symmetry; the point at the origin is left out. Throws a RangeError for an
+ * unknown key or setting.
+ *
+ * @remarks Source: ITA (6th ed., 2016), Chapter 2.2 (the plane groups) and Table 3.2.3.1, pp. 742–744
+ * (the plane point groups).
  */
-export function wyckoffPositions(key: PlaneGroupKey): readonly WyckoffPosition[] {
+export function wyckoffPositions(
+  key: PlaneGroupKey | PointGroupKey,
+  options?: SettingOptions,
+): readonly WyckoffPosition[] {
+  checkOptions(options, ['setting'], 'wyckoffPositions');
+  if (isPlanePointGroupKey(key)) {
+    const setting = settingOf(key, options) ?? 1;
+    exact(key, options, false);
+    return deepFreeze(
+      planePointGroupPositionRows(key, setting).map(([letter, multiplicity, siteSymmetry, coordinates, forms]) => ({
+        letter,
+        multiplicity,
+        siteSymmetry,
+        coordinates: [...coordinates],
+        millerIndices: forms[0][2],
+        siteSymmetryOperations: planeSiteSymmetryOperations(key, setting, coordinates[0]),
+      })),
+    );
+  }
   const entry = planeGroupEntry(groupKey(key, 'wyckoffPositions'));
+  const setting = settingOf(entry.symbol as PlaneGroupKey, options);
+  if (setting !== undefined && setting !== 1) {
+    throw new RangeError(`The plane group ${entry.symbol} has no setting ${String(setting)}`);
+  }
   return Object.freeze(
     entry.wyckoff.map(([multiplicity, letter, siteSymmetry, coordinates]) =>
       Object.freeze({ letter, multiplicity, siteSymmetry, coordinates: Object.freeze([...coordinates]) }),
+    ),
+  );
+}
+
+/**
+ * The edge forms of a plane point group, the crystal forms of a two-dimensional crystal, in the
+ * setting `setting`: for each Wyckoff position (general position first) its basic form, then a
+ * limiting form where there is one. Throws a RangeError for an unknown key or setting and for a
+ * plane group.
+ *
+ * @remarks Source: ITA (6th ed., 2016), Table 3.2.3.1, pp. 742–744.
+ */
+export function crystalForms(key: PointGroupKey, options?: SettingOptions): readonly CrystalForm[] {
+  checkOptions(options, ['setting'], 'crystalForms');
+  const k = pointKey(key, 'crystalForms');
+  const setting = settingOf(k, options) ?? 1;
+  exact(k, options, false);
+  return deepFreeze(
+    planePointGroupPositionRows(k, setting).flatMap(([letter, multiplicity, siteSymmetry, , forms]) =>
+      forms.map(([basic, formType, millerIndices]) => {
+        if (CRYSTAL_FORM_TYPES[formType].edges !== multiplicity) {
+          throw new Error(
+            `Plane point group ${k}: the form ${formType} does not have the multiplicity of position ${letter}`,
+          );
+        }
+        return { letter, multiplicity, siteSymmetry, basic, formType, millerIndices };
+      }),
     ),
   );
 }
