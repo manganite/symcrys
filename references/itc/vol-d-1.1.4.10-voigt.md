@@ -5,9 +5,8 @@ Source: _International Tables for Crystallography_, Vol. D, 2nd edition (2013): 
 § 1.1.4.10.3 (third-rank tensors, pp. 24–25) and § 1.1.4.10.5 (fourth-rank tensors, pp. 26–27);
 Chapter 1.5 (A. S. Borovik-Romanov, H. Grimmer, M. Kenzelmann, "Magnetic properties"), § 1.5.7.1,
 eq. (1.5.7.4), p. 134; Chapter 1.7 ("Nonlinear optical properties"),
-§ 1.7.2.2.1.3, p. 185. Transcribed on 2026-11-25 from page images of the volume in Thomas' Zotero
-(item YQKTNYVN; in this PDF the printed page is the PDF page index + 2), read at 130 and 300 dpi;
-checked again at 250–300 dpi in the review of PR #174, which also pointed to p. 185.
+§ 1.7.2.2.1.3, p. 185. Transcribed on 2026-11-25;
+checked again against print in the review of PR #174, which also pointed to p. 185.
 
 Transcription conventions: indices as printed, subscripts written inline (`S23` for S₂₃, `d_ijk`);
 Greek letters as printed (α, β); one printed relation per row. Where print writes a chain of

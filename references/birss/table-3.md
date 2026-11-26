@@ -1,7 +1,7 @@
 # Birss Table 3: the 32 crystallographic point groups
 
 Source: R. R. Birss, _Symmetry and Magnetism_ (North-Holland, Amsterdam, 1966), Table 3,
-printed pp. 36–38 (printed rotated by 90°, spanning two scanned pages of Thomas' copy). Transcribed
+printed pp. 36–38 (printed rotated by 90°). Transcribed
 in manganite/birss-tables (`table-3.md`); taken over as printed, with the known misprints listed
 under "Errata" instead of corrected in the table.
 

@@ -5,10 +5,7 @@ Press, Oxford, 2005): Table 12.2 "Piezoelectric matrices for the crystallographi
 point groups", printed pp. 91–92; Table 30.1 "Gyration tensor for the 32 crystal classes and 7
 texture groups", p. 330; Table 30.2 "Properties associated with acentric crystals and textures:
 piezoelectricity (P), pyroelectricity (P*), optical activity (O), and enantiomorphism (E)", p. 332.
-Transcribed on 2026-11-25 from the PDF in Thomas' Zotero (item `G32GB96M`, attachment `UKXAALX2`;
-printed page = PDF page number − 13 = page index − 12 counting from 0), read from page images at
-100–170 dpi, the entry of −4 in Table 12.2 at 400 dpi; every cell checked again at 300–600 dpi in
-the review of PR #178.
+Transcribed on 2026-11-25; every cell checked again against print in the review of PR #178.
 
 The axes are those of § 4.3 (p. 26), the IEEE standard settings: monoclinic Z₂ ∥ b (the twofold axis
 or the normal of the mirror), orthorhombic Z₁, Z₂, Z₃ along a, b, c, trigonal and hexagonal Z₁ ∥ a,

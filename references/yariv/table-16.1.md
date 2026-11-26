@@ -4,8 +4,8 @@ Source: A. Yariv, _Quantum Electronics_, 2nd ed. (John Wiley & Sons, New York, 1
 ISBN 0-471-97176-6), Table 16.1, printed
 pp. 410–411: "The Form of the Nonlinear Optical Tensor d_ijk as Defined by (16.1-4), after
 Reference 2" (Reference 2 is J. F. Nye, _Physical Properties of Crystals_). Transcribed in birss-app
-(`src/services/yarivT161.reference.fixtures.ts`, 2026-07-31) from Thomas' scans of the two pages
-and photographs of single panels; taken over unchanged.
+(`src/services/yarivT161.reference.fixtures.ts`, 2026-07-31) from the two printed pages, each
+panel also read on its own; taken over unchanged.
 
 Yariv's d_ijk is defined through a field product (his Eq. (16.1-4)), so it carries no Voigt factor:
 the 3×6 grid is the tensor component d_i(jk) itself, with columns μ = 1…6 for jk = xx, yy, zz, yz,
@@ -39,18 +39,18 @@ Yariv names an orientation for four classes (2, m, 3m, -6m2), and prints two pan
 | class-mm2 | Class mm2 | mm2 | 5 | 15f; 24f; 31f; 32f; 33f | blind |  |
 | class-4 | Class 4 | 4 | 4 | 14f 25o; 15f 24f; 31f 32f; 33f | blind | The two links at columns 4/5 cross as a printed X; endpoints unambiguous. |
 | class-bar4 | Class -4 | -4 | 4 | 14f 25f; 15f 24o; 31f 32o; 36f | engine-known-unambiguous | Crossed X at columns 4/5, opposite polarity to class 4; row 3 carries d31--d32 open and a separate d36. |
-| class-422 | Class 422 | 422 | 1 | 14f 25o | blind | Per-panel photograph. Single link; all other cells are small zero dots. |
+| class-422 | Class 422 | 422 | 1 | 14f 25o | blind | Single link; all other cells are small zero dots. |
 | class-4mm | Class 4mm | 4mm | 3 | 15f 24f; 31f 32f; 33f | engine-known-unambiguous |  |
 | class-bar42m-2parx1 | Class -42m, 2∥x1 | -42m | 2 | 14f 25f; 36f | engine-known-unambiguous |  |
 | class-432 | Class 432 (all moduli vanish) | 432 | 0 | — | engine-known-unambiguous |  |
 | classes-bar43m-and-23 | Classes -43m and 23 | -43m, 23 | 1 | 14f 25f 36f | engine-known-unambiguous | One printed chain of two segments across all three heavy dots. |
-| class-3 | Class 3 | 3 | 6 | 11f 12o 26o; 14f 25o; 15f 24f; 16o 21o 22f; 31f 32f; 33f | engine-known-unambiguous | Per-panel photograph. The hardest panel: two three-mark sign chains (d11--d12--d26 and d22--d21--d16) whose long diagonals cross, plus the d14/d15 X. All six glyphs and both diagonal endpoints resolve at photograph resolution. |
+| class-3 | Class 3 | 3 | 6 | 11f 12o 26o; 14f 25o; 15f 24f; 16o 21o 22f; 31f 32f; 33f | engine-known-unambiguous | The hardest panel: two three-mark sign chains (d11--d12--d26 and d22--d21--d16) whose long diagonals cross, plus the d14/d15 X. All six glyphs and both diagonal endpoints resolve when the panel is read on its own. |
 | class-32 | Class 32 | 32 | 2 | 11f 12o 26o; 14f 25o | blind | Ambiguity logged: the long diagonal reaching d26 leaves the d11/d12 pair without a resolvable start dot. Immaterial -- both candidates lie in the same connected component, so neither the cell set nor the partition depends on it. |
-| class-3m-perpx1 | Class 3m, m-perp-x1 (standard orientation) | 3m | 4 | 15f 24f; 16o 21o 22f; 31f 32f; 33f | blind | Per-panel photograph. |
-| class-3m-perpx2 | Class 3m, m-perp-x2 | 3m | 4 | 11f 12o 26o; 15f 24f; 31f 32f; 33f | engine-known-unambiguous | Per-panel photograph. |
-| class-6 | Class 6 (same as class 4) | 6 | 4 | 14f 25o; 15f 24f; 31f 32f; 33f | blind | Per-panel photograph. Yariv's own 'same as class 4' note is an in-source cross-check, and the two transcriptions agree. |
+| class-3m-perpx1 | Class 3m, m-perp-x1 (standard orientation) | 3m | 4 | 15f 24f; 16o 21o 22f; 31f 32f; 33f | blind |  |
+| class-3m-perpx2 | Class 3m, m-perp-x2 | 3m | 4 | 11f 12o 26o; 15f 24f; 31f 32f; 33f | engine-known-unambiguous |  |
+| class-6 | Class 6 (same as class 4) | 6 | 4 | 14f 25o; 15f 24f; 31f 32f; 33f | blind | Yariv's own 'same as class 4' note is an in-source cross-check, and the two transcriptions agree. |
 | class-6mm | Class 6mm (same as class 4mm) | 6mm | 3 | 15f 24f; 31f 32f; 33f | blind | Yariv's 'same as class 4mm' note is an in-source cross-check, and the two transcriptions agree. |
 | class-622 | Class 622 (same as class 422) | 622 | 1 | 14f 25o | blind | Yariv's 'same as class 422' note is an in-source cross-check, and the two transcriptions agree. |
-| class-bar6 | Class -6 | -6 | 2 | 11f 12o 26o; 16o 21o 22f | engine-known-unambiguous | Per-panel photograph, printed rotated 90deg. The rotation was fixed WITHOUT the engine: under the sigma-h of -6 every component with an odd z count vanishes, so the all-small line must be row 3, which determines the orientation uniquely. Both three-mark chains and the crossing diagonals then resolve. |
-| class-bar6m2-perpx1 | Class -6m2, m-perp-x1 (standard orientation) | -6m2 | 1 | 16o 21o 22f | blind | Per-panel photograph. One three-mark chain: d21--d22 horizontal, then the long diagonal d22--d16. Same shape as the in-plane group of 3m m-perp-x1, which is what -6m2 = 3m + sigma-h leaves standing. |
-| class-bar6m2-perpx2 | Class -6m2, m-perp-x2 | -6m2 | 1 | 11f 12o 26o | blind | Per-panel photograph. One three-mark chain: d11--d12 horizontal, then the long diagonal d12--d26. An earlier page-level read of this panel put a mark near column 5; the photograph shows that was the diagonal's descent, not a mark. No stray dot -- both -6m2 panels occupy only rows 1-2 x columns 1, 2, 6, the only cells sigma-h and the threefold axis leave alive. |
+| class-bar6 | Class -6 | -6 | 2 | 11f 12o 26o; 16o 21o 22f | engine-known-unambiguous | Printed rotated 90deg. The rotation was fixed WITHOUT the engine: under the sigma-h of -6 every component with an odd z count vanishes, so the all-small line must be row 3, which determines the orientation uniquely. Both three-mark chains and the crossing diagonals then resolve. |
+| class-bar6m2-perpx1 | Class -6m2, m-perp-x1 (standard orientation) | -6m2 | 1 | 16o 21o 22f | blind | One three-mark chain: d21--d22 horizontal, then the long diagonal d22--d16. Same shape as the in-plane group of 3m m-perp-x1, which is what -6m2 = 3m + sigma-h leaves standing. |
+| class-bar6m2-perpx2 | Class -6m2, m-perp-x2 | -6m2 | 1 | 11f 12o 26o | blind | One three-mark chain: d11--d12 horizontal, then the long diagonal d12--d26. An earlier page-level read of this panel put a mark near column 5; the panel read on its own shows that was the diagonal's descent, not a mark. No stray dot -- both -6m2 panels occupy only rows 1-2 x columns 1, 2, 6, the only cells sigma-h and the threefold axis leave alive. |

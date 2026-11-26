@@ -1,12 +1,12 @@
 # Birss Table 7: symbol classes of the 90 magnetic point groups for i- and c-tensors
 
-Source: R. R. Birss, _Symmetry and Magnetism_ (North-Holland, Amsterdam, 1966), Table 7, printed
-pp. 103–108, with the text of Ch. 3, § 3.1, pp. 102 and 109–110. The transcription is that of
-birss-app (`birss-tables/table-7.md`, there with columns 3–12 first taken from R. R. Birss, _Proc.
-Phys. Soc._ **79**, 946 (1962), Table 2(a), then checked against the book); it was compared again
-row by row with the scan of the book in Thomas' Zotero (item WKMPAPCY, PDF pages 61–64, the table
-rotated by 90°) on 2026-11-20: columns 3–12 of all 90 rows agree with the book. Column 2 was read
-with the order of the rows; the tests identify each group again from its column 3 (see below).
+Source: R. R. Birss, _Symmetry and Magnetism_ (North-Holland, Amsterdam, 1966), Table 7, printed pp.
+103–108, with the text of Ch. 3, § 3.1, pp. 102 and 109–110. The transcription is that of birss-app
+(`birss-tables/table-7.md`, there with columns 3–12 first taken from R. R. Birss, _Proc. Phys. Soc._
+**79**, 946 (1962), Table 2(a), then checked against the book); it was compared again row by row
+with the book (the table printed rotated by 90°) on 2026-11-20: columns 3–12 of all 90 rows agree
+with the book. Column 2 was read with the order of the rows; the tests identify each group again
+from its column 3 (see below).
 
 The table lists the 32 classical groups and the 58 additional magnetic groups, not the 32
 non-magnetic groups that contain time reversal itself. For each it gives the symbol class (a letter

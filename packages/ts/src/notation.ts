@@ -7,8 +7,8 @@
  */
 
 /**
- * Combining overbar (U+0304) and combining overline (U+0305), and the macron (U+00AF), as the text
- * layer of the ITA 2016 PDFs gives the overbar, each written after the digit it marks.
+ * Combining overbar (U+0304) and combining overline (U+0305), and the macron (U+00AF), as text
+ * copied from the PDF edition of ITA 2016 gives the overbar, each written after the digit it marks.
  */
 const OVERBAR_AFTER = /(\d)[\u0304\u0305\u00AF]/g;
 

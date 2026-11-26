@@ -1,17 +1,16 @@
 # ITC Vol. D § 1.1.4.10.6: forms of fourth-rank tensors (matrices of independent components)
 
-Source: _International Tables for Crystallography_, Vol. D, 2nd edition (2013), Chapter 1.1
-(A. Authier, "Introduction to the properties of tensors"), § 1.1.4.10.6, "Independent components
-of the matrix associated with a fourth-rank tensor according to the following point groups",
-printed pp. 27–29; the key to the symbols is printed on p. 28 (left column, under the diagrams of
-the groups 3, -3), the two-index notation on p. 27. Transcribed 2026-11-20 from the volume in
-Thomas' Zotero (item YQKTNYVN), read from page images at 330 and 550 dpi, diagram by diagram, before
-the forms computed by symcrys for these tensors were compared. The numbers of independent
-components alone are also in `vol-d-table-1.1.4.10.6-rank-4-counts.md` (transcribed 2026-11-19).
+Source: _International Tables for Crystallography_, Vol. D, 2nd edition (2013), Chapter 1.1 (A.
+Authier, "Introduction to the properties of tensors"), § 1.1.4.10.6, "Independent components of the
+matrix associated with a fourth-rank tensor according to the following point groups", printed pp.
+27–29; the key to the symbols is printed on p. 28 (left column, under the diagrams of the groups 3,
+-3), the two-index notation on p. 27. Transcribed 2026-11-20, diagram by diagram, before the forms
+computed by symcrys for these tensors were compared. The numbers of independent components alone are
+also in `vol-d-table-1.1.4.10.6-rank-4-counts.md` (transcribed 2026-11-19).
 
-**The matrices.** Each diagram is a 6 × 6 matrix in the two-index notation of p. 27, with
-α, β = 1…6 for the index pairs 11, 22, 33, 23, 31, 12 (Voigt's notation, § 1.1.4.10.2, eq. (1.1.4.6),
-p. 24). The section draws 30 diagrams for five tensors:
+**The matrices.** Each diagram is a 6 × 6 matrix in the two-index notation of p. 27, with α, β = 1…6
+for the index pairs 11, 22, 33, 23, 31, 12 (Voigt's notation, § 1.1.4.10.2, eq. (1.1.4.6), p. 24).
+The section draws 30 diagrams for five tensors:
 
 - p_αβ (elasto-optic) and c_αβ (elastic stiffnesses): p_αβ = p_ijkl, c_αβ = c_ijkl, without factors;
 - π_αβ (piezo-optic): π_αβ = π_ijkl for β = 1, 2, 3 and π_ijkl + π_ijlk = 2π_ijkl for β = 4, 5, 6;
@@ -24,11 +23,11 @@ the full matrix is drawn. For c and s the pairs are interchangeable and only the
 drawn.
 
 **The symbols** (key on p. 28; the first two are not spelled out there): a heavy dot is a nonzero
-component; a line links related components; ⊖ "is a component numerically equal but opposite in sign to the heavy dot component
-to which it is linked"; ⊕ is "equal to twice the heavy dot component to which it is linked"; ⊙ is
-"equal to minus twice the heavy dot component to which it is linked"; ⊗ "is equal to 1/2(p11 − p12),
-(π11 − π12), 2(Q11 − Q12), 1/2(c11 − c12) and 2(s11 − s12), respectively". A cell without a mark is
-zero.
+component; a line links related components; ⊖ "is a component numerically equal but opposite in sign
+to the heavy dot component to which it is linked"; ⊕ is "equal to twice the heavy dot component to
+which it is linked"; ⊙ is "equal to minus twice the heavy dot component to which it is linked"; ⊗
+"is equal to 1/2(p11 − p12), (π11 − π12), 2(Q11 − Q12), 1/2(c11 − c12) and 2(s11 − s12),
+respectively". A cell without a mark is zero.
 
 Transcription conventions:
 

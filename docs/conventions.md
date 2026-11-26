@@ -422,8 +422,8 @@ writes; ITC Vol. D and the magnetic API write `S6`).
 normalisation before the comparison (#96; decided by Thomas on 2026-11-22 and 2026-11-23):
 
 - **Spellings** (`notation.ts`): the overbar as `-`, `−` (U+2212), a combining overbar or overline
-  after the digit (`m3̄m`), the macron `¯` after the digit (as the text layer of the ITA 2016 PDFs
-  gives it), `bar3`, or LaTeX's `\bar{3}` and `\overline{3}`; the prime as `'`, `′`
+  after the digit (`m3̄m`), the macron `¯` after the digit (as text copied from the PDF edition of
+  ITA 2016 writes it), `bar3`, or LaTeX's `\bar{3}` and `\overline{3}`; the prime as `'`, `′`
   (U+2032), `ʹ` (U+02B9) or `’` (U+2019, which editors put for an apostrophe); Schoenflies subscripts
   also as Unicode subscripts (`C₃ᵥ`, `D₃d(S₆)`) or LaTeX's (`C_{3v}`, `C_3`). Spaces carry no
   meaning: `3 2` is `32` (Thomas, 2026-11-23), as print writes the short symbols without them.

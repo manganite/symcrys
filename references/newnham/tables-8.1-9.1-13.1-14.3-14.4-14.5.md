@@ -7,9 +7,8 @@ matrices for the various symmetry groups", p. 64; Table 13.1 "Elastic constant m
 crystal classes and seven limiting groups", pp. 108–109; Table 14.3 "The 31 pyromagnetic point
 groups", p. 133; Table 14.4 "Magnetoelectric matrices for the 90 magnetic crystal classes and 14
 magnetic Curie groups", p. 140; Table 14.5 "Piezomagnetic matrices for the various magnetic symmetry
-groups", pp. 144–145. Transcribed on 2026-11-25 from the PDF in Thomas' Zotero (item `G32GB96M`,
-attachment `UKXAALX2`; printed page = PDF page number − 13 = page index − 12 counting from 0), read
-from page images at 130 dpi and every matrix and group list again at 250–400 dpi.
+groups", pp. 144–145. Transcribed on 2026-11-25; every matrix and group
+list checked again against print.
 
 The axes are those of § 4.3 (p. 26) with the secondary elements of Table 4.2 (p. 25), as in
 `tables-12.2-30.1-30.2.md`: monoclinic 2 ∥ Z₂ and m ⊥ Z₂; 2 ∥ Z₁ in 32, 422, −42m, 622; m ⊥ Z₁ in
@@ -83,7 +82,7 @@ line break is read as the separator.
 ## Table 14.4, p. 140
 
 The magnetoelectric coefficients Q_ij. Print writes `∞m'` both at the end of the row of 3 and at the
-end of the row of 32 (read at 400 dpi); the Curie groups are not compared.
+end of the row of 32; the Curie groups are not compared.
 
 | Magnetic groups | Matrix |
 |---|---|

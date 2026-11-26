@@ -89,6 +89,22 @@ convention or the process updates this file (or the `docs/` file) in the same PR
   import it by DOI or ISBN and check its metadata against the printed source (for a book: authors,
   year, edition and publisher against the title page).
   Ask Thomas for a volume that is not at hand.
+- **Where the sources are** (working notes; the files of the repository cite their sources plainly,
+  "Correctness and provenance"). Zotero items and the printed page p from the PDF page number n or
+  the page index i counted from 0:
+  - ITA 6th ed. (2016), item `7NZ258UB`, one PDF per chapter: Ch. 1.3 `RAC6PA2Y` (p = n + 21),
+    Ch. 1.4 `5YVS9AQE` (p = n + 41), Ch. 1.5 `AHHQY85L` (p = n + 74 = i + 75), Ch. 1.6 `YXY538BN`
+    (p = n + 106), Ch. 2.1 `9W72G6EC` (p = n + 141), Ch. 2.2 one PDF per plane group
+    (`sgtable2o2o001` to `sgtable2o2o017`, group N on p. 175 + N), Ch. 3.2 `Y6Z8P8NR` (p = n + 719).
+  - ITA 5th ed. (2006), item `3SDKZZFX`, attachment `PPFFWAZC` (p = n − 139).
+  - Frank (1965), item `JUFIBJSH`, attachment `HCKTL6NT` (p = n + 861).
+  - Shubnikov & Belov (1964), item `PD7DF9V6`, attachment `3WP3F6T6` (p = i − 29).
+  - ITC Vol. D, Birss, Newnham and Paufler: above and in "Reading ITC Vol. D" and "Reading Birss".
+  - Reading: the text layers of these PDFs lose primes, overbars and underlines and take fractions
+    apart, so tables are read from the page, enlarged where a prime, an overbar or an underline
+    matters; the text layer serves to find candidate pages and, where it keeps the overbars (ITA
+    2016 Ch. 3.2; ITA 2006, whose rendered overbars are displaced towards the line above), as a
+    second check.
 - **Further books for questions of convention and group theory** (Thomas, 2026-11-20), all in his
   Zotero; consult them, beside ITC and Birss, before putting such a question to him: Litvin
   (magnetic groups; _Acta Cryst._ A**64**, 419 (2008)), Koster, Dimmock, Wheeler & Statz,
@@ -195,7 +211,10 @@ Carried over from birss-app, where the calculations come from.
 - Files in `references/` change only by transcription from print or by correction against it
   (maintainer, 2026-11-18). The one exception is the note on provenance in a file's head (where a
   transcription came from, what was reported where): it follows the current state of the source it
-  names (maintainer, 2026-11-20). Notes on the state of symcrys do not belong there (which settings
+  names (maintainer, 2026-11-20). It cites the source as a reference (authors, work, edition, year,
+  chapter, table or section, printed page), says when the transcription was made and how it was
+  checked against print, and leaves the working details of reading it (files, PDF pages,
+  resolutions) to "Where the sources are" (Thomas, 2026-11-25, #194). Notes on the state of symcrys do not belong there (which settings
   it has); they are in `docs/conventions.md` (maintainer, 2026-11-23, removed from
   `references/itc/orientations.md`). Prettier and ESLint leave these files alone.
 

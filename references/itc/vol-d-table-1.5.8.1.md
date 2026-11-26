@@ -1,10 +1,9 @@
 # ITC Vol. D Table 1.5.8.1: the forms of the tensor characterizing the linear magnetoelectric effect
 
-Source: _International Tables for Crystallography_, Vol. D, 2nd edition (2013), Chapter 1.5
-(A. S. Borovik-Romanov, H. Grimmer, M. Kenzelmann, "Magnetic properties"), Table 1.5.8.1, printed
-p. 139, with § 1.5.8 (eqs. (1.5.8.1)–(1.5.8.3), p. 139) and § 1.5.8.1, printed p. 140. Transcribed 2026-11-20 from the volume in Thomas' Zotero
-(item YQKTNYVN), read from page images at 200 and 450 dpi (the text layer of the PDF loses primes
-and overbars), and compared with the list of groups in birss-app
+Source: _International Tables for Crystallography_, Vol. D, 2nd edition (2013), Chapter 1.5 (A. S.
+Borovik-Romanov, H. Grimmer, M. Kenzelmann, "Magnetic properties"), Table 1.5.8.1, printed p. 139,
+with § 1.5.8 (eqs. (1.5.8.1)–(1.5.8.3), p. 139) and § 1.5.8.1, printed p. 140. Transcribed
+2026-11-20, primes and overbars as printed, and compared with the list of groups in birss-app
 (`docs/references/ITC-table-1.5.8.1-magnetoelectric-groups.md`).
 
 The table lists 58 magnetic point groups in 11 blocks; the groups of a block share one matrix.
@@ -22,7 +21,7 @@ What the print fixes (§§ 1.5.8 and 1.5.8.1):
   the remaining 69 there are 11 more for which it is forbidden, named in the text (second table
   below); the remaining 58 are those of the table. (The 32 groups with time reversal as an element
   of its own are not among these 90.)
-- Footnote 3 (p. 140), transcribed from the page image on 2026-11-24: "Table 1.5.8.1 shows that the
+- Footnote 3 (p. 140), transcribed on 2026-11-24: "Table 1.5.8.1 shows that the
   tensor α_ij describing the magnetoelectric effect does not need to be symmetric for 31 of the 58
   point groups. Its trace α11 + α22 + α33 is a relativistic pseudoscalar (Hehl et al., 2009). These
   31 groups coincide with those that admit a spontaneous toroidal moment (Gorbatsevich & Kopaev,

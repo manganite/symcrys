@@ -1,12 +1,11 @@
 # ITC Vol. D § 1.1.4.10.7: independent components of axial tensors of rank 2
 
-Source: _International Tables for Crystallography_, Vol. D, 2nd edition (2013), Chapter 1.1
-(A. Authier, "Introduction to the properties of tensors"), § 1.1.4.10.7.1 "Independent components
+Source: _International Tables for Crystallography_, Vol. D, 2nd edition (2013), Chapter 1.1 (A.
+Authier, "Introduction to the properties of tensors"), § 1.1.4.10.7.1 "Independent components
 according to the following point groups" (axial tensors of rank 2, e.g. the piezomagnetic
-coefficients Λ_iα, printed pp. 29–30) and § 1.1.4.10.7.2 "Independent components of symmetric
-axial tensors according to the following point groups" (e.g. the gyration tensor g_ij, printed
-pp. 30–31). Transcribed 2026-11-19 from the chapter in Thomas' Zotero (item YQKTNYVN), read from page
-images at 220 dpi, before the forms computed by symcrys for these tensors were looked at.
+coefficients Λ_iα, printed pp. 29–30) and § 1.1.4.10.7.2 "Independent components of symmetric axial
+tensors according to the following point groups" (e.g. the gyration tensor g_ij, printed pp. 30–31).
+Transcribed 2026-11-19, before the forms computed by symcrys for these tensors were looked at.
 
 Each diagram is a 3 × 3 matrix in Nye's notation: a heavy dot is a nonzero component; a line links
 components of equal magnitude; an open circle with a bar (⊖) is "numerically equal but opposite in

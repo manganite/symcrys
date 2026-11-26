@@ -1,22 +1,18 @@
 # ITA space-group tables: symmetry operations of the symmorphic P space groups (and R groups, rhombohedral axes)
 
-Source: _International Tables for Crystallography_, Vol. A, 5th edition (2006), ed. Th. Hahn,
-Part 7 (space-group tables), the block "Symmetry operations" of the symmorphic space group with
-a primitive lattice for each crystallographic point group: one entry per ITC setting that ITA
-lists, unique axis b and c for the monoclinic classes, hexagonal axes for the trigonal ones
-(`mm2` in its only printed setting `Pmm2`); for the five trigonal classes that ITA also gives
-with rhombohedral axes, in addition the symmorphic R group with rhombohedral axes (R3, R-3, R32,
-R3m, R-3m; Nos. 146, 148, 155, 160, 166), whose cell is primitive in those axes. The printed page
-of the block is given in each heading. Transcribed 2026-11-18 from the PDF in Thomas' Zotero (item
-3SDKZZFX); every entry checked against the rendered page. The five R entries were added
-2026-11-23 from the page images of the same PDF (attachment `PPFFWAZC`, PDF pages 635–636, 641–642,
-657–658, 669–670, 686; printed page = PDF page − 139), read at 400–500 dpi, and checked a second
-time against the text layer, which keeps the overbars as separate characters (the rendered overbars
-of this PDF are displaced and can look like underlines of the line above). Symbols as defined in ITA § 11.1.2, pp. 810–811: `n+` / `n-` is a
-rotation by +360°/n / −360°/n, positive (counter-clockwise) when viewed along the axis in the
-direction of decreasing values of the parameter that describes it; for a rotoinversion, angle and
-sense refer to the pure rotation, followed by the inversion through the point after the
-semicolon.
+Source: _International Tables for Crystallography_, Vol. A, 5th edition (2006), ed. Th. Hahn, Part 7
+(space-group tables), the block "Symmetry operations" of the symmorphic space group with a primitive
+lattice for each crystallographic point group: one entry per ITC setting that ITA lists, unique axis
+b and c for the monoclinic classes, hexagonal axes for the trigonal ones (`mm2` in its only printed
+setting `Pmm2`); for the five trigonal classes that ITA also gives with rhombohedral axes, in
+addition the symmorphic R group with rhombohedral axes (R3, R-3, R32, R3m, R-3m; Nos. 146, 148, 155,
+160, 166), whose cell is primitive in those axes. The printed page of the block is given in each
+heading. Transcribed 2026-11-18; every entry checked against print. The five R entries were added
+2026-11-23 and checked a second time, overbars included. Symbols as defined in ITA § 11.1.2, pp.
+810–811: `n+` / `n-` is a rotation by +360°/n / −360°/n, positive (counter-clockwise) when viewed
+along the axis in the direction of decreasing values of the parameter that describes it; for a
+rotoinversion, angle and sense refer to the pure rotation, followed by the inversion through the
+point after the semicolon.
 
 Each entry also gives the line "Generators selected" from the facing page (block "Positions",
 page given): the numbers of the symmetry operations ITA uses as generators, in printed order; the

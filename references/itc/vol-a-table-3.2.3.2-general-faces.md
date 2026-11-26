@@ -1,11 +1,9 @@
 # ITA Table 3.2.3.2: faces of the general form, hexagonal and rhombohedral axes
 
 Source: _International Tables for Crystallography_, Vol. A, 6th edition (2016), Chapter 3.2 (Point
-groups and crystal classes), Table 3.2.3.2, printed pp. 752–764. Transcribed 2026-11-21 from the
-page images of the chapter PDF (Zotero item `7NZ258UB`, attachment `Y6Z8P8NR`, PDF pages 33–45, at
-200 dpi), overbars included. The five entries with rhombohedral axes (3, -3, 32, 3m, -3m;
-pp. 753, 753, 755, 756, 759) were added 2026-11-23 from the page images of the same PDF (PDF pages
-34, 36, 37, 40; printed page = PDF page + 719), read at 300–500 dpi.
+groups and crystal classes), Table 3.2.3.2, printed pp. 752–764. Transcribed 2026-11-21,
+overbars included, as printed. The five entries with rhombohedral axes (3, -3, 32, 3m, -3m;
+pp. 753, 753, 755, 756, 759) were added 2026-11-23.
 
 The last column of the first row of each entry, the Miller indices of the faces of the general
 form, for the 21 entries with hexagonal or rhombohedral axes (the trigonal classes with both kinds

@@ -2,18 +2,18 @@
 
 Source: _International Tables for Crystallography_, Vol. A, 6th edition (2016), Chapter 1.4 (Space
 groups and their descriptions), § 1.4.2.2, Tables 1.4.2.1–1.4.2.3 on printed p. 52 and Tables
-1.4.2.4–1.4.2.5 on printed p. 53 (Zotero `5YVS9AQE`, `ch1o4.pdf`, PDF pages 11–12). Transcribed
-from the page images at 260 dpi on 2026-11-24.
+1.4.2.4–1.4.2.5 on printed p. 53. Transcribed on 2026-11-24.
 
 Transcription conventions: a leading minus sign is an overbar (`-x`, `-1`, `-3`). A Seitz symbol is
 written as its symbol R with the sense as `^+`/`^-` and the characteristic direction as a subscript
-`_{…}`, its indices with a minus for an overbar: `2_{-101}` is 2 with the subscript 1̄01, `-3^+_{1-1-1}`
-is 3̄⁺ with the subscript 11̄1̄. The subscript is the direction of the axis of a rotation or
-rotoinversion and of the normal of a reflection plane (§ 1.4.2.2, p. 51). The "Orientation" column
-gives the axis, or for a reflection the plane, as ITA's symmetry-operations block writes it.
+`_{…}`, its indices with a minus for an overbar: `2_{-101}` is 2 with the subscript 1̄01,
+`-3^+_{1-1-1}` is 3̄⁺ with the subscript 11̄1̄. The subscript is the direction of the axis of a
+rotation or rotoinversion and of the normal of a reflection plane (§ 1.4.2.2, p. 51). The
+"Orientation" column gives the axis, or for a reflection the plane, as ITA's symmetry-operations
+block writes it.
 
-Erratum: in Table 1.4.2.1, No. 32 prints the Seitz symbol `3^+_{-1-11}` without the overbar on the 3,
-although its type is printed as 3̄⁺ and the coordinate triplet z, -x, y is a rotoinversion
+Erratum: in Table 1.4.2.1, No. 32 prints the Seitz symbol `3^+_{-1-11}` without the overbar on the
+3, although its type is printed as 3̄⁺ and the coordinate triplet z, -x, y is a rotoinversion
 (determinant −1); read as `-3^+_{-1-11}`, as the other entries 29–36 are printed.
 
 ## Table 1.4.2.1

@@ -2,9 +2,8 @@
 
 Source: _International Tables for Crystallography_, Vol. D, 2nd edition (2013), Chapter 1.5
 (A. S. Borovik-Romanov, H. Grimmer, M. Kenzelmann, "Magnetic properties"), Table 1.5.7.1, printed
-p. 135, with the conventions of § 1.5.7.1, printed p. 134. Transcribed 2026-11-20 from the volume in
-Thomas' Zotero (item YQKTNYVN), read from page images at 200 and 450 dpi (the text layer of the PDF
-loses primes and overbars), and compared cell by cell with the transcription in birss-app
+p. 135, with the conventions of § 1.5.7.1, printed p. 134. Transcribed 2026-11-20, primes and
+overbars as printed, and compared cell by cell with the transcription in birss-app
 (`docs/references/ITC-table-1.5.7.1-piezomagnetic.md`); the two differ in one symbol, the first
 orientation of C2v(Cs), which the print gives as m′2′m.
 

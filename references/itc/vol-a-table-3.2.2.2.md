@@ -3,10 +3,9 @@
 Source: _International Tables for Crystallography_, Vol. A, 6th edition (2016), Chapter 3.2 (Point
 groups and crystal classes), Table 3.2.2.2, printed p. 739.
 
-Transcribed in birss-app (2026-07-11) from a screenshot provided by Thomas, the page scan with
-zooms on the trigonal and hexagonal rows, and the OCR text. Thomas compared the transcription with
-the printed original (2026-07-11), including the 622 row; checked again against the printed page in
-the chapter PDF on 2026-11-09.
+Transcribed in birss-app (2026-07-11). Thomas compared the transcription with
+the printed original (2026-07-11), including the 622 row; checked again against the printed page on
+2026-11-09.
 
 Transcription conventions: a leading minus sign inside a direction is an overbar on that index
 (`[-1-10]`); indices are written without separators as printed (`[u2uw]` is the family [u, 2u, w]).
