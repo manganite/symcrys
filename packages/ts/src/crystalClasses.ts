@@ -417,8 +417,12 @@ export type CartesianOperationDescription = Omit<MagneticCartesianOperationDescr
  * distorting a crystal: its key, and the setting whose operations it equals in the frame of symcrys
  * (absent if the group is the class in another orientation, e.g. a threefold axis along [111]). The
  * list is closed into a group first, two matrices being equal when no entry differs by `tolerance`
- * (default `EPSILON`) or more. Returns undefined if the operations generate no crystal class (an
- * operation of order 5, a group larger than 48). Throws a RangeError for an operation without an orthogonal Cartesian matrix (`cartesian`; within `tolerance`, at least `EPSILON`). The classes `1` and `-1` have no
+ * (default `EPSILON`) or more. Returns undefined if the operations generate a finite group that is
+ * not a crystal class (an operation of order 5, a group larger than 48). Throws a RangeError for an
+ * operation without an orthogonal Cartesian matrix (`cartesian`; within `tolerance`, at least
+ * `EPSILON`), and if the operations do not close into a finite group within the tolerance, the
+ * error of `tensorFormOf` for the same input (matrices with errors too large for it, or a rotation
+ * by an angle that is not 360°/n). The classes `1` and `-1` have no
  * orientation, so they always have setting 1. The first call builds a table of the groups (about
  * 0.1 s in Node, 0.3 s in the Python package; docs/conventions.md, "Point group of a list of
  * operations").

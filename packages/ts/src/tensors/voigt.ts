@@ -33,7 +33,7 @@ export interface VoigtOptions extends ToleranceOptions {
   readonly factors?: readonly VoigtFactor[];
   /**
    * The index symmetry of the tensor (or of the tensor of a Voigt array) is checked within this
-   * tolerance, relative to its largest component; default `EPSILON` (10⁻⁶).
+   * tolerance, relative to its largest component; default `EPSILON` (10⁻⁵).
    */
   readonly tolerance?: number;
 }

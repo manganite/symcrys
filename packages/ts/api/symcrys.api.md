@@ -197,7 +197,7 @@ export interface DirectionOrbitEntry {
 export function directionToFourIndices(uvw: Vec3): FourIndices;
 
 // @public
-export const EPSILON = 0.000001;
+export const EPSILON = 0.00001;
 
 // @public
 export interface FaceIndices {

@@ -52,13 +52,23 @@ export function checkOrthogonal(m: Mat3, what: string): void {
  */
 export function checkOrthogonalWithin(m: Mat3, what: string, tolerance: number): void {
   const t = Math.max(tolerance, EPSILON);
+  let deviation = 0;
   for (let i = 0; i < 3; i++) {
     for (let j = 0; j < 3; j++) {
-      const d = m[0][i] * m[0][j] + m[1][i] * m[1][j] + m[2][i] * m[2][j];
-      if (!(Math.abs(d - (i === j ? 1 : 0)) < t)) {
-        throw new RangeError(`${what} is not an orthogonal (Cartesian) matrix: ${shown(m)}`);
-      }
+      const d = Math.abs(m[0][i] * m[0][j] + m[1][i] * m[1][j] + m[2][i] * m[2][j] - (i === j ? 1 : 0));
+      // NaN compares false, so it counts as the largest deviation.
+      deviation = d > deviation || Number.isNaN(d) ? d : deviation;
     }
+  }
+  if (!(deviation < t)) {
+    const hint =
+      deviation < 0.1
+        ? `: the largest entry of mᵀm − 1 is ${deviation.toPrecision(2)}; for matrices with rounding errors pass a ` +
+          'larger tolerance (about ten times their rounding)'
+        : '';
+    throw new RangeError(
+      `${what} is not an orthogonal (Cartesian) matrix within the tolerance ${t}${hint}: ${shown(m)}`,
+    );
   }
 }
 

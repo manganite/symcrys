@@ -794,7 +794,8 @@ VERSION: str = _shared.convert(_value("VERSION"), _V)
 EPSILON: float = _shared.convert(_value("EPSILON"), _F)
 """The default tolerance of every function that compares numbers a caller passes in (operations,
 directions, points): two numbers closer than this count as equal, in the metric of their kind
-(docs/conventions.md, "Tolerances").
+(docs/conventions.md, "Tolerances"). Operations rounded to 6 decimals pass with it in any
+orientation; rounded to n decimals they need about 10^(1−n).
 """
 LATTICE_SYMMETRY_DIRECTIONS: dict[str, list[NDArray[np.int64]]] = _shared.convert(
     _value("LATTICE_SYMMETRY_DIRECTIONS"),
@@ -839,7 +840,7 @@ def residual_operations(
     Parameters
     ----------
     tolerance : keyword-only, optional
-        Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁶). It is measured per
+        Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁵). It is measured per
         matrix entry for operations, as the distance of unit vectors for directions and per
         coordinate modulo the lattice for points (docs/conventions.md, "Tolerances").
 
@@ -1178,7 +1179,7 @@ def change_of_coordinates(
     operations : keyword-only, optional
         Operations (W, w): W′ = P⁻¹WP, w′ = P⁻¹(w + (W − I)p).
     tolerance : keyword-only, optional
-        Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁶). It is measured per
+        Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁵). It is measured per
         matrix entry for operations, as the distance of unit vectors for directions and per
         coordinate modulo the lattice for points (docs/conventions.md, "Tolerances").
     """
@@ -1414,16 +1415,19 @@ def point_group_of(
     symcrys (absent if the group is the point group in another orientation). The list is closed into
     a group first, two matrices being equal when no entry differs by ``tolerance`` (default
     ``EPSILON``) or more. Time reversal counts: a list with time reversal gives a magnetic point
-    group. Returns None if the operations generate no point group (an operation of order 5, a group
-    larger than 96). Raises SymcrysError for an operation without an orthogonal Cartesian matrix
-    (``cartesian``; within ``tolerance``, at least ``EPSILON``) and for an operation that does not
-    say whether it is combined with time reversal. The classes ``1`` and ``-1`` have one setting and
-    no orientation, so they always have setting 1.
+    group. Returns None if the operations generate a finite group that is not a crystallographic
+    point group (an operation of order 5, a group larger than 96). Raises SymcrysError for an
+    operation without an orthogonal Cartesian matrix (``cartesian``; within ``tolerance``, at least
+    ``EPSILON``), for an operation that does not say whether it is combined with time reversal, and
+    if the operations do not close into a finite group within the tolerance, the error of
+    ``tensor_form_of`` for the same input (matrices with errors too large for it, or a rotation by
+    an angle that is not 360°/n). The classes ``1`` and ``-1`` have one setting and no orientation,
+    so they always have setting 1.
 
     Parameters
     ----------
     tolerance : keyword-only, optional
-        Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁶). It is measured per
+        Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁵). It is measured per
         matrix entry for operations, as the distance of unit vectors for directions and per
         coordinate modulo the lattice for points (docs/conventions.md, "Tolerances").
     """
@@ -1456,7 +1460,7 @@ def describe_operations_of(
     Parameters
     ----------
     tolerance : keyword-only, optional
-        Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁶). It is measured per
+        Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁵). It is measured per
         matrix entry for operations, as the distance of unit vectors for directions and per
         coordinate modulo the lattice for points (docs/conventions.md, "Tolerances").
 
@@ -1572,7 +1576,7 @@ def orbit_of(
     Parameters
     ----------
     tolerance : keyword-only, optional
-        Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁶). It is measured per
+        Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁵). It is measured per
         matrix entry for operations, as the distance of unit vectors for directions and per
         coordinate modulo the lattice for points (docs/conventions.md, "Tolerances").
 
@@ -1838,7 +1842,7 @@ def is_centrosymmetric_of(
     Parameters
     ----------
     tolerance : keyword-only, optional
-        Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁶). It is measured per
+        Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁵). It is measured per
         matrix entry for operations, as the distance of unit vectors for directions and per
         coordinate modulo the lattice for points (docs/conventions.md, "Tolerances").
     """
@@ -1867,7 +1871,7 @@ def is_enantiomorphic_of(
     Parameters
     ----------
     tolerance : keyword-only, optional
-        Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁶). It is measured per
+        Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁵). It is measured per
         matrix entry for operations, as the distance of unit vectors for directions and per
         coordinate modulo the lattice for points (docs/conventions.md, "Tolerances").
     """
@@ -1958,7 +1962,7 @@ def site_symmetry(
         ``'32'``, ``'2'`` for unique axis b, c and a) gives the standard (ITC default) setting,
         unless ``axes`` or ``unique_axis`` chooses another. Default: the ITC default setting.
     tolerance : keyword-only, optional
-        Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁶). It is measured per
+        Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁵). It is measured per
         matrix entry for operations, as the distance of unit vectors for directions and per
         coordinate modulo the lattice for points (docs/conventions.md, "Tolerances").
 
@@ -2001,7 +2005,7 @@ def site_symmetry_of(
     Parameters
     ----------
     tolerance : keyword-only, optional
-        Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁶). It is measured per
+        Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁵). It is measured per
         matrix entry for operations, as the distance of unit vectors for directions and per
         coordinate modulo the lattice for points (docs/conventions.md, "Tolerances").
 
@@ -2094,7 +2098,7 @@ def tensor_form_of(
     Parameters
     ----------
     tolerance : keyword-only, optional
-        Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁶). It is measured per
+        Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁵). It is measured per
         matrix entry for operations, as the distance of unit vectors for directions and per
         coordinate modulo the lattice for points (docs/conventions.md, "Tolerances").
 
@@ -2135,7 +2139,7 @@ def rotate_tensor(
     Parameters
     ----------
     tolerance : keyword-only, optional
-        Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁶). It is measured per
+        Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁵). It is measured per
         matrix entry for operations, as the distance of unit vectors for directions and per
         coordinate modulo the lattice for points (docs/conventions.md, "Tolerances").
 
@@ -2188,7 +2192,7 @@ def allows_property_of(
     Parameters
     ----------
     tolerance : keyword-only, optional
-        Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁶). It is measured per
+        Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁵). It is measured per
         matrix entry for operations, as the distance of unit vectors for directions and per
         coordinate modulo the lattice for points (docs/conventions.md, "Tolerances").
     """
@@ -2215,7 +2219,7 @@ def allowed_properties_of(
     Parameters
     ----------
     tolerance : keyword-only, optional
-        Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁶). It is measured per
+        Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁵). It is measured per
         matrix entry for operations, as the distance of unit vectors for directions and per
         coordinate modulo the lattice for points (docs/conventions.md, "Tolerances").
     """
@@ -2259,7 +2263,7 @@ def to_voigt(
         tensor serves both d and second-harmonic generation.
     tolerance : keyword-only, optional
         The index symmetry of the tensor (or of the tensor of a Voigt array) is checked within this
-        tolerance, relative to its largest component; default ``EPSILON`` (10⁻⁶).
+        tolerance, relative to its largest component; default ``EPSILON`` (10⁻⁵).
 
     Returns
     -------
@@ -2308,7 +2312,7 @@ def from_voigt(
         tensor serves both d and second-harmonic generation.
     tolerance : keyword-only, optional
         The index symmetry of the tensor (or of the tensor of a Voigt array) is checked within this
-        tolerance, relative to its largest component; default ``EPSILON`` (10⁻⁶).
+        tolerance, relative to its largest component; default ``EPSILON`` (10⁻⁵).
 
     Returns
     -------

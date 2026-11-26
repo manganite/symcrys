@@ -91,7 +91,7 @@ export function describeOperations(key: PlaneGroupKey | PointGroupKey, options?:
 export function describeOperationsOf(operations: readonly PlaneOperation[], options?: ToleranceOptions): readonly OperationDescription[];
 
 // @public
-export const EPSILON = 0.000001;
+export const EPSILON = 0.00001;
 
 // @public
 export function findPlaneGroup(symbol: string): PlaneGroupFound | undefined;

@@ -733,7 +733,8 @@ VERSION: str = _shared.convert(_value("VERSION"), _V)
 EPSILON: float = _shared.convert(_value("EPSILON"), _F)
 """The default tolerance of every function that compares numbers a caller passes in (operations,
 directions, points): two numbers closer than this count as equal, in the metric of their kind
-(docs/conventions.md, "Tolerances").
+(docs/conventions.md, "Tolerances"). Operations rounded to 6 decimals pass with it in any
+orientation; rounded to n decimals they need about 10^(1−n).
 """
 PLANE_GROUP_KEYS: tuple[str, ...] = _shared.convert(_value("PLANE_GROUP_KEYS"), ("t", _V))
 """The short symbols of the 17 plane groups, in ITA's order (plane group n at index n − 1)."""
@@ -961,7 +962,7 @@ def describe_operations_of(
     Parameters
     ----------
     tolerance : keyword-only, optional
-        Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁶). It is measured per
+        Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁵). It is measured per
         matrix entry for operations, as the distance of unit vectors for directions and per
         coordinate modulo the lattice for points (docs/conventions.md, "Tolerances").
 
@@ -1041,7 +1042,7 @@ def site_symmetry(key: str, point: ArrayLike, *, tolerance: Optional[float] = No
     point
         The coordinates x, y of the point in the lattice basis a, b (fractions of the cell).
     tolerance : keyword-only, optional
-        Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁶). It is measured per
+        Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁵). It is measured per
         matrix entry for operations, as the distance of unit vectors for directions and per
         coordinate modulo the lattice for points (docs/conventions.md, "Tolerances").
 
@@ -1080,7 +1081,7 @@ def wyckoff_position(
     point
         The coordinates x, y of the point in the lattice basis a, b (fractions of the cell).
     tolerance : keyword-only, optional
-        Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁶). It is measured per
+        Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁵). It is measured per
         matrix entry for operations, as the distance of unit vectors for directions and per
         coordinate modulo the lattice for points (docs/conventions.md, "Tolerances").
     """
@@ -1160,7 +1161,7 @@ def orbit(
     point
         The coordinates x, y of the point in the lattice basis a, b (fractions of the cell).
     tolerance : keyword-only, optional
-        Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁶). It is measured per
+        Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁵). It is measured per
         matrix entry for operations, as the distance of unit vectors for directions and per
         coordinate modulo the lattice for points (docs/conventions.md, "Tolerances").
 
@@ -1321,7 +1322,7 @@ def residual_operations(
     Parameters
     ----------
     tolerance : keyword-only, optional
-        Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁶). It is measured per
+        Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁵). It is measured per
         matrix entry for operations, as the distance of unit vectors for directions and per
         coordinate modulo the lattice for points (docs/conventions.md, "Tolerances").
 
@@ -1388,7 +1389,7 @@ def change_of_coordinates(
     operations : keyword-only, optional
         Operations (W, w): W′ = P⁻¹WP, w′ = P⁻¹(w + (W − I)p).
     tolerance : keyword-only, optional
-        Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁶). It is measured per
+        Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁵). It is measured per
         matrix entry for operations, as the distance of unit vectors for directions and per
         coordinate modulo the lattice for points (docs/conventions.md, "Tolerances").
     """

@@ -8,7 +8,7 @@
 import { describe, expect, it } from 'vitest';
 import { groupOfSymbol } from '../testUtils/hermannMauguin.js';
 import { mul, rotationAbout, type M } from '../testUtils/independentGroups.js';
-import type { Mat3 } from '../linalg.js';
+import { multiply, transpose, type Mat3 } from '../linalg.js';
 import type { CartesianOperation } from '../operations.js';
 import { describeOperations } from './elements.js';
 import { describeOperationsOf, pointGroupOf } from './identify.js';
@@ -124,11 +124,42 @@ describe('pointGroupOf', () => {
     expect(pointGroupOf(noisy, { tolerance: 1e-4 })).toEqual({ key: '6mm', setting: 1 });
   });
 
-  it('returns undefined for operations that generate no point group', () => {
+  it('returns undefined for a finite group that is not a crystallographic point group', () => {
     const fivefold = rotationAbout(Z, 1 / 5) as unknown as Mat3;
     expect(pointGroupOf([{ cartesian: fivefold, timeReversal: false }])).toBeUndefined();
+  });
+
+  it('throws where the tolerance is the problem, as tensorFormOf does, instead of answering undefined', () => {
+    // A rotation by an angle that is not 360°/n generates no finite group.
     const odd = rotationAbout(Z, 0.1234) as unknown as Mat3;
-    expect(pointGroupOf([{ cartesian: odd, timeReversal: false }])).toBeUndefined();
+    expect(() => pointGroupOf([{ cartesian: odd, timeReversal: false }])).toThrow(/no finite point group/);
+    // 6/mmm rounded to 6 decimals: a group at the default tolerance (it gave undefined at 10⁻⁶).
+    const r6 = operations('6/mmm').map((o) => ({
+      cartesian: o.cartesian.map((row) => row.map((x) => Math.round(x * 1e6) / 1e6)) as unknown as Mat3,
+      timeReversal: false,
+    }));
+    expect(pointGroupOf(r6)).toEqual({ key: '6/mmm', setting: 1 });
+    expect(() => pointGroupOf(r6, { tolerance: 1e-7 })).toThrow(/larger tolerance|larger one/);
+    // 3 in a general orientation rounded to 5 decimals at 10⁻⁵ closed into five "elements", two of
+    // them the same operation with other rounding errors, and gave undefined.
+    const c = Math.cos(0.7), s = Math.sin(0.7); // prettier-ignore
+    const rot: Mat3 = [[c, -s, 0], [s, c, 0], [0, 0, 1]]; // prettier-ignore
+    const tilt: Mat3 = [[1, 0, 0], [0, Math.cos(0.4), -Math.sin(0.4)], [0, Math.sin(0.4), Math.cos(0.4)]]; // prettier-ignore
+    const g = multiply(tilt, rot);
+    const r5 = operations('3').map((o) => ({
+      cartesian: multiply(multiply(g, o.cartesian), transpose(g)).map((row) =>
+        row.map((x) => Math.round(x * 1e5) / 1e5),
+      ) as unknown as Mat3,
+      timeReversal: false,
+    }));
+    let outcome: unknown;
+    try {
+      outcome = pointGroupOf(r5, { tolerance: 1e-6 });
+    } catch (e) {
+      outcome = e;
+    }
+    expect(outcome).toBeInstanceOf(RangeError);
+    expect(pointGroupOf(r5, { tolerance: 1e-4 })?.key).toBe('3');
   });
 
   it('refuses a matrix that is not orthogonal and an operation that does not say whether it has time reversal', () => {
