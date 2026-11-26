@@ -225,6 +225,57 @@ describe('pointGroupOf', () => {
 });
 
 describe('describeOperationsOf', () => {
+  it('refuses a matrix far from the operation its trace suggests, near 0° and 180° too', () => {
+    // A rotation by 10⁻³ rad, or by 180° + 10⁻³ rad, about [1,2,3]: entries off by about 10⁻³,
+    // but the trace within 3·10⁻⁵ of an integer. Both were described as the identity and a twofold
+    // rotation.
+    for (const turns of [1e-3 / (2 * Math.PI), 0.5 + 1e-3 / (2 * Math.PI)]) {
+      const m = rotationAbout([1, 2, 3], turns) as unknown as Mat3;
+      expect(() => describeOperationsOf([{ cartesian: m, timeReversal: false }])).toThrow(RangeError);
+      expect(() =>
+        describeOperationsOf([{ cartesian: m.map((r) => r.map((x) => -x)) as unknown as Mat3, timeReversal: false }]),
+      ).toThrow(RangeError);
+    }
+    // Within the tolerance it is the operation.
+    const near = rotationAbout([1, 2, 3], 1e-7) as unknown as Mat3;
+    expect(describeOperationsOf([{ cartesian: near, timeReversal: false }])[0].kind).toBe('identity');
+    // A reflection 0.45·10⁻³ from an exact one, and a rotation 0.5·10⁻³ from an exact twofold
+    // rotation, at the tolerance 10⁻³: the axis estimated from the matrix carries its error, and the
+    // rebuilt operation lies farther than the nearest one (pointGroupOf accepts both).
+    const reflection: Mat3 = [
+      [0.5247607057271139, 0.5793446341279355, -0.6236653179371416],
+      [0.5800506253972413, 0.29309977510295737, 0.7596896513457927],
+      [-0.6233420636333016, 0.7602238224307932, 0.1820106245125145],
+    ];
+    const twofold = rotationAbout([-2, 3, 3], 0.5 + 0.8e-3 / (2 * Math.PI)) as unknown as Mat3;
+    for (const [m, kind] of [
+      [reflection, 'reflection'],
+      [twofold, 'rotation'],
+    ] as const) {
+      expect(describeOperationsOf([{ cartesian: m, timeReversal: false }], { tolerance: 1e-3 })[0].kind).toBe(kind);
+    }
+  });
+
+  it('accepts every operation of every group in a general orientation, rounded to 6 decimals', () => {
+    const c = Math.cos(0.7), s = Math.sin(0.7); // prettier-ignore
+    const g = multiply(
+      [[1, 0, 0], [0, Math.cos(0.4), -Math.sin(0.4)], [0, Math.sin(0.4), Math.cos(0.4)]], // prettier-ignore
+      [[c, -s, 0], [s, c, 0], [0, 0, 1]], // prettier-ignore
+    );
+    for (const key of MAGNETIC_POINT_GROUP_KEYS) {
+      const ops = operations(key).map((o) => ({
+        cartesian: multiply(multiply(g, o.cartesian), transpose(g)).map((row) =>
+          row.map((x) => Math.round(x * 1e6) / 1e6),
+        ) as unknown as Mat3,
+        timeReversal: o.timeReversal,
+      }));
+      expect(
+        describeOperationsOf(ops).map((d) => [d.kind, d.n]),
+        key,
+      ).toEqual(describeOperations(key).map((d) => [d.kind, d.n]));
+    }
+  });
+
   it('agrees with describeOperations, axes signed with the first non-zero component positive', () => {
     for (const key of MAGNETIC_POINT_GROUP_KEYS) {
       for (const s of settings(key)) {

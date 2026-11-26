@@ -1548,9 +1548,10 @@ def describe_operations_of(
     component, in the order x, y, z, positive, and for n ≥ 3 the sense about that axis. The axes are
     not named by lattice directions, since the list need not belong to a setting; for a crystal
     class given by its key, ``describe_operations`` names them. Raises SymcrysError for an operation
-    without an orthogonal Cartesian matrix (``cartesian``) or not a crystallographic operation (a
-    rotation part by an angle other than 360°/n, n = 1, 2, 3, 4, 6), both within ``tolerance``
-    (default ``EPSILON``, as for ``point_group_of``).
+    without an orthogonal Cartesian matrix (``cartesian``) or not a crystallographic operation (one
+    whose matrix differs by more than three times the tolerance from the operation its description
+    names, a rotation by 360°/n, n = 1, 2, 3, 4, 6, about its axis, or its product with the
+    inversion), within ``tolerance`` (default ``EPSILON``, as for ``point_group_of``).
 
     Parameters
     ----------

@@ -38,6 +38,13 @@ All notable changes to symcrys are recorded here. The format follows
 
 ### Fixed
 
+- `describeOperationsOf` (both point-group entry points) described a matrix far outside the
+  tolerance as a crystallographic operation (#205): it checked only that the trace is an integer
+  within 3·tolerance, which near 0° and 180° holds for matrices off by about 10⁻³ (a rotation by
+  10⁻³ rad about [1,2,3] was the identity, one by 180° + 10⁻³ rad a twofold rotation). The matrix
+  must now equal the operation of its description within three times the tolerance, the factor of
+  the trace test. Affected since the
+  function was added (0.7.0).
 - The functions that close a list of operations into a group (`pointGroupOf`, `tensorFormOf`,
   `allowsPropertyOf`, `allowedPropertiesOf`, `isCentrosymmetricOf`, `isEnantiomorphicOf`) accepted
   a closure that held near copies of one operation, which matrices with rounding errors above the
