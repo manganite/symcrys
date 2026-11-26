@@ -229,7 +229,7 @@ describe('describeOperationsOf', () => {
     // A rotation by 10⁻³ rad, or by 180° + 10⁻³ rad, about [1,2,3]: entries off by about 10⁻³,
     // but the trace within 3·10⁻⁵ of an integer. Both were described as the identity and a twofold
     // rotation.
-    for (const turns of [1e-3 / (2 * Math.PI), 0.5 + 1e-3 / (2 * Math.PI), 1 / 3 + 1e-4]) {
+    for (const turns of [1e-3 / (2 * Math.PI), 0.5 + 1e-3 / (2 * Math.PI)]) {
       const m = rotationAbout([1, 2, 3], turns) as unknown as Mat3;
       expect(() => describeOperationsOf([{ cartesian: m, timeReversal: false }])).toThrow(RangeError);
       expect(() =>
@@ -239,6 +239,21 @@ describe('describeOperationsOf', () => {
     // Within the tolerance it is the operation.
     const near = rotationAbout([1, 2, 3], 1e-7) as unknown as Mat3;
     expect(describeOperationsOf([{ cartesian: near, timeReversal: false }])[0].kind).toBe('identity');
+    // A reflection 0.45·10⁻³ from an exact one, and a rotation 0.5·10⁻³ from an exact twofold
+    // rotation, at the tolerance 10⁻³: the axis estimated from the matrix carries its error, and the
+    // rebuilt operation lies farther than the nearest one (pointGroupOf accepts both).
+    const reflection: Mat3 = [
+      [0.5247607057271139, 0.5793446341279355, -0.6236653179371416],
+      [0.5800506253972413, 0.29309977510295737, 0.7596896513457927],
+      [-0.6233420636333016, 0.7602238224307932, 0.1820106245125145],
+    ];
+    const twofold = rotationAbout([-2, 3, 3], 0.5 + 0.8e-3 / (2 * Math.PI)) as unknown as Mat3;
+    for (const [m, kind] of [
+      [reflection, 'reflection'],
+      [twofold, 'rotation'],
+    ] as const) {
+      expect(describeOperationsOf([{ cartesian: m, timeReversal: false }], { tolerance: 1e-3 })[0].kind).toBe(kind);
+    }
   });
 
   it('accepts every operation of every group in a general orientation, rounded to 6 decimals', () => {

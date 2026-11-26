@@ -895,8 +895,12 @@ symcrys's own rule for a list without a lattice, and the sense refers to that si
 counts as zero, so that a matrix with rounding errors keeps the sign of its axis. A matrix that is
 not orthogonal, or that is not a crystallographic operation, is a RangeError, both within
 `tolerance` as for `pointGroupOf`: the description (kind, n, axis, sense) is read from the trace
-and the axis, and the matrix must equal, entry by entry within the tolerance, the operation the
-description names, since near 0° and 180° the trace changes only to second order with the angle.
+and the axis, and the matrix must equal, entry by entry within three times the tolerance, the
+operation the description names (a rotation by 360°/n about the axis, or its product with the
+inversion), since near 0° and 180° the trace changes only to second order with the angle. The
+factor 3 is that of the trace test: the axis is estimated from the matrix and carries its errors,
+so the rebuilt operation can lie up to about 2.3 times farther from the matrix than the nearest
+operation does.
 
 ## Lattice basis and orbits
 

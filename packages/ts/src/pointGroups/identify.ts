@@ -191,17 +191,22 @@ function rotation(a: Vec3, angle: number): Mat3 {
 }
 
 /**
- * Throws unless the rotation part of an operation equals, entry by entry within the tolerance, the
- * rotation its description names (kind, n, axis, sense): the trace alone changes only to second
- * order with the angle near 0° and 180°, so a matrix far from any crystallographic operation can
- * have an integer trace within the tolerance.
+ * Throws unless the rotation part of an operation equals, entry by entry within three times the
+ * tolerance (as the trace test), the rotation its description names (kind, n, axis, sense): the
+ * trace alone changes only to second order with the angle near 0° and 180°, so a matrix far from
+ * any crystallographic operation can have an integer trace within the tolerance. The axis of the
+ * description is estimated from the matrix and carries its errors, so the rebuilt operation can lie
+ * up to about 2.3 times farther from the matrix than the nearest operation does; the factor 3 keeps
+ * a matrix within the tolerance of an operation from being refused.
  */
 function checkIdeal(r: Mat3, ideal: Mat3, i: number, tolerance: number): void {
   const deviation = Math.max(...r.flatMap((row, a) => row.map((v, b) => Math.abs(v - ideal[a][b]))));
-  if (!(deviation < Math.max(tolerance, EPSILON))) {
+  const bound = traceTolerance(tolerance);
+  if (!(deviation < bound)) {
     throw new RangeError(
-      `Operation ${i} is not a crystallographic point operation within the tolerance ${tolerance}: it differs ` +
-        `from the nearest one by ${deviation.toPrecision(2)} in an entry`,
+      `Operation ${i} is not a crystallographic point operation within the tolerance ${tolerance} (at least ` +
+        `EPSILON): it differs from the operation it reads as by ${deviation.toPrecision(2)} in an entry, more ` +
+        `than three times the tolerance`,
     );
   }
 }
@@ -212,9 +217,10 @@ function checkIdeal(r: Mat3, ideal: Mat3, i: number, tolerance: number): void {
  * in the order x, y, z, positive, and for n ≥ 3 the sense about that axis. The axes are not named
  * by lattice directions, since the list need not belong to a setting; for a point group given by its
  * key, `describeOperations` names them. Throws a RangeError for an operation without an orthogonal Cartesian matrix (`cartesian`) or
- * not a crystallographic operation (one whose matrix differs from the operation its description
- * names, a rotation by 360°/n, n = 1, 2, 3, 4, 6, about its axis), both within `tolerance` (default
- * `EPSILON`, as for `pointGroupOf`), and for an operation that
+ * not a crystallographic operation (one whose matrix differs by more than three times the
+ * tolerance from the operation its description names, a rotation by 360°/n, n = 1, 2, 3, 4, 6,
+ * about its axis, or its product with the inversion), within `tolerance` (default `EPSILON`, as for
+ * `pointGroupOf`), and for an operation that
  * does not say whether it is combined with time reversal.
  */
 export function describeOperationsOf(
