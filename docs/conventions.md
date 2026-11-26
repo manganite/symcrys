@@ -1285,12 +1285,13 @@ same sequence with the centring (1/2, 1/2) added, as ITA prints the "(1/2,1/2)+ 
 a plane group are its number and symbol, ITA's selected generators, the centring and the asymmetric
 unit (convention data); the general position is built from the generators by ITA's rule, as for the
 point groups: from the identity, each generator g extends the group H built so far by the cosets
-gH, g²H, … until a power of g lies in H, all modulo the lattice (ITA 2016 § 2.1.3.11 (iv), p. 162;
-5th ed. § 8.3.5, p. 737), which gives ITA's numbering for all 17 groups (tested). The crystal system
+gH, g²H, … until a power of g lies in H, all modulo the lattice (ITA 2016 § 1.4.3, p. 60, Table
+1.4.3.2; § 2.1.3.11 (iv), p. 162), which gives ITA's numbering for all 17 groups (tested). The crystal system
 follows from the point group, the full symbol from the elements along the symmetry directions
 (per set `m` if a mirror line is normal to one of them, else `g` for a glide line, else `1`; in
 the square and hexagonal systems the 1s are left out when all are 1), and the Patterson symmetry
-is the symmorphic group of the lattice letter with the Laue class as point group; all are compared
+is the symmorphic group of the lattice with the Laue class as point group (§ 2.1.3.5, p. 152); all
+are compared
 with the printed headlines. The generators are ITA's selected generators without the identity and
 the integer translations, the centring first. A plane point group has the linear parts of its symmorphic plane group, in the same
 order (pm for `m`, p3m1 and p31m for the settings of `3m`), so that the point group of a plane group

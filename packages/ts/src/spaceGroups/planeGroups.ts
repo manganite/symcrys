@@ -48,7 +48,8 @@ const cache = new Map<number, readonly ExactOperation[]>();
  * The operations of a plane group, one per coset of the integer translations, translations in
  * [0, 1): the general position in ITA's numbering, then, for a centred group, the same sequence
  * with the centring (1/2, 1/2) added, as ITA prints the "(1/2,1/2)+ set". The numbering follows
- * ITA's rule (2016 § 2.1.3.11 (iv), p. 162; 5th ed. § 8.3.5, p. 737): from the identity, each
+ * ITA's rule (2016 § 1.4.3, p. 60, Table 1.4.3.2; the coordinates in that order, § 2.1.3.11 (iv),
+ * p. 162): from the identity, each
  * selected generator g extends the group H generated so far by the cosets gH, g²H, … until a power
  * of g lies in H, all modulo the lattice. Throws if the result is not closed, which would be an
  * error in the data.
@@ -63,6 +64,9 @@ export function planeGroupOperations(key: string | number): readonly ExactOperat
   for (const g of entry.generators.map(parseOperation)) {
     const h = general.slice();
     for (let power = g; !has(h, power); power = compose(power, g)) {
+      // A plane point group has at most 12 operations; more means an error in the data (a generator
+      // of infinite order modulo the lattice would not end the loop).
+      if (general.length > 12) throw new Error(`The selected generators of ${entry.symbol} give no plane group`);
       for (const x of h) general.push(reduceModLattice(compose(power, x)));
     }
   }
@@ -91,6 +95,9 @@ export function planeGroupGenerators(key: string | number): ExactOperation[] {
   return [...centringOperations(entry).slice(1), ...entry.generators.map(parseOperation)];
 }
 
+/** The lattice letter of a plane group: c for a centred lattice, p otherwise. */
+export const latticeLetter = (entry: PlaneGroupEntry): 'p' | 'c' => (entry.centring.length > 0 ? 'c' : 'p');
+
 /** The order of a proper rotation of the plane from its trace (also in a hexagonal basis): 1, 2, 3, 4, 6. */
 const ROTATION_ORDER: Readonly<Record<number, number>> = { 2: 1, [-2]: 2, [-1]: 3, 0: 4, 1: 6 };
 
@@ -114,8 +121,9 @@ export function planeGroupSystem(key: string | number): PlaneSystem {
 
 /**
  * The character of a set of symmetry directions in the full symbol: `m` if a mirror line is normal to
- * one of them, else `g` if a glide line is, else `1`. An operation is a mirror if its glide vector
- * (w + Ww)/2 is a lattice vector, a glide otherwise.
+ * one of them, else `g` if a glide line is, else `1`. The coset of an operation (W, w) holds a
+ * mirror if its glide vector (w + Ww)/2 plus (t + Wt)/2 is a lattice vector for some integer t;
+ * since (t + Wt)/2 = (s + Ws) + (r + Wr)/2 for t = 2s + r, it is enough to try r ∈ {0, 1}².
  */
 function directionCharacter(ops: readonly ExactOperation[], set: readonly PlaneDirection[]): string {
   const parallel = (a: readonly number[], b: PlaneDirection): boolean => a[0] * b[1] - a[1] * b[0] === 0;
@@ -129,14 +137,20 @@ function directionCharacter(ops: readonly ExactOperation[], set: readonly PlaneD
       add(multiply(rational(w[i][0]), op.translation[0]), multiply(rational(w[i][1]), op.translation[1])),
     );
     const g = [0, 1].map((i) => multiply(add(op.translation[i], ww[i]), rational(1, 2)));
-    if (g.every(isInteger)) return 'm';
+    const mirror = [
+      [0, 0],
+      [1, 0],
+      [0, 1],
+      [1, 1],
+    ].some((r) => [0, 1].every((i) => isInteger(add(g[i], rational(r[i] + w[i][0] * r[0] + w[i][1] * r[1], 2)))));
+    if (mirror) return 'm';
     glide = true;
   }
   return glide ? 'g' : '1';
 }
 
 /**
- * The full Hermann–Mauguin symbol of a plane group (ITA 2016 § 2.1.3.4, p. 151, with the symmetry
+ * The full Hermann–Mauguin symbol of a plane group (ITA 2016 § 2.1.3.4, pp. 151–152, with the symmetry
  * directions of Table 2.1.3.1): the lattice letter, the highest rotation, and per set of symmetry
  * directions its character; in the square and hexagonal systems the characters are left out when
  * all are 1 (`p4`, `p3`, `p6`), in the rectangular system never (`p1m1`).
@@ -148,5 +162,5 @@ export function planeGroupFullSymbol(key: string | number): string {
   const chars = PLANE_SYMMETRY_DIRECTIONS[system].map((set) => directionCharacter(ops, set));
   const { n } = rotationsAndReflections(key);
   const shown = system !== 'rectangular' && chars.every((c) => c === '1') ? [] : chars;
-  return `${entry.symbol[0]}${n}${shown.join('')}`;
+  return `${latticeLetter(entry)}${n}${shown.join('')}`;
 }

@@ -10,6 +10,8 @@ import { compose, type ExactOperation } from './affine.js';
 import { type PlaneSystem } from './planeGroupData.js';
 import {
   PLANE_GROUP_KEYS,
+  latticeLetter,
+  planeGroupEntry,
   planeGroupFullSymbol,
   planeGroupGenerators,
   planeGroupOperations,
@@ -88,9 +90,9 @@ export function planePointGroupOf(groupSymbol: string): { key: PlanePointGroupKe
 }
 
 /**
- * The Patterson symmetry of a plane group: the symmorphic plane group with its lattice letter whose
- * point group is the Laue class of its point group, the point group with the twofold rotation (the
- * symmetry centre of the plane) added (ITA 2016 § 3.2.1.1, p. 720).
+ * The Patterson symmetry of a plane group: the symmorphic plane group of its lattice whose point
+ * group is its Laue class (ITA 2016 § 2.1.3.5, p. 152), the point group with the twofold rotation,
+ * the symmetry centre of the plane, added (§ 3.2.1.1, p. 720).
  */
 export function planeGroupPatterson(groupSymbol: string): string {
   const twofold: ExactOperation = {
@@ -103,7 +105,7 @@ export function planeGroupPatterson(groupSymbol: string): string {
   const ops = planeGroupOperations(groupSymbol);
   const withCentre = [...ops, ...ops.map((op) => compose(twofold, op))];
   const laue = pointGroupOfLinearParts(withCentre).key;
-  const letter = groupSymbol[0];
+  const letter = latticeLetter(planeGroupEntry(groupSymbol));
   if (letter === 'p') return SOURCE[laue][0];
   // A centred lattice: the centred plane group of the Laue class without glide lines.
   const found = PLANE_GROUP_KEYS.find(

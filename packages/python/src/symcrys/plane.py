@@ -138,8 +138,8 @@ class PlaneGroup(TypedDict):
     bravais_lattice: PlaneBravaisLattice
     """The Bravais lattice: ``'mp'``, ``'op'``, ``'oc'``, ``'tp'`` or ``'hp'``."""
     patterson_symmetry: str
-    """The Patterson symmetry as ITA gives it in the headline of the group, a plane group: the lattice
-    of the group with its Laue class, e.g. ``'p2mm'`` for ``p2mg``, ``'c2mm'`` for ``cm``.
+    """The Patterson symmetry, a plane group: the symmorphic plane group of the lattice of the group
+    whose point group is its Laue class, e.g. ``'p2mm'`` for ``p2mg``, ``'c2mm'`` for ``cm``.
     """
     centring: NDArray[np.float64]
     """The centring translations besides (0, 0): ``[[0.5, 0.5]]`` for ``cm`` and ``c2mm``, otherwise

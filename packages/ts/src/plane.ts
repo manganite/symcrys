@@ -163,10 +163,10 @@ export interface PlaneGroup {
    */
   readonly bravaisLattice: PlaneBravaisLattice;
   /**
-   * The Patterson symmetry as ITA gives it in the headline of the group, a plane group: the lattice
-   * of the group with its Laue class, e.g. `'p2mm'` for `p2mg`, `'c2mm'` for `cm`.
+   * The Patterson symmetry, a plane group: the symmorphic plane group of the lattice of the group
+   * whose point group is its Laue class, e.g. `'p2mm'` for `p2mg`, `'c2mm'` for `cm`.
    *
-   * @remarks Source: ITA (2016), Chapter 2.2.
+   * @remarks ITA (2016) § 2.1.3.5, p. 152; equal to the headlines of Chapter 2.2 for all 17 groups.
    */
   readonly pattersonSymmetry: PlaneGroupKey;
   /** The centring translations besides (0, 0): `[[0.5, 0.5]]` for `cm` and `c2mm`, otherwise none. */
