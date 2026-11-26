@@ -665,7 +665,6 @@ function argument(ctx, ir, name, fn, where) {
   const own = api.functions[fn]?.args?.[name];
   if (own) used.add(`functions.${fn}.args.${name}`);
   if (own) return { py: 'ArrayLike', expr: own };
-  if (ctx.name === 'symcrys.plane' && name === 'point') return { py: 'ArrayLike', expr: api.plane.point };
   if (name === 'operations') {
     // The keys an operation needs, and the field a bare array of matrices is read as: the module's,
     // or a function's own in api.json (an array, or per module an object).
@@ -913,10 +912,12 @@ async function generate(name, cfg) {
             if (!ann) throw new Error(`${where}(${p.name}).${f.name}: a field of kind ${f.ir.k}`);
             if (f.required) params.push(`${name}: ${ann}`);
             else keywords.push({ py: name, ann: `Optional[${ann}]`, expr: '' });
+            // A point of the plane is checked by its own function, which names the argument in its errors.
+            const planePoint = ctx.name === 'symcrys.plane' && f.name === 'point' && f.required;
             passed.push(
               ops && !f.required
                 ? `${name}=None if ${name} is None else ${ops.expr}`
-                : `${name}=${ops ? ops.expr : name}`,
+                : `${name}=${ops ? ops.expr : planePoint ? api.plane.point : name}`,
             );
           }
           // Several object parameters only without overloads: the overloads are written for one.

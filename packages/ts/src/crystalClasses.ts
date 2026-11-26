@@ -519,9 +519,11 @@ export function siteSymmetryOf(
  * The site symmetry of a face (field `hkl`), a lattice direction (`uvw`) or a Cartesian
  * direction (`cartesian`) under a crystal class in a setting: `siteSymmetryOf` applied to
  * `operations(key, options)`, so the indices refer to those operations; `direction` of the result is
- * the Cartesian unit vector (for a face its normal, `latticeBasis`). Throws a RangeError for a bare
- * array, which could be either kind of vector, for indices that are not three integers not all
- * zero, and as `siteSymmetryOf` does.
+ * the Cartesian unit vector (for a face its normal, `latticeBasis`). Throws a RangeError unless
+ * exactly one of the three is given, for indices that are not three integers not all zero, and as
+ * `siteSymmetryOf` does.
+ *
+ * @remarks A bare array, which could be either kind of vector, is a RangeError.
  */
 export function siteSymmetry(
   key: PointGroupKey,
@@ -597,9 +599,10 @@ export function wyckoffPosition(
 
 /**
  * The conventional basis a, b, c of a crystal class in a setting, as the columns of a Cartesian
- * matrix with unit edge lengths: the basis in which `matrix` of each operation is W and `cartesian`
- * is B·W·B⁻¹. Orthorhombic, tetragonal, cubic: x ∥ a, y ∥ b, z ∥ c. Hexagonal axes: x ∥ a, z ∥ c,
- * b at 120° from a. Rhombohedral axes: the obverse basis a_R, b_R, c_R in the hexagonal frame. A
+ * matrix: the basis in which `matrix` of each operation is W and `cartesian` is B·W·B⁻¹.
+ * Orthorhombic, tetragonal, cubic: x ∥ a, y ∥ b, z ∥ c, unit edge lengths. Hexagonal axes: x ∥ a,
+ * z ∥ c, b at 120° from a, a = c = 1. Rhombohedral axes: the obverse basis a_R, b_R, c_R in that
+ * hexagonal cell (edge length 2/3 for a = c = 1). A
  * direction [uvw] is B·u in this frame, the normal of a face (hkl) B⁻ᵀ·h. For the monoclinic and
  * triclinic families, whose cell angles a point group does not fix, it is the basis symcrys takes
  * for its operations, a, b, c along x, y, z; the basis of a real cell is `latticeFromParameters`.
@@ -607,6 +610,7 @@ export function wyckoffPosition(
  * @remarks The matrix is frozen.
  */
 export function latticeBasis(key: PointGroupKey, options?: SettingOptions): Mat3 {
+  directions.checkFamilyName(key);
   return directions.latticeBasis(classKey(key), options);
 }
 

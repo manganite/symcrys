@@ -75,7 +75,12 @@ describe('a direction given to a function of a key: { hkl }, { uvw } or { cartes
     expect(() => classes.orbit('4mm', { cartesian: [1, 0, 0] } as never)).toThrow(
       /orbitOf with the operations of the key/,
     );
-    expect(() => classes.orbit('4mm', [1, 0, 0] as never)).toThrow(/either a face \(hkl\)/);
+    expect(() => classes.orbit('4mm', [1, 0, 0] as never)).toThrow(
+      /a face \(hkl\) or a lattice direction \(uvw\), named by its field/,
+    );
+    expect(() => classes.orbit('4mm', { hkl: [1, 0, 0], foo: 1 } as never)).toThrow(
+      /exactly one of the fields hkl, uvw/,
+    );
   });
 });
 
@@ -90,6 +95,11 @@ describe('latticeBasis(key, { setting })', () => {
         }
       }
     }
+  });
+
+  it('names the key to take for the name of a crystal family', () => {
+    expect(() => classes.latticeBasis('hexagonal' as never)).toThrow(/for "hexagonal" use "6\/mmm"/);
+    expect(() => magnetic.latticeBasis('cubic' as never)).toThrow(/use "m-3m"/);
   });
 
   it('puts a along x and c along z for hexagonal axes, the obverse a_R, b_R, c_R for rhombohedral axes', () => {

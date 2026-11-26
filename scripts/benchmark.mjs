@@ -77,4 +77,4 @@ time(
   () => classes.rotateTensor(tensor4, turn, { rank: 4, kind: 'polar', intrinsic: 'none' }),
   2000,
 );
-time('siteSymmetry m-3m, [111]', () => classes.siteSymmetry('m-3m', [1, 1, 1]));
+time('siteSymmetry m-3m, [111]', () => classes.siteSymmetry('m-3m', { uvw: [1, 1, 1] }));

@@ -202,7 +202,7 @@ def test_operations_in_the_lattice_basis_and_orbits() -> None:
     poles = symcrys.orbit_of(symcrys.operations("4mm"), [1, 0, 0])
     assert [p["operations"].tolist() for p in poles] == [[0, 4], [1, 5], [2, 7], [3, 6]]
     assert poles[0]["direction"].dtype == np.float64
-    with pytest.raises(symcrys.SymcrysError, match="either hkl"):
+    with pytest.raises(symcrys.SymcrysError, match="exactly one of the fields hkl, uvw"):
         symcrys.orbit("4mm")
 
 

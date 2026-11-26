@@ -907,10 +907,10 @@ def angle_between_planes(basis: ArrayLike, plane1: ArrayLike, plane2: ArrayLike)
 
 def face_normal(basis: ArrayLike, hkl: ArrayLike) -> NDArray[np.float64]:
     """The unit normal of a plane (hkl) in a cell, a Cartesian vector: h·a* + k·b* + l·c*
-    normalised, the pole of the face. With ``lattice_basis(family)`` for a family with fixed cell
-    angles, or ``lattice_from_parameters`` for a real cell; Miller indices of hexagonal axes are
-    three, without i. Raises SymcrysError for a basis that is not a regular 3 × 3 matrix and for a
-    zero vector.
+    normalised, the pole of the face. With ``lattice_basis`` of a point group whose family has fixed
+    cell angles, or ``lattice_from_parameters`` for a real cell; Miller indices of hexagonal axes
+    are three, without i. Raises SymcrysError for a basis that is not a regular 3 × 3 matrix and for
+    a zero vector.
     """
     result: NDArray[np.float64] = _shared.convert(
         _call("faceNormal", _shared.array(basis, "basis", np.float64), _shared.array(hkl, "hkl")),
@@ -1273,13 +1273,13 @@ def lattice_basis(
     setting: Optional[Union[int, str]] = None,
 ) -> NDArray[np.float64]:
     """The conventional basis a, b, c of a point group in a setting, as the columns of a Cartesian
-    matrix with unit edge lengths: the basis in which ``matrix`` of each operation is W and
-    ``cartesian`` is B·W·B⁻¹. Orthorhombic, tetragonal, cubic: x ∥ a, y ∥ b, z ∥ c. Hexagonal axes:
-    x ∥ a, z ∥ c, b at 120° from a. Rhombohedral axes: the obverse basis a_R, b_R, c_R in the
-    hexagonal frame. A direction [uvw] is B·u in this frame, the normal of a face (hkl) B⁻ᵀ·h. For
-    the monoclinic and triclinic families, whose cell angles a point group does not fix, it is the
-    basis symcrys takes for its operations, a, b, c along x, y, z; the basis of a real cell is
-    ``lattice_from_parameters``.
+    matrix: the basis in which ``matrix`` of each operation is W and ``cartesian`` is B·W·B⁻¹.
+    Orthorhombic, tetragonal, cubic: x ∥ a, y ∥ b, z ∥ c, unit edge lengths. Hexagonal axes: x ∥ a,
+    z ∥ c, b at 120° from a, a = c = 1. Rhombohedral axes: the obverse basis a_R, b_R, c_R in that
+    hexagonal cell (edge length 2/3 for a = c = 1). A direction [uvw] is B·u in this frame, the
+    normal of a face (hkl) B⁻ᵀ·h. For the monoclinic and triclinic families, whose cell angles a
+    point group does not fix, it is the basis symcrys takes for its operations, a, b, c along x, y,
+    z; the basis of a real cell is ``lattice_from_parameters``.
 
     Parameters
     ----------
@@ -1933,8 +1933,8 @@ def site_symmetry(
     direction (``cartesian``) under a point group in a setting: ``site_symmetry_of`` applied to
     ``operations(key, options)``, so the indices refer to those operations; ``direction`` of the
     result is the Cartesian unit vector (for a face its normal, ``lattice_basis``). Time reversal is
-    ignored. Raises SymcrysError for a bare array, which could be either kind of vector, for indices
-    that are not three integers not all zero, and as ``site_symmetry_of`` does.
+    ignored. Raises SymcrysError unless exactly one of the three is given, for indices that are not
+    three integers not all zero, and as ``site_symmetry_of`` does.
 
     Parameters
     ----------

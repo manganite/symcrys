@@ -268,8 +268,10 @@ export function wyckoffPositions(key: PointGroupKey, options?: SettingOptions): 
  * direction (`cartesian`) under a point group in a setting: `siteSymmetryOf` applied to
  * `operations(key, options)`, so the indices refer to those operations; `direction` of the result is
  * the Cartesian unit vector (for a face its normal, `latticeBasis`). Time reversal is ignored.
- * Throws a RangeError for a bare array, which could be either kind of vector, for indices that are
- * not three integers not all zero, and as `siteSymmetryOf` does.
+ * Throws a RangeError unless exactly one of the three is given, for indices that are not three
+ * integers not all zero, and as `siteSymmetryOf` does.
+ *
+ * @remarks A bare array, which could be either kind of vector, is a RangeError.
  */
 export function siteSymmetry(
   key: MagneticPointGroupKey,

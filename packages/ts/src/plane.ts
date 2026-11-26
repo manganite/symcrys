@@ -789,7 +789,7 @@ function pointOf(input: unknown, name: string): readonly number[] {
 }
 
 /**
- * The site symmetry of a point (field `point`, lattice basis) under a plane group, as one notion with its Wyckoff
+ * The site symmetry of a point (lattice basis) under a plane group, as one notion with its Wyckoff
  * position: the point is set onto the position it lies on within the tolerance
  * (`wyckoffPosition`), and the site symmetry is that of the point there; `point` is the point on the
  * position. Throws a RangeError for an unknown key, a point that is not two finite numbers, or a
@@ -807,7 +807,7 @@ export function siteSymmetry(key: PlaneGroupKey, point: PlanePoint, options?: To
 }
 
 /**
- * The Wyckoff position of a point (field `point`, lattice basis) under a plane group, as `wyckoffPositions` gives
+ * The Wyckoff position of a point (lattice basis) under a plane group, as `wyckoffPositions` gives
  * it: the most special position whose point set lies within the tolerance of the point,
  * measured per coordinate modulo the lattice, and among positions of equal multiplicity the nearest
  * (the distance of `wyckoffDistances`); the general position always holds the point. Throws a
@@ -823,7 +823,7 @@ export function wyckoffPosition(key: PlaneGroupKey, point: PlanePoint, options?:
 }
 
 /**
- * The distance of a point (field `point`, lattice basis) to every Wyckoff position of a plane group, in the order
+ * The distance of a point (lattice basis) to every Wyckoff position of a plane group, in the order
  * of `wyckoffPositions`, each with the nearest point of the position. The point set
  * of a position is the union of the points of its coordinates with every centring and
  * lattice translation: a point, a line or the plane. Without a basis the distance is the larger of
@@ -862,7 +862,7 @@ export interface PointOrbitEntry {
 }
 
 /**
- * The orbit of a point (field `point`, lattice basis) under a plane group: the images of the point set onto its
+ * The orbit of a point (lattice basis) under a plane group: the images of the point set onto its
  * Wyckoff position (as `siteSymmetry` sets it), each in [0, 1), in the order of the operations that
  * first give them, each with the indices of the operations that map the point there (as the
  * entries of the orbits of the point groups): one entry per coset of the site symmetry, so the

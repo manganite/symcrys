@@ -49,32 +49,61 @@ export function indicesOf(value: unknown, name: string): readonly [number, numbe
   return [value[0] + 0, value[1] + 0, value[2] + 0];
 }
 
-/** The field of a direction input that is given, checked: exactly one of `hkl`, `uvw`, `cartesian`. */
-export function directionField(input: unknown, name: string): (typeof FIELDS)[number] {
+type DirectionField = (typeof FIELDS)[number];
+
+const KINDS: Readonly<Record<DirectionField, string>> = {
+  hkl: 'a face (hkl)',
+  uvw: 'a lattice direction (uvw)',
+  cartesian: 'a Cartesian vector (cartesian)',
+};
+
+/**
+ * The field of a direction input that is given, checked: exactly one of `fields` and no other key;
+ * a bare array, which could be any of them, is refused with a message that names them.
+ */
+export function directionField<F extends DirectionField>(
+  input: unknown,
+  name: string,
+  fields: readonly F[] = FIELDS as unknown as readonly F[],
+): F {
+  const kinds = fields.map((f) => KINDS[f]);
+  const choice = kinds.length === 2 ? kinds.join(' or ') : `${kinds.slice(0, -1).join(', ')} or ${kinds.at(-1)}`;
   if (Array.isArray(input)) {
-    throw new RangeError(
-      `${name} takes a face (hkl), a lattice direction (uvw) or a Cartesian vector (cartesian), named by ` +
-        `its field, not a bare array: ${shown(input)}`,
-    );
+    throw new RangeError(`${name} takes ${choice}, named by its field, not a bare array: ${shown(input)}`);
   }
-  if (typeof input !== 'object' || input === null) {
-    throw new RangeError(
-      `${name} takes a face (hkl), a lattice direction (uvw) or a Cartesian vector (cartesian), not ${shown(input)}`,
-    );
-  }
-  const given = FIELDS.filter((f) => (input as Record<string, unknown>)[f] !== undefined);
-  const other = Object.keys(input).filter((k) => !(FIELDS as readonly string[]).includes(k));
+  if (typeof input !== 'object' || input === null) throw new RangeError(`${name} takes ${choice}, not ${shown(input)}`);
+  const given = fields.filter((f) => (input as Record<string, unknown>)[f] !== undefined);
+  const other = Object.keys(input).filter((k) => !(fields as readonly string[]).includes(k));
   if (given.length !== 1 || other.length > 0) {
-    throw new RangeError(`${name} takes exactly one of the fields hkl, uvw and cartesian, not ${shown(input)}`);
+    throw new RangeError(`${name} takes exactly one of the fields ${fields.join(', ')}, not ${shown(input)}`);
   }
   return given[0];
 }
 
+const FAMILY_KEYS: Readonly<Record<string, string>> = {
+  triclinic: '-1',
+  monoclinic: '2/m',
+  orthorhombic: 'mmm',
+  tetragonal: '4/mmm',
+  hexagonal: '6/mmm',
+  cubic: 'm-3m',
+};
+
+/** A RangeError for the name of a crystal family, which `latticeBasis` took before it took a key. */
+export function checkFamilyName(key: unknown): void {
+  if (typeof key === 'string' && key in FAMILY_KEYS) {
+    throw new RangeError(
+      `latticeBasis takes the key of a point group, not a crystal family: for ${shown(key)} use ${shown(FAMILY_KEYS[key])}`,
+    );
+  }
+}
+
 /**
  * The conventional basis a, b, c of a point group in a setting, as the columns of a Cartesian
- * matrix with unit edge lengths: the basis in which `matrix` of each operation is W and `cartesian`
- * is B·W·B⁻¹. Orthorhombic, tetragonal, cubic: x ∥ a, y ∥ b, z ∥ c. Hexagonal axes: x ∥ a, z ∥ c,
- * b at 120° from a. Rhombohedral axes: the obverse basis a_R, b_R, c_R in the hexagonal frame. A
+ * matrix: the basis in which `matrix` of each operation is W and `cartesian` is B·W·B⁻¹.
+ * Orthorhombic, tetragonal, cubic: x ∥ a, y ∥ b, z ∥ c, unit edge lengths. Hexagonal axes: x ∥ a,
+ * z ∥ c, b at 120° from a, a = c = 1. Rhombohedral axes: the obverse basis a_R, b_R, c_R in that
+ * hexagonal cell (edge length 2/3 for a = c = 1). A
  * direction [uvw] is B·u in this frame, the normal of a face (hkl) B⁻ᵀ·h. For the monoclinic and
  * triclinic families, whose cell angles a point group does not fix, it is the basis symcrys takes
  * for its operations, a, b, c along x, y, z; the basis of a real cell is `latticeFromParameters`.
@@ -82,6 +111,7 @@ export function directionField(input: unknown, name: string): (typeof FIELDS)[nu
  * @remarks The matrix is frozen.
  */
 export function latticeBasis(key: MagneticPointGroupKey, options?: SettingOptions): Mat3 {
+  checkFamilyName(key);
   checkOptions(options, SETTING_KEYS, 'latticeBasis');
   const setting = classSettingOf(key, options);
   return deepFreeze(settingBasis(setting.key, setting.index).map((row) => [...row]) as unknown as Mat3);

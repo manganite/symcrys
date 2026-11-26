@@ -18,7 +18,7 @@ import {
   type SettingOptions,
 } from './pointGroups.js';
 import type { Hkl } from './wyckoff.js';
-import { indicesOf, type DirectionIndices, type FaceIndices } from './directions.js';
+import { directionField, indicesOf, type DirectionIndices, type FaceIndices } from './directions.js';
 
 export type { DirectionIndices, FaceIndices } from './directions.js';
 
@@ -78,18 +78,14 @@ export function orbit(
   options?: SettingOptions,
 ): readonly FaceOrbitEntry[] | readonly DirectionOrbitEntry[] {
   checkOptions(options, SETTING_KEYS, 'orbit');
-  const given = (indices ?? {}) as { readonly hkl?: unknown; readonly uvw?: unknown };
-  const hasHkl = given.hkl !== undefined;
-  const hasUvw = given.uvw !== undefined;
-  if ((given as { readonly cartesian?: unknown }).cartesian !== undefined) {
+  if (typeof indices === 'object' && indices !== null && (indices as { cartesian?: unknown }).cartesian !== undefined) {
     throw new RangeError(
       'orbit gives faces or lattice directions, exactly; for a Cartesian vector use orbitOf with the operations of the key',
     );
   }
-  if (hasHkl === hasUvw || Array.isArray(indices)) {
-    throw new RangeError(`orbit takes either a face (hkl) or a lattice direction (uvw), not ${shown(indices)}`);
-  }
-  const field = hasHkl ? 'hkl' : 'uvw';
+  const field = directionField(indices, 'orbit', ['hkl', 'uvw'] as const);
+  const hasHkl = field === 'hkl';
+  const given = indices as { readonly hkl?: unknown; readonly uvw?: unknown };
   const v = indicesOf(hasHkl ? given.hkl : given.uvw, field);
   const ws = groupOperations(key, options).map((op) => (hasHkl ? integerInverseTranspose(op.matrix) : op.matrix));
   const images: { key: string; value: [number, number, number]; operations: number[] }[] = [];
