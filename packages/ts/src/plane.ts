@@ -37,6 +37,8 @@ import {
   planeGroupEntry,
   planeGroupGenerators,
   planeGroupOperations,
+  planeGroupFullSymbol,
+  planeGroupSystem,
 } from './spaceGroups/planeGroups.js';
 import {
   PLANE_POINT_GROUP_KEYS,
@@ -48,6 +50,7 @@ import {
   planePointGroupSymbol,
   planePointGroupSystem,
   type PlanePointGroupKey,
+  planeGroupPatterson,
 } from './spaceGroups/planePointGroups.js';
 import {
   planeMetric,
@@ -442,9 +445,9 @@ function settingOf(key: PlaneGroupKey | PointGroupKey, options: SettingOptions |
   if (typeof setting !== 'string') return setting;
   const wanted = compactSymbol(setting);
   if (isGroupKey(key)) {
-    if (wanted === key || wanted === planeGroupEntry(key).fullSymbol) return 1;
+    if (wanted === key || wanted === planeGroupFullSymbol(key)) return 1;
     throw new RangeError(
-      `The plane group ${key} has no setting ${shown(setting)} (its symbols: ${key}, ${planeGroupEntry(key).fullSymbol})`,
+      `The plane group ${key} has no setting ${shown(setting)} (its symbols: ${key}, ${planeGroupFullSymbol(key)})`,
     );
   }
   const symbols = Array.from({ length: planePointGroupSettingCount(key) }, (_, i) => planePointGroupSymbol(key, i + 1));
@@ -549,7 +552,7 @@ export function pointGroups(): readonly PointGroup[] {
 export function findPlaneGroup(symbol: string): PlaneGroupFound | undefined {
   if (typeof symbol !== 'string') throw new RangeError(`A symbol is a string, not ${shown(symbol)}`);
   const wanted = compactSymbol(symbol);
-  const key = PLANE_GROUP_KEYS.find((k) => k === wanted || planeGroupEntry(k).fullSymbol === wanted);
+  const key = PLANE_GROUP_KEYS.find((k) => k === wanted || planeGroupFullSymbol(k) === wanted);
   return key === undefined ? undefined : Object.freeze({ key });
 }
 
@@ -580,9 +583,9 @@ export function planeGroup(key: PlaneGroupKey): PlaneGroup {
     number: entry.number,
     pointGroup: point.key,
     pointGroupSetting: point.setting,
-    crystalSystem: entry.system,
-    bravaisLattice: planeBravaisLattice(entry.system, entry.symbol),
-    pattersonSymmetry: entry.pattersonSymmetry as PlaneGroupKey,
+    crystalSystem: planeGroupSystem(entry.symbol),
+    bravaisLattice: planeBravaisLattice(planeGroupSystem(entry.symbol), entry.symbol),
+    pattersonSymmetry: planeGroupPatterson(entry.symbol) as PlaneGroupKey,
     centring: Object.freeze(
       entry.centring.map((t) => Object.freeze(t.split(',').map((c) => toNumber(parseRational(c))))),
     ),
@@ -639,7 +642,7 @@ export function symbol(key: PlaneGroupKey | PointGroupKey, options?: SymbolOptio
     if (setting !== undefined && setting !== 1) {
       throw new RangeError(`The plane group ${key} has no setting ${shown(setting)}`);
     }
-    return spaced(form === 'full' ? planeGroupEntry(key).fullSymbol : key);
+    return spaced(form === 'full' ? planeGroupFullSymbol(key) : key);
   }
   if (!isPlanePointGroupKey(key)) return unknownKey(key);
   return spaced(planePointGroupSymbol(key, settingOf(key, options)));

@@ -1281,9 +1281,18 @@ group fixes the type of its lattice, not its parameters.
 
 **Operations.** A plane group has one operation per coset of the integer translations, with its
 translation in [0, 1): first the general position as ITA numbers it, then, for `cm` and `c2mm`, the
-same sequence with the centring (1/2, 1/2) added, as ITA prints the "(1/2,1/2)+ set". The
-generators are ITA's selected generators without the identity and the integer translations, the
-centring first. A plane point group has the linear parts of its symmorphic plane group, in the same
+same sequence with the centring (1/2, 1/2) added, as ITA prints the "(1/2,1/2)+ set". The data of
+a plane group are its number and symbol, ITA's selected generators, the centring and the asymmetric
+unit (convention data); the general position is built from the generators by ITA's rule, as for the
+point groups: from the identity, each generator g extends the group H built so far by the cosets
+gH, g²H, … until a power of g lies in H, all modulo the lattice (ITA 2016 § 2.1.3.11 (iv), p. 162;
+5th ed. § 8.3.5, p. 737), which gives ITA's numbering for all 17 groups (tested). The crystal system
+follows from the point group, the full symbol from the elements along the symmetry directions
+(per set `m` if a mirror line is normal to one of them, else `g` for a glide line, else `1`; in
+the square and hexagonal systems the 1s are left out when all are 1), and the Patterson symmetry
+is the symmorphic group of the lattice letter with the Laue class as point group; all are compared
+with the printed headlines. The generators are ITA's selected generators without the identity and
+the integer translations, the centring first. A plane point group has the linear parts of its symmorphic plane group, in the same
 order (pm for `m`, p3m1 and p31m for the settings of `3m`), so that the point group of a plane group
 is the set of its linear parts; this is checked for all 17 plane groups, also for those that are not
 symmorphic (`pg`, `cm`, `p4gm`, …).
@@ -1376,8 +1385,8 @@ million rotation points is refused. Clipping and drawing are left to the applica
 
 **Lattices and cells.** `planeGroup(key)` gives the Bravais lattice
 (`bravaisLattice`: `'mp'`, `'op'`, `'oc'`, `'tp'`, `'hp'`, the family symbol of ITA Table 2.1.1.1
-followed by the lattice letter of the group) and the Patterson symmetry as the headline of the
-group prints it (`pattersonSymmetry`, a plane group: `'p2mm'` for `p2mg`, `'c2mm'` for `cm`,
+followed by the lattice letter of the group) and the Patterson symmetry, computed as above and equal
+to the headline of every group (`pattersonSymmetry`, a plane group: `'p2mm'` for `p2mg`, `'c2mm'` for `cm`,
 `'p6mm'` for `p3m1`). `pointGroup(key)` of a plane point group gives its Laue class (`laueClass`):
 the point group with the twofold rotation added, the symmetry centre of the plane ("its Laue class
 is obtained if a symmetry centre is added to its point group", ITA § 3.2.1.1, p. 720), one of the

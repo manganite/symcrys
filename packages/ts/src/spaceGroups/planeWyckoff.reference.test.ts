@@ -8,7 +8,8 @@
 import { describe, expect, it } from 'vitest';
 import * as plane from '../plane.js';
 import { readReference, tableRows } from '../testUtils/references.js';
-import { FIRST_REPRESENTATIVE_EXCEPTIONS, PLANE_SYMMETRY_DIRECTIONS } from './planeWyckoff.js';
+import { FIRST_REPRESENTATIVE_EXCEPTIONS } from './planeWyckoff.js';
+import { PLANE_SYMMETRY_DIRECTIONS } from './planeSymmetryDirections.js';
 
 const parseDirection = (s: string): number[] => {
   const digits = [...s.replace(/[[\]]/g, '').matchAll(/-?\d/g)].map((m) => Number(m[0]));

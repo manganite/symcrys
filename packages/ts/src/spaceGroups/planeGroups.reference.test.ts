@@ -17,6 +17,7 @@ import {
   applyToPoint,
   closure,
   compose,
+  formatOperation,
   equalModLattice,
   parseOperation,
   reduceModLattice,
@@ -24,7 +25,14 @@ import {
   type ExactOperation,
 } from './affine.js';
 import { PLANE_GROUP_DATA } from './planeGroupData.js';
-import { PLANE_GROUP_KEYS, planeGroupGenerators, planeGroupOperations } from './planeGroups.js';
+import {
+  PLANE_GROUP_KEYS,
+  planeGroupFullSymbol,
+  planeGroupGenerators,
+  planeGroupOperations,
+  planeGroupSystem,
+} from './planeGroups.js';
+import { planeGroupPatterson, planePointGroupOf } from './planePointGroups.js';
 import { planeWyckoffRows } from './planeWyckoff.js';
 import { isInteger, mod1, parseRational, rational, subtract, type Rational } from './rational.js';
 
@@ -105,25 +113,47 @@ describe('plane groups: transcription', () => {
     }
   });
 
-  it('equals the data file', () => {
+  it('equals the data file: number, symbol, asymmetric unit, centring, the selected generators', () => {
     const fromPrint = PRINT.map((g) => {
+      const general = g.rows[0][3].split('; ');
       const gens = g.fields['Generators selected'];
       return {
         number: g.number,
         symbol: g.symbol,
-        fullSymbol: g.fields['Full symbol'],
-        pointGroup: g.fields['Point group'],
-        system: g.fields.System.toLowerCase(),
-        pattersonSymmetry: g.fields['Patterson symmetry'],
         asymmetricUnit: g.fields['Asymmetric unit'],
-        ...(g.fields.Vertices ? { vertices: g.fields.Vertices.split('; ') } : {}),
         centring: g.fields.Centring ? ['1/2,1/2'] : [],
-        generalPosition: g.rows[0][3].split('; '),
-        generators: gens === 'none' ? [] : [...gens.matchAll(/\((\d+)\)/g)].map((m) => Number(m[1])),
+        generators: gens === 'none' ? [] : [...gens.matchAll(/\((\d+)\)/g)].map((m) => general[Number(m[1]) - 1]),
       };
     });
     expect(PLANE_GROUP_DATA).toEqual(fromPrint);
     expect(PLANE_GROUP_KEYS).toEqual(PRINT.map((g) => g.symbol));
+  });
+
+  it("gives the general position, built from the generators by ITA's rule, in ITA's numbering", () => {
+    for (const g of PRINT) {
+      const ops = planeGroupOperations(g.symbol);
+      const own = ops.slice(0, ops.length / (g.fields.Centring ? 2 : 1));
+      expect(own.map(formatOperation).join('; '), g.symbol).toBe(g.rows[0][3]);
+    }
+  });
+
+  it('gives the full symbol, point group, crystal system and Patterson symmetry of the headline, computed', () => {
+    for (const g of PRINT) {
+      expect(
+        [
+          planeGroupFullSymbol(g.symbol),
+          planePointGroupOf(g.symbol).key,
+          planeGroupSystem(g.symbol),
+          planeGroupPatterson(g.symbol),
+        ],
+        g.symbol,
+      ).toEqual([
+        g.fields['Full symbol'],
+        g.fields['Point group'],
+        g.fields.System.toLowerCase(),
+        g.fields['Patterson symmetry'],
+      ]);
+    }
   });
 
   it('gives the Wyckoff positions computed from the group as printed: letters, multiplicities, oriented symbols, coordinates', () => {
