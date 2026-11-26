@@ -15,7 +15,6 @@ import {
   isMagneticPointGroupKey,
   isPointGroupKey,
   operations,
-  settings,
   type MagneticPointGroupKey,
   type PointGroupKey,
   type SettingOptions,
@@ -145,23 +144,6 @@ export function permutationFromSetting1(key: PointGroupKey, setting: number): Ma
   if (!signedPermutation)
     throw new Error(`Point group ${key}, setting ${setting}: not a signed permutation of setting 1`);
   return [0, 1, 2].map((i) => [0, 1, 2].map((j) => p[j][i])) as unknown as Mat3;
-}
-
-/**
- * The entry of a table printed per setting (Wyckoff positions, face forms) for a setting of a class:
- * the one with the ITC short symbol (and unique axis or axes) of the setting, or undefined if ITA does not
- * print the setting.
- */
-export function storedEntry<
-  E extends { readonly symbol: string; readonly uniqueAxis?: 'b' | 'c'; readonly axes?: 'rhombohedral' },
->(table: readonly E[], key: PointGroupKey, setting: number): E | undefined {
-  const s = settings(key)[setting - 1];
-  return table.find(
-    (e) =>
-      e.symbol === s.symbol &&
-      (e.uniqueAxis === undefined || e.uniqueAxis === s.uniqueAxis) &&
-      (e.axes === 'rhombohedral') === (s.axes === 'rhombohedral'),
-  );
 }
 
 /**

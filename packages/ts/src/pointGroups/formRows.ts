@@ -13,7 +13,7 @@ import { inverse, transpose, apply as applyMatrix, type Mat3, type Vec3 } from '
 import { classData, classSettingData, settingBasis, settingLatticeOperations } from './classData.js';
 import type { PointGroupKey } from './keys.js';
 import { keyOfCompleteGroup } from './identify.js';
-import { settings } from './pointGroups.js';
+import { POINT_GROUP_KEYS, settings } from './pointGroups.js';
 import { FORM_TYPE_DATA, FORM_TYPE_KEYS, type CrystalFormTypeKey } from './formTypes.js';
 import {
   applyToFace,
@@ -152,40 +152,7 @@ const sameMatrix = (a: Mat3, b: Mat3): boolean =>
 
 /** The class of a printed eigensymmetry (`-62m` is a setting of the class `-6m2`). */
 function classOfSymbol(symbol: string): string | undefined {
-  for (const key of [
-    '1',
-    '-1',
-    '2',
-    'm',
-    '2/m',
-    '222',
-    'mm2',
-    'mmm',
-    '4',
-    '-4',
-    '4/m',
-    '422',
-    '4mm',
-    '-42m',
-    '4/mmm',
-    '3',
-    '-3',
-    '32',
-    '3m',
-    '-3m',
-    '6',
-    '-6',
-    '6/m',
-    '622',
-    '6mm',
-    '-6m2',
-    '6/mmm',
-    '23',
-    'm-3',
-    '432',
-    '-43m',
-    'm-3m',
-  ] as const) {
+  for (const key of POINT_GROUP_KEYS) {
     if (settings(key).some((s) => s.symbol === symbol)) return key;
   }
   return undefined;
@@ -245,10 +212,11 @@ function formType(normals: readonly Vec3[]): { type: CrystalFormTypeKey; conditi
 }
 
 /**
- * Vocabulary: what tells apart kinds of forms with the same number of faces and eigensymmetry
- * (ITA 2016 Table 3.2.1.3, pp. 724–726): the order of the rotation of the eigensymmetry about the
- * normal of the mirror that fixes a face (6, 4 or 3 for a prism, whose faces are parallel to the main
- * axis; 4 for the tetrahexahedron), and for the cubic forms on (hhl) the condition on h and l.
+ * Part of the definition of the names: what tells apart kinds of forms with the same number of faces
+ * and eigensymmetry, from their geometry (Table 3.2.1.3 gives the names, not these numbers): the
+ * order of the rotation of the eigensymmetry about the normal of the mirror that fixes a face (6, 4
+ * or 3 for a prism, whose faces are parallel to the main axis; 4 for the tetrahexahedron), and for
+ * the cubic forms on (hhl) the condition on h and l (ITA's "for |h| < |l|").
  */
 export const FORM_DISTINCTIONS: Readonly<
   Partial<Record<CrystalFormTypeKey, { readonly mirrorAxis?: number; readonly condition?: string }>>
@@ -291,15 +259,8 @@ const cache = new Map<string, readonly FormRow[]>();
  * The crystal forms of a setting, by Wyckoff position (general position first), basic forms before
  * limiting forms.
  *
- * - The faces of a position form a space F, those fixed by its site group. A limiting form is the
- *   form of the faces of a subspace S of F that lie on a symmetry element of the holohedry of the
- *   family (6/mmm also for rhombohedral axes) and still have the site symmetry of the position,
- *   where its kind differs from that of the basic form (ITA 2016 § 3.2.1.2.2, p. 723).
- * - Order of the limiting forms (`limitingOrder`): outside the cubic family first those whose faces
- *   are parallel to the main axis, then by the letter of the Wyckoff position of S in the holohedry,
- *   descending; the cubic forms on (hhl) with |h| < |l| first; `LIMITING_ORDER_EXCEPTIONS`.
- * - First face of a limiting form: the face space of its orbit first by `faceRank` with hexagonal
- *   or rhombohedral axes, by `pointRank` otherwise.
+ * The rules (basic and limiting forms, kind, order, first face) are stated in docs/conventions.md,
+ * "Crystal forms", "How they are computed".
  */
 export function computedFormRows(key: PointGroupKey, setting: number): readonly FormRow[] {
   const id = `${key}#${setting}`;
@@ -329,7 +290,16 @@ export function formRowsWith(key: PointGroupKey, setting: number, conventions: F
   const holo = holohedryOf(key, setting);
   const holohedry = settingLatticeOperations(holo.key, holo.setting) as unknown as Mat[];
   const holohedryRows = computedWyckoffRows(holo.key, holo.setting);
-  const basis = settingBasis(holo.key, holo.setting);
+  // The normals in a cell of general lengths, so that no sample face is special by the metric
+  // (with c = a a tetragonal (hhl) form would be an octahedron).
+  const family = crystalFamily(classData(key).crystalSystem);
+  const lengths =
+    family === 'cubic'
+      ? [1, 1, 1]
+      : family === 'tetragonal' || family === 'hexagonal'
+        ? [1, 1, 1.5556]
+        : [1, 1.2071, 1.5556];
+  const basis = settingBasis(holo.key, holo.setting).map((row) => row.map((x, j) => x * lengths[j])) as unknown as Mat3;
   const reciprocal = transpose(inverse(basis));
   const unit = (h: Vec): Vec3 => {
     const v = applyMatrix(reciprocal, h as unknown as Vec3);
@@ -406,7 +376,8 @@ export function formRowsWith(key: PointGroupKey, setting: number, conventions: F
   };
   const parallelToAxis = (space: Space): boolean => {
     if (cubic) return false;
-    // The main axis: c (hexagonal axes in the working basis), z for the others; faces with l = 0.
+    // Faces parallel to c (for rhombohedral axes in the hexagonal working basis): l = 0. Only
+    // orthorhombic, tetragonal and hexagonal positions have more than one limiting form.
     return space.every((h) => h[2] === 0);
   };
   const faceExceptions = (conventions.firstFaces[data.short] ?? []).map((p) => keyOf(patternSpanOfFace(p)));
@@ -460,7 +431,6 @@ export function formRowsWith(key: PointGroupKey, setting: number, conventions: F
       parallelToAxis(l.space) ? 0 : 1,
       // letters descending
       -holohedryLetter(l.space).charCodeAt(0),
-      l.kind.condition === '|h|>|l|' ? 1 : 0,
     ];
     limiting.sort((a, b) => {
       const i = order.indexOf(a.kind.type);

@@ -16,8 +16,8 @@
  * only a prism, has its face normals in one plane, and a name that gives the polygon of the faces
  * (trigon-, tetragon-, pentagon-) matches the polyhedron the faces bound: this tells apart forms
  * with the same number of faces and eigensymmetry; (5) each form occurs once per position, except
- * the limiting forms marked † in Table 3.2.1.3. The
- * library's data file must equal the transcriptions, and its crystal forms must agree with them.
+ * the limiting forms marked † in Table 3.2.1.3. The library's kinds of forms (formTypes.ts) must
+ * equal Table 3.2.1.3, and its computed crystal forms must equal Table 3.2.3.2.
  */
 
 import { millerIndices } from '../indices.js';

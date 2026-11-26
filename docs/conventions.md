@@ -842,8 +842,7 @@ m), are left to the applications, which look a form up by its key.
 
 `crystalForms(key, { setting })` lists the forms of a crystal class, computed from its operations
 and equal to the fifth column of ITA 6th ed. Table 3.2.3.2 (pp. 745–769) for every printed setting:
-by Wyckoff position, general position first, and for
-each position first the **basic** form, the one of lowest eigensymmetry, then the **limiting**
+by Wyckoff position, general position first, and for each position first the **basic** form, the one of lowest eigensymmetry, then the **limiting**
 forms, which have the face symmetry of the position but a higher eigensymmetry (§ 3.2.1.2.2, p. 723;
 a basic form need not be characteristic, i.e. have the eigensymmetry of the class: the rhombic prism
 of 2/m has the eigensymmetry mmm). For instance the faces (hk0) of the general position of 4mm form
@@ -860,8 +859,9 @@ tetragonal dipyramids of 422, (h0l) and (hhl)).
   form (ITA's definition, § 3.2.1.2.2, p. 723). A subspace of another limiting form of the same kind
   adds no form (the faces (101̄0) of 3 belong to the trigonal prism (hki0)).
 - **Kind:** the number of faces and the eigensymmetry, the group of all orthogonal maps that
-  permute the face normals. Where these do not decide (`FORM_DISTINCTIONS`, vocabulary from Table
-  3.2.1.3): the order of the rotation of the eigensymmetry about the normal of the mirror that fixes
+  permute the face normals, taken in a cell of general lengths so that no face is special by the
+  metric alone. Where these do not decide (`FORM_DISTINCTIONS`, part of the definition of the
+  names, from their geometry; Table 3.2.1.3 gives the names): the order of the rotation of the eigensymmetry about the normal of the mirror that fixes
   a face (a prism, faces parallel to the main axis: 6, 4 or 3; a dipyramid 2 or 1; the
   tetrahexahedron 4, the trioctahedra 2), and for the cubic forms on (hhl), which no symmetry tells
   apart, the condition: two components of the normal are equal, and |h| < |l| where the third is

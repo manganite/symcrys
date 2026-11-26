@@ -61,7 +61,7 @@ export const FIRST_FACE_EXCEPTIONS: Readonly<Record<string, readonly string[]>> 
 export type Vec = readonly number[];
 export type Mat = readonly Vec[];
 
-export const apply = (w: Mat, v: Vec): number[] => w.map((row) => row[0] * v[0] + row[1] * v[1] + row[2] * v[2]);
+const apply = (w: Mat, v: Vec): number[] => w.map((row) => row[0] * v[0] + row[1] * v[1] + row[2] * v[2]);
 /** h·W, the face (row vector) h carried by the transpose; over a group the same set as h·W⁻¹. */
 export const applyToFace = (w: Mat, h: Vec): number[] =>
   [0, 1, 2].map((j) => h[0] * w[0][j] + h[1] * w[1][j] + h[2] * w[2][j]);
@@ -121,7 +121,7 @@ const transposeMinusIdentity = (w: Mat): number[][] =>
   [0, 1, 2].map((i) => [0, 1, 2].map((j) => w[j][i] - (i === j ? 1 : 0)));
 
 /** The indices of the operations that fix every vector of a basis. */
-export const stabiliser = (ops: readonly Mat[], basis: readonly Vec[]): number[] =>
+const stabiliser = (ops: readonly Mat[], basis: readonly Vec[]): number[] =>
   ops.flatMap((w, i) => (basis.every((v) => apply(w, v).every((x, k) => x === v[k])) ? [i] : []));
 
 /**
