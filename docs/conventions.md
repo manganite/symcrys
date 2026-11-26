@@ -1414,8 +1414,20 @@ the crystal classes, the point at the origin and the point forms are left out,
 and `siteSymmetryOperations` fix the first edge: in the hexagonal groups the first doublet and the
 first edge of a special position may lie on different, conjugate mirror lines (3m1, position a: the
 direction x,x̄ and the edge (101̄), normal to 2x̄,x̄).
-The source is ITA 2016 Table 3.2.3.1 (pp. 742–744), which prints `3m` in its two orientations
-`3m1` and `31m`.
+
+They are computed; only the names of the ten kinds of edge forms are vocabulary. The positions are
+those of the symmorphic plane group of the setting (`p3m1` for `3m1`) that consist of lines through
+the origin, with their doublets and oriented symbols and in their order, the letters counted from
+a; the point at the origin is left out. The first edge of a special position is fixed by the
+stabiliser of one of its directions; of the edges with such a stabiliser it is the one with h ≥ 0,
+k ≥ 0 and the greatest h (`1,0` before `0,1`), and the general position has `h,k` (`h,k,i`). The
+kind of a form follows from its number n of edges and from whether a rotation of the lattice
+through 360°/n permutes them (regular: single edge, pair of parallel edges, trigon, square,
+hexagon; otherwise pair of edges, rhomb, ditrigon, ditetragon, dihexagon). A limiting form of the
+general position is the form of an edge fixed by no operation of the group but by a mirror of the
+lattice, where its kind differs from that of the general form: a form gains a rotation of its
+order only through such an edge (`m`: `1,0`; `3m1`: `1,1,-2`; `31m`: `1,0,-1`). All of it equals ITA
+2016 Table 3.2.3.1 (pp. 742–744), which prints `3m` in its two orientations `3m1` and `31m`.
 
 **Not yet.** The determination of the plane group of a pattern.
 

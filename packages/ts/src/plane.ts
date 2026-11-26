@@ -714,8 +714,8 @@ export function describeOperationsOf(
  * that fix that edge; the point at the origin is left out. Throws a RangeError for an
  * unknown key or setting.
  *
- * @remarks Source: ITA (6th ed., 2016), Chapter 2.2 (the plane groups) and Table 3.2.3.1, pp. 742–744
- * (the plane point groups).
+ * @remarks Computed from the operations; equal to ITA (6th ed., 2016), Chapter 2.2 (the plane
+ * groups) and Table 3.2.3.1, pp. 742–744 (the plane point groups).
  */
 export function wyckoffPositions(
   key: PlaneGroupKey | PointGroupKey,
@@ -755,7 +755,8 @@ export function wyckoffPositions(
  * limiting form where there is one. Throws a RangeError for an unknown key or setting and for a
  * plane group.
  *
- * @remarks Source: ITA (6th ed., 2016), Table 3.2.3.1, pp. 742–744.
+ * @remarks Computed from the operations (the kind of a form from its number of edges and whether a
+ * rotation of the lattice permutes them); equal to ITA (6th ed., 2016), Table 3.2.3.1, pp. 742–744.
  */
 export function crystalForms(key: PointGroupKey, options?: SettingOptions): readonly CrystalForm[] {
   checkOptions(options, ['setting'], 'crystalForms');
