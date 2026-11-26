@@ -2,7 +2,7 @@
  * Captures the output of symcrys in the ITC convention as behavioural pins (fixture class (c),
  * GUIDE.md, "Correctness and tests"): the safety net of the ITC migration (#121, #137). What is
  * collected is defined once, in packages/ts/src/testUtils/itcBaseline.ts, which `itcBaseline.pins.test.ts` also uses. Writes
- * three JSON files, one entry per line:
+ * four JSON files, one entry per line:
  *
  * - packages/ts/src/pointGroups/itcBaseline.pins.json: every key of the magnetic API in every ITC
  *   setting, and the crystallographic API for the 32 classes (symbols, searches, operations,
@@ -14,6 +14,8 @@
  *   black-and-white groups, and the tensor functions on lists of operations.
  * - packages/ts/src/spaceGroups/itcBaseline.pins.json: the 17 plane groups (with snapping and
  *   tolerances near special positions) and the 10 plane point groups.
+ * - packages/ts/src/api.pins.json: calls of the public API as data with their answers
+ *   (testUtils/apiCalls.ts), replayed by both languages.
  *
  * Run by hand from a clean checkout of a known-good revision: npm run audit:itc-baseline. Not part
  * of the build, the tests or CI. Regenerate the pins only by re-running this script, never by
@@ -31,6 +33,7 @@ import {
   collectTensors,
   type Pin,
 } from '../../packages/ts/src/testUtils/itcBaseline';
+import { API_PINS_FILE, answer, apiCalls } from '../../packages/ts/src/testUtils/apiCalls';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const src = `${root}packages/ts/src/`;
@@ -45,13 +48,31 @@ function write(path: string, revision: string, pins: readonly Pin[]): void {
   writeFileSync(path, `{\n${[...head, body].join(',\n')}\n}\n`);
 }
 
-it('captures the ITC baseline pins', () => {
+/** The revision of a clean checkout of packages/ts/src; throws if it has local changes. */
+function cleanRevision(): string {
   const git = (...args: string[]) => execFileSync('git', ['-C', root, ...args], { encoding: 'utf8' }).trim();
   if (git('status', '--porcelain', '--', 'packages/ts/src')) {
     throw new Error('packages/ts/src has local changes; capture only from a clean checkout');
   }
-  const revision = git('log', '-1', '--format=%h %cs');
+  return git('log', '-1', '--format=%h %cs');
+}
+
+it('captures the ITC baseline pins', () => {
+  const revision = cleanRevision();
   write(`${src}${ITC_BASELINE_FILES.pointGroups}`, revision, collectPointGroups());
   write(`${src}${ITC_BASELINE_FILES.tensors}`, revision, collectTensors());
   write(`${src}${ITC_BASELINE_FILES.plane}`, revision, collectPlane());
 });
+
+// Separate, so that the API pins can be re-captured alone after a change of the API's shape:
+// npm run audit:itc-baseline -- -t "API pins".
+it('captures the API pins', () => {
+  const revision = cleanRevision();
+  const pins = apiCalls().map((call) => ({ ...call, value: answer(call) }));
+  const head = [`  "note": ${JSON.stringify(API_NOTE)}`, `  "revision": ${JSON.stringify(revision)}`];
+  const body = `  "pins": [\n${pins.map((p) => `    ${JSON.stringify(p)}`).join(',\n')}\n  ]`;
+  writeFileSync(`${src}${API_PINS_FILE}`, `{\n${[...head, body].join(',\n')}\n}\n`);
+});
+
+const API_NOTE =
+  'API pins (fixture class (c), GUIDE.md): calls of the public API as data (entry, name, args; a constant without args) with the answer of symcrys (value; numbers rounded to 12 decimals, undefined as null), replayed by the TypeScript tests and through the Python layer. Captured by audit/itc-baseline/capture.run.ts (npm run audit:itc-baseline) from the revision below; regenerate only by re-capture, never edit.';

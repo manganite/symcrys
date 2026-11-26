@@ -199,10 +199,13 @@ resultJson`.
   not matter; they find contradictions, not wrong values. `npm test` runs all of them.
 - **Fixtures are JSON** (`*.pins.json`, one entry per line), so that the tests of both languages
   can read the same files; a hand-written fixture in `.ts` moves to JSON when it is next touched.
-  The ITC baseline pins cover the output of all three entry points.
-- **Python tests** read the same `references/` and pins as the TypeScript tests and have no
-  expected values of their own; in addition they test the layer itself and run the example
-  notebooks. The ITC baseline pins are not read by the Python tests yet.
+  The ITC baseline pins are the regression net of the TypeScript tests over all three entry points.
+- **The API pins** (`api.pins.json`): calls of every export but the version as data with their
+  answers, every function of a key for every group and setting. Both languages replay them, Python
+  through its layer, its keys, dtypes and numbers checked by the rules of "The Python layer".
+- **Python tests** read the same `references/` (for correctness) and the API pins (for the
+  layer) and have no expected values of their own; in addition they test the layer itself and run
+  the example notebooks.
 
 ## 8. Documentation
 
