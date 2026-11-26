@@ -8,6 +8,15 @@ All notable changes to symcrys are recorded here. The format follows
 
 ### Changed
 
+- The default tolerance `EPSILON` is 10⁻⁵, was 10⁻⁶ (#204): operations rounded to 6 decimals, the
+  usual output of files and other programs, now pass in any orientation (at 10⁻⁶, 21 of the 50
+  settings of the 32 classes failed in the frame of symcrys, up to about 40 in general
+  orientations); it is also spglib's default `symprec`. Results for exact
+  input do not change; for a caller's numbers, values closer than 10⁻⁵ now count as equal.
+- `pointGroupOf` throws the RangeError of `tensorFormOf` where the tolerance is the problem (the
+  operations close into no finite group), instead of returning `undefined`; `undefined` now means
+  a finite group that is not a crystallographic point group (#204). The orthogonality error names the tolerance and the deviation it measured, and
+  says to pass a larger tolerance for matrices with rounding errors.
 - A direction given to a function of a key names what it is (#202): `siteSymmetry(key, direction)`
   (both point-group entry points) and `wyckoffPosition(key, direction)` (`symcrys`) take a face `{ hkl }`, a
   lattice direction `{ uvw }` or a Cartesian vector `{ cartesian }`, as `orbit` takes `{ hkl }` or
@@ -29,6 +38,14 @@ All notable changes to symcrys are recorded here. The format follows
 
 ### Fixed
 
+- The functions that close a list of operations into a group (`pointGroupOf`, `tensorFormOf`,
+  `allowsPropertyOf`, `allowedPropertiesOf`, `isCentrosymmetricOf`, `isEnantiomorphicOf`) accepted
+  a closure that held near copies of one operation, which matrices with rounding errors above the
+  tolerance produce: `allowedPropertiesOf` of mm2 in a general orientation rounded to 5 decimals
+  at the tolerance 10⁻⁵ lacked `'gyrotropic'`, and `pointGroupOf` returned `undefined` (#204).
+  They now refuse it with a RangeError that says to pass a larger tolerance. Affected: `pointGroupOf`
+  since it was added, the other functions since they close a list within the tolerance (0.11.0);
+  at the default 10⁻⁶ such input mostly failed the orthogonality check instead.
 - `siteSymmetry(key, direction)` and `wyckoffPosition(key, direction)` read the direction as a
   Cartesian vector, so ITA's lattice indices gave a wrong answer without an error: the lattice
   direction [210] of 6/mmm lies on a twofold axis (position c, multiplicity 6), but `[2, 1, 0]` gave

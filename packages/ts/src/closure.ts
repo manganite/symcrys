@@ -205,7 +205,8 @@ export function closeWithin(
 
 /**
  * The group the operations generate within `tolerance` (`closeWithin`); throws a RangeError if it
- * has more than `MAX_GROUP_ORDER` elements.
+ * has more than `MAX_GROUP_ORDER` elements, or if two of its elements are near copies of one
+ * operation (`nearCopies`).
  */
 export function closedGroup(operations: readonly CartesianOperation[], tolerance: number): CartesianOperation[] {
   const group = closeWithin(operations, tolerance);
@@ -214,7 +215,25 @@ export function closedGroup(operations: readonly CartesianOperation[], tolerance
       `The operations generate no finite point group within the tolerance ${tolerance} (more than ${MAX_GROUP_ORDER} elements): matrices with errors too large for the tolerance (pass a larger one, about ten times their rounding), or a rotation by an angle that is not 360°/n`,
     );
   }
+  if (nearCopies(group, tolerance)) {
+    throw new RangeError(
+      `The operations generate ${group.length} elements within the tolerance ${tolerance}, some of them one operation with different rounding errors: matrices with errors too large for the tolerance (pass a larger one, about ten times their rounding)`,
+    );
+  }
   return group;
+}
+
+/**
+ * True if two elements of a closure agree in time reversal and lie within ten times the tolerance
+ * (at most 0.1) in every entry: one operation whose products, with errors above the tolerance,
+ * the closure collected as new elements. Over-filled closures of rounded point groups have their
+ * nearest pair within about 1.25 times the tolerance; distinct operations of a point group differ by
+ * at least √2/3 ≈ 0.47 in some entry, and those of a finite group of up to 200 elements by about
+ * 0.015, so the bound tells the two apart for tolerances up to 10⁻³.
+ */
+function nearCopies(group: readonly CartesianOperation[], tolerance: number): boolean {
+  const near = Math.min(0.1, 10 * tolerance);
+  return group.some((a, i) => group.some((b, j) => j > i && sameWithin(a, b, near)));
 }
 
 /** The largest difference of two matrix entries. */

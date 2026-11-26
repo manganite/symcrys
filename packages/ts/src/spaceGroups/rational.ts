@@ -144,7 +144,7 @@ export function nearestFraction(value: unknown, tolerance: number, what: string)
  * The simplest fraction (smallest denominator) strictly within `tolerance` of a number from a
  * caller, found by descending the Stern–Brocot tree (continued fractions): unique, and exactly n/d
  * for the double nearest to n/d as long as two fractions of denominators up to d lie more than
- * twice the tolerance apart (d up to about 700 at the tolerance 10⁻⁶). `what` names the number in
+ * twice the tolerance apart (d up to about 220 at the tolerance 10⁻⁵). `what` names the number in
  * the messages. Throws a RangeError for a value that is not a finite number, and where the fraction
  * leaves the safe integers.
  */

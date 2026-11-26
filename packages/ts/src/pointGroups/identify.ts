@@ -6,7 +6,7 @@
 
 import { TOLERANCE_KEYS, checkOptions } from '../checks.js';
 import { det, trace, type Mat3, type Vec3 } from '../linalg.js';
-import { closeWithin, sameWithin } from '../closure.js';
+import { closedGroup, sameWithin } from '../closure.js';
 import { checkCartesianOperations, checkTimeReversal, type CartesianOperation } from '../operations.js';
 import { EPSILON, MAX_POINT_GROUP_ORDER, toleranceOf, type ToleranceOptions } from '../tolerances.js';
 import { axialVector, rotationAxis, type OperationKind } from './elements.js';
@@ -64,9 +64,13 @@ const traceTolerance = (tolerance: number): number => 3 * Math.max(tolerance, EP
 
 const same = sameWithin;
 
-/** The group the operations generate within the tolerance, or undefined if it is larger than any point group. */
-const close = (ops: readonly CartesianOperation[], tolerance: number): CartesianOperation[] | undefined =>
-  closeWithin(ops, tolerance, MAX_POINT_GROUP_ORDER);
+/**
+ * The group the operations generate within the tolerance; throws the RangeError of `closedGroup` if
+ * it does not close (matrices with errors too large for the tolerance, or a rotation by an angle
+ * that is not 360°/n).
+ */
+const close = (ops: readonly CartesianOperation[], tolerance: number): CartesianOperation[] =>
+  closedGroup(ops, tolerance);
 
 /**
  * How many operations of each kind a group has: determinant, trace and time reversal of each. For
@@ -101,9 +105,13 @@ function keyOfSignature(s: string): MagneticPointGroupKey | undefined {
  * (absent if the group is the point group in another orientation). The list is closed into a group
  * first, two matrices being equal when no entry differs by `tolerance` (default `EPSILON`) or more.
  * Time reversal counts: a list with time reversal gives a magnetic point group. Returns undefined
- * if the operations generate no point group (an operation of order 5, a group larger than 96).
- * Throws a RangeError for an operation without an orthogonal Cartesian matrix (`cartesian`; within `tolerance`, at least
- * `EPSILON`) and for an operation that does not say whether it is combined with time reversal.
+ * if the operations generate a finite group that is not a crystallographic point group (an
+ * operation of order 5, a group larger than 96). Throws a RangeError for an operation without an
+ * orthogonal Cartesian matrix (`cartesian`; within `tolerance`, at least `EPSILON`), for an
+ * operation that does not say whether it is combined with time reversal, and if the operations do
+ * not close into a finite group within the tolerance, the error of `tensorFormOf` for the same
+ * input (matrices with errors too large for it, which give more than 200 elements or near copies
+ * of one operation, or a rotation by an angle that is not 360°/n).
  * The classes `1` and `-1` have one setting and no orientation, so they always have
  * setting 1.
  */
@@ -116,8 +124,7 @@ export function pointGroupOf(
   checkCartesianOperations(operations, tolerance);
   checkTimeReversal(operations);
   const group = close(operations, tolerance);
-  if (!group) return undefined;
-  const key = keyOfSignature(signature(group, tolerance));
+  const key = group.length > MAX_POINT_GROUP_ORDER ? undefined : keyOfSignature(signature(group, tolerance));
   if (!key) return undefined;
   // The operations passed in generate the group; if each is an operation of a setting of the same
   // order, the group is that setting. Products are not compared, since their errors add up.

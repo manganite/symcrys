@@ -9,9 +9,10 @@ import { shown } from './checks.js';
 /**
  * The default tolerance of every function that compares numbers a caller passes in (operations,
  * directions, points): two numbers closer than this count as equal, in the metric of their kind
- * (docs/conventions.md, "Tolerances").
+ * (docs/conventions.md, "Tolerances"). Operations rounded to 6 decimals pass with it in any
+ * orientation; rounded to n decimals they need about 10^(1−n).
  */
-export const EPSILON = 1e-6;
+export const EPSILON = 1e-5;
 
 /**
  * During group closure, an entry closer than this to one of the exact values in `SNAP_VALUES`
@@ -22,7 +23,7 @@ export const SNAP_EPSILON = 1e-9;
 /** The tolerance of a function that compares numbers a caller passes in. */
 export interface ToleranceOptions {
   /**
-   * Two numbers closer than this count as equal; default `EPSILON` (10⁻⁶). It is measured per
+   * Two numbers closer than this count as equal; default `EPSILON` (10⁻⁵). It is measured per
    * matrix entry for operations, as the distance of unit vectors for directions and per coordinate
    * modulo the lattice for points (docs/conventions.md, "Tolerances").
    */

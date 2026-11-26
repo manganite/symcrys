@@ -518,7 +518,7 @@ def test_site_symmetry_of_a_key_and_of_a_list() -> None:
 
 def test_one_tolerance_contract() -> None:
     # EPSILON in every module, and a tolerance for every function that compares numbers of a caller (#93).
-    assert symcrys.EPSILON == magnetic.EPSILON == plane.EPSILON == 1e-6
+    assert symcrys.EPSILON == magnetic.EPSILON == plane.EPSILON == 1e-5
     rounded = [{"cartesian": np.round(op["cartesian"], 4)} for op in symcrys.operations("6/mmm")]
     assert symcrys.is_centrosymmetric_of(rounded, tolerance=1e-3)
     assert not symcrys.is_enantiomorphic_of(rounded, tolerance=1e-3)

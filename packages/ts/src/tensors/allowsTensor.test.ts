@@ -92,7 +92,7 @@ describe('the cache of tensorFormOf', () => {
     // Another specification, other operations and another tolerance are other entries.
     expect(tensorFormOf(ops, 'gyrotropic')).not.toBe(first);
     expect(tensorFormOf(rounded, 'piezoelectric', { tolerance: 1e-4 })).not.toBe(first);
-    expect(tensorFormOf(ops, 'piezoelectric', { tolerance: 1e-5 })).not.toBe(first);
+    expect(tensorFormOf(ops, 'piezoelectric', { tolerance: 1e-6 })).not.toBe(first);
     expect(tensorFormOf(rounded, 'piezoelectric', { tolerance: 1e-4 }).basis.length).toBe(first.basis.length);
   });
 

@@ -912,10 +912,10 @@ describe('one tolerance contract (#93)', () => {
     'symcrys/plane orbit': [(o) => plane.orbit('p4', { point: [0.1, 0.2] }, o as never), 0.5],
   };
 
-  it('EPSILON is 10⁻⁶ and exported by all three entry points', () => {
-    expect(classes.EPSILON).toBe(1e-6);
-    expect(magnetic.EPSILON).toBe(1e-6);
-    expect(plane.EPSILON).toBe(1e-6);
+  it('EPSILON is 10⁻⁵ and exported by all three entry points', () => {
+    expect(classes.EPSILON).toBe(1e-5);
+    expect(magnetic.EPSILON).toBe(1e-5);
+    expect(plane.EPSILON).toBe(1e-5);
   });
 
   for (const [name, [call, bound]] of Object.entries(calls)) {

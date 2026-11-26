@@ -514,7 +514,7 @@ function with wrong values in every position). In Python a `RangeError` raises `
 
 Matrices hold floating-point numbers. During group closure every entry within 10⁻⁹ of an exact
 value (0, ±1, ±1/2, ±√3/2, and ±√2/2 for the 45° setting frame) is set to that value, so products do not drift; two matrices are
-equal when all entries agree within 10⁻⁶. Operations a caller passes in are compared within the
+equal when all entries agree within `EPSILON` (10⁻⁵). Operations a caller passes in are compared within the
 tolerance of the call ("Tolerances"). The matrix W of an operation in the lattice basis
 (`matrix`, "Operations") is exact: integers.
 
@@ -522,7 +522,9 @@ tolerance of the call ("Tolerances"). The matrix W of an operation in the lattic
 
 Every function that compares numbers a caller passes in (operations, directions, points) takes one
 option, `tolerance` (`ToleranceOptions`; in Python the keyword `tolerance`), with the default
-`EPSILON` = 10⁻⁶, which all three entry points export. Two numbers count as equal
+`EPSILON` = 10⁻⁵, which all three entry points export: operations rounded to 6 decimals, the
+usual output of files and other programs, pass with it in any orientation, and it is the default
+symmetry tolerance of spglib (`symprec`), which users of such a library know. Two numbers count as equal
 when they differ by less than the tolerance, in the metric of their kind:
 
 | Kind of object                            | Metric                                                  | Bound | Functions                                                                                                                                                                                                                                                                 |
@@ -558,8 +560,12 @@ when they differ by less than the tolerance, in the metric of their kind:
   the list within the tolerance and seeks the inversion in it.
 - **The tolerance must exceed the errors of the products.** Closing a list multiplies its
   matrices, and their errors add up: matrices rounded to n decimals need a tolerance of about
-  10^(1−n), not 10^(−n). With the default, matrices rounded to 6 decimals in a hexagonal or
-  trigonal group generate no finite group, and the error says to pass a larger tolerance.
+  10^(1−n), not 10^(−n). With the default, matrices rounded to 6 decimals pass in any orientation;
+  rounded to fewer decimals they need a larger tolerance. Where the tolerance is too small, every
+  function of a list says so in a RangeError: the orthogonality check names the deviation it
+  measured, and a list that closes into no finite group, or into near copies of one operation,
+  is refused, by `pointGroupOf` too. `pointGroupOf` returns `undefined` only for a finite group
+  that is not a crystallographic point group (a fivefold rotation).
 - **The exact group is near the caller's, not necessarily the textbook one.** Matrices rounded to 4
   decimals give an exact group within their errors (√3/2 written as 0.866 fixes the orientation of
   a hexagonal group about z only to a few 10⁻⁵), so a form computed from them has entries within
@@ -704,7 +710,7 @@ read in the basis a, b, c along x, y, z, which gives the right site symmetry for
 **Site symmetry.** `siteSymmetryOf(operations, direction, { tolerance })` returns the operations of
 any list (a point group, or for example the operations left after distorting a crystal) that fix
 the direction: those that move its unit vector by less than `tolerance` (default `EPSILON`,
-10⁻⁶). Near an element, the operations fixing a direction within the tolerance need not form a
+10⁻⁵). Near an element, the operations fixing a direction within the tolerance need not form a
 group (a sixfold rotation can count as fixing while its square, which moves the direction further,
 does not), so symcrys closes them under the products found in the list, sets the given direction
 onto the fixed space of that group (the mean of its images, normalised), takes the operations
@@ -862,8 +868,10 @@ their traces integers, within it. The result is the
 key, and the setting whose operations the group equals in the frame of symcrys. A group in another
 orientation (a threefold axis along [111] of a cubic crystal, a frame turned by any angle) has no
 setting: the key is still found, the setting is absent. `1` and `-1` have no orientation and always
-setting 1. The result is undefined if the operations generate no point group (an operation of
-order 5, a group of more than 96 operations). The setting is found from the operations passed in,
+setting 1. The result is undefined if the operations generate a finite group that is not a
+crystallographic point group (an operation of order 5, a group of more than 96 operations); where
+the tolerance is the problem (the list closes into more than 200 elements, or into near copies of
+one operation), it is the RangeError of `tensorFormOf` ("Tolerances"). The setting is found from the operations passed in,
 which generate the group, not from their products, whose errors add up. The first call builds a
 table of the 122 groups (about 0.1 s in Node, 0.3 s in the Python package); after that a call takes
 about 1 ms for the 48 operations of m-3m in Node (`npm run benchmark`), about 4 ms in Python
@@ -1283,7 +1291,7 @@ normals of a group are the printed symmetry directions at the positions where it
 of `symmetryElements` carry them too. `describeOperationsOf` describes
 any list of operations of the plane in the same way, such as a product of operations, an operation
 shifted by a lattice translation or the operations of a site symmetry; it reads each translation as
-a fraction with a denominator of at most 12 (within the tolerance, default 10⁻⁶) and refuses a matrix that is not the linear
+a fraction with a denominator of at most 12 (within the tolerance, default 10⁻⁵) and refuses a matrix that is not the linear
 part of a plane point group.
 
 **Points.** `siteSymmetry`, `wyckoffPosition`, `orbit` and `wyckoffDistances` take the key of a
@@ -1291,7 +1299,7 @@ plane group, since the site symmetry needs the group modulo the lattice, and a p
 basis as `{ point: [x, y] }` (in Python the argument `point`), named as the points of their results
 are (`orbit` gives each image as `{ point, operations }`, with the indices of the
 operations that map the point there, as the orbits of the point groups do), with an
-optional `tolerance` measured per coordinate modulo the lattice (default 10⁻⁶, below 1/2). They
+optional `tolerance` measured per coordinate modulo the lattice (default 10⁻⁵, below 1/2). They
 answer one question with one criterion: on which Wyckoff
 position does the point lie? `wyckoffDistances(key, { point }, { basis })` gives the numbers: for every
 printed position, in printed order, the nearest point of its point set (the printed coordinates with
