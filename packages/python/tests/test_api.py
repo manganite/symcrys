@@ -1,5 +1,5 @@
 """The Python layer itself: names, conversions, errors. The values are the library's (print is
-checked in test_references.py)."""
+checked in test_references.py, the layer over every group and setting in test_pins.py)."""
 
 import copy
 import pickle

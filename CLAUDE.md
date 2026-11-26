@@ -100,9 +100,11 @@ records: reasons live in issues and pull requests.
 
 The rules are in `GUIDE.md`; here the commands and the places in the code.
 
-- **Pins:** the ITC baseline pins are re-captured from a clean checkout with
+- **Pins:** the ITC baseline pins and the API pins are re-captured from a clean checkout with
   `npm run audit:itc-baseline`; a change of the API's shape alone changes
-  `testUtils/itcBaseline.ts`, which maps the current API back to the shape of the pins.
+  `testUtils/itcBaseline.ts`, which maps the current API back to the shape of the ITC baseline
+  pins, while the API pins are re-captured in the new shape. A new export gets its calls in
+  `testUtils/apiCalls.ts`.
 - **A new point-group function:** its wrapper goes into `crystalClasses.ts` if a key, an operation
   or a tensor passes through it.
 - **After changing a TSDoc comment or an export**: `npm run build && npm run docs:python`, and
