@@ -1030,14 +1030,16 @@ def crystal_forms(key: str, *, setting: Optional[Union[int, str]] = None) -> lis
 
 
 def site_symmetry(key: str, point: ArrayLike, *, tolerance: Optional[float] = None) -> SiteSymmetry:
-    """The site symmetry of a point (lattice basis) under a plane group, as one notion with its
-    Wyckoff position: the point is set onto the position it lies on within the tolerance
-    (``wyckoff_position``), and the site symmetry is that of the point there; ``point`` is the point
-    on the position. Raises SymcrysError for an unknown key, a point that is not two finite numbers,
-    or a tolerance outside (0, 1/2).
+    """The site symmetry of a point (field ``point``, lattice basis) under a plane group, as one
+    notion with its Wyckoff position: the point is set onto the position it lies on within the
+    tolerance (``wyckoff_position``), and the site symmetry is that of the point there; ``point`` is
+    the point on the position. Raises SymcrysError for an unknown key, a point that is not two
+    finite numbers, or a tolerance outside (0, 1/2).
 
     Parameters
     ----------
+    point
+        The coordinates x, y of the point in the lattice basis a, b (fractions of the cell).
     tolerance : keyword-only, optional
         Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁶). It is measured per
         matrix entry for operations, as the distance of unit vectors for directions and per
@@ -1053,7 +1055,7 @@ def site_symmetry(key: str, point: ArrayLike, *, tolerance: Optional[float] = No
         _call(
             "siteSymmetry",
             key,
-            _shared.plane_point(point),
+            _shared.options(point=point),
             _shared.options(tolerance=tolerance),
         ),
         _S_SiteSymmetry,
@@ -1067,14 +1069,16 @@ def wyckoff_position(
     *,
     tolerance: Optional[float] = None,
 ) -> WyckoffPosition:
-    """The Wyckoff position of a point (lattice basis) under a plane group, as ``wyckoff_positions``
-    gives it: the most special position whose point set lies within the tolerance of the point,
-    measured per coordinate modulo the lattice, and among positions of equal multiplicity the
-    nearest (the distance of ``wyckoff_distances``); the general position always holds the point.
-    Raises SymcrysError as ``site_symmetry``.
+    """The Wyckoff position of a point (field ``point``, lattice basis) under a plane group, as
+    ``wyckoff_positions`` gives it: the most special position whose point set lies within the
+    tolerance of the point, measured per coordinate modulo the lattice, and among positions of equal
+    multiplicity the nearest (the distance of ``wyckoff_distances``); the general position always
+    holds the point. Raises SymcrysError as ``site_symmetry``.
 
     Parameters
     ----------
+    point
+        The coordinates x, y of the point in the lattice basis a, b (fractions of the cell).
     tolerance : keyword-only, optional
         Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁶). It is measured per
         matrix entry for operations, as the distance of unit vectors for directions and per
@@ -1084,7 +1088,7 @@ def wyckoff_position(
         _call(
             "wyckoffPosition",
             key,
-            _shared.plane_point(point),
+            _shared.options(point=point),
             _shared.options(tolerance=tolerance),
         ),
         _S_WyckoffPosition,
@@ -1098,21 +1102,24 @@ def wyckoff_distances(
     *,
     basis: Optional[ArrayLike] = None,
 ) -> list[WyckoffDistance]:
-    """The distance of a point (lattice basis) to every Wyckoff position of a plane group, in the
-    order of ``wyckoff_positions``, each with the nearest point of the position. The point set of a
-    position is the union of the points of its coordinates with every centring and lattice
-    translation: a point, a line or the plane. Without a basis the distance is the larger of the two
-    coordinate differences modulo the lattice, the metric of the tolerance of ``wyckoff_position``;
-    with a basis (columns a, b) it is Euclidean, and the nearest point is the Euclidean nearest one;
-    per coordinate the nearest point of a line need not be unique (on x,0 every x within the
-    distance is as near), and then it is one of them. The basis should be a reduced cell, such as
-    the conventional one: the nearest lattice translate is sought near the rounded coordinates. How
-    to snap a dragged point onto a position (which position wins, within which radius) is the
-    application's choice; this gives the numbers for it. Raises SymcrysError for an unknown key, a
-    point that is not two finite numbers, and a basis that is not a non-singular 2 × 2 matrix.
+    """The distance of a point (field ``point``, lattice basis) to every Wyckoff position of a plane
+    group, in the order of ``wyckoff_positions``, each with the nearest point of the position. The
+    point set of a position is the union of the points of its coordinates with every centring and
+    lattice translation: a point, a line or the plane. Without a basis the distance is the larger of
+    the two coordinate differences modulo the lattice, the metric of the tolerance of
+    ``wyckoff_position``; with a basis (columns a, b) it is Euclidean, and the nearest point is the
+    Euclidean nearest one; per coordinate the nearest point of a line need not be unique (on x,0
+    every x within the distance is as near), and then it is one of them. The basis should be a
+    reduced cell, such as the conventional one: the nearest lattice translate is sought near the
+    rounded coordinates. How to snap a dragged point onto a position (which position wins, within
+    which radius) is the application's choice; this gives the numbers for it. Raises SymcrysError
+    for an unknown key, a point that is not two finite numbers, and a basis that is not a
+    non-singular 2 × 2 matrix.
 
     Parameters
     ----------
+    point
+        The coordinates x, y of the point in the lattice basis a, b (fractions of the cell).
     basis : keyword-only, optional
         The Cartesian basis of the lattice, a 2 × 2 matrix whose columns are a and b; with it the
         distances are Euclidean, without it they are measured per lattice coordinate.
@@ -1128,7 +1135,7 @@ def wyckoff_distances(
         _call(
             "wyckoffDistances",
             key,
-            _shared.plane_point(point),
+            _shared.options(point=point),
             _shared.options(basis=None if basis is None else _shared.array(basis, "basis", np.float64)),
         ),
         ("l", _S_WyckoffDistance),
@@ -1142,15 +1149,17 @@ def orbit(
     *,
     tolerance: Optional[float] = None,
 ) -> list[PointOrbitEntry]:
-    """The orbit of a point (lattice basis) under a plane group: the images of the point set onto
-    its Wyckoff position (as ``site_symmetry`` sets it), each in [0, 1), in the order of the
-    operations that first give them, each with the indices of the operations that map the point
-    there (as the entries of the orbits of the point groups): one entry per coset of the site
+    """The orbit of a point (field ``point``, lattice basis) under a plane group: the images of the
+    point set onto its Wyckoff position (as ``site_symmetry`` sets it), each in [0, 1), in the order
+    of the operations that first give them, each with the indices of the operations that map the
+    point there (as the entries of the orbits of the point groups): one entry per coset of the site
     symmetry, so the first entry holds the operations of ``site_symmetry``. Raises SymcrysError as
     ``site_symmetry``.
 
     Parameters
     ----------
+    point
+        The coordinates x, y of the point in the lattice basis a, b (fractions of the cell).
     tolerance : keyword-only, optional
         Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁶). It is measured per
         matrix entry for operations, as the distance of unit vectors for directions and per
@@ -1163,7 +1172,7 @@ def orbit(
         shape (n,).
     """
     result: list[PointOrbitEntry] = _shared.convert(
-        _call("orbit", key, _shared.plane_point(point), _shared.options(tolerance=tolerance)),
+        _call("orbit", key, _shared.options(point=point), _shared.options(tolerance=tolerance)),
         ("l", _S_PointOrbitEntry),
     )
     return result

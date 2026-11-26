@@ -21,6 +21,13 @@ import {
 } from './pointGroups.js';
 import { siteSymmetryOfGroup, siteTolerance, type SiteSymmetry } from '../siteSymmetry.js';
 import { EPSILON, type ToleranceOptions } from '../tolerances.js';
+import {
+  cartesianDirection,
+  type CartesianDirection,
+  type DirectionIndices,
+  type DirectionInput,
+  type FaceIndices,
+} from './directions.js';
 import { CLASS_WYCKOFF_POSITIONS, type WyckoffRow } from './wyckoffData.js';
 
 /** A face (hkl): three Miller indices in the conventional basis (for hexagonal axes without i = −(h + k)). */
@@ -257,30 +264,56 @@ export function wyckoffPositions(key: PointGroupKey, options?: SettingOptions): 
 }
 
 /**
- * The site symmetry of a direction (any non-zero Cartesian vector) under a point group in a
- * setting: `siteSymmetryOf` applied to `operations(key, options)`, so the indices refer to those
- * operations. Time reversal is ignored. Throws a RangeError as `siteSymmetryOf` does.
+ * The site symmetry of a face (field `hkl`), a lattice direction (`uvw`) or a Cartesian
+ * direction (`cartesian`) under a point group in a setting: `siteSymmetryOf` applied to
+ * `operations(key, options)`, so the indices refer to those operations; `direction` of the result is
+ * the Cartesian unit vector (for a face its normal, `latticeBasis`). Time reversal is ignored.
+ * Throws a RangeError for a bare array, which could be either kind of vector, for indices that are
+ * not three integers not all zero, and as `siteSymmetryOf` does.
  */
 export function siteSymmetry(
   key: MagneticPointGroupKey,
-  direction: Vec3,
+  direction: FaceIndices,
+  options?: SettingOptions & ToleranceOptions,
+): SiteSymmetry;
+export function siteSymmetry(
+  key: MagneticPointGroupKey,
+  direction: DirectionIndices,
+  options?: SettingOptions & ToleranceOptions,
+): SiteSymmetry;
+export function siteSymmetry(
+  key: MagneticPointGroupKey,
+  direction: CartesianDirection,
+  options?: SettingOptions & ToleranceOptions,
+): SiteSymmetry;
+export function siteSymmetry(
+  key: MagneticPointGroupKey,
+  direction: DirectionInput,
+  options?: SettingOptions & ToleranceOptions,
+): SiteSymmetry;
+export function siteSymmetry(
+  key: MagneticPointGroupKey,
+  direction: DirectionInput,
   options?: SettingOptions & ToleranceOptions,
 ): SiteSymmetry {
   checkOptions(options, [...SETTING_KEYS, ...TOLERANCE_KEYS], 'siteSymmetry');
-  return siteSymmetryOfGroup(operations(key, pick(options, SETTING_KEYS)), direction, siteTolerance(options));
+  const setting = pick(options, SETTING_KEYS);
+  const v = cartesianDirection(key, direction, setting, 'siteSymmetry');
+  return siteSymmetryOfGroup(operations(key, setting), v, siteTolerance(options));
 }
 
 const sortedKey = (list: readonly number[]): string => [...list].sort((a, b) => a - b).join(',');
 
 /**
- * The Wyckoff position of a direction (any non-zero Cartesian vector) in a crystal class: the
- * position whose printed face has a site symmetry conjugate to that of the
- * direction (ITA's definition). `tolerance` as for `siteSymmetryOf`; throws a RangeError if the
- * operations found within it do not match any position (a tolerance too large).
+ * The Wyckoff position of a face (field `hkl`), a lattice direction (`uvw`) or a Cartesian
+ * direction (`cartesian`) in a crystal class: the position whose printed face has a site symmetry conjugate
+ * to that of the direction (ITA's definition). `tolerance` as for `siteSymmetryOf`. Throws a
+ * RangeError as `siteSymmetry` does, and if the operations found within the tolerance do not match
+ * any position (a tolerance too large).
  */
 export function wyckoffPosition(
   key: PointGroupKey,
-  direction: Vec3,
+  direction: DirectionInput,
   options?: SettingOptions & ToleranceOptions,
 ): WyckoffPosition {
   checkOptions(options, [...SETTING_KEYS, ...TOLERANCE_KEYS], 'wyckoffPosition');
@@ -288,7 +321,7 @@ export function wyckoffPosition(
   const setting = tableSetting(key, options);
   const ops = operations(key, { setting });
   const rows = wyckoffPositions(key, { setting });
-  const site = siteSymmetryOfGroup(ops, direction, tolerance);
+  const site = siteSymmetryOfGroup(ops, cartesianDirection(key, direction, { setting }, 'wyckoffPosition'), tolerance);
   const candidates = rows.filter((r) => r.siteSymmetryOperations.length === site.operations.length);
   for (const g of ops) {
     const k = sortedKey(siteSymmetryOfGroup(ops, apply(g.cartesian, site.direction), tolerance).operations);

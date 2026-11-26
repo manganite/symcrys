@@ -498,13 +498,18 @@ def test_find_point_group_reads_symbols_tolerantly() -> None:
 
 def test_site_symmetry_of_a_key_and_of_a_list() -> None:
     # site_symmetry takes a key, site_symmetry_of a list of operations.
-    by_key = symcrys.site_symmetry("4mm", [1, 1, 0], setting=1)
+    by_key = symcrys.site_symmetry("4mm", cartesian=[1, 1, 0], setting=1)
     by_list = symcrys.site_symmetry_of(symcrys.operations("4mm"), [1, 1, 0])
     assert by_key["operations"].tolist() == by_list["operations"].tolist() and by_key["multiplicity"] == 4
     # [100] lies on the twofold axis of unique axis a only.
-    assert magnetic.site_symmetry("2'", [1, 0, 0])["multiplicity"] == 2
-    assert magnetic.site_symmetry("2'", [1, 0, 0], unique_axis="a")["multiplicity"] == 1
-    assert symcrys.wyckoff_position("4mm", [0, 0, 1])["letter"] == "a"
+    assert magnetic.site_symmetry("2'", uvw=[1, 0, 0])["multiplicity"] == 2
+    assert magnetic.site_symmetry("2'", uvw=[1, 0, 0], unique_axis="a")["multiplicity"] == 1
+    assert symcrys.wyckoff_position("4mm", hkl=[0, 0, 1])["letter"] == "a"
+    # A lattice direction is read as one, not as a Cartesian vector: [210] of 6/mmm is on a twofold axis.
+    assert symcrys.site_symmetry("6/mmm", uvw=[2, 1, 0])["multiplicity"] == 6
+    assert symcrys.site_symmetry("6/mmm", cartesian=[2, 1, 0])["multiplicity"] == 12
+    with pytest.raises(symcrys.SymcrysError, match="exactly one"):
+        symcrys.site_symmetry("6/mmm", hkl=[2, 1, 0], uvw=[2, 1, 0])
     # The coordinates of a Wyckoff position are the printed triplets, a list of strings.
     assert symcrys.wyckoff_positions("mm2")[1]["coordinates"] == ["0,y,z", "0,-y,z"]
     assert plane.symmetry_elements("p4")["rotation_points"][0]["n"] == 4
@@ -597,7 +602,7 @@ def test_miller_indices_and_face_normal() -> None:
     for module in (symcrys, magnetic):
         hkl = module.miller_indices("h,h,-2h,l", h=3, l=1)
         assert hkl.dtype == np.int64 and hkl.tolist() == [3, 3, 1]
-        n = module.face_normal(module.lattice_basis("cubic"), [1, 1, 1])
+        n = module.face_normal(module.lattice_basis("m-3m"), [1, 1, 1])
         assert n.dtype == np.float64 and np.allclose(n, np.ones(3) / np.sqrt(3))
         with pytest.raises(symcrys.SymcrysError, match="value of l"):
             module.miller_indices("h,k,l", h=1, k=2)

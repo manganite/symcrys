@@ -51,7 +51,7 @@ describe('crystalForms', () => {
       for (const f of crystalForms(key, { setting: s.index })) {
         const label = `${key} #${s.index} ${f.letter} ${f.millerIndices}`;
         const v = representativeFace(key, s.index, f.millerIndices, f.condition).cartesian;
-        expect(wyckoffPosition(key, v, { setting: s.index }).letter, label).toBe(f.letter);
+        expect(wyckoffPosition(key, { cartesian: v }, { setting: s.index }).letter, label).toBe(f.letter);
         expect(orbitSize(key, s.index, v), label).toBe(CRYSTAL_FORM_TYPES[f.formType].faces);
         const ops = operations(key, { setting: s.index });
         expect(ops.length / siteSymmetryOf(ops, v).operations.length, label).toBe(f.multiplicity);

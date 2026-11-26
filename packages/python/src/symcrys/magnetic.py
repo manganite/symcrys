@@ -868,27 +868,6 @@ def crystal_family(system: str) -> CrystalFamily:
     return result
 
 
-def lattice_basis(family: str) -> NDArray[np.float64]:
-    """The conventional basis vectors a, b, c as the **columns** of a Cartesian matrix, with unit
-    edge lengths. Hexagonal family (hexagonal axes): x ∥ a, z ∥ c, y = z × x, so b points at 120°
-    from a. Orthorhombic, tetragonal, cubic: x ∥ a, y ∥ b, z ∥ c.
-
-    The edge lengths are set to 1 because the symmetry directions of these families, and so the
-    point operations, do not depend on them. For a direction [uvw] that is not a symmetry direction,
-    scale the columns by the real edge lengths first.
-
-    Returns
-    -------
-    numpy.ndarray
-        A float64 array of shape (3, 3), a new array on each call; a, b, c are its columns.
-    """
-    result: NDArray[np.float64] = _shared.convert(
-        _call("latticeBasis", family),
-        ("a", np.float64, None),
-    )
-    return result
-
-
 def angle_between_directions(
     basis: ArrayLike,
     direction1: ArrayLike,
@@ -1283,6 +1262,53 @@ def holohedry(lattice_system: str) -> str:
     included.
     """
     result: str = _shared.convert(_call("holohedry", lattice_system), _V)
+    return result
+
+
+def lattice_basis(
+    key: str,
+    *,
+    axes: Optional[Literal["hexagonal", "rhombohedral"]] = None,
+    unique_axis: Optional[Literal["a", "b", "c"]] = None,
+    setting: Optional[Union[int, str]] = None,
+) -> NDArray[np.float64]:
+    """The conventional basis a, b, c of a point group in a setting, as the columns of a Cartesian
+    matrix with unit edge lengths: the basis in which ``matrix`` of each operation is W and
+    ``cartesian`` is B·W·B⁻¹. Orthorhombic, tetragonal, cubic: x ∥ a, y ∥ b, z ∥ c. Hexagonal axes:
+    x ∥ a, z ∥ c, b at 120° from a. Rhombohedral axes: the obverse basis a_R, b_R, c_R in the
+    hexagonal frame. A direction [uvw] is B·u in this frame, the normal of a face (hkl) B⁻ᵀ·h. For
+    the monoclinic and triclinic families, whose cell angles a point group does not fix, it is the
+    basis symcrys takes for its operations, a, b, c along x, y, z; the basis of a real cell is
+    ``lattice_from_parameters``.
+
+    Parameters
+    ----------
+    axes : keyword-only, optional
+        The axes, as ITA's headlines name them: ``'rhombohedral'`` chooses the setting with
+        rhombohedral axes of a trigonal group, ``'hexagonal'`` one with hexagonal axes, which every
+        group of the hexagonal family has. A SymcrysError for another family.
+    unique_axis : keyword-only, optional
+        The unique axis of a monoclinic group, as ITA's headlines name it (``'b'``, the standard,
+        ``'c'``, ``'a'``). A SymcrysError for another system.
+    setting : keyword-only, optional
+        The setting: its 1-based index, or a symbol, read as ``find_point_group`` reads it (spaces
+        ignored: ``'312'``, ``'3 1 2'``, ``'1 1 2'``). A symbol that several settings share (the key
+        ``'32'``, ``'2'`` for unique axis b, c and a) gives the standard (ITC default) setting,
+        unless ``axes`` or ``unique_axis`` chooses another. Default: the ITC default setting.
+
+    Returns
+    -------
+    numpy.ndarray
+        A float64 array of shape (3, 3), a new array on each call; a, b, c are its columns.
+    """
+    result: NDArray[np.float64] = _shared.convert(
+        _call(
+            "latticeBasis",
+            key,
+            _shared.options(axes=axes, unique_axis=unique_axis, setting=setting),
+        ),
+        ("a", np.float64, None),
+    )
     return result
 
 
@@ -1856,21 +1882,69 @@ def is_enantiomorphic_of(
     return result
 
 
+@overload
 def site_symmetry(
     key: str,
-    direction: ArrayLike,
     *,
+    hkl: ArrayLike,
+    axes: Optional[Literal["hexagonal", "rhombohedral"]] = None,
+    unique_axis: Optional[Literal["a", "b", "c"]] = None,
+    setting: Optional[Union[int, str]] = None,
+    tolerance: Optional[float] = None,
+) -> SiteSymmetry: ...
+
+
+@overload
+def site_symmetry(
+    key: str,
+    *,
+    uvw: ArrayLike,
+    axes: Optional[Literal["hexagonal", "rhombohedral"]] = None,
+    unique_axis: Optional[Literal["a", "b", "c"]] = None,
+    setting: Optional[Union[int, str]] = None,
+    tolerance: Optional[float] = None,
+) -> SiteSymmetry: ...
+
+
+@overload
+def site_symmetry(
+    key: str,
+    *,
+    cartesian: ArrayLike,
+    axes: Optional[Literal["hexagonal", "rhombohedral"]] = None,
+    unique_axis: Optional[Literal["a", "b", "c"]] = None,
+    setting: Optional[Union[int, str]] = None,
+    tolerance: Optional[float] = None,
+) -> SiteSymmetry: ...
+
+
+def site_symmetry(
+    key: str,
+    *,
+    hkl: Optional[ArrayLike] = None,
+    uvw: Optional[ArrayLike] = None,
+    cartesian: Optional[ArrayLike] = None,
     axes: Optional[Literal["hexagonal", "rhombohedral"]] = None,
     unique_axis: Optional[Literal["a", "b", "c"]] = None,
     setting: Optional[Union[int, str]] = None,
     tolerance: Optional[float] = None,
 ) -> SiteSymmetry:
-    """The site symmetry of a direction (any non-zero Cartesian vector) under a point group in a
-    setting: ``site_symmetry_of`` applied to ``operations(key, options)``, so the indices refer to
-    those operations. Time reversal is ignored. Raises SymcrysError as ``site_symmetry_of`` does.
+    """The site symmetry of a face (field ``hkl``), a lattice direction (``uvw``) or a Cartesian
+    direction (``cartesian``) under a point group in a setting: ``site_symmetry_of`` applied to
+    ``operations(key, options)``, so the indices refer to those operations; ``direction`` of the
+    result is the Cartesian unit vector (for a face its normal, ``lattice_basis``). Time reversal is
+    ignored. Raises SymcrysError for a bare array, which could be either kind of vector, for indices
+    that are not three integers not all zero, and as ``site_symmetry_of`` does.
 
     Parameters
     ----------
+    hkl : keyword-only, optional
+        The face (hkl), three integers not all zero (hexagonal axes: three indices, without i).
+    uvw : keyword-only, optional
+        The lattice direction [uvw], three integers not all zero.
+    cartesian : keyword-only, optional
+        The direction in the Cartesian frame of symcrys, any non-zero vector (its length does not
+        matter).
     axes : keyword-only, optional
         The axes, as ITA's headlines name them: ``'rhombohedral'`` chooses the setting with
         rhombohedral axes of a trigonal group, ``'hexagonal'`` one with hexagonal axes, which every
@@ -1898,10 +1972,10 @@ def site_symmetry(
         _call(
             "siteSymmetry",
             key,
-            _shared.array(direction, "direction"),
+            _shared.options(hkl=hkl, uvw=uvw, cartesian=cartesian),
             _shared.options(axes=axes, unique_axis=unique_axis, setting=setting, tolerance=tolerance),
         ),
-        _S_SiteSymmetry,
+        ("d", {"operations": ("a", np.int64, None), "direction": ("a", np.float64, None), "multiplicity": _I, "general": _V}),
     )
     return result
 

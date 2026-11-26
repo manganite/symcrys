@@ -18,7 +18,7 @@ import {
   residualMagneticOperations,
   residualOperations,
 } from './cell.js';
-import { latticeBasis } from './lattice.js';
+import { familyBasis } from './lattice.js';
 import { operations } from './pointGroups/pointGroups.js';
 import type { Mat3 } from './linalg.js';
 
@@ -36,9 +36,9 @@ describe('latticeFromParameters: the frame a ∥ x, b in the xy plane, c towards
     ]);
   });
 
-  it('hexagonal: the basis of latticeBasis with the edge lengths', () => {
+  it('hexagonal: the basis of familyBasis with the edge lengths', () => {
     const m = latticeFromParameters({ a: 3, b: 3, c: 5, alpha: 90, beta: 90, gamma: 120 });
-    const unit = latticeBasis('hexagonal');
+    const unit = familyBasis('hexagonal');
     closeMat(m, [
       [3 * unit[0][0], 3 * unit[0][1], 0],
       [0, 3 * unit[1][1], 0],

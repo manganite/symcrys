@@ -13,7 +13,7 @@ import * as plane from './plane.js';
 
 const ops = classes.operations('32');
 const magneticOps = magnetic.operations("6'/m'mm'");
-const basis = classes.latticeBasis('hexagonal');
+const basis = classes.latticeBasis('6/mmm');
 const piezo = classes.tensorForm('1', 'piezoelectric').basis[0];
 const piezoVoigt = classes.toVoigt(piezo, 'piezoelectric', { factors: [2] });
 const unit = [
@@ -47,7 +47,7 @@ const pointCalls = (o: readonly { readonly cartesian: unknown }[], key: string, 
   describeOperations: call([key], SETTING),
   describeOperationsOf: call([o], TOLERANCE),
   symmetryDirections: call([key], SETTING),
-  siteSymmetry: call([key, [0, 0, 1]], [...SETTING, ...TOLERANCE]),
+  siteSymmetry: call([key, { cartesian: [0, 0, 1] }], [...SETTING, ...TOLERANCE]),
   siteSymmetryOf: call([o, [0, 0, 1]], TOLERANCE),
   orbit: call([key, { hkl: [1, 0, 0] }], SETTING),
   orbitOf: call([o, [1, 0, 0]], TOLERANCE),
@@ -68,7 +68,7 @@ const pointCalls = (o: readonly { readonly cartesian: unknown }[], key: string, 
   millerIndices: call(['h,h,-2h,l', { h: 3, l: 1 }]),
   faceNormal: call([basis, [1, 0, 0]]),
   crystalFamily: call(['trigonal']),
-  latticeBasis: call(['hexagonal']),
+  latticeBasis: call([key], SETTING),
   latticeFromParameters: call([{ a: 3, b: 3, c: 5, alpha: 90, beta: 90, gamma: 120 }]),
   latticeParameters: call([basis]),
   metricTensor: call([basis]),
@@ -96,7 +96,7 @@ const CALLS: Record<string, [Record<string, unknown>, Record<string, Call>]> = {
     {
       ...pointCalls(ops, '32', 'piezoelectric'),
       wyckoffPositions: call(['32'], SETTING),
-      wyckoffPosition: call(['32', [0, 0, 1]], [...SETTING, ...TOLERANCE]),
+      wyckoffPosition: call(['32', { uvw: [0, 0, 1] }], [...SETTING, ...TOLERANCE]),
       crystalForms: call(['32'], SETTING),
     },
   ],
@@ -165,10 +165,10 @@ const CALLS: Record<string, [Record<string, unknown>, Record<string, Call>]> = {
       symmetryElements: call(['p4']),
       wyckoffPositions: call(['3m'], ['setting']),
       crystalForms: call(['3m'], ['setting']),
-      wyckoffPosition: call(['p4', [0.1, 0.2]], TOLERANCE),
-      siteSymmetry: call(['p4', [0.1, 0.2]], TOLERANCE),
-      orbit: call(['p4', [0.1, 0.2]], TOLERANCE),
-      wyckoffDistances: call(['p4', [0.1, 0.2]], ['basis']),
+      wyckoffPosition: call(['p4', { point: [0.1, 0.2] }], TOLERANCE),
+      siteSymmetry: call(['p4', { point: [0.1, 0.2] }], TOLERANCE),
+      orbit: call(['p4', { point: [0.1, 0.2] }], TOLERANCE),
+      wyckoffDistances: call(['p4', { point: [0.1, 0.2] }], ['basis']),
     },
   ],
 };

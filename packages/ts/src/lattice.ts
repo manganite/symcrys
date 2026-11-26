@@ -88,7 +88,7 @@ const HEXAGONAL = frozen([
  *
  * @remarks The matrix is frozen and shared between calls.
  */
-export function latticeBasis(family: FixedAngleFamily): Mat3 {
+export function familyBasis(family: FixedAngleFamily): Mat3 {
   switch (family) {
     case 'hexagonal':
       return HEXAGONAL;
@@ -97,6 +97,6 @@ export function latticeBasis(family: FixedAngleFamily): Mat3 {
     case 'cubic':
       return ORTHONORMAL;
     default:
-      throw new RangeError(`latticeBasis: no fixed basis for the crystal family ${String(family)}`);
+      throw new RangeError(`familyBasis: no fixed basis for the crystal family ${String(family)}`);
   }
 }

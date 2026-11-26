@@ -207,10 +207,10 @@ describe('plain numbers at the API', () => {
   });
 
   it('the orbit of a point gives each image with the operations that map the point there', () => {
-    const orbit = plane.orbit('p4', [0.1, 0.2]);
+    const orbit = plane.orbit('p4', { point: [0.1, 0.2] });
     expect(orbit).toHaveLength(4);
     expect(orbit.flatMap((e) => e.operations).sort((a, b) => a - b)).toEqual([0, 1, 2, 3]);
-    expect(plane.orbit('p4', [0, 0])).toEqual([{ point: [0, 0], operations: [0, 1, 2, 3] }]);
+    expect(plane.orbit('p4', { point: [0, 0] })).toEqual([{ point: [0, 0], operations: [0, 1, 2, 3] }]);
     expect(Object.isFrozen(orbit[0].operations)).toBe(true);
     // Every entry: its operations map the point (set onto its site symmetry) onto its point, and
     // the first entry holds the site symmetry, also for a centred group and near an element with a
@@ -229,8 +229,8 @@ describe('plain numbers at the API', () => {
     for (const [k, p, tolerance] of cases) {
       const ops = plane.operations(k);
       const options = tolerance === undefined ? undefined : { tolerance };
-      const site = plane.siteSymmetry(k, p, options);
-      const entries = plane.orbit(k, p, options);
+      const site = plane.siteSymmetry(k, { point: p }, options);
+      const entries = plane.orbit(k, { point: p }, options);
       expect(entries[0].operations, `${k} ${p}`).toEqual(site.operations);
       expect(entries, `${k} ${p}`).toHaveLength(site.multiplicity);
       for (const e of entries) {
@@ -240,18 +240,18 @@ describe('plain numbers at the API', () => {
   });
 
   it('points', () => {
-    expect(plane.wyckoffPosition('p6mm', [1 / 3, 2 / 3])).toEqual({
+    expect(plane.wyckoffPosition('p6mm', { point: [1 / 3, 2 / 3] })).toEqual({
       letter: 'b',
       multiplicity: 2,
       siteSymmetry: '3m.',
       coordinates: ['1/3,2/3', '2/3,1/3'],
     });
-    expect(plane.wyckoffPosition('cm', [0.2, 0.3])).toEqual(plane.wyckoffPositions('cm')[0]);
-    const site = plane.siteSymmetry('p2mm', [0.5, 0.2]);
+    expect(plane.wyckoffPosition('cm', { point: [0.2, 0.3] })).toEqual(plane.wyckoffPositions('cm')[0]);
+    const site = plane.siteSymmetry('p2mm', { point: [0.5, 0.2] });
     expect(site.multiplicity).toBe(2);
     expect(site.general).toBe(false);
-    expect(plane.siteSymmetry('p2mm', [0.31, 0.2]).general).toBe(true);
-    expect(plane.orbit('p2', [0.1, 0.2])).toHaveLength(2);
+    expect(plane.siteSymmetry('p2mm', { point: [0.31, 0.2] }).general).toBe(true);
+    expect(plane.orbit('p2', { point: [0.1, 0.2] })).toHaveLength(2);
     expect(plane.wyckoffPositions('cm')).toEqual([
       { letter: 'b', multiplicity: 4, siteSymmetry: '1', coordinates: ['x,y', '-x,y'] },
       { letter: 'a', multiplicity: 2, siteSymmetry: '.m.', coordinates: ['0,y'] },
@@ -317,7 +317,7 @@ describe('symmetryElements and asymmetricUnit', () => {
 
 describe('wyckoffDistances', () => {
   it('gives every printed position in printed order with its nearest point and distance, frozen', () => {
-    const all = plane.wyckoffDistances('p6mm', [0.34, 0.66]);
+    const all = plane.wyckoffDistances('p6mm', { point: [0.34, 0.66] });
     expect(all.map((d) => d.letter)).toEqual(plane.wyckoffPositions('p6mm').map((w) => w.letter));
     const b = all.find((d) => d.letter === 'b')!;
     expect(b).toEqual({
@@ -332,7 +332,7 @@ describe('wyckoffDistances', () => {
 
   it('with a basis: Euclidean distances in its unit', () => {
     // pm, rectangular cell a = 2, b = 1: the point (0.1, 0.3) is 0.1 · 2 = 0.2 from the line x = 0.
-    const a = plane.wyckoffDistances('pm', [0.1, 0.3], { basis: [[2, 0], [0, 1]] }).find((d) => d.letter === 'a')!; // prettier-ignore
+    const a = plane.wyckoffDistances('pm', { point: [0.1, 0.3] }, { basis: [[2, 0], [0, 1]] }).find((d) => d.letter === 'a')!; // prettier-ignore
     expect(a.distance).toBeCloseTo(0.2, 12);
     expect(a.point[0]).toBe(0);
     expect(a.point[1]).toBeCloseTo(0.3, 12);
@@ -340,8 +340,8 @@ describe('wyckoffDistances', () => {
 
   it('agrees with wyckoffPosition and siteSymmetry: one notion', () => {
     // 0.012 from the mirror line of pm; its image is 0.024 away, beyond the tolerance 0.02.
-    expect(plane.wyckoffPosition('pm', [0.012, 0.3], { tolerance: 0.02 }).letter).toBe('a');
-    const site = plane.siteSymmetry('pm', [0.012, 0.3], { tolerance: 0.02 });
+    expect(plane.wyckoffPosition('pm', { point: [0.012, 0.3] }, { tolerance: 0.02 }).letter).toBe('a');
+    const site = plane.siteSymmetry('pm', { point: [0.012, 0.3] }, { tolerance: 0.02 });
     expect(site.multiplicity).toBe(1);
     expect(site.general).toBe(false);
     expect(site.point[0]).toBe(0);
@@ -358,24 +358,27 @@ describe('wyckoffDistances', () => {
       ['p4mm', [1e10 + 0.3, 0.2], 0.1, 'f'],
     ];
     for (const [k, p, tolerance, letter] of cases) {
-      const w = plane.wyckoffPosition(k, p, { tolerance });
-      const site = plane.siteSymmetry(k, p, { tolerance });
-      const orbit = plane.orbit(k, p, { tolerance });
+      const w = plane.wyckoffPosition(k, { point: p }, { tolerance });
+      const site = plane.siteSymmetry(k, { point: p }, { tolerance });
+      const orbit = plane.orbit(k, { point: p }, { tolerance });
       expect(w.letter, `${k} ${p}`).toBe(letter);
       expect(site.multiplicity, `${k} ${p}`).toBe(w.multiplicity);
       expect(orbit, `${k} ${p}`).toHaveLength(w.multiplicity);
       expect(orbit[0].operations).toEqual(site.operations);
     }
-    expect(plane.wyckoffDistances('p2mg', [1e16, 0.3]).find((d) => d.letter === 'c')!.distance).toBeCloseTo(0.25, 12);
+    expect(plane.wyckoffDistances('p2mg', { point: [1e16, 0.3] }).find((d) => d.letter === 'c')!.distance).toBeCloseTo(
+      0.25,
+      12,
+    );
   });
 
   it('refuses a point group, a bad point or basis', () => {
-    expect(() => plane.wyckoffDistances('4mm' as plane.PlaneGroupKey, [0, 0])).toThrow(RangeError);
-    expect(() => plane.wyckoffDistances('p2', 'x' as unknown as number[])).toThrow(RangeError);
-    expect(() => plane.wyckoffDistances('p2', [0, 0], { basis: [[1, 2], [2, 4]] })).toThrow(RangeError); // prettier-ignore
+    expect(() => plane.wyckoffDistances('4mm' as plane.PlaneGroupKey, { point: [0, 0] })).toThrow(RangeError);
+    expect(() => plane.wyckoffDistances('p2', { point: 'x' as unknown as number[] })).toThrow(RangeError);
+    expect(() => plane.wyckoffDistances('p2', { point: [0, 0] }, { basis: [[1, 2], [2, 4]] })).toThrow(RangeError); // prettier-ignore
     // Bases of extreme scale are not singular (the test scales the columns first).
-    expect(plane.wyckoffDistances('p2', [0, 0], { basis: [[1e200, 0], [0, 1e200]] })).toHaveLength(5); // prettier-ignore
-    expect(plane.wyckoffDistances('p2', [0, 0], { basis: [[1e-200, 0], [0, 1e-200]] })).toHaveLength(5); // prettier-ignore
+    expect(plane.wyckoffDistances('p2', { point: [0, 0] }, { basis: [[1e200, 0], [0, 1e200]] })).toHaveLength(5); // prettier-ignore
+    expect(plane.wyckoffDistances('p2', { point: [0, 0] }, { basis: [[1e-200, 0], [0, 1e-200]] })).toHaveLength(5); // prettier-ignore
   });
 });
 
@@ -516,7 +519,7 @@ describe('errors', () => {
     for (const f of [plane.operations, plane.generators, plane.describeOperations]) {
       expect(() => f('p7' as plane.PlaneGroupKey)).toThrow(/Unknown plane group or plane point group: "p7"/);
     }
-    expect(() => plane.orbit('p7' as plane.PlaneGroupKey, [0, 0])).toThrow(/Unknown plane group: "p7"/);
+    expect(() => plane.orbit('p7' as plane.PlaneGroupKey, { point: [0, 0] })).toThrow(/Unknown plane group: "p7"/);
     expect(() => plane.pointGroup('7' as plane.PointGroupKey)).toThrow(/Unknown plane point group: "7"/);
     expect(() => plane.planeGroup(9 as unknown as plane.PlaneGroupKey)).toThrow(RangeError);
     expect(() => plane.planeGroup('2mm' as plane.PlaneGroupKey)).toThrow(/plane group, not of the point group 2mm/);
@@ -528,8 +531,8 @@ describe('errors', () => {
     expect(() => plane.crystalForms('p4mm' as plane.PointGroupKey)).toThrow(RangeError);
     expect(() => plane.wyckoffPositions('4mm', { setting: 2 })).toThrow(RangeError);
     expect(() => plane.wyckoffPositions('p4mm', { setting: 2 })).toThrow(RangeError);
-    expect(() => plane.siteSymmetry('4mm' as plane.PlaneGroupKey, [0, 0])).toThrow(RangeError);
-    expect(() => plane.orbit('p2', [0.1, 0.2], { tolerance: 0.5 })).toThrow(RangeError);
+    expect(() => plane.siteSymmetry('4mm' as plane.PlaneGroupKey, { point: [0, 0] })).toThrow(RangeError);
+    expect(() => plane.orbit('p2', { point: [0.1, 0.2] }, { tolerance: 0.5 })).toThrow(RangeError);
   });
 });
 

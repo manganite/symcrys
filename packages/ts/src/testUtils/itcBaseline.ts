@@ -160,8 +160,8 @@ function errorPins(add: (id: string, f: () => unknown) => void): void {
     magnetic.tensorFormOf(classes.operations('4mm') as never, 'ferromagnetic'),
   );
   add('error: plane.operations point group key with setting 3', () => plane.operations('3m', { setting: 3 }));
-  add('error: plane.siteSymmetry point group key', () => plane.siteSymmetry('4mm' as never, [0, 0]));
-  add('error: plane.siteSymmetry tolerance 0.5', () => plane.siteSymmetry('p4', [0, 0], { tolerance: 0.5 }));
+  add('error: plane.siteSymmetry point group key', () => plane.siteSymmetry('4mm' as never, { point: [0, 0] }));
+  add('error: plane.siteSymmetry tolerance 0.5', () => plane.siteSymmetry('p4', { point: [0, 0] }, { tolerance: 0.5 }));
   add('error: plane.describeOperationsOf det 2', () =>
     plane.describeOperationsOf([
       {
@@ -340,11 +340,13 @@ function pointGroupPins(add: (id: string, f: () => unknown) => void, key: Magnet
       add(id('classes.wyckoffPositions'), () => classes.wyckoffPositions(key, options).map((w) => old(oldWyckoff(w))));
       add(id('classes.crystalForms'), () => classes.crystalForms(key, options).map((f) => old(oldForm(f))));
       for (const d of DIRECTIONS) {
-        add(id(`classes.wyckoffPositionOf [${d}]`), () => old(oldWyckoff(classes.wyckoffPosition(key, d, options))));
+        add(id(`classes.wyckoffPositionOf [${d}]`), () =>
+          old(oldWyckoff(classes.wyckoffPosition(key, { cartesian: d }, options))),
+        );
       }
       for (const d of NEAR_DIRECTIONS) {
         add(id(`classes.wyckoffPositionOf [${d}] tolerance 1e-4`), () =>
-          old(oldWyckoff(classes.wyckoffPosition(key, d, { ...options, tolerance: 1e-4 }))),
+          old(oldWyckoff(classes.wyckoffPosition(key, { cartesian: d }, { ...options, tolerance: 1e-4 }))),
         );
       }
     }
@@ -508,16 +510,18 @@ function planeGroupPins(add: (id: string, f: () => unknown) => void, key: plane.
     ),
   );
   for (const p of POINTS) {
-    add(`${key}: siteSymmetry (${p})`, () => plane.siteSymmetry(key, p));
-    add(`${key}: wyckoffPositionOf (${p})`, () => plane.wyckoffPosition(key, p));
+    add(`${key}: siteSymmetry (${p})`, () => plane.siteSymmetry(key, { point: p }));
+    add(`${key}: wyckoffPositionOf (${p})`, () => plane.wyckoffPosition(key, { point: p }));
     // Bare points before #121 step 7d.
-    add(`${key}: orbit (${p})`, () => plane.orbit(key, p).map((e) => e.point));
+    add(`${key}: orbit (${p})`, () => plane.orbit(key, { point: p }).map((e) => e.point));
   }
   for (const p of NEAR_POINTS) {
     for (const tolerance of [0.005, 0.02]) {
-      add(`${key}: siteSymmetry (${p}) tolerance ${tolerance}`, () => plane.siteSymmetry(key, p, { tolerance }));
+      add(`${key}: siteSymmetry (${p}) tolerance ${tolerance}`, () =>
+        plane.siteSymmetry(key, { point: p }, { tolerance }),
+      );
       add(`${key}: wyckoffPositionOf (${p}) tolerance ${tolerance}`, () =>
-        plane.wyckoffPosition(key, p, { tolerance }),
+        plane.wyckoffPosition(key, { point: p }, { tolerance }),
       );
     }
   }
@@ -570,8 +574,10 @@ function generalPins(add: (id: string, f: () => unknown) => void): void {
     add(`classes.findPointGroup ${JSON.stringify(symbol)}`, () => classes.findPointGroup(symbol));
     add(`magnetic.findPointGroup ${JSON.stringify(symbol)}`, () => magnetic.findPointGroup(symbol));
   }
-  for (const f of ['orthorhombic', 'tetragonal', 'hexagonal', 'cubic'] as const) {
-    add(`latticeBasis ${f}`, () => classes.latticeBasis(f));
+  // The basis of a family is that of a crystal class of it (latticeBasis takes a key).
+  const familyKeys = { orthorhombic: 'mmm', tetragonal: '4/mmm', hexagonal: '6/mmm', cubic: 'm-3m' } as const;
+  for (const [f, key] of Object.entries(familyKeys)) {
+    add(`latticeBasis ${f}`, () => classes.latticeBasis(key));
   }
   for (const s of [
     'triclinic',

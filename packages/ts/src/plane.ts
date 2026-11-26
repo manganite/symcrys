@@ -585,7 +585,7 @@ export function planeGroup(key: PlaneGroupKey): PlaneGroup {
     centring: Object.freeze(
       entry.centring.map((t) => Object.freeze(t.split(',').map((c) => toNumber(parseRational(c))))),
     ),
-    origin: wyckoffPosition(entry.symbol as PlaneGroupKey, [0, 0]).siteSymmetry,
+    origin: wyckoffPosition(entry.symbol as PlaneGroupKey, { point: [0, 0] }).siteSymmetry,
   });
 }
 
@@ -772,16 +772,32 @@ export function crystalForms(key: PointGroupKey, options?: SettingOptions): read
   );
 }
 
+/** A point of the plane, in the lattice basis, for the functions of a plane group that take a point. */
+export interface PlanePoint {
+  /** The coordinates x, y of the point in the lattice basis a, b (fractions of the cell). */
+  readonly point: readonly number[];
+}
+
+/** The coordinates of a `{ point }`, checked to be given in that form; their numbers are checked later. */
+function pointOf(input: unknown, name: string): readonly number[] {
+  if (typeof input !== 'object' || input === null || Array.isArray(input)) {
+    throw new RangeError(`${name} takes a point by its field point (lattice coordinates x, y), not ${shown(input)}`);
+  }
+  const other = Object.keys(input).filter((k) => k !== 'point');
+  if (other.length > 0) throw new RangeError(`${name} takes the field point only, not ${shown(input)}`);
+  return (input as PlanePoint).point;
+}
+
 /**
- * The site symmetry of a point (lattice basis) under a plane group, as one notion with its Wyckoff
+ * The site symmetry of a point (field `point`, lattice basis) under a plane group, as one notion with its Wyckoff
  * position: the point is set onto the position it lies on within the tolerance
  * (`wyckoffPosition`), and the site symmetry is that of the point there; `point` is the point on the
  * position. Throws a RangeError for an unknown key, a point that is not two finite numbers, or a
  * tolerance outside (0, 1/2).
  */
-export function siteSymmetry(key: PlaneGroupKey, point: readonly number[], options?: ToleranceOptions): SiteSymmetry {
+export function siteSymmetry(key: PlaneGroupKey, point: PlanePoint, options?: ToleranceOptions): SiteSymmetry {
   checkOptions(options, TOLERANCE_KEYS, 'siteSymmetry');
-  const site = planeSiteOfPosition(groupKey(key, 'siteSymmetry'), point, options);
+  const site = planeSiteOfPosition(groupKey(key, 'siteSymmetry'), pointOf(point, 'siteSymmetry'), options);
   return Object.freeze({
     operations: Object.freeze([...site.operations]),
     point: Object.freeze([...site.point]),
@@ -791,27 +807,23 @@ export function siteSymmetry(key: PlaneGroupKey, point: readonly number[], optio
 }
 
 /**
- * The Wyckoff position of a point (lattice basis) under a plane group, as `wyckoffPositions` gives
+ * The Wyckoff position of a point (field `point`, lattice basis) under a plane group, as `wyckoffPositions` gives
  * it: the most special position whose point set lies within the tolerance of the point,
  * measured per coordinate modulo the lattice, and among positions of equal multiplicity the nearest
  * (the distance of `wyckoffDistances`); the general position always holds the point. Throws a
  * RangeError as `siteSymmetry`.
  */
-export function wyckoffPosition(
-  key: PlaneGroupKey,
-  point: readonly number[],
-  options?: ToleranceOptions,
-): WyckoffPosition {
+export function wyckoffPosition(key: PlaneGroupKey, point: PlanePoint, options?: ToleranceOptions): WyckoffPosition {
   checkOptions(options, TOLERANCE_KEYS, 'wyckoffPosition');
   const k = groupKey(key, 'wyckoffPosition');
-  const { letter } = planeWyckoffPositionOf(k, point, options);
+  const { letter } = planeWyckoffPositionOf(k, pointOf(point, 'wyckoffPosition'), options);
   const found = wyckoffPositions(k).find((w) => w.letter === letter);
   if (!found) throw new Error(`No Wyckoff position ${letter} in ${k}`);
   return found;
 }
 
 /**
- * The distance of a point (lattice basis) to every Wyckoff position of a plane group, in the order
+ * The distance of a point (field `point`, lattice basis) to every Wyckoff position of a plane group, in the order
  * of `wyckoffPositions`, each with the nearest point of the position. The point set
  * of a position is the union of the points of its coordinates with every centring and
  * lattice translation: a point, a line or the plane. Without a basis the distance is the larger of
@@ -827,7 +839,7 @@ export function wyckoffPosition(
  */
 export function wyckoffDistances(
   key: PlaneGroupKey,
-  point: readonly number[],
+  point: PlanePoint,
   options?: WyckoffDistanceOptions,
 ): readonly WyckoffDistance[] {
   checkOptions(options, ['basis'], 'wyckoffDistances');
@@ -835,7 +847,7 @@ export function wyckoffDistances(
   const g = options?.basis === undefined ? undefined : planeMetric(options.basis);
   const positions = wyckoffPositions(k);
   return Object.freeze(
-    planeWyckoffDistances(k, point, g).map((d) =>
+    planeWyckoffDistances(k, pointOf(point, 'wyckoffDistances'), g).map((d) =>
       Object.freeze({ ...positions[d.row], point: Object.freeze([...d.point]), distance: d.distance }),
     ),
   );
@@ -850,20 +862,16 @@ export interface PointOrbitEntry {
 }
 
 /**
- * The orbit of a point (lattice basis) under a plane group: the images of the point set onto its
+ * The orbit of a point (field `point`, lattice basis) under a plane group: the images of the point set onto its
  * Wyckoff position (as `siteSymmetry` sets it), each in [0, 1), in the order of the operations that
  * first give them, each with the indices of the operations that map the point there (as the
  * entries of the orbits of the point groups): one entry per coset of the site symmetry, so the
  * first entry holds the operations of `siteSymmetry`. Throws a RangeError as `siteSymmetry`.
  */
-export function orbit(
-  key: PlaneGroupKey,
-  point: readonly number[],
-  options?: ToleranceOptions,
-): readonly PointOrbitEntry[] {
+export function orbit(key: PlaneGroupKey, point: PlanePoint, options?: ToleranceOptions): readonly PointOrbitEntry[] {
   checkOptions(options, TOLERANCE_KEYS, 'orbit');
   return Object.freeze(
-    planeOrbit(groupKey(key, 'orbit'), point, options).map((e) =>
+    planeOrbit(groupKey(key, 'orbit'), pointOf(point, 'orbit'), options).map((e) =>
       Object.freeze({ point: Object.freeze(e.point), operations: Object.freeze(e.operations) }),
     ),
   );

@@ -9,7 +9,7 @@
 
 import { shown } from '../checks.js';
 import { IDENTITY, type Mat3, matricesEqual, type Vec3 } from '../linalg.js';
-import { crystalFamily, latticeBasis, type CrystalFamily, type CrystalSystem } from '../lattice.js';
+import { crystalFamily, familyBasis, type CrystalFamily, type CrystalSystem } from '../lattice.js';
 import type { CartesianOperation } from '../operations.js';
 import { LATTICE_SYMMETRY_DIRECTIONS } from '../symmetryDirections.js';
 
@@ -17,7 +17,7 @@ import { LATTICE_SYMMETRY_DIRECTIONS } from '../symmetryDirections.js';
 function positionDirections(family: CrystalFamily): readonly Vec3[] {
   const positions = LATTICE_SYMMETRY_DIRECTIONS[family];
   // Monoclinic: a, b, c along x, y, z, exact for the unique axis, the only one with an element.
-  const b: Mat3 = family === 'monoclinic' || family === 'triclinic' ? IDENTITY : latticeBasis(family);
+  const b: Mat3 = family === 'monoclinic' || family === 'triclinic' ? IDENTITY : familyBasis(family);
   return positions.map(([uvw]) => [
     b[0][0] * uvw[0] + b[0][1] * uvw[1] + b[0][2] * uvw[2],
     b[1][0] * uvw[0] + b[1][1] * uvw[1] + b[1][2] * uvw[2],

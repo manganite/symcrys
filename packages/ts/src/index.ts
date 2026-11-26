@@ -9,14 +9,7 @@ export { VERSION } from './version.js';
 export { EPSILON, type ToleranceOptions } from './tolerances.js';
 
 export type { Mat3, Vec3 } from './linalg.js';
-export {
-  crystalFamily,
-  latticeBasis,
-  type CrystalFamily,
-  type CrystalSystem,
-  type FixedAngleFamily,
-  type LatticeSystem,
-} from './lattice.js';
+export { crystalFamily, type CrystalFamily, type CrystalSystem, type LatticeSystem } from './lattice.js';
 export {
   angleBetweenDirections,
   angleBetweenPlanes,
@@ -58,13 +51,8 @@ export type { Axis, DirectionElements, OperationKind, SymmetryDirection } from '
 export type { SiteSymmetry } from './siteSymmetry.js';
 export type { Hkl, WyckoffPosition } from './pointGroups/wyckoff.js';
 export type { CrystalForm, CrystalFormType, CrystalFormTypeKey } from './pointGroups/crystalForms.js';
-export type {
-  DirectionIndices,
-  DirectionOrbitEntry,
-  FaceIndices,
-  FaceOrbitEntry,
-  OrbitPole,
-} from './pointGroups/orbits.js';
+export type { DirectionOrbitEntry, FaceOrbitEntry, OrbitPole } from './pointGroups/orbits.js';
+export type { CartesianDirection, DirectionIndices, DirectionInput, FaceIndices } from './pointGroups/directions.js';
 export type { CartesianAxis } from './pointGroups/identify.js';
 export type { IntrinsicSymmetry, TensorForm, TensorKind, TensorRank } from './tensors/tensorForm.js';
 
@@ -85,6 +73,7 @@ export {
   isCentrosymmetricOf,
   isEnantiomorphicOf,
   isPointGroupKey,
+  latticeBasis,
   latticeSystems,
   residualOperations,
   operations,

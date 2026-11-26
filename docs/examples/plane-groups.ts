@@ -8,7 +8,7 @@ import {
   wyckoffPosition,
 } from 'symcrys/plane';
 
-const point = [0.47, 0.05];
+const point = { point: [0.47, 0.05] };
 const basis = latticeFromParameters({ a: 5, b: 5, gamma: 90 });
 for (const d of wyckoffDistances('p4gm', point, { basis })) {
   console.log(

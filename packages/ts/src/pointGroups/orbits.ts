@@ -18,6 +18,9 @@ import {
   type SettingOptions,
 } from './pointGroups.js';
 import type { Hkl } from './wyckoff.js';
+import { indicesOf, type DirectionIndices, type FaceIndices } from './directions.js';
+
+export type { DirectionIndices, FaceIndices } from './directions.js';
 
 const deepFreeze = (m: Mat3): Mat3 => Object.freeze(m.map((row) => Object.freeze([...row]))) as unknown as Mat3;
 
@@ -27,18 +30,6 @@ function integerInverse(w: Mat3): Mat3 {
 }
 
 /** Indices of a face or a lattice direction, checked: three integers, not all zero. */
-function indicesOf(value: unknown, name: string): readonly [number, number, number] {
-  if (
-    !Array.isArray(value) ||
-    value.length !== 3 ||
-    !value.every((x) => typeof x === 'number' && Number.isSafeInteger(x)) ||
-    value.every((x) => x === 0)
-  ) {
-    throw new RangeError(`${name} must be three (safe) integers, not all zero: ${shown(value)}`);
-  }
-  return [value[0] + 0, value[1] + 0, value[2] + 0];
-}
-
 /** One face of the orbit of a face: its Miller indices and the operations that map the given face onto it. */
 export interface FaceOrbitEntry {
   /** Miller indices (hkl) of the face, in the conventional basis (hexagonal axes: without i). */
@@ -53,18 +44,6 @@ export interface DirectionOrbitEntry {
   readonly uvw: Uvw;
   /** Indices into `operations` (same setting) of the operations that map the given direction onto this one, ascending. */
   readonly operations: readonly number[];
-}
-
-/** A face (hkl) for `orbit`. */
-export interface FaceIndices {
-  /** The face (hkl), three integers not all zero (hexagonal axes: three indices, without i). */
-  readonly hkl: Hkl;
-}
-
-/** A lattice direction [uvw] for `orbit`. */
-export interface DirectionIndices {
-  /** The lattice direction [uvw], three integers not all zero. */
-  readonly uvw: Uvw;
 }
 
 /**
@@ -102,7 +81,14 @@ export function orbit(
   const given = (indices ?? {}) as { readonly hkl?: unknown; readonly uvw?: unknown };
   const hasHkl = given.hkl !== undefined;
   const hasUvw = given.uvw !== undefined;
-  if (hasHkl === hasUvw) throw new RangeError('orbit: give either hkl (a face) or uvw (a lattice direction)');
+  if ((given as { readonly cartesian?: unknown }).cartesian !== undefined) {
+    throw new RangeError(
+      'orbit gives faces or lattice directions, exactly; for a Cartesian vector use orbitOf with the operations of the key',
+    );
+  }
+  if (hasHkl === hasUvw || Array.isArray(indices)) {
+    throw new RangeError(`orbit takes either a face (hkl) or a lattice direction (uvw), not ${shown(indices)}`);
+  }
   const field = hasHkl ? 'hkl' : 'uvw';
   const v = indicesOf(hasHkl ? given.hkl : given.uvw, field);
   const ws = groupOperations(key, options).map((op) => (hasHkl ? integerInverseTranspose(op.matrix) : op.matrix));

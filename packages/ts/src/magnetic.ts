@@ -14,14 +14,7 @@ export { EPSILON, type ToleranceOptions } from './tolerances.js';
 
 export type { Mat3, Vec3 } from './linalg.js';
 export type { CartesianOperation, Operation } from './operations.js';
-export {
-  crystalFamily,
-  latticeBasis,
-  type CrystalFamily,
-  type CrystalSystem,
-  type FixedAngleFamily,
-  type LatticeSystem,
-} from './lattice.js';
+export { crystalFamily, type CrystalFamily, type CrystalSystem, type LatticeSystem } from './lattice.js';
 export {
   angleBetweenDirections,
   angleBetweenPlanes,
@@ -115,15 +108,14 @@ export {
   type CartesianOperationDescription,
   type IdentifiedPointGroup,
 } from './pointGroups/identify.js';
+export { orbit, orbitOf, type DirectionOrbitEntry, type FaceOrbitEntry, type OrbitPole } from './pointGroups/orbits.js';
 export {
-  orbit,
-  orbitOf,
+  latticeBasis,
+  type CartesianDirection,
   type DirectionIndices,
-  type DirectionOrbitEntry,
+  type DirectionInput,
   type FaceIndices,
-  type FaceOrbitEntry,
-  type OrbitPole,
-} from './pointGroups/orbits.js';
+} from './pointGroups/directions.js';
 export {
   rotateTensor,
   tensorForm,

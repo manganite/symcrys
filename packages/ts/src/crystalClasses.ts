@@ -23,6 +23,8 @@ import * as forms from './pointGroups/crystalForms.js';
 import * as identify from './pointGroups/identify.js';
 import * as orbits from './pointGroups/orbits.js';
 import * as wyckoff from './pointGroups/wyckoff.js';
+import * as directions from './pointGroups/directions.js';
+import type { CartesianDirection, DirectionInput } from './pointGroups/directions.js';
 import * as cell from './cell.js';
 import * as site from './siteSymmetry.js';
 import { TENSOR_PROPERTIES as ALL_TENSOR_PROPERTIES } from './tensors/propertyTable.js';
@@ -514,13 +516,36 @@ export function siteSymmetryOf(
 }
 
 /**
- * The site symmetry of a direction (any non-zero Cartesian vector) under a crystal class in a
- * setting: `siteSymmetryOf` applied to `operations(key, options)`, so the indices refer to those
- * operations. Throws a RangeError as `siteSymmetryOf` does.
+ * The site symmetry of a face (field `hkl`), a lattice direction (`uvw`) or a Cartesian
+ * direction (`cartesian`) under a crystal class in a setting: `siteSymmetryOf` applied to
+ * `operations(key, options)`, so the indices refer to those operations; `direction` of the result is
+ * the Cartesian unit vector (for a face its normal, `latticeBasis`). Throws a RangeError for a bare
+ * array, which could be either kind of vector, for indices that are not three integers not all
+ * zero, and as `siteSymmetryOf` does.
  */
 export function siteSymmetry(
   key: PointGroupKey,
-  direction: Vec3,
+  direction: FaceIndices,
+  options?: SettingOptions & ToleranceOptions,
+): SiteSymmetry;
+export function siteSymmetry(
+  key: PointGroupKey,
+  direction: DirectionIndices,
+  options?: SettingOptions & ToleranceOptions,
+): SiteSymmetry;
+export function siteSymmetry(
+  key: PointGroupKey,
+  direction: CartesianDirection,
+  options?: SettingOptions & ToleranceOptions,
+): SiteSymmetry;
+export function siteSymmetry(
+  key: PointGroupKey,
+  direction: DirectionInput,
+  options?: SettingOptions & ToleranceOptions,
+): SiteSymmetry;
+export function siteSymmetry(
+  key: PointGroupKey,
+  direction: DirectionInput,
   options?: SettingOptions & ToleranceOptions,
 ): SiteSymmetry {
   return wyckoff.siteSymmetry(classKey(key), direction, options);
@@ -535,19 +560,55 @@ export function wyckoffPositions(key: PointGroupKey, options?: SettingOptions): 
 }
 
 /**
- * The Wyckoff position of a direction (Cartesian) in a crystal class: the position whose site
- * symmetry is conjugate to that of the direction (ITA's definition). `tolerance` as for
- * `siteSymmetryOf`.
+ * The Wyckoff position of a face (field `hkl`), a lattice direction (`uvw`) or a Cartesian
+ * direction (`cartesian`) in a crystal class: the position whose site symmetry is conjugate to that of the
+ * direction (ITA's definition). `tolerance` as for `siteSymmetryOf`. Throws a RangeError as
+ * `siteSymmetry` does, and if the operations found within the tolerance match no position.
  */
 export function wyckoffPosition(
   key: PointGroupKey,
-  direction: Vec3,
+  direction: FaceIndices,
+  options?: SettingOptions & ToleranceOptions,
+): WyckoffPosition;
+export function wyckoffPosition(
+  key: PointGroupKey,
+  direction: DirectionIndices,
+  options?: SettingOptions & ToleranceOptions,
+): WyckoffPosition;
+export function wyckoffPosition(
+  key: PointGroupKey,
+  direction: CartesianDirection,
+  options?: SettingOptions & ToleranceOptions,
+): WyckoffPosition;
+export function wyckoffPosition(
+  key: PointGroupKey,
+  direction: DirectionInput,
+  options?: SettingOptions & ToleranceOptions,
+): WyckoffPosition;
+export function wyckoffPosition(
+  key: PointGroupKey,
+  direction: DirectionInput,
   options?: SettingOptions & ToleranceOptions,
 ): WyckoffPosition {
   return wyckoff.wyckoffPosition(classKey(key), direction, options);
 }
 
 // --- lattice basis and orbits ---------------------------------------------------------------------
+
+/**
+ * The conventional basis a, b, c of a crystal class in a setting, as the columns of a Cartesian
+ * matrix with unit edge lengths: the basis in which `matrix` of each operation is W and `cartesian`
+ * is B·W·B⁻¹. Orthorhombic, tetragonal, cubic: x ∥ a, y ∥ b, z ∥ c. Hexagonal axes: x ∥ a, z ∥ c,
+ * b at 120° from a. Rhombohedral axes: the obverse basis a_R, b_R, c_R in the hexagonal frame. A
+ * direction [uvw] is B·u in this frame, the normal of a face (hkl) B⁻ᵀ·h. For the monoclinic and
+ * triclinic families, whose cell angles a point group does not fix, it is the basis symcrys takes
+ * for its operations, a, b, c along x, y, z; the basis of a real cell is `latticeFromParameters`.
+ *
+ * @remarks The matrix is frozen.
+ */
+export function latticeBasis(key: PointGroupKey, options?: SettingOptions): Mat3 {
+  return directions.latticeBasis(classKey(key), options);
+}
 
 /**
  * The operations of a list that keep the metric of a cell: W with WᵀGW = G, G the metric tensor

@@ -59,6 +59,11 @@ export interface CartesianAxis {
 }
 
 // @public
+export interface CartesianDirection {
+    readonly cartesian: Vec3;
+}
+
+// @public
 export interface CartesianOperation {
     readonly cartesian: Mat3;
     readonly timeReversal: boolean;
@@ -162,6 +167,9 @@ export interface DirectionIndices {
 }
 
 // @public
+export type DirectionInput = FaceIndices | DirectionIndices | CartesianDirection;
+
+// @public
 export interface DirectionOrbitEntry {
     readonly operations: readonly number[];
     readonly uvw: Uvw;
@@ -191,9 +199,6 @@ export interface FaceOrbitEntry {
 //
 // @public
 export function findPointGroup(symbol: string, options?: AxesOptions): PointGroupInSetting_2<MagneticPointGroupKey> | undefined;
-
-// @public
-export type FixedAngleFamily = 'orthorhombic' | 'tetragonal' | 'hexagonal' | 'cubic';
 
 // @public
 export type FourIndices = readonly [number, number, number, number];
@@ -249,7 +254,7 @@ export interface IsValidCellOptions {
 export const LATTICE_SYMMETRY_DIRECTIONS: Readonly<Record<CrystalFamily, readonly (readonly Uvw[])[]>>;
 
 // @public
-export function latticeBasis(family: FixedAngleFamily): Mat3;
+export function latticeBasis(key: MagneticPointGroupKey, options?: SettingOptions): Mat3;
 
 // @public
 export function latticeFromParameters(parameters: LatticeParameters): Mat3;
@@ -441,7 +446,16 @@ export interface SiteSymmetry {
 }
 
 // @public
-export function siteSymmetry(key: MagneticPointGroupKey, direction: Vec3, options?: SettingOptions & ToleranceOptions): SiteSymmetry;
+export function siteSymmetry(key: MagneticPointGroupKey, direction: FaceIndices, options?: SettingOptions & ToleranceOptions): SiteSymmetry;
+
+// @public (undocumented)
+export function siteSymmetry(key: MagneticPointGroupKey, direction: DirectionIndices, options?: SettingOptions & ToleranceOptions): SiteSymmetry;
+
+// @public (undocumented)
+export function siteSymmetry(key: MagneticPointGroupKey, direction: CartesianDirection, options?: SettingOptions & ToleranceOptions): SiteSymmetry;
+
+// @public (undocumented)
+export function siteSymmetry(key: MagneticPointGroupKey, direction: DirectionInput, options?: SettingOptions & ToleranceOptions): SiteSymmetry;
 
 // @public
 export function siteSymmetryOf(operations: readonly CartesianOperation[], direction: Vec3, options?: ToleranceOptions): SiteSymmetry;

@@ -40,7 +40,9 @@ describe('wyckoffPositions', () => {
 
   it('refuse the option convention, removed in 0.11.0', () => {
     expect(() => wyckoffPositions('mmm', { convention: 'birss' } as never)).toThrow(/option convention was removed/);
-    expect(() => wyckoffPosition('mmm', [0, 0, 1], { convention: 'birss' } as never)).toThrow(RangeError);
+    expect(() => wyckoffPosition('mmm', { cartesian: [0, 0, 1] }, { convention: 'birss' } as never)).toThrow(
+      RangeError,
+    );
   });
 
   it('reject an unknown setting', () => {
@@ -61,19 +63,20 @@ describe('wyckoffPosition', () => {
       for (const w of wyckoffPositions(key, { setting: s.index })) {
         for (const g of ops) {
           const image = apply(g.cartesian, representativeFace(key, s.index, w.millerIndices).cartesian);
-          expect(wyckoffPosition(key, image, { setting: s.index }).letter, `${key} #${s.index} ${w.letter}`).toBe(
-            w.letter,
-          );
+          expect(
+            wyckoffPosition(key, { cartesian: image }, { setting: s.index }).letter,
+            `${key} #${s.index} ${w.letter}`,
+          ).toBe(w.letter);
           const scaled: Vec3 = [image[0] * 7, image[1] * 7, image[2] * 7];
-          expect(wyckoffPosition(key, scaled, { setting: s.index }).letter).toBe(w.letter);
+          expect(wyckoffPosition(key, { cartesian: scaled }, { setting: s.index }).letter).toBe(w.letter);
         }
       }
     }
   });
 
   it('finds both pedions of a polar axis in the same position, as ITA prints "(001) or (001̄)"', () => {
-    expect(wyckoffPosition('4mm', [0, 0, -1]).letter).toBe('a');
-    expect(wyckoffPosition('2', [0, -1, 0]).letter).toBe('a');
+    expect(wyckoffPosition('4mm', { cartesian: [0, 0, -1] }).letter).toBe('a');
+    expect(wyckoffPosition('2', { cartesian: [0, -1, 0] }).letter).toBe('a');
   });
 
   it('gives a group and a position for directions near an element, at the edge of the tolerance too', () => {
@@ -102,7 +105,7 @@ describe('wyckoffPosition', () => {
                 ).toBe(true);
               }
             }
-            const letter = wyckoffPosition(key, near, { setting: s.index, tolerance }).letter;
+            const letter = wyckoffPosition(key, { cartesian: near }, { setting: s.index, tolerance }).letter;
             if (delta <= tolerance / 4) {
               // Every element fixing the image moves the perturbed direction by less than 2·√3·δ < tolerance.
               expect(letter, `${key} #${s.index} ${w.letter}`).toBe(w.letter);
@@ -115,8 +118,8 @@ describe('wyckoffPosition', () => {
 
   it('uses the tolerance for directions rounded near an element', () => {
     const near: Vec3 = [1, 0.5, 0.00005];
-    expect(wyckoffPosition('4/mmm', near).letter).toBe('g');
-    expect(wyckoffPosition('4/mmm', near, { tolerance: 1e-4 }).letter).toBe('d');
+    expect(wyckoffPosition('4/mmm', { cartesian: near }).letter).toBe('g');
+    expect(wyckoffPosition('4/mmm', { cartesian: near }, { tolerance: 1e-4 }).letter).toBe('d');
   });
 });
 
@@ -294,7 +297,7 @@ describe('magnetic point groups', () => {
   it('have no Wyckoff positions: ITA gives them for the crystal classes only', () => {
     for (const key of ["4'/mmm'", "2221'"]) {
       expect(() => wyckoffPositions(key as never)).toThrow(/32 crystal classes only/);
-      expect(() => wyckoffPosition(key as never, [0, 0, 1])).toThrow(RangeError);
+      expect(() => wyckoffPosition(key as never, { cartesian: [0, 0, 1] })).toThrow(RangeError);
     }
     expect(() => wyckoffPositions('nonsense' as never)).toThrow(/Unknown point group key/);
   });

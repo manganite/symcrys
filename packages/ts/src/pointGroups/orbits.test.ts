@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { representativeFace } from './wyckoff.js';
 import { apply, det, inverse, matricesEqual, multiply, transpose, type Mat3, type Vec3 } from '../linalg.js';
-import { latticeBasis } from '../lattice.js';
+import { familyBasis } from '../lattice.js';
 import { orbit, orbitOf } from './orbits.js';
 import { MAGNETIC_POINT_GROUP_KEYS, POINT_GROUP_KEYS, generators, operations, settings } from './pointGroups.js';
 import { wyckoffPositions } from './wyckoff.js';
@@ -22,7 +22,7 @@ describe('the matrix W of an operation (field matrix)', () => {
   }
 
   it('is the Cartesian operation in the lattice basis: R·B = B·W', () => {
-    const b = latticeBasis('hexagonal');
+    const b = familyBasis('hexagonal');
     for (const op of operations('6/mmm')) {
       expect(matricesEqual(multiply(op.cartesian, b), multiply(b, op.matrix))).toBe(true);
     }
@@ -53,7 +53,7 @@ describe('orbit', () => {
   });
 
   it('maps a face as the Cartesian operations map its normal', () => {
-    const b = latticeBasis('hexagonal');
+    const b = familyBasis('hexagonal');
     const reciprocal = transpose(inverse(b));
     const normal = (h: readonly number[]): Vec3 => {
       const v = apply(reciprocal, h as unknown as Vec3);
