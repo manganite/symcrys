@@ -7,7 +7,7 @@ import { checkNumbers, checkOptions, SETTING_KEYS, shown, TOLERANCE_KEYS } from 
 import { apply, inverse, type Mat3, type Vec3 } from '../linalg.js';
 import { checkCartesianOperations } from '../operations.js';
 import { siteTolerance } from '../siteSymmetry.js';
-import { checkClosed } from '../closure.js';
+import { checkGroup } from '../closure.js';
 import { EPSILON, TOLERANCE_BOUND } from '../tolerances.js';
 import type { ToleranceOptions } from '../tolerances.js';
 import type { Uvw } from '../symmetryDirections.js';
@@ -169,7 +169,7 @@ export function orbitOf(
       Object.freeze({ direction: Object.freeze(u) as unknown as Vec3, operations: Object.freeze([]) }),
     ]);
   }
-  checkClosed(operations, Math.max(within, EPSILON), 'orbitOf');
+  checkGroup(operations, Math.max(within, EPSILON), 'orbitOf');
   const poles: { direction: Vec3; operations: number[] }[] = [];
   operations.forEach((op, i) => {
     const w = apply(op.cartesian, u);

@@ -1,11 +1,11 @@
 /**
- * Site symmetry of a direction under any list of point operations: which operations leave it
- * fixed (docs/conventions.md, "Site symmetry and Wyckoff positions").
+ * Site symmetry of a direction under a point group given as its list of operations: which
+ * operations leave it fixed (docs/conventions.md, "Site symmetry and Wyckoff positions").
  */
 
 import { checkNumbers, checkOptions, shown, TOLERANCE_KEYS } from './checks.js';
 import { apply, multiply, type Vec3 } from './linalg.js';
-import { checkClosed, closeIndices } from './closure.js';
+import { checkGroup, closeIndices } from './closure.js';
 import { checkCartesianOperations, type CartesianOperation } from './operations.js';
 import {
   EPSILON,
@@ -134,7 +134,7 @@ export function siteSymmetryOf(
       general: true,
     });
   }
-  checkClosed(operations, Math.max(within, EPSILON), 'siteSymmetryOf');
+  checkGroup(operations, Math.max(within, EPSILON), 'siteSymmetryOf');
   return siteSymmetryInGroup(operations, v, tolerance, direction);
 }
 

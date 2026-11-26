@@ -702,14 +702,14 @@ onto the fixed space of that group (the mean of its images, normalised), takes t
 fixing that set direction, and repeats until the group no longer changes. If the group fixes no
 common direction (only with a tolerance far too large), it throws. The result is the site symmetry of the set direction,
 which removes rounding errors within the tolerance; the multiplicity is the number of operations
-divided by its order. The list must be a group, given as all its operations: the result is a list
-of indices into it, so a list that is not closed under products (only the generators of a group,
-for instance) is a RangeError that names the first missing product, and an empty list is the group
-
-1. Time reversal is ignored, since it does not change a
-   direction. `siteSymmetry(key, direction, { setting, axes, uniqueAxis, tolerance })` is the same for
-   the operations of a point group in a setting, `siteSymmetryOf(operations(key, options), …)`; the
-   suffix `…Of` marks the functions of a list of operations.
+divided by its order. The list must be a group, given as all its operations, each once: the
+result is a list of indices into it, so a list that is not a group (only the generators of a
+group, an operation twice, a product missing with its time reversal) is a RangeError that says
+why, and an empty list is the trivial group of the identity. Time reversal does not change a
+direction, so it does not change the result. `siteSymmetry(key, direction, { setting, axes,
+uniqueAxis, tolerance })` is the same for the operations of a point group in a setting,
+`siteSymmetryOf(operations(key, options), …)`; the suffix `…Of` marks the functions of a list of
+operations.
 
 **Wyckoff positions** are ITA's: a Wyckoff position is the set of directions whose site
 symmetries are conjugate in the point group (ITA, 6th ed., § 3.2.1.2.2, "Definition", p. 722).

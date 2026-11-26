@@ -113,7 +113,11 @@ describe('orbit', () => {
 describe('orbitOf', () => {
   it('refuses a list that is not a group, naming the missing product', () => {
     // The generators of 4/mmm gave 4 poles instead of the 16 of the general form.
-    expect(() => orbitOf(generators('4/mmm'), [1, 2, 3])).toThrow(/not a group: the product of operations/);
+    expect(() => orbitOf(generators('4/mmm'), [1, 2, 3])).toThrow(/not a group: the identity is not in the list/);
+    const withIdentity = [operations('1')[0], ...generators('4/mmm')];
+    expect(() => orbitOf(withIdentity, [1, 2, 3])).toThrow(
+      /not a group: the product of operations \d+ and \d+ is not in the list/,
+    );
     expect(orbitOf(operations('4/mmm'), [1, 2, 3])).toHaveLength(16);
   });
 
@@ -144,9 +148,9 @@ describe('orbitOf', () => {
     expect(orbitOf(ops, [0, 0, 2])[0].direction).toEqual([0, 0, 1]);
   });
 
-  it('takes the list as it is, not closed', () => {
-    const ops = operations('4mm').slice(0, 2);
-    expect(orbitOf(ops, [3, 2, 1]).map((p) => p.operations)).toEqual([[0], [1]]);
+  it('takes a subgroup of a group as given, its indices referring to that list', () => {
+    const two = operations('4mm').slice(0, 2); // 1 and 2 along z
+    expect(orbitOf(two, [3, 2, 1]).map((p) => p.operations)).toEqual([[0], [1]]);
   });
 
   it('refuses a zero vector, a matrix that is not orthogonal, and an operation without its Cartesian matrix', () => {
