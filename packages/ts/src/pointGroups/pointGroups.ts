@@ -280,10 +280,13 @@ export function rejectConventionArgument(argumentCount: number): void {
   }
 }
 
-/** The settings a symbol names, spaces ignored: by its key, its short or full symbol, or Birss's cubic form. */
+/**
+ * The settings a symbol names, spaces ignored: by its key, its short or full symbol, or another
+ * printed spelling of the key (`keySpelling`).
+ */
 function settingsNamed(d: GroupData, text: string): number[] {
   const compactText = compact(text);
-  const target = birssCubic(compactText) === d.key ? d.key : compactText;
+  const target = keySpelling(compactText) === d.key ? d.key : compactText;
   return allSettings(d).filter((i) => {
     if (target === d.key && i === d.defaultSetting) return true;
     const s = settingSymbols(d, i);
@@ -862,6 +865,41 @@ function find(
   }
   const target = compact(symbol);
   const candidates = [...BY_KEY.values()].filter((d) => !classesOnly || d.type === 'I');
+  // A Shubnikov symbol that symcrys writes without the characters only Shubnikov writes is also a
+  // Hermann–Mauguin spelling, of another group or of none: `6̅` (-3; -6 in Hermann–Mauguin), `2̅`
+  // (-1), `3/2` (23), `6̅/2` (m-3), `3/4` (432), `3/4̅` (-43m), `6̅/4` (m-3m). Such a symbol is refused
+  // rather than read as either; `4̅` means -4 in both and is read. Every spelling of the overbar
+  // after a digit counts as Shubnikov's, as it does for reading Hermann–Mauguin symbols.
+  const raw = symbol
+    .normalize('NFD')
+    .replace(/\s+/g, '')
+    .replace(/(\d)[\u0304\u00AF]/g, '$1\u0305');
+  const written = candidates.find((d) => shubnikov(d).normalize('NFD') === raw);
+  if (written) {
+    let reading: PointGroupInSetting<MagneticPointGroupKey> | undefined;
+    try {
+      reading = findIn(candidates, symbol, target, undefined);
+    } catch {
+      reading = undefined;
+    }
+    if (reading?.key !== written.key) {
+      throw new RangeError(
+        `The symbol ${shown(symbol)} is ${written.key} in Shubnikov's notation` +
+          (reading ? ` and ${reading.key} in Hermann–Mauguin's` : '') +
+          `: write ${[written.key, ...(reading ? [reading.key] : [])].map((k) => shown(k)).join(' or ')}`,
+      );
+    }
+  }
+  return findIn(candidates, symbol, target, options);
+}
+
+/** The group a symbol names among the candidates, with the setting the symbol and the options choose. */
+function findIn(
+  candidates: readonly GroupData[],
+  symbol: string,
+  target: string,
+  options: AxesOptions | undefined,
+): PointGroupInSetting<MagneticPointGroupKey> | undefined {
   // The key, a short or full symbol of a setting (spaces ignored), Birss's cubic form; then a
   // Schoenflies symbol, ITA's `C3i` or ITC Vol. D's `S6` alike, which names the group and not an
   // orientation. A symbol of several groups is an error.
@@ -884,14 +922,21 @@ function find(
 }
 
 /**
- * Birss prints the cubic groups without the overbar on the 3, which takes the prime of the mirror
- * before it (Birss Tables 3 and 6: `m3m`, `m'3` for `m-3m`, `m'-3'`): the symbol with the overbar,
- * which the caller looks up as a key (the cubic groups have one setting); undefined for any other
- * symbol.
+ * Another printed spelling of a key, as the key, which the caller compares with the keys; undefined
+ * for any other symbol. All are unambiguous, since they name no other group:
+ * - the cubic groups without the overbar on the 3, or without its prime, the 3 taking the prime of
+ *   the mirror before it (Birss Tables 3 and 6: `m3m`, `m'3` for `m-3m`, `m'-3'`; ITC Vol. D
+ *   Table 1.2.6.12: `m'-3`, `m'-3m'` for `m'-3'`, `m'-3'm'`); the cubic groups have one setting;
+ * - a grey group with its `1'` after the first position, and `1'` alone for the grey group of 1
+ *   (ITC Vol. D Table 1.2.6.12: `21'/m` for `2/m1'`, `1'` for `11'`).
  */
-function birssCubic(compactTarget: string): string | undefined {
-  const m = /^m('?)3(?!')(.*)$/.exec(compactTarget);
-  return m ? `m${m[1]}-3${m[1]}${m[2]}` : undefined;
+function keySpelling(compactTarget: string): string | undefined {
+  const cubic = /^m('?)-?3(?!')(.*)$/.exec(compactTarget);
+  if (cubic) return `m${cubic[1]}-3${cubic[1]}${cubic[2]}`;
+  if (compactTarget === "1'") return "11'";
+  const grey = /^(-?\d)1'\/(.+)$/.exec(compactTarget);
+  if (grey) return `${grey[1]}/${grey[2]}1'`;
+  return undefined;
 }
 
 /**
@@ -923,7 +968,8 @@ export function findPointGroup(symbol: string, options?: AxesOptions): PointGrou
  * tolerantly. A prime marks time reversal: `4'/mmm'`, `2221'`.
  * It reads, spaces ignored (docs/conventions.md, "Reading symbols"): the key; the short or
  * full symbol of a setting (`312`, `1 1 2`); a Schoenflies symbol (`D3`; for -3 either `C3i` or
- * `S6`); Birss's cubic symbols without the overbar on the 3 (`m3m`). A symbol that names
+ * `S6`); the cubic symbols without the overbar on the 3 or its prime (`m3m`, `m'-3`); the grey
+ * groups with `1'` after the first position (`21'/m`, `1'` for `11'`). A symbol that names
  * several settings (the key `32`, which is also the symbol of the setting with rhombohedral axes;
  * `2` for unique axis b, c and a; any Schoenflies symbol) gives the standard (ITC default) setting,
  * unless the options `axes` or `uniqueAxis` choose another, as the headlines of ITA name the
