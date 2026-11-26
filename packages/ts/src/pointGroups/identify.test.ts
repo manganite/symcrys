@@ -12,6 +12,9 @@ import { multiply, transpose, type Mat3 } from '../linalg.js';
 import type { CartesianOperation } from '../operations.js';
 import { describeOperations } from './elements.js';
 import { describeOperationsOf, pointGroupOf } from './identify.js';
+import { isCentrosymmetricOf } from './properties.js';
+import { allowedPropertiesOf, allowsPropertyOf } from '../tensors/tensorProperties.js';
+import { tensorFormOf } from '../tensors/tensorForm.js';
 import {
   MAGNETIC_POINT_GROUP_KEYS,
   generators,
@@ -140,26 +143,46 @@ describe('pointGroupOf', () => {
     }));
     expect(pointGroupOf(r6)).toEqual({ key: '6/mmm', setting: 1 });
     expect(() => pointGroupOf(r6, { tolerance: 1e-7 })).toThrow(/larger tolerance|larger one/);
-    // 3 in a general orientation rounded to 5 decimals at 10⁻⁵ closed into five "elements", two of
-    // them the same operation with other rounding errors, and gave undefined.
+    // 4 in a general orientation rounded to 3 decimals at 10⁻³ closes into near copies of its
+    // operations (errors above the tolerance); it gave undefined.
     const c = Math.cos(0.7), s = Math.sin(0.7); // prettier-ignore
     const rot: Mat3 = [[c, -s, 0], [s, c, 0], [0, 0, 1]]; // prettier-ignore
     const tilt: Mat3 = [[1, 0, 0], [0, Math.cos(0.4), -Math.sin(0.4)], [0, Math.sin(0.4), Math.cos(0.4)]]; // prettier-ignore
     const g = multiply(tilt, rot);
-    const r5 = operations('3').map((o) => ({
+    const r3 = operations('4').map((o) => ({
       cartesian: multiply(multiply(g, o.cartesian), transpose(g)).map((row) =>
-        row.map((x) => Math.round(x * 1e5) / 1e5),
+        row.map((x) => Math.round(x * 1e3) / 1e3),
       ) as unknown as Mat3,
       timeReversal: false,
     }));
-    let outcome: unknown;
-    try {
-      outcome = pointGroupOf(r5, { tolerance: 1e-6 });
-    } catch (e) {
-      outcome = e;
+    expect(() => pointGroupOf(r3, { tolerance: 1e-3 })).toThrow(/near|one operation with different rounding errors/);
+    expect(pointGroupOf(r3, { tolerance: 1e-2 })?.key).toBe('4');
+  });
+
+  it('refuses near copies in every function that closes a list: mm2 rounded to 5 decimals', () => {
+    // At the default tolerance this list closes into near copies; allowedPropertiesOf gave
+    // ['pyroelectric', 'piezoelectric'] without 'gyrotropic', which mm2 allows.
+    const r = [
+      [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+      [[-0.99879, 0.04154, 0.02621], [0.04154, 0.42959, 0.90207], [0.02621, 0.90207, -0.43079]],
+      [[-0.58936, -0.39758, 0.70327], [-0.39758, 0.90055, 0.17592], [0.70327, 0.17592, 0.68881]],
+      [[0.59056, 0.43912, -0.67706], [0.43912, 0.52904, 0.72615], [-0.67706, 0.72615, -0.1196]],
+    ].map((m) => ({ cartesian: m as unknown as Mat3, timeReversal: false })); // prettier-ignore
+    for (const f of [
+      () => pointGroupOf(r),
+      () => allowedPropertiesOf(r),
+      () => allowsPropertyOf(r, 'gyrotropic'),
+      () => isCentrosymmetricOf(r),
+      () => tensorFormOf(r, 'piezoelectric'),
+    ]) {
+      expect(f).toThrow(/one operation with different rounding errors/);
     }
-    expect(outcome).toBeInstanceOf(RangeError);
-    expect(pointGroupOf(r5, { tolerance: 1e-4 })?.key).toBe('3');
+    expect(allowedPropertiesOf(r, { tolerance: 1e-4 })).toContain('gyrotropic');
+  });
+
+  it('gives undefined for a finite group of up to 200 elements that is not crystallographic', () => {
+    const c48 = rotationAbout(Z, 1 / 48) as unknown as Mat3;
+    expect(pointGroupOf([{ cartesian: c48, timeReversal: false }])).toBeUndefined();
   });
 
   it('refuses a matrix that is not orthogonal and an operation that does not say whether it has time reversal', () => {

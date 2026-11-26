@@ -868,8 +868,10 @@ their traces integers, within it. The result is the
 key, and the setting whose operations the group equals in the frame of symcrys. A group in another
 orientation (a threefold axis along [111] of a cubic crystal, a frame turned by any angle) has no
 setting: the key is still found, the setting is absent. `1` and `-1` have no orientation and always
-setting 1. The result is undefined if the operations generate no point group (an operation of
-order 5, a group of more than 96 operations). The setting is found from the operations passed in,
+setting 1. The result is undefined if the operations generate a finite group that is not a
+crystallographic point group (an operation of order 5, a group of more than 96 operations); where
+the tolerance is the problem (the list closes into more than 200 elements, or into near copies of
+one operation), it is the RangeError of `tensorFormOf` ("Tolerances"). The setting is found from the operations passed in,
 which generate the group, not from their products, whose errors add up. The first call builds a
 table of the 122 groups (about 0.1 s in Node, 0.3 s in the Python package); after that a call takes
 about 1 ms for the 48 operations of m-3m in Node (`npm run benchmark`), about 4 ms in Python

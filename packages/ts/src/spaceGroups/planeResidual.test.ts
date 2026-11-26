@@ -56,7 +56,7 @@ describe('residualOperations of the plane', () => {
 
   it('takes the tolerance of the metric, relative to the largest entry of G', () => {
     const ops = plane.operations('p4mm');
-    // b longer by 10⁻⁵: G differs by about 2·10⁻⁵ relative, above the default 10⁻⁶.
+    // b longer by 10⁻⁵: G differs by about 2·10⁻⁵ relative, above the default 10⁻⁵.
     const near = cell(1, 1 + 1e-5, 90) as plane.Mat2;
     expect(plane.residualOperations(ops, near)).toHaveLength(4);
     expect(plane.residualOperations(ops, near, { tolerance: 1e-4 })).toHaveLength(8);

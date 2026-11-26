@@ -67,7 +67,7 @@ export function checkOrthogonalWithin(m: Mat3, what: string, tolerance: number):
           'larger tolerance (about ten times their rounding)'
         : '';
     throw new RangeError(
-      `${what} is not an orthogonal (Cartesian) matrix within the tolerance ${t}${hint}: ${shown(m)}`,
+      `${what} is not an orthogonal (Cartesian) matrix within the tolerance ${t} (at least EPSILON)${hint}: ${shown(m)}`,
     );
   }
 }

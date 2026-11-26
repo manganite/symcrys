@@ -1420,9 +1420,10 @@ def point_group_of(
     operation without an orthogonal Cartesian matrix (``cartesian``; within ``tolerance``, at least
     ``EPSILON``), for an operation that does not say whether it is combined with time reversal, and
     if the operations do not close into a finite group within the tolerance, the error of
-    ``tensor_form_of`` for the same input (matrices with errors too large for it, or a rotation by
-    an angle that is not 360°/n). The classes ``1`` and ``-1`` have one setting and no orientation,
-    so they always have setting 1.
+    ``tensor_form_of`` for the same input (matrices with errors too large for it, which give more
+    than 200 elements or near copies of one operation, or a rotation by an angle that is not
+    360°/n). The classes ``1`` and ``-1`` have one setting and no orientation, so they always have
+    setting 1.
 
     Parameters
     ----------

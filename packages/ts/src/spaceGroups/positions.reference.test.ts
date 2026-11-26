@@ -71,7 +71,7 @@ describe('plane groups: points of every printed Wyckoff position', () => {
               [p, -1],
             ] as const,
         )) {
-          // Displaced by much less than the default tolerance of 10⁻⁶, both ways (across 0 and 1).
+          // Displaced by much less than the default tolerance of 10⁻⁵, both ways (across 0 and 1).
           const q = [p[0] + sign * 3e-8, p[1] - sign * 2e-8];
           expect(planeWyckoffPositionOf(symbol, q)).toEqual({
             letter: row.letter,
