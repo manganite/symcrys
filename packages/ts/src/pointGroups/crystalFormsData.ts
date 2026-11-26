@@ -6,8 +6,8 @@
  * references/itc/vol-a-table-3.2.3.2-face-forms.md, which the reference test re-parses and compares
  * with this file; change both only by transcription from print.
  *
- * Notation as in the Wyckoff positions (wyckoffRows.ts): a leading `-` is an overbar; components separated by commas;
- * Bravais–Miller indices (four components) for hexagonal axes; three for rhombohedral axes, where an
+ * Notation as in the Wyckoff positions (wyckoffRows.ts): a leading `-` is an overbar; components
+ * separated by commas; Bravais–Miller indices (four components) for hexagonal axes; three for rhombohedral axes, where an
  * index may be a sum as printed (`h,k,-h-k`, `h,k,2k-h`).
  */
 

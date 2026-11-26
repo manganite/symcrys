@@ -383,7 +383,9 @@ describe('ITA Table 3.2.3.2: Wyckoff positions', () => {
             departs =
               JSON.stringify(wyckoffRowsWith(key, s.index, without(table, symbol, entry))) !==
               JSON.stringify(computedWyckoffRows(key, s.index));
-          } catch {
+          } catch (e) {
+            // Without a letter order the computation refuses to decide; any other error is a fault.
+            if (!(e instanceof Error) || !/no letter order/.test(e.message)) throw e;
             departs = true;
           }
           expect(departs, label).toBe(true);

@@ -19,8 +19,8 @@ export type WyckoffRow = readonly [string, number, string, readonly string[], st
 
 /**
  * Convention data: the order of the Wyckoff letters among positions of equal multiplicity and
- * equal dimension, which ITA sets without a rule (2016 § 2.1.4, p. 173: the letters follow the
- * order of its data file), as the oriented site-symmetry symbols of those positions in letter
+ * equal dimension, for which print states no rule (ITA 2016 § 2.1.3.11 (ii), p. 162: the letter "is
+ * merely a coding scheme"; § 3.2.1.2.3, p. 727), as the oriented site-symmetry symbols of those positions in letter
  * order, by the short symbol of the setting.
  */
 export const LETTER_ORDER: Readonly<Record<string, readonly string[]>> = deepFreeze({
@@ -142,7 +142,10 @@ function pointRank(vectors: readonly Vec[]): number[] {
   ];
 }
 
-/** The order of the rule for faces with hexagonal or rhombohedral axes: smallest greatest coefficient, then the greatest coefficients in reading order. */
+/**
+ * The order of the rule for faces with hexagonal or rhombohedral axes: smallest greatest
+ * coefficient, then the greatest coefficients in reading order.
+ */
 function faceRank(vectors: readonly Vec[]): number[] {
   const flat = echelon(vectors).rows.flat();
   return [Math.max(...flat.map(Math.abs)), ...flat.map((x) => -x)];
@@ -329,9 +332,10 @@ const cache = new Map<string, readonly WyckoffRow[]>();
  * - First representative: the element of the orbit first by `pointRank`, or the one listed in
  *   `FIRST_POINT_EXCEPTIONS`; its coordinates are the images under the operations in their order,
  *   each once.
- * - First face: the face fixed by the site group of the first representative; with hexagonal or
- *   rhombohedral axes, where that face is not normal to the representative, the face of its orbit
- *   first by `faceRank`, or the one listed in `FIRST_FACE_EXCEPTIONS`.
+ * - First face: the face fixed by the site group of the first representative, the face normal to
+ *   it; with hexagonal or rhombohedral axes, where ITA prints a face that in general lies on a
+ *   conjugate element, the face of the orbit first by `faceRank`, or the one listed in
+ *   `FIRST_FACE_EXCEPTIONS`.
  */
 export function computedWyckoffRows(key: PointGroupKey, setting: number): readonly WyckoffRow[] {
   const id = `${key}#${setting}`;
@@ -411,7 +415,7 @@ export function wyckoffRowsWith(
       next &&
       next.multiplicity === r.multiplicity &&
       next.dimension === r.dimension &&
-      (tie(r.siteSymmetry) < 0 || tie(next.siteSymmetry) < 0)
+      (tie(r.siteSymmetry) < 0 || tie(r.siteSymmetry) === tie(next.siteSymmetry))
     ) {
       throw new Error(`Point group ${symbol}: no letter order for ${r.siteSymmetry} and ${next.siteSymmetry}`);
     }

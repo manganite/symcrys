@@ -793,8 +793,9 @@ printed settings:
 - The special positions are the orbits of the lines and planes V through the origin that are the
   fixed space of their stabiliser; the multiplicity is |G| divided by the order of the stabiliser.
 - **Letters:** multiplicity ascending (ITA 2016 § 1.4.4.2, p. 63), then fewer free parameters
-  (a line before a plane). Where both are equal, ITA's order follows no rule (§ 2.1.4, p. 173: the
-  letters follow the order of its data file); this order is convention data, `LETTER_ORDER`, the
+  (a line before a plane), a convention of symcrys that holds throughout print. Where both are
+  equal, print states no rule (the letter "is merely a coding scheme", § 2.1.3.11 (ii), p. 162, to
+  which § 3.2.1.2.3, p. 727, refers for the point groups); this order is convention data, `LETTER_ORDER`, the
   oriented symbols in letter order for 222, mm2, mmm, 422, 4mm, 4/mmm, 622, 6mm, -6m2, -62m, 6/mmm
   and m-3m (15 sets of positions).
 - **First representative:** the element of the orbit whose reduced row echelon form, made integer
@@ -809,15 +810,16 @@ printed settings:
   its directions under the site group that carries an element (the order of the rotations about
   it, or `m` for a reflection normal to it), in the order of the directions, a dot if none does
   (ITA 2016 § 2.1.3.12, p. 163); monoclinic site symmetries `2` and `m` are not oriented.
-- **First face:** the face fixed by the site group of the first representative. With hexagonal or
-  rhombohedral axes that face need not be normal to the point; there the face of the orbit with the
-  smallest greatest coefficient, then the greatest coefficients in reading order, and for 32 and
-  -3m with rhombohedral axes `0,1,-1` as convention data (`FIRST_FACE_EXCEPTIONS`).
+- **First face:** the face fixed by the site group of the first representative, the face normal to
+  it. With hexagonal or rhombohedral axes ITA prints a face of the orbit that in general lies on a
+  conjugate element (the bullet on 321 above): the face with the smallest greatest coefficient, then
+  the greatest coefficients in reading order, and for 32 and -3m with rhombohedral axes `0,1,-1` as
+  convention data (`FIRST_FACE_EXCEPTIONS`).
 - A test removes each entry of the convention data in turn and checks that the result then departs
   from print or is undecided.
 
 `wyckoffPosition(key, { hkl } | { uvw } | { cartesian }, { setting, tolerance })` gives the
-Wyckoff position of any face or direction: the one whose printed face has a site symmetry conjugate to that of the direction.
+Wyckoff position of any face or direction: the one whose first face has a site symmetry conjugate to that of the direction.
 
 **ITA 2006 and 2016.** The 5th edition prints these data as Table 10.1.2.2, without coordinates
 ("for point coordinates see text", § 10.1.2.3) and without the point at the origin. Letters,

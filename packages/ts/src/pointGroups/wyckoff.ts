@@ -169,17 +169,17 @@ export function storedEntry<
  * from setting 1 by a change of basis), those of setting 1 carried into its frame, so that the
  * letters are those of setting 1.
  */
-function storedRows(key: PointGroupKey, setting: number): readonly WyckoffRow[] {
+function settingRows(key: PointGroupKey, setting: number): readonly WyckoffRow[] {
   if (classSettingData(key, setting).from === undefined) return computedWyckoffRows(key, setting);
   const r = permutationFromSetting1(key, setting);
   // A monoclinic site symmetry (`2`, `m`, `2/m`) names the element on the unique axis, not a position.
   const oriented = crystalFamily(classData(key).crystalSystem) !== 'monoclinic';
-  return storedRows(key, 1).map(([letter, mult, site, coords, miller]) => [
+  return settingRows(key, 1).map(([letter, mult, site, coords, miller]) => [
     letter,
     mult,
     oriented ? permuteSymbol(site, r) : site,
     coords.map((c) => permutePattern(c, r, XYZ)),
-    miller === '' ? '' : permutePattern(miller, r, HKL),
+    permutePattern(miller, r, HKL),
   ]);
 }
 
@@ -242,24 +242,22 @@ export function wyckoffPositions(key: PointGroupKey, options?: SettingOptions): 
   if (!result) {
     const ops = operations(key, { setting });
     result = Object.freeze(
-      storedRows(key, setting)
-        .filter(([letter]) => letter !== 'o')
-        .map(([letter, multiplicity, site, coordinates, millerIndices]) => {
-          const stab = siteSymmetryOfGroup(ops, representativeFace(key, setting, millerIndices).cartesian, EPSILON);
-          if (stab.multiplicity !== multiplicity) {
-            throw new Error(
-              `Point group ${key}, setting ${setting}, position ${letter}: multiplicity differs from print`,
-            );
-          }
-          return Object.freeze({
-            letter,
-            multiplicity,
-            siteSymmetry: site,
-            coordinates: Object.freeze([...coordinates]),
-            millerIndices,
-            siteSymmetryOperations: stab.operations,
-          });
-        }),
+      settingRows(key, setting).map(([letter, multiplicity, site, coordinates, millerIndices]) => {
+        const stab = siteSymmetryOfGroup(ops, representativeFace(key, setting, millerIndices).cartesian, EPSILON);
+        if (stab.multiplicity !== multiplicity) {
+          throw new Error(
+            `Point group ${key}, setting ${setting}, position ${letter}: multiplicity differs from the site symmetry of its face`,
+          );
+        }
+        return Object.freeze({
+          letter,
+          multiplicity,
+          siteSymmetry: site,
+          coordinates: Object.freeze([...coordinates]),
+          millerIndices,
+          siteSymmetryOperations: stab.operations,
+        });
+      }),
     );
     cache.set(cacheKey, result);
   }
