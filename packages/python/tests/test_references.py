@@ -336,3 +336,26 @@ def test_ita_3232_general_faces(row: list[str]) -> None:
             reordered += computed[6:9] + shift(9)
         computed = reordered
     assert computed == expected
+
+
+# --- ITA Table 3.2.3.1: positions and edge forms of the plane point groups -----------------------
+
+PLANE_POINT = reference("itc/vol-a-table-3.2.3.1.md")
+
+
+def test_ita_3231_plane_point_groups() -> None:
+    positions = table_rows(section(PLANE_POINT, "## Positions"))[1:]
+    forms = table_rows(section(PLANE_POINT, "## Forms"))[1:]
+    kinds = symcrys.plane.CRYSTAL_FORM_TYPES
+    for printed in dict.fromkeys(r[0] for r in positions):
+        key, setting = ("3m", 1) if printed == "3m1" else ("3m", 2) if printed == "31m" else (printed, 1)
+        lib = symcrys.plane.wyckoff_positions(key, setting=setting)
+        assert [[str(p["multiplicity"]), p["letter"], p["site_symmetry"], "; ".join(p["coordinates"])] for p in lib] == [
+            r[2:] for r in positions if r[0] == printed and r[3] != "o"
+        ]
+        assert all(p["site_symmetry_operations"].dtype == np.int64 for p in lib)
+        lib_forms = symcrys.plane.crystal_forms(key, setting=setting)
+        assert [
+            [f["letter"], "basic" if f["basic"] else "limiting", kinds[f["form_type"]]["name"], f["miller_indices"]]
+            for f in lib_forms
+        ] == [[r[1], r[2], r[3], r[5].split(";")[0].strip()] for r in forms if r[0] == printed and r[1] != "o"]

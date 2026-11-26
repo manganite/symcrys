@@ -47,6 +47,21 @@ PlaneOperationKind = Literal[
 """What an operation of a plane group or plane point group is, in ITA's names of the operations:
 ``'reflection'`` (in a line, as ``'reflection'`` of the point groups) and ``'glide-reflection'``.
 """
+CrystalFormTypeKey = Literal[
+    "single-edge",
+    "pair-of-parallel-edges",
+    "pair-of-edges",
+    "rhomb",
+    "square",
+    "ditetragon",
+    "trigon",
+    "ditrigon",
+    "hexagon",
+    "dihexagon",
+]
+"""A kind of edge form, the crystal form of a two-dimensional crystal: its usual English name in
+lower case, words joined by ``-`` (``'pair-of-parallel-edges'``, ``'ditetragon'``).
+"""
 PlaneCellParameter = Literal["a", "b", "gamma"]
 """A parameter of a plane cell: the edge lengths a, b and the angle γ between them."""
 
@@ -220,17 +235,58 @@ class OperationDescription(TypedDict):
 
 @final
 class WyckoffPosition(TypedDict):
-    """A Wyckoff position of a plane group, in ITA's notation."""
+    """A Wyckoff position of a plane group (points of the plane) or of a plane point group
+    (directions of the plane, with the edges normal to them).
+    """
 
     letter: str
     """The Wyckoff letter."""
     multiplicity: int
-    """The multiplicity: the number of points in the conventional cell."""
+    """The multiplicity: for a plane group the number of points in the conventional cell, for a plane
+    point group the number of equivalent directions (and edges).
+    """
     site_symmetry: str
     """The oriented site-symmetry symbol, written without spaces, e.g. ``'.m.'``, ``'2mm'``."""
     coordinates: list[str]
-    """All coordinate triplets of the (0,0)+ set, e.g. ``['x,0', '-x,0']``; a leading ``-`` is an
-    overbar.
+    """All coordinate doublets of the position, for a plane group those of the (0,0)+ set, e.g.
+    ``['x,0', '-x,0']``; a leading ``-`` is an overbar.
+    """
+    miller_indices: NotRequired[str]
+    """For a plane point group: the first edge of the position's basic form, its Miller indices in the
+    usual notation, e.g. ``h,k``, ``1,0``, or ``h,k,i`` and ``1,1,-2`` (Bravais–Miller indices) for the
+    hexagonal groups; a leading ``-`` is an overbar. In the hexagonal groups the first doublet and the
+    first edge of a special position may lie on different, conjugate mirror lines; both belong to the
+    position.
+    """
+    site_symmetry_operations: NotRequired[NDArray[np.int64]]
+    """For a plane point group: the indices into the operations of the group in the same setting
+    (``operations``) of those that fix the first edge (``miller_indices``), the site symmetry of the
+    edge, as for the faces of a crystal class.
+    """
+
+
+@final
+class CrystalForm(TypedDict):
+    """An edge form of a plane point group, the crystal form of a two-dimensional crystal: a set of
+    edges equivalent under the group.
+    """
+
+    letter: str
+    """The Wyckoff letter of the position the edges belong to."""
+    multiplicity: int
+    """The number of edges: the multiplicity of the position."""
+    site_symmetry: str
+    """The oriented site-symmetry symbol of the position (the edge symmetry)."""
+    basic: bool
+    """``True`` for the basic form of the position, ``False`` for a limiting form: its edges have the
+    edge symmetry of the position, but the form has a higher symmetry.
+    """
+    form_type: CrystalFormTypeKey
+    """The kind of the form, its key in ``CRYSTAL_FORM_TYPES``."""
+    miller_indices: str
+    """The first edge of the form in the usual notation, components separated by commas, e.g. ``h,k``,
+    ``1,0``, or ``h,k,i`` and ``1,1,-2`` (Bravais–Miller indices) for the hexagonal groups; a leading
+    ``-`` is an overbar.
     """
 
 
@@ -262,12 +318,26 @@ class WyckoffDistance(TypedDict):
     letter: str
     """The Wyckoff letter."""
     multiplicity: int
-    """The multiplicity: the number of points in the conventional cell."""
+    """The multiplicity: for a plane group the number of points in the conventional cell, for a plane
+    point group the number of equivalent directions (and edges).
+    """
     site_symmetry: str
     """The oriented site-symmetry symbol, written without spaces, e.g. ``'.m.'``, ``'2mm'``."""
     coordinates: list[str]
-    """All coordinate triplets of the (0,0)+ set, e.g. ``['x,0', '-x,0']``; a leading ``-`` is an
-    overbar.
+    """All coordinate doublets of the position, for a plane group those of the (0,0)+ set, e.g.
+    ``['x,0', '-x,0']``; a leading ``-`` is an overbar.
+    """
+    miller_indices: NotRequired[str]
+    """For a plane point group: the first edge of the position's basic form, its Miller indices in the
+    usual notation, e.g. ``h,k``, ``1,0``, or ``h,k,i`` and ``1,1,-2`` (Bravais–Miller indices) for the
+    hexagonal groups; a leading ``-`` is an overbar. In the hexagonal groups the first doublet and the
+    first edge of a special position may lie on different, conjugate mirror lines; both belong to the
+    position.
+    """
+    site_symmetry_operations: NotRequired[NDArray[np.int64]]
+    """For a plane point group: the indices into the operations of the group in the same setting
+    (``operations``) of those that fix the first edge (``miller_indices``), the site symmetry of the
+    edge, as for the faces of a crystal class.
     """
     point: NDArray[np.float64]
     """The point of the position nearest to the given one (lattice basis), modulo the lattice, in [0,
@@ -429,6 +499,16 @@ class CoordinateChange(TypedDict):
     """The operations, as given, in the new coordinate system."""
 
 
+@final
+class CrystalFormType(TypedDict):
+    """A kind of edge form: its usual English name and its number of edges."""
+
+    name: str
+    """The usual English name, e.g. ``Pair of parallel edges``, ``Ditetragon``."""
+    edges: int
+    """The number of edges."""
+
+
 _OPERATION_FIELDS = {"matrix": (np.int64, (2, 2)), "translation": (np.float64, (2,))}
 _S_Operations = ("ops", Operations, {"matrix": (np.int64, (2, 2)), "translation": (np.float64, (2,))})
 _S_PlaneGroup = (
@@ -469,6 +549,19 @@ _S_WyckoffPosition = (
         "multiplicity": _I,
         "siteSymmetry": _V,
         "coordinates": ("l", _V),
+        "millerIndices": _V,
+        "siteSymmetryOperations": ("a", np.int64, None),
+    },
+)
+_S_CrystalForm = (
+    "d",
+    {
+        "letter": _V,
+        "multiplicity": _I,
+        "siteSymmetry": _V,
+        "basic": _V,
+        "formType": _V,
+        "millerIndices": _V,
     },
 )
 _S_SiteSymmetry = (
@@ -487,6 +580,8 @@ _S_WyckoffDistance = (
         "multiplicity": _I,
         "siteSymmetry": _V,
         "coordinates": ("l", _V),
+        "millerIndices": _V,
+        "siteSymmetryOperations": ("a", np.int64, None),
         "point": ("a", np.float64, (2,)),
         "distance": _F,
     },
@@ -554,17 +649,22 @@ _S_CoordinateChange = (
         "operations": ("l", _S_TransformedOperation),
     },
 )
+_S_CrystalFormType = ("d", {"name": _V, "edges": _I})
 
 __all__ = [
     "VERSION",
     "EPSILON",
     "PLANE_GROUP_KEYS",
     "POINT_GROUP_KEYS",
+    "CRYSTAL_FORM_TYPES",
     "SymcrysError",
     "SymcrysInternalError",
     "AsymmetricUnit",
     "CellRestrictions",
     "CoordinateChange",
+    "CrystalForm",
+    "CrystalFormType",
+    "CrystalFormTypeKey",
     "InverseTransformation",
     "LatticeParameters",
     "OperationDescription",
@@ -591,6 +691,7 @@ __all__ = [
     "asymmetric_unit",
     "cell_restrictions",
     "change_of_coordinates",
+    "crystal_forms",
     "describe_operations",
     "describe_operations_of",
     "find_plane_group",
@@ -638,6 +739,13 @@ PLANE_GROUP_KEYS: tuple[str, ...] = _shared.convert(_value("PLANE_GROUP_KEYS"), 
 """The short symbols of the 17 plane groups, in ITA's order (plane group n at index n − 1)."""
 POINT_GROUP_KEYS: tuple[str, ...] = _shared.convert(_value("POINT_GROUP_KEYS"), ("t", _V))
 """The keys of the 10 plane point groups, in ITA's order."""
+CRYSTAL_FORM_TYPES: dict[str, CrystalFormType] = _shared.convert(
+    _value("CRYSTAL_FORM_TYPES"),
+    ("m", _S_CrystalFormType),
+)
+"""The ten kinds of edge forms, by key, in the order in which they first occur among the point
+groups.
+"""
 
 
 def is_plane_group_key(key: str) -> bool:
@@ -874,14 +982,49 @@ def describe_operations_of(
     return result
 
 
-def wyckoff_positions(key: str) -> list[WyckoffPosition]:
-    """The Wyckoff positions of a plane group in ITA's notation and order, general position first.
-    Raises SymcrysError for an unknown key and for a plane point group, whose positions are not in
-    symcrys yet.
+def wyckoff_positions(
+    key: str,
+    *,
+    setting: Optional[Union[int, str]] = None,
+) -> list[WyckoffPosition]:
+    """The Wyckoff positions of a plane group or of a plane point group, in ITA's order, general
+    position first. A plane point group's positions are those of the directions in the plane, in the
+    setting ``setting`` (``3m`` has two), each with the first edge of its basic form and the
+    operations that fix that edge; the point at the origin is left out. Raises SymcrysError for an
+    unknown key or setting.
+
+    Parameters
+    ----------
+    setting : keyword-only, optional
+        The setting, by its 1-based index or its symbol (spaces ignored): for the point group ``3m``
+        1 or ``'3m1'`` (default) and 2 or ``'31m'``, and the key ``'3m'`` names the default; the
+        other point groups have one, and a plane group takes only 1 or its own symbol (short or
+        full).
     """
     result: list[WyckoffPosition] = _shared.convert(
-        _call("wyckoffPositions", key),
+        _call("wyckoffPositions", key, _shared.options(setting=setting)),
         ("l", _S_WyckoffPosition),
+    )
+    return result
+
+
+def crystal_forms(key: str, *, setting: Optional[Union[int, str]] = None) -> list[CrystalForm]:
+    """The edge forms of a plane point group, the crystal forms of a two-dimensional crystal, in the
+    setting ``setting``: for each Wyckoff position (general position first) its basic form, then a
+    limiting form where there is one. Raises SymcrysError for an unknown key or setting and for a
+    plane group.
+
+    Parameters
+    ----------
+    setting : keyword-only, optional
+        The setting, by its 1-based index or its symbol (spaces ignored): for the point group ``3m``
+        1 or ``'3m1'`` (default) and 2 or ``'31m'``, and the key ``'3m'`` names the default; the
+        other point groups have one, and a plane group takes only 1 or its own symbol (short or
+        full).
+    """
+    result: list[CrystalForm] = _shared.convert(
+        _call("crystalForms", key, _shared.options(setting=setting)),
+        ("l", _S_CrystalForm),
     )
     return result
 

@@ -522,9 +522,12 @@ describe('errors', () => {
     expect(() => plane.planeGroup('2mm' as plane.PlaneGroupKey)).toThrow(/plane group, not of the point group 2mm/);
     expect(() => plane.pointGroup('p2' as plane.PointGroupKey)).toThrow(/planeGroup/);
     expect(() => plane.symbol('p7' as plane.PointGroupKey)).toThrow(RangeError);
-    for (const f of [plane.wyckoffPositions, plane.asymmetricUnit, plane.symmetryElements]) {
+    for (const f of [plane.asymmetricUnit, plane.symmetryElements]) {
       expect(() => f('4mm' as plane.PlaneGroupKey)).toThrow(RangeError);
     }
+    expect(() => plane.crystalForms('p4mm' as plane.PointGroupKey)).toThrow(RangeError);
+    expect(() => plane.wyckoffPositions('4mm', { setting: 2 })).toThrow(RangeError);
+    expect(() => plane.wyckoffPositions('p4mm', { setting: 2 })).toThrow(RangeError);
     expect(() => plane.siteSymmetry('4mm' as plane.PlaneGroupKey, [0, 0])).toThrow(RangeError);
     expect(() => plane.orbit('p2', [0.1, 0.2], { tolerance: 0.5 })).toThrow(RangeError);
   });

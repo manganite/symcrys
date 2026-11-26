@@ -8,6 +8,13 @@ All notable changes to symcrys are recorded here. The format follows
 
 ### Added
 
+- The Wyckoff positions and edge forms of the ten plane point groups (#81), in `symcrys/plane`:
+  `wyckoffPositions(key, { setting })` takes the key of a plane point group (each position with its
+  coordinate doublets, `millerIndices` and `siteSymmetryOperations`), and `crystalForms(key,
+{ setting })` gives the edge forms, the crystal forms of a two-dimensional crystal, with
+  `CRYSTAL_FORM_TYPES` of the ten kinds (`'single-edge'` … `'dihexagon'`); from ITA 2016
+  Table 3.2.3.1. In Python `symcrys.plane.wyckoff_positions`, `crystal_forms` and
+  `CRYSTAL_FORM_TYPES`.
 - `cellTransformation(bravaisLattice, fromCell, toCell)` (#120): the transformation matrix P from
   one cell of a lattice to another, for `changeOfCoordinates`: the monoclinic cell choices and unique
   axes, the six orthorhombic settings, the primitive cells of centred lattices, the C- and F-centred
