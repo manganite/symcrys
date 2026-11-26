@@ -6,6 +6,17 @@ All notable changes to symcrys are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.14.0] - 2026-11-26
+
+Changes between the cells of a lattice (#120) and the positions and edge forms of the plane point
+groups (#81). One breaking change (#194): results name their content in crystallographic terms and
+the sources are cited in the documentation, which changes `TENSOR_PROPERTIES`, `CRYSTAL_FORM_TYPES`,
+the plane `origin` and a parameter name of `millerIndices` (below, "Changed"). Beside the API: the
+documentation site keeps the pages of each release (#57), with a browser example (#65); API reports
+of the three entry points (#56, #190); a coverage report of the tests and consistency tests under
+changes of unit, basis and setting (#69); internal names by content and plain citations in
+`references/` (#194).
+
 ### Added
 
 - The Wyckoff positions and edge forms of the ten plane point groups (#81), in `symcrys/plane`:
@@ -17,7 +28,7 @@ All notable changes to symcrys are recorded here. The format follows
   `CRYSTAL_FORM_TYPES`.
 - `cellTransformation(bravaisLattice, fromCell, toCell)` (#120): the transformation matrix P from
   one cell of a lattice to another, for `changeOfCoordinates`: the monoclinic cell choices and unique
-  axes, the six orthorhombic settings, the primitive cells of centred lattices, the C- and F-centred
+  axes, the six orthorhombic settings, the primitive cells of I- and F-centred lattices, the C- and F-centred
   tetragonal cells, the orthohexagonal and triple cells of a hexagonal lattice, and the rhombohedral,
   triple hexagonal (obverse, reverse) and monoclinic cells of a rhombohedral lattice, from the
   matrices of ITA 2016 Table 1.5.1.1, any two cells of a lattice joined exactly; with the types
@@ -40,11 +51,11 @@ All notable changes to symcrys are recorded here. The format follows
   source of each definition is in its documentation and in docs/conventions.md, "Named properties"
   (formerly the field `source`). `CRYSTAL_FORM_TYPES` is a record by key, the first usual
   name of a form in lower case with hyphens (`'pedion'`, `'tetragonal-prism'`), with `name`,
-  `faces` and `eigensymmetry` (formerly a list in ITA's numbering); `CrystalForm.formType` is that key
+  `faces` and `eigensymmetry` (formerly a list in ITA's numbering, with a field `number`); `CrystalForm.formType` is that key
   (`'ditetragonal-pyramid'`, formerly 12), and the type `CrystalFormTypeKey` lists the 47 keys.
   `planeGroup(key).origin` of `symcrys/plane` is the site symmetry of the origin (`'2..'` for
   `p2mg`, `'1'` for `p1`; formerly ITA's sentence `'at 2 1 g'`). The first parameter of
-  `millerIndices` is named `indices` (in Python a positional argument, as before).
+  `millerIndices` is named `indices`, in Python too (`printed=` becomes `indices=`).
 
 ## [0.13.0] - 2026-11-25
 
@@ -1006,7 +1017,8 @@ k=None, l=None)` (new in this version).
 - Project scaffold: TypeScript build to `dist/` (ES modules with type declarations), tests, lint,
   format check, CI and release workflow. The only export so far is `VERSION`.
 
-[Unreleased]: https://github.com/manganite/symcrys/compare/v0.13.0...HEAD
+[Unreleased]: https://github.com/manganite/symcrys/compare/v0.14.0...HEAD
+[0.14.0]: https://github.com/manganite/symcrys/compare/v0.13.0...v0.14.0
 [0.13.0]: https://github.com/manganite/symcrys/compare/v0.12.0...v0.13.0
 [0.12.0]: https://github.com/manganite/symcrys/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/manganite/symcrys/compare/v0.10.1...v0.11.0
