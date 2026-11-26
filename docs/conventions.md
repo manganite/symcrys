@@ -1407,7 +1407,7 @@ in 3D).
 directions of the plane, general position first, each with its coordinate doublets, `millerIndices`
 (the first edge of its basic form) and `siteSymmetryOperations`; `crystalForms(key, { setting })`
 gives the edge forms, the crystal forms of a two-dimensional crystal: per position the basic form,
-then a limiting form where print gives one, with `formType`, a key of `CRYSTAL_FORM_TYPES` (the
+then a limiting form where there is one, with `formType`, a key of `CRYSTAL_FORM_TYPES` (the
 ten kinds, from `'single-edge'` to `'dihexagon'`, with their names and numbers of edges), and the
 first edge in the usual notation (`h,k`, `1,0`; `h,k,i`, `1,1,-2` for the hexagonal groups). As for
 the crystal classes, the point at the origin and the point forms are left out,
@@ -1425,8 +1425,10 @@ kind of a form follows from its number n of edges and from whether a rotation of
 through 360°/n permutes them (regular: single edge, pair of parallel edges, trigon, square,
 hexagon; otherwise pair of edges, rhomb, ditrigon, ditetragon, dihexagon). A limiting form of the
 general position is the form of an edge fixed by no operation of the group but by a mirror of the
-lattice, where its kind differs from that of the general form: a form gains a rotation of its
-order only through such an edge (`m`: `1,0`; `3m1`: `1,1,-2`; `31m`: `1,0,-1`). All of it equals ITA
+lattice, where its kind differs from that of the general form, ITA's definition of a limiting
+form (2016 § 3.2.1.2.2, p. 723: higher eigensymmetry, another name, its edges on symmetry elements
+of the holohedry that the group lacks); a form gains a rotation of its order only through such an
+edge (`m`: `1,0`; `3m1`: `1,1,-2`; `31m`: `1,0,-1`). All of it equals ITA
 2016 Table 3.2.3.1 (pp. 742–744), which prints `3m` in its two orientations `3m1` and `31m`.
 
 **Not yet.** The determination of the plane group of a pattern.

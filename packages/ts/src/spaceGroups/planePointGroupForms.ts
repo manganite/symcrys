@@ -4,7 +4,7 @@
  * the crystal forms of a two-dimensional crystal (basic form first, then a limiting form). The point
  * at the origin and the point forms, which concern molecules, are left out, as for the crystal
  * classes. The names of the kinds of edge forms are vocabulary; everything else follows from the
- * operations (docs/conventions.md, "Plane point groups"). Compared with ITA (6th ed., 2016), Table
+ * operations (docs/conventions.md, "Positions and edge forms of the plane point groups"). Compared with ITA (6th ed., 2016), Table
  * 3.2.3.1, pp. 742–744, by planePointGroupForms.reference.test.ts.
  */
 
@@ -61,13 +61,17 @@ export const CRYSTAL_FORM_TYPES: Readonly<Record<CrystalFormTypeKey, CrystalForm
 /** An edge form of a position: basic or limiting, its kind, and its first edge. */
 type FormRow = readonly [basic: boolean, type: CrystalFormTypeKey, millerIndices: string];
 
-/** A position: letter, multiplicity, oriented site symmetry, coordinate doublets, and its edge forms. */
+/**
+ * A position: letter, multiplicity, oriented site symmetry, coordinate doublets, its edge forms, and
+ * the indices of the operations that fix the first edge of its basic form.
+ */
 type PositionRow = readonly [
   letter: string,
   multiplicity: number,
   siteSymmetry: string,
   coordinates: readonly string[],
   forms: readonly FormRow[],
+  siteOperations: readonly number[],
 ];
 
 /**
@@ -89,7 +93,7 @@ const FORM_TYPE_OF: Readonly<Record<string, CrystalFormTypeKey>> = {
 };
 
 // General values of h and k, so that only the operations of the site symmetry fix the edge.
-const VALUES: Readonly<Record<string, number>> = { h: 5, k: 2 };
+const GENERAL_EDGE: readonly [number, number] = [5, 2];
 
 type Edge = readonly [number, number];
 type Matrix = readonly (readonly number[])[];
@@ -193,7 +197,7 @@ export function planePointGroupPositionRows(key: PlanePointGroupKey, setting: nu
   });
   const letters = 'abcdefghijklmnopqrstuvwxyz';
   const general = rows[0];
-  const generalType = formType([VALUES.h, VALUES.k], ops, holohedry);
+  const generalType = formType(GENERAL_EDGE, ops, holohedry);
   // Limiting forms: one per orbit of the candidate edges.
   const limiting: FormRow[] = [];
   const seen: Edge[] = [];
@@ -212,27 +216,20 @@ export function planePointGroupPositionRows(key: PlanePointGroupKey, setting: nu
       general[2],
       general[3],
       [[true, generalType, hexagonal ? 'h,k,i' : 'h,k'], ...limiting],
+      [0],
     ],
   ];
-  // The special positions, last letter first, as the general position.
+  // The special positions from a; reversed below into the order of the plane group, last letter first.
   lines.forEach(([multiplicity, , siteSymmetry, coordinates], i) => {
     const direction = parseOperation(coordinates[0]).matrix.map((row) => row[0] + row[1]);
-    const site = ops.filter((w) =>
-      [0, 1].every((r) => w[r][0] * direction[0] + w[r][1] * direction[1] === direction[r]),
+    const site = ops.flatMap((w, j) =>
+      [0, 1].every((r) => w[r][0] * direction[0] + w[r][1] * direction[1] === direction[r]) ? [j] : [],
     );
-    // The stabilisers of the directions of the position: those of its first direction, conjugated.
-    const conjugates = ops.map((g) => {
-      const gInverse = ops.find((h) =>
-        [0, 1].every((r) => [0, 1].every((c) => h[r][0] * g[0][c] + h[r][1] * g[1][c] === (r === c ? 1 : 0))),
-      )!;
-      const product = (a: Matrix, b: Matrix): string =>
-        JSON.stringify([0, 1].map((r) => [0, 1].map((c) => a[r][0] * b[0][c] + a[r][1] * b[1][c])));
-      return new Set(site.map((s) => product(g, JSON.parse(product(s, gInverse)) as Matrix)));
-    });
-    const edges = CANDIDATE_EDGES.filter((e) => {
-      const fixing = new Set(edgeStabiliser(e, ops).map((j) => JSON.stringify(ops[j])));
-      return conjugates.some((c) => c.size === fixing.size && [...c].every((m) => fixing.has(m)));
-    });
+    // The edges fixed by the stabiliser of the first direction, and their images: the stabiliser of
+    // g·e is g·stab(e)·g⁻¹, so these are the edges fixed by the stabiliser of some direction.
+    const edges = CANDIDATE_EDGES.filter((e) => edgeStabiliser(e, ops).join() === site.join()).flatMap((e) =>
+      edgeOrbit(e, ops),
+    );
     const e = firstEdge(edges);
     const type = formType(e, ops, holohedry);
     if (CRYSTAL_FORM_TYPES[type].edges !== multiplicity) {
@@ -240,29 +237,17 @@ export function planePointGroupPositionRows(key: PlanePointGroupKey, setting: nu
         `Plane point group ${key}: the form of ${notation(e)} does not have the multiplicity ${multiplicity}`,
       );
     }
-    result.push([letters[i], multiplicity, siteSymmetry, coordinates, [[true, type, notation(e)]]]);
+    result.push([
+      letters[i],
+      multiplicity,
+      siteSymmetry,
+      coordinates,
+      [[true, type, notation(e)]],
+      edgeStabiliser(e, ops),
+    ]);
   });
   const ordered = [result[0], ...result.slice(1).reverse()];
   const frozen = deepFreeze(ordered);
   positionsCache.set(id, frozen);
   return frozen;
-}
-
-/** One index of the usual notation as a number: `h`, `-k`, `0`, `1`, `-2`. */
-function indexValue(text: string): number {
-  const m = /^(-?)(\d*)([hk]?)$/.exec(text.trim());
-  if (!m || (!m[2] && !m[3])) throw new Error(`Unreadable Miller index: ${text}`);
-  return (m[1] ? -1 : 1) * (m[2] ? Number(m[2]) : 1) * (m[3] ? VALUES[m[3]] : 1);
-}
-
-/**
- * The indices of the operations that fix the first edge of a position, (h k)·W⁻¹ = (h k), its site
- * symmetry; for the hexagonal groups the third index i = −(h + k) follows from the first two.
- */
-export function planeSiteSymmetryOperations(key: PlanePointGroupKey, setting: number, millerIndices: string): number[] {
-  const e = millerIndices.split(',').slice(0, 2).map(indexValue);
-  return planePointGroupOperations(key, setting)
-    .map((op, i) => [i, [0, 1].map((j) => e[0] * op.matrix[0][j] + e[1] * op.matrix[1][j])] as const)
-    .filter(([, f]) => f[0] === e[0] && f[1] === e[1])
-    .map(([i]) => i);
 }

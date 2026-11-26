@@ -60,12 +60,7 @@ import {
   planeWyckoffPositionOf,
 } from './spaceGroups/positions.js';
 import { nearestFraction, parseRational, toNumber, type Rational } from './spaceGroups/rational.js';
-import {
-  CRYSTAL_FORM_TYPES,
-  planePointGroupPositionRows,
-  planeSiteSymmetryOperations,
-  type CrystalFormTypeKey,
-} from './spaceGroups/planePointGroupForms.js';
+import { planePointGroupPositionRows, type CrystalFormTypeKey } from './spaceGroups/planePointGroupForms.js';
 
 export { VERSION } from './version.js';
 export { EPSILON, type ToleranceOptions } from './tolerances.js';
@@ -726,14 +721,16 @@ export function wyckoffPositions(
     const setting = settingOf(key, options) ?? 1;
     exact(key, options, false);
     return deepFreeze(
-      planePointGroupPositionRows(key, setting).map(([letter, multiplicity, siteSymmetry, coordinates, forms]) => ({
-        letter,
-        multiplicity,
-        siteSymmetry,
-        coordinates: [...coordinates],
-        millerIndices: forms[0][2],
-        siteSymmetryOperations: planeSiteSymmetryOperations(key, setting, forms[0][2]),
-      })),
+      planePointGroupPositionRows(key, setting).map(
+        ([letter, multiplicity, siteSymmetry, coordinates, forms, siteOperations]) => ({
+          letter,
+          multiplicity,
+          siteSymmetry,
+          coordinates: [...coordinates],
+          millerIndices: forms[0][2],
+          siteSymmetryOperations: [...siteOperations],
+        }),
+      ),
     );
   }
   if (!isGroupKey(key)) unknownKey(key);
@@ -756,7 +753,8 @@ export function wyckoffPositions(
  * plane group.
  *
  * @remarks Computed from the operations (the kind of a form from its number of edges and whether a
- * rotation of the lattice permutes them); equal to ITA (6th ed., 2016), Table 3.2.3.1, pp. 742–744.
+ * rotation of the lattice permutes them; a limiting form as defined in ITA (6th ed., 2016)
+ * § 3.2.1.2.2, p. 723); equal to ITA (6th ed., 2016), Table 3.2.3.1, pp. 742–744.
  */
 export function crystalForms(key: PointGroupKey, options?: SettingOptions): readonly CrystalForm[] {
   checkOptions(options, ['setting'], 'crystalForms');
@@ -765,14 +763,14 @@ export function crystalForms(key: PointGroupKey, options?: SettingOptions): read
   exact(k, options, false);
   return deepFreeze(
     planePointGroupPositionRows(k, setting).flatMap(([letter, multiplicity, siteSymmetry, , forms]) =>
-      forms.map(([basic, formType, millerIndices]) => {
-        if (CRYSTAL_FORM_TYPES[formType].edges !== multiplicity) {
-          throw new Error(
-            `Plane point group ${k}: the form ${formType} does not have the multiplicity of position ${letter}`,
-          );
-        }
-        return { letter, multiplicity, siteSymmetry, basic, formType, millerIndices };
-      }),
+      forms.map(([basic, formType, millerIndices]) => ({
+        letter,
+        multiplicity,
+        siteSymmetry,
+        basic,
+        formType,
+        millerIndices,
+      })),
     ),
   );
 }
