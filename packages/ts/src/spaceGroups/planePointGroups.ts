@@ -121,7 +121,7 @@ export function isPlanePointGroupKey(key: unknown): key is PlanePointGroupKey {
 }
 
 /** The symmorphic plane group for a point group and a setting (1-based); throws for an unknown one. */
-function source(key: PlanePointGroupKey, setting = 1): string {
+export function symmorphicPlaneGroup(key: PlanePointGroupKey, setting = 1): string {
   const list = SOURCE[key];
   if (!Number.isInteger(setting) || setting < 1 || setting > list.length) {
     throw new RangeError(`The plane point group ${key} has no setting ${String(setting)}`);
@@ -136,13 +136,13 @@ export function planePointGroupSettingCount(key: PlanePointGroupKey): number {
 
 /** The symbol of a plane point group in a setting: `3m1` or `31m` for `3m`, otherwise the key. */
 export function planePointGroupSymbol(key: PlanePointGroupKey, setting = 1): string {
-  const full = planeGroupFullSymbol(source(key, setting)).slice(1);
+  const full = planeGroupFullSymbol(symmorphicPlaneGroup(key, setting)).slice(1);
   return key === '3m' ? full : key;
 }
 
 /** The crystal system of a plane point group. */
 export function planePointGroupSystem(key: PlanePointGroupKey): PlaneSystem {
-  return planeGroupSystem(source(key));
+  return planeGroupSystem(symmorphicPlaneGroup(key));
 }
 
 const linear = (op: ExactOperation): ExactOperation => ({
@@ -152,12 +152,12 @@ const linear = (op: ExactOperation): ExactOperation => ({
 
 /** The operations of a plane point group in a setting, in ITA's order, as operations without translation. */
 export function planePointGroupOperations(key: PlanePointGroupKey, setting = 1): ExactOperation[] {
-  return planeGroupOperations(source(key, setting)).map(linear);
+  return planeGroupOperations(symmorphicPlaneGroup(key, setting)).map(linear);
 }
 
 /** The generators of a plane point group: the linear parts of ITA's selected generators of its symmorphic plane group. */
 export function planePointGroupGenerators(key: PlanePointGroupKey, setting = 1): ExactOperation[] {
-  return planeGroupGenerators(source(key, setting))
+  return planeGroupGenerators(symmorphicPlaneGroup(key, setting))
     .filter((op) => !(op.matrix[0][0] === 1 && op.matrix[0][1] === 0 && op.matrix[1][0] === 0 && op.matrix[1][1] === 1))
     .map(linear);
 }

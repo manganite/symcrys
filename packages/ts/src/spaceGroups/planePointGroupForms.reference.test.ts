@@ -1,6 +1,6 @@
 /**
  * The Wyckoff positions and edge forms of the plane point groups against ITA (6th ed., 2016)
- * Table 3.2.3.1, pp. 742–744 (fixture class (a)): the stored data equal the transcription
+ * Table 3.2.3.1, pp. 742–744 (fixture class (a)): the computed positions and forms equal the transcription
  * (references/itc/vol-a-table-3.2.3.1.md), without the point at the origin and the point forms. Checks
  * that read print alone: the printed coordinate doublets of each position are the orbit of its first
  * doublet under the operations of the group, in their order; the printed Miller indices of each form
@@ -68,7 +68,7 @@ const key = (m: M) => JSON.stringify(m.map((r) => r.map((x) => x + 0)));
 const dedup = (list: M[]): string[] => [...new Set(list.map(key))];
 
 describe('ITA 2016 Table 3.2.3.1: the positions and edge forms of the plane point groups', () => {
-  it('the stored data equal the transcription, without the origin and the point forms', () => {
+  it('the computed positions and forms equal the transcription, without the origin and the point forms', () => {
     const groups = [...new Set(positions.map((r) => r[0]))];
     expect(groups).toEqual(['1', '2', 'm', '2mm', '4', '4mm', '3', '3m1', '31m', '6', '6mm']);
     for (const g of groups) {
