@@ -12,12 +12,12 @@ Sources:
 - ITA (Vol. A), 6th edition (2016): Chapter 1.5 (pp. 75–106), Chapter 1.6 (pp. 107–131),
   Chapter 3.2 (pp. 720–776).
 
-Read on 2026-11-23. Every symbol transcribed here with a prime or an overbar was read from print;
-a full-text search does not show primes and overbars reliably, so it served only to find candidate
+Read on 2026-11-23. Every symbol transcribed here with a prime or an overbar was read from print; a
+full-text search does not show primes and overbars reliably, so it served only to find candidate
 pages. Rows marked "search only" were found by a full-text search of the volume and not read from
-print; they carry no prime and no overbar. The ITA Table 3.2.3.2 rows rest on the
-print-checked transcriptions `vol-a-table-3.2.3.2-headlines.md` and
-`vol-a-table-3.2.3.2-wyckoff-positions.md`, Table 3.2.2.2 on `vol-a-table-3.2.2.2.md`.
+print; they carry no prime and no overbar. The ITA Table 3.2.3.2 rows rest on the print-checked
+transcriptions `vol-a-table-3.2.3.2-headlines.md` and `vol-a-table-3.2.3.2-wyckoff-positions.md`,
+Table 3.2.2.2 on `vol-a-table-3.2.2.2.md`.
 
 What was searched:
 
@@ -36,7 +36,7 @@ What was searched:
   inventoried row by row.
 - ITA 2016: § 1.6.4 (p. 114) and § 1.6.5 (p. 126) read from print; Chapter 3.2 through the
   transcriptions named above and full-text search (Table 3.2.1.3, p. 724); Table 1.5.4.4 (pp. 97–106)
-  by p. 97 read from print and full-text search.
+  with p. 97 read from print, the rest by full-text search.
 
 "Not found" means not found in these pages; it is no statement about the rest of ITC.
 

@@ -3,8 +3,9 @@
 Source: _International Tables for Crystallography_, Vol. A, 6th edition (2016), Chapter 3.2 (Point
 groups and crystal classes), Table 3.2.3.2, printed pp. 745–769. Transcribed 2026-11-09; every row
 checked triplet by triplet against print. The five entries with rhombohedral axes (3, -3, 32, 3m,
--3m; pp. 753, 753, 755, 756, 759) were added 2026-11-23 and checked a second time, overbars
-included. Headlines of the same entries: `vol-a-table-3.2.3.2-headlines.md`.
+-3m; pp. 753, 753, 755, 756, 759) were added 2026-11-23 and checked a second time against the full
+text of the same pages, overbars included. Headlines of the same entries:
+`vol-a-table-3.2.3.2-headlines.md`.
 
 Each row is the general position (the first Wyckoff position, site symmetry 1) of one entry: the
 coordinate triplets x̃, ỹ, z̃ of the images of a point x, y, z, in the basis of the conventional

@@ -1,10 +1,9 @@
 # Shubnikov & Belov (1964): the symbol of a neutral (grey) point group
 
-Source: A. V. Shubnikov, N. V. Belov and others, _Colored Symmetry_, ed. W. T. Holser, translated
-by J. Itzkoff and J. Gollob (Pergamon Press Book, The Macmillan Company, New York, 1964), Part I
-(A. V. Shubnikov, "Symmetry and antisymmetry of finite figures"), section "Three Types of Groups of
-Antisymmetry", printed pp. 112–114. Transcribed on
-2026-11-25.
+Source: A. V. Shubnikov, N. V. Belov and others, _Colored Symmetry_, ed. W. T. Holser, translated by
+J. Itzkoff and J. Gollob (Pergamon Press Book, The Macmillan Company, New York, 1964), Part I (A. V.
+Shubnikov, "Symmetry and antisymmetry of finite figures"), section "Three Types of Groups of
+Antisymmetry", printed pp. 112–114. Transcribed on 2026-11-25.
 
 Transcription conventions as in `references/itc/vol-d-table-1.5.2.3.md`: a leading `_` is the
 printed underline (here an italic underlined 1), `.` the centred dot. The brackets hold the

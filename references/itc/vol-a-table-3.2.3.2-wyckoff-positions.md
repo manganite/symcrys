@@ -5,14 +5,15 @@ groups and crystal classes), Table 3.2.3.2, printed pp. 745–769. Transcribed 2
 checked against print, overbars included. General positions of the same entries:
 `vol-a-table-3.2.3.2-general-positions.md`; headlines: `vol-a-table-3.2.3.2-headlines.md`. The five
 entries with rhombohedral axes (3, -3, 32, 3m, -3m; pp. 753, 753, 755, 756, 759) were added
-2026-11-23, the points checked a second time. All coordinate triplets of column 4 (not only the
-first) were added 2026-11-23 from the full text of the same pages (#121 step 7d). On each of the 25
-pages the triplets read so equal, one by one and in printed order, the first triplet of each row
-carried by the general position of `vol-a-table-3.2.3.2-general-positions.md` in its printed order.
-All triplets of pages 750–769 were also compared with print (pages 759, 764 and 769 while
-transcribing, the others by the review of the same day); pages 745–749 (triclinic, monoclinic,
-orthorhombic, with at most eight triplets of 0, x, y, z and their overbars per position) were
-checked against the general position only, not compared with print.
+2026-11-23, the points checked a second time against the full text of the same pages. All coordinate
+triplets of column 4 (not only the first) were added 2026-11-23 from the full text of the same pages
+(#121 step 7d). On each of the 25 pages the triplets read so equal, one by one and in printed order,
+the first triplet of each row carried by the general position of
+`vol-a-table-3.2.3.2-general-positions.md` in its printed order. All triplets of pages 750–769 were
+also compared with print (pages 759, 764 and 769 while transcribing, the others by the review of the
+same day); pages 745–749 (triclinic, monoclinic, orthorhombic, with at most eight triplets of 0, x,
+y, z and their overbars per position) were checked against the general position only, not compared
+with print.
 
 One row per Wyckoff position, in the printed order (general position first): multiplicity, Wyckoff
 letter, oriented site-symmetry symbol (columns 1 to 3 of the print), the coordinate triplets of

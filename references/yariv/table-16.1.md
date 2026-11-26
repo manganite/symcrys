@@ -1,11 +1,10 @@
 # Yariv Table 16.1: form of the nonlinear optical tensor d_ijk
 
-Source: A. Yariv, _Quantum Electronics_, 2nd ed. (John Wiley & Sons, New York, 1975;
-ISBN 0-471-97176-6), Table 16.1, printed
-pp. 410–411: "The Form of the Nonlinear Optical Tensor d_ijk as Defined by (16.1-4), after
-Reference 2" (Reference 2 is J. F. Nye, _Physical Properties of Crystals_). Transcribed in birss-app
-(`src/services/yarivT161.reference.fixtures.ts`, 2026-07-31) from the two printed pages, each
-panel also read on its own; taken over unchanged.
+Source: A. Yariv, _Quantum Electronics_, 2nd ed. (John Wiley & Sons, New York, 1975; ISBN
+0-471-97176-6), Table 16.1, printed pp. 410–411: "The Form of the Nonlinear Optical Tensor d_ijk as
+Defined by (16.1-4), after Reference 2" (Reference 2 is J. F. Nye, _Physical Properties of
+Crystals_). Transcribed in birss-app (`src/services/yarivT161.reference.fixtures.ts`, 2026-07-31)
+from the two printed pages, each panel also read on its own; taken over unchanged.
 
 Yariv's d_ijk is defined through a field product (his Eq. (16.1-4)), so it carries no Voigt factor:
 the 3×6 grid is the tensor component d_i(jk) itself, with columns μ = 1…6 for jk = xx, yy, zz, yz,

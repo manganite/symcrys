@@ -1,19 +1,17 @@
 # ITC Vol. D § 1.1.4.10.6: numbers of independent components of fourth-rank tensors
 
-Source: _International Tables for Crystallography_, Vol. D, 2nd edition (2013), Chapter 1.1
-(A. Authier, "Introduction to the properties of tensors"), § 1.1.4.10.6, "Independent components
-of the matrix associated with a fourth-rank tensor according to the following point groups",
-printed pp. 27–29. Transcribed 2026-11-19; the counts are printed as
-text under each diagram.
+Source: _International Tables for Crystallography_, Vol. D, 2nd edition (2013), Chapter 1.1 (A.
+Authier, "Introduction to the properties of tensors"), § 1.1.4.10.6, "Independent components of the
+matrix associated with a fourth-rank tensor according to the following point groups", printed pp.
+27–29. Transcribed 2026-11-19; the counts are printed as text under each diagram.
 
 The section draws the 6 × 6 matrices of Nye's scheme for two kinds of tensor and prints the number
-of independent components under each: p_αβ, π_αβ, Q_αβ (elasto-optic, piezo-optic,
-electrostriction: symmetric in the first and in the last index pair, the pairs not
-interchangeable) and c_αβ, s_αβ (elastic stiffnesses and compliances: in addition the pairs
-interchangeable). Only the counts are transcribed here; the diagrams are in
-`vol-d-1.1.4.10.6-rank-4-forms.md` (transcribed 2026-11-20). Where the section prints
-separate diagrams for p, π and Q (trigonal, hexagonal (i)), their counts agree, and so do those of c
-and s.
+of independent components under each: p_αβ, π_αβ, Q_αβ (elasto-optic, piezo-optic, electrostriction:
+symmetric in the first and in the last index pair, the pairs not interchangeable) and c_αβ, s_αβ
+(elastic stiffnesses and compliances: in addition the pairs interchangeable). Only the counts are
+transcribed here; the diagrams are in `vol-d-1.1.4.10.6-rank-4-forms.md` (transcribed 2026-11-20).
+Where the section prints separate diagrams for p, π and Q (trigonal, hexagonal (i)), their counts
+agree, and so do those of c and s.
 
 Transcription conventions: groups as printed (`4/mm`, `6/mm` for 4/mmm, 6/mmm; `2mm` and `-62m` for
 the classes mm2 and -6m2), a leading minus sign for the overbar. `Count p` is the count for p_αβ,

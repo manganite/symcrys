@@ -8,11 +8,11 @@ setting `Pmm2`); for the five trigonal classes that ITA also gives with rhombohe
 addition the symmorphic R group with rhombohedral axes (R3, R-3, R32, R3m, R-3m; Nos. 146, 148, 155,
 160, 166), whose cell is primitive in those axes. The printed page of the block is given in each
 heading. Transcribed 2026-11-18; every entry checked against print. The five R entries were added
-2026-11-23 and checked a second time, overbars included. Symbols as defined in ITA § 11.1.2, pp.
-810–811: `n+` / `n-` is a rotation by +360°/n / −360°/n, positive (counter-clockwise) when viewed
-along the axis in the direction of decreasing values of the parameter that describes it; for a
-rotoinversion, angle and sense refer to the pure rotation, followed by the inversion through the
-point after the semicolon.
+2026-11-23 and checked a second time against the full text of the same pages, overbars included.
+Symbols as defined in ITA § 11.1.2, pp. 810–811: `n+` / `n-` is a rotation by +360°/n / −360°/n,
+positive (counter-clockwise) when viewed along the axis in the direction of decreasing values of the
+parameter that describes it; for a rotoinversion, angle and sense refer to the pure rotation,
+followed by the inversion through the point after the semicolon.
 
 Each entry also gives the line "Generators selected" from the facing page (block "Positions",
 page given): the numbers of the symmetry operations ITA uses as generators, in printed order; the
