@@ -55,7 +55,8 @@ export type GroupDefect =
  * time reversal (`timeReversal === true`) and in every Cartesian matrix entry within `tolerance`.
  *
  * @remarks A finite list L that contains the identity and is closed under right multiplication by
- * a generating set S of the group it generates is that group. S is chosen greedily in the order of
+ * a generating set S of the group it generates is that group; with a tolerance, closed within it
+ * under the products with S, which accepts lists within rounding of an exact group. S is chosen greedily in the order of
  * the list (an operation not yet reached by products of the earlier ones joins it), so the check
  * takes about |L|·|S| products, with |S| at most 4 for a point group. A product is looked up among
  * the operations of its kind (rounded trace, sign of the determinant, time reversal), then, if not
@@ -84,9 +85,14 @@ export function groupDefect(
     for (let i = 0; i < n; i++) if (same(i)) return i;
     return -1;
   };
-  for (let i = 0; i < n; i++) {
-    const j = find(operations[i].cartesian, reversed[i]);
-    if (j !== i) return { kind: 'duplicate', i: j, j: i };
+  // Every pair, not only within a kind: two operations within the tolerance may round to different
+  // traces when the trace lies near a half integer (a group of large order).
+  for (let j = 1; j < n; j++) {
+    for (let i = 0; i < j; i++) {
+      if (reversed[i] === reversed[j] && equal(operations[i].cartesian, operations[j].cartesian)) {
+        return { kind: 'duplicate', i, j };
+      }
+    }
   }
   const identity = find(LINEAR_IDENTITY, false);
   if (identity < 0) return { kind: 'identity' };
