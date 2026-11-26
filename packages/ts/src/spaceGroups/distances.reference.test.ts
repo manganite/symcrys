@@ -28,6 +28,8 @@ interface Row {
   multiplicity: number;
   letter: string;
   site: string;
+  /** True if the printed coordinates have no free parameter: a point position. */
+  fixed: boolean;
   points: number[][];
 }
 
@@ -56,7 +58,7 @@ function printed(): { symbol: string; rows: Row[] }[] {
               }),
             );
           });
-          return { multiplicity: Number(m), letter, site, points };
+          return { multiplicity: Number(m), letter, site, fixed: !/[xy]/.test(coordinates), points };
         });
       return { symbol, rows };
     });
@@ -81,8 +83,9 @@ describe('every printed Wyckoff position', () => {
     const wyckoff = planeWyckoffRows(symbol);
     for (const row of rows) {
       const index = wyckoff.findIndex(([, letter]) => letter === row.letter);
-      const fixed = !/[xy]/.test(wyckoff[index][3][0]);
+      const fixed = row.fixed;
       it(`${symbol} ${row.multiplicity}${row.letter}`, () => {
+        expect(index, 'the printed letter is a position of symcrys').toBeGreaterThanOrEqual(0);
         for (const p of row.points) {
           // Distance 0 to its own position, the point itself the nearest point of it.
           const own = planeWyckoffDistances(symbol, p)[index];
@@ -155,9 +158,8 @@ describe('the position of a point within the tolerance: order, metric and errors
 
   it('finds the fixed points at the tolerance of an application (10⁻²)', () => {
     for (const { symbol, rows } of printed()) {
-      const wyckoff = planeWyckoffRows(symbol);
       for (const row of rows) {
-        if (/[xy]/.test(wyckoff.find(([, l]) => l === row.letter)?.[3][0] ?? 'x')) continue;
+        if (!row.fixed) continue;
         for (const p of row.points) {
           for (const s of [
             [9e-3, -8e-3],

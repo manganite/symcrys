@@ -4,25 +4,45 @@
  * line, its multiplicity the order of the group over that of the site-symmetry group, its oriented
  * site-symmetry symbol read along the symmetry directions of the lattice, its coordinates the
  * images of a first representative under the operations in their order. ITA's letters and first
- * representatives follow from a rule, except four first representatives, which are convention data.
+ * representatives follow from rules, except two first representatives, kept as convention data.
+ *
+ * @remarks Two dimensions only: in the plane every special position is a rotation point or a mirror
+ * line, the fixed set of one operation (cell.ts, `planeElements`), and a site symbol has only `m`
+ * after the rotation. The space groups need the fixed spaces of site subgroups and the full
+ * characters of the symbols.
  */
 
 import { deepFreeze } from '../freeze.js';
-import { applyToPoint, determinant, formatOperation, type ExactOperation, type IntMatrix } from './affine.js';
-import { planeGroupEntry, planeGroupOperations, type PLANE_GROUP_KEYS } from './planeGroups.js';
-import type { PlaneSystem, PlaneWyckoffRow } from './planeGroupData.js';
+import { gcd } from '../integers.js';
+import {
+  applyToPoint,
+  compose,
+  determinant,
+  equalModLattice,
+  formatOperation,
+  reduceModLattice,
+  type ExactOperation,
+  type IntMatrix,
+} from './affine.js';
+import { planeElements } from './cell.js';
+import { describePlaneOperation } from './describe.js';
+import { centringOperations, planeGroupEntry, planeGroupOperations } from './planeGroups.js';
+import type { PlaneSystem } from './planeGroupData.js';
 import {
   add,
   isInteger,
   mod1,
   multiply,
   negate,
+  parseRational,
   rational,
-  rationalsEqual,
   subtract,
   toNumber,
   type Rational,
 } from './rational.js';
+
+/** [multiplicity, Wyckoff letter, oriented site symmetry, coordinates of the (0,0)+ set]. */
+export type PlaneWyckoffRow = readonly [number, string, string, readonly string[]];
 
 type Vec = readonly [Rational, Rational];
 type Direction = readonly [number, number];
@@ -31,13 +51,14 @@ type Direction = readonly [number, number];
 type Element =
   | { readonly kind: 'point'; readonly point: Vec }
   | { readonly kind: 'line'; readonly point: Vec; readonly direction: Direction };
+type Line = Element & { readonly kind: 'line' };
 
 /**
- * The symmetry directions of the plane lattices after the rotation point, by set (ITA 2016 Table
- * 2.1.3.1, p. 151, "Two dimensions"): convention data of ITA, the order of the positions of the
- * symbols.
+ * The symmetry directions of the plane lattices after the rotation point, by set: convention data of
+ * ITA (2016 Table 2.1.3.1, p. 151, "Two dimensions"), which fix the order of the positions of the
+ * symbols; compared with the transcription by `planeWyckoff.reference.test.ts`.
  */
-const SYMMETRY_DIRECTIONS: Readonly<Record<PlaneSystem, readonly (readonly Direction[])[]>> = {
+export const PLANE_SYMMETRY_DIRECTIONS: Readonly<Record<PlaneSystem, readonly (readonly Direction[])[]>> = deepFreeze({
   oblique: [],
   rectangular: [[[1, 0]], [[0, 1]]],
   square: [
@@ -62,25 +83,29 @@ const SYMMETRY_DIRECTIONS: Readonly<Record<PlaneSystem, readonly (readonly Direc
       [-2, -1],
     ],
   ],
-};
+});
 
 /**
- * First representatives that ITA prints where the rule (the point of the orbit lowest by y, then x)
- * gives another point of the same orbit: convention data, as ITA typed the first representatives in
- * by hand (ITA 2016 § 2.1.4, p. 173). The other first representatives follow from the rule.
+ * The first representative of a point position where ITA prints another point of the orbit than the
+ * rule gives (the point lowest by y, then x, its coordinates taken in (−1/2, 1/2]): convention data,
+ * as ITA typed its first representatives in by hand (2016 § 2.1.4, p. 173). Both are in c2mm: its
+ * position b is the orbit {0,1/2; 1/2,0}, which p2gg b shares, and ITA prints 0,1/2 in one and 1/2,0
+ * in the other, so no rule on the orbit gives both; its position c is printed 1/4,1/4.
  */
-const PRINTED_REPRESENTATIVES: Readonly<Partial<Record<(typeof PLANE_GROUP_KEYS)[number], readonly string[]>>> = {
-  c2mm: ['0,1/2'],
-  p31m: ['1/3,2/3'],
-  p6: ['1/3,2/3'],
-  p6mm: ['1/3,2/3'],
-};
+export const FIRST_REPRESENTATIVE_EXCEPTIONS: Readonly<Record<string, readonly string[]>> = deepFreeze({
+  c2mm: ['0,1/2', '1/4,1/4'],
+});
 
 const r = (n: number, d = 1): Rational => rational(n, d);
-const gcd = (a: number, b: number): number => (b === 0 ? Math.abs(a) : gcd(b, a % b));
 const cmp = (a: Rational, b: Rational): number => toNumber(a) - toNumber(b);
 const vecMod1 = (v: readonly Rational[]): Vec => [mod1(v[0]), mod1(v[1])];
-const vecEqual = (a: Vec, b: Vec): boolean => rationalsEqual(a[0], b[0]) && rationalsEqual(a[1], b[1]);
+const sameMod1 = (a: readonly Rational[], b: readonly Rational[]): boolean =>
+  isInteger(subtract(a[0], b[0])) && isInteger(subtract(a[1], b[1]));
+/** A coordinate in (−1/2, 1/2]. */
+const centred = (a: Rational): Rational => {
+  const m = mod1(a);
+  return toNumber(m) > 0.5 ? subtract(m, r(1)) : m;
+};
 
 /** The shortest integer vector along `v` with its first non-zero component positive. */
 function primitive(v: readonly number[]): Direction {
@@ -94,43 +119,12 @@ const applyLinear = (m: IntMatrix, d: Direction): Direction => [
   m[1][0] * d[0] + m[1][1] * d[1],
 ];
 
-/**
- * The fixed set of an operation with a lattice translation added, if it is a point or a line: the
- * solutions of (W − 1)x = −(w + t). A rotation fixes one point; a reflection a line, a glide
- * reflection none.
- */
-function fixedSet(op: ExactOperation, t: Direction): Element | undefined {
-  const w = op.matrix;
-  const b: Vec = [negate(add(op.translation[0], r(t[0]))), negate(add(op.translation[1], r(t[1])))];
-  const a = [
-    [w[0][0] - 1, w[0][1]],
-    [w[1][0], w[1][1] - 1],
-  ];
-  const det = a[0][0] * a[1][1] - a[0][1] * a[1][0];
-  if (det !== 0) {
-    // Cramer's rule.
-    const x = multiply(subtract(multiply(r(a[1][1]), b[0]), multiply(r(a[0][1]), b[1])), r(1, det));
-    const y = multiply(subtract(multiply(r(a[0][0]), b[1]), multiply(r(a[1][0]), b[0])), r(1, det));
-    return { kind: 'point', point: vecMod1([x, y]) };
-  }
-  if (determinant(w) !== -1) return undefined;
-  // A reflection: the rows of W − 1 are proportional; its kernel is the direction of the line.
-  const row = a[0][0] !== 0 || a[0][1] !== 0 ? 0 : 1;
-  const [p, q] = a[row];
-  const direction = primitive([-q, p]);
-  // One solution: the row equation p·x + q·y = b[row], consistent with the other row if a fixed line exists.
-  const point: Vec = p !== 0 ? [multiply(b[row], r(1, p)), r(0)] : [r(0), multiply(b[row], r(1, q))];
-  const other = 1 - row;
-  const lhs = add(multiply(r(a[other][0]), point[0]), multiply(r(a[other][1]), point[1]));
-  if (!rationalsEqual(lhs, b[other])) return undefined;
-  return { kind: 'line', point, direction };
-}
-
-/** cross(p, d) = p_x d_y − p_y d_x, which two parallel lines share modulo 1 exactly when they are equal modulo the lattice. */
-const cross = (p: Vec, d: Direction): Rational => subtract(multiply(p[0], r(d[1])), multiply(p[1], r(d[0])));
+/** cross(p, d) = p_x d_y − p_y d_x: two parallel lines with a primitive direction d are equal modulo the lattice exactly when it agrees modulo 1. */
+const cross = (p: readonly Rational[], d: Direction): Rational =>
+  subtract(multiply(p[0], r(d[1])), multiply(p[1], r(d[0])));
 
 function sameElement(a: Element, b: Element): boolean {
-  if (a.kind === 'point' && b.kind === 'point') return vecEqual(vecMod1(a.point), vecMod1(b.point));
+  if (a.kind === 'point' && b.kind === 'point') return sameMod1(a.point, b.point);
   if (a.kind === 'line' && b.kind === 'line') {
     return (
       a.direction[0] === b.direction[0] &&
@@ -150,18 +144,20 @@ function image(op: ExactOperation, e: Element): Element {
 
 /** True if the operation, with some lattice translation, fixes the element pointwise. */
 function fixes(op: ExactOperation, e: Element): boolean {
-  const moved = applyToPoint(op, e.point);
-  if (!isInteger(subtract(moved[0], e.point[0])) || !isInteger(subtract(moved[1], e.point[1]))) return false;
+  if (!sameMod1(applyToPoint(op, e.point), e.point)) return false;
   if (e.kind === 'point') return true;
   const d = applyLinear(op.matrix, e.direction);
   return d[0] === e.direction[0] && d[1] === e.direction[1];
 }
 
 /**
- * A line in ITA's form: the point with the coordinate of the free parameter 0, the other
- * coordinate in [0, 1). The parameter is named after the first non-zero component of the direction.
+ * A line in ITA's form: the point with the coordinate of the free parameter 0, the other coordinate
+ * in [0, 1). The parameter is named after the first non-zero component of the direction.
+ *
+ * @remarks For a direction whose first non-zero component is ±2 the constant is unique only modulo
+ * 1/2; no such line is a first representative in the plane groups.
  */
-function lineForm(e: Element & { kind: 'line' }): { point: Vec; pivot: 0 | 1 } {
+function lineForm(e: Line): { point: Vec; pivot: 0 | 1 } {
   const d = e.direction;
   const pivot = d[0] !== 0 ? 0 : 1;
   const s = multiply(negate(e.point[pivot]), r(1, d[pivot]));
@@ -174,7 +170,7 @@ function lineForm(e: Element & { kind: 'line' }): { point: Vec; pivot: 0 | 1 } {
  * representative: the parameter x before y, then the direction with fewer non-zero components,
  * smaller components and fewer minus signs, then the constant ascending.
  */
-function lineKey(e: Element & { kind: 'line' }): number[] {
+function lineKey(e: Line): number[] {
   const { point, pivot } = lineForm(e);
   const d = e.direction;
   return [
@@ -191,7 +187,11 @@ const compareKeys = (a: readonly number[], b: readonly number[]): number => {
   return 0;
 };
 
-/** The operation x ↦ (the element's point) + parameter · direction, as a matrix acting on (x, y), for writing images. */
+/**
+ * The element as an affine map of the parameters (x, y), to write its images as ITA does: a point is
+ * constant; a line maps its parameter, named after the first non-zero component of its direction,
+ * to point + parameter · direction.
+ */
 function parametrization(e: Element): ExactOperation {
   if (e.kind === 'point') {
     return {
@@ -204,41 +204,41 @@ function parametrization(e: Element): ExactOperation {
   }
   const { point, pivot } = lineForm(e);
   const d = e.direction;
-  const column = (i: number): number[] => (pivot === 0 ? [d[i], 0] : [0, d[i]]);
-  return { matrix: [column(0), column(1)], translation: [point[0], point[1]] };
-}
-
-/** g ∘ p with the translation reduced modulo the lattice. */
-function composeMod(g: ExactOperation, p: ExactOperation): ExactOperation {
-  const matrix = g.matrix.map((row) => [0, 1].map((j) => row[0] * p.matrix[0][j] + row[1] * p.matrix[1][j]));
-  const t = applyToPoint(g, p.translation);
-  return { matrix, translation: [mod1(t[0]), mod1(t[1])] };
-}
-
-/** The normal of a mirror line, its symmetry direction: the non-zero column of W − 1, primitive (as `axis` in describe.ts). */
-function mirrorNormal(w: IntMatrix): Direction {
-  const first = [w[0][0] - 1, w[1][0]];
-  return primitive(first[0] !== 0 || first[1] !== 0 ? first : [w[0][1], w[1][1] - 1]);
+  const row = (i: number): number[] => (pivot === 0 ? [d[i], 0] : [0, d[i]]);
+  return { matrix: [row(0), row(1)], translation: [point[0], point[1]] };
 }
 
 /** The oriented site-symmetry symbol of a site-symmetry group (ITA 2016 § 2.1.3.12, p. 163). */
 function orientedSymbol(system: PlaneSystem, site: readonly ExactOperation[]): string {
+  if (site.length === 1) return '1';
   const rotations = site.filter((op) => determinant(op.matrix) === 1).length;
-  const mirrors = site.filter((op) => determinant(op.matrix) === -1).map((op) => mirrorNormal(op.matrix));
+  const normals = site
+    .filter((op) => determinant(op.matrix) === -1)
+    .map((op) => describePlaneOperation(op).axis as unknown as Direction);
   const parallel = (a: Direction, b: Direction): boolean => a[0] * b[1] - a[1] * b[0] === 0;
-  const sets = SYMMETRY_DIRECTIONS[system].map((set) => {
-    // The directions of the set fall into orbits under the site group; one character per orbit
-    // that carries a mirror, a dot if none does.
+  const sets = PLANE_SYMMETRY_DIRECTIONS[system].map((set) => {
+    // The directions of the set fall into orbits under the site group; one `m` per orbit that
+    // carries a mirror normal to it, a dot if none does.
     const orbits: Direction[][] = [];
     for (const d of set) {
       if (orbits.some((o) => o.some((x) => parallel(x, d)))) continue;
-      orbits.push(set.filter((x) => site.some((op) => parallel(applyLinear(op.matrix, d), x))) as Direction[]);
+      orbits.push(set.filter((x) => site.some((op) => parallel(applyLinear(op.matrix, d), x))));
     }
-    const chars = orbits.filter((o) => o.some((x) => mirrors.some((m) => parallel(m, x)))).map(() => 'm');
-    return chars.length === 0 ? '.' : chars.join('');
+    const carrying = orbits.filter((o) => o.some((x) => normals.some((m) => parallel(m, x))));
+    return carrying.length === 0 ? '.' : 'm'.repeat(carrying.length);
   });
-  const symbol = [rotations === 1 ? '.' : String(rotations), ...sets].join('');
-  return /^[.]*$/.test(symbol.replace(/^\./, '')) && rotations === 1 ? '1' : symbol;
+  return [rotations === 1 ? '.' : String(rotations), ...sets].join('');
+}
+
+/** The special elements of a plane group: its rotation points and mirror lines, each once modulo the lattice and the centring. */
+function specialElements(key: string): Element[] {
+  const { rotationPoints, lines } = planeElements(key);
+  return [
+    ...rotationPoints.map((p): Element => ({ kind: 'point', point: [p.point[0], p.point[1]] })),
+    ...lines
+      .filter((l) => l.kind === 'mirror')
+      .map((l): Element => ({ kind: 'line', point: [l.point[0], l.point[1]], direction: l.direction })),
+  ];
 }
 
 const cache = new Map<string, readonly PlaneWyckoffRow[]>();
@@ -248,30 +248,16 @@ const cache = new Map<string, readonly PlaneWyckoffRow[]>();
  * downwards): multiplicity, letter, oriented site-symmetry symbol and the coordinates of the (0,0)+
  * set as ITA writes them.
  */
-export function planeWyckoffRows(key: string): readonly PlaneWyckoffRow[] {
-  const cached = cache.get(key);
-  if (cached) return cached;
+export function planeWyckoffRows(key: string | number): readonly PlaneWyckoffRow[] {
   const entry = planeGroupEntry(key);
-  const ops = planeGroupOperations(key);
-  const centrings = 1 + entry.centring.length;
-  const ownOps = ops.slice(0, ops.length / centrings);
-  const centringVectors: Vec[] = ops
-    .filter((op) => op.matrix[0][0] === 1 && op.matrix[0][1] === 0 && op.matrix[1][0] === 0 && op.matrix[1][1] === 1)
-    .map((op) => [op.translation[0], op.translation[1]]);
-  // The special elements: the fixed sets of every operation and lattice translation that meet the cell.
-  const elements: Element[] = [];
-  for (const op of ops) {
-    if (op.matrix[0][0] === 1 && op.matrix[0][1] === 0 && op.matrix[1][0] === 0 && op.matrix[1][1] === 1) continue;
-    for (const tx of [-1, 0, 1]) {
-      for (const ty of [-1, 0, 1]) {
-        const e = fixedSet(op, [tx, ty]);
-        if (e && !elements.some((x) => sameElement(x, e))) elements.push(e);
-      }
-    }
-  }
-  // Their orbits are the special Wyckoff positions; each with its site-symmetry group.
+  const cached = cache.get(entry.symbol);
+  if (cached) return cached;
+  const ops = planeGroupOperations(entry.symbol);
+  const centrings = centringOperations(entry);
+  const ownOps = ops.slice(0, ops.length / centrings.length);
+  // The special Wyckoff positions: the orbits of the rotation points and mirror lines.
   const orbits: Element[][] = [];
-  for (const e of elements) {
+  for (const e of specialElements(entry.symbol)) {
     if (orbits.some((o) => o.some((x) => sameElement(x, e)))) continue;
     const orbit: Element[] = [];
     for (const op of ops) {
@@ -280,67 +266,55 @@ export function planeWyckoffRows(key: string): readonly PlaneWyckoffRow[] {
     }
     orbits.push(orbit);
   }
+  const exceptions = (FIRST_REPRESENTATIVE_EXCEPTIONS[entry.symbol] ?? []).map(
+    (s) => s.split(',').map(parseRational) as unknown as Vec,
+  );
+  const used = new Set<number>();
   const positions = orbits.map((orbit) => {
-    const site = ops.filter((op) => fixes(op, orbit[0]));
-    const multiplicity = ops.length / site.length;
     let representative: Element;
     if (orbit[0].kind === 'point') {
-      const printed = PRINTED_REPRESENTATIVES[key as keyof typeof PRINTED_REPRESENTATIVES]?.map(
-        (s) =>
-          s.split(',').map((c) => (c.includes('/') ? r(+c.split('/')[0], +c.split('/')[1]) : r(+c))) as unknown as Vec,
-      );
-      const listed = printed?.find((p) => orbit.some((x) => vecEqual(vecMod1(x.point), p)));
-      representative = listed
-        ? { kind: 'point', point: listed }
-        : [...orbit].sort((a, b) => cmp(a.point[1], b.point[1]) || cmp(a.point[0], b.point[0]))[0];
+      const listed = exceptions.findIndex((p) => orbit.some((x) => sameMod1(x.point, p)));
+      if (listed >= 0) used.add(listed);
+      representative =
+        listed >= 0
+          ? { kind: 'point', point: exceptions[listed] }
+          : [...orbit].sort(
+              (a, b) => cmp(centred(a.point[1]), centred(b.point[1])) || cmp(centred(a.point[0]), centred(b.point[0])),
+            )[0];
     } else {
-      representative = [...orbit].sort((a, b) =>
-        compareKeys(lineKey(a as Element & { kind: 'line' }), lineKey(b as Element & { kind: 'line' })),
-      )[0];
+      representative = [...orbit].sort((a, b) => compareKeys(lineKey(a as Line), lineKey(b as Line)))[0];
     }
-    const siteOfRepresentative = ops.filter((op) => fixes(op, representative));
-    return { orbit, representative, multiplicity, site: siteOfRepresentative };
+    const site = ops.filter((op) => fixes(op, representative));
+    return { orbit, representative, multiplicity: ops.length / site.length, site };
   });
-  // Letters: multiplicity ascending, points before lines, then points by their lowest (x, y) and
-  // lines by `lineKey`, each over the whole orbit.
+  if (used.size !== exceptions.length) {
+    throw new Error(`A first representative listed for ${entry.symbol} is in no orbit`);
+  }
+  // Letters: multiplicity ascending, points before lines, then points by the point of their orbit
+  // lowest by x, then y, and lines by the least `lineKey` over their orbit.
   const orderKey = (p: (typeof positions)[number]): number[] => {
     if (p.representative.kind === 'point') {
       const low = [...p.orbit].sort((a, b) => cmp(a.point[0], b.point[0]) || cmp(a.point[1], b.point[1]))[0];
       return [p.multiplicity, 0, toNumber(low.point[0]), toNumber(low.point[1]), 0, 0];
     }
-    const low = [...p.orbit].map((x) => lineKey(x as Element & { kind: 'line' })).sort(compareKeys)[0];
+    const low = p.orbit.map((x) => lineKey(x as Line)).sort(compareKeys)[0];
     return [p.multiplicity, 1, ...low];
   };
   positions.sort((a, b) => compareKeys(orderKey(a), orderKey(b)));
   const letters = 'abcdefghijklmnopqrstuvwxyz';
   const rows: PlaneWyckoffRow[] = positions.map((p, i) => {
     const param = parametrization(p.representative);
-    // The images under the operations of the (0,0)+ set, an image left out if it is one before it
-    // shifted by a centring translation.
+    // The images under the operations of the (0,0)+ set in their order, an image left out that
+    // repeats one before it modulo the lattice and the centring (ITA 2016 § 2.1.3.11 (iv), p. 162).
     const images: ExactOperation[] = [];
     for (const op of ownOps) {
-      const im = composeMod(op, param);
-      const duplicate = images.some((x) =>
-        centringVectors.some(
-          (c) =>
-            formatOperation({
-              matrix: x.matrix,
-              translation: vecMod1([add(x.translation[0], c[0]), add(x.translation[1], c[1])]),
-            }) === formatOperation(im),
-        ),
-      );
-      if (!duplicate) images.push(im);
+      const im = reduceModLattice(compose(op, param));
+      if (!images.some((x) => centrings.some((c) => equalModLattice(compose(c, x), im)))) images.push(im);
     }
-    const coordinates = images.map((x) => formatOperation(x));
-    return [p.multiplicity, letters[i], orientedSymbol(entry.system, p.site), coordinates];
+    return [p.multiplicity, letters[i], orientedSymbol(entry.system, p.site), images.map(formatOperation)];
   });
-  const general: PlaneWyckoffRow = [
-    ops.length,
-    letters[positions.length],
-    '1',
-    ownOps.map((op) => formatOperation(op)),
-  ];
+  const general: PlaneWyckoffRow = [ops.length, letters[positions.length], '1', ownOps.map(formatOperation)];
   const result = deepFreeze([general, ...rows.reverse()]);
-  cache.set(key, result);
+  cache.set(entry.symbol, result);
   return result;
 }

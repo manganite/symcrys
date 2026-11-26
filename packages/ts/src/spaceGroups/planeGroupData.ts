@@ -2,9 +2,9 @@
  * The 17 plane groups as ITA prints them (6th ed., 2016, Chapter 2.2, pp. 176–192, plane group n on
  * p. 175 + n). The same data are in references/itc/vol-a-2016-plane-groups.md, which the reference
  * test re-parses and compares with this file; change both only by transcription from print. The
- * Wyckoff positions are computed from the group (planeWyckoff.ts); what is still stored here as
- * printed (the general position, symbols, Patterson symmetry) is computed in a later step (GUIDE.md,
- * "Own structure").
+ * Wyckoff positions are computed from the group (planeWyckoff.ts). The asymmetric unit is convention
+ * data; the rest is printed data that GUIDE.md, "Own structure", lists among the modules still to
+ * be computed.
  *
  * Notation as in the transcription: a leading `-` is an overbar; coordinates in the lattice basis
  * a, b; `<=` for ≤.
@@ -12,9 +12,6 @@
 
 /** A crystal system of the plane, as ITA names it. */
 export type PlaneSystem = 'oblique' | 'rectangular' | 'square' | 'hexagonal';
-
-/** [multiplicity, Wyckoff letter, oriented site symmetry, coordinates of the (0,0)+ set]. */
-export type PlaneWyckoffRow = readonly [number, string, string, readonly string[]];
 
 /** One plane group as printed. */
 export interface PlaneGroupEntry {

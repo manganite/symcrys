@@ -186,7 +186,7 @@ export function planeSiteSymmetry(
   );
 }
 
-/** A printed coordinate expression, parsed once. */
+/** A coordinate expression of a Wyckoff position, parsed once. */
 const expressionCache = new Map<string, PlainOperation>();
 function parsed(expression: string): PlainOperation {
   let op = expressionCache.get(expression);
@@ -197,7 +197,7 @@ function parsed(expression: string): PlainOperation {
   return op;
 }
 
-/** The distance of a point to one printed Wyckoff position, and the nearest point of the position. */
+/** The distance of a point to one Wyckoff position, and the nearest point of the position. */
 export interface PositionDistance {
   /** The index of the position in ITA's order (`planeWyckoffRows`). */
   readonly row: number;
@@ -207,7 +207,7 @@ export interface PositionDistance {
   readonly distance: number;
 }
 
-/** The free directions of a printed coordinate expression (the columns of W that are not zero, independent ones). */
+/** The free directions of a coordinate expression (the columns of W that are not zero, independent ones). */
 function freeDirections(op: PlainOperation): number[][] {
   const cols = [0, 1].map((k) => [op.matrix[0][k], op.matrix[1][k]]).filter((v) => v[0] !== 0 || v[1] !== 0);
   if (cols.length === 2 && Math.abs(cols[0][0] * cols[1][1] - cols[0][1] * cols[1][0]) === 0) return [cols[0]];
@@ -274,9 +274,9 @@ export function planeMetric(basis: unknown): Mat2 {
 }
 
 /**
- * The distance of a point (lattice basis) to every printed Wyckoff position of a plane group, in
- * printed order, with the nearest point of each: the point set of a position is the union of its
- * printed coordinate expressions with every centring and lattice translation, a point, a line or
+ * The distance of a point (lattice basis) to every Wyckoff position of a plane group, in
+ * ITA's order, with the nearest point of each: the point set of a position is the union of its
+ * coordinate expressions with every centring and lattice translation, a point, a line or
  * the plane. Without a metric the distance is the larger of the two coordinate differences, with
  * one (G = BᵀB) Euclidean.
  */
@@ -316,7 +316,7 @@ export function planeWyckoffDistances(key: string, given: readonly number[], g?:
 }
 
 /**
- * The Wyckoff position a point lies on within the tolerance: the most special printed
+ * The Wyckoff position a point lies on within the tolerance: the most special
  * position (the smallest multiplicity) whose point set lies within the tolerance of the point,
  * measured per coordinate modulo the lattice, the nearest among positions of equal multiplicity;
  * the general position always holds the point. Returns the row and the nearest point on it.
