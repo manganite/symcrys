@@ -1288,6 +1288,33 @@ order (pm for `m`, p3m1 and p31m for the settings of `3m`), so that the point gr
 is the set of its linear parts; this is checked for all 17 plane groups, also for those that are not
 symmorphic (`pg`, `cm`, `p4gm`, …).
 
+**Wyckoff positions.** `wyckoffPositions` computes the positions of a plane group from its
+operations, and they equal ITA's printed ones in every column (tested for the 17 groups):
+
+- the special positions are the orbits of the rotation points and the mirror lines (the fixed sets
+  of the operations with a lattice translation added), the multiplicity the number of operations
+  over the order of the site-symmetry group;
+- the oriented site-symmetry symbol is read along the symmetry directions of the lattice (ITA 2016
+  Table 2.1.3.1, p. 151, kept as convention data, since they fix the order of the positions of the
+  symbols) by ITA's rule (§ 2.1.3.12, p. 163): the rotation, then per set of
+  directions one `m` for each orbit of its directions under the site group that carries a mirror
+  normal to it, a dot if none does;
+- the letters run from a by increasing multiplicity (ITA § 1.4.4.2, p. 63), then points before
+  lines; among points, by the point of the orbit lowest by x, then y (coordinates in [0, 1)); among
+  lines, by the least over the orbit of the key: the free parameter (x before y), the direction
+  (fewer non-zero components, smaller components, fewer minus signs), the constant. ITA states no
+  rule beyond the multiplicity (its letters follow the order of its data file, § 2.1.4, p. 173), and
+  this one reproduces its letters;
+- a line is written as ITA writes it, the parameter named after the first non-zero component of its
+  direction (`x,-x`, `1/2,y`, `x,x+1/2`); the first representative of a line is the least of its
+  orbit by that key, that of a point the point of its orbit lowest by y, then x, with its
+  coordinates taken in (−1/2, 1/2], except two in c2mm that ITA chose otherwise and that symcrys
+  keeps as convention data (`0,1/2` and `1/4,1/4`): ITA typed its first representatives in by hand
+  (§ 2.1.4, p. 173), and the orbit of c2mm b is that of p2gg b, which ITA prints as `1/2,0`;
+- the coordinates are the images of the first representative under the operations of the (0,0)+
+  set in their order, an image left out that repeats one before it modulo the lattice and the
+  centring (§ 2.1.3.11 (iv), p. 162).
+
 **Descriptions.** `describeOperations` describes each operation as ITA does under "Symmetry
 operations": its kind (`'identity'`, `'translation'`, `'rotation'`, `'reflection'` or
 `'glide-reflection'`, as ITA names the operations in Table 2.1.2.1, p. 145), the n and sense of a rotation, the centre of a rotation, the direction of a line and one point of
@@ -1316,7 +1343,7 @@ operations that map the point there, as the orbits of the point groups do), with
 optional `tolerance` measured per coordinate modulo the lattice (default 10⁻⁵, below 1/2). They
 answer one question with one criterion: on which Wyckoff
 position does the point lie? `wyckoffDistances(key, { point }, { basis })` gives the numbers: for every
-printed position, in printed order, the nearest point of its point set (the printed coordinates with
+Wyckoff position, in ITA's order, the nearest point of its point set (its coordinates with
 every centring and lattice translation: a point, a line or the plane) and the distance to it, per
 lattice coordinate (the larger of |Δx| and |Δy| modulo the lattice, the metric of the tolerance)
 without a basis, Euclidean with a basis (columns a, b). `wyckoffPosition` is the most special

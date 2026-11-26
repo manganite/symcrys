@@ -10,6 +10,7 @@
  * `tolerance` (docs/conventions.md, "Plane groups").
  */
 
+import { planeWyckoffRows } from './spaceGroups/planeWyckoff.js';
 import { TOLERANCE_KEYS, checkOptions, shown } from './checks.js';
 import { describePlaneOperation, type PlaneOperationKind } from './spaceGroups/describe.js';
 import { planeAsymmetricUnit, planeElements, planeElementsInBox } from './spaceGroups/cell.js';
@@ -739,7 +740,7 @@ export function wyckoffPositions(
     throw new RangeError(`The plane group ${entry.symbol} has no setting ${String(setting)}`);
   }
   return Object.freeze(
-    entry.wyckoff.map(([multiplicity, letter, siteSymmetry, coordinates]) =>
+    planeWyckoffRows(entry.symbol).map(([multiplicity, letter, siteSymmetry, coordinates]) =>
       Object.freeze({ letter, multiplicity, siteSymmetry, coordinates: Object.freeze([...coordinates]) }),
     ),
   );
