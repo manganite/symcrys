@@ -9,6 +9,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { API_PINS_FILE, ENTRY_POINTS, UNPINNED, answer, apiCalls, type ApiPin } from './testUtils/apiCalls.js';
+import { normalised } from './testUtils/itcBaseline.js';
 
 interface PinFile {
   readonly revision: string;
@@ -16,12 +17,14 @@ interface PinFile {
 }
 
 const pinned = JSON.parse(readFileSync(new URL(`./${API_PINS_FILE}`, import.meta.url), 'utf8')) as PinFile;
+// Arguments computed with Math (a cell from its angles) rounded as the answers are, so that a
+// change in the last bit of the engine's Math does not change the id of a call.
 const id = (p: { entry: string; name: string; args?: readonly unknown[] }): string =>
-  `${p.entry} ${p.name}${p.args ? JSON.stringify(p.args) : ''}`;
+  `${p.entry} ${p.name}${p.args ? JSON.stringify(normalised(p.args)) : ''}`;
 
 describe(`the API pins (pins of ${pinned.revision})`, () => {
   it('are the calls of testUtils/apiCalls.ts, in the same order, none throwing', () => {
-    expect(pinned.pins.map(id)).toEqual(apiCalls().map((c) => id(JSON.parse(JSON.stringify(c)))));
+    expect(pinned.pins.map(id)).toEqual(apiCalls().map(id));
   });
 
   it('pin every export of every entry point at least once', () => {

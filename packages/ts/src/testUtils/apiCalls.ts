@@ -69,6 +69,19 @@ function pointGroupCalls(entry: 'symcrys' | 'symcrys/magnetic'): ApiCall[] {
     c('settings', key);
     c('isPointGroupKey', key);
     c('findPointGroup', key);
+    // A setting by its symbol, and by the axes or the unique axis, as ITA's headlines name them.
+    for (const s of api.settings(key as never)) {
+      c('operations', key, {
+        setting: s.symbol,
+        ...('axes' in s ? { axes: s.axes } : {}),
+        ...('uniqueAxis' in s ? { uniqueAxis: s.uniqueAxis } : {}),
+      });
+      if ('uniqueAxis' in s) c('symmetryDirections', key, { uniqueAxis: s.uniqueAxis });
+      if ('axes' in s) {
+        c('latticeBasis', key, { axes: s.axes });
+        c('findPointGroup', s.symbol, { axes: s.axes });
+      }
+    }
     c('latticeSystems', key);
     c('allowedProperties', key);
     c('allowsProperty', key, properties[0]);
@@ -84,12 +97,17 @@ function pointGroupCalls(entry: 'symcrys' | 'symcrys/magnetic'): ApiCall[] {
       c('siteSymmetry', key, { uvw: [1, 0, 0] }, o);
       c('siteSymmetry', key, { hkl: [1, 1, 1] }, o);
       c('siteSymmetry', key, { cartesian: [0.3, 0.2, 1] }, { ...o, tolerance: 1e-4 });
+      // Near an element: the tolerance decides the answer.
+      c('siteSymmetry', key, { cartesian: [0.00004, 0.00001, 1] }, { ...o, tolerance: 1e-4 });
+      c('siteSymmetry', key, { cartesian: [1, 1.00005, 0.00002] }, { ...o, tolerance: 1e-4 });
       c('orbit', key, { hkl: [3, 2, 1] }, o);
       c('orbit', key, { uvw: [1, 1, 0] }, o);
       if (entry === 'symcrys') {
         c('wyckoffPositions', key, o);
         c('crystalForms', key, o);
         c('wyckoffPosition', key, { uvw: [1, 1, 0] }, o);
+        c('wyckoffPosition', key, { hkl: [1, 0, 1] }, o);
+        c('wyckoffPosition', key, { cartesian: [1, 0.00003, 0.00002] }, { ...o, tolerance: 1e-4 });
       }
     }
   }
@@ -128,6 +146,7 @@ function pointGroupCalls(entry: 'symcrys' | 'symcrys/magnetic'): ApiCall[] {
   c('metricTensor', hexagonal);
   c('reciprocalBasis', hexagonal);
   c('isValidCell', { alpha: 90, beta: 90, gamma: 120 });
+  c('isValidCell', { alpha: 30, beta: 30, gamma: 50 }, { minVolumeRatio: 0.1 });
   c('angleBetweenDirections', hexagonal, [1, 0, 0], [0, 1, 0]);
   c('angleBetweenPlanes', hexagonal, [1, 0, 0], [0, 1, 0]);
   c('directionFromFourIndices', [2, -1, -1, 0]);
@@ -172,6 +191,12 @@ function planeCalls(): ApiCall[] {
     c('describeOperationsOf', plane.operations(key));
     c('wyckoffPositions', key);
     c('asymmetricUnit', key);
+    // About 10⁻⁴ off a special position: the tolerance decides the answer.
+    for (const tolerance of [1e-5, 1e-3]) {
+      c('siteSymmetry', key, { point: [0.50008, 0.00006] }, { tolerance });
+      c('wyckoffPosition', key, { point: [0.50008, 0.00006] }, { tolerance });
+      c('orbit', key, { point: [0.50008, 0.00006] }, { tolerance });
+    }
     c('symmetryElements', key);
     c('symmetryElements', key, { box: [[0, 0], [1, 1]] }); // prettier-ignore
     for (const point of [

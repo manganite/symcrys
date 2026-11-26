@@ -48,15 +48,26 @@ function write(path: string, revision: string, pins: readonly Pin[]): void {
   writeFileSync(path, `{\n${[...head, body].join(',\n')}\n}\n`);
 }
 
-it('captures the ITC baseline pins', () => {
+/** The revision of a clean checkout of packages/ts/src; throws if it has local changes. */
+function cleanRevision(): string {
   const git = (...args: string[]) => execFileSync('git', ['-C', root, ...args], { encoding: 'utf8' }).trim();
   if (git('status', '--porcelain', '--', 'packages/ts/src')) {
     throw new Error('packages/ts/src has local changes; capture only from a clean checkout');
   }
-  const revision = git('log', '-1', '--format=%h %cs');
+  return git('log', '-1', '--format=%h %cs');
+}
+
+it('captures the ITC baseline pins', () => {
+  const revision = cleanRevision();
   write(`${src}${ITC_BASELINE_FILES.pointGroups}`, revision, collectPointGroups());
   write(`${src}${ITC_BASELINE_FILES.tensors}`, revision, collectTensors());
   write(`${src}${ITC_BASELINE_FILES.plane}`, revision, collectPlane());
+});
+
+// Separate, so that the API pins can be re-captured alone after a change of the API's shape:
+// npm run audit:itc-baseline -- -t "API pins".
+it('captures the API pins', () => {
+  const revision = cleanRevision();
   const pins = apiCalls().map((call) => ({ ...call, value: answer(call) }));
   const head = [`  "note": ${JSON.stringify(API_NOTE)}`, `  "revision": ${JSON.stringify(revision)}`];
   const body = `  "pins": [\n${pins.map((p) => `    ${JSON.stringify(p)}`).join(',\n')}\n  ]`;
