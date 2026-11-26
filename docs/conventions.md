@@ -702,11 +702,14 @@ onto the fixed space of that group (the mean of its images, normalised), takes t
 fixing that set direction, and repeats until the group no longer changes. If the group fixes no
 common direction (only with a tolerance far too large), it throws. The result is the site symmetry of the set direction,
 which removes rounding errors within the tolerance; the multiplicity is the number of operations
-divided by its order. For a list that is not a group, the closure keeps only products in the list,
-and the multiplicity may not be an integer. Time reversal is ignored, since it does not change a
-direction. `siteSymmetry(key, direction, { setting, axes, uniqueAxis, tolerance })` is the same for
-the operations of a point group in a setting, `siteSymmetryOf(operations(key, options), …)`; the
-suffix `…Of` marks the functions of a list of operations.
+divided by its order. The list must be a group, given as all its operations: the result is a list
+of indices into it, so a list that is not closed under products (only the generators of a group,
+for instance) is a RangeError that names the first missing product, and an empty list is the group
+
+1. Time reversal is ignored, since it does not change a
+   direction. `siteSymmetry(key, direction, { setting, axes, uniqueAxis, tolerance })` is the same for
+   the operations of a point group in a setting, `siteSymmetryOf(operations(key, options), …)`; the
+   suffix `…Of` marks the functions of a list of operations.
 
 **Wyckoff positions** are ITA's: a Wyckoff position is the set of directions whose site
 symmetries are conjugate in the point group (ITA, 6th ed., § 3.2.1.2.2, "Definition", p. 722).
@@ -908,7 +911,8 @@ by one (`references/itc/vol-a-table-3.2.3.2-general-faces.md`).
 normal, a pole) under any list of Cartesian operations, for instance those left after distorting a
 crystal: the images of its unit vector, coinciding images merged when closer than `tolerance`
 (default `EPSILON`, as for `siteSymmetryOf`), each with the operations that
-lead there. The list is not closed into a group. For a group and a face of a crystal form, `orbit`
+lead there. The list must be a group, as for `siteSymmetryOf`; an empty list is the group 1, whose
+orbit is the direction itself. For a group and a face of a crystal form, `orbit`
 and `orbitOf` give the same entries with the same operations.
 
 ## Cell, metric and indices

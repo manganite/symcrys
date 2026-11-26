@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { apply, matricesEqual, multiply, type Vec3 } from '../linalg.js';
 import { siteSymmetryOf } from '../siteSymmetry.js';
-import { POINT_GROUP_KEYS, operations, settings } from './pointGroups.js';
+import { POINT_GROUP_KEYS, generators, operations, settings } from './pointGroups.js';
 import { GREY_POINT_GROUP_KEYS } from './keys.js';
 import { numericHkl, representativeFace, wyckoffPosition, wyckoffPositions } from './wyckoff.js';
 
@@ -155,11 +155,28 @@ describe('siteSymmetry', () => {
     expect(siteSymmetryOf(primed, [0, 0, 1]).operations).toHaveLength(8);
   });
 
-  it('is not general if a non-identity operation alone fixes the direction', () => {
+  it('is general only if no operation but the identity fixes the direction', () => {
+    const m = operations('m', { setting: 2 });
+    expect(siteSymmetryOf(m, [1, 2, 0]).general).toBe(false);
+    expect(siteSymmetryOf(m, [1, 2, 3]).general).toBe(true);
+  });
+
+  it('refuses a list that is not a group, naming the missing product', () => {
+    // The generators of 4/mmm gave a site symmetry without the identity and the multiplicity 4.
+    expect(() => siteSymmetryOf(generators('4/mmm'), [1, 0, 0])).toThrow(/not a group: the product of operations/);
     const mirrorOnly = operations('m', { setting: 2 }).filter((o) => o.cartesian[2][2] === -1);
-    expect(mirrorOnly).toHaveLength(1);
-    expect(siteSymmetryOf(mirrorOnly, [1, 2, 0]).general).toBe(false);
-    expect(siteSymmetryOf(mirrorOnly, [1, 2, 3]).general).toBe(true);
+    expect(() => siteSymmetryOf(mirrorOnly, [1, 2, 0])).toThrow(RangeError);
+    // A group in any order and any frame is accepted.
+    expect(siteSymmetryOf([...operations('4/mmm')].reverse(), [1, 0, 0]).multiplicity).toBe(4);
+  });
+
+  it('reads an empty list as the group 1, as the other functions of a list do', () => {
+    expect(siteSymmetryOf([], [0, 0, 2])).toEqual({
+      operations: [],
+      direction: [0, 0, 1],
+      multiplicity: 1,
+      general: true,
+    });
   });
 
   it('throws if the operations fixing within a far too large tolerance fix no common direction', () => {

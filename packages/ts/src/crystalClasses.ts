@@ -492,15 +492,16 @@ export function symmetryDirections(key: PointGroupKey, options?: SettingOptions)
 // --- site symmetry and Wyckoff positions -----------------------------------------------------------
 
 /**
- * The site symmetry of `direction` (any non-zero vector, Cartesian) under `operations`, which may
- * be any list of point operations (for instance those of a distorted crystal). The operations
- * fixing the direction within the tolerance are closed under the products found in the list and
- * the direction is set onto their fixed space, repeated until stable, so that for a group the
- * result is a subgroup and the set direction lies exactly on its elements. For a list that is not a
- * group, `multiplicity` may not be an integer. Each operation is read by its Cartesian matrix
- * (`cartesian`). Throws a RangeError for an operation without an orthogonal Cartesian matrix (`cartesian`; within
- * `tolerance`, at least `EPSILON`), for a zero vector, and if the closed operations fix no common
- * direction or do not settle into a group (a tolerance far too large, e.g. 0.5).
+ * The site symmetry of `direction` (any non-zero vector, Cartesian) under `operations`, a point
+ * group given as the list of all its operations (for instance those of a distorted crystal). The
+ * operations fixing the direction within the tolerance are closed under products and the direction
+ * is set onto their fixed space, repeated until stable, so that the result is a subgroup and the set
+ * direction lies exactly on its elements. An empty list is the group 1. Each operation is read by
+ * its Cartesian matrix (`cartesian`). Throws a RangeError for an operation without an orthogonal
+ * Cartesian matrix (`cartesian`; within `tolerance`, at least `EPSILON`), for a list that is not
+ * closed under products (only generators, for instance; the error names the missing product), for
+ * a zero vector, and if the closed operations fix no common direction or do not settle into a group
+ * (a tolerance far too large, e.g. 0.5).
  */
 export function siteSymmetryOf(
   operations: readonly CartesianOperation[],
@@ -597,9 +598,11 @@ export function orbit(
  * operations, for instance those of a distorted crystal: the images of its unit vector under each
  * operation, coinciding images merged (closer than `tolerance`, default `EPSILON`, as for
  * `siteSymmetryOf`), in the order in which the operations reach them, each with the indices of the
- * operations that map the direction there. The list is taken as it is, not closed into a group.
- * Throws a RangeError for a zero vector and for an operation without an orthogonal Cartesian matrix (`cartesian`; within
- * `tolerance`, at least `EPSILON`).
+ * operations that map the direction there. The list is a point group given as all its operations;
+ * an empty list is the group 1, whose orbit is the direction itself. Throws a RangeError for a zero
+ * vector, for an operation without an orthogonal Cartesian matrix (`cartesian`; within `tolerance`,
+ * at least `EPSILON`) and for a list that is not closed under products (only generators, for
+ * instance; the error names the missing product).
  */
 export function orbitOf(
   operations: readonly CartesianOperation[],

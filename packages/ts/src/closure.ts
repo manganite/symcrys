@@ -43,6 +43,55 @@ export function closeIndices(product: (i: number, j: number) => number, indices:
   return set.sort((a, b) => a - b);
 }
 
+/**
+ * The first pair (i, j) of operations whose product op[i]·op[j] is not in the list, comparing the
+ * Cartesian matrices only (time reversal ignored) per entry within `tolerance`; undefined if the list
+ * is closed under products, which for a finite list of orthogonal matrices means it is a group. A
+ * product is compared only with the operations of its kind (rounded trace, sign of the determinant).
+ */
+export function missingProduct(
+  operations: readonly { readonly cartesian: Mat3 }[],
+  tolerance: number,
+): readonly [number, number] | undefined {
+  const kind = (m: Mat3): string => `${Math.round(trace(m))}${det(m) > 0 ? '+' : '-'}`;
+  const byKind = new Map<string, Mat3[]>();
+  for (const op of operations) {
+    const k = kind(op.cartesian);
+    const list = byKind.get(k);
+    if (list) list.push(op.cartesian);
+    else byKind.set(k, [op.cartesian]);
+  }
+  const equal = (a: Mat3, b: Mat3): boolean =>
+    a.every((row, r) => row.every((v, c) => Math.abs(v - b[r][c]) < tolerance));
+  for (let i = 0; i < operations.length; i++) {
+    for (let j = 0; j < operations.length; j++) {
+      const product = multiply(operations[i].cartesian, operations[j].cartesian);
+      if (!(byKind.get(kind(product)) ?? []).some((m) => equal(m, product))) return [i, j];
+    }
+  }
+  return undefined;
+}
+
+/**
+ * Throws a RangeError naming the first missing product unless the operations are closed under
+ * products (`missingProduct`), for the functions whose results are indices into the caller's list.
+ */
+export function checkClosed(
+  operations: readonly { readonly cartesian: Mat3 }[],
+  tolerance: number,
+  name: string,
+): void {
+  const missing = missingProduct(operations, tolerance);
+  if (missing) {
+    const [i, j] = missing;
+    throw new RangeError(
+      `${name}: the operations are not a group: the product of operations ${i} and ${j} is not in the list ` +
+        `(within the tolerance ${tolerance}). Pass every operation of the group, not only its generators; ` +
+        `the indices of the result refer to this list.`,
+    );
+  }
+}
+
 /** True if the two operations agree in time reversal and in every matrix entry within `tolerance`. */
 export function sameWithin(a: CartesianOperation, b: CartesianOperation, tolerance: number): boolean {
   return (

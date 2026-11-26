@@ -111,6 +111,16 @@ describe('orbit', () => {
 });
 
 describe('orbitOf', () => {
+  it('refuses a list that is not a group, naming the missing product', () => {
+    // The generators of 4/mmm gave 4 poles instead of the 16 of the general form.
+    expect(() => orbitOf(generators('4/mmm'), [1, 2, 3])).toThrow(/not a group: the product of operations/);
+    expect(orbitOf(operations('4/mmm'), [1, 2, 3])).toHaveLength(16);
+  });
+
+  it('reads an empty list as the group 1: the orbit is the direction itself', () => {
+    expect(orbitOf([], [0, 3, 4])).toEqual([{ direction: [0, 0.6, 0.8], operations: [] }]);
+  });
+
   it('gives the poles of orbit, with the same operations', () => {
     for (const { key, s } of ALL_SETTINGS) {
       const ops = operations(key, { setting: s.index });
