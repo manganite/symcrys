@@ -60,9 +60,9 @@ results. It is not a digital interface to printed tables.
   crystal forms, symbols, signs of axes, cell changes, tensor forms.
 - **No library module holds a table in printed form or printed order.** Notation in results
   (`x,-y,z`, `h,0,l`, symbols) is formatted output of computed structures. Library modules that
-  still hold printed tables (`pointGroups/wyckoffData.ts`, `crystalFormsData.ts`, `seitzData.ts`,
-  `shubnikovData.ts`, `blackWhiteData.ts`, `CELL_CHANGES` of `cellTransformation.ts`) are rebuilt
-  by this rule, module by module; no new one is added.
+  still hold printed tables (`pointGroups/crystalFormsData.ts`, `seitzData.ts`, `shubnikovData.ts`,
+  `blackWhiteData.ts`, `CELL_CHANGES` of `cellTransformation.ts`) are rebuilt by this rule, module
+  by module; no new one is added.
 - **`references/` is only the anchor of the tests**, never the source of an API result.
 - **Names say what a thing is in crystallographic terms**: functions, parameters, fields, types and
   internal identifiers (`cellTransformation`, `formType: 'tetragonal-prism'`). The usual notation of

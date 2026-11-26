@@ -741,17 +741,18 @@ They are given for the **32 crystal classes only**: ITA tabulates them for these
 `wyckoffPositions` and `wyckoffPosition` throw for a magnetic point group with time reversal. For
 such a group, use the key of its crystal class or `siteSymmetry` with its key.
 
-`wyckoffPositions(key, { setting })` lists them in ITA's order, general position first, as ITA
-prints them for that setting (ITA 6th ed., Table 3.2.3.2, pp. 745–769):
+`wyckoffPositions(key, { setting })` lists them in ITA's order, general position first, computed
+from the operations of the setting; they equal ITA 6th ed., Table 3.2.3.2 (pp. 745–769), for all 45
+printed settings:
 
-| Field                    | Meaning                                                                                                                                             |
-| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `letter`                 | ITA's Wyckoff letter                                                                                                                                |
-| `multiplicity`           | number of equivalent directions (faces of the form)                                                                                                 |
-| `siteSymmetry`           | oriented site-symmetry symbol as printed, e.g. `..m`, `4m.m`; the positions are those of the symmetry directions of ITA Table 2.1.3.1               |
-| `coordinates`            | the printed coordinate triplets in printed order, one per equivalent direction, e.g. `['x,x,z', '-x,-x,z', …]`; the first is a representative point |
-| `millerIndices`          | the first printed face, e.g. `h,h,l`, Bravais–Miller indices for hexagonal axes, e.g. `h,h,-2h,l`                                                   |
-| `siteSymmetryOperations` | indices into `operations` (same setting) of the operations fixing that face (for values of h, k, l that keep it in the position)                    |
+| Field                    | Meaning                                                                                                                                   |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `letter`                 | ITA's Wyckoff letter                                                                                                                      |
+| `multiplicity`           | number of equivalent directions (faces of the form)                                                                                       |
+| `siteSymmetry`           | oriented site-symmetry symbol, e.g. `..m`, `4m.m`; the positions are those of the symmetry directions of ITA Table 2.1.3.1                |
+| `coordinates`            | the coordinate triplets in ITA's order, one per equivalent direction, e.g. `['x,x,z', '-x,-x,z', …]`; the first is a representative point |
+| `millerIndices`          | the first face, e.g. `h,h,l`, Bravais–Miller indices for hexagonal axes, e.g. `h,h,-2h,l`                                                 |
+| `siteSymmetryOperations` | indices into `operations` (same setting) of the operations fixing that face (for values of h, k, l that keep it in the position)          |
 
 - The **point at the origin** (letter o, site symmetry the whole group), which ITA 2016 prints for
   every group except the ten polar ones (1, 2, m, mm2, 4, 4mm, 3, 3m, 6, 6mm), is not a direction
@@ -782,14 +783,43 @@ prints them for that setting (ITA 6th ed., Table 3.2.3.2, pp. 745–769):
   (2016) Table 1.5.4.4): same letters and multiplicities, the
   positions of the oriented symbol permuted, the coordinates and Miller indices permuted and their
   letters renamed after their new position (`m..`, `0,y,z`, `0,k,l` in `mm2` become `.m.`, `x,0,z`,
-  `h,0,l` in `2mm`), every triplet of a position in the order printed for setting 1.
+  `h,0,l` in `2mm`), every triplet of a position in the order of setting 1.
 - The **coordinates** are ITA's in full: the triplets of a position are the
   images of its first under the general position, in the order of the general position, which a
-  test checks for all 45 printed entries against the transcription of both
-  (`wyckoff.reference.test.ts`).
+  test checks for all 45 printed entries against the transcription (`wyckoff.reference.test.ts`).
+
+**How they are computed** (`pointGroups/wyckoffRows.ts`):
+
+- The special positions are the orbits of the lines and planes V through the origin that are the
+  fixed space of their stabiliser; the multiplicity is |G| divided by the order of the stabiliser.
+- **Letters:** multiplicity ascending (ITA 2016 § 1.4.4.2, p. 63), then fewer free parameters
+  (a line before a plane), a convention of symcrys that holds throughout print. Where both are
+  equal, print states no rule (the letter "is merely a coding scheme", § 2.1.3.11 (ii), p. 162, to
+  which § 3.2.1.2.3, p. 727, refers for the point groups); this order is convention data,
+  `LETTER_ORDER`, the oriented symbols in letter order for 222, mm2, mmm, 422, 4mm, 4/mmm, 622,
+  6mm, -6m2, -62m, 6/mmm and m-3m (15 sets of positions).
+- **First representative:** the element of the orbit whose reduced row echelon form, made integer
+  and primitive, has the smallest greatest coefficient, then the fewest negative coefficients, then
+  the fewest nonzero ones, then the earliest pivots, then the greatest coefficients in reading
+  order; its notation is that form (`x,-x,z`). Ten positions where ITA prints another element are
+  convention data, `FIRST_POINT_EXCEPTIONS`: 32 and -3m with rhombohedral axes (`x,-x,0`), 6/mmm
+  (`x,2x,0`, `x,2x,z`), m-3 (`0,y,z`), 432 (`0,y,y`), -43m (`x,x,z`), m-3m (`0,y,y`, `0,y,z`,
+  `x,x,z`). The coordinates are the images of the first under the operations in their order, each
+  once.
+- **Site symmetry:** per set of symmetry directions (ITA Table 2.1.3.1) one character per orbit of
+  its directions under the site group that carries an element (the order of the rotations about
+  it, or `m` for a reflection normal to it), in the order of the directions, a dot if none does
+  (ITA 2016 § 2.1.3.12, p. 163); monoclinic site symmetries `2` and `m` are not oriented.
+- **First face:** the face fixed by the site group of the first representative, the face normal to
+  it. With hexagonal or rhombohedral axes ITA prints a face of the orbit that in general lies on a
+  conjugate element (the bullet on 321 above): the face with the smallest greatest coefficient, then
+  the greatest coefficients in reading order, and for 32 and -3m with rhombohedral axes `0,1,-1` as
+  convention data (`FIRST_FACE_EXCEPTIONS`).
+- A test removes each entry of the convention data in turn and checks that the result then departs
+  from print or is undecided.
 
 `wyckoffPosition(key, { hkl } | { uvw } | { cartesian }, { setting, tolerance })` gives the
-Wyckoff position of any face or direction: the one whose printed face has a site symmetry conjugate to that of the direction.
+Wyckoff position of any face or direction: the one whose first face has a site symmetry conjugate to that of the direction.
 
 **ITA 2006 and 2016.** The 5th edition prints these data as Table 10.1.2.2, without coordinates
 ("for point coordinates see text", § 10.1.2.3) and without the point at the origin. Letters,

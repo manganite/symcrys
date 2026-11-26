@@ -1814,8 +1814,9 @@ def wyckoff_positions(
     unique_axis: Optional[Literal["a", "b", "c"]] = None,
     setting: Optional[Union[int, str]] = None,
 ) -> list[WyckoffPosition]:
-    """The Wyckoff positions of a crystal class for directions, as ITA tabulates them (general
-    position first) (docs/conventions.md, "Site symmetry and Wyckoff positions").
+    """The Wyckoff positions of a crystal class for directions, computed from its operations, with
+    ITA's letters and notation, general position first (docs/conventions.md, "Site symmetry and
+    Wyckoff positions").
 
     Parameters
     ----------

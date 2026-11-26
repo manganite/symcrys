@@ -34,7 +34,13 @@ import {
 } from '../testUtils/references.js';
 import { POINT_GROUP_KEYS, operations, settings, type PointGroupKey } from './pointGroups.js';
 import { wyckoffPositions } from './wyckoff.js';
-import { CLASS_WYCKOFF_POSITIONS } from './wyckoffData.js';
+import {
+  computedWyckoffRows,
+  FIRST_FACE_EXCEPTIONS,
+  FIRST_POINT_EXCEPTIONS,
+  LETTER_ORDER,
+  wyckoffRowsWith,
+} from './wyckoffRows.js';
 
 const ORTHONORMAL: M = [
   [1, 0, 0],
@@ -326,26 +332,66 @@ function settingOf(e: Entry): { key: PointGroupKey; index: number } {
 const UNIQUE: Record<string, number[]> = { b: [0, 1, 0], c: [0, 0, 1] };
 
 describe('ITA Table 3.2.3.2: Wyckoff positions', () => {
-  it('the library data equal the transcription, row by row', () => {
-    const fromData = CLASS_WYCKOFF_POSITIONS.flatMap((e) =>
-      e.rows.map((r) => [
-        e.symbol,
-        e.uniqueAxis
-          ? `unique axis ${e.uniqueAxis}`
-          : e.axes === 'rhombohedral'
-            ? 'rhombohedral axes'
-            : ['3', '-3', '312', '321', '3m1', '31m', '-31m', '-3m1'].includes(e.symbol)
-              ? 'hexagonal axes'
-              : '',
-        String(r[1]),
+  it('the computed positions equal the transcription, row by row, but for the origin', () => {
+    // Columns: multiplicity, letter, site symmetry, coordinates, Miller indices (the page is in print only).
+    const printed = wyckoffRows.slice(1).filter((r) => r[4] !== 'o');
+    const computed = printed.map((r) => `${r[0]} ${r[1]}`);
+    const entries = [...new Set(computed)].map((id) => printed.find((r) => `${r[0]} ${r[1]}` === id)!);
+    const fromLibrary = entries.flatMap((r) => {
+      const { key, index } = settingOf({ short: r[0], axes: r[1] } as Entry);
+      return computedWyckoffRows(key, index).map((row) => [
         r[0],
-        r[2],
-        r[3].join(' '),
-        r[4],
-      ]),
-    );
-    // The page of each row is in the transcription only.
-    expect(fromData).toEqual(wyckoffRows.slice(1).map((r) => r.filter((_, i) => i !== 2)));
+        r[1],
+        String(row[1]),
+        row[0],
+        row[2],
+        row[3].join(' '),
+        row[4],
+      ]);
+    });
+    expect(fromLibrary).toEqual(printed.map((r) => r.filter((_, i) => i !== 2)));
+  });
+
+  it('needs each entry of the convention data: without it the result departs from print or is undecided', () => {
+    const settingsBySymbol = POINT_GROUP_KEYS.flatMap((key) => settings(key).map((s) => ({ key, s })));
+    const without = (
+      table: 'letterOrder' | 'firstPoints' | 'firstFaces',
+      symbol: string,
+      entry: string,
+    ): {
+      letterOrder: typeof LETTER_ORDER;
+      firstPoints: typeof FIRST_POINT_EXCEPTIONS;
+      firstFaces: typeof FIRST_FACE_EXCEPTIONS;
+    } => {
+      const all = { letterOrder: LETTER_ORDER, firstPoints: FIRST_POINT_EXCEPTIONS, firstFaces: FIRST_FACE_EXCEPTIONS };
+      return { ...all, [table]: { ...all[table], [symbol]: all[table][symbol].filter((x) => x !== entry) } };
+    };
+    for (const table of ['letterOrder', 'firstPoints', 'firstFaces'] as const) {
+      const data = {
+        letterOrder: LETTER_ORDER,
+        firstPoints: FIRST_POINT_EXCEPTIONS,
+        firstFaces: FIRST_FACE_EXCEPTIONS,
+      }[table];
+      for (const [symbol, entries] of Object.entries(data)) {
+        const found = settingsBySymbol.filter(({ s }) => s.symbol === symbol);
+        expect(found, symbol).toHaveLength(1);
+        const { key, s } = found[0];
+        for (const entry of entries) {
+          const label = `${table} ${symbol} ${entry}`;
+          let departs: boolean;
+          try {
+            departs =
+              JSON.stringify(wyckoffRowsWith(key, s.index, without(table, symbol, entry))) !==
+              JSON.stringify(computedWyckoffRows(key, s.index));
+          } catch (e) {
+            // Without a letter order the computation refuses to decide; any other error is a fault.
+            if (!(e instanceof Error) || !/no letter order/.test(e.message)) throw e;
+            departs = true;
+          }
+          expect(departs, label).toBe(true);
+        }
+      }
+    }
   });
 
   it('has Wyckoff positions for each of the 45 printed entries, on the page of the entry', () => {
