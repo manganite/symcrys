@@ -6,8 +6,19 @@ All notable changes to symcrys are recorded here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- `findPointGroup` and the option `setting` read the symbols of ITC Vol. D Table 1.2.6.12 (p. 66)
+  (#206): the grey groups with `1'` after the first position (`21'/m`, `41'/m`, `61'/m`) and `1'`
+  alone for `11'`, and the cubic groups without the prime on the 3 (`m'-3`, `m'-3m`, `m'-3m'`), a
+  spelling in common use. The table's `2'2'` is a misprint for `2'2'2` and is not read.
+
 ### Changed
 
+- `findPointGroup` refuses the Shubnikov symbols of -3 and -1 written with the overbar alone, `6̅`
+  and `2̅`, with a RangeError that names both readings (#206): in Hermann–Mauguin `6̅` is -6, so a
+  Shubnikov symbol that `symbol()` writes was read as another group; `2̅` was not found. The
+  overbar stays, as ITC Vol. D Table 1.5.2.3 and Shubnikov & Belov print it.
 - The default tolerance `EPSILON` is 10⁻⁵, was 10⁻⁶ (#204): operations rounded to 6 decimals, the
   usual output of files and other programs, now pass in any orientation (at 10⁻⁶, 21 of the 50
   settings of the 32 classes failed in the frame of symcrys, up to about 40 in general

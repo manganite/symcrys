@@ -1800,12 +1800,13 @@ def find_point_group(
     """Finds one of the 122 magnetic point groups (the 32 crystal classes included) by a symbol,
     read tolerantly. A prime marks time reversal: ``4'/mmm'``, ``2221'``. It reads, spaces ignored
     (docs/conventions.md, "Reading symbols"): the key; the short or full symbol of a setting
-    (``312``, ``1 1 2``); a Schoenflies symbol (``D3``; for -3 either ``C3i`` or ``S6``); Birss's
-    cubic symbols without the overbar on the 3 (``m3m``). A symbol that names several settings (the
-    key ``32``, which is also the symbol of the setting with rhombohedral axes; ``2`` for unique
-    axis b, c and a; any Schoenflies symbol) gives the standard (ITC default) setting, unless the
-    options ``axes`` or ``unique_axis`` choose another, as the headlines of ITA name the settings
-    (the option ``axes`` set to ``'rhombohedral'`` for the key ``32``).
+    (``312``, ``1 1 2``); a Schoenflies symbol (``D3``; for -3 either ``C3i`` or ``S6``); the cubic
+    symbols without the overbar on the 3 or its prime (``m3m``, ``m'-3``); the grey groups with
+    ``1'`` after the first position (``21'/m``, ``1'`` for ``11'``). A symbol that names several
+    settings (the key ``32``, which is also the symbol of the setting with rhombohedral axes; ``2``
+    for unique axis b, c and a; any Schoenflies symbol) gives the standard (ITC default) setting,
+    unless the options ``axes`` or ``unique_axis`` choose another, as the headlines of ITA name the
+    settings (the option ``axes`` set to ``'rhombohedral'`` for the key ``32``).
 
     Spellings: the overbar as ``-``, ``−``, a combining overbar or ``¯`` after the digit (``m3̄m``),
     ``bar3`` (also with a backslash and braces, as in LaTeX); the prime as ``'``, ``′``, ``ʹ`` or

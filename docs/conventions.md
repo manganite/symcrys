@@ -437,9 +437,12 @@ normalisation before the comparison:
   meaning: `3 2` is `32`, as print writes the short symbols without them.
 - **What `findPointGroup` reads:** the key; the short or full symbol of a setting (and the short
   symbol by the rule, `32'1`); a Schoenflies symbol, with `C3i` or `S6` alike (`D3`, `D4h(D2h)`,
-  `D4R`), which names the group, not an orientation; Birss's cubic symbols,
-  printed without the overbar on the 3, which takes the prime of the mirror before it (`m3m`, `m'3m`
-  for `m-3m`, `m'-3'm`; Birss Tables 3 and 6). A symbol that names several settings (the key `32`,
+  `D4R`), which names the group, not an orientation; the cubic symbols printed without the overbar
+  on the 3 or without its prime, the 3 taking the prime of the mirror before it (`m3m`, `m'3m` for
+  `m-3m`, `m'-3'm` in Birss Tables 3 and 6; `m'-3`, `m'-3m'` for `m'-3'`, `m'-3'm'` in ITC Vol. D
+  Table 1.2.6.12, p. 66); and the grey groups as that table writes them, with the `1'` after the
+  first position (`21'/m` for `2/m1'`) and `1'` alone for `11'`. Every symbol of Table 1.2.6.12 is
+  read as its group (tested), except its misprint `2'2'` for `2'2'2`. A symbol that names several settings (the key `32`,
   also the symbol of the setting with rhombohedral axes; `2` for unique axis b, c and a; `3 1'`;
   every Schoenflies symbol) gives the standard (ITC default) setting, as the name without the
   headline means the standard in ITA; the options `axes` and `uniqueAxis` choose another
@@ -447,9 +450,13 @@ normalisation before the comparison:
 
   Every symbol `symbol()` writes is read back to its group (tested over all settings and forms of
   both entry points), and to its setting where the symbol, or the symbol with the setting's axes or
-  unique axis, names one; the one exception is the Shubnikov form, which is not read, since its
-  overbar means something else (`6̅` is −3 there, `-6` is C3h in Hermann–Mauguin): a symbol with a character only Shubnikov writes (the underline, `:`, `·`) is a
-  RangeError, and one without (`6̅`, `2̅`) is read as Hermann–Mauguin. A symbol that names several groups is a RangeError that lists them; none
+  unique axis, names one; the exception is the Shubnikov form, which is not read: its overbar marks a
+  rotoreflection, as ITC Vol. D Table 1.5.2.3 (p. 111) and Shubnikov & Belov (1964, p. 73) print it
+  (`6̅` is −3 there and −6 in Hermann–Mauguin). A symbol with a character only Shubnikov writes
+  (the underline, `:`, `·`) is a RangeError, and so are the two Shubnikov symbols written with the
+  overbar alone that read otherwise in Hermann–Mauguin, `6̅` (−3) and `2̅` (−1): the error names
+  both readings. `4̅` is −4 in both and is read. No symbol symcrys writes, in any form, is read as
+  another group (tested). A symbol that names several groups is a RangeError that lists them; none
   of the symbols of the library does. The crystallographic API finds no magnetic group, in any
   spelling.
 

@@ -300,7 +300,8 @@ export function pointGroups(): readonly PointGroup[] {
  * Finds a crystal class by a symbol, read tolerantly.
  * It reads, spaces ignored (docs/conventions.md, "Reading symbols"): the key; the short or
  * full symbol of a setting (`312`, `1 1 2`); a Schoenflies symbol (`D3`; for -3 either `C3i` or
- * `S6`); Birss's cubic symbols without the overbar on the 3 (`m3m`). A symbol that names
+ * `S6`); the cubic symbols without the overbar on the 3 or its prime (`m3m`, `m'-3`); the grey
+ * groups with `1'` after the first position (`21'/m`, `1'` for `11'`). A symbol that names
  * several settings (the key `32`, which is also the symbol of the setting with rhombohedral axes;
  * `2` for unique axis b, c and a; any Schoenflies symbol) gives the standard (ITC default) setting,
  * unless the options `axes` or `uniqueAxis` choose another, as the headlines of ITA name the
