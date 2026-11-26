@@ -19,9 +19,9 @@ export type WyckoffRow = readonly [string, number, string, readonly string[], st
 
 /**
  * Convention data: the order of the Wyckoff letters among positions of equal multiplicity and
- * equal dimension, for which print states no rule (ITA 2016 § 2.1.3.11 (ii), p. 162: the letter "is
- * merely a coding scheme"; § 3.2.1.2.3, p. 727), as the oriented site-symmetry symbols of those positions in letter
- * order, by the short symbol of the setting.
+ * equal dimension, for which print states no rule (ITA 2016 § 2.1.3.11 (ii), p. 162: the letter
+ * "is merely a coding scheme"; § 3.2.1.2.3, p. 727), as the oriented site-symmetry symbols of
+ * those positions in letter order, by the short symbol of the setting.
  */
 export const LETTER_ORDER: Readonly<Record<string, readonly string[]>> = deepFreeze({
   '222': ['2..', '.2.', '..2'],
