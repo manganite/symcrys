@@ -701,9 +701,9 @@ export const CRYSTAL_FORM_TYPES: Readonly<Record<CrystalFormTypeKey, CrystalForm
 /**
  * The crystal forms of a crystal class: for each Wyckoff position (general position first) its
  * basic form (two for the cubic faces (hhl) of -43m and m-3m), then its limiting forms
- * (docs/conventions.md, "Crystal forms").
+ * (docs/conventions.md, "Crystal forms"), computed from the operations.
  *
- * @remarks Source: ITA (6th ed., 2016), Table 3.2.3.2.
+ * @remarks Equal to ITA (6th ed., 2016), Table 3.2.3.2, pp. 745–769, for every printed setting.
  */
 export function crystalForms(key: PointGroupKey, options?: SettingOptions): readonly CrystalForm[] {
   return forms.crystalForms(classKey(key), options);

@@ -33,7 +33,13 @@ import {
   RHOMBOHEDRAL_IN_HEXAGONAL,
 } from '../testUtils/references.js';
 import { CRYSTAL_FORM_TYPES, crystalForms } from './crystalForms.js';
-import { CLASS_FORMS, FORM_TYPE_DATA } from './crystalFormsData.js';
+import { FORM_TYPE_DATA, FORM_TYPE_KEYS } from './formTypes.js';
+import {
+  computedFormRows,
+  FIRST_LIMITING_FACE_EXCEPTIONS,
+  formRowsWith,
+  LIMITING_ORDER_EXCEPTIONS,
+} from './formRows.js';
 import { POINT_GROUP_KEYS, settings, type PointGroupKey } from './pointGroups.js';
 
 const ORTHONORMAL: M = [
@@ -340,30 +346,68 @@ describe('ITA Table 3.2.1.3: the 47 crystal forms', () => {
   });
 });
 
+/** The setting of a printed entry, by its short symbol and axes column. */
+function printedSetting(short: string, axes: string): { key: PointGroupKey; index: number } {
+  const axis = /^unique axis (b|c)$/.exec(axes)?.[1];
+  const found = POINT_GROUP_KEYS.flatMap((key) =>
+    settings(key)
+      .filter((s) => s.symbol === short && (axis === undefined || s.uniqueAxis === axis) && sameAxes(axes, s))
+      .map((s) => ({ key, index: s.index })),
+  );
+  if (found.length !== 1) throw new Error(`No unique setting for ${short} ${axes}`);
+  return found[0];
+}
+
 describe('ITA Table 3.2.3.2: face forms', () => {
-  it('the library data equal the transcription, row by row (names as numbers of Table 3.2.1.3)', () => {
-    const fromData = CLASS_FORMS.flatMap((e) =>
-      e.rows.map((r) => [
-        e.symbol,
-        e.uniqueAxis ?? e.axes ?? '',
+  it('the computed forms equal the transcription, row by row (names as numbers of Table 3.2.1.3)', () => {
+    const printed = faceRows.slice(1);
+    const entries = [...new Set(printed.map((r) => `${r[0]}|${r[1]}`))].map((id) => id.split('|'));
+    const fromLibrary = entries.flatMap(([short, axes]) => {
+      const { key, index } = printedSetting(short, axes);
+      return computedFormRows(key, index).map((r) => [
+        short,
+        axes,
         r[0],
         r[1] ? 'basic' : 'limiting',
-        String(r[2]),
+        String(FORM_TYPE_KEYS.indexOf(r[2]) + 1),
         r[3],
         (r[4] ?? '').replace(/\|(\w)\|/g, 'abs($1)'),
-      ]),
-    );
-    const fromPrint = faceRows.slice(1).map(([short, axes, , letter, form, name, miller, condition]) => [
+      ]);
+    });
+    const fromPrint = printed.map(([short, axes, , letter, form, name, miller, condition]) => [
       short,
-      // The unique axis of a monoclinic entry, or the rhombohedral axes of a trigonal one.
-      /^unique axis (b|c)$/.exec(axes)?.[1] ?? (axes === 'rhombohedral axes' ? 'rhombohedral' : ''),
+      axes,
       letter,
       form,
       String(numberOfName(name)),
       miller,
       condition,
     ]);
-    expect(fromData).toEqual(fromPrint);
+    expect(fromLibrary).toEqual(fromPrint);
+  });
+
+  it('needs each entry of the convention data: without it the result departs from print', () => {
+    const all = { limitingOrder: LIMITING_ORDER_EXCEPTIONS, firstFaces: FIRST_LIMITING_FACE_EXCEPTIONS };
+    for (const table of ['limitingOrder', 'firstFaces'] as const) {
+      for (const [symbol, entries] of Object.entries(all[table])) {
+        const found = POINT_GROUP_KEYS.flatMap((key) =>
+          settings(key)
+            .filter((s) => s.symbol === symbol)
+            .map((s) => ({ key, index: s.index })),
+        );
+        expect(found, symbol).toHaveLength(1);
+        const { key, index } = found[0];
+        const entriesLeft = (entry: string): readonly string[] =>
+          table === 'limitingOrder' ? [] : entries.filter((x) => x !== entry);
+        for (const entry of table === 'limitingOrder' ? [entries.join(' ')] : entries) {
+          const reduced = { ...all, [table]: { ...all[table], [symbol]: entriesLeft(entry) } };
+          expect(
+            JSON.stringify(formRowsWith(key, index, reduced as typeof all)),
+            `${table} ${symbol} ${entry}`,
+          ).not.toBe(JSON.stringify(computedFormRows(key, index)));
+        }
+      }
+    }
   });
 
   it('has forms for each of the 45 printed entries, on the page and with the letters of its Wyckoff positions', () => {

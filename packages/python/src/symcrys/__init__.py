@@ -2155,7 +2155,7 @@ def crystal_forms(
 ) -> list[CrystalForm]:
     """The crystal forms of a crystal class: for each Wyckoff position (general position first) its
     basic form (two for the cubic faces (hhl) of -43m and m-3m), then its limiting forms
-    (docs/conventions.md, "Crystal forms").
+    (docs/conventions.md, "Crystal forms"), computed from the operations.
 
     Parameters
     ----------

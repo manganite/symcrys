@@ -58,16 +58,16 @@ export const FIRST_FACE_EXCEPTIONS: Readonly<Record<string, readonly string[]>> 
   '-3m': ['0,1,-1'],
 });
 
-type Vec = readonly number[];
-type Mat = readonly Vec[];
+export type Vec = readonly number[];
+export type Mat = readonly Vec[];
 
-const apply = (w: Mat, v: Vec): number[] => w.map((row) => row[0] * v[0] + row[1] * v[1] + row[2] * v[2]);
+export const apply = (w: Mat, v: Vec): number[] => w.map((row) => row[0] * v[0] + row[1] * v[1] + row[2] * v[2]);
 /** h·W, the face (row vector) h carried by the transpose; over a group the same set as h·W⁻¹. */
-const applyToFace = (w: Mat, h: Vec): number[] =>
+export const applyToFace = (w: Mat, h: Vec): number[] =>
   [0, 1, 2].map((j) => h[0] * w[0][j] + h[1] * w[1][j] + h[2] * w[2][j]);
 
 /** A primitive integer vector: divided by the gcd of its components. */
-function primitive(v: Vec): number[] {
+export function primitive(v: Vec): number[] {
   const g = v.reduce((a, x) => gcd(a, x), 0);
   return g === 0 ? [...v] : v.map((x) => x / g + 0);
 }
@@ -77,7 +77,7 @@ function primitive(v: Vec): number[] {
  * integer vector with a positive pivot: the canonical form of a subspace, and the notation of ITA's
  * first representatives (`x,-x,z` is the span of (1,−1,0) and (0,0,1)).
  */
-function echelon(vectors: readonly Vec[]): { rows: number[][]; pivots: number[] } {
+export function echelon(vectors: readonly Vec[]): { rows: number[][]; pivots: number[] } {
   // Fraction-free elimination on integers, then each row made primitive.
   const m = vectors.map((v) => [...v]).filter((v) => v.some((x) => x !== 0));
   const pivots: number[] = [];
@@ -100,10 +100,10 @@ function echelon(vectors: readonly Vec[]): { rows: number[][]; pivots: number[] 
   return { rows: m.slice(0, r), pivots };
 }
 
-const keyOf = (vectors: readonly Vec[]): string => JSON.stringify(echelon(vectors).rows);
+export const keyOf = (vectors: readonly Vec[]): string => JSON.stringify(echelon(vectors).rows);
 
 /** A basis of the integer vectors v with A·v = 0 for the given rows A. */
-function nullspace(rows: readonly Vec[]): number[][] {
+export function nullspace(rows: readonly Vec[]): number[][] {
   const { rows: e, pivots } = echelon(rows);
   const free = [0, 1, 2].filter((c) => !pivots.includes(c));
   return free.map((f) => {
@@ -121,7 +121,7 @@ const transposeMinusIdentity = (w: Mat): number[][] =>
   [0, 1, 2].map((i) => [0, 1, 2].map((j) => w[j][i] - (i === j ? 1 : 0)));
 
 /** The indices of the operations that fix every vector of a basis. */
-const stabiliser = (ops: readonly Mat[], basis: readonly Vec[]): number[] =>
+export const stabiliser = (ops: readonly Mat[], basis: readonly Vec[]): number[] =>
   ops.flatMap((w, i) => (basis.every((v) => apply(w, v).every((x, k) => x === v[k])) ? [i] : []));
 
 /**
@@ -130,7 +130,7 @@ const stabiliser = (ops: readonly Mat[], basis: readonly Vec[]): number[] =>
  * coefficients, then the fewest nonzero ones, then the earliest pivots, then the greatest
  * coefficients in reading order.
  */
-function pointRank(vectors: readonly Vec[]): number[] {
+export function pointRank(vectors: readonly Vec[]): number[] {
   const { rows, pivots } = echelon(vectors);
   const flat = rows.flat();
   return [
@@ -146,12 +146,12 @@ function pointRank(vectors: readonly Vec[]): number[] {
  * The order of the rule for faces with hexagonal or rhombohedral axes: smallest greatest
  * coefficient, then the greatest coefficients in reading order.
  */
-function faceRank(vectors: readonly Vec[]): number[] {
+export function faceRank(vectors: readonly Vec[]): number[] {
   const flat = echelon(vectors).rows.flat();
   return [Math.max(...flat.map(Math.abs)), ...flat.map((x) => -x)];
 }
 
-const compareRanks = (a: readonly number[], b: readonly number[]): number => {
+export const compareRanks = (a: readonly number[], b: readonly number[]): number => {
   for (let i = 0; i < Math.max(a.length, b.length); i++) {
     const d = (a[i] ?? 0) - (b[i] ?? 0);
     if (d !== 0) return d;
@@ -160,7 +160,7 @@ const compareRanks = (a: readonly number[], b: readonly number[]): number => {
 };
 
 /** The subspace spanned by a printed pattern (`x,2x,z`, `h,h,l`, `0,1,-1`): the span of its columns, or of the vector. */
-function patternSpan(pattern: string, letters: string): number[][] {
+export function patternSpan(pattern: string, letters: string): number[][] {
   const parts = pattern.split(',');
   const coefficient = (text: string, letter: string): number => {
     const m = new RegExp(`(^|[+-])(\\d*)${letter}`).exec(text);
@@ -172,7 +172,7 @@ function patternSpan(pattern: string, letters: string): number[][] {
 }
 
 /** The orbit of a subspace under the operations (images of its basis), each once, by canonical key. */
-function orbit(ops: readonly Mat[], basis: readonly Vec[], image: (w: Mat, v: Vec) => number[]): number[][][] {
+export function orbit(ops: readonly Mat[], basis: readonly Vec[], image: (w: Mat, v: Vec) => number[]): number[][][] {
   const out: number[][][] = [];
   const keys = new Set<string>();
   for (const w of ops) {
@@ -215,19 +215,22 @@ const formatTriplet = (m: Mat): string => formatOperation({ matrix: m, translati
  * parameters named after the pivots (h, k, l); with hexagonal axes Bravais–Miller indices with
  * i = −(h + k), written `i` where it is −h − k of two parameters.
  */
-function formatFace(basis: readonly Vec[], bravaisMiller: boolean): string {
+export function formatFace(basis: readonly Vec[], bravaisMiller: boolean): string {
   const { rows, pivots } = echelon(basis);
   const names = 'hkl';
   // components[j]: coefficients of the parameters in index j
   const components = [0, 1, 2].map((j) => rows.map((row) => row[j]));
+  // A sum with its positive terms first, as ITA writes indices (`2k-h`, `h,k,-h-k`).
   const linear = (coefficients: readonly number[]): string => {
+    const terms = coefficients
+      .map((c, r) => ({ c, name: names[pivots[r]] }))
+      .filter(({ c }) => c !== 0)
+      .sort((a, b) => Number(b.c > 0) - Number(a.c > 0));
     let s = '';
-    coefficients.forEach((c, r) => {
-      if (c === 0) return;
-      const name = names[pivots[r]];
+    for (const { c, name } of terms) {
       const magnitude = Math.abs(c) === 1 ? name : `${Math.abs(c)}${name}`;
       s += c < 0 ? `-${magnitude}` : s === '' ? magnitude : `+${magnitude}`;
-    });
+    }
     return s === '' ? '0' : s;
   };
   const single = rows.length === 1;
