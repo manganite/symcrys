@@ -1038,6 +1038,8 @@ def site_symmetry(key: str, point: ArrayLike, *, tolerance: Optional[float] = No
 
     Parameters
     ----------
+    point
+        The coordinates x, y of the point in the lattice basis a, b (fractions of the cell).
     tolerance : keyword-only, optional
         Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁶). It is measured per
         matrix entry for operations, as the distance of unit vectors for directions and per
@@ -1053,7 +1055,7 @@ def site_symmetry(key: str, point: ArrayLike, *, tolerance: Optional[float] = No
         _call(
             "siteSymmetry",
             key,
-            _shared.plane_point(point),
+            _shared.options(point=_shared.plane_point(point)),
             _shared.options(tolerance=tolerance),
         ),
         _S_SiteSymmetry,
@@ -1075,6 +1077,8 @@ def wyckoff_position(
 
     Parameters
     ----------
+    point
+        The coordinates x, y of the point in the lattice basis a, b (fractions of the cell).
     tolerance : keyword-only, optional
         Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁶). It is measured per
         matrix entry for operations, as the distance of unit vectors for directions and per
@@ -1084,7 +1088,7 @@ def wyckoff_position(
         _call(
             "wyckoffPosition",
             key,
-            _shared.plane_point(point),
+            _shared.options(point=_shared.plane_point(point)),
             _shared.options(tolerance=tolerance),
         ),
         _S_WyckoffPosition,
@@ -1113,6 +1117,8 @@ def wyckoff_distances(
 
     Parameters
     ----------
+    point
+        The coordinates x, y of the point in the lattice basis a, b (fractions of the cell).
     basis : keyword-only, optional
         The Cartesian basis of the lattice, a 2 × 2 matrix whose columns are a and b; with it the
         distances are Euclidean, without it they are measured per lattice coordinate.
@@ -1128,7 +1134,7 @@ def wyckoff_distances(
         _call(
             "wyckoffDistances",
             key,
-            _shared.plane_point(point),
+            _shared.options(point=_shared.plane_point(point)),
             _shared.options(basis=None if basis is None else _shared.array(basis, "basis", np.float64)),
         ),
         ("l", _S_WyckoffDistance),
@@ -1151,6 +1157,8 @@ def orbit(
 
     Parameters
     ----------
+    point
+        The coordinates x, y of the point in the lattice basis a, b (fractions of the cell).
     tolerance : keyword-only, optional
         Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁶). It is measured per
         matrix entry for operations, as the distance of unit vectors for directions and per
@@ -1163,7 +1171,12 @@ def orbit(
         shape (n,).
     """
     result: list[PointOrbitEntry] = _shared.convert(
-        _call("orbit", key, _shared.plane_point(point), _shared.options(tolerance=tolerance)),
+        _call(
+            "orbit",
+            key,
+            _shared.options(point=_shared.plane_point(point)),
+            _shared.options(tolerance=tolerance),
+        ),
         ("l", _S_PointOrbitEntry),
     )
     return result

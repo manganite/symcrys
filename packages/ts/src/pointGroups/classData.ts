@@ -17,7 +17,7 @@
 
 import { MAX_CLASS_ORDER } from '../tolerances.js';
 import { shown } from '../checks.js';
-import { crystalFamily, latticeBasis, type CrystalSystem } from '../lattice.js';
+import { crystalFamily, familyBasis, type CrystalSystem } from '../lattice.js';
 import { IDENTITY as LINEAR_IDENTITY, inverse, multiply, snap, type Mat3 } from '../linalg.js';
 import type { PointGroupKey } from './keys.js';
 import { LATTICE_SYMMETRY_DIRECTIONS, type Uvw } from '../symmetryDirections.js';
@@ -326,7 +326,7 @@ const RHOMBOHEDRAL_IN_HEXAGONAL: Mat3 = [
 export function settingBasis(key: PointGroupKey, index: number): Mat3 {
   const family = crystalFamily(classData(key).crystalSystem);
   if (family === 'monoclinic' || family === 'triclinic') return LINEAR_IDENTITY;
-  const b = latticeBasis(family);
+  const b = familyBasis(family);
   return classSettingData(key, index).axes === 'rhombohedral' ? multiply(b, RHOMBOHEDRAL_IN_HEXAGONAL) : b;
 }
 

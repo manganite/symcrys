@@ -140,7 +140,8 @@ groups" below); its keys are not keys of the other two.
 Cartesian matrices (the `cartesian` of an operation, rotations of tensors, bases) are taken in a
 right-handed orthonormal frame x, y, z, row-major, acting on column vectors; the `matrix` of an
 operation is in the lattice basis ("Operations"). How the conventional lattice basis a, b, c sits in that frame
-(`latticeBasis(family)`, columns a, b, c with unit edge lengths):
+(`latticeBasis(key, { setting })`, columns a, b, c with a = c = 1, the basis B with
+`cartesian` = B·W·B⁻¹ for every operation of the setting):
 
 | Family                      | Frame                                               |
 | --------------------------- | --------------------------------------------------- |
@@ -149,10 +150,12 @@ operation is in the lattice basis ("Operations"). How the conventional lattice b
 | hexagonal (hexagonal axes)  | x ∥ a, z ∥ c, y = z × x; b at 120° from a           |
 | trigonal, rhombohedral axes | a_R, b_R, c_R of the hexagonal cell above (below)   |
 | monoclinic                  | unique axis ∥ y (unique axis b), ∥ z (c) or ∥ x (a) |
-| triclinic                   | no symmetry direction; no fixed basis               |
+| triclinic                   | no symmetry direction                               |
 
-For the monoclinic and triclinic families the cell angles are free, so `latticeBasis` gives no
-basis for them; only the direction of the monoclinic unique axis is fixed.
+For the monoclinic and triclinic families the cell angles are free, and only the direction of the
+monoclinic unique axis is fixed. `latticeBasis` gives for them the basis in which symcrys takes
+their operations, a, b, c along x, y, z, so that W and R are equal; the basis of a real cell is
+`latticeFromParameters`.
 
 **Rhombohedral axes** are those of the obverse setting in the hexagonal cell (ITA 2016 Table
 1.5.1.1, p. 78, the matrix Q of the row R₁ obverse): a_R = (2a + b + c)/3, b_R = (−a + b + c)/3, c_R = (−a − 2b + c)/3, with the hexagonal a, b,
@@ -690,7 +693,13 @@ perpendicular.
 ## Site symmetry and Wyckoff positions
 
 These functions treat **directions**: face normals (poles) and lattice directions, the vectors a
-point group acts on. A direction is a non-zero Cartesian vector; its length does not matter.
+point group acts on; the length of a direction does not matter. A function of a list of operations
+takes a Cartesian vector, as its operations are Cartesian. A function of a key takes the direction
+by the field that says what it is: a face `{ hkl }`, a lattice direction `{ uvw }` or a Cartesian
+vector `{ cartesian }` (in Python the keyword `hkl=`, `uvw=` or `cartesian=`); a bare array, which
+could be either, is a RangeError. A face is read as its normal B⁻ᵀ·h, a lattice direction as B·u,
+with B = `latticeBasis(key, { setting })`; so for the monoclinic and triclinic classes they are
+read in the basis a, b, c along x, y, z, which gives the right site symmetry for any cell.
 
 **Site symmetry.** `siteSymmetryOf(operations, direction, { tolerance })` returns the operations of
 any list (a point group, or for example the operations left after distorting a crystal) that fix
@@ -706,7 +715,7 @@ divided by its order. The list must be a group, given as all its operations, eac
 result is a list of indices into it, so a list that is not a group (only the generators of a
 group, an operation twice, a product missing with its time reversal) is a RangeError that says
 why, and an empty list is the trivial group of the identity. Time reversal does not change a
-direction, so it does not change the result. `siteSymmetry(key, direction, { setting, axes,
+direction, so it does not change the result. `siteSymmetry(key, { hkl } | { uvw } | { cartesian }, { setting, axes,
 uniqueAxis, tolerance })` is the same for the operations of a point group in a setting,
 `siteSymmetryOf(operations(key, options), …)`; the suffix `…Of` marks the functions of a list of
 operations.
@@ -741,7 +750,7 @@ prints them for that setting (ITA 6th ed., Table 3.2.3.2, pp. 745–769):
   letters. `millerIndices(indices, { h, k, l })` substitutes a caller's values (three indices; for
   hexagonal axes i = −(h + k) is dropped, as `orbit` takes them; rhombohedral axes print sums such
   as `h,k,-h-k` and `h,k,2k-h`), and `faceNormal(basis, hkl)` gives the unit normal
-  h a\* + k b\* + l c\* of a face in a cell. A normal exists only for a cell: `latticeBasis(family)`
+  h a\* + k b\* + l c\* of a face in a cell. A normal exists only for a cell: `latticeBasis(key, { setting })`
   for the families with fixed cell angles, `latticeFromParameters` for a real cell, which the
   monoclinic and triclinic classes need, since a point group does not fix their cell angles. The
   values are the caller's choice; values that put a face on a limiting form or a special position
@@ -765,8 +774,8 @@ prints them for that setting (ITA 6th ed., Table 3.2.3.2, pp. 745–769):
   test checks for all 45 printed entries against the transcription of both
   (`wyckoff.reference.test.ts`).
 
-`wyckoffPosition(key, direction, { setting, tolerance })` gives the Wyckoff position of any
-direction: the one whose printed face has a site symmetry conjugate to that of the direction.
+`wyckoffPosition(key, { hkl } | { uvw } | { cartesian }, { setting, tolerance })` gives the
+Wyckoff position of any face or direction: the one whose printed face has a site symmetry conjugate to that of the direction.
 
 **ITA 2006 and 2016.** The 5th edition prints these data as Table 10.1.2.2, without coordinates
 ("for point coordinates see text", § 10.1.2.3) and without the point at the origin. Letters,
@@ -1277,13 +1286,14 @@ shifted by a lattice translation or the operations of a site symmetry; it reads 
 a fraction with a denominator of at most 12 (within the tolerance, default 10⁻⁶) and refuses a matrix that is not the linear
 part of a plane point group.
 
-**Points.** `siteSymmetry`, `wyckoffPosition` and `orbit` take the key of a plane group, since the site
-symmetry needs the group modulo the lattice, and a point
-in the lattice basis (`orbit` gives each image as `{ point, operations }`, with the indices of the
+**Points.** `siteSymmetry`, `wyckoffPosition`, `orbit` and `wyckoffDistances` take the key of a
+plane group, since the site symmetry needs the group modulo the lattice, and a point in the lattice
+basis as `{ point: [x, y] }` (in Python the argument `point`), named as the points of their results
+are (`orbit` gives each image as `{ point, operations }`, with the indices of the
 operations that map the point there, as the orbits of the point groups do), with an
 optional `tolerance` measured per coordinate modulo the lattice (default 10⁻⁶, below 1/2). They
 answer one question with one criterion: on which Wyckoff
-position does the point lie? `wyckoffDistances(key, point, { basis })` gives the numbers: for every
+position does the point lie? `wyckoffDistances(key, { point }, { basis })` gives the numbers: for every
 printed position, in printed order, the nearest point of its point set (the printed coordinates with
 every centring and lattice translation: a point, a line or the plane) and the distance to it, per
 lattice coordinate (the larger of |Δx| and |Δy| modulo the lattice, the metric of the tolerance)

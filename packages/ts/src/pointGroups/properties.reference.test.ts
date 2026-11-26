@@ -5,7 +5,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { latticeBasis, latticeSystemsOfSystem, type LatticeSystem } from '../lattice.js';
+import { familyBasis, latticeSystemsOfSystem, type LatticeSystem } from '../lattice.js';
 import { det, inverse, multiply, type Mat3 } from '../linalg.js';
 import { expectHeader, readReference, tableRows } from '../testUtils/references.js';
 import {
@@ -216,18 +216,18 @@ describe('ITA Table 1.3.4.1: lattice systems and their holohedries', () => {
     // Independent of the table. The hexagonal (hP) lattice: the basis of the hexagonal family. The
     // rhombohedral (hR) lattice: the rhombohedral axes in the frame of the hexagonal ones (ITA 2016
     // Table 1.5.1.1, p. 78: a_R = (2a + b + c)/3, b_R = (−a + b + c)/3, c_R = (−a − 2b + c)/3).
-    const hex = latticeBasis('hexagonal');
+    const hex = familyBasis('hexagonal');
     const obverse = [
       [2 / 3, -1 / 3, -1 / 3],
       [1 / 3, 1 / 3, -2 / 3],
       [1 / 3, 1 / 3, 1 / 3],
     ];
     const bases: Record<string, Mat3> = {
-      orthorhombic: latticeBasis('orthorhombic'),
-      tetragonal: latticeBasis('tetragonal'),
+      orthorhombic: familyBasis('orthorhombic'),
+      tetragonal: familyBasis('tetragonal'),
       hexagonal: hex,
       rhombohedral: multiply(hex, obverse as unknown as Mat3),
-      cubic: latticeBasis('cubic'),
+      cubic: familyBasis('cubic'),
     };
     for (const [system, basis] of Object.entries(bases)) {
       const toLattice = inverse(basis);

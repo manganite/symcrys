@@ -149,7 +149,7 @@ export interface OperationDescription {
 export function operations(key: PlaneGroupKey | PointGroupKey, options?: SettingOptions): readonly PlaneOperation[];
 
 // @public
-export function orbit(key: PlaneGroupKey, point: readonly number[], options?: ToleranceOptions): readonly PointOrbitEntry[];
+export function orbit(key: PlaneGroupKey, point: PlanePoint, options?: ToleranceOptions): readonly PointOrbitEntry[];
 
 // @public
 export const PLANE_GROUP_KEYS: readonly PlaneGroupKey[];
@@ -205,6 +205,11 @@ export interface PlaneOperation {
 
 // @public
 export type PlaneOperationKind = 'identity' | 'translation' | 'rotation' | 'reflection' | 'glide-reflection';
+
+// @public
+export interface PlanePoint {
+    readonly point: readonly number[];
+}
 
 // @public
 type PlanePointGroupKey = '1' | '2' | 'm' | '2mm' | '4' | '4mm' | '3' | '3m' | '6' | '6mm';
@@ -282,7 +287,7 @@ export interface SiteSymmetry {
 }
 
 // @public
-export function siteSymmetry(key: PlaneGroupKey, point: readonly number[], options?: ToleranceOptions): SiteSymmetry;
+export function siteSymmetry(key: PlaneGroupKey, point: PlanePoint, options?: ToleranceOptions): SiteSymmetry;
 
 // @public
 export function symbol(key: PlaneGroupKey | PointGroupKey, options?: SymbolOptions): string;
@@ -341,7 +346,7 @@ export interface WyckoffDistanceOptions {
 }
 
 // @public
-export function wyckoffDistances(key: PlaneGroupKey, point: readonly number[], options?: WyckoffDistanceOptions): readonly WyckoffDistance[];
+export function wyckoffDistances(key: PlaneGroupKey, point: PlanePoint, options?: WyckoffDistanceOptions): readonly WyckoffDistance[];
 
 // @public
 export interface WyckoffPosition {
@@ -354,7 +359,7 @@ export interface WyckoffPosition {
 }
 
 // @public
-export function wyckoffPosition(key: PlaneGroupKey, point: readonly number[], options?: ToleranceOptions): WyckoffPosition;
+export function wyckoffPosition(key: PlaneGroupKey, point: PlanePoint, options?: ToleranceOptions): WyckoffPosition;
 
 // @public
 export function wyckoffPositions(key: PlaneGroupKey | PointGroupKey, options?: SettingOptions): readonly WyckoffPosition[];

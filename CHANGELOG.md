@@ -8,6 +8,19 @@ All notable changes to symcrys are recorded here. The format follows
 
 ### Changed
 
+- A direction given to a function of a key names what it is (#202): `siteSymmetry(key, direction)`
+  (both point-group entry points) and `wyckoffPosition(key, direction)` (`symcrys`) take a face `{ hkl }`, a
+  lattice direction `{ uvw }` or a Cartesian vector `{ cartesian }`, as `orbit` takes `{ hkl }` or
+  `{ uvw }`; a bare array is a RangeError. In Python the keyword `hkl=`, `uvw=` or `cartesian=`:
+  `site_symmetry("6/mmm", uvw=[2, 1, 0])`. `orbit` refuses `{ cartesian }` and names `orbitOf`.
+- `latticeBasis(key, { setting })` replaces `latticeBasis(family)` (#202): the basis B of a point
+  group in a setting, `cartesian` = B·W·B⁻¹, for every setting, rhombohedral axes and unique axis a
+  included; for the monoclinic and triclinic classes a, b, c along x, y, z, the basis symcrys takes
+  for their operations. `latticeBasis('cubic')` becomes `latticeBasis('m-3m')`, `'hexagonal'`
+  `'6/mmm'`; the name of a family is a RangeError that names the key to take. The type
+  `FixedAngleFamily` is no longer exported. `orbit` refuses fields other than `hkl` and `uvw`.
+- `symcrys/plane`: `siteSymmetry`, `wyckoffPosition`, `orbit` and `wyckoffDistances` take the
+  point as `{ point: [x, y] }` (#202), named as in their results; in Python unchanged (`point`).
 - `siteSymmetryOf` and `orbitOf` (both point-group entry points; in Python `site_symmetry_of`,
   `orbit_of`) take a point group given as all its operations, each once, and refuse a list that is
   not a group with a RangeError that says why: a missing product (time reversal included), an
@@ -16,6 +29,14 @@ All notable changes to symcrys are recorded here. The format follows
 
 ### Fixed
 
+- `siteSymmetry(key, direction)` and `wyckoffPosition(key, direction)` read the direction as a
+  Cartesian vector, so ITA's lattice indices gave a wrong answer without an error: the lattice
+  direction [210] of 6/mmm lies on a twofold axis (position c, multiplicity 6), but `[2, 1, 0]` gave
+  position f, multiplicity 12 (#202). Affected since 0.3.0 (`wyckoffPositionOf`, named
+  `wyckoffPosition` since 0.11.0) and 0.11.0 (`siteSymmetry` of a key): results for Cartesian
+  vectors were right; lattice indices passed as a Cartesian vector were wrong where B·u (for a face
+  B⁻ᵀ·h) has another site symmetry than u itself, which happens only with hexagonal or
+  rhombohedral axes.
 - `siteSymmetryOf` and `orbitOf` answered a list that is not a group, such as the generators of a
   group, without an error: `siteSymmetryOf(generators('4/mmm'), [1, 0, 0])` gave no operation at all
   and the multiplicity 4, `orbitOf(generators('4/mmm'), [1, 2, 3])` 4 poles instead of 16 (#203).

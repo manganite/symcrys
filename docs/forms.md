@@ -42,7 +42,7 @@ site symmetry (the cell decides the pole: for monoclinic and triclinic crystals 
 ```{code-cell} ipython3
 f = symcrys.crystal_forms("-43m")[2]  # h,h,l with |h| < |l|, the trigon-tritetrahedron
 hkl = symcrys.miller_indices(f["miller_indices"], h=1, l=3)
-hkl, symcrys.face_normal(symcrys.lattice_basis("cubic"), hkl)
+hkl, symcrys.face_normal(symcrys.lattice_basis("-43m"), hkl)
 ```
 
 ## Orbits and the lattice basis

@@ -183,7 +183,7 @@ describe('the crystallographic API returns nothing about time reversal', () => {
         expect(positions, `${key}, setting ${setting}`).toBe(wyckoff.wyckoffPositions(key, { setting }));
         const special = positions[positions.length - 1];
         const direction = representativeFace(key, setting, special.millerIndices).cartesian;
-        expect(classes.wyckoffPosition(key, direction, { setting }).letter).toBe(special.letter);
+        expect(classes.wyckoffPosition(key, { cartesian: direction }, { setting }).letter).toBe(special.letter);
       }
     }
     // 32: the twofold axes lie along other directions in the two settings.
@@ -193,8 +193,8 @@ describe('the crystallographic API returns nothing about time reversal', () => {
     const ops = classes.operations('4mm');
     expect(classes.siteSymmetryOf(ops, off).multiplicity).toBe(8);
     expect(classes.siteSymmetryOf(ops, off, { tolerance: 1e-2 }).multiplicity).toBe(1);
-    expect(classes.wyckoffPosition('4mm', off).letter).toBe('d');
-    expect(classes.wyckoffPosition('4mm', off, { tolerance: 1e-2 }).letter).toBe('a');
+    expect(classes.wyckoffPosition('4mm', { cartesian: off }).letter).toBe('d');
+    expect(classes.wyckoffPosition('4mm', { cartesian: off }, { tolerance: 1e-2 }).letter).toBe('a');
   });
 
   it('the named properties are those of time-even tensors, their specifications without time parity', () => {
@@ -231,7 +231,7 @@ describe('the crystallographic API refuses what involves time reversal', () => {
       classes.describeOperations,
       classes.symmetryDirections,
       classes.wyckoffPositions,
-      (key) => classes.wyckoffPosition(key, [0, 0, 1]),
+      (key) => classes.wyckoffPosition(key, { cartesian: [0, 0, 1] }),
       classes.crystalForms,
       (key) => classes.orbit(key, { hkl: [1, 0, 0] }),
       (key) => classes.tensorForm(key, 'piezoelectric'),
@@ -640,22 +640,24 @@ describe('siteSymmetry of a key', () => {
       for (const s of magnetic.settings(key)) {
         for (const d of directions) {
           const ops = magnetic.operations(key, { setting: s.index });
-          expect(magnetic.siteSymmetry(key, d, { setting: s.index }), `${key} ${s.index}`).toEqual(
+          expect(magnetic.siteSymmetry(key, { cartesian: d }, { setting: s.index }), `${key} ${s.index}`).toEqual(
             magnetic.siteSymmetryOf(ops, d),
           );
         }
       }
     }
     for (const key of classes.POINT_GROUP_KEYS) {
-      expect(classes.siteSymmetry(key, [1, 1, 0])).toEqual(classes.siteSymmetryOf(classes.operations(key), [1, 1, 0]));
+      expect(classes.siteSymmetry(key, { cartesian: [1, 1, 0] })).toEqual(
+        classes.siteSymmetryOf(classes.operations(key), [1, 1, 0]),
+      );
     }
     // The criteria and the tolerance as options.
     // A criterion reaches the operations: [100] lies on the twofold axis of unique axis a only.
-    expect(classes.siteSymmetry('2', [1, 0, 0]).multiplicity).toBe(2);
-    expect(classes.siteSymmetry('2', [1, 0, 0], { uniqueAxis: 'a' }).multiplicity).toBe(1);
-    expect(classes.siteSymmetry('4mm', [1, 1.00004, 3], { tolerance: 1e-4 }).multiplicity).toBe(4);
-    expect(() => classes.siteSymmetry("4'mm'" as never, [0, 0, 1])).toThrow(/magnetic API/);
-    expect(() => classes.siteSymmetry('4mm', [0, 0, 0])).toThrow(RangeError);
+    expect(classes.siteSymmetry('2', { cartesian: [1, 0, 0] }).multiplicity).toBe(2);
+    expect(classes.siteSymmetry('2', { cartesian: [1, 0, 0] }, { uniqueAxis: 'a' }).multiplicity).toBe(1);
+    expect(classes.siteSymmetry('4mm', { cartesian: [1, 1.00004, 3] }, { tolerance: 1e-4 }).multiplicity).toBe(4);
+    expect(() => classes.siteSymmetry("4'mm'" as never, { cartesian: [0, 0, 1] })).toThrow(/magnetic API/);
+    expect(() => classes.siteSymmetry('4mm', { cartesian: [0, 0, 0] })).toThrow(RangeError);
   });
 });
 
@@ -679,7 +681,7 @@ describe('every result is frozen, nested values included', () => {
     generators: ['32'],
     describeOperations: ['32'],
     symmetryDirections: ['32'],
-    siteSymmetry: ['32', [0, 0, 1]],
+    siteSymmetry: ['32', { hkl: [0, 0, 1] }],
     siteSymmetryOf: [ops, [0, 0, 1]],
     orbit: ['32', { hkl: [1, 0, 0] }],
     orbitOf: [ops, [1, 0, 0]],
@@ -691,7 +693,7 @@ describe('every result is frozen, nested values included', () => {
     latticeSystems: ['32'],
     millerIndices: ['h,h,-2h,l', { h: 3, l: 1 }],
     faceNormal: [basis, [1, 0, 0]],
-    latticeBasis: ['hexagonal'],
+    latticeBasis: ['32', { axes: 'rhombohedral' }],
     latticeFromParameters: [{ a: 3, b: 3, c: 5, alpha: 90, beta: 90, gamma: 120 }],
     latticeParameters: [basis],
     metricTensor: [basis],
@@ -731,7 +733,7 @@ describe('every result is frozen, nested values included', () => {
   };
   const classOnly: Record<string, unknown[]> = {
     wyckoffPositions: ['32'],
-    wyckoffPosition: ['32', [0, 0, 1]],
+    wyckoffPosition: ['32', { cartesian: [0, 0, 1] }],
     crystalForms: ['32'],
     tensorFormOf: [ops, 'piezoelectric'],
     allowedPropertiesOf: [ops],
@@ -786,10 +788,10 @@ describe('every result is frozen, nested values included', () => {
     describeOperationsOf: [plane.operations('p4')],
     wyckoffPositions: ['p4'],
     crystalForms: ['3m', { setting: 2 }],
-    siteSymmetry: ['p4', [0, 0]],
-    wyckoffPosition: ['p4', [0, 0]],
-    wyckoffDistances: ['p4', [0.01, 0]],
-    orbit: ['p4', [0.1, 0.2]],
+    siteSymmetry: ['p4', { point: [0, 0] }],
+    wyckoffPosition: ['p4', { point: [0, 0] }],
+    wyckoffDistances: ['p4', { point: [0.01, 0] }],
+    orbit: ['p4', { point: [0.1, 0.2] }],
     asymmetricUnit: ['p4'],
     symmetryElements: ['p4gm'],
   };
@@ -862,7 +864,7 @@ describe('every result is frozen, nested values included', () => {
 describe('one tolerance contract (#93)', () => {
   const cubic = classes.operations('m-3m');
   const magneticOps = magnetic.operations("4/m'mm");
-  const basis = classes.latticeBasis('cubic');
+  const basis = classes.latticeBasis('m-3m');
   const p4 = plane.operations('p4');
   type Call = (options: { tolerance?: unknown }) => unknown;
   // Every function that compares numbers a caller passes in, with the bound of its metric.
@@ -879,8 +881,8 @@ describe('one tolerance contract (#93)', () => {
       0.1,
     ],
     'symcrys siteSymmetryOf': [(o) => classes.siteSymmetryOf(cubic, [0, 0, 1], o as never), 1],
-    'symcrys siteSymmetry': [(o) => classes.siteSymmetry('m-3m', [0, 0, 1], o as never), 1],
-    'symcrys wyckoffPosition': [(o) => classes.wyckoffPosition('m-3m', [0, 0, 1], o as never), 1],
+    'symcrys siteSymmetry': [(o) => classes.siteSymmetry('m-3m', { cartesian: [0, 0, 1] }, o as never), 1],
+    'symcrys wyckoffPosition': [(o) => classes.wyckoffPosition('m-3m', { cartesian: [0, 0, 1] }, o as never), 1],
     'symcrys orbitOf': [(o) => classes.orbitOf(cubic, [0, 0, 1], o as never), 1],
     'symcrys residualOperations': [(o) => classes.residualOperations(cubic, basis, o as never), 1],
     'symcrys/magnetic pointGroupOf': [(o) => magnetic.pointGroupOf(magneticOps, o as never), 0.1],
@@ -898,16 +900,16 @@ describe('one tolerance contract (#93)', () => {
       0.1,
     ],
     'symcrys/magnetic siteSymmetryOf': [(o) => magnetic.siteSymmetryOf(magneticOps, [0, 0, 1], o as never), 1],
-    'symcrys/magnetic siteSymmetry': [(o) => magnetic.siteSymmetry("4/m'mm", [0, 0, 1], o as never), 1],
+    'symcrys/magnetic siteSymmetry': [(o) => magnetic.siteSymmetry("4/m'mm", { cartesian: [0, 0, 1] }, o as never), 1],
     'symcrys/magnetic orbitOf': [(o) => magnetic.orbitOf(magneticOps, [0, 0, 1], o as never), 1],
     'symcrys/magnetic residualOperations': [
-      (o) => magnetic.residualOperations(magneticOps, classes.latticeBasis('tetragonal'), o as never),
+      (o) => magnetic.residualOperations(magneticOps, classes.latticeBasis('4/mmm'), o as never),
       1,
     ],
     'symcrys/plane describeOperationsOf': [(o) => plane.describeOperationsOf(p4, o as never), 0.1],
-    'symcrys/plane siteSymmetry': [(o) => plane.siteSymmetry('p4', [0.1, 0.2], o as never), 0.5],
-    'symcrys/plane wyckoffPosition': [(o) => plane.wyckoffPosition('p4', [0.1, 0.2], o as never), 0.5],
-    'symcrys/plane orbit': [(o) => plane.orbit('p4', [0.1, 0.2], o as never), 0.5],
+    'symcrys/plane siteSymmetry': [(o) => plane.siteSymmetry('p4', { point: [0.1, 0.2] }, o as never), 0.5],
+    'symcrys/plane wyckoffPosition': [(o) => plane.wyckoffPosition('p4', { point: [0.1, 0.2] }, o as never), 0.5],
+    'symcrys/plane orbit': [(o) => plane.orbit('p4', { point: [0.1, 0.2] }, o as never), 0.5],
   };
 
   it('EPSILON is 10⁻⁶ and exported by all three entry points', () => {

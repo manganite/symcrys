@@ -8,7 +8,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { latticeBasis } from '../lattice.js';
+import { familyBasis } from '../lattice.js';
 import { det, inverse, multiply, type Mat3 } from '../linalg.js';
 import * as classes from '../index.js';
 import * as magnetic from '../magnetic.js';
@@ -72,9 +72,9 @@ const OBVERSE = [
   [1 / 3, 1 / 3, 1 / 3],
 ] as unknown as Mat3;
 const BASES: Record<string, Mat3> = {
-  cubic: latticeBasis('cubic'),
-  hexagonal: latticeBasis('hexagonal'),
-  rhombohedral: multiply(latticeBasis('hexagonal'), OBVERSE),
+  cubic: familyBasis('cubic'),
+  hexagonal: familyBasis('hexagonal'),
+  rhombohedral: multiply(familyBasis('hexagonal'), OBVERSE),
 };
 
 const apply = (m: number[][], v: number[]) => m.map((row) => row.reduce((s, x, j) => s + x * v[j], 0));
