@@ -154,3 +154,40 @@ export function inverse(a: Mat3): Mat3 {
 export function conjugate(a: Mat3, s: Mat3): Mat3 {
   return multiply(multiply(s, a), transpose(s));
 }
+
+/**
+ * The operator norm ‖M‖₂: the largest length of M·v over unit vectors v, the square root of the
+ * largest eigenvalue of MᵀM, found by Jacobi rotations of that symmetric matrix.
+ */
+export function operatorNorm(m: Mat3): number {
+  const a = multiply(transpose(m), m).map((row) => [...row]);
+  for (let sweep = 0; sweep < 50; sweep++) {
+    const off = Math.abs(a[0][1]) + Math.abs(a[0][2]) + Math.abs(a[1][2]);
+    if (off <= 1e-30 * (Math.abs(a[0][0]) + Math.abs(a[1][1]) + Math.abs(a[2][2])) || off === 0) break;
+    for (const [p, q] of [
+      [0, 1],
+      [0, 2],
+      [1, 2],
+    ] as const) {
+      if (a[p][q] === 0) continue;
+      // The rotation in the plane p, q that zeroes a[p][q].
+      const theta = (a[q][q] - a[p][p]) / (2 * a[p][q]);
+      const t = Math.sign(theta || 1) / (Math.abs(theta) + Math.sqrt(theta * theta + 1));
+      const c = 1 / Math.sqrt(t * t + 1);
+      const s = t * c;
+      for (let k = 0; k < 3; k++) {
+        const akp = a[k][p];
+        const akq = a[k][q];
+        a[k][p] = c * akp - s * akq;
+        a[k][q] = s * akp + c * akq;
+      }
+      for (let k = 0; k < 3; k++) {
+        const apk = a[p][k];
+        const aqk = a[q][k];
+        a[p][k] = c * apk - s * aqk;
+        a[q][k] = s * apk + c * aqk;
+      }
+    }
+  }
+  return Math.sqrt(Math.max(0, a[0][0], a[1][1], a[2][2]));
+}

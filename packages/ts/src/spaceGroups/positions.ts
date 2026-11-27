@@ -8,7 +8,6 @@
 import { planeWyckoffRows } from './planeWyckoff.js';
 import { deepFreeze } from '../freeze.js';
 import { shown } from '../checks.js';
-import { closeIndices } from '../closure.js';
 import {
   compose,
   equalModLattice,
@@ -20,7 +19,7 @@ import {
   type PlainOperation,
 } from './affine.js';
 import { planeGroupEntry, planeGroupOperations } from './planeGroups.js';
-import { ROUNDING_EPSILON, SINGULAR_RATIO, SITE_PASSES, toleranceOf, type ToleranceOptions } from '../tolerances.js';
+import { ROUNDING_EPSILON, SINGULAR_RATIO, toleranceOf, type ToleranceOptions } from '../tolerances.js';
 
 /** The site symmetry of a point under a plane group. */
 export interface PlaneSiteSymmetry {
@@ -35,8 +34,8 @@ export interface PlaneSiteSymmetry {
    */
   readonly fixing: readonly PlainOperation[];
   /**
-   * The point set onto the fixed space of its site symmetry (the mean of its images under the
-   * fixing operations), in [0, 1), which removes rounding errors within the tolerance.
+   * The point set onto the element of its site symmetry, in [0, 1), which removes the deviation
+   * within the tolerance.
    */
   readonly point: readonly number[];
   /** The number of points in the conventional cell equivalent to it. */
@@ -197,12 +196,6 @@ export function orbitIn(
   return out;
 }
 
-/** Indices of `set` closed under products, modulo the lattice, within the operations of the group. */
-function closeSet(data: GroupData, set: readonly number[]): number[] {
-  const { table } = data;
-  return closeIndices((i, j) => table[i][j], set);
-}
-
 /** The operations of `indices`, each shifted by the lattice translation that brings its image of `p` nearest to `p`. */
 function fixingOperations(ops: readonly PlainOperation[], indices: readonly number[], p: readonly number[]) {
   return indices.map((i) => {
@@ -212,13 +205,7 @@ function fixingOperations(ops: readonly PlainOperation[], indices: readonly numb
   });
 }
 
-/**
- * The site symmetry of a point under a plane group. The operations that fix the point modulo the
- * lattice within the tolerance are closed under products and the point is set onto the fixed space
- * of the closure (the mean of its images), repeated until stable, as `siteSymmetryOf` does for the point
- * groups; so the result is always a subgroup and the set point lies exactly on its elements. Throws a
- * RangeError if that does not settle (a tolerance far too large).
- */
+/** The site symmetry of a point under a plane group, by the distance to the element (`siteSymmetryIn`). */
 export function planeSiteSymmetry(
   key: string,
   point: readonly number[],
@@ -227,7 +214,13 @@ export function planeSiteSymmetry(
   return siteSymmetryIn(groupData(key), point, options);
 }
 
-/** `planeSiteSymmetry` under any group (`GroupData`): a plane group, or a list of a caller. */
+/**
+ * `planeSiteSymmetry` under any group (`GroupData`): a plane group, or a list of a caller. The tolerance
+ * measures the distance to the symmetry element, per coordinate modulo the lattice, as the Wyckoff
+ * position of a key does: the site symmetry is that of the most special element (a rotation point or
+ * a mirror line, the fixed set of an operation) within the tolerance of the point, of elements fixed
+ * by equally many operations the nearest, and the point is set onto it.
+ */
 export function siteSymmetryIn(
   data: GroupData,
   point: readonly number[],
@@ -236,30 +229,86 @@ export function siteSymmetryIn(
   checkPlanePoint(point);
   const tol = tolerance(options);
   const ops = data.ops;
-  const fixingAt = (p: readonly number[]): number[] =>
-    ops.flatMap((op, i) => (sameModLattice(image(op, p), p, tol) ? [i] : []));
-  let p: readonly number[] = point;
-  let set = closeSet(data, fixingAt(p));
-  for (let pass = 0; pass < SITE_PASSES; pass++) {
-    const fixing = fixingOperations(ops, set, p);
-    const mean = [0, 1].map((k) => fixing.reduce((s, op) => s + image(op, p)[k], 0) / fixing.length);
-    const next = closeSet(data, fixingAt(mean));
-    const settled = fixing.every((op) => sameModLattice(image(op, mean), mean, ROUNDING_EPSILON));
-    if (settled && next.length === set.length && next.every((x, i) => x === set[i])) {
-      const q = mean.map(mod1);
-      return {
-        operations: set,
-        fixing: fixingOperations(ops, set, q),
-        point: q,
-        multiplicity: ops.length / set.length,
-      };
+  const p = point.map(mod1);
+  // Each candidate: the nearest translate of the fixed set of one operation, as a point and the
+  // direction of a line (none for a point; the whole plane for the identity).
+  let best: { indices: number[]; distance: number; on: number[] } | undefined;
+  const consider = (on: number[], line: number[] | undefined, distance: number): void => {
+    if (!(distance < tol)) return;
+    // The operations that fix the element pointwise: the point, and for a line a second point of it.
+    const points = line ? [on, [on[0] + line[0], on[1] + line[1]]] : [on];
+    const indices = ops.flatMap((op, i) =>
+      points.every((x) => sameModLattice(image(op, x), x, ROUNDING_EPSILON)) ? [i] : [],
+    );
+    if (
+      !best ||
+      indices.length > best.indices.length ||
+      (indices.length === best.indices.length && distance < best.distance)
+    ) {
+      best = { indices, distance, on };
     }
-    p = mean;
-    set = next;
+  };
+  /** The distance per coordinate of two points modulo the lattice. */
+  const apart = (x: readonly number[], y: readonly number[]): number =>
+    Math.max(...x.map((v, k) => Math.abs(v - y[k] - Math.round(v - y[k]))));
+  for (const op of ops) {
+    const [[a, b], [c, d]] = op.matrix;
+    // The translation modulo the lattice, so that the windows below find the nearest elements also for
+    // a translation given with whole cells added.
+    const w = op.translation.map((x) => x - Math.floor(x));
+    const det = a * d - b * c;
+    if (a === 1 && b === 0 && c === 0 && d === 1) {
+      // The identity fixes the plane; a translation, nothing.
+      if (w.every((v) => Math.abs(v - Math.round(v)) < ROUNDING_EPSILON)) consider([...p], undefined, 0);
+    } else if (det === 1) {
+      // A rotation: the fixed points x = (I − W)⁻¹(w + t), t integer; the nearest to p is reached
+      // from t near (I − W)p − w.
+      const m = [
+        [1 - a, -b],
+        [-c, 1 - d],
+      ];
+      const dm = m[0][0] * m[1][1] - m[0][1] * m[1][0];
+      const t0 = [0, 1].map((k) => Math.round(m[k][0] * p[0] + m[k][1] * p[1] - w[k]));
+      for (let i = -1; i <= 1; i++)
+        for (let j = -1; j <= 1; j++) {
+          const rhs = [w[0] + t0[0] + i, w[1] + t0[1] + j];
+          const x = [(m[1][1] * rhs[0] - m[0][1] * rhs[1]) / dm, (-m[1][0] * rhs[0] + m[0][0] * rhs[1]) / dm];
+          const nearest = x.map((v, k) => p[k] + (v - p[k] - Math.round(v - p[k])));
+          consider(nearest, undefined, apart(p, x));
+        }
+    } else {
+      // A reflection: (I − W)/2 = P is idempotent; (I − W)x = w + t has a solution exactly when
+      // P(w + t) = w + t, then x₀ = (w + t)/2 and the line x₀ + s·v with v along (I + W). A glide
+      // reflection has no such t.
+      const P = [
+        [(1 - a) / 2, -b / 2],
+        [-c / 2, (1 - d) / 2],
+      ];
+      const v = [1 + a, c].some((x) => x !== 0) ? [1 + a, c] : [b, 1 + d];
+      for (let i = -2; i <= 2; i++)
+        for (let j = -2; j <= 2; j++) {
+          const rhs = [w[0] + i, w[1] + j];
+          const Prhs = [P[0][0] * rhs[0] + P[0][1] * rhs[1], P[1][0] * rhs[0] + P[1][1] * rhs[1]];
+          if (Math.abs(Prhs[0] - rhs[0]) > ROUNDING_EPSILON || Math.abs(Prhs[1] - rhs[1]) > ROUNDING_EPSILON) continue;
+          const x0 = [rhs[0] / 2, rhs[1] / 2];
+          for (let k = -1; k <= 1; k++)
+            for (let l = -1; l <= 1; l++) {
+              const base = [x0[0] + Math.round(p[0] - x0[0]) + k, x0[1] + Math.round(p[1] - x0[1]) + l];
+              const { t, d: distance } = nearestOnLine([p[0] - base[0], p[1] - base[1]], v, undefined);
+              consider([base[0] + t * v[0], base[1] + t * v[1]], v, distance);
+            }
+        }
+    }
   }
-  throw new RangeError(
-    `No common fixed point for the operations fixing ${shown(point)} within ${tol} (tolerance too large?)`,
-  );
+  // The identity is in every group, at distance 0.
+  const { indices, on } = best!;
+  const q = on.map(mod1);
+  return {
+    operations: indices,
+    fixing: fixingOperations(ops, indices, q),
+    point: q,
+    multiplicity: ops.length / indices.length,
+  };
 }
 
 /**

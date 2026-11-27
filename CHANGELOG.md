@@ -6,6 +6,29 @@ All notable changes to symcrys are recorded here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- **Breaking:** the tolerance of a direction or a point measures the distance to the symmetry
+  element, the same for every kind of element (#235). `siteSymmetry`, `siteSymmetryOf`,
+  `wyckoffPosition` and `orbitOf` (both point-group entry points) and `siteSymmetryOf`, `orbitOf` of
+  `symcrys/plane` give the site symmetry of the most special element (a mirror, a rotation axis or
+  point) within the tolerance of the direction or point, of equal ones the nearest, and set it onto
+  it. Before, they measured how far an operation moved it, twice the distance for a mirror or a
+  twofold axis, and the functions of a list of the plane measured otherwise than those of a key.
+  Results change only within a factor 2 of the tolerance: `siteSymmetryOf(operations('4mm'),
+[1, 1.00004, 3])` lies on the mirror y, x, z at the default tolerance, was the general position.
+
+### Fixed
+
+- `siteSymmetryOf` and `orbitOf` (both point-group entry points, and `symcrys/plane` for a point)
+  refuse a tolerance below the deviation of the given operations from the exact group they
+  approximate, with a RangeError that names both numbers (#235). Before, such a tolerance gave a
+  wrong site symmetry without an error: the identity fell out of it (`siteSymmetryOf` of the
+  identity written as 1.000001 at the tolerance 10⁻⁸ gave no operation), and of `4mm` with errors of
+  2·10⁻⁶ at the tolerance 10⁻⁶ none of the 8 operations fixing the fourfold axis was found. The list
+  is made an exact group once and the direction tested against it, so the site symmetry is a
+  subgroup and the images of `orbitOf` are unit vectors (they were off by up to 5·10⁻⁶). Affected since `orbitOf` was added (0.7.0) and `siteSymmetryOf` (0.11.0); in `symcrys/plane` since 0.15.0.
+
 ## [0.15.0] - 2026-11-27
 
 The review of 0.14.0 (#200) carried out: library data are minimal and everything else is computed

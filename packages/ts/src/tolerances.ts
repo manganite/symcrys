@@ -168,13 +168,6 @@ export const ELIMINATION_EPSILON = 1e-12;
 export const MAX_CLASS_ORDER = 48;
 
 /**
- * The passes of setting a direction or a point onto the fixed space of the operations that fix it
- * within the tolerance, until the set of them is stable (siteSymmetry.ts, spaceGroups/positions.ts);
- * it settles in one or two passes for every group, so 8 only stops a loop that does not.
- */
-export const SITE_PASSES = 8;
-
-/**
  * The depth of the search for the simplest fraction within a tolerance (spaceGroups/rational.ts,
  * `simplestFraction`), one step per term of a continued fraction: a double has at most about 40, so
  * 200 is reached only by a tolerance far too small for the value.

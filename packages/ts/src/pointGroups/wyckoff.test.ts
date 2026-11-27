@@ -123,6 +123,25 @@ describe('wyckoffPosition', () => {
   });
 });
 
+/** The site symmetry is closed under the magnetic product and fixes the set direction exactly. */
+function expectSubgroupOnElement(
+  ops: readonly ReturnType<typeof operations>[number][],
+  v: Vec3,
+  tolerance: number,
+): void {
+  const site = siteSymmetryOf(ops, v, { tolerance });
+  const members = site.operations.map((i) => ops[i]);
+  for (const a of members) {
+    const moved = apply(a.cartesian, site.direction);
+    expect(Math.hypot(...moved.map((x, k) => x - site.direction[k]))).toBeLessThan(1e-9);
+    for (const b of members) {
+      const m = multiply(a.cartesian, b.cartesian);
+      const r = a.timeReversal !== b.timeReversal;
+      expect(members.some((c) => c.timeReversal === r && matricesEqual(c.cartesian, m))).toBe(true);
+    }
+  }
+}
+
 describe('siteSymmetry', () => {
   const ops = operations('4mm');
 
@@ -136,10 +155,14 @@ describe('siteSymmetry', () => {
   });
 
   it('treats the general position and the default tolerance', () => {
-    const s = siteSymmetryOf(ops, [1, 1.00004, 3]);
+    // 2.1·10⁻⁵ from the diagonal mirror x = y (|x − y| / √2 over the length 3.32): beyond 10⁻⁵.
+    const s = siteSymmetryOf(ops, [1, 1.0001, 3]);
     expect(s.operations).toEqual([0]);
     expect(s.general).toBe(true);
     expect(s.multiplicity).toBe(8);
+    // 0.85·10⁻⁵ from it: on the mirror y, x, z (operation (8) of ITA, index 7), by the distance to the
+    // element; its image lies 1.7·10⁻⁵ away.
+    expect(siteSymmetryOf(ops, [1, 1.00004, 3]).operations).toEqual([0, 7]);
   });
 
   it('closes the fixing operations to a group and sets the direction exactly on its axis', () => {
@@ -209,10 +232,10 @@ describe('siteSymmetry', () => {
     });
   });
 
-  it('throws if the operations fixing within a far too large tolerance fix no common direction', () => {
-    // 422, tolerance 0.95: operations that move this direction by up to 0.95 generate a group fixing no
-    // direction (found by a scan; a tolerance far beyond any use).
-    expect(() => siteSymmetryOf(operations('422'), [0.9018, 0.3462, 0.2588], { tolerance: 0.95 })).toThrow(RangeError);
+  it('gives a subgroup whose element holds the set direction also at a tolerance far beyond any use', () => {
+    // 422 at 0.95 (before, the operations that moved this direction by up to 0.95 generated a group
+    // fixing no direction, and it threw): the most special element within 0.95 is taken.
+    expectSubgroupOnElement(operations('422'), [0.9018, 0.3462, 0.2588], 0.95);
   });
 
   it('answers for the list as it is now, also when a caller changes its list in place (#90)', () => {
@@ -242,7 +265,9 @@ describe('siteSymmetry', () => {
     // Before #133 the product of two operations was looked up by its matrix alone, so in a grey group
     // it always found the copy without time reversal: 6mm1' at [0.74, -0.16, -0.14], tolerance 0.7,
     // gave 15 of its 24 operations.
-    expect(siteSymmetryOf(operations("6mm1'"), [0.74, -0.16, -0.14], { tolerance: 0.7 }).operations).toHaveLength(24);
+    // 6mm1' at 0.7: the direction lies 0.21 from the mirror normal to y and 0.98 from the sixfold
+    // axis, so the site symmetry is that mirror with its primed copy, 1, 1', m, m'.
+    expect(siteSymmetryOf(operations("6mm1'"), [0.74, -0.16, -0.14], { tolerance: 0.7 }).operations).toHaveLength(4);
     expect(GREY_POINT_GROUP_KEYS).toHaveLength(32);
     for (const key of GREY_POINT_GROUP_KEYS) {
       const ops = operations(key);
@@ -277,13 +302,10 @@ describe('siteSymmetry', () => {
     }
   });
 
-  it('throws if the fixing operations do not settle into a group, instead of returning a non-group (#91)', () => {
-    // Found by a scan of the review of #91: before, this returned 10 of the 24 operations of 6221',
-    // which are no subgroup, and the direction not projected. Since #133 compares whole operations
-    // in the products, the closure fixes no common direction there, which throws as well.
-    expect(() => siteSymmetryOf(operations("6221'"), [-0.655, 0.766, 0.415], { tolerance: 0.99 })).toThrow(
-      /does not settle|No common fixed direction/,
-    );
+  it('gives a subgroup at a tolerance near 1, where the closure of #91 gave none', () => {
+    // Found by a scan of the review of #91: this once returned 10 of the 24 operations of 6221', no
+    // subgroup; the site symmetry of the most special element within the tolerance is one.
+    expectSubgroupOnElement(operations("6221'"), [-0.655, 0.766, 0.415], 0.99);
   });
 
   it('rejects a zero vector and an invalid tolerance', () => {

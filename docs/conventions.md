@@ -574,13 +574,13 @@ usual output of files and other programs, pass with it in any orientation, and i
 symmetry tolerance of spglib (`symprec`), which users of such a library know. Two numbers count as equal
 when they differ by less than the tolerance, in the metric of their kind:
 
-| Kind of object                            | Metric                                                  | Bound | Functions                                                                                                                                                                                                                                                                 |
-| ----------------------------------------- | ------------------------------------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| operations                                | per matrix entry                                        | 0.1   | `pointGroupOf`, `describeOperationsOf` (also in `symcrys/plane`), `tensorFormOf`, `isCentrosymmetricOf`, `isEnantiomorphicOf`, `allowsPropertyOf`, `allowedPropertiesOf`, `rotateTensor`; `changeOfCoordinates` (all three entry points) for the entries of P, p, W and w |
-| directions                                | Euclidean distance of the unit vectors                  | 1     | `siteSymmetryOf`, `siteSymmetry`, `wyckoffPosition`, `orbitOf`                                                                                                                                                                                                            |
-| points of the plane                       | per coordinate in the lattice basis, modulo the lattice | 1/2   | `siteSymmetry`, `wyckoffPosition`, `orbit` of `symcrys/plane`                                                                                                                                                                                                             |
-| the metric tensor G of a cell (W ᵀGW = G) | per entry, relative to the largest entry of G           | 1     | `residualOperations` (also in `symcrys/plane`)                                                                                                                                                                                                                            |
-| the index symmetry of a tensor            | per component, relative to its largest component        | 1     | `toVoigt`, `fromVoigt`                                                                                                                                                                                                                                                    |
+| Kind of object                            | Metric                                                                                   | Bound | Functions                                                                                                                                                                                                                                                                 |
+| ----------------------------------------- | ---------------------------------------------------------------------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| operations                                | per matrix entry                                                                         | 0.1   | `pointGroupOf`, `describeOperationsOf` (also in `symcrys/plane`), `tensorFormOf`, `isCentrosymmetricOf`, `isEnantiomorphicOf`, `allowsPropertyOf`, `allowedPropertiesOf`, `rotateTensor`; `changeOfCoordinates` (all three entry points) for the entries of P, p, W and w |
+| directions                                | Euclidean distance of the unit vector to the symmetry element                            | 1     | `siteSymmetryOf`, `siteSymmetry`, `wyckoffPosition`, `orbitOf`                                                                                                                                                                                                            |
+| points of the plane                       | distance to the symmetry element per coordinate in the lattice basis, modulo the lattice | 1/2   | `siteSymmetry`, `wyckoffPosition`, `orbit`, `siteSymmetryOf`, `orbitOf` of `symcrys/plane`                                                                                                                                                                                |
+| the metric tensor G of a cell (W ᵀGW = G) | per entry, relative to the largest entry of G                                            | 1     | `residualOperations` (also in `symcrys/plane`)                                                                                                                                                                                                                            |
+| the index symmetry of a tensor            | per component, relative to its largest component                                         | 1     | `toVoigt`, `fromVoigt`                                                                                                                                                                                                                                                    |
 
 - **One check.** A tolerance is a finite number above 0 and below the bound of its kind, beyond
   which it says nothing: two distinct operations of a crystallographic point group differ in some
@@ -589,7 +589,9 @@ when they differ by less than the tolerance, in the metric of their kind:
   at most 1/2 per coordinate. Anything else, `null` included, is a RangeError with one message; only
   a missing tolerance takes the default. A function that compares directions checks the
   orthogonality of the operations with its tolerance, at most 0.1 (per entry of RᵀR, at least
-  `EPSILON`). The translations read by `describeOperationsOf` of `symcrys/plane` are compared per
+  `EPSILON`), and refuses a tolerance below the deviation of the operations from the exact group
+  they approximate ("Site symmetry and Wyckoff positions"; for a list of the plane, "Plane groups").
+  The translations read by `describeOperationsOf` of `symcrys/plane` are compared per
   coordinate; one that lies within the tolerance of two fractions with denominators up to 12
   (which can be 1/132 apart) is refused. `changeOfCoordinates` reads each entry of P and W as a
   fraction: one that is a fraction with a denominator of at most 1000 to rounding (10⁻⁹) as that
@@ -769,15 +771,22 @@ read in the basis a, b, c along x, y, z, which gives the right site symmetry for
 
 **Site symmetry.** `siteSymmetryOf(operations, direction, { tolerance })` returns the operations of
 any list (a point group, or for example the operations left after distorting a crystal) that fix
-the direction: those that move its unit vector by less than `tolerance` (default `EPSILON`,
-10⁻⁵). Near an element, the operations fixing a direction within the tolerance need not form a
-group (a sixfold rotation can count as fixing while its square, which moves the direction further,
-does not), so symcrys closes them under the products found in the list, sets the given direction
-onto the fixed space of that group (the mean of its images, normalised), takes the operations
-fixing that set direction, and repeats until the group no longer changes. If the group fixes no
-common direction (only with a tolerance far too large), it throws. The result is the site symmetry of the set direction,
-which removes rounding errors within the tolerance; the multiplicity is the number of operations
-divided by its order. The list must be a group, given as all its operations, each once: the
+the direction. The tolerance (default `EPSILON`, 10⁻⁵) measures the distance to the symmetry
+element: the list is made an exact group once, near it (its own matrices averaged over its product
+table), and of the
+elements of that group, the fixed spaces of its operations (a mirror plane, a rotation axis, the
+whole space for the identity), those whose distance to the unit vector of the direction (‖v − Pv‖,
+P the projector onto the element) is below the tolerance are candidates. The most special
+candidate wins, the one fixed by the most operations, and of equal ones the nearest; the site
+symmetry is the operations that fix it pointwise, a subgroup, and the direction is set onto it,
+which removes the deviation within the tolerance. The rule applies to the given direction: the set
+direction can lie within the tolerance of a more special element. The distance to the element is
+the same for every kind of element, where the distance of the image is twice it for a mirror or a
+twofold axis. A tolerance below the deviation of the list from its exact group is refused with a
+RangeError that names both numbers: the deviation is the largest operator distance ‖A − E‖₂ of a
+given matrix from its exact counterpart, the farthest an operation moves a unit vector from where
+the exact one moves it, and below it the list cannot tell whether a direction lies on an element.
+The multiplicity is the number of operations divided by the order of the site symmetry. The list must be a group, given as all its operations, each once: the
 result is a list of indices into it, so a list that is not a group (only the generators of a
 group, an operation twice, a product missing with its time reversal) is a RangeError that says
 why, and an empty list is the trivial group of the identity. Time reversal does not change a
@@ -1517,11 +1526,11 @@ groups and both settings of `3m`).
 
 **Lists of operations.** `siteSymmetryOf` and `orbitOf` take a list of operations
 `{ matrix, translation }` of the plane, for instance those of a pattern, and the same inputs: of a
-point, the operations (W, w) that fix it modulo the lattice within the tolerance (the distance of
-its image, per coordinate, which at a mirror line is twice the distance to the line that the
-functions of a key measure: a list has no Wyckoff positions to measure to), closed under
-products, the point set onto their fixed space until stable, as `siteSymmetryOf` does for
-directions in 3D; of a direction or an edge, the linear parts, exactly. The list is a group: for a
+point, the site symmetry of the most special element (a rotation point or a mirror line, the fixed
+set of an operation modulo the lattice) within the tolerance of the point, per coordinate modulo
+the lattice as for a key, the point set onto it; a tolerance below the deviation of the given
+numbers from the operations read (the largest displacement of a point of the cell per coordinate,
+max over rows of Σⱼ |ΔWᵢⱼ| + |Δwᵢ|) is refused, naming both; of a direction or an edge, the linear parts, exactly. The list is a group: for a
 point one operation per coset of the lattice translations, closed under products modulo the
 lattice; for a direction or an edge, linear parts closed under products (a matrix may occur twice,
 as in `cm`). The operations are read within `EPSILON` whatever the tolerance of the point, with
