@@ -40,8 +40,8 @@ All notable changes to symcrys are recorded here. The format follows
 - Unknown fields are refused in a tensor specification (`TensorSpec`; a misspelt `timeparity` was
   read as time-even), in the parameters of a cell (`latticeFromParameters`, both entry points) and
   in the angles of `isValidCell`, which takes the edges of a whole cell too.
-- Python: a point, direction or face passed by position to `site_symmetry`, `wyckoff_position` or
-  `orbit` is a `SymcrysError` that names the keywords (`point=`, `uv=`, `hk=`; `hkl=`, `uvw=`,
+- Python: a point, direction or face passed by position to `site_symmetry`, `wyckoff_position`,
+  `orbit` (and in `symcrys.plane` `site_symmetry_of`, `orbit_of`) is a `SymcrysError` that names the keywords (`point=`, `uv=`, `hk=`; `hkl=`, `uvw=`,
   `cartesian=`), was Python's bare `TypeError`; messages write a record of fields as keywords
   (`point=`, was `{ point }`) and name the function, not the position of an argument in
   JavaScript; an array of zero dimensions as operations is a `SymcrysError`, was a `TypeError`.
@@ -132,7 +132,9 @@ All notable changes to symcrys are recorded here. The format follows
 - `changeOfCoordinates` of `symcrys` refuses an operation with `timeReversal: true`, as every
   other function of that entry point does; in both entry points a `timeReversal` that is not a
   boolean is a RangeError. Before, the field was dropped without notice.
-- `siteSymmetryOf` and `orbitOf` on a list asked for many directions check the list once (a list
+- `siteSymmetryOf` and `orbitOf` check every product of the list, not only those with a generating
+  set: with a tolerance, a list could pass the check and miss a product that the site symmetry
+  looks up. They check a list asked for many directions once (a list
   checked is remembered by its content): with the check that the list is a group, a call on 48
   operations took about 0.5 ms, ten times as long as in 0.14.0.
 - `changeOfCoordinates` refuses an entry of P that is no fraction with a denominator of at most

@@ -36,7 +36,6 @@ export type DirectionInput = FaceIndices | DirectionIndices | CartesianDirection
 
 const FIELDS = ['hkl', 'uvw', 'cartesian'] as const;
 
-/** Three integers, not all zero, as indices of a face or a lattice direction; a RangeError otherwise. */
 /**
  * The largest component of indices: an image under an operation of a point group (a matrix W or
  * its inverse transpose with at most three entries ±1 in a row) has components up to three times as
@@ -44,6 +43,7 @@ const FIELDS = ['hkl', 'uvw', 'cartesian'] as const;
  */
 const MAX_INDEX = Math.floor(Number.MAX_SAFE_INTEGER / 3);
 
+/** Three integers, not all zero, as indices of a face or a lattice direction; a RangeError otherwise. */
 export function indicesOf(value: unknown, name: string): readonly [number, number, number] {
   if (
     !Array.isArray(value) ||

@@ -928,6 +928,12 @@ export function changeOfCoordinates(
   options?: ToleranceOptions,
 ): CoordinateChange {
   const ops = (quantities as { readonly operations?: unknown } | null)?.operations;
-  if (Array.isArray(ops)) checkUnitary(ops as readonly { readonly timeReversal?: false }[]);
+  if (Array.isArray(ops)) {
+    try {
+      checkUnitary(ops as readonly { readonly timeReversal?: false }[]);
+    } catch (e) {
+      throw new RangeError(`changeOfCoordinates: ${(e as Error).message}`, { cause: e });
+    }
+  }
   return coordinates.changeOfCoordinates(transformation, quantities, options);
 }

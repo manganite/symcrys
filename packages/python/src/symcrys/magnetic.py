@@ -1679,14 +1679,14 @@ def orbit_of(
     operations, for instance those of a distorted crystal: one image per coset of its site symmetry
     (``site_symmetry_of``, with the same ``tolerance``), the unit vector set onto the fixed space of
     the site symmetry and turned by the operations, in the order in which the operations reach them,
-    each with the indices of the operations that map the direction there; so the first entry holds
-    the operations of ``site_symmetry_of``, and the number of entries is its multiplicity. The list
-    is a point group given as all its operations; an empty list is the group 1, whose orbit is the
-    direction itself. Time reversal does not move a direction; an operation that leaves it out
-    counts as one without it. Raises SymcrysError for a zero vector, for an operation without an
-    orthogonal Cartesian matrix (``cartesian``; within ``tolerance``, at least ``EPSILON``) and for
-    a list that is not closed under products (only generators, for instance; the error names the
-    missing product).
+    each with the indices of the operations that map the direction there; so the entry with the
+    identity holds the operations of ``site_symmetry_of``, and the number of entries is its
+    multiplicity. The list is a point group given as all its operations; an empty list is the group
+    1, whose orbit is the direction itself. Time reversal does not move a direction; an operation
+    that leaves it out counts as one without it. Raises SymcrysError for a zero vector, for an
+    operation without an orthogonal Cartesian matrix (``cartesian``; within ``tolerance``, at least
+    ``EPSILON``) and for a list that is not closed under products (only generators, for instance;
+    the error names the missing product).
 
     Parameters
     ----------

@@ -1111,8 +1111,8 @@ origin shift changes neither vectors, indices nor the metric. It also gives the 
 positive one preferable, § 1.5.1.2, p. 76); a singular P is refused. P and the matrices W are
 read each number as the simplest fraction within the tolerance (0.3333333 is 1/3, 0.0625 is 1/16)
 and transformed exactly, so that W′ is exactly integral and every result, the inverse pair included,
-can be passed back; p and w are exact where they are fractions to rounding and otherwise taken as
-given (0.1234 stays 0.1234); an operation with det W ≠ ±1, or whose W′ is not integral
+can be passed back; p and w are exact when every number of them is a fraction to rounding, and
+otherwise taken as given (0.1234 stays 0.1234); an operation with det W ≠ ±1, or whose W′ is not integral
 (the new basis spans no lattice that the operation maps onto itself), is refused. A transformed
 operation is `{ matrix, translation }` alone, its translation w′ not reduced modulo the lattice, as
 ITA writes it; other fields of an operation record (`cartesian`, `timeReversal`) are not carried

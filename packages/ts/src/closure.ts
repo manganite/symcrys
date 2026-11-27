@@ -54,11 +54,10 @@ export type GroupDefect =
  * identity among them, and the list closed under products. Operations are equal when they agree in
  * time reversal (`timeReversal === true`) and in every Cartesian matrix entry within `tolerance`.
  *
- * @remarks A finite list L that contains the identity and is closed under right multiplication by
- * a generating set S of the group it generates is that group; with a tolerance, closed within it
- * under the products with S, which accepts lists within rounding of an exact group. S is chosen greedily in the order of
- * the list (an operation not yet reached by products of the earlier ones joins it), so the check
- * takes about |L|·|S| products, with |S| at most 4 for a point group. A product is looked up among
+ * @remarks Every product of two operations is looked up, |L|² of them (9216 for the 96 operations
+ * of m-3m1'), once per list (`checkGroup` remembers a list it has checked): with a tolerance, a list
+ * closed under the products with a generating set need not be closed under all of them, and the
+ * site symmetry and the orbit look up any product. A product is looked up among
  * the operations of its kind (rounded trace, sign of the determinant, time reversal), then, if not
  * found there, among all of them, so that a trace near a half integer is not misplaced.
  */
@@ -96,32 +95,12 @@ export function groupDefect(
   }
   const identity = find(LINEAR_IDENTITY, false);
   if (identity < 0) return { kind: 'identity' };
-  const reached = new Set([identity]);
-  const order = [identity];
-  const generators: number[] = [];
-  // Every reached operation times every generator: order[next] is the first not yet multiplied by
-  // all generators; a new generator is multiplied with every reached operation.
-  const multiplyBy = (x: number, s: number): GroupDefect | undefined => {
-    const k = find(multiply(operations[x].cartesian, operations[s].cartesian), reversed[x] !== reversed[s]);
-    if (k < 0) return { kind: 'product', i: x, j: s };
-    if (!reached.has(k)) {
-      reached.add(k);
-      order.push(k);
-    }
-    return undefined;
-  };
-  let done = 0; // order[0..done) are multiplied by every generator
-  for (let candidate = 0; candidate < n; candidate++) {
-    if (reached.has(candidate)) continue;
-    generators.push(candidate);
-    for (let a = 0; a < done; a++) {
-      const defect = multiplyBy(order[a], candidate);
-      if (defect) return defect;
-    }
-    for (; done < order.length; done++) {
-      for (const s of generators) {
-        const defect = multiplyBy(order[done], s);
-        if (defect) return defect;
+  // Every product, not only those with a generating set: with a tolerance, closure under the
+  // generators does not imply closure under all products, and the callers look up any product.
+  for (let i = 0; i < n; i++) {
+    for (let j = 0; j < n; j++) {
+      if (find(multiply(operations[i].cartesian, operations[j].cartesian), reversed[i] !== reversed[j]) < 0) {
+        return { kind: 'product', i, j };
       }
     }
   }

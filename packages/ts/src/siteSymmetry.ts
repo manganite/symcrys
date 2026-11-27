@@ -176,6 +176,7 @@ export function orbitInGroup(
   operations.forEach((op, i) => {
     if (done.has(i)) return;
     const coset = [...new Set(site.operations.map((h) => product(i, h)))].sort((a, b) => a - b);
+    // checkGroup has found every product in the list.
     if (coset.some((k) => k < 0)) throw new Error('orbitOf: a product of a checked group is not in it');
     for (const k of coset) done.add(k);
     poles.push({ direction: apply(op.cartesian, site.direction), operations: coset });

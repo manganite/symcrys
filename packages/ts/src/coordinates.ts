@@ -6,8 +6,8 @@
  *
  * The linear part P and the matrices W are read each number as the simplest fraction within the
  * tolerance and transformed exactly, so that W′ = P⁻¹WP is exactly integral where it is; the origin
- * shift p and the translations w are exact where they are fractions to rounding and floating point
- * otherwise, as are points, direction and plane coefficients and the metric.
+ * shift p and the translations w are exact when every number of them is a fraction to rounding and
+ * floating point otherwise, as are points, direction and plane coefficients and the metric.
  */
 
 import { checkObject, checkOptions, shown, TOLERANCE_KEYS } from './checks.js';
