@@ -679,13 +679,15 @@ perpendicular.
 - **Axis.** Every axis and mirror normal of a crystal class lies along one of its symmetry
   directions; the axis is that direction, as [uvw] and as a Cartesian unit vector in the frame of
   the setting, with the sign of the operation's **Seitz symbol** (ITA 6th ed., Tables 1.4.2.1–1.4.2.3,
-  p. 52): the direction its subscript names, for every matrix W of the setting.
-  symcrys computes it: the lattice symmetry direction of Table 2.1.3.1, reversed where none of its
-  components is positive. So the two differ in sign only in the hexagonal family, where the twofold
-  axes and mirror normals 2₁₁₀, m₁₁₀ and 2₂₁₀, m₂₁₀ are [1, 1, 0] and [2, 1, 0] and the table lists
-  [1̄, 1̄, 0] and [2̄, 1̄, 0]; directions such as [1̄, 1, 1̄] (3⁺ in the cubic family) and [1̄, 0, 1]
-  keep their sign. ITA states no rule for the signs; this one gives every printed subscript. `symmetryDirections` keeps the sign of Table 2.1.3.1, so match an axis with a direction up
-  to sign. Tested against the printed tables for every operation of every setting
+  p. 52): the direction its subscript names, for every matrix W of the setting. ITA (2016
+  § 1.4.2.2, p. 51) names the subscript the characteristic direction of the operation and states
+  no rule for its sign; symcrys computes it as the lattice symmetry direction of Table 2.1.3.1,
+  reversed where none of its components is positive, which gives every printed subscript. So the
+  two differ in sign only in the hexagonal family, where the twofold axes and mirror normals 2₁₁₀,
+  m₁₁₀ and 2₂₁₀, m₂₁₀ are [1, 1, 0] and [2, 1, 0] and the table lists [1̄, 1̄, 0] and [2̄, 1̄, 0];
+  directions such as [1̄, 1, 1̄] (3⁺ in the cubic family) and [1̄, 0, 1] keep their sign.
+  `symmetryDirections` keeps the sign of Table 2.1.3.1, so match an axis with a direction up to
+  sign. Tested against the printed tables for every operation of every setting
   (`seitz.reference.test.ts`), with the printed entries checked against their own matrices (axis,
   normal, sense); Table 1.4.2.1 prints No. 32 without the overbar of its type (erratum in the
   transcription). For the monoclinic family, which has no fixed
