@@ -12,7 +12,6 @@ import type { CartesianOperation } from './operations.js';
 import {
   IDEAL_PASSES,
   IDEAL_SETTLED,
-  IDEAL_EXACT,
   IDEAL_SNAP,
   IDEAL_UNSETTLED,
   MAX_GROUP_ORDER,
@@ -322,8 +321,6 @@ export function idealGroup(operations: readonly CartesianOperation[], tolerance:
   // Flat copies of the matrices, rows first, for the n² products of the table.
   const flat = group.map((g) => Float64Array.from(g.cartesian.flat()));
   const product = new Float64Array(9);
-  // The largest difference of a product from the element it is matched to.
-  let residual = 0;
   const nearest = (timeReversal: boolean, candidates: readonly number[]): number => {
     let best = -1;
     let bestDistance = Infinity;
@@ -337,7 +334,6 @@ export function idealGroup(operations: readonly CartesianOperation[], tolerance:
         bestDistance = d;
       }
     }
-    if (bestDistance < PRODUCT_MATCH) residual = Math.max(residual, bestDistance);
     return bestDistance < PRODUCT_MATCH ? best : -1;
   };
   const table = group.map((a, x) =>
@@ -355,21 +351,6 @@ export function idealGroup(operations: readonly CartesianOperation[], tolerance:
       return k;
     }),
   );
-  // Exact already: the products match the table and the matrices are orthogonal, within IDEAL_EXACT.
-  const orthogonal = flat.every((m) =>
-    [0, 1, 2].every((i) =>
-      [0, 1, 2].every(
-        (j) => Math.abs(m[i] * m[j] + m[3 + i] * m[3 + j] + m[6 + i] * m[6 + j] - (i === j ? 1 : 0)) < IDEAL_EXACT,
-      ),
-    ),
-  );
-  if (residual < IDEAL_EXACT && orthogonal) {
-    const exact = group.map((g) => ({ cartesian: snap(g.cartesian, IDEAL_SNAP), timeReversal: g.timeReversal }));
-    return {
-      operations: exact,
-      deviation: Math.max(...exact.map((op, k) => distance(op.cartesian, group[k].cartesian))),
-    };
-  }
   // The averaging, in flat arithmetic: f(x) ← (1/n) Σ_y f(xy)·f(y)⁻¹.
   let g = flat.map((m) => Float64Array.from(m));
   const inverses = group.map(() => new Float64Array(9));

@@ -594,8 +594,7 @@ when they differ by less than the tolerance, in the metric of their kind:
   replace it by the exact group nearest to it before they compute anything: each matrix f(x) by
   the mean of f(xy)·f(y)⁻¹ over the group, repeated until it settles, which turns matrices that are
   a group within a small error into an exact representation nearby, then made orthogonal by its
-  invariant metric; a group that satisfies its product table and is orthogonal within 10⁻¹²
-  already is exact and is kept (`IDEAL_EXACT`). The rank of a tensor form is the trace of the group average of the exact
+  invariant metric. The rank of a tensor form is the trace of the group average of the exact
   group, exact in any frame, and its free parameters are sought first among components larger
   than ten times the distance between the caller's matrices and the exact group, so that a component of the order of that error is not
   taken for an independent one. Operations rounded to 4, 5 or 6 decimals give the form of
