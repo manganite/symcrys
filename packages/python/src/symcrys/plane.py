@@ -209,7 +209,7 @@ class OperationDescription(TypedDict):
     """The n of the linear part (an n-fold rotation): 1 for the identity and a translation, 2 for a
     reflection or glide reflection.
     """
-    sense: NotRequired[Literal["+", "-"]]
+    sense: NotRequired[Literal["-", "+"]]
     """For a rotation of order 3 or more: ``'+'`` if it turns a towards b, ``'-'`` otherwise."""
     translation: NotRequired[NDArray[np.float64]]
     """For a translation: the translation vector."""

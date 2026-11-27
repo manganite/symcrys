@@ -62,9 +62,7 @@ results. It is not a digital interface to printed tables.
   established names of the field are standard vocabulary, not inventions of a print source, and
   stay as they are (the 47 crystal forms with the numbers of faces and eigensymmetries that define
   them, `formTypes.ts`), named by their content, never by the table that prints them. Notation in
-  results (`x,-y,z`, `h,0,l`, symbols) is formatted output of computed structures. Library modules
-  that still hold printed tables (`CELL_CHANGES` of `cellTransformation.ts`) are rebuilt by this
-  rule; no new one is added.
+  results (`x,-y,z`, `h,0,l`, symbols) is formatted output of computed structures.
 - **`references/` is only the anchor of the tests**, never the source of an API result.
 - **Names say what a thing is in crystallographic terms**: functions, parameters, fields, types and
   internal identifiers (`cellTransformation`, `formType: 'tetragonal-prism'`). The usual notation of

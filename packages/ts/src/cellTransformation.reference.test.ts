@@ -9,7 +9,6 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { CELL_CHANGES } from './cellTransformation.js';
 import {
   cellTransformation,
   changeOfCoordinates,
@@ -144,11 +143,8 @@ const MEANING: readonly (readonly [changes: readonly Change[], volume: string])[
 ];
 
 describe('the changes of cell against print (ITA 2016 Table 1.5.1.1)', () => {
-  it('the 41 printed rows are the changes of cell, the same matrices in the same order', () => {
+  it('has the 41 printed rows, each with its meaning', () => {
     expect(printed.map((r) => Number(r[0]))).toEqual(Array.from({ length: 41 }, (_, i) => i + 1));
-    expect(CELL_CHANGES.map((r) => [matrix(r.p), matrix(r.q)])).toEqual(
-      printed.map((r) => [matrix(r[3]), matrix(r[4])]),
-    );
     expect(MEANING).toHaveLength(41);
   });
 

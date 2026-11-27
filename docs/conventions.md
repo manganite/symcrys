@@ -1131,11 +1131,26 @@ A₁–A₃) are the three twofold axes of the lattice, 120° apart (ITA 2016 Fi
 p. 80). ITA calls them cell choices 1, 2, 3 in Table 1.5.1.1, but a cell choice of a monoclinic
 lattice keeps the unique axis and changes the centring, so one name would stand for two things.
 
-The matrices are those of ITA 2016 Table 1.5.1.1 (pp. 77–80); two cells the table does not join
-directly are joined by a product of its matrices, computed exactly. The triple hexagonal cell R from
-which the table gives the monoclinic cells of an `hR` lattice is R₁ obverse. The primitive cell of a
-centred lattice is the one the table gives for its conventional cell (I → P, F → P); the F-centred
-cells F₁, F₂ of `tI` have no primitive cell of their own. The change back is
+Each named cell has a basis in the conventional cell of the standard setting, and P from one cell
+to another is the inverse of the one times the other, computed exactly. The bases follow from rules
+where ITA's definitions have one, and are convention data otherwise (`cellTransformation.ts`,
+`basisOf`):
+
+- **Rules:** an orthorhombic setting from its symbol (`ba-c`: a′ = b, b′ = a, c′ = −c); the
+  primitive cell of an I lattice t − a, t − b, t − c with t = (a + b + c)/2, of an F lattice the
+  three centring vectors (b + c)/2, (a + c)/2, (a + b)/2 (also for `tI`, `cI`, `cF`); monoclinic
+  unique axes c and a the settings cab and bca, and cell choice k the step 1 → 2 of unique axis b
+  applied k − 1 times, relabelled for the other axes; the triple hexagonal cells R₁, R₂, R₃ of `hR`
+  as R₁ turned 0, 1, 2 times by the threefold rotation, the reverse ones these turned by the twofold
+  rotation about c, and the monoclinic cells C₂, C₃ likewise from C₁, A₁–A₃ as C₁–C₃ with unique
+  axis c.
+- **Convention data,** as ITA defines them: the monoclinic step 1 → 2 (unique axis b), the
+  tetragonal C₁, C₂ (and F₁, F₂), the hexagonal C₁–C₃, H₁–H₃, D₁, D₂, the primitive rhombohedral
+  cell and the monoclinic C₁ of `hR`.
+
+Every printed row of ITA 2016 Table 1.5.1.1 (pp. 77–80) is the P computed for its two cells
+(tested). The triple hexagonal cell R from which the table gives the monoclinic cells of an `hR`
+lattice is R₁ obverse; the F-centred cells F₁, F₂ of `tI` have no primitive cell of their own. The change back is
 `cellTransformation(bravaisLattice, toCell, fromCell)`.
 
 ## Tensors
