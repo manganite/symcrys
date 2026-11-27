@@ -1117,7 +1117,8 @@ describe('#235: one measure for a key and a list, and the accuracy of the operat
     expect(error).toBeInstanceOf(RangeError);
     const named = numbersIn((error as Error).message);
     expect(named).toContain(1e-7);
-    expect(named.some((x) => Math.abs(x - (1 / 3 - 0.333333)) < 1e-9)).toBe(true);
+    // The deviation 3.3·10⁻⁷, written to a few digits.
+    expect(named.some((x) => Math.abs(x / (1 / 3 - 0.333333) - 1) < 0.05)).toBe(true);
   });
 });
 

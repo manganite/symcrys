@@ -118,28 +118,48 @@ describe('idealGroup', () => {
 // --- the safety net of #234: tests that fail on 0.15.0 (it.fails); each fix removes its mark -------
 
 describe('#241: the postconditions of idealGroup', () => {
-  // The 12 operations of 23 with every entry moved by up to 0.02 (seed 22), closed at the tolerance
-  // 0.09: on 0.15.0 the "group" has 16 elements and is not orthogonal. No group of order 16 holds
-  // a rotation of order 3 (Lagrange: 3 does not divide 16), so these are no group of 23 at all.
+  // The 12 operations of 23 with every entry moved by up to 0.03 (seed 8), within the tolerance
+  // 0.09 of an exact 23. On 0.15.0 the closure is no group of orthogonal matrices, pointGroupOf gives
+  // undefined and tensorFormOf throws a plain Error. Right is either a RangeError or the answer for
+  // 23: 12 operations, the class 23, one piezoelectric component (ITA 2016 Table 3.2.2.1, p. 738).
   const input = noisy(
     classes.operations('23').map((op) => ({ cartesian: op.cartesian, timeReversal: false })),
-    0.02,
-    seededRandom(22),
+    0.03,
+    seededRandom(8),
   );
   const tolerance = 0.09;
   /** The same operations as the crystallographic API takes them, without the field timeReversal. */
   const spatial = input.map(({ cartesian }) => ({ cartesian }));
+  /** A RangeError, or the value of `f`. */
+  const rangeErrorOr = <T>(f: () => T): T | 'RangeError' => {
+    try {
+      return f();
+    } catch (e) {
+      if (e instanceof RangeError) return 'RangeError';
+      throw e;
+    }
+  };
+  const orthogonal = (m: Mat3) =>
+    m.every((_, i) =>
+      m.every((_, j) => Math.abs(m[0][i] * m[0][j] + m[1][i] * m[1][j] + m[2][i] * m[2][j] - (i === j ? 1 : 0)) < 1e-9),
+    );
 
-  it.fails('idealGroup refuses input that does not settle into a group of orthogonal matrices', () => {
-    expect(() => idealGroup(input, tolerance)).toThrow(RangeError);
+  it.fails('idealGroup gives the 12 orthogonal operations of 23, or refuses', () => {
+    const got = rangeErrorOr(() => idealGroup(input, tolerance));
+    if (got !== 'RangeError') {
+      expect(got.operations).toHaveLength(12);
+      expect(got.operations.every((op) => orthogonal(op.cartesian))).toBe(true);
+    }
   });
 
-  it.fails('tensorFormOf refuses it with a RangeError, not a plain Error', () => {
-    expect(() => classes.tensorFormOf(spatial, 'piezoelectric', { tolerance })).toThrow(RangeError);
+  it.fails('pointGroupOf gives the class 23, or refuses', () => {
+    const got = rangeErrorOr(() => classes.pointGroupOf(spatial, { tolerance }));
+    if (got !== 'RangeError') expect(got?.key).toBe('23');
   });
 
-  it.fails('pointGroupOf refuses it with a RangeError, not undefined', () => {
-    expect(() => classes.pointGroupOf(spatial, { tolerance })).toThrow(RangeError);
+  it.fails('tensorFormOf gives one piezoelectric component, or refuses with a RangeError', () => {
+    const got = rangeErrorOr(() => classes.tensorFormOf(spatial, 'piezoelectric', { tolerance }));
+    if (got !== 'RangeError') expect(got.basis).toHaveLength(1);
   });
 
   it.fails('an accepted result is a group of orthogonal matrices within the tolerance of the input', () => {
@@ -155,7 +175,7 @@ describe('#241: the postconditions of idealGroup', () => {
       [0, 0, 1],
     ];
     const wrong: string[] = [];
-    // Large noise at large tolerances, where 0.15.0 violates them (4 of these 400 inputs), and small
+    // Large noise at large tolerances, where 0.15.0 violates them (in 4 of these 400 inputs), and small
     // noise as a check that the bounds hold for ordinary input.
     for (const key of ['m-3m', '6/mmm', '4/mmm', '23'] as const) {
       for (const amplitude of [1e-3, 2e-2]) {

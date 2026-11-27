@@ -6,12 +6,16 @@
 
 import type { Mat3, Vec3 } from '../linalg.js';
 
-/** A linear congruential generator in [0, 1): the same sequence for the same seed in every run. */
+/**
+ * The minimal standard generator of Park and Miller in [0, 1): the same sequence for the same seed
+ * (1 to 2³¹ − 2) in every run. Its products stay below 2⁴⁷, so they are exact in doubles, and its
+ * period is 2³¹ − 2.
+ */
 export function seededRandom(seed: number): () => number {
   let state = seed;
   return () => {
-    state = (state * 1103515245 + 12345) % 2147483648;
-    return state / 2147483648;
+    state = (state * 48271) % 2147483647;
+    return state / 2147483647;
   };
 }
 

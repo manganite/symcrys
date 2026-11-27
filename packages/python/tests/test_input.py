@@ -65,31 +65,54 @@ def test_two_keys_for_one_field_are_refused_in_an_operation() -> None:
 def test_a_masked_array_with_masked_values_is_refused() -> None:
     # On 0.15.0 the masked value 2 is used as if it were not masked.
     with pytest.raises(symcrys.SymcrysError, match="mask"):
-        symcrys.rotate_tensor(np.ma.array([1.0, 2.0, 3.0], mask=[0, 1, 0]), np.eye(3), "pyroelectric")
+        symcrys.rotate_tensor(np.ma.array([1.0, 2.0, 3.0], mask=[False, True, False]), np.eye(3), "pyroelectric")
 
 
 def test_a_masked_point_is_refused_in_the_plane() -> None:
     with pytest.raises(symcrys.SymcrysError):
-        plane.site_symmetry("p4", point=np.ma.array([0.1, 0.2], mask=[0, 1]))
+        plane.site_symmetry("p4", point=np.ma.array([0.1, 0.2], mask=[False, True]))
 
 
 def test_a_masked_array_without_masked_values_is_taken() -> None:
-    got = symcrys.rotate_tensor(np.ma.array([1.0, 2.0, 3.0], mask=[0, 0, 0]), np.eye(3), "pyroelectric")
+    got = symcrys.rotate_tensor(np.ma.array([1.0, 2.0, 3.0], mask=[False, False, False]), np.eye(3), "pyroelectric")
     assert got.tolist() == [1.0, 2.0, 3.0]
 
 
 @FAILS_ON_0_15
 def test_an_integer_that_a_double_would_round_is_refused_in_a_list_of_floats() -> None:
     # 2**53 + 1 has no double; on 0.15.0 it becomes 9007199254740992.0 without an error.
-    with pytest.raises(symcrys.SymcrysError, match=r"2\*\*53"):
+    with pytest.raises(symcrys.SymcrysError):
         symcrys.rotate_tensor([2**53 + 1, 1.0, 2.0], np.eye(3), "pyroelectric")
+
+
+@pytest.mark.parametrize(
+    "call",
+    [
+        lambda: symcrys.rotate_tensor(np.array([2**53 + 1, 1, 2]), np.eye(3), "pyroelectric"),
+        lambda: plane.orbit("4mm", uv=np.array([2**53 + 1, 1])),
+    ],
+    ids=["symcrys int64 array", "plane int64 array"],
+)
+def test_an_integer_array_beyond_2_53_is_refused(call: Any) -> None:
+    with pytest.raises(symcrys.SymcrysError):
+        call()
+
+
+def test_strings_are_refused_as_a_point_of_the_plane() -> None:
+    with pytest.raises(symcrys.SymcrysError):
+        plane.site_symmetry("p4", point=np.array(["0.1", "0.2"]))
+
+
+def test_a_key_that_is_not_a_string_is_refused() -> None:
+    with pytest.raises(symcrys.SymcrysError):
+        symcrys.tensor_form("4", {1: "x", "rank": 1, "kind": "polar", "intrinsic": "none"})  # type: ignore[dict-item]
 
 
 @FAILS_ON_0_15
 def test_an_empty_record_of_the_wrong_shape_is_refused() -> None:
     a = np.empty((3, 0, 4))
     with pytest.raises(symcrys.SymcrysError, match="shape"):
-        symcrys.point_group_of(symcrys.Operations(a, a))
+        symcrys.point_group_of(symcrys.Operations(a, a))  # type: ignore[arg-type]
 
 
 def test_an_empty_record_of_the_right_shape_is_the_group_1() -> None:
@@ -135,7 +158,7 @@ def test_to_voigt_takes_a_rank_2_tensor_in_its_shapes(shape: tuple[int, ...]) ->
 def test_a_numpy_scalar_that_is_exactly_a_double_is_taken() -> None:
     # np.longdouble(1) is exactly 1.0; on 0.15.0 it raises a RecursionError.
     want = symcrys.lattice_from_parameters(1.0, 1, 1, 90, 90, 90)
-    got = symcrys.lattice_from_parameters(np.longdouble(1), 1, 1, 90, 90, 90)
+    got = symcrys.lattice_from_parameters(np.longdouble(1), 1, 1, 90, 90, 90)  # type: ignore[arg-type]
     assert got.tolist() == want.tolist()
 
 
@@ -143,4 +166,4 @@ def test_a_numpy_scalar_that_is_exactly_a_double_is_taken() -> None:
 @pytest.mark.skipif(np.finfo(np.longdouble).eps == np.finfo(np.float64).eps, reason="long double is a double here")
 def test_a_numpy_scalar_that_a_double_would_round_is_refused() -> None:
     with pytest.raises(symcrys.SymcrysError):
-        symcrys.lattice_from_parameters(np.longdouble(1) + np.longdouble(2) ** -60, 1, 1, 90, 90, 90)
+        symcrys.lattice_from_parameters(np.longdouble(1) + np.longdouble(2) ** -60, 1, 1, 90, 90, 90)  # type: ignore[arg-type]

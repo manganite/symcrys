@@ -37,7 +37,8 @@ describe('#235: a tolerance below the accuracy of the operations', () => {
     expect(error).toBeInstanceOf(RangeError);
     const named = numbersIn((error as Error).message);
     expect(named).toContain(1e-8);
-    expect(named.some((x) => Math.abs(x - 1e-6) < 1e-8)).toBe(true);
+    // The deviation, 10⁻⁶, written to a few digits.
+    expect(named.some((x) => Math.abs(x / 1e-6 - 1) < 0.05)).toBe(true);
   });
 
   // The noisy 4mm of the issue: entries moved by up to 2·10⁻⁶, direction along the fourfold axis.
@@ -61,7 +62,9 @@ describe('#235: a tolerance below the accuracy of the operations', () => {
       expect(error).toBeInstanceOf(RangeError);
       const named = numbersIn((error as Error).message);
       expect(named).toContain(tolerance);
-      expect(named.some((x) => Math.abs(x - dev) < 0.01 * dev)).toBe(true);
+      // The deviation is measured against the exact group nearest to the list, which need not be the
+      // group in the standard orientation that dev is measured against; it lies within a factor 2.
+      expect(named.some((x) => x !== tolerance && x > 0.5 * dev && x < 2 * dev)).toBe(true);
     });
   }
 
@@ -133,6 +136,8 @@ describe('#235: the tolerance measures the distance to the symmetry element', ()
 });
 
 describe('#235: the site symmetry of a noisy list is a subgroup (all groups)', () => {
+  // At each tolerance either a RangeError, allowed only for noisy operations and a tolerance below
+  // their deviation (within the factor 2 of the measure), or a subgroup with these properties.
   it.fails('identity included, closed, |orbit| · |stabiliser| = |G|, images of norm 1, a partition', () => {
     const random = seededRandom(5);
     const found: string[] = [];
@@ -146,9 +151,17 @@ describe('#235: the site symmetry of a noisy list is a subgroup (all groups)', (
       const index = (m: Mat3, t: boolean) => exact.findIndex((op) => op.timeReversal === t && same(op.cartesian, m));
       for (const amplitude of [0, 1e-7, 1e-6]) {
         const given = noisy(exact, amplitude, random);
-        for (const v of directions) {
-          const where = `${key} ${amplitude} ${v.map((x) => x.toFixed(2)).join(',')}`;
-          const site = magnetic.siteSymmetryOf(given, v);
+        const dev = deviation(given, exact);
+        for (const [tolerance, v] of [1e-8, 1e-6, 1e-5].flatMap((t) => directions.map((d) => [t, d] as const))) {
+          const where = `${key} ${amplitude} ${tolerance} ${v.map((x) => x.toFixed(2)).join(',')}`;
+          let site;
+          try {
+            site = magnetic.siteSymmetryOf(given, v, { tolerance });
+          } catch (e) {
+            if (!(e instanceof RangeError && amplitude > 0 && tolerance < 2 * dev))
+              found.push(`${where}: ${String(e)}`);
+            continue;
+          }
           const H = site.operations;
           if (!H.some((i) => same(exact[i].cartesian, I) && !exact[i].timeReversal))
             found.push(`${where}: no identity`);
@@ -160,7 +173,7 @@ describe('#235: the site symmetry of a noisy list is a subgroup (all groups)', (
               );
               if (!H.includes(k)) found.push(`${where}: not closed`);
             }
-          const orbit = magnetic.orbitOf(given, v);
+          const orbit = magnetic.orbitOf(given, v, { tolerance });
           if (orbit.length * H.length !== exact.length) found.push(`${where}: |orbit| · |H| ≠ |G|`);
           for (const pole of orbit)
             if (Math.abs(Math.hypot(...pole.direction) - 1) > 1e-12) found.push(`${where}: an image of norm ≠ 1`);
