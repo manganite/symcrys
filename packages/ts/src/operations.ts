@@ -23,6 +23,32 @@ export interface CartesianOperation {
 }
 
 /**
+ * An operation as the functions of directions read it (`siteSymmetryOf`, `orbitOf`): its Cartesian
+ * matrix, and whether it is combined with time reversal; one that leaves it out counts as one
+ * without it. Time
+ * reversal does not move a direction; it only tells apart the two copies of a matrix in a grey
+ * group.
+ */
+export interface DirectionOperation {
+  /** The orthogonal Cartesian 3×3 matrix, rows first. */
+  readonly cartesian: Mat3;
+  /** Whether the operation is combined with time reversal; left out, it is not. */
+  readonly timeReversal?: boolean;
+}
+
+/** Throws a RangeError for an operation whose `timeReversal`, given, is not a boolean. */
+export function checkOptionalTimeReversal(operations: readonly unknown[], who: string): void {
+  // A list that is no array is refused by the check of the operations themselves.
+  if (!Array.isArray(operations)) return;
+  operations.forEach((op, i) => {
+    const t = (op as { readonly timeReversal?: unknown } | null)?.timeReversal;
+    if (t !== undefined && typeof t !== 'boolean') {
+      throw new RangeError(`${who}: operation ${i}: timeReversal must be true, false or absent, not ${shown(t)}`);
+    }
+  });
+}
+
+/**
  * A point operation of a magnetic point group in a setting: ITA's matrix W in the lattice basis of
  * the setting (`matrix`, integer, acting on the coordinates of a lattice direction [uvw]; the
  * coordinate triplets of ITA's general position are its rows) and the same operation as an

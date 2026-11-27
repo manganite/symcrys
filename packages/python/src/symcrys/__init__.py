@@ -1245,8 +1245,8 @@ def cell_transformation(
     cI and cF: ``centring`` ``'P'``, the primitive cell, the one ITA gives for the conventional
     cell.
 
-    Fractions such as 1/3 are the nearest numbers, which ``change_of_coordinates`` reads back as
-    fractions.
+    Fractions such as 1/3 are the nearest numbers, which ``change_of_coordinates`` reads back as the
+    same fractions at any tolerance.
     """
     result: CoordinateTransformation = _shared.convert(
         _call(
@@ -1278,17 +1278,18 @@ def change_of_coordinates(
     gives the inverse pair (Q, q) = (P⁻¹, −P⁻¹p). det P may be negative (a change of handedness,
     which ITA allows).
 
-    P, p and the operations are read each number as the simplest fraction within the tolerance
-    (default ``EPSILON``; 0.3333333 is 1/3) and transformed exactly, so that every result, the
-    inverse pair included, can be passed back; the other quantities are floating point. P is
-    rational in a change between lattice bases, as in ITA; an irrational P (a rotation by 30°) is
-    read as the nearby fractions, about as exact as the tolerance, and a much smaller tolerance can
-    make the exact products leave the safe integers, a SymcrysError. A transformed operation has a
-    ``matrix`` and a ``translation`` alone: other fields of the record (``cartesian``, in the
-    magnetic API ``time_reversal``) are not carried over, so they are matched by index. Raises
-    SymcrysError for a singular P, a quantity of the wrong shape, an unknown quantity, an operation
-    with det W ≠ ±1, and one whose W′ is not integral (the new basis does not span a lattice that
-    the operation maps onto itself).
+    P, p and the operations are read each number as a fraction, transformed exactly, so that every
+    result, the inverse pair included, can be passed back; the other quantities are floating point.
+    A number that is a fraction to rounding is that fraction; another is read as the simplest
+    fraction within the tolerance (default ``EPSILON``; 0.3333333 is 1/3). P is rational in a change
+    between lattice bases, as in ITA: an entry of P that needs a fraction with a denominator above
+    tolerance^(−1/3) (46 at 10⁻⁵), such as cos 30° of a rotation, is refused (docs/conventions.md,
+    "Tolerances"). A transformed operation has a ``matrix`` and a ``translation`` alone: other
+    fields of the record (``cartesian``, in the magnetic API ``time_reversal``) are not carried
+    over, so they are matched by index. Raises SymcrysError for a singular P, an entry of P that is
+    not rational within the tolerance, a quantity of the wrong shape, an unknown quantity, an
+    operation with det W ≠ ±1, and one whose W′ is not integral (the new basis does not span a
+    lattice that the operation maps onto itself).
 
     Parameters
     ----------

@@ -43,7 +43,7 @@ export const POINT_GROUP_KEYS = Object.freeze([
   'm-3m',
 ] as const);
 
-/** The key of one of the 32 crystal classes (`POINT_GROUP_KEYS`). */
+/** The key of one of the 32 crystal classes: the ITC short symbol of the class. */
 // `Extract<…, string>` is the same type; written so, the documentation (TypeDoc) names it instead of
 // listing the 32 keys at every use.
 export type PointGroupKey = Extract<(typeof POINT_GROUP_KEYS)[number], string>;
@@ -51,6 +51,7 @@ export type PointGroupKey = Extract<(typeof POINT_GROUP_KEYS)[number], string>;
 /** Keys of the 32 grey groups: the key of the crystal class followed by `1'`. */
 export type GreyPointGroupKey = `${PointGroupKey}1'`;
 
+/** Keys of the 32 grey groups, in the order of the crystal classes. */
 export const GREY_POINT_GROUP_KEYS: readonly GreyPointGroupKey[] = Object.freeze(
   POINT_GROUP_KEYS.map((key): GreyPointGroupKey => `${key}1'`),
 );

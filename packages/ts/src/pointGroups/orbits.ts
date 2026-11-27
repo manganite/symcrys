@@ -5,7 +5,7 @@
 
 import { checkNumbers, checkOptions, SETTING_KEYS, shown, TOLERANCE_KEYS } from '../checks.js';
 import { apply, inverse, type Mat3, type Vec3 } from '../linalg.js';
-import { checkCartesianOperations } from '../operations.js';
+import { checkCartesianOperations, checkOptionalTimeReversal, type DirectionOperation } from '../operations.js';
 import { siteTolerance } from '../siteSymmetry.js';
 import { checkGroup } from '../closure.js';
 import { EPSILON, TOLERANCE_BOUND } from '../tolerances.js';
@@ -127,17 +127,19 @@ export interface OrbitPole {
  * operation, coinciding images merged (closer than `tolerance`, default `EPSILON`, as for
  * `siteSymmetryOf`), in the order in which the operations reach them, each with the indices of the
  * operations that map the direction there. The list is a point group given as all its operations;
- * an empty list is the group 1, whose orbit is the direction itself. Time reversal is ignored.
+ * an empty list is the group 1, whose orbit is the direction itself. Time reversal does not move a
+ * direction; an operation that leaves it out counts as one without it.
  * Throws a RangeError for a zero vector, for an operation without an orthogonal Cartesian matrix
  * (`cartesian`; within `tolerance`, at least `EPSILON`) and for a list that is not closed under
  * products (only generators, for instance; the error names the missing product).
  */
 export function orbitOf(
-  operations: readonly { readonly cartesian: Mat3 }[],
+  operations: readonly DirectionOperation[],
   direction: Vec3,
   options?: ToleranceOptions,
 ): readonly OrbitPole[] {
   checkOptions(options, TOLERANCE_KEYS, 'orbitOf');
+  checkOptionalTimeReversal(operations, 'orbitOf');
   const tolerance = siteTolerance(options);
   // Operations are checked in their own metric, at most with the bound for operations.
   const within = Math.min(tolerance, TOLERANCE_BOUND.operations);

@@ -784,7 +784,10 @@ _S_TensorForm = (
 __all__ = [
     "VERSION",
     "EPSILON",
+    "CRYSTAL_CLASS_KEYS",
     "LATTICE_SYMMETRY_DIRECTIONS",
+    "GREY_POINT_GROUP_KEYS",
+    "BLACK_WHITE_POINT_GROUP_KEYS",
     "POINT_GROUP_KEYS",
     "TENSOR_PROPERTIES",
     "SymcrysError",
@@ -897,6 +900,9 @@ directions, points): two numbers closer than this count as equal, in the metric 
 (docs/conventions.md, "Tolerances"). Operations rounded to 6 decimals pass with it in any
 orientation; rounded to n decimals they need about 10^(1−n).
 """
+CRYSTAL_CLASS_KEYS: tuple[str, ...] = _shared.convert(_value("CRYSTAL_CLASS_KEYS"), ("t", _V))
+"""Keys of the 32 crystal classes: the ITC short symbol of the class (docs/conventions.md, "Keys").
+"""
 LATTICE_SYMMETRY_DIRECTIONS: dict[str, list[NDArray[np.int64]]] = _shared.convert(
     _value("LATTICE_SYMMETRY_DIRECTIONS"),
     ("x", "lattice_symmetry_directions"),
@@ -910,6 +916,15 @@ unique axis b, [001] for unique axis c, [100] for unique axis a), and the full s
 the other two positions (``1 2/m 1``).
 
 In Python: family → one int64 array of shape (n, 3) per position, the n directions [uvw] as rows.
+"""
+GREY_POINT_GROUP_KEYS: tuple[str, ...] = _shared.convert(_value("GREY_POINT_GROUP_KEYS"), ("t", _V))
+"""Keys of the 32 grey groups, in the order of the crystal classes."""
+BLACK_WHITE_POINT_GROUP_KEYS: tuple[str, ...] = _shared.convert(
+    _value("BLACK_WHITE_POINT_GROUP_KEYS"),
+    ("t", _V),
+)
+"""Keys of the 58 black-and-white groups: their ITC short Hermann–Mauguin symbols, in ITC's order
+(docs/conventions.md, "Keys").
 """
 POINT_GROUP_KEYS: tuple[str, ...] = _shared.convert(_value("POINT_GROUP_KEYS"), ("t", _V))
 """Keys of the 122 magnetic point groups: the 32 crystal classes (white groups), the 32 grey groups
@@ -1248,17 +1263,18 @@ def change_of_coordinates(
     gives the inverse pair (Q, q) = (P⁻¹, −P⁻¹p). det P may be negative (a change of handedness,
     which ITA allows).
 
-    P, p and the operations are read each number as the simplest fraction within the tolerance
-    (default ``EPSILON``; 0.3333333 is 1/3) and transformed exactly, so that every result, the
-    inverse pair included, can be passed back; the other quantities are floating point. P is
-    rational in a change between lattice bases, as in ITA; an irrational P (a rotation by 30°) is
-    read as the nearby fractions, about as exact as the tolerance, and a much smaller tolerance can
-    make the exact products leave the safe integers, a SymcrysError. A transformed operation has a
-    ``matrix`` and a ``translation`` alone: other fields of the record (``cartesian``, in the
-    magnetic API ``time_reversal``) are not carried over, so they are matched by index. Raises
-    SymcrysError for a singular P, a quantity of the wrong shape, an unknown quantity, an operation
-    with det W ≠ ±1, and one whose W′ is not integral (the new basis does not span a lattice that
-    the operation maps onto itself).
+    P, p and the operations are read each number as a fraction, transformed exactly, so that every
+    result, the inverse pair included, can be passed back; the other quantities are floating point.
+    A number that is a fraction to rounding is that fraction; another is read as the simplest
+    fraction within the tolerance (default ``EPSILON``; 0.3333333 is 1/3). P is rational in a change
+    between lattice bases, as in ITA: an entry of P that needs a fraction with a denominator above
+    tolerance^(−1/3) (46 at 10⁻⁵), such as cos 30° of a rotation, is refused (docs/conventions.md,
+    "Tolerances"). A transformed operation has a ``matrix`` and a ``translation`` alone: other
+    fields of the record (``cartesian``, in the magnetic API ``time_reversal``) are not carried
+    over, so they are matched by index. Raises SymcrysError for a singular P, an entry of P that is
+    not rational within the tolerance, a quantity of the wrong shape, an unknown quantity, an
+    operation with det W ≠ ±1, and one whose W′ is not integral (the new basis does not span a
+    lattice that the operation maps onto itself).
 
     Parameters
     ----------
@@ -1341,8 +1357,8 @@ def cell_transformation(
     cI and cF: ``centring`` ``'P'``, the primitive cell, the one ITA gives for the conventional
     cell.
 
-    Fractions such as 1/3 are the nearest numbers, which ``change_of_coordinates`` reads back as
-    fractions.
+    Fractions such as 1/3 are the nearest numbers, which ``change_of_coordinates`` reads back as the
+    same fractions at any tolerance.
     """
     result: CoordinateTransformation = _shared.convert(
         _call(
@@ -1671,10 +1687,11 @@ def orbit_of(
     operation, coinciding images merged (closer than ``tolerance``, default ``EPSILON``, as for
     ``site_symmetry_of``), in the order in which the operations reach them, each with the indices of
     the operations that map the direction there. The list is a point group given as all its
-    operations; an empty list is the group 1, whose orbit is the direction itself. Time reversal is
-    ignored. Raises SymcrysError for a zero vector, for an operation without an orthogonal Cartesian
-    matrix (``cartesian``; within ``tolerance``, at least ``EPSILON``) and for a list that is not
-    closed under products (only generators, for instance; the error names the missing product).
+    operations; an empty list is the group 1, whose orbit is the direction itself. Time reversal
+    does not move a direction; an operation that leaves it out counts as one without it. Raises
+    SymcrysError for a zero vector, for an operation without an orthogonal Cartesian matrix
+    (``cartesian``; within ``tolerance``, at least ``EPSILON``) and for a list that is not closed
+    under products (only generators, for instance; the error names the missing product).
 
     Parameters
     ----------
@@ -2340,7 +2357,7 @@ def allowed_properties_of(
 
 def to_voigt(
     tensor: ArrayLike,
-    spec_or_name: TensorSpec | Mapping[str, Any] | TensorPropertyName,
+    spec: TensorSpec | Mapping[str, Any] | TensorPropertyName,
     *,
     factors: Optional[ArrayLike] = None,
     tolerance: Optional[float] = None,
@@ -2380,7 +2397,7 @@ def to_voigt(
         _call(
             "toVoigt",
             _shared.array(tensor, "tensor", np.float64).reshape(-1),
-            _shared.spec(spec_or_name),
+            _shared.spec(spec),
             _shared.options(factors=None if factors is None else _shared.array(factors, "factors", np.float64), tolerance=tolerance),
         ),
         ("a", np.float64, None),
@@ -2390,7 +2407,7 @@ def to_voigt(
 
 def from_voigt(
     voigt: ArrayLike,
-    spec_or_name: TensorSpec | Mapping[str, Any] | TensorPropertyName,
+    spec: TensorSpec | Mapping[str, Any] | TensorPropertyName,
     *,
     factors: Optional[ArrayLike] = None,
     tolerance: Optional[float] = None,
@@ -2427,7 +2444,7 @@ def from_voigt(
         _call(
             "fromVoigt",
             _shared.array(voigt, "voigt", np.float64),
-            _shared.spec(spec_or_name),
+            _shared.spec(spec),
             _shared.options(factors=None if factors is None else _shared.array(factors, "factors", np.float64), tolerance=tolerance),
         ),
         ("x", "tensor"),

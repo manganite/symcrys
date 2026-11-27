@@ -8,6 +8,13 @@ All notable changes to symcrys are recorded here. The format follows
 
 ### Added
 
+- `findPlaneGroup` reads the short symbols of International Tables (1952) still in common use:
+  `pmm`, `pmg`, `pgg`, `cmm`, `p4m`, `p4g`, `p6m` (#208).
+- `symcrys/magnetic` exports the keys of the three types of groups, `CRYSTAL_CLASS_KEYS`,
+  `GREY_POINT_GROUP_KEYS` and `BLACK_WHITE_POINT_GROUP_KEYS`, and their types `CrystalClassKey`,
+  `GreyPointGroupKey`, `BlackWhitePointGroupKey` and `MagneticPointGroupKey`; `symcrys/plane` the
+  type `PlanePointGroupKey` (#208).
+
 - `findPointGroup` and the option `setting` read the symbols of ITC Vol. D Table 1.2.6.12 (p. 66)
   (#206): the grey groups with `1'` after the first position (`21'/m`, `41'/m`, `61'/m`) and `1'`
   alone for `11'`, and the cubic groups without the prime on the 3 (`m'-3`, `m'-3m`, `m'-3m'`), a
@@ -19,6 +26,13 @@ All notable changes to symcrys are recorded here. The format follows
   operations (#208): the group of the caller is made exact with flat arithmetic. 48 operations of
   m-3m in a general orientation: 2–5 ms in Node, was about 11 ms (0.9: 6–13 ms); forms
   unchanged up to rounding.
+- `toVoigt` and `fromVoigt` of `symcrys/magnetic` name their second parameter `spec`, as in
+  `symcrys` (#208); in Python `symcrys.magnetic.to_voigt` and `from_voigt` take `spec=`, was
+  `spec_or_name=`.
+- `siteSymmetryOf` and `orbitOf` of `symcrys/magnetic` take operations with or without
+  `timeReversal` (`DirectionOperation`), read as false when left out (#208); before,
+  `siteSymmetryOf` was typed to require it. A given `timeReversal` that is not a boolean is a
+  RangeError.
 - Python (#208): messages of `SymcrysError` are in Python's terms (`from_cell`, `time_reversal`,
   `None`, `True`, `factors=[…]`, was `fromCell`, `timeReversal`, `undefined`, `true`,
   `{ factors: […] }`); `change_of_coordinates(...)["operations"]` is a `TransformedOperations`
@@ -63,6 +77,15 @@ All notable changes to symcrys are recorded here. The format follows
 
 ### Fixed
 
+- `changeOfCoordinates` refuses an entry of P that is no fraction with a denominator of at most
+  tolerance^(−1/3) (46 at 10⁻⁵) within the tolerance, such as cos 30° of a rotation, with a
+  RangeError (#208). Before, such a P was read as nearby fractions, coordinates off by about the
+  tolerance (a rotation by 30°), or failed with an error about safe integers (a general rotation).
+  An entry that is a fraction to rounding is now that fraction at any tolerance: before, at a
+  large tolerance 1/16 was read as the simplest fraction within it (1/9 at 0.05). Since 0.12.0.
+- The functions of a point of the plane refuse a coordinate beyond 10⁶ in magnitude (#208): beyond
+  about 2⁵² a double has no fractional part, and `orbit('p4mm', { point: [1e300, 0] })` gave the
+  origin with its full site symmetry.
 - `describeOperationsOf` (both point-group entry points) described a matrix far outside the
   tolerance as a crystallographic operation (#205): it checked only that the trace is an integer
   within 3·tolerance, which near 0° and 180° holds for matrices off by about 10⁻³ (a rotation by

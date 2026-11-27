@@ -11,7 +11,7 @@
  */
 
 import { checkObject, checkOptions, shown, TOLERANCE_KEYS } from './checks.js';
-import { toleranceOf, type ToleranceOptions } from './tolerances.js';
+import { EXACT_DENOMINATOR, ROUNDING_EPSILON, toleranceOf, type ToleranceOptions } from './tolerances.js';
 import { deepFreeze } from './freeze.js';
 import type { Mat3, Vec3 } from './linalg.js';
 import {
@@ -187,8 +187,32 @@ function transform(
   }
   const P0 = transformation.linearPart;
   if (!isRows(P0, d)) throw new RangeError(`${who}: the linear part P must be a ${d} × ${d} matrix, not ${shown(P0)}`);
-  const fraction = (x: number, what: string): Rational => simplestFraction(x, tolerance, what);
-  const P = P0.map((row) => row.map((x) => fraction(x, 'entry of P')));
+  // A number that is a fraction to rounding is that fraction; otherwise the simplest fraction within
+  // the tolerance (0.3333333 is 1/3).
+  const exact = (x: number): Rational | undefined => {
+    const f = simplestFraction(x, ROUNDING_EPSILON, 'number');
+    return f[1] <= EXACT_DENOMINATOR ? f : undefined;
+  };
+  const fraction = (x: number, what: string): Rational =>
+    (typeof x === 'number' && Number.isFinite(x) ? exact(x) : undefined) ?? simplestFraction(x, tolerance, what);
+  // Every number lies within 1/q² of a fraction p/q (Dirichlet), so a fraction found within the
+  // tolerance says something only for small q: a number without one (cos 30°, from a rotation by
+  // 30°) meets a fraction with q ≤ Q within the tolerance with a chance of about Q²·tolerance; with
+  // Q = tolerance^(-1/3) that chance is tolerance^(1/3), about 2 % at 10⁻⁵ (Q = 46). An entry that
+  // is a fraction to rounding (1/16, 2/3) is taken as it is at any tolerance.
+  const largest = Math.floor(tolerance ** (-1 / 3) + ROUNDING_EPSILON);
+  const P = P0.map((row) =>
+    row.map((x) => {
+      const f = fraction(x, 'entry of P');
+      if (f[1] > largest && !exact(x)) {
+        const rotate = d === 3 ? '; to turn a tensor by a rotation, use rotateTensor' : '';
+        throw new RangeError(
+          `${who}: the linear part P is not rational within the tolerance ${tolerance}: its entry ${shown(x)} is no fraction with a denominator of at most ${largest}. P is a change of basis between lattice bases (entries such as 1, 1/2, 1/3)${rotate}`,
+        );
+      }
+      return f;
+    }),
+  );
   if (determinant(P)[0] === 0) throw new RangeError(`${who}: the linear part P is singular (det P = 0)`);
   // Only a missing origin shift is zero; null is a wrong value, not a missing one.
   const shift0 =
@@ -381,16 +405,18 @@ export interface CoordinateChange {
  * metric tensor G′ = PᵀGP, and operations W′ = P⁻¹WP, w′ = P⁻¹(w + (W − I)p); and gives the inverse
  * pair (Q, q) = (P⁻¹, −P⁻¹p). det P may be negative (a change of handedness, which ITA allows).
  *
- * P, p and the operations are read each number as the simplest fraction within the tolerance
- * (default `EPSILON`; 0.3333333 is 1/3) and transformed exactly, so that every result, the inverse
- * pair included, can be passed back; the other quantities are floating point. P is rational in a
- * change between lattice bases, as in ITA; an irrational P (a rotation by 30°) is read as the
- * nearby fractions, about as exact as the tolerance, and a much smaller tolerance can make the exact
- * products leave the safe integers, a RangeError.
+ * P, p and the operations are read each number as a fraction, transformed exactly, so that every
+ * result, the inverse pair included, can be passed back; the other quantities are floating point. A
+ * number that is a fraction to rounding is that fraction; another is read as the simplest fraction
+ * within the tolerance (default `EPSILON`; 0.3333333 is 1/3). P is rational in a change between
+ * lattice bases, as in ITA: an entry of P that needs a fraction with a denominator above
+ * tolerance^(−1/3) (46 at 10⁻⁵), such as cos 30° of a rotation, is refused
+ * (docs/conventions.md, "Tolerances").
  * A transformed
  * operation has a `matrix` and a `translation` alone: other fields of the record (`cartesian`, in the
  * magnetic API `timeReversal`) are not carried over, so they are matched by index. Throws a
- * RangeError for a singular P, a quantity of the wrong shape, an unknown quantity, an operation with
+ * RangeError for a singular P, an entry of P that is not rational within the tolerance, a quantity
+ * of the wrong shape, an unknown quantity, an operation with
  * det W ≠ ±1, and one whose W′ is not integral (the new basis does not span a lattice that the
  * operation maps onto itself).
  *

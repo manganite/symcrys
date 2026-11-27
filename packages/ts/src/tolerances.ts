@@ -103,6 +103,14 @@ export const INTEGER_EPSILON = 1e-9;
 export const ROUNDING_EPSILON = 1e-9;
 
 /**
+ * A number of a caller within `ROUNDING_EPSILON` of a fraction with a denominator of at most this
+ * is that fraction exactly, whatever the tolerance (changeOfCoordinates: 1/16 stays 1/16 at a
+ * tolerance of 0.05, where the simplest fraction within the tolerance would be 1/9). A number
+ * without one lies so close to such a fraction with a chance of about 10⁶ · 10⁻⁹ = 10⁻³.
+ */
+export const EXACT_DENOMINATOR = 1000;
+
+/**
  * The margin of a floor, a ceiling or a closed interval taken of a number that is exact up to
  * rounding (a rational turned into a double): the translates of a symmetry element that meet a box
  * and the class of a line (spaceGroups/cell.ts), so that a boundary value counts as inside.

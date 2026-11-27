@@ -13,7 +13,7 @@ export { VERSION } from './version.js';
 export { EPSILON, type ToleranceOptions } from './tolerances.js';
 
 export type { Mat3, Vec3 } from './linalg.js';
-export type { CartesianOperation, Operation } from './operations.js';
+export type { CartesianOperation, DirectionOperation, Operation } from './operations.js';
 export { crystalFamily, type CrystalFamily, type CrystalSystem, type LatticeSystem } from './lattice.js';
 export {
   angleBetweenDirections,
@@ -52,23 +52,27 @@ export {
 export { cellTransformation, type BravaisLattice, type Cell, type OrthorhombicSetting } from './cellTransformation.js';
 
 import type {
-  PointGroupKey as ClassKey,
   MagneticPointGroupKey,
   PointGroup as PointGroupOf,
   PointGroupInSetting as PointGroupInSettingOf,
 } from './pointGroups/pointGroups.js';
 
-/**
- * The key of a crystal class, one of the 32: the type of `crystalClass` and `laueClass` of a point
- * group and of `holohedry()`. In the crystallographic API this is `PointGroupKey`.
- */
-export type CrystalClassKey = ClassKey;
+// The key of a crystal class, one of the 32: the type of `crystalClass` and `laueClass` of a point
+// group and of `holohedry()` (`PointGroupKey` of the crystallographic API), and the 32 keys.
+export { POINT_GROUP_KEYS as CRYSTAL_CLASS_KEYS, type PointGroupKey as CrystalClassKey } from './pointGroups/keys.js';
 /** The key of a magnetic point group: a crystal class (white group), a grey or a black-and-white group. */
 export type PointGroupKey = MagneticPointGroupKey;
 /** A magnetic point group with the properties that are fixed by its operations (docs/conventions.md, "Properties"). */
 export type PointGroup<K extends PointGroupKey = PointGroupKey> = PointGroupOf<K>;
 /** A point group in a given setting. */
 export type PointGroupInSetting = PointGroupInSettingOf<PointGroupKey>;
+export type { MagneticPointGroupKey } from './pointGroups/pointGroups.js';
+export {
+  BLACK_WHITE_POINT_GROUP_KEYS,
+  GREY_POINT_GROUP_KEYS,
+  type BlackWhitePointGroupKey,
+  type GreyPointGroupKey,
+} from './pointGroups/keys.js';
 
 export {
   MAGNETIC_POINT_GROUP_KEYS as POINT_GROUP_KEYS,
