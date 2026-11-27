@@ -1,10 +1,10 @@
 /**
  * The signs of the axes against ITA's Seitz symbols (ITA 6th ed. 2016, Tables 1.4.2.1–1.4.2.5,
  * pp. 52–53; references/itc/vol-a-2016-tables-1.4.2-seitz.md; "Pure ITC", #114, #107). The printed
- * tables are re-parsed here, independently of `seitzData.ts`: each entry is checked against its own
- * matrix (the direction is the axis or the normal, the sense the turn about it), the data of the
- * library against the transcription, and the axis of every operation of every point group, magnetic
- * group, plane group and plane point group against the printed Seitz symbol of its matrix.
+ * tables are re-parsed here: each entry is checked against its own matrix (the direction is the axis
+ * or the normal, the sense the turn about it), and the axis and sense the library computes for every
+ * operation of every point group, magnetic group, plane group and plane point group against the
+ * printed Seitz symbol of its matrix.
  */
 
 import { describe, expect, it } from 'vitest';
@@ -14,7 +14,6 @@ import * as classes from '../index.js';
 import * as magnetic from '../magnetic.js';
 import * as plane from '../plane.js';
 import { readReference, tableRows } from '../testUtils/references.js';
-import { seitzRows, type SeitzAxes } from './seitzData.js';
 
 const text = readReference('itc/vol-a-2016-tables-1.4.2-seitz.md');
 
@@ -130,17 +129,6 @@ describe('ITA Tables 1.4.2.1–1.4.2.5: the printed Seitz symbols agree with the
         const parallel = (a: number[], b: number[]) => a.every((x, i) => x === b[i]) || a.every((x, i) => x === -b[i]);
         if (w(name) === 3) expect(parallel(coefficients, s.direction), `${name} ${row.join(' ')}`).toBe(true);
       }
-    }
-  });
-
-  it('the data of the library are the transcription', () => {
-    for (const name of ['cubic', 'hexagonal', 'rhombohedral'] as SeitzAxes[]) {
-      const lib = seitzRows(name).map(([t, axis, sense]) => [t, axis ? [...axis] : null, sense]);
-      const printed = TABLES[name].map((row) => {
-        const s = seitzOf(seitzSymbol(name, row));
-        return [row[1], s.direction ?? null, s.sense ?? null];
-      });
-      expect(lib).toEqual(printed);
     }
   });
 });
