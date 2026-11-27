@@ -15,6 +15,10 @@ All notable changes to symcrys are recorded here. The format follows
 
 ### Changed
 
+- `tensorFormOf`, `allowsPropertyOf` and `allowedPropertiesOf` are faster on a new list of
+  operations (#208): the group of the caller is made exact with flat arithmetic. 48 operations of
+  m-3m in a general orientation: 2–5 ms in Node, was about 11 ms (0.9: 6–13 ms); forms
+  unchanged up to rounding.
 - `findPointGroup` refuses every Shubnikov symbol that `symbol()` writes without Shubnikov's own
   characters and that does not read as the same group in Hermann–Mauguin, with a RangeError that
   names both readings (#206): `6̅` (-3) was read as -6; `2̅` (-1) and the cubic `3/2`, `6̅/2`, `3/4`,
