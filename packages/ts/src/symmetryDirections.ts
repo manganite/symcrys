@@ -15,7 +15,8 @@ const frozen = (rows: [number, number, number][][]): readonly (readonly Uvw[])[]
   Object.freeze(rows.map((dirs) => Object.freeze(dirs.map((d) => Object.freeze(d) as unknown as Uvw))));
 
 /**
- * The symmetry directions of each position of the full symbol, per family, as ITA gives them
+ * Convention data: the symmetry directions of each position of the full symbol, per family, as ITA
+ * gives them, with their representatives and signs
  * (hexagonal family: the directions of the hexagonal lattice, which also serve the trigonal classes
  * with hexagonal axes). Triclinic: no position. Monoclinic: the positions of the full symbol, which
  * reads along a, b, c, the orthorhombic directions [100], [010], [001]; of these, only the unique axis is a lattice symmetry direction ([010] for

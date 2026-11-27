@@ -801,12 +801,13 @@ LATTICE_SYMMETRY_DIRECTIONS: dict[str, list[NDArray[np.int64]]] = _shared.conver
     _value("LATTICE_SYMMETRY_DIRECTIONS"),
     ("x", "lattice_symmetry_directions"),
 )
-"""The symmetry directions of each position of the full symbol, per family, as ITA gives them
-(hexagonal family: the directions of the hexagonal lattice, which also serve the trigonal classes
-with hexagonal axes). Triclinic: no position. Monoclinic: the positions of the full symbol, which
-reads along a, b, c, the orthorhombic directions [100], [010], [001]; of these, only the unique axis
-is a lattice symmetry direction ([010] for unique axis b, [001] for unique axis c, [100] for unique
-axis a), and the full symbol has ``1`` at the other two positions (``1 2/m 1``).
+"""Convention data: the symmetry directions of each position of the full symbol, per family, as ITA
+gives them, with their representatives and signs (hexagonal family: the directions of the hexagonal
+lattice, which also serve the trigonal classes with hexagonal axes). Triclinic: no position.
+Monoclinic: the positions of the full symbol, which reads along a, b, c, the orthorhombic directions
+[100], [010], [001]; of these, only the unique axis is a lattice symmetry direction ([010] for
+unique axis b, [001] for unique axis c, [100] for unique axis a), and the full symbol has ``1`` at
+the other two positions (``1 2/m 1``).
 
 In Python: family → one int64 array of shape (n, 3) per position, the n directions [uvw] as rows.
 """
