@@ -22,7 +22,8 @@ import {
 } from './classData.js';
 import type { IntMat3 } from './generatorData.js';
 import {
-  BLACK_WHITE_GROUPS,
+  BLACK_WHITE_CLASSES,
+  blackWhiteGroup,
   blackWhiteClassSetting,
   blackWhiteOperations,
   blackWhiteSetting,
@@ -238,16 +239,23 @@ for (const c of CLASSES) {
     settingCount: crystalClass.settingCount,
   });
 }
-for (const g of BLACK_WHITE_GROUPS) {
+// Black-and-white groups: their settings are built on first use (blackWhiteData.ts).
+for (const g of BLACK_WHITE_CLASSES) {
   const crystalClass = BY_KEY.get(g.crystalClass)!;
   BY_KEY.set(g.key, {
     key: g.key,
     type: 'III',
     crystalClass,
     crystalSystem: crystalClass.crystalSystem,
-    schoenflies: g.schoenflies,
-    defaultSetting: g.settings.find((s) => s.isDefault)!.index,
-    settingCount: g.settings.length,
+    get schoenflies() {
+      return blackWhiteGroup(g.key).schoenflies;
+    },
+    get defaultSetting() {
+      return blackWhiteGroup(g.key).settings.find((s) => s.isDefault)!.index;
+    },
+    get settingCount() {
+      return blackWhiteGroup(g.key).settings.length;
+    },
   });
 }
 
@@ -425,8 +433,8 @@ function withMatrix(ops: readonly CartesianOperation[], op: CartesianOperation):
 /**
  * The setting of the crystal class whose frame is that of setting `index` of the group: the one
  * in which the class has the operations of the group without their time reversal. For a class and
- * a grey group it is `index` itself; for a black-and-white group, the class setting named by its
- * ITC symbol without primes (blackWhiteData.ts). A black-and-white group may have its settings in
+ * a grey group it is `index` itself; for a black-and-white group, the class setting that is the
+ * frame of the setting (blackWhiteData.ts). A black-and-white group may have its settings in
  * another order than its class, and settings its class does not tell apart (docs/conventions.md,
  * "Settings").
  */
@@ -491,8 +499,8 @@ function settingGenerators(d: GroupData, index: number): readonly CartesianOpera
 /**
  * The operations of a setting in ITA's order (docs/conventions.md, "Order of the operations"). A
  * crystal class: from the ITC class data (classData.ts), built coset by coset from ITA's generators.
- * A black-and-white group: the operations of its class in the setting its ITC symbol names, in
- * that order, each with the time reversal its symbol gives (blackWhiteData.ts). A grey group: the
+ * A black-and-white group: the operations of its class in the frame of the setting, in that order,
+ * each with its time reversal (blackWhiteData.ts: from the primed generators of the default). A grey group: the
  * operations of its class, then the same sequence combined with time reversal.
  */
 function settingOperations(d: GroupData, index: number): readonly CartesianOperation[] {

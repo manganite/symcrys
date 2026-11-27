@@ -213,8 +213,11 @@ a list of group types counts in the orientation its positions name (`6'/mm'm`, I
 
 The operations, generators, symbols and lattice operations of the classes come from ITA's selected
 generators, exact integer matrices in the conventional basis (`pointGroups/classData.ts`); a setting
-ITA does not print is a printed one in another basis. A black-and-white group is given by its ITC
-symbol in each setting, from which its operations follow (`pointGroups/blackWhiteData.ts`).
+ITA does not print is a printed one in another basis. A black-and-white group is given by its
+crystal class, the setting of the class that is the frame of its default, and which of ITA's
+selected generators of that frame carry time reversal (`pointGroups/blackWhiteData.ts`); its
+further settings follow by the rule below, and its symbols, in every setting, are written from its
+operations.
 
 **Numbering:** the ITC default is setting 1; then, for the monoclinic classes, unique
 axis c and unique axis a; for the orthorhombic groups, the further orientations in the order of the columns of ITA
@@ -323,6 +326,19 @@ numbered as above:
   apart about z;
 - all other groups: one setting.
 
+These settings are computed from the default (`pointGroups/blackWhiteData.ts`): monoclinic, the
+same generators with time reversal in the settings of the class with unique axis b, c and a;
+orthorhombic, the default carried by the six orientations of Table 1.5.4.4 in its column order,
+each distinct result once; tetragonal, the default and the default turned by 45° about z;
+hexagonal and trigonal, by 30°; each result is the setting of the class with the same operations,
+with their time reversal, kept once; for a trigonal group, last, the setting of the class with
+rhombohedral axes that has the operations of the default. Their symbols are written from their
+operations. A test checks them against the inventory of the orientations ITC prints
+(`references/itc/orientations.md`): every printed orientation is a further setting of its group,
+and every further setting of a class or black-and-white group without rhombohedral axes is printed
+(`orientations.reference.test.ts`); where a transcribed table prints a setting (ITC Vol. D Tables
+1.5.2.3, 1.5.2.4, 1.5.7.1, 1.5.8.1) the tests compare its symbol and operations with print.
+
 **The six settings of `2'm'm`.** `2'm'm` (C2v(Cs)) is the one orthorhombic group whose three
 elements all differ, so every permutation of the axes gives a further orientation: six in all, and
 print uses every one of them. "Mirror" is the normal of the mirror plane without time reversal, the
@@ -342,7 +358,8 @@ the operations are those the symbol names, each position read along x, y, z.
 
 A setting of a black-and-white group is a frame of its crystal class, but not always the one with
 the same index: setting 1 of `-6'2m'` (twofold axes along a, x) is the frame of setting 2 of `-6m2`
-(`-62m`). The setting of the class is the one whose symbol is the group's without primes.
+(`-62m`). The setting of the class is the one with the group's operations; its symbol is the group's
+without primes.
 
 **Defaults.** The frame in which the key, read along ITA's symmetry directions (Table 2.1.3.1),
 describes the group. For the triclinic to tetragonal systems this is the frame of the operators
