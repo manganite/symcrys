@@ -538,14 +538,15 @@ export function symmetryDirections(key: PointGroupKey, options?: SettingOptions)
 /**
  * The site symmetry of `direction` (any non-zero vector, Cartesian) under `operations`, a point
  * group given as the list of all its operations (for instance those of a distorted crystal). The
- * operations fixing the direction within the tolerance are closed under products and the direction
- * is set onto their fixed space, repeated until stable, so that the result is a subgroup and the set
- * direction lies exactly on its elements. An empty list is the group 1. Each operation is read by
- * its Cartesian matrix (`cartesian`). Throws a RangeError for an operation without an orthogonal
+ * list is made an exact group once; the site symmetry is that of the most special symmetry element
+ * (a mirror plane or a rotation axis) whose distance to the unit vector of the direction is below
+ * the tolerance, the direction set onto it; of elements fixed by equally many operations, the
+ * nearest. The indices refer to the given list. An empty list is the group 1. Each operation is read
+ * by its Cartesian matrix (`cartesian`). Throws a RangeError for an operation without an orthogonal
  * Cartesian matrix (`cartesian`; within `tolerance`, at least `EPSILON`), for a list that is not
- * closed under products (only generators, for instance; the error names the missing product), for
- * a zero vector, and if the closed operations fix no common direction or do not settle into a group
- * (a tolerance far too large, e.g. 0.5).
+ * closed under products (only generators, for instance; the error names the missing product), for a
+ * tolerance below the deviation of the operations from the exact group (the error names both), and
+ * for a zero vector.
  */
 export function siteSymmetryOf(
   operations: readonly CartesianOperation[],

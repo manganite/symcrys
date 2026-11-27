@@ -1067,15 +1067,16 @@ describe('lists of operations: what the review of #229 found', () => {
     expect(plane.orbitOf(twelfth, { point: [0.3, 0.2] }, { tolerance: 0.01 })).toHaveLength(2);
   });
 
-  it('measure the distance of the images, twice the distance to a mirror line', () => {
-    // pm: 0.012 from the mirror x = 0 lies on it at 0.02 for the key, its image 0.024 away does not.
+  it('measure the distance to the element, as the functions of a key do', () => {
+    // pm: 0.012 from the mirror x = 0 lies on it at the tolerance 0.02, for the key and the list alike
+    // (its image, 0.024 away, does not decide); at 0.01 it does not.
     expect(plane.siteSymmetry('pm', { point: [0.012, 0.3] }, { tolerance: 0.02 }).multiplicity).toBe(1);
     expect(
       plane.siteSymmetryOf(plane.operations('pm'), { point: [0.012, 0.3] }, { tolerance: 0.02 }).multiplicity,
-    ).toBe(2);
-    expect(
-      plane.siteSymmetryOf(plane.operations('pm'), { point: [0.012, 0.3] }, { tolerance: 0.03 }).multiplicity,
     ).toBe(1);
+    expect(
+      plane.siteSymmetryOf(plane.operations('pm'), { point: [0.012, 0.3] }, { tolerance: 0.01 }).multiplicity,
+    ).toBe(2);
   });
 
   it('check the tolerance for a direction or an edge too, and bound their components', () => {
@@ -1097,11 +1098,11 @@ describe('#235: one measure for a key and a list, and the accuracy of the operat
     expect(plane.siteSymmetry('pm', { point }).multiplicity).toBe(1);
   });
 
-  it.fails('siteSymmetryOf the operations of pm does the same', () => {
+  it('siteSymmetryOf the operations of pm does the same', () => {
     expect(plane.siteSymmetryOf(plane.operations('pm'), { point }).multiplicity).toBe(1);
   });
 
-  it.fails('a tolerance below the deviation of the operations is refused, naming both numbers', () => {
+  it('a tolerance below the deviation of the operations is refused, naming both numbers', () => {
     // A twofold rotation with the translation 0.333333 for 1/3: read as 1/3, it moves a point of the
     // cell by 3.3·10⁻⁷ from where the exact operation moves it.
     const ops = [

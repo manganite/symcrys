@@ -1179,6 +1179,35 @@ export function orbit(
 // --- lists of operations ---------------------------------------------------------------------------
 
 /** The operations of a caller, read exactly: integer matrices, translations as fractions within the tolerance. */
+/**
+ * How far operations read exactly lie from the given numbers: the largest displacement per coordinate
+ * of a point of the cell, max over operations and rows of Σⱼ |ΔWᵢⱼ| + |Δwᵢ|.
+ */
+function readingDeviation(given: readonly PlaneOperation[], exact: readonly ExactOperation[]): number {
+  let deviation = 0;
+  given.forEach((op, k) => {
+    for (let i = 0; i < 2; i++) {
+      const row = op.matrix[i].reduce((s, v, j) => s + Math.abs(v - exact[k].matrix[i][j]), 0);
+      deviation = Math.max(deviation, row + Math.abs(op.translation[i] - toNumber(exact[k].translation[i])));
+    }
+  });
+  return deviation;
+}
+
+/**
+ * Refuses a tolerance for a point below the deviation of the operations as read: below it the given
+ * numbers cannot tell whether a point lies on an element.
+ */
+function checkPointTolerance(who: string, tolerance: number, deviation: number): void {
+  if (tolerance < deviation) {
+    throw new RangeError(
+      `${who}: the tolerance ${shown(tolerance)} is below the deviation ${deviation.toPrecision(2)} of the ` +
+        'operations from their exact values (the largest displacement of a point of the cell, per ' +
+        'coordinate): pass a tolerance of at least the deviation, or more accurate operations',
+    );
+  }
+}
+
 function exactList(operations: unknown, name: string, tolerance: number): ExactOperation[] {
   if (!Array.isArray(operations)) {
     throw new RangeError(`${name} takes a list of operations { matrix, translation }, not ${shown(operations)}`);
@@ -1193,19 +1222,21 @@ function exactList(operations: unknown, name: string, tolerance: number): ExactO
 
 /**
  * The site symmetry under a list of operations of the plane (lattice basis), for instance those of
- * a pattern, named by the field of the input. Of a point (field `point`): the operations (W, w) that map
- * it onto itself modulo the lattice within the tolerance (the distance of its image, per coordinate,
- * which at a mirror line is twice the distance to it that `siteSymmetry` of a key measures), closed under products, the point set onto
- * their fixed space (the mean of its images), repeated until stable, so that the result is a
- * subgroup and the set point lies exactly on its elements; `point` is that point, in [0, 1). The list
+ * a pattern, named by the field of the input. Of a point (field `point`): the site symmetry of the
+ * most special symmetry element (a rotation point or a mirror line) whose distance to the point,
+ * per coordinate modulo the lattice, is below the tolerance, as `siteSymmetry` of a key measures it;
+ * of elements fixed by equally many operations, the nearest; `point` is the point set onto it, in
+ * [0, 1). The list
  * is a plane group given as one operation per coset of the lattice translations, all of them. Of a
  * lattice direction (`uv`) or an edge (`hk`): the operations whose linear part leaves it fixed,
  * exactly; the linear parts must be closed under products. An empty list is the group 1. Each
  * matrix must have integer entries within `EPSILON` and determinant ±1, and each translation
  * component is read as a fraction with a denominator of at most 12 within `EPSILON`, as in
- * `describeOperationsOf` (the tolerance is that of the point). Throws a RangeError for such input, for a list that is not a group (the error names the missing product or the operations
- * equal modulo the lattice), for a point or a vector as `siteSymmetry` refuses it, and if the
- * operations do not settle (a tolerance far too large).
+ * `describeOperationsOf` (the tolerance is that of the point). Throws a RangeError for such input, for
+ * a list that is not a group (the error names the missing product or the operations equal modulo the
+ * lattice), for a point or a vector as `siteSymmetry` refuses it, and for a tolerance of a point below
+ * the deviation of the given numbers from the operations read (the largest displacement of a point of
+ * the cell; the error names both).
  */
 export function siteSymmetryOf(
   operations: readonly PlaneOperation[],
@@ -1243,6 +1274,7 @@ export function siteSymmetryOf(
   const ops = exactList(operations, 'siteSymmetryOf', EPSILON);
   if (read.kind === 'point') {
     if (ops.length === 0) return frozenSite(emptySite(read.point));
+    checkPointTolerance('siteSymmetryOf', toleranceOf(options, 'points'), readingDeviation(operations, ops));
     return frozenSite(siteSymmetryIn(listGroupData(ops), read.point, options));
   }
   const matrices = ops.map((op) => op.matrix);
@@ -1300,6 +1332,7 @@ export function orbitOf(
       const site = emptySite(read.point);
       return frozenPointOrbit([{ point: site.point, operations: [] }]);
     }
+    checkPointTolerance('orbitOf', toleranceOf(options, 'points'), readingDeviation(operations, ops));
     const data = listGroupData(ops);
     return frozenPointOrbit(orbitIn(data, siteSymmetryIn(data, read.point, options)));
   }

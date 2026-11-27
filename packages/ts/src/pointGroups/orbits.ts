@@ -6,9 +6,8 @@
 import { checkNumbers, checkOptions, SETTING_KEYS, shown, TOLERANCE_KEYS } from '../checks.js';
 import { apply, inverse, type Mat3, type Vec3 } from '../linalg.js';
 import { checkCartesianOperations, checkOptionalTimeReversal, type DirectionOperation } from '../operations.js';
-import { orbitInGroup, siteTolerance } from '../siteSymmetry.js';
-import { checkGroup } from '../closure.js';
-import { EPSILON, TOLERANCE_BOUND } from '../tolerances.js';
+import { orbitOfList, siteTolerance } from '../siteSymmetry.js';
+import { TOLERANCE_BOUND } from '../tolerances.js';
 import type { ToleranceOptions } from '../tolerances.js';
 import type { Uvw } from '../symmetryDirections.js';
 import {
@@ -133,8 +132,9 @@ export interface OrbitPole {
  * an empty list is the group 1, whose orbit is the direction itself. Time reversal does not move a
  * direction; an operation that leaves it out counts as one without it.
  * Throws a RangeError for a zero vector, for an operation without an orthogonal Cartesian matrix
- * (`cartesian`; within `tolerance`, at least `EPSILON`) and for a list that is not closed under
- * products (only generators, for instance; the error names the missing product).
+ * (`cartesian`; within `tolerance`, at least `EPSILON`), for a list that is not closed under
+ * products (only generators, for instance; the error names the missing product) and for a tolerance
+ * below the deviation of the operations from the exact group, as `siteSymmetryOf`.
  */
 export function orbitOf(
   operations: readonly DirectionOperation[],
@@ -156,9 +156,7 @@ export function orbitOf(
       Object.freeze({ direction: Object.freeze(u) as unknown as Vec3, operations: Object.freeze([]) }),
     ]);
   }
-  const ops = operations.map((op) => ({ cartesian: op.cartesian, timeReversal: op.timeReversal === true }));
-  checkGroup(ops, Math.max(within, EPSILON), 'orbitOf');
-  const poles = orbitInGroup(ops, u, tolerance);
+  const poles = orbitOfList(operations, u, tolerance);
   return Object.freeze(
     poles.map((p) =>
       Object.freeze({

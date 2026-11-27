@@ -546,13 +546,13 @@ class SiteSymmetry(TypedDict):
     """The site symmetry of a direction."""
 
     operations: NDArray[np.int64]
-    """Indices into the given operations of those that leave the direction fixed, ascending: for a
-    group, a subgroup (the operations fixing within the tolerance, closed under products, see
+    """Indices into the given operations of those that leave the direction fixed, ascending: a subgroup,
+    the operations that fix the most special symmetry element within the tolerance of the direction (see
     ``site_symmetry_of``).
     """
     direction: NDArray[np.float64]
-    """The unit vector of the direction, set onto the fixed space of its site symmetry (the mean of its
-    images under the site symmetry, normalised), which removes rounding errors within the tolerance.
+    """The unit vector of the direction, set onto that element (its fixed space), which removes the
+    deviation within the tolerance.
     """
     multiplicity: int
     """Number of operations divided by the order of the site symmetry: the number of equivalent
@@ -1695,14 +1695,15 @@ def site_symmetry_of(
 ) -> SiteSymmetry:
     """The site symmetry of ``direction`` (any non-zero vector, Cartesian) under ``operations``, a
     point group given as the list of all its operations (for instance those of a distorted crystal).
-    The operations fixing the direction within the tolerance are closed under products and the
-    direction is set onto their fixed space, repeated until stable, so that the result is a subgroup
-    and the set direction lies exactly on its elements. An empty list is the group 1. Each operation
+    The list is made an exact group once; the site symmetry is that of the most special symmetry
+    element (a mirror plane or a rotation axis) whose distance to the unit vector of the direction
+    is below the tolerance, the direction set onto it; of elements fixed by equally many operations,
+    the nearest. The indices refer to the given list. An empty list is the group 1. Each operation
     is read by its Cartesian matrix (``cartesian``). Raises SymcrysError for an operation without an
     orthogonal Cartesian matrix (``cartesian``; within ``tolerance``, at least ``EPSILON``), for a
     list that is not closed under products (only generators, for instance; the error names the
-    missing product), for a zero vector, and if the closed operations fix no common direction or do
-    not settle into a group (a tolerance far too large, e.g. 0.5).
+    missing product), for a tolerance below the deviation of the operations from the exact group
+    (the error names both), and for a zero vector.
 
     Parameters
     ----------

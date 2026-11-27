@@ -27,7 +27,7 @@ const deviation = (given: readonly { cartesian: Mat3 }[], exact: readonly { cart
 describe('#235: a tolerance below the accuracy of the operations', () => {
   const almostIdentity = [{ cartesian: [[1.000001, 0, 0], [0, 1, 0], [0, 0, 1]] as unknown as Mat3 }]; // prettier-ignore
 
-  it.fails('siteSymmetryOf refuses it and names the tolerance and the deviation (10⁻⁶)', () => {
+  it('siteSymmetryOf refuses it and names the tolerance and the deviation (10⁻⁶)', () => {
     let error: unknown;
     try {
       classes.siteSymmetryOf(almostIdentity, [1, 0, 0], { tolerance: 1e-8 });
@@ -52,7 +52,7 @@ describe('#235: a tolerance below the accuracy of the operations', () => {
   });
 
   for (const tolerance of [1e-8, 1e-6]) {
-    it.fails(`siteSymmetryOf refuses the noisy 4mm at the tolerance ${tolerance}, naming the deviation`, () => {
+    it(`siteSymmetryOf refuses the noisy 4mm at the tolerance ${tolerance}, naming the deviation`, () => {
       let error: unknown;
       try {
         classes.siteSymmetryOf(noisy4mm, [0, 0, 1], { tolerance });
@@ -111,20 +111,20 @@ describe('#235: the tolerance measures the distance to the symmetry element', ()
     ]);
   });
 
-  it.fails('siteSymmetry of a key: a direction 7.5·10⁻⁶ from the mirror of m lies on it', () => {
+  it('siteSymmetry of a key: a direction 7.5·10⁻⁶ from the mirror of m lies on it', () => {
     expect(classes.siteSymmetry('m', { cartesian: nearMirror }).multiplicity).toBe(1);
   });
-  it.fails('siteSymmetryOf: a direction 7.5·10⁻⁶ from the mirror of m lies on it', () => {
+  it('siteSymmetryOf: a direction 7.5·10⁻⁶ from the mirror of m lies on it', () => {
     expect(classes.siteSymmetryOf(classes.operations('m'), nearMirror).multiplicity).toBe(1);
   });
-  it.fails('siteSymmetry of a key: a direction 7.5·10⁻⁶ from the axis of 2 lies on it', () => {
+  it('siteSymmetry of a key: a direction 7.5·10⁻⁶ from the axis of 2 lies on it', () => {
     expect(classes.siteSymmetry('2', { cartesian: nearAxis }).multiplicity).toBe(1);
   });
-  it.fails('siteSymmetryOf: a direction 7.5·10⁻⁶ from the axis of 2 lies on it', () => {
+  it('siteSymmetryOf: a direction 7.5·10⁻⁶ from the axis of 2 lies on it', () => {
     expect(classes.siteSymmetryOf(classes.operations('2'), nearAxis).multiplicity).toBe(1);
   });
 
-  it.fails('mm2: within the tolerance of both mirrors but not of their axis, the nearer mirror', () => {
+  it('mm2: within the tolerance of both mirrors but not of their axis, the nearer mirror', () => {
     // 0.80·10⁻⁵ from the mirror normal to x, 0.85·10⁻⁵ from the one normal to y, 1.17·10⁻⁵ from the
     // twofold axis z: the most special element within 10⁻⁵ is a mirror, the nearer one −x, y, z.
     const ops = classes.operations('mm2');
@@ -138,7 +138,7 @@ describe('#235: the tolerance measures the distance to the symmetry element', ()
 describe('#235: the site symmetry of a noisy list is a subgroup (all groups)', () => {
   // At each tolerance either a RangeError, allowed only for noisy operations and a tolerance below
   // their deviation (within the factor 2 of the measure), or a subgroup with these properties.
-  it.fails('identity included, closed, |orbit| · |stabiliser| = |G|, images of norm 1, a partition', () => {
+  it('identity included, closed, |orbit| · |stabiliser| = |G|, images of norm 1, a partition', () => {
     const random = seededRandom(5);
     const found: string[] = [];
     const directions: Vec3[] = [unit([0.3, 0.4, 0.86]), [0, 0, 1], [1, 0, 0], unit([1, 1, 0]), unit([1, 1, 1])];
@@ -187,7 +187,7 @@ describe('#235: the site symmetry of a noisy list is a subgroup (all groups)', (
 });
 
 describe('#235: orbitOf below the accuracy of the operations', () => {
-  it.fails('orbitOf refuses a tolerance below the deviation, as siteSymmetryOf', () => {
+  it('orbitOf refuses a tolerance below the deviation, as siteSymmetryOf', () => {
     const ops = [{ cartesian: [[1.000001, 0, 0], [0, 1, 0], [0, 0, 1]] as unknown as Mat3 }]; // prettier-ignore
     expect(() => classes.orbitOf(ops, [1, 0, 0], { tolerance: 1e-8 })).toThrow(RangeError);
   });

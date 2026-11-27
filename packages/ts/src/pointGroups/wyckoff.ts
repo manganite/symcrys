@@ -6,7 +6,7 @@
  */
 
 import { checkOptions, pick, SETTING_KEYS, shown, TOLERANCE_KEYS } from '../checks.js';
-import { apply, inverse, transpose, type Mat3, type Vec3 } from '../linalg.js';
+import { apply, inverse, multiply, transpose, type Mat3, type Vec3 } from '../linalg.js';
 import { crystalFamily } from '../lattice.js';
 import { substituteMillerIndices } from '../indices.js';
 import { settingBasis, classData, classSettingData } from './classData.js';
@@ -20,7 +20,7 @@ import {
   type SettingOptions,
 } from './pointGroups.js';
 import { siteSymmetryOfGroup, siteTolerance, type SiteSymmetry } from '../siteSymmetry.js';
-import { EPSILON, type ToleranceOptions } from '../tolerances.js';
+import { EPSILON, ROUNDING_EPSILON, type ToleranceOptions } from '../tolerances.js';
 import {
   cartesianDirection,
   type CartesianDirection,
@@ -310,9 +310,17 @@ export function wyckoffPosition(
   const ops = operations(key, { setting });
   const rows = wyckoffPositions(key, { setting });
   const site = siteSymmetryOfGroup(ops, cartesianDirection(key, direction, { setting }, 'wyckoffPosition'), tolerance);
+  // The position whose site symmetry is conjugate to that of the direction, g·H·g⁻¹ = T, exactly in
+  // the operations of the key (a site symmetry is not taken again at a tolerance: setting a direction
+  // onto an element can bring it within the tolerance of a more special one).
+  const index = (m: Mat3): number =>
+    ops.findIndex((op) =>
+      op.cartesian.every((row, i) => row.every((v, j) => Math.abs(v - m[i][j]) < ROUNDING_EPSILON)),
+    );
   const candidates = rows.filter((r) => r.siteSymmetryOperations.length === site.operations.length);
   for (const g of ops) {
-    const k = sortedKey(siteSymmetryOfGroup(ops, apply(g.cartesian, site.direction), tolerance).operations);
+    const gInverse = transpose(g.cartesian);
+    const k = sortedKey(site.operations.map((h) => index(multiply(multiply(g.cartesian, ops[h].cartesian), gInverse))));
     const row = candidates.find((r) => sortedKey(r.siteSymmetryOperations) === k);
     if (row) return row;
   }

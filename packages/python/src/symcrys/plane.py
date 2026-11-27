@@ -1496,21 +1496,21 @@ def site_symmetry_of(
     tolerance: Optional[float] = None,
 ) -> SiteSymmetry | DirectionSiteSymmetry:
     """The site symmetry under a list of operations of the plane (lattice basis), for instance those
-    of a pattern, named by the field of the input. Of a point (field ``point``): the operations (W,
-    w) that map it onto itself modulo the lattice within the tolerance (the distance of its image,
-    per coordinate, which at a mirror line is twice the distance to it that ``site_symmetry`` of a
-    key measures), closed under products, the point set onto their fixed space (the mean of its
-    images), repeated until stable, so that the result is a subgroup and the set point lies exactly
-    on its elements; ``point`` is that point, in [0, 1). The list is a plane group given as one
-    operation per coset of the lattice translations, all of them. Of a lattice direction (``uv``) or
-    an edge (``hk``): the operations whose linear part leaves it fixed, exactly; the linear parts
-    must be closed under products. An empty list is the group 1. Each matrix must have integer
-    entries within ``EPSILON`` and determinant ±1, and each translation component is read as a
-    fraction with a denominator of at most 12 within ``EPSILON``, as in ``describe_operations_of``
-    (the tolerance is that of the point). Raises SymcrysError for such input, for a list that is not
-    a group (the error names the missing product or the operations equal modulo the lattice), for a
-    point or a vector as ``site_symmetry`` refuses it, and if the operations do not settle (a
-    tolerance far too large).
+    of a pattern, named by the field of the input. Of a point (field ``point``): the site symmetry
+    of the most special symmetry element (a rotation point or a mirror line) whose distance to the
+    point, per coordinate modulo the lattice, is below the tolerance, as ``site_symmetry`` of a key
+    measures it; of elements fixed by equally many operations, the nearest; ``point`` is the point
+    set onto it, in [0, 1). The list is a plane group given as one operation per coset of the
+    lattice translations, all of them. Of a lattice direction (``uv``) or an edge (``hk``): the
+    operations whose linear part leaves it fixed, exactly; the linear parts must be closed under
+    products. An empty list is the group 1. Each matrix must have integer entries within ``EPSILON``
+    and determinant ±1, and each translation component is read as a fraction with a denominator of
+    at most 12 within ``EPSILON``, as in ``describe_operations_of`` (the tolerance is that of the
+    point). Raises SymcrysError for such input, for a list that is not a group (the error names the
+    missing product or the operations equal modulo the lattice), for a point or a vector as
+    ``site_symmetry`` refuses it, and for a tolerance of a point below the deviation of the given
+    numbers from the operations read (the largest displacement of a point of the cell; the error
+    names both).
 
     Parameters
     ----------
