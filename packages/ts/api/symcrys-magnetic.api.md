@@ -198,10 +198,8 @@ export interface FaceOrbitEntry {
     readonly operations: readonly number[];
 }
 
-// Warning: (ae-forgotten-export) The symbol "PointGroupInSetting_2" needs to be exported by the entry point magnetic.d.ts
-//
 // @public
-export function findPointGroup(symbol: string, options?: AxesOptions): PointGroupInSetting_2<MagneticPointGroupKey> | undefined;
+export function findPointGroup(symbol: string, options?: AxesOptions): IdentifiedPointGroup | undefined;
 
 // @public
 export type FourIndices = readonly [number, number, number, number];
@@ -377,15 +375,6 @@ interface PointGroup_2<K extends MagneticPointGroupKey = CrystalClassKey> {
     readonly order: number;
     readonly polar: boolean;
     readonly type: PointGroupType;
-}
-
-// @public
-export type PointGroupInSetting = PointGroupInSetting_2<PointGroupKey>;
-
-// @public
-interface PointGroupInSetting_2<K extends MagneticPointGroupKey = CrystalClassKey> {
-    readonly key: K;
-    readonly setting: number;
 }
 
 // @public

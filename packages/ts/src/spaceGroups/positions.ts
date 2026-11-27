@@ -9,7 +9,16 @@ import { planeWyckoffRows } from './planeWyckoff.js';
 import { deepFreeze } from '../freeze.js';
 import { shown } from '../checks.js';
 import { closeIndices } from '../closure.js';
-import { compose, equalModLattice, parseOperation, toPlain, type PlainOperation } from './affine.js';
+import {
+  compose,
+  equalModLattice,
+  formatOperation,
+  parseOperation,
+  reduceModLattice,
+  toPlain,
+  type ExactOperation,
+  type PlainOperation,
+} from './affine.js';
 import { planeGroupEntry, planeGroupOperations } from './planeGroups.js';
 import { ROUNDING_EPSILON, SINGULAR_RATIO, SITE_PASSES, toleranceOf, type ToleranceOptions } from '../tolerances.js';
 
@@ -55,7 +64,8 @@ function tolerance(options?: ToleranceOptions): number {
  */
 export const MAX_COORDINATE = 1e6;
 
-function checkPoint(point: readonly number[]): void {
+/** Checks a point of the plane: two finite coordinates of at most `MAX_COORDINATE` in magnitude. */
+export function checkPlanePoint(point: readonly number[]): void {
   if (!Array.isArray(point) || point.length !== 2 || !point.every((x) => typeof x === 'number' && Number.isFinite(x))) {
     throw new RangeError(`A point of the plane has two finite coordinates, not ${shown(point)}`);
   }
@@ -84,11 +94,12 @@ function sameModLattice(p: readonly number[], q: readonly number[], tol: number)
 }
 
 /**
- * Per plane group, computed once: its operations as plain numbers and its group table modulo the
- * lattice (`table[a][b]` is the index of the operation that equals a∘b modulo the lattice), so that
- * closing a set of operations works on indices.
+ * A plane group as a list of operations, one per coset of the lattice translations: the operations
+ * as plain numbers and the group table modulo the lattice (`table[a][b]` is the index of the
+ * operation that equals a∘b modulo the lattice), so that closing a set of operations works on
+ * indices. Computed once per plane group, or per call for a list of a caller (`listGroupData`).
  */
-interface GroupData {
+export interface GroupData {
   readonly ops: readonly PlainOperation[];
   readonly table: readonly (readonly number[])[];
 }
@@ -116,6 +127,40 @@ function groupData(key: string): GroupData {
 const plainOperations = (key: string): readonly PlainOperation[] => groupData(key).ops;
 
 /**
+ * The group data of a list of operations of a caller (exact, in the lattice basis), checked to be a
+ * group modulo the lattice: one operation per coset of the lattice translations, closed under
+ * products. Throws a RangeError naming two operations equal modulo the lattice, or a product
+ * missing from the list. An empty list is the group 1.
+ */
+export function listGroupData(operations: readonly ExactOperation[]): GroupData {
+  if (operations.length === 0) {
+    const one = parseOperation('x,y');
+    return { ops: [toPlain(one)], table: [[0]] };
+  }
+  operations.forEach((a, i) => {
+    const j = operations.findIndex((b) => equalModLattice(a, b));
+    if (j < i) {
+      throw new RangeError(
+        `The operations ${j} and ${i} (${formatOperation(a)}) are equal modulo the lattice: give one operation per coset of the lattice translations`,
+      );
+    }
+  });
+  const table = operations.map((a, i) =>
+    operations.map((b, j) => {
+      const product = compose(a, b);
+      const k = operations.findIndex((op) => equalModLattice(op, product));
+      if (k < 0) {
+        throw new RangeError(
+          `The operations are not a group: the product of operations ${i} and ${j}, ${formatOperation(reduceModLattice(product))}, is not among them modulo the lattice (give all operations, not only generators)`,
+        );
+      }
+      return k;
+    }),
+  );
+  return { ops: operations.map(toPlain), table };
+}
+
+/**
  * The orbit of a point under a plane group: the images of the point set onto its Wyckoff position
  * (`planeSiteOfPosition`), each in [0, 1), in the order of the operations that first produce them,
  * with the operations that map the point there: one entry per coset of the site symmetry.
@@ -128,8 +173,19 @@ export function planeOrbit(
   // The point is first set onto its Wyckoff position, and the entries are the left cosets
   // g·H of its site symmetry H: merging images by a distance is not transitive and depends on a
   // threshold.
-  const site = planeSiteOfPosition(key, point, options);
-  const { ops, table } = groupData(key);
+  return orbitIn(groupData(key), planeSiteOfPosition(key, point, options));
+}
+
+/**
+ * The orbit of a point under a group (`GroupData`) given its site symmetry: one entry per left coset
+ * g·H of the site symmetry H, in the order of the operations, with the image of the point set on
+ * the site in [0, 1).
+ */
+export function orbitIn(
+  data: GroupData,
+  site: { readonly operations: readonly number[]; readonly point: readonly number[] },
+): { point: number[]; operations: number[] }[] {
+  const { ops, table } = data;
   const done = new Set<number>();
   const out: { point: number[]; operations: number[] }[] = [];
   ops.forEach((op, i) => {
@@ -142,8 +198,8 @@ export function planeOrbit(
 }
 
 /** Indices of `set` closed under products, modulo the lattice, within the operations of the group. */
-function closeSet(key: string, set: readonly number[]): number[] {
-  const { table } = groupData(key);
+function closeSet(data: GroupData, set: readonly number[]): number[] {
+  const { table } = data;
   return closeIndices((i, j) => table[i][j], set);
 }
 
@@ -168,17 +224,26 @@ export function planeSiteSymmetry(
   point: readonly number[],
   options?: ToleranceOptions,
 ): PlaneSiteSymmetry {
-  checkPoint(point);
+  return siteSymmetryIn(groupData(key), point, options);
+}
+
+/** `planeSiteSymmetry` under any group (`GroupData`): a plane group, or a list of a caller. */
+export function siteSymmetryIn(
+  data: GroupData,
+  point: readonly number[],
+  options?: ToleranceOptions,
+): PlaneSiteSymmetry {
+  checkPlanePoint(point);
   const tol = tolerance(options);
-  const ops = plainOperations(key);
+  const ops = data.ops;
   const fixingAt = (p: readonly number[]): number[] =>
     ops.flatMap((op, i) => (sameModLattice(image(op, p), p, tol) ? [i] : []));
   let p: readonly number[] = point;
-  let set = closeSet(key, fixingAt(p));
+  let set = closeSet(data, fixingAt(p));
   for (let pass = 0; pass < SITE_PASSES; pass++) {
     const fixing = fixingOperations(ops, set, p);
     const mean = [0, 1].map((k) => fixing.reduce((s, op) => s + image(op, p)[k], 0) / fixing.length);
-    const next = closeSet(key, fixingAt(mean));
+    const next = closeSet(data, fixingAt(mean));
     const settled = fixing.every((op) => sameModLattice(image(op, mean), mean, ROUNDING_EPSILON));
     if (settled && next.length === set.length && next.every((x, i) => x === set[i])) {
       const q = mean.map(mod1);
@@ -196,6 +261,28 @@ export function planeSiteSymmetry(
     `No common fixed point for the operations fixing ${shown(point)} within ${tol} (tolerance too large?)`,
   );
 }
+
+/**
+ * Per Wyckoff position of a plane group, in the order of `planeWyckoffRows`: the indices into the
+ * operations of the group of those that fix its first coordinate doublet for every value of its
+ * parameters, modulo the lattice (W·p(x, y) + w ≡ p(x, y), exactly), ascending.
+ */
+export function planeWyckoffSiteOperations(key: string): readonly (readonly number[])[] {
+  const k = planeGroupEntry(key).symbol;
+  let rows = siteOperationsCache.get(k);
+  if (!rows) {
+    const ops = planeGroupOperations(k);
+    rows = deepFreeze(
+      planeWyckoffRows(k).map(([, , , coordinates]) => {
+        const position = parseOperation(coordinates[0]);
+        return ops.flatMap((op, i) => (equalModLattice(compose(op, position), position) ? [i] : []));
+      }),
+    );
+    siteOperationsCache.set(k, rows);
+  }
+  return rows;
+}
+const siteOperationsCache = new Map<string, readonly (readonly number[])[]>();
 
 /** A coordinate expression of a Wyckoff position, parsed once. */
 const expressionCache = new Map<string, PlainOperation>();
@@ -292,7 +379,7 @@ export function planeMetric(basis: unknown): Mat2 {
  * one (G = BᵀB) Euclidean.
  */
 export function planeWyckoffDistances(key: string, given: readonly number[], g?: Mat2): PositionDistance[] {
-  checkPoint(given);
+  checkPlanePoint(given);
   // Modulo the lattice first, so that large coordinates keep their digits (review of step 10a).
   const point = given.map(mod1);
   const entry = planeGroupEntry(key);

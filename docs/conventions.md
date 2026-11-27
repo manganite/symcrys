@@ -1449,14 +1449,18 @@ operations, and they equal ITA's printed ones in every column (tested for the 17
   (§ 2.1.4, p. 173), and the orbit of c2mm b is that of p2gg b, which ITA prints as `1/2,0`;
 - the coordinates are the images of the first representative under the operations of the (0,0)+
   set in their order, an image left out that repeats one before it modulo the lattice and the
-  centring (§ 2.1.3.11 (iv), p. 162).
+  centring (§ 2.1.3.11 (iv), p. 162);
+- `siteSymmetryOperations` are the operations that fix the first doublet modulo the lattice for
+  every value of its parameters, exactly, |G|/multiplicity of them, as a plane point group's fix its
+  first edge.
 
 **Descriptions.** `describeOperations` describes each operation as ITA does under "Symmetry
 operations": its kind (`'identity'`, `'translation'`, `'rotation'`, `'reflection'` or
-`'glide-reflection'`, as ITA names the operations in Table 2.1.2.1, p. 145), the n and sense of a rotation, the centre of a rotation, the direction of a line and one point of
-it (on y = 0, or on x = 0 for a line along a), and the glide vector (w + W·w)/2. An operation whose
+`'glide-reflection'`, as ITA names the operations in Table 2.1.2.1, p. 145), the n and sense of a rotation, the centre of a rotation (`point`), the direction of a line and one point of
+it (`point`, on y = 0, or on x = 0 for a line along a), and the glide vector (w + W·w)/2. An operation whose
 glide vector is a non-zero lattice vector is a glide, as it is geometrically. A reflection or glide
-reflection also carries its `axis`, the normal of its line, a symmetry direction of ITA Table 2.1.3.1
+reflection also carries its `axis` `{ lattice }`, a record as in the other entry points (which
+add `cartesian`; the plane has no cell here), with `lattice` the normal of its line, a symmetry direction of ITA Table 2.1.3.1
 (p. 151), under the name the axis of an operation has in the point groups (where the `axis` of a
 reflection is the normal of its plane), with the sign of its Seitz symbol (ITA 2016 Tables
 1.4.2.4, 1.4.2.5, p. 53: m₁₀, m₁₂, m₂₁): the shortest integer vector along W − I, first
@@ -1472,7 +1476,7 @@ a fraction with a denominator of at most 12 (within the tolerance, default 10⁻
 part of a plane point group.
 
 **Points.** `siteSymmetry`, `wyckoffPosition`, `orbit` and `wyckoffDistances` take the key of a
-plane group, since the site symmetry needs the group modulo the lattice, and a point in the lattice
+plane group, since the site symmetry of a point needs the group modulo the lattice, and a point in the lattice
 basis as `{ point: [x, y] }` (in Python the argument `point`), named as the points of their results
 are (`orbit` gives each image as `{ point, operations }`, with the indices of the
 operations that map the point there, as the orbits of the point groups do), with an
@@ -1494,6 +1498,41 @@ on screen) is a policy of the application, built on `wyckoffDistances`. "Most sp
 smallest multiplicity, so at a large tolerance a line can win against a point of the same
 multiplicity (c2mm: 4c, a point, against 4d and 4e, lines).
 
+**Directions and edges.** `siteSymmetry`, `wyckoffPosition` and `orbit` take the key of a plane
+point group (and its `setting`) with a lattice direction `{ uv: [u, v] }` or an edge
+`{ hk: [h, k] }` (hexagonal axes: without i), two integers not both zero, as the crystal classes
+take `{ uvw }` and `{ hkl }`; the field says what is meant, and a point goes with a plane group
+only. They are exact: the site symmetry is the operations whose W fixes the direction (W·u = u)
+or the edge ((hk)·W⁻¹ = (hk), as Miller indices transform), the orbit its distinct images in the
+order the operations reach them (`{ uv, operations }`, `{ hk, operations }`), and the Wyckoff
+position the one whose site symmetry is conjugate to that of the vector, ITA's definition; it holds
+the direction of its first doublet and the edge of its first Miller indices (tested for all ten
+groups and both settings of `3m`).
+
+**Lists of operations.** `siteSymmetryOf` and `orbitOf` take a list of operations
+`{ matrix, translation }` of the plane, for instance those of a pattern, and the same inputs: of a
+point, the operations (W, w) that fix it modulo the lattice within the tolerance, closed under
+products, the point set onto their fixed space until stable, as `siteSymmetryOf` does for
+directions in 3D; of a direction or an edge, the linear parts, exactly. The list is a group: for a
+point one operation per coset of the lattice translations, closed under products modulo the
+lattice; for a direction or an edge, linear parts closed under products (a matrix may occur twice,
+as in `cm`). A list that is not one is a RangeError naming a missing product or two operations
+equal modulo the lattice; the empty list is the group 1. `pointGroupOf` gives the plane point
+group of the group the linear parts generate, by its order and whether it holds a reflection, with
+the setting whose operations they are (absent in another basis, a mirror along a diagonal).
+`planeGroupOf` gives the plane group of a list (W, w) given in a conventional cell of their
+lattice, closed modulo the lattice first, so that generators suffice. The type does not depend on
+the origin and follows from the point group, the centring and, per direction of mirror lines,
+whether a reflection (glide vector zero modulo the lattice) is among the operations or only glide
+reflections: `pm`/`pg`, `p2mm`/`p2mg`/`p2gg`, `p4mm`/`p4gm`, and `p3m1`/`p31m` from the setting
+of `3m`. Setting 1 is given if the operations are those of `operations(key)` modulo the lattice;
+with another origin, or for `p2mg` with its mirror lines normal to b (`p2gm`), it is absent. A
+translation besides the lattice translations other than the centring (1/2, 1/2) of a rectangular
+lattice, or linear parts that no conventional cell gives, are refused: in another cell a centred
+group would pass for a primitive one (`cm` in its primitive cell has a mirror along the diagonal
+and no centring). The conventional cells: ITA 2016 Table 2.1.1.1, p. 143; the 17 types with their operations:
+Chapter 2.2, pp. 176–192.
+
 **The cell.** `asymmetricUnit` gives ITA's printed block "Asymmetric unit" as data: the
 printed inequalities a·x + b·y ≤ c, all of them in printed order, also bounds that hold no edge
 (p3: x ≤ 2/3, y ≤ 2/3; a double inequality and a `min` give one each), and the convex polygon they
@@ -1510,7 +1549,10 @@ lattice translates that meet the box, boundary included, the lines not clipped: 
 twofold points modulo the lattice and nine in the closed cell [0, 1]²; a box with more than a
 million rotation points is refused. Clipping and drawing are left to the application.
 
-**Lattices and cells.** `planeGroup(key)` gives the Bravais lattice
+**Lattices and cells.** `planeGroup(key)` gives the centring translations besides (0, 0)
+(`centringTranslations`), the site symmetry of the origin (`originSiteSymmetry`: the group of the
+operations that fix it, where ITA's line "Origin" names the elements through it, "on g" for pg),
+the Bravais lattice
 (`bravaisLattice`: `'mp'`, `'op'`, `'oc'`, `'tp'`, `'hp'`, the family symbol of ITA Table 2.1.1.1
 followed by the lattice letter of the group) and the Patterson symmetry, computed as above and equal
 to the headline of every group (`pattersonSymmetry`, a plane group: `'p2mm'` for `p2mg`, `'c2mm'` for `cm`,
@@ -1557,8 +1599,6 @@ of the holohedry that the group lacks); a form gains a rotation of its order onl
 edge (`m`: `1,0`; `3m1`: `1,1,-2`; `31m`: `1,0,-1`). All of it equals ITA
 2016 Table 3.2.3.1 (pp. 742–744), which prints `3m` in its two orientations `3m1` and `31m`.
 
-**Not yet.** The determination of the plane group of a pattern.
-
 ## Sources
 
 | What                                                                                                                                                                                                                  | Print source                                                                                                                                                                                                                                                                                                                                               | Test                                                                                                    |
@@ -1597,6 +1637,7 @@ edge (`m`: `1,0`; `3m1`: `1,1,-2`; `31m`: `1,0,-1`). All of it equals ITA
 | plane point groups: Wyckoff positions and edge forms                                                                                                                                                                  | ITA 6th ed. (2016), Table 3.2.3.1, pp. 742–744: `references/itc/vol-a-table-3.2.3.1.md`                                                                                                                                                                                                                                                                    | `spaceGroups/planePointGroupForms.reference.test.ts`                                                    |
 | plane groups: description of the operations                                                                                                                                                                           | the block "Symmetry operations" of the same pages, both sets of the centred groups; symbols as in ITA § 2.1.3.9 (pp. 160–161); normals: ITA Table 2.1.3.1 (p. 151), `references/itc/vol-a-table-2.1.3.1-plane.md`, with the full symbols                                                                                                                   | `spaceGroups/describe.reference.test.ts`                                                                |
 | plane groups: site symmetry, orbit and Wyckoff position of a point                                                                                                                                                    | the Wyckoff positions of the same pages: every printed point of every position                                                                                                                                                                                                                                                                             | `spaceGroups/positions.reference.test.ts`                                                               |
+| plane groups and plane point groups of a list of operations; directions and edges under a plane point group                                                                                                           | none needed: built from the operations of the 17 plane groups and 10 plane point groups (anchored above), every group identified from its operations and from its generators, with other origins and orientations; the Wyckoff positions of the directions and edges are those of Table 3.2.3.1 (above)                                                    | `plane.test.ts`                                                                                         |
 | plane groups: asymmetric unit, symmetry elements in the cell                                                                                                                                                          | the printed vertices and inequalities, the Wyckoff positions (centres and mirror lines) and the printed glides of the same pages; all lines also derived from the printed general position                                                                                                                                                                 | `spaceGroups/cell.reference.test.ts`                                                                    |
 | plane groups: finding a group by its short or full symbol (`findPlaneGroup`)                                                                                                                                          | the short and full symbols of the same pages                                                                                                                                                                                                                                                                                                               | `spaceGroups/planeGroups.reference.test.ts`                                                             |
 | change of the coordinate system: P⁻¹, points, vectors, indices, metric, operations                                                                                                                                    | ITA 6th ed. (2016), Chapter 1.5: the worked examples of pp. 75–90 (F → P, zircon, GeTe, P2₁/c, I4₁/amd) and rows of Table 1.5.1.1 (pp. 77, 79): `references/itc/vol-a-2016-1.5-transformations.md`                                                                                                                                                         | `coordinates.reference.test.ts`                                                                         |

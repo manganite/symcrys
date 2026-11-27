@@ -65,11 +65,21 @@ describe('findPointGroup reads every symbol symbol() writes', () => {
   };
 
   it('in the crystallographic API (ITA symbols, C3i)', () => {
-    roundTrip(classes.POINT_GROUP_KEYS, classes.settings as never, classes.symbol as never, classes.findPointGroup);
+    roundTrip(
+      classes.POINT_GROUP_KEYS,
+      classes.settings as never,
+      classes.symbol as never,
+      classes.findPointGroup as never,
+    );
   });
 
   it('in the magnetic API (ITC Vol. D symbols, S6)', () => {
-    roundTrip(magnetic.POINT_GROUP_KEYS, magnetic.settings as never, magnetic.symbol as never, magnetic.findPointGroup);
+    roundTrip(
+      magnetic.POINT_GROUP_KEYS,
+      magnetic.settings as never,
+      magnetic.symbol as never,
+      magnetic.findPointGroup as never,
+    );
   });
 
   it('the Schoenflies symbols of the 122 groups are all different, in either volume', () => {

@@ -105,7 +105,7 @@ describe('plane groups: transcription', () => {
     for (const g of PRINT) {
       const full = g.fields['Full symbol'];
       for (const text of [g.symbol, full, [...full].join(' '), ` ${[...g.symbol].join('  ')} `]) {
-        expect(plane.findPlaneGroup(text), text).toEqual({ key: g.symbol });
+        expect(plane.findPlaneGroup(text), text).toEqual({ key: g.symbol, setting: 1 });
       }
       expect(plane.isPlaneGroupKey(g.symbol)).toBe(true);
       // A plane group's symbol names no plane point group.
@@ -189,7 +189,7 @@ describe('plane groups: transcription', () => {
     for (const g of PRINT) {
       const [printed, siteSymmetry] = ORIGIN[g.symbol];
       expect(g.fields.Origin, g.symbol).toBe(printed);
-      expect(plane.planeGroup(g.symbol as plane.PlaneGroupKey).origin, g.symbol).toBe(siteSymmetry);
+      expect(plane.planeGroup(g.symbol as plane.PlaneGroupKey).originSiteSymmetry, g.symbol).toBe(siteSymmetry);
     }
   });
 });

@@ -4,6 +4,7 @@
  * operations, generators and symbols, as ITC gives them (GUIDE.md, "ITC as the standard").
  */
 
+import type { IdentifiedPointGroup } from './identify.js';
 import { shubnikovSymbol } from './shubnikov.js';
 import { checkOptions, SETTING_KEYS, shown } from '../checks.js';
 import { INVERSION, det, inverse, matricesEqual, multiply, type Mat3 } from '../linalg.js';
@@ -1002,10 +1003,7 @@ export function findPointGroup(symbol: string, options?: AxesOptions): PointGrou
  * @remarks The two spellings of the Schoenflies symbols are those of ITA (`C3i`) and of ITC Vol. D
  * (`S6`).
  */
-export function findMagneticPointGroup(
-  symbol: string,
-  options?: AxesOptions,
-): PointGroupInSetting<MagneticPointGroupKey> | undefined {
+export function findMagneticPointGroup(symbol: string, options?: AxesOptions): IdentifiedPointGroup | undefined {
   if (arguments.length > 2) rejectConventionArgument(arguments.length);
   return deepFreeze(find(symbol, false, criteriaArgument(options)));
 }

@@ -36,18 +36,18 @@ def test_numpy_types() -> None:
     assert op["matrix"].dtype == np.int64 and op["matrix"].shape == (2, 2)
     assert op["translation"].dtype == np.float64 and op["translation"].tolist() == [0.5, 0.5]
     assert plane.operations("p2")[0]["translation"].dtype == np.float64
-    assert plane.plane_group("p2")["centring"].shape == (0, 2)
+    assert plane.plane_group("p2")["centring_translations"].shape == (0, 2)
     glide = plane.describe_operations("p4gm")[4]
     assert glide["direction"].dtype == np.int64 and glide["glide"].dtype == np.float64
-    assert glide["axis"].dtype == np.int64 and glide["axis"].tolist() == [1, 0]
+    assert glide["axis"]["lattice"].dtype == np.int64 and glide["axis"]["lattice"].tolist() == [1, 0]
     described = plane.describe_operations_of(plane.operations("p6mm"))
     assert [d["kind"] for d in described] == [d["kind"] for d in plane.describe_operations("p6mm")]
     assert all(
-        np.array_equal(a.get("axis", []), b.get("axis", []))
+        np.array_equal(a.get("axis", {}).get("lattice", []), b.get("axis", {}).get("lattice", []))
         for a, b in zip(described, plane.describe_operations("p6mm"))
     )
     mirror = plane.describe_operations_of([{"matrix": np.array([[1, -1], [0, -1]]), "translation": (0, 0)}])[0]
-    assert mirror["kind"] == "reflection" and mirror["axis"].tolist() == [1, 2] and mirror["direction"].tolist() == [1, 0]
+    assert mirror["kind"] == "reflection" and mirror["axis"]["lattice"].tolist() == [1, 2] and mirror["direction"].tolist() == [1, 0]
     unit = plane.asymmetric_unit("p6mm")
     assert unit["vertices"].shape == (3, 2) and unit["inequalities"].dtype == np.int64
     assert unit["edges"].dtype == np.int64 and unit["edges"].shape == (3,)
@@ -57,10 +57,10 @@ def test_numpy_types() -> None:
     assert len(plane.symmetry_elements("p2")["rotation_points"]) == 4
     assert len(plane.symmetry_elements("p2", box=np.array([[0, 0], [1, 1]]))["rotation_points"]) == 9
     assert elements["rotation_points"][0]["point"].dtype == np.float64
-    assert elements["lines"][0]["axis"].dtype == np.int64
-    site = plane.site_symmetry("p2mm", np.array([0.5, 0.2]))
+    assert elements["lines"][0]["axis"]["lattice"].dtype == np.int64
+    site = plane.site_symmetry("p2mm", point=np.array([0.5, 0.2]))
     assert site["operations"].dtype == np.int64 and site["multiplicity"] == 2
-    orbit = plane.orbit("p2", (0.1, 0.2))
+    orbit = plane.orbit("p2", point=(0.1, 0.2))
     assert len(orbit) == 2 and orbit[0]["point"].dtype == np.float64 and orbit[0]["point"].shape == (2,)
     assert orbit[1]["operations"].dtype == np.int64 and orbit[1]["operations"].tolist() == [1]
     assert plane.settings("3m")[0]["is_default"] is True
@@ -72,18 +72,30 @@ def test_numpy_types() -> None:
     assert b["point"].dtype == np.float64 and np.allclose(b["point"], [1 / 3, 2 / 3])
     a = next(d for d in plane.wyckoff_distances("pm", [0.1, 0.3], basis=np.diag([2.0, 1.0])) if d["letter"] == "a")
     assert abs(a["distance"] - 0.2) < 1e-12
-    assert plane.wyckoff_position("pm", [0.012, 0.3], tolerance=0.02)["letter"] == "a"
+    assert plane.wyckoff_position("pm", point=[0.012, 0.3], tolerance=0.02)["letter"] == "a"
+    # A plane point group: a lattice direction or an edge, integers.
+    edge = plane.site_symmetry("4mm", hk=[1, 0])
+    assert edge["operations"].dtype == np.int64 and edge["multiplicity"] == 4
+    assert plane.orbit("4mm", uv=[1, 2])[2]["uv"].dtype == np.int64
+    assert plane.wyckoff_position("6mm", hk=[1, 0])["letter"] == "b"
+    assert plane.site_symmetry_of(plane.operations("p2"), point=[0.5, 0])["operations"].tolist() == [0, 1]
+    assert plane.orbit_of(plane.operations("4"), hk=[1, 0])[2]["hk"].tolist() == [0, 1]
+    assert plane.point_group_of(plane.operations("p31m")) == {"key": "3m", "setting": 2}
+    assert plane.plane_group_of(plane.generators("p4gm")) == {"key": "p4gm", "setting": 1}
+    assert plane.settings("p2mg") == [{"index": 1, "symbol": "p2mg", "is_default": True}]
 
 
 def test_errors() -> None:
     with pytest.raises(symcrys.SymcrysError, match="Unknown plane group"):
         plane.operations("p7")
-    with pytest.raises(symcrys.SymcrysError, match="key of a plane group"):
-        plane.site_symmetry("4mm", [0, 0])
+    with pytest.raises(symcrys.SymcrysError, match="plane point group takes a lattice direction"):
+        plane.site_symmetry("4mm", point=[0, 0])
     with pytest.raises(symcrys.SymcrysError):
-        plane.orbit("p2", [0.1, 0.2], tolerance=0.5)
+        plane.orbit("p2", point=[0.1, 0.2], tolerance=0.5)
     with pytest.raises(symcrys.SymcrysError, match="two coordinates"):
-        plane.site_symmetry("p2", [[0.1, 0.2]])
+        plane.site_symmetry("p2", point=[[0.1, 0.2]])
+    with pytest.raises(symcrys.SymcrysError, match="by one field"):
+        plane.site_symmetry("4mm", uv=[1, 0], hk=[1, 0])
     with pytest.raises(symcrys.SymcrysError):
         plane.wyckoff_distances("p2", [0.1, 0.2], basis=[[1, 2], [2, 4]])
     with pytest.raises(symcrys.SymcrysError, match="denominator"):
@@ -105,7 +117,8 @@ def test_print(text: str) -> None:
         if "x" in first or "y" in first:
             continue
         point = [frac(c) for c in first.split(",")]
-        assert plane.wyckoff_position(symbol, point) == {
+        position = plane.wyckoff_position(symbol, point=point)
+        assert {k: position[k] for k in ("letter", "multiplicity", "site_symmetry", "coordinates")} == {  # type: ignore[literal-required]
             "letter": letter, "multiplicity": int(m), "site_symmetry": site, "coordinates": coords.split("; ")
         }  # fmt: skip
     vertices = re.search(r"^Vertices: (.+?)\s*$", text, re.M)

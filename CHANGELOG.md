@@ -8,6 +8,15 @@ All notable changes to symcrys are recorded here. The format follows
 
 ### Added
 
+- `symcrys/plane` is on par with the other entry points (#208): `planeGroupOf` names the plane
+  group of a list of operations in a conventional cell (generators suffice, any origin; setting 1
+  if they are ITA's operations), `pointGroupOf` the plane point group of their linear parts;
+  `siteSymmetryOf` and `orbitOf` take a list of operations with a point (modulo the lattice), a
+  lattice direction `{ uv }` or an edge `{ hk }`; `siteSymmetry`, `wyckoffPosition` and `orbit`
+  take the key of a plane point group with `{ uv }` or `{ hk }` (and the option `setting`);
+  `settings` takes the key of a plane group; a Wyckoff position of a plane group has
+  `siteSymmetryOperations`, the operations that fix its first doublet.
+
 - `findPlaneGroup` reads the short symbols of International Tables (1952) still in common use:
   `pmm`, `pmg`, `pgg`, `cmm`, `p4m`, `p4g`, `p6m` (#208).
 - `symcrys/magnetic` exports the keys of the three types of groups, `CRYSTAL_CLASS_KEYS`,
@@ -21,6 +30,18 @@ All notable changes to symcrys are recorded here. The format follows
   spelling in common use. The table's `2'2'` is a misprint for `2'2'2` and is not read.
 
 ### Changed
+
+- `symcrys/plane`, in the names of the other entry points (#208): the `axis` of a reflection or
+  glide reflection (`describeOperations`, `describeOperationsOf`, the lines of `symmetryElements`)
+  is a record `{ lattice }`, was the bare vector; the point of a rotation or a line in
+  `describeOperations` is `point`, was `location`; `planeGroup(key).centring` is
+  `centringTranslations` and `planeGroup(key).origin` is `originSiteSymmetry`. In Python the point
+  of `site_symmetry`, `wyckoff_position` and `orbit` is the keyword argument `point=`, as `hkl=` and
+  `uvw=` in `symcrys`, was positional.
+- One result type for a group found or identified (#208): `findPointGroup` and `pointGroupOf`
+  give `IdentifiedPointGroup` `{ key, setting? }` in every entry point (`PointGroupInSetting` is
+  gone; `findPointGroup` always gives the setting), `findPlaneGroup` and `planeGroupOf`
+  `IdentifiedPlaneGroup`, `findPlaneGroup` with `setting: 1` (`PlaneGroupFound` is gone).
 
 - `tensorFormOf`, `allowsPropertyOf` and `allowedPropertiesOf` are faster on a new list of
   operations (#208): the group of the caller is made exact with flat arithmetic. 48 operations of

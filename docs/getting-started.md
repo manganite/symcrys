@@ -96,7 +96,7 @@ The plane API is the module `symcrys.plane`:
 ```{code-cell} ipython3
 from symcrys import plane
 
-plane.wyckoff_position("p6mm", [1 / 3, 2 / 3]), plane.asymmetric_unit("p6mm")["vertices"]
+plane.wyckoff_position("p6mm", point=[1 / 3, 2 / 3]), plane.asymmetric_unit("p6mm")["vertices"]
 ```
 
 Wrong input (an unknown key, a vector of the wrong length, an argument of the wrong type) raises

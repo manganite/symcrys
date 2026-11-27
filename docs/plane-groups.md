@@ -38,8 +38,8 @@ plane.symbol("p4gm", form="full"), plane.find_plane_group("p 4 g m"), plane.poin
 
 `operations` gives the general position in ITA's order, `generators` ITA's selected generators.
 `describeOperations` says what each operation is, as the block "Symmetry operations" of ITA does,
-but as numbers: kind, n, sense, the location of a rotation point, the line of a mirror or glide
-(a point, its direction and its symmetry direction `axis`) and the glide part. Symbols such as
+but as numbers: kind, n, sense, the centre of a rotation (`point`), the line of a mirror or glide
+(a `point`, its direction and its symmetry direction `axis`) and the glide part. Symbols such as
 `g(1/2,1/2) x,x` are left to the application.
 
 ```{code-cell} ipython3
@@ -53,6 +53,23 @@ plane.describe_operations("p4gm")[4:8]
 
 `describeOperationsOf` describes any list of operations of the plane in the same way, for instance
 those found in a pattern.
+
+## Operations of a pattern: plane group, site symmetry, orbit
+
+`planeGroupOf` names the plane group of operations found in a pattern, given in a conventional cell
+of its lattice; generators suffice, and the origin does not matter. Setting 1 means they are ITA's
+operations of that group; with another origin or orientation it is absent. `pointGroupOf` names the
+plane point group of the linear parts, and `siteSymmetryOf` and `orbitOf` answer for the list what
+`siteSymmetry` and `orbit` answer for a key:
+
+```{code-cell} ipython3
+found = [{"matrix": [[-1, 0], [0, 1]], "translation": [0.5, 0.5]}, {"matrix": [[0, -1], [1, 0]], "translation": [0, 0]}]
+plane.plane_group_of(found), plane.point_group_of(found)
+```
+
+```{code-cell} ipython3
+plane.site_symmetry_of(plane.operations("p4gm"), point=[0.5, 0])
+```
 
 ## Points: Wyckoff position, site symmetry, orbit
 
@@ -68,11 +85,11 @@ for w in plane.wyckoff_positions("p4gm"):
 ```
 
 ```{code-cell} ipython3
-plane.site_symmetry("p4gm", [0.5, 0.003], tolerance=0.01)
+plane.site_symmetry("p4gm", point=[0.5, 0.003], tolerance=0.01)
 ```
 
 ```{code-cell} ipython3
-[entry["point"] for entry in plane.orbit("p4gm", [0.1, 0.3])]  # a general point: 8 images
+[entry["point"] for entry in plane.orbit("p4gm", point=[0.1, 0.3])]  # a general point: 8 images
 ```
 
 Which position a dragged point should snap to, and within which radius, is a choice of the
@@ -97,6 +114,13 @@ indices do, to (hk)·W⁻¹; in the hexagonal groups the first doublet and the f
 position may lie on different, conjugate mirror lines (in 3m1, position a prints the direction x,x̄
 and the edge (101̄), whose normal is along 2x̄,x̄), and the site symmetry is that of the edge, as
 for the faces of a crystal class.
+
+`siteSymmetry`, `wyckoffPosition` and `orbit` take a lattice direction (`uv`) or an edge (`hk`)
+with the key of a plane point group, exactly, as the crystal classes take `uvw` and `hkl`:
+
+```{code-cell} ipython3
+plane.wyckoff_position("6mm", hk=[1, 0])["letter"], [e["hk"] for e in plane.orbit("4mm", hk=[1, 2])]
+```
 
 ```{code-cell} ipython3
 for f in plane.crystal_forms("3m", setting="31m"):

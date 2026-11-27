@@ -346,13 +346,18 @@ class PointGroup(TypedDict):
 
 
 @final
-class PointGroupInSetting(TypedDict):
-    """A crystal class in a given setting."""
+class IdentifiedPointGroup(TypedDict):
+    """A crystal class found by its symbol (``find_point_group``) or identified from operations
+    (``point_group_of``): its key, and the setting if the operations are exactly those of one.
+    """
 
     key: str
     """The key of the crystal class."""
-    setting: int
-    """The 1-based index of the setting."""
+    setting: NotRequired[int]
+    """The 1-based index of the setting: always for ``find_point_group``; for ``point_group_of`` the
+    setting whose operations the group equals, in the Cartesian frame of symcrys, absent if the group is
+    the class in another orientation.
+    """
 
 
 @final
@@ -375,20 +380,6 @@ class Setting(TypedDict):
     """
     is_default: bool
     """True for the ITC default setting."""
-
-
-@final
-class IdentifiedPointGroup(TypedDict):
-    """The crystal class of a list of operations: its key, and the setting if the operations are
-    exactly those of one.
-    """
-
-    key: str
-    """The key of the crystal class the operations generate."""
-    setting: NotRequired[int]
-    """The 1-based index of the setting whose operations the group equals, in the Cartesian frame of
-    symcrys; absent if the group is the class in another orientation.
-    """
 
 
 @final
@@ -700,7 +691,7 @@ _S_PointGroup = (
         "laueClass": _V,
     },
 )
-_S_PointGroupInSetting = ("d", {"key": _V, "setting": _I})
+_S_IdentifiedPointGroup = ("d", {"key": _V, "setting": _I})
 _S_Setting = (
     "d",
     {
@@ -712,7 +703,6 @@ _S_Setting = (
         "isDefault": _V,
     },
 )
-_S_IdentifiedPointGroup = ("d", {"key": _V, "setting": _I})
 _S_CartesianAxis = ("d", {"cartesian": ("a", np.float64, None)})
 _S_CartesianOperationDescription = (
     "d",
@@ -822,7 +812,6 @@ __all__ = [
     "Operations",
     "OrbitPole",
     "PointGroup",
-    "PointGroupInSetting",
     "Setting",
     "SiteSymmetry",
     "SymmetryDirection",
@@ -1257,7 +1246,7 @@ def find_point_group(
     *,
     axes: Optional[Literal["hexagonal", "rhombohedral"]] = None,
     unique_axis: Optional[Literal["a", "b", "c"]] = None,
-) -> Optional[PointGroupInSetting]:
+) -> Optional[IdentifiedPointGroup]:
     """Finds a crystal class by a symbol, read tolerantly. It reads, spaces ignored
     (docs/conventions.md, "Reading symbols"): the key; the short or full symbol of a setting
     (``312``, ``1 1 2``); a Schoenflies symbol (``D3``; for -3 either ``C3i`` or ``S6``); Birss's
@@ -1283,9 +1272,9 @@ def find_point_group(
         The unique axis of a monoclinic group, as ITA's headlines name it (``'b'``, the standard,
         ``'c'``, ``'a'``). A SymcrysError for another system.
     """
-    result: Optional[PointGroupInSetting] = _shared.convert(
+    result: Optional[IdentifiedPointGroup] = _shared.convert(
         _call("findPointGroup", symbol, _shared.options(axes=axes, unique_axis=unique_axis)),
-        ("o", _S_PointGroupInSetting),
+        ("o", _S_IdentifiedPointGroup),
     )
     return result
 

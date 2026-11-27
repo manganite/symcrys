@@ -141,13 +141,14 @@ class PlaneGroup(TypedDict):
     """The Patterson symmetry, a plane group: the symmorphic plane group of the lattice of the group
     whose point group is its Laue class, e.g. ``'p2mm'`` for ``p2mg``, ``'c2mm'`` for ``cm``.
     """
-    centring: NDArray[np.float64]
+    centring_translations: NDArray[np.float64]
     """The centring translations besides (0, 0): ``[[0.5, 0.5]]`` for ``cm`` and ``c2mm``, otherwise
     none.
     """
-    origin: str
+    origin_site_symmetry: str
     """The site symmetry of the origin, as an oriented site-symmetry symbol: ``'2mm'`` for ``p2mm``,
-    ``'2..'`` for ``p2mg``, ``'1'`` for ``p1`` and ``pg``.
+    ``'2..'`` for ``p2mg``, ``'1'`` for ``p1`` and ``pg``. (ITA's line "Origin" names the symmetry
+    elements through the origin, "on g" for pg; this is the group of the operations that fix it.)
     """
 
 
@@ -168,26 +169,37 @@ class PointGroup(TypedDict):
 
 
 @final
-class PlaneGroupFound(TypedDict):
-    """A plane group found by ``find_plane_group``."""
+class IdentifiedPlaneGroup(TypedDict):
+    """A plane group found by its symbol (``find_plane_group``) or identified from operations
+    (``plane_group_of``): its key, and the setting if the operations are exactly those of it.
+    """
 
     key: str
     """The key of the plane group."""
+    setting: NotRequired[int]
+    """1, the one setting of a plane group: always for ``find_plane_group``; for ``plane_group_of`` if
+    the operations are those of ``operations(key)`` modulo the lattice, absent if they are the group
+    with another origin or orientation.
+    """
 
 
 @final
-class PointGroupInSetting(TypedDict):
-    """A plane point group in a setting, as ``find_point_group`` finds it."""
+class IdentifiedPointGroup(TypedDict):
+    """A plane point group found by its symbol (``find_point_group``) or identified from operations
+    (``point_group_of``): its key, and the setting if the operations are exactly those of one.
+    """
 
     key: str
     """The key of the plane point group."""
-    setting: int
-    """The 1-based index of the setting."""
+    setting: NotRequired[int]
+    """The 1-based index of the setting: always for ``find_point_group``; for ``point_group_of`` the
+    setting whose operations the linear parts are, absent if they are the group in another orientation.
+    """
 
 
 @final
 class Setting(TypedDict):
-    """A setting of a plane point group."""
+    """A setting of a plane group or a plane point group."""
 
     index: int
     """1-based."""
@@ -195,6 +207,18 @@ class Setting(TypedDict):
     """Its symbol: ``'3m1'`` or ``'31m'`` for ``3m``, otherwise the key."""
     is_default: bool
     """True for the default setting (setting 1)."""
+
+
+@final
+class LatticeAxis(TypedDict):
+    """The axis of an operation of the plane in the lattice basis: the normal of a mirror or glide
+    line. A record with the field ``lattice``, as the axis in the other entry points, which have a
+    field ``cartesian`` besides; the plane has no Cartesian part, since its operations come without
+    a cell.
+    """
+
+    lattice: NDArray[np.int64]
+    """The shortest integer vector, first non-zero component positive."""
 
 
 @final
@@ -213,7 +237,7 @@ class OperationDescription(TypedDict):
     """For a rotation of order 3 or more: ``'+'`` if it turns a towards b, ``'-'`` otherwise."""
     translation: NotRequired[NDArray[np.float64]]
     """For a translation: the translation vector."""
-    location: NotRequired[NDArray[np.float64]]
+    point: NotRequired[NDArray[np.float64]]
     """For a rotation: its centre. For a mirror or glide: a point of its line, on y = 0 unless the line
     is parallel to it, then on x = 0. Not reduced modulo the lattice.
     """
@@ -221,7 +245,7 @@ class OperationDescription(TypedDict):
     """For a mirror or glide: the direction of its line, the shortest integer vector, first non-zero
     component positive.
     """
-    axis: NotRequired[NDArray[np.int64]]
+    axis: NotRequired[LatticeAxis]
     """For a reflection or glide reflection: its axis, the normal of its line in the lattice basis (as
     the ``axis`` of a reflection of the point groups is the normal of its plane), its symmetry direction
     with the sign of its Seitz symbol (``m₁₀``, ``m₁₂``): the shortest integer vector along the columns
@@ -252,16 +276,17 @@ class WyckoffPosition(TypedDict):
     ``['x,0', '-x,0']``; a leading ``-`` is an overbar.
     """
     miller_indices: NotRequired[str]
-    """For a plane point group: the first edge of the position's basic form, its Miller indices in the
-    usual notation, e.g. ``h,k``, ``1,0``, or ``h,k,i`` and ``1,1,-2`` (Bravais–Miller indices) for the
-    hexagonal groups; a leading ``-`` is an overbar. In the hexagonal groups the first doublet and the
-    first edge of a special position may lie on different, conjugate mirror lines; both belong to the
-    position.
+    """For a plane point group only (a plane group has no edges): the first edge of the position's basic
+    form, its Miller indices in the usual notation, e.g. ``h,k``, ``1,0``, or ``h,k,i`` and ``1,1,-2``
+    (Bravais–Miller indices) for the hexagonal groups; a leading ``-`` is an overbar. In the hexagonal
+    groups the first doublet and the first edge of a special position may lie on different, conjugate
+    mirror lines; both belong to the position.
     """
-    site_symmetry_operations: NotRequired[NDArray[np.int64]]
-    """For a plane point group: the indices into the operations of the group in the same setting
-    (``operations``) of those that fix the first edge (``miller_indices``), the site symmetry of the
-    edge, as for the faces of a crystal class.
+    site_symmetry_operations: NDArray[np.int64]
+    """The indices into the operations of the group in the same setting (``operations``) of those that
+    fix the position's first element, ascending: for a plane group its first coordinate doublet, for
+    every value of x and y, modulo the lattice; for a plane point group its first edge
+    (``miller_indices``), as for the faces of a crystal class.
     """
 
 
@@ -310,6 +335,20 @@ class SiteSymmetry(TypedDict):
 
 
 @final
+class DirectionSiteSymmetry(TypedDict):
+    """The site symmetry of a lattice direction or an edge under a plane point group."""
+
+    operations: NDArray[np.int64]
+    """Indices into the operations of those that leave the direction (the edge) fixed, ascending: a
+    subgroup.
+    """
+    multiplicity: int
+    """The number of equivalent directions (edges)."""
+    general: bool
+    """True if no operation other than the identity leaves it fixed (general position)."""
+
+
+@final
 class WyckoffDistance(TypedDict):
     """The distance of a point to a Wyckoff position: the position, as ``wyckoff_positions`` gives
     it, the nearest point of it, and the distance.
@@ -328,16 +367,17 @@ class WyckoffDistance(TypedDict):
     ``['x,0', '-x,0']``; a leading ``-`` is an overbar.
     """
     miller_indices: NotRequired[str]
-    """For a plane point group: the first edge of the position's basic form, its Miller indices in the
-    usual notation, e.g. ``h,k``, ``1,0``, or ``h,k,i`` and ``1,1,-2`` (Bravais–Miller indices) for the
-    hexagonal groups; a leading ``-`` is an overbar. In the hexagonal groups the first doublet and the
-    first edge of a special position may lie on different, conjugate mirror lines; both belong to the
-    position.
+    """For a plane point group only (a plane group has no edges): the first edge of the position's basic
+    form, its Miller indices in the usual notation, e.g. ``h,k``, ``1,0``, or ``h,k,i`` and ``1,1,-2``
+    (Bravais–Miller indices) for the hexagonal groups; a leading ``-`` is an overbar. In the hexagonal
+    groups the first doublet and the first edge of a special position may lie on different, conjugate
+    mirror lines; both belong to the position.
     """
-    site_symmetry_operations: NotRequired[NDArray[np.int64]]
-    """For a plane point group: the indices into the operations of the group in the same setting
-    (``operations``) of those that fix the first edge (``miller_indices``), the site symmetry of the
-    edge, as for the faces of a crystal class.
+    site_symmetry_operations: NDArray[np.int64]
+    """The indices into the operations of the group in the same setting (``operations``) of those that
+    fix the position's first element, ascending: for a plane group its first coordinate doublet, for
+    every value of x and y, modulo the lattice; for a plane point group its first edge
+    (``miller_indices``), as for the faces of a crystal class.
     """
     point: NDArray[np.float64]
     """The point of the position nearest to the given one (lattice basis), modulo the lattice, in [0,
@@ -358,6 +398,33 @@ class PointOrbitEntry(TypedDict):
     operations: NDArray[np.int64]
     """Indices into ``operations`` of the operations that map the given point here (modulo the lattice),
     ascending.
+    """
+
+
+@final
+class DirectionOrbitEntry(TypedDict):
+    """One direction of the orbit of a lattice direction: its indices and the operations that map
+    the given direction onto it.
+    """
+
+    uv: NDArray[np.int64]
+    """The lattice direction [uv]."""
+    operations: NDArray[np.int64]
+    """Indices into ``operations`` of the operations that map the given direction onto this one,
+    ascending.
+    """
+
+
+@final
+class EdgeOrbitEntry(TypedDict):
+    """One edge of the orbit of an edge: its Miller indices and the operations that map the given
+    edge onto it.
+    """
+
+    hk: NDArray[np.int64]
+    """The Miller indices (hk) of the edge."""
+    operations: NDArray[np.int64]
+    """Indices into ``operations`` of the operations that map the given edge onto this one, ascending.
     """
 
 
@@ -399,7 +466,7 @@ class SymmetryLine(TypedDict):
     """``'mirror'`` or ``'glide'``."""
     direction: NDArray[np.int64]
     """The direction of the line, the shortest integer vector, first non-zero component positive."""
-    axis: NDArray[np.int64]
+    axis: LatticeAxis
     """The normal of the line in the lattice basis, its symmetry direction, as ``axis`` in
     ``describe_operations``.
     """
@@ -521,14 +588,15 @@ _S_PlaneGroup = (
         "crystalSystem": _V,
         "bravaisLattice": _V,
         "pattersonSymmetry": _V,
-        "centring": ("a", np.float64, (-1, 2)),
-        "origin": _V,
+        "centringTranslations": ("a", np.float64, (-1, 2)),
+        "originSiteSymmetry": _V,
     },
 )
 _S_PointGroup = ("d", {"key": _V, "crystalSystem": _V, "order": _I, "laueClass": _V})
-_S_PlaneGroupFound = ("d", {"key": _V})
-_S_PointGroupInSetting = ("d", {"key": _V, "setting": _I})
+_S_IdentifiedPlaneGroup = ("d", {"key": _V, "setting": _I})
+_S_IdentifiedPointGroup = ("d", {"key": _V, "setting": _I})
 _S_Setting = ("d", {"index": _I, "symbol": _V, "isDefault": _V})
+_S_LatticeAxis = ("d", {"lattice": ("a", np.int64, (2,))})
 _S_OperationDescription = (
     "d",
     {
@@ -536,9 +604,9 @@ _S_OperationDescription = (
         "n": _I,
         "sense": _V,
         "translation": ("a", np.float64, (2,)),
-        "location": ("a", np.float64, (2,)),
+        "point": ("a", np.float64, (2,)),
         "direction": ("a", np.int64, (2,)),
-        "axis": ("a", np.int64, (2,)),
+        "axis": _S_LatticeAxis,
         "glide": ("a", np.float64, (2,)),
     },
 )
@@ -573,6 +641,14 @@ _S_SiteSymmetry = (
         "general": _V,
     },
 )
+_S_DirectionSiteSymmetry = (
+    "d",
+    {
+        "operations": ("a", np.int64, None),
+        "multiplicity": _I,
+        "general": _V,
+    },
+)
 _S_WyckoffDistance = (
     "d",
     {
@@ -587,6 +663,8 @@ _S_WyckoffDistance = (
     },
 )
 _S_PointOrbitEntry = ("d", {"point": ("a", np.float64, (2,)), "operations": ("a", np.int64, None)})
+_S_DirectionOrbitEntry = ("d", {"uv": ("a", np.int64, (2,)), "operations": ("a", np.int64, None)})
+_S_EdgeOrbitEntry = ("d", {"hk": ("a", np.int64, (2,)), "operations": ("a", np.int64, None)})
 _S_AsymmetricUnit = (
     "d",
     {
@@ -601,7 +679,7 @@ _S_SymmetryLine = (
     {
         "kind": _V,
         "direction": ("a", np.int64, (2,)),
-        "axis": ("a", np.int64, (2,)),
+        "axis": _S_LatticeAxis,
         "glide": ("a", np.float64, (2,)),
         "point": ("a", np.float64, (2,)),
     },
@@ -665,7 +743,13 @@ __all__ = [
     "CrystalForm",
     "CrystalFormType",
     "CrystalFormTypeKey",
+    "DirectionOrbitEntry",
+    "DirectionSiteSymmetry",
+    "EdgeOrbitEntry",
+    "IdentifiedPlaneGroup",
+    "IdentifiedPointGroup",
     "InverseTransformation",
+    "LatticeAxis",
     "LatticeParameters",
     "OperationDescription",
     "Operations",
@@ -673,12 +757,10 @@ __all__ = [
     "PlaneCellParameter",
     "PlaneFixedAngles",
     "PlaneGroup",
-    "PlaneGroupFound",
     "PlaneOperation",
     "PlaneOperationKind",
     "PlaneSystem",
     "PointGroup",
-    "PointGroupInSetting",
     "PointOrbitEntry",
     "RotationPoint",
     "Setting",
@@ -704,14 +786,18 @@ __all__ = [
     "metric_tensor",
     "operations",
     "orbit",
+    "orbit_of",
     "plane_group",
+    "plane_group_of",
     "plane_groups",
     "point_group",
+    "point_group_of",
     "point_groups",
     "reciprocal_basis",
     "residual_operations",
     "settings",
     "site_symmetry",
+    "site_symmetry_of",
     "symbol",
     "symmetry_elements",
     "wyckoff_distances",
@@ -775,7 +861,7 @@ def point_groups() -> list[PointGroup]:
     return result
 
 
-def find_plane_group(symbol: str) -> Optional[PlaneGroupFound]:
+def find_plane_group(symbol: str) -> Optional[IdentifiedPlaneGroup]:
     """Finds a plane group by a symbol: the key (the short symbol, ``'pm'``), the full symbol
     (``'p1m1'``, ``'p 1 m 1'``) or the short symbol of International Tables (1952) still in common
     use (``'pmm'``, ``'cmm'``, ``'p4m'``, ``'p4g'``, ``'p6m'``), spaces ignored
@@ -783,22 +869,22 @@ def find_plane_group(symbol: str) -> Optional[PlaneGroupFound]:
     notation. Gives ``None`` if the symbol names no plane group; raises SymcrysError for a value
     that is not a string.
     """
-    result: Optional[PlaneGroupFound] = _shared.convert(
+    result: Optional[IdentifiedPlaneGroup] = _shared.convert(
         _call("findPlaneGroup", symbol),
-        ("o", _S_PlaneGroupFound),
+        ("o", _S_IdentifiedPlaneGroup),
     )
     return result
 
 
-def find_point_group(symbol: str) -> Optional[PointGroupInSetting]:
+def find_point_group(symbol: str) -> Optional[IdentifiedPointGroup]:
     """Finds a plane point group by a symbol: the key, or the symbol of a setting (``'3m1'``,
     ``'31m'``), spaces ignored; the key ``'3m'`` gives the default setting 1. Gives ``None`` if the
     symbol names no plane point group, also for the symbol of a plane group (that is
     ``find_plane_group``); raises SymcrysError for a value that is not a string.
     """
-    result: Optional[PointGroupInSetting] = _shared.convert(
+    result: Optional[IdentifiedPointGroup] = _shared.convert(
         _call("findPointGroup", symbol),
-        ("o", _S_PointGroupInSetting),
+        ("o", _S_IdentifiedPointGroup),
     )
     return result
 
@@ -822,8 +908,9 @@ def point_group(key: str) -> PointGroup:
 
 
 def settings(key: str) -> list[Setting]:
-    """The settings of a plane point group: two for ``3m`` (``3m1``, the default, and ``31m``), one
-    for the others. Raises SymcrysError for an unknown key.
+    """The settings of a plane group or a plane point group: two for ``3m`` (``3m1``, the default,
+    and ``31m``), one for the others, a plane group's with its key as the symbol. Raises
+    SymcrysError for an unknown key.
     """
     result: list[Setting] = _shared.convert(_call("settings", key), ("l", _S_Setting))
     return result
@@ -1032,17 +1119,67 @@ def crystal_forms(key: str, *, setting: Optional[Union[int, str]] = None) -> lis
     return result
 
 
-def site_symmetry(key: str, point: ArrayLike, *, tolerance: Optional[float] = None) -> SiteSymmetry:
-    """The site symmetry of a point (lattice basis) under a plane group, as one notion with its
-    Wyckoff position: the point is set onto the position it lies on within the tolerance
-    (``wyckoff_position``), and the site symmetry is that of the point there; ``point`` is the point
-    on the position. Raises SymcrysError for an unknown key, a point that is not two finite numbers
-    or has a coordinate beyond 10⁶ in magnitude, or a tolerance outside (0, 1/2).
+@overload
+def site_symmetry(
+    key: str,
+    *,
+    point: ArrayLike,
+    setting: Optional[Union[int, str]] = None,
+    tolerance: Optional[float] = None,
+) -> SiteSymmetry: ...
+
+
+@overload
+def site_symmetry(
+    key: str,
+    *,
+    uv: ArrayLike,
+    setting: Optional[Union[int, str]] = None,
+    tolerance: Optional[float] = None,
+) -> DirectionSiteSymmetry: ...
+
+
+@overload
+def site_symmetry(
+    key: str,
+    *,
+    hk: ArrayLike,
+    setting: Optional[Union[int, str]] = None,
+    tolerance: Optional[float] = None,
+) -> DirectionSiteSymmetry: ...
+
+
+def site_symmetry(
+    key: str,
+    *,
+    point: Optional[ArrayLike] = None,
+    uv: Optional[ArrayLike] = None,
+    hk: Optional[ArrayLike] = None,
+    setting: Optional[Union[int, str]] = None,
+    tolerance: Optional[float] = None,
+) -> SiteSymmetry | DirectionSiteSymmetry:
+    """The site symmetry under a plane group or a plane point group, as one notion with its Wyckoff
+    position. A point (lattice basis) under a plane group: the point is set onto the position it
+    lies on within the tolerance (``wyckoff_position``), and the site symmetry is that of the point
+    there; ``point`` is the point on the position. A lattice direction [uv] or an edge (hk) under a
+    plane point group in a setting, exactly: the operations that leave it fixed (for an edge, map it
+    onto itself). Raises SymcrysError for an unknown key or setting, a point that is not two finite
+    numbers or has a coordinate beyond 10⁶ in magnitude, a direction or an edge that is not two
+    integers not both zero, an input of the other kind of key, or a tolerance outside (0, 1/2).
 
     Parameters
     ----------
-    point
+    point : keyword-only, optional
         The coordinates x, y of the point in the lattice basis a, b (fractions of the cell).
+    uv : keyword-only, optional
+        The lattice direction [uv], two integers not both zero.
+    hk : keyword-only, optional
+        The Miller indices (hk) of the edge, two integers not both zero (hexagonal axes: without i).
+    setting : keyword-only, optional
+        The setting, by its 1-based index or its symbol (spaces ignored): for the point group ``3m``
+        1 or ``'3m1'`` (default) and 2 or ``'31m'``, and the key ``'3m'`` names the default; the
+        other point groups have one, and a plane group takes only 1 or its own symbol (short or
+        full).
     tolerance : keyword-only, optional
         Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁵). It is measured per
         matrix entry for operations, as the distance of unit vectors for directions and per
@@ -1054,34 +1191,78 @@ def site_symmetry(key: str, point: ArrayLike, *, tolerance: Optional[float] = No
         ``operations`` int64 array of shape (n,), ``point`` float64 array of shape (2,),
         ``multiplicity``, ``general``.
     """
-    result: SiteSymmetry = _shared.convert(
+    result: SiteSymmetry | DirectionSiteSymmetry = _shared.convert(
         _call(
             "siteSymmetry",
             key,
-            _shared.options(point=_shared.plane_point(point)),
-            _shared.options(tolerance=tolerance),
+            _shared.options(point=point, uv=uv, hk=hk),
+            _shared.options(setting=setting, tolerance=tolerance),
         ),
-        _S_SiteSymmetry,
+        ("d", {"operations": ("a", np.int64, None), "point": ("a", np.float64, (2,)), "multiplicity": _I, "general": _V}),
     )
     return result
 
 
+@overload
 def wyckoff_position(
     key: str,
-    point: ArrayLike,
     *,
+    point: ArrayLike,
+    setting: Optional[Union[int, str]] = None,
+    tolerance: Optional[float] = None,
+) -> WyckoffPosition: ...
+
+
+@overload
+def wyckoff_position(
+    key: str,
+    *,
+    uv: ArrayLike,
+    setting: Optional[Union[int, str]] = None,
+    tolerance: Optional[float] = None,
+) -> WyckoffPosition: ...
+
+
+@overload
+def wyckoff_position(
+    key: str,
+    *,
+    hk: ArrayLike,
+    setting: Optional[Union[int, str]] = None,
+    tolerance: Optional[float] = None,
+) -> WyckoffPosition: ...
+
+
+def wyckoff_position(
+    key: str,
+    *,
+    point: Optional[ArrayLike] = None,
+    uv: Optional[ArrayLike] = None,
+    hk: Optional[ArrayLike] = None,
+    setting: Optional[Union[int, str]] = None,
     tolerance: Optional[float] = None,
 ) -> WyckoffPosition:
-    """The Wyckoff position of a point (lattice basis) under a plane group, as ``wyckoff_positions``
-    gives it: the most special position whose point set lies within the tolerance of the point,
+    """The Wyckoff position as ``wyckoff_positions`` gives it. Of a point (lattice basis) under a
+    plane group: the most special position whose point set lies within the tolerance of the point,
     measured per coordinate modulo the lattice, and among positions of equal multiplicity the
-    nearest (the distance of ``wyckoff_distances``); the general position always holds the point.
-    Raises SymcrysError as ``site_symmetry``.
+    nearest (the distance of ``wyckoff_distances``); the general position always holds the point. Of
+    a lattice direction [uv] or an edge (hk) under a plane point group in a setting: the position
+    whose site symmetry is conjugate to that of the direction (ITA's definition). Raises
+    SymcrysError as ``site_symmetry``.
 
     Parameters
     ----------
-    point
+    point : keyword-only, optional
         The coordinates x, y of the point in the lattice basis a, b (fractions of the cell).
+    uv : keyword-only, optional
+        The lattice direction [uv], two integers not both zero.
+    hk : keyword-only, optional
+        The Miller indices (hk) of the edge, two integers not both zero (hexagonal axes: without i).
+    setting : keyword-only, optional
+        The setting, by its 1-based index or its symbol (spaces ignored): for the point group ``3m``
+        1 or ``'3m1'`` (default) and 2 or ``'31m'``, and the key ``'3m'`` names the default; the
+        other point groups have one, and a plane group takes only 1 or its own symbol (short or
+        full).
     tolerance : keyword-only, optional
         Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁵). It is measured per
         matrix entry for operations, as the distance of unit vectors for directions and per
@@ -1091,10 +1272,10 @@ def wyckoff_position(
         _call(
             "wyckoffPosition",
             key,
-            _shared.options(point=_shared.plane_point(point)),
-            _shared.options(tolerance=tolerance),
+            _shared.options(point=point, uv=uv, hk=hk),
+            _shared.options(setting=setting, tolerance=tolerance),
         ),
-        _S_WyckoffPosition,
+        ("d", {"letter": _V, "multiplicity": _I, "siteSymmetry": _V, "coordinates": ("l", _V), "millerIndices": _V, "siteSymmetryOperations": ("a", np.int64, None)}),
     )
     return result
 
@@ -1146,23 +1327,67 @@ def wyckoff_distances(
     return result
 
 
+@overload
 def orbit(
     key: str,
-    point: ArrayLike,
     *,
+    point: ArrayLike,
+    setting: Optional[Union[int, str]] = None,
     tolerance: Optional[float] = None,
-) -> list[PointOrbitEntry]:
-    """The orbit of a point (lattice basis) under a plane group: the images of the point set onto
-    its Wyckoff position (as ``site_symmetry`` sets it), each in [0, 1), in the order of the
-    operations that first give them, each with the indices of the operations that map the point
-    there (as the entries of the orbits of the point groups): one entry per coset of the site
-    symmetry, so the first entry holds the operations of ``site_symmetry``. Raises SymcrysError as
-    ``site_symmetry``.
+) -> list[PointOrbitEntry]: ...
+
+
+@overload
+def orbit(
+    key: str,
+    *,
+    uv: ArrayLike,
+    setting: Optional[Union[int, str]] = None,
+    tolerance: Optional[float] = None,
+) -> list[DirectionOrbitEntry]: ...
+
+
+@overload
+def orbit(
+    key: str,
+    *,
+    hk: ArrayLike,
+    setting: Optional[Union[int, str]] = None,
+    tolerance: Optional[float] = None,
+) -> list[EdgeOrbitEntry]: ...
+
+
+def orbit(
+    key: str,
+    *,
+    point: Optional[ArrayLike] = None,
+    uv: Optional[ArrayLike] = None,
+    hk: Optional[ArrayLike] = None,
+    setting: Optional[Union[int, str]] = None,
+    tolerance: Optional[float] = None,
+) -> list[PointOrbitEntry] | list[DirectionOrbitEntry] | list[EdgeOrbitEntry]:
+    """The orbit under a plane group or a plane point group. Of a point (lattice basis) under a
+    plane group: the images of the point set onto its Wyckoff position (as ``site_symmetry`` sets
+    it), each in [0, 1), in the order of the operations that first give them, each with the indices
+    of the operations that map the point there: one entry per coset of the site symmetry, so the
+    first entry holds the operations of ``site_symmetry``. Of a lattice direction [uv] or an edge
+    (hk) under a plane point group in a setting, exactly: the distinct directions (edges), in the
+    order in which the operations reach them (the given one first), each with the operations that
+    map the given one onto it. Raises SymcrysError as ``site_symmetry``.
 
     Parameters
     ----------
-    point
+    point : keyword-only, optional
         The coordinates x, y of the point in the lattice basis a, b (fractions of the cell).
+    uv : keyword-only, optional
+        The lattice direction [uv], two integers not both zero.
+    hk : keyword-only, optional
+        The Miller indices (hk) of the edge, two integers not both zero (hexagonal axes: without i).
+    setting : keyword-only, optional
+        The setting, by its 1-based index or its symbol (spaces ignored): for the point group ``3m``
+        1 or ``'3m1'`` (default) and 2 or ``'31m'``, and the key ``'3m'`` names the default; the
+        other point groups have one, and a plane group takes only 1 or its own symbol (short or
+        full).
     tolerance : keyword-only, optional
         Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁵). It is measured per
         matrix entry for operations, as the distance of unit vectors for directions and per
@@ -1174,14 +1399,222 @@ def orbit(
         In each, ``point`` is a float64 array of shape (2,) and ``operations`` an int64 array of
         shape (n,).
     """
-    result: list[PointOrbitEntry] = _shared.convert(
+    result: list[PointOrbitEntry] | list[DirectionOrbitEntry] | list[EdgeOrbitEntry] = _shared.convert(
         _call(
             "orbit",
             key,
-            _shared.options(point=_shared.plane_point(point)),
+            _shared.options(point=point, uv=uv, hk=hk),
+            _shared.options(setting=setting, tolerance=tolerance),
+        ),
+        ("l", ("d", {"point": ("a", np.float64, (2,)), "operations": ("a", np.int64, None), "uv": ("a", np.int64, (2,)), "hk": ("a", np.int64, (2,))})),
+    )
+    return result
+
+
+@overload
+def site_symmetry_of(
+    operations: Operations | Sequence[Mapping[str, Any]],
+    *,
+    point: ArrayLike,
+    tolerance: Optional[float] = None,
+) -> SiteSymmetry: ...
+
+
+@overload
+def site_symmetry_of(
+    operations: Operations | Sequence[Mapping[str, Any]],
+    *,
+    uv: ArrayLike,
+    tolerance: Optional[float] = None,
+) -> DirectionSiteSymmetry: ...
+
+
+@overload
+def site_symmetry_of(
+    operations: Operations | Sequence[Mapping[str, Any]],
+    *,
+    hk: ArrayLike,
+    tolerance: Optional[float] = None,
+) -> DirectionSiteSymmetry: ...
+
+
+def site_symmetry_of(
+    operations: Operations | Sequence[Mapping[str, Any]],
+    *,
+    point: Optional[ArrayLike] = None,
+    uv: Optional[ArrayLike] = None,
+    hk: Optional[ArrayLike] = None,
+    tolerance: Optional[float] = None,
+) -> SiteSymmetry | DirectionSiteSymmetry:
+    """The site symmetry under a list of operations of the plane (lattice basis), for instance those
+    of a pattern, named by the field of the input. Of a point (field ``point``): the operations (W,
+    w) that map it onto itself modulo the lattice within the tolerance, closed under products, the
+    point set onto their fixed space (the mean of its images), repeated until stable, so that the
+    result is a subgroup and the set point lies exactly on its elements; ``point`` is that point, in
+    [0, 1). The list is a plane group given as one operation per coset of the lattice translations,
+    all of them. Of a lattice direction (``uv``) or an edge (``hk``): the operations whose linear
+    part leaves it fixed, exactly; the linear parts must be closed under products. An empty list is
+    the group 1. Each matrix must have integer entries within the tolerance and each translation
+    component is read as a fraction with a denominator of at most 12, as in
+    ``describe_operations_of``. Raises SymcrysError for such input, for a list that is not a group
+    (the error names the missing product or the operations equal modulo the lattice), for a point or
+    a vector as ``site_symmetry`` refuses it, and if the operations do not settle (a tolerance far
+    too large).
+
+    Parameters
+    ----------
+    point : keyword-only, optional
+        The coordinates x, y of the point in the lattice basis a, b (fractions of the cell).
+    uv : keyword-only, optional
+        The lattice direction [uv], two integers not both zero.
+    hk : keyword-only, optional
+        The Miller indices (hk) of the edge, two integers not both zero (hexagonal axes: without i).
+    tolerance : keyword-only, optional
+        Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁵). It is measured per
+        matrix entry for operations, as the distance of unit vectors for directions and per
+        coordinate modulo the lattice for points (docs/conventions.md, "Tolerances").
+    """
+    result: SiteSymmetry | DirectionSiteSymmetry = _shared.convert(
+        _call(
+            "siteSymmetryOf",
+            _shared.operation_list(operations, ("matrix", "translation")),
+            _shared.options(point=point, uv=uv, hk=hk),
             _shared.options(tolerance=tolerance),
         ),
-        ("l", _S_PointOrbitEntry),
+        ("d", {"operations": ("a", np.int64, None), "point": ("a", np.float64, (2,)), "multiplicity": _I, "general": _V}),
+    )
+    return result
+
+
+@overload
+def orbit_of(
+    operations: Operations | Sequence[Mapping[str, Any]],
+    *,
+    point: ArrayLike,
+    tolerance: Optional[float] = None,
+) -> list[PointOrbitEntry]: ...
+
+
+@overload
+def orbit_of(
+    operations: Operations | Sequence[Mapping[str, Any]],
+    *,
+    uv: ArrayLike,
+    tolerance: Optional[float] = None,
+) -> list[DirectionOrbitEntry]: ...
+
+
+@overload
+def orbit_of(
+    operations: Operations | Sequence[Mapping[str, Any]],
+    *,
+    hk: ArrayLike,
+    tolerance: Optional[float] = None,
+) -> list[EdgeOrbitEntry]: ...
+
+
+def orbit_of(
+    operations: Operations | Sequence[Mapping[str, Any]],
+    *,
+    point: Optional[ArrayLike] = None,
+    uv: Optional[ArrayLike] = None,
+    hk: Optional[ArrayLike] = None,
+    tolerance: Optional[float] = None,
+) -> list[PointOrbitEntry] | list[DirectionOrbitEntry] | list[EdgeOrbitEntry]:
+    """The orbit under a list of operations of the plane (lattice basis), named by the field of the
+    input, as ``orbit`` gives it for a key: of a point, one entry per coset of its site symmetry
+    (``site_symmetry_of``), each image in [0, 1); of a lattice direction or an edge, the distinct
+    images under the linear parts, exactly. The list as for ``site_symmetry_of``; an empty list is
+    the group 1, whose orbit is the input itself. Raises SymcrysError as ``site_symmetry_of``.
+
+    Parameters
+    ----------
+    point : keyword-only, optional
+        The coordinates x, y of the point in the lattice basis a, b (fractions of the cell).
+    uv : keyword-only, optional
+        The lattice direction [uv], two integers not both zero.
+    hk : keyword-only, optional
+        The Miller indices (hk) of the edge, two integers not both zero (hexagonal axes: without i).
+    tolerance : keyword-only, optional
+        Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁵). It is measured per
+        matrix entry for operations, as the distance of unit vectors for directions and per
+        coordinate modulo the lattice for points (docs/conventions.md, "Tolerances").
+    """
+    result: list[PointOrbitEntry] | list[DirectionOrbitEntry] | list[EdgeOrbitEntry] = _shared.convert(
+        _call(
+            "orbitOf",
+            _shared.operation_list(operations, ("matrix", "translation")),
+            _shared.options(point=point, uv=uv, hk=hk),
+            _shared.options(tolerance=tolerance),
+        ),
+        ("l", ("d", {"point": ("a", np.float64, (2,)), "operations": ("a", np.int64, None), "uv": ("a", np.int64, (2,)), "hk": ("a", np.int64, (2,))})),
+    )
+    return result
+
+
+def point_group_of(
+    operations: Operations | Sequence[Mapping[str, Any]],
+    *,
+    tolerance: Optional[float] = None,
+) -> IdentifiedPointGroup:
+    """The plane point group of a list of operations of the plane (lattice basis): the group their
+    linear parts generate (the translations do not matter), its key, and the setting whose
+    operations they are, absent if they are the group in another basis (a mirror along a diagonal of
+    the cell). The linear parts are closed into a group first. Each matrix must have integer entries
+    within the tolerance; a translation is read as in ``describe_operations_of``. Raises
+    SymcrysError for such input, a matrix of determinant other than ±1, and matrices that generate
+    no finite group (a shear).
+
+    Parameters
+    ----------
+    tolerance : keyword-only, optional
+        Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁵). It is measured per
+        matrix entry for operations, as the distance of unit vectors for directions and per
+        coordinate modulo the lattice for points (docs/conventions.md, "Tolerances").
+    """
+    result: IdentifiedPointGroup = _shared.convert(
+        _call(
+            "pointGroupOf",
+            _shared.operation_list(operations, ("matrix", "translation")),
+            _shared.options(tolerance=tolerance),
+        ),
+        _S_IdentifiedPointGroup,
+    )
+    return result
+
+
+def plane_group_of(
+    operations: Operations | Sequence[Mapping[str, Any]],
+    *,
+    tolerance: Optional[float] = None,
+) -> IdentifiedPlaneGroup:
+    """The plane group of a list of operations of the plane, given in a conventional cell of their
+    lattice (lattice basis), for instance those of a pattern: its key, and setting 1 if the
+    operations are exactly those of ``operations(key)`` modulo the lattice, absent if they are the
+    group with another origin or orientation (``p2mg`` with the mirror lines normal to b). The list
+    is closed modulo the lattice first, so generators suffice. The type follows from the point
+    group, the centring and, per direction of mirror lines, whether a reflection is among the
+    operations or only glide reflections; it does not depend on the origin. Matrices and
+    translations are read as in ``describe_operations_of``. Raises SymcrysError for such input, and
+    for operations that are not in a conventional cell: a translation besides the lattice
+    translations other than the centring (1/2, 1/2) of a rectangular lattice, linear parts that no
+    conventional cell gives (a mirror along a diagonal of a rectangular cell, a square or hexagonal
+    group in another basis), and operations that generate no plane group.
+
+    Parameters
+    ----------
+    tolerance : keyword-only, optional
+        Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁵). It is measured per
+        matrix entry for operations, as the distance of unit vectors for directions and per
+        coordinate modulo the lattice for points (docs/conventions.md, "Tolerances").
+    """
+    result: IdentifiedPlaneGroup = _shared.convert(
+        _call(
+            "planeGroupOf",
+            _shared.operation_list(operations, ("matrix", "translation")),
+            _shared.options(tolerance=tolerance),
+        ),
+        _S_IdentifiedPlaneGroup,
     )
     return result
 

@@ -101,7 +101,6 @@ export {
   type Operation,
   type OperationDescription,
   type PointGroup,
-  type PointGroupInSetting,
   type TensorProperty,
   type TensorPropertyName,
   type TensorSpec,

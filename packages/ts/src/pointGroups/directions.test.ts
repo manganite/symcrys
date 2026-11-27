@@ -115,9 +115,10 @@ describe('latticeBasis(key, { setting })', () => {
 
 describe('a point of the plane: { point }', () => {
   it('refuses a bare array and other fields', () => {
-    expect(() => plane.siteSymmetry('p4', [0.1, 0.2] as never)).toThrow(/by its field point/);
+    expect(() => plane.siteSymmetry('p4', [0.1, 0.2] as never)).toThrow(/a point \{ point \}.*by one field/);
     expect(() => plane.orbit('p4', [0.1, 0.2] as never)).toThrow(RangeError);
-    expect(() => plane.wyckoffPosition('p4', { point: [0, 0], x: 1 } as never)).toThrow(/the field point only/);
+    expect(() => plane.wyckoffPosition('p4', { point: [0, 0], x: 1 } as never)).toThrow(/by one field/);
+    expect(() => plane.wyckoffDistances('p4', { point: [0, 0], x: 1 } as never)).toThrow(/by its field point/);
     expect(plane.wyckoffPosition('p4', { point: [0.5, 0.5] }).letter).toBe('b');
   });
 });

@@ -7,7 +7,7 @@ import { describe, expect, it } from 'vitest';
 import * as plane from './plane.js';
 import { planeAsymmetricUnit, planeElements } from './spaceGroups/cell.js';
 import { describePlaneOperation } from './spaceGroups/describe.js';
-import { compose, translationOperation } from './spaceGroups/affine.js';
+import { compose, parseOperation, toPlain, translationOperation } from './spaceGroups/affine.js';
 import { planeGroupOperations } from './spaceGroups/planeGroups.js';
 import { rational, toNumber } from './spaceGroups/rational.js';
 
@@ -82,9 +82,9 @@ describe('plane point groups', () => {
       const point = plane.operations(g.pointGroup, { setting: g.pointGroupSetting });
       expect(new Set(point.map((op) => key(op.matrix))), k).toEqual(linear);
       expect(point.every((op) => op.translation.every((t) => t === 0))).toBe(true);
-      expect(plane.pointGroup(g.pointGroup).order * g.centring.length + plane.pointGroup(g.pointGroup).order).toBe(
-        plane.operations(k).length,
-      );
+      expect(
+        plane.pointGroup(g.pointGroup).order * g.centringTranslations.length + plane.pointGroup(g.pointGroup).order,
+      ).toBe(plane.operations(k).length);
     }
   });
 
@@ -110,7 +110,8 @@ describe('plane point groups', () => {
       { index: 2, symbol: '31m', isDefault: false },
     ]);
     expect(plane.settings('m')).toEqual([{ index: 1, symbol: 'm', isDefault: true }]);
-    expect(() => plane.settings('p2' as plane.PointGroupKey)).toThrow(/plane group \(planeGroup\)/);
+    expect(plane.settings('p2mg')).toEqual([{ index: 1, symbol: 'p2mg', isDefault: true }]);
+    expect(() => plane.settings('p7' as plane.PointGroupKey)).toThrow(RangeError);
     expect(plane.planeGroup('p31m').pointGroupSetting).toBe(2);
     expect(plane.planeGroup('p3m1').pointGroupSetting).toBe(1);
     expect(() => plane.symbol('4mm', { setting: 2 })).toThrow(RangeError);
@@ -158,8 +159,8 @@ describe('plain numbers at the API', () => {
       crystalSystem: 'rectangular',
       bravaisLattice: 'oc',
       pattersonSymmetry: 'c2mm',
-      centring: [[0.5, 0.5]],
-      origin: '2mm',
+      centringTranslations: [[0.5, 0.5]],
+      originSiteSymmetry: '2mm',
     });
     const ops = plane.operations('p3');
     expect(ops[1]).toEqual({
@@ -184,24 +185,24 @@ describe('plain numbers at the API', () => {
       const exact = planeGroupOperations(k).map(describePlaneOperation);
       plane.describeOperations(k).forEach((d, i) => {
         expect(d.kind).toBe(exact[i].kind);
-        expect(d.location).toEqual(exact[i].location?.map(toNumber));
+        expect(d.point).toEqual(exact[i].location?.map(toNumber));
         expect(d.glide).toEqual(exact[i].glide?.map(toNumber));
         expect(d.direction).toEqual(exact[i].direction);
-        expect(d.axis).toEqual(exact[i].axis);
+        expect(d.axis?.lattice).toEqual(exact[i].axis);
       });
       expect(plane.asymmetricUnit(k).vertices).toEqual(planeAsymmetricUnit(k).vertices.map((v) => v.map(toNumber)));
       expect(plane.asymmetricUnit(k).edges).toEqual(planeAsymmetricUnit(k).edges);
       const e = planeElements(k);
       expect(plane.symmetryElements(k).lines.map((l) => l.point)).toEqual(e.lines.map((l) => l.point.map(toNumber)));
-      expect(plane.symmetryElements(k).lines.map((l) => l.axis)).toEqual(e.lines.map((l) => l.axis));
+      expect(plane.symmetryElements(k).lines.map((l) => l.axis.lattice)).toEqual(e.lines.map((l) => l.axis));
       expect(plane.symmetryElements(k).rotationPoints.map((r) => r.n)).toEqual(e.rotationPoints.map((r) => r.n));
     }
     expect(plane.describeOperations('p4gm')[4]).toEqual({
       kind: 'glide-reflection',
       n: 2,
-      location: [0.25, 0],
+      point: [0.25, 0],
       direction: [0, 1],
-      axis: [1, 0],
+      axis: { lattice: [1, 0] },
       glide: [0, 0.5],
     });
   });
@@ -245,6 +246,8 @@ describe('plain numbers at the API', () => {
       multiplicity: 2,
       siteSymmetry: '3m.',
       coordinates: ['1/3,2/3', '2/3,1/3'],
+      // The threefold rotations and the mirrors -y,-x; -x+y,y; x,x-y, which map 1/3,2/3 onto itself modulo the lattice.
+      siteSymmetryOperations: [0, 1, 2, 6, 7, 8],
     });
     expect(plane.wyckoffPosition('cm', { point: [0.2, 0.3] })).toEqual(plane.wyckoffPositions('cm')[0]);
     const site = plane.siteSymmetry('p2mm', { point: [0.5, 0.2] });
@@ -253,8 +256,8 @@ describe('plain numbers at the API', () => {
     expect(plane.siteSymmetry('p2mm', { point: [0.31, 0.2] }).general).toBe(true);
     expect(plane.orbit('p2', { point: [0.1, 0.2] })).toHaveLength(2);
     expect(plane.wyckoffPositions('cm')).toEqual([
-      { letter: 'b', multiplicity: 4, siteSymmetry: '1', coordinates: ['x,y', '-x,y'] },
-      { letter: 'a', multiplicity: 2, siteSymmetry: '.m.', coordinates: ['0,y'] },
+      { letter: 'b', multiplicity: 4, siteSymmetry: '1', coordinates: ['x,y', '-x,y'], siteSymmetryOperations: [0] },
+      { letter: 'a', multiplicity: 2, siteSymmetry: '.m.', coordinates: ['0,y'], siteSymmetryOperations: [0, 1] },
     ]);
   });
 
@@ -408,10 +411,10 @@ describe('describeOperationsOf', () => {
         expect(d.kind).toBe(e.kind);
         expect(d.n).toBe(e.n);
         expect(d.sense).toBe(e.sense);
-        expect(d.location).toEqual(e.location?.map(toNumber));
+        expect(d.point).toEqual(e.location?.map(toNumber));
         expect(d.glide).toEqual(e.glide?.map(toNumber));
         expect(d.translation).toEqual(e.translation?.map(toNumber));
-        expect(d.axis).toEqual(e.axis);
+        expect(d.axis?.lattice).toEqual(e.axis);
       });
     }
   });
@@ -521,7 +524,9 @@ describe('errors', () => {
     for (const f of [plane.operations, plane.generators, plane.describeOperations]) {
       expect(() => f('p7' as plane.PlaneGroupKey)).toThrow(/Unknown plane group or plane point group: "p7"/);
     }
-    expect(() => plane.orbit('p7' as plane.PlaneGroupKey, { point: [0, 0] })).toThrow(/Unknown plane group: "p7"/);
+    expect(() => plane.orbit('p7' as plane.PlaneGroupKey, { point: [0, 0] })).toThrow(
+      /Unknown plane group or plane point group: "p7"/,
+    );
     expect(() => plane.pointGroup('7' as plane.PointGroupKey)).toThrow(/Unknown plane point group: "7"/);
     expect(() => plane.planeGroup(9 as unknown as plane.PlaneGroupKey)).toThrow(RangeError);
     expect(() => plane.planeGroup('2mm' as plane.PlaneGroupKey)).toThrow(/plane group, not of the point group 2mm/);
@@ -533,7 +538,12 @@ describe('errors', () => {
     expect(() => plane.crystalForms('p4mm' as plane.PointGroupKey)).toThrow(RangeError);
     expect(() => plane.wyckoffPositions('4mm', { setting: 2 })).toThrow(RangeError);
     expect(() => plane.wyckoffPositions('p4mm', { setting: 2 })).toThrow(RangeError);
-    expect(() => plane.siteSymmetry('4mm' as plane.PlaneGroupKey, { point: [0, 0] })).toThrow(RangeError);
+    expect(() => plane.siteSymmetry('4mm' as plane.PlaneGroupKey, { point: [0, 0] })).toThrow(
+      /takes a lattice direction \{ uv \} or an edge/,
+    );
+    expect(() => plane.siteSymmetry('p4mm' as plane.PointGroupKey, { uv: [1, 0] })).toThrow(
+      /takes a point \{ point \}/,
+    );
     expect(() => plane.orbit('p2', { point: [0.1, 0.2] }, { tolerance: 0.5 })).toThrow(RangeError);
   });
 });
@@ -678,5 +688,334 @@ describe('a point of the plane', () => {
     expect(() => plane.siteSymmetry('p4mm', { point: [2e6, 0] })).toThrow(/at most 1000000/);
     expect(() => plane.wyckoffPosition('p4mm', { point: [0, -2e6] })).toThrow(RangeError);
     expect(plane.orbit('p4mm', { point: [1e6, 0.25] }).length).toBeGreaterThan(0);
+  });
+});
+
+describe('sites under a plane point group: a lattice direction { uv } or an edge { hk } (#208)', () => {
+  /** A vector of a doublet or Miller indices as ITA prints them, the parameters set to small primes. */
+  const vectorOf = (text: string): number[] => {
+    const values: Record<string, number> = { x: 1, y: 3, h: 2, k: 5 };
+    return text
+      .split(',')
+      .slice(0, 2)
+      .map((c) => {
+        const m = /^(-?)(\d*)([xyhk]?)$/.exec(c)!;
+        const n = m[3] ? (m[2] ? Number(m[2]) : 1) * values[m[3]] : Number(m[2]);
+        return m[1] ? -n : n;
+      });
+  };
+
+  it('every position holds the direction of its first doublet and the edge of its first Miller indices', () => {
+    for (const key of plane.POINT_GROUP_KEYS) {
+      for (const { index: setting } of plane.settings(key)) {
+        const positions = plane.wyckoffPositions(key, { setting });
+        for (const w of positions) {
+          const uv = vectorOf(w.coordinates[0]);
+          const hk = vectorOf(w.millerIndices!);
+          const where = `${key} #${setting} ${w.letter}`;
+          expect(plane.wyckoffPosition(key, { uv }, { setting }), where).toEqual(w);
+          expect(plane.wyckoffPosition(key, { hk }, { setting }), where).toEqual(w);
+          // The site symmetry of the first edge is the position's; the orbits have its multiplicity.
+          const edge = plane.siteSymmetry(key, { hk }, { setting });
+          expect(edge.operations, where).toEqual(w.siteSymmetryOperations);
+          expect(edge.multiplicity, where).toBe(w.multiplicity);
+          expect(edge.general, where).toBe(w.siteSymmetryOperations.length === 1);
+          expect(plane.orbit(key, { uv }, { setting }), where).toHaveLength(w.multiplicity);
+          expect(plane.orbit(key, { hk }, { setting }), where).toHaveLength(w.multiplicity);
+        }
+      }
+    }
+  });
+
+  it('turns an edge as a linear form and a direction as a vector', () => {
+    // 4: the rotation (2) is -y,x; it turns [1,0] into [0,1] and the edge (1,0), normal to a*, into (0,1).
+    expect(plane.orbit('4', { uv: [1, 2] }).map((e) => e.uv)).toEqual([
+      [1, 2],
+      [-1, -2],
+      [-2, 1],
+      [2, -1],
+    ]);
+    expect(plane.orbit('4', { hk: [1, 0] }).map((e) => e.hk)).toEqual([
+      [1, 0],
+      [-1, 0],
+      [0, 1],
+      [0, -1],
+    ]);
+    // 6mm: the direction [1,0] lies on the mirror x,0 (position a), the edge (1,0) is normal to the
+    // mirror x,-x (position b), as ITA Table 3.2.3.1 gives them.
+    expect(plane.wyckoffPosition('6mm', { uv: [1, 0] }).letter).toBe('a');
+    expect(plane.wyckoffPosition('6mm', { hk: [1, 0] }).letter).toBe('b');
+  });
+
+  it('refuses a vector that is not two integers not both zero, and an input of the other kind', () => {
+    expect(() => plane.siteSymmetry('4mm', { uv: [0, 0] })).toThrow(/two integers, not both zero/);
+    expect(() => plane.orbit('4mm', { hk: [0.5, 1] })).toThrow(/two integers/);
+    expect(() => plane.orbit('4mm', { uv: [1, 0], hk: [1, 0] } as never)).toThrow(/by one field/);
+    expect(() => plane.wyckoffPosition('3m', { uv: [1, 0] }, { setting: 3 })).toThrow(RangeError);
+    expect(() => plane.siteSymmetry('p2', { point: [0, 0] }, { setting: 2 })).toThrow(RangeError);
+  });
+});
+
+describe('lists of operations of the plane: siteSymmetryOf, orbitOf (#208)', () => {
+  it('give for the operations of a key what the functions of the key give', () => {
+    for (const key of plane.PLANE_GROUP_KEYS) {
+      const ops = plane.operations(key);
+      for (const point of [
+        [0, 0],
+        [0.5, 0],
+        [1 / 3, 2 / 3],
+        [0.25, 0.25],
+        [0.1, 0.2],
+        [0.5, 0.31],
+      ]) {
+        const where = `${key} ${point.join(',')}`;
+        const site = plane.siteSymmetry(key, { point });
+        const of = plane.siteSymmetryOf(ops, { point });
+        // On an exact point the two settle on the same site, up to the last bit of the point.
+        expect({ ...of, point: undefined }, where).toEqual({ ...site, point: undefined });
+        of.point.forEach((x, i) => expect(x, where).toBeCloseTo(site.point[i], 12));
+        const orbit = plane.orbit(key, { point });
+        const orbitOf = plane.orbitOf(ops, { point });
+        expect(
+          orbitOf.map((e) => e.operations),
+          where,
+        ).toEqual(orbit.map((e) => e.operations));
+        orbitOf.forEach((e, j) => e.point.forEach((x, i) => expect(x, where).toBeCloseTo(orbit[j].point[i], 12)));
+      }
+    }
+    for (const key of plane.POINT_GROUP_KEYS) {
+      for (const { index: setting } of plane.settings(key)) {
+        const ops = plane.operations(key, { setting });
+        for (const v of [
+          [1, 0],
+          [1, 1],
+          [1, 2],
+          [2, -1],
+        ]) {
+          expect(plane.siteSymmetryOf(ops, { uv: v })).toEqual(plane.siteSymmetry(key, { uv: v }, { setting }));
+          expect(plane.orbitOf(ops, { hk: v })).toEqual(plane.orbit(key, { hk: v }, { setting }));
+        }
+      }
+    }
+  });
+
+  it('read a direction under the linear parts of a plane group, a point modulo the lattice', () => {
+    // cm: the identity and the centring have the same linear part, so both fix every direction.
+    const cm = plane.operations('cm');
+    expect(plane.siteSymmetryOf(cm, { uv: [0, 1] })).toEqual({
+      operations: [0, 1, 2, 3],
+      multiplicity: 1,
+      general: false,
+    });
+    expect(plane.siteSymmetryOf(cm, { uv: [1, 1] })).toEqual({ operations: [0, 2], multiplicity: 2, general: true });
+    // p2: the point 1/2,0 is a twofold point modulo the lattice.
+    expect(plane.siteSymmetryOf(plane.operations('p2'), { point: [0.5, 0] }).operations).toEqual([0, 1]);
+    expect(plane.siteSymmetryOf(plane.operations('2'), { uv: [1, 0] }).operations).toEqual([0]);
+  });
+
+  it('take the empty list as the group 1', () => {
+    expect(plane.siteSymmetryOf([], { point: [1.25, -0.5] })).toEqual({
+      operations: [],
+      point: [0.25, 0.5],
+      multiplicity: 1,
+      general: true,
+    });
+    expect(plane.orbitOf([], { uv: [1, 2] })).toEqual([{ uv: [1, 2], operations: [] }]);
+  });
+
+  it('refuse a list that is not a group', () => {
+    expect(() => plane.siteSymmetryOf(plane.generators('p4mm'), { point: [0.1, 0.2] })).toThrow(
+      /not a group: the product of operations/,
+    );
+    expect(() => plane.orbitOf(plane.generators('4mm'), { uv: [1, 0] })).toThrow(
+      /linear parts of the operations are not a group/,
+    );
+    const shifted = [
+      ...plane.operations('p2'),
+      {
+        matrix: [
+          [1, 0],
+          [0, 1],
+        ],
+        translation: [1, 0],
+      },
+    ];
+    expect(() => plane.siteSymmetryOf(shifted, { point: [0.1, 0.2] })).toThrow(/equal modulo the lattice/);
+    expect(() => plane.siteSymmetryOf('p2' as never, { point: [0, 0] })).toThrow(/a list of operations/);
+  });
+});
+
+describe('the point group and the plane group of a list of operations (#208)', () => {
+  it('identify every plane group and plane point group from its operations and from its generators', () => {
+    for (const key of plane.PLANE_GROUP_KEYS) {
+      const g = plane.planeGroup(key);
+      expect(plane.planeGroupOf(plane.operations(key)), key).toEqual({ key, setting: 1 });
+      expect(plane.planeGroupOf(plane.generators(key)), key).toEqual({ key, setting: 1 });
+      expect(plane.pointGroupOf(plane.operations(key)), key).toEqual({
+        key: g.pointGroup,
+        setting: g.pointGroupSetting,
+      });
+    }
+    for (const key of plane.POINT_GROUP_KEYS) {
+      for (const { index: setting } of plane.settings(key)) {
+        expect(plane.pointGroupOf(plane.generators(key, { setting }))).toEqual({ key, setting });
+      }
+    }
+    expect(plane.pointGroupOf([])).toEqual({ key: '1', setting: 1 });
+  });
+
+  it('do not depend on the origin; the setting is given only for the operations of the key', () => {
+    const shift: plane.CoordinateTransformation = {
+      linearPart: [
+        [1, 0],
+        [0, 1],
+      ],
+      originShift: [1 / 12, 1 / 6],
+    };
+    for (const key of plane.PLANE_GROUP_KEYS) {
+      const moved = plane.changeOfCoordinates(shift, { operations: plane.operations(key) }).operations!;
+      expect(plane.planeGroupOf(moved).key, key).toBe(key);
+    }
+    const p2 = plane.changeOfCoordinates(shift, { operations: plane.operations('p2') }).operations!;
+    expect(plane.planeGroupOf(p2)).toEqual({ key: 'p2' });
+  });
+
+  it('tell mirrors from glides per direction, in either orientation of a rectangular cell', () => {
+    const op = (matrix: number[][], translation: number[]) => ({ matrix, translation });
+    const mA = [
+      [-1, 0],
+      [0, 1],
+    ];
+    const mB = [
+      [1, 0],
+      [0, -1],
+    ];
+    expect(plane.planeGroupOf([op(mA, [0, 0])])).toEqual({ key: 'pm', setting: 1 });
+    expect(plane.planeGroupOf([op(mB, [0, 0])])).toEqual({ key: 'pm' });
+    expect(plane.planeGroupOf([op(mB, [0.5, 0])])).toEqual({ key: 'pg' });
+    // p2mg with the mirror lines normal to b instead of a: p2gm, the group in the other orientation.
+    expect(plane.planeGroupOf([op(mB, [0, 0]), op(mA, [0, 0.5])])).toEqual({ key: 'p2mg' });
+    expect(plane.planeGroupOf([op(mA, [0, 0.5]), op(mB, [0.5, 0])])).toEqual({ key: 'p2gg' });
+    expect(
+      plane.planeGroupOf([
+        op(mA, [0, 0]),
+        op(
+          [
+            [1, 0],
+            [0, 1],
+          ],
+          [0.5, 0.5],
+        ),
+      ]),
+    ).toEqual({ key: 'cm', setting: 1 });
+  });
+
+  it('refuse operations outside a conventional cell, and operations that generate no group', () => {
+    const op = (matrix: number[][], translation: number[]) => ({ matrix, translation });
+    // cm in its primitive cell: the mirror along the diagonal.
+    expect(() =>
+      plane.planeGroupOf([
+        op(
+          [
+            [0, 1],
+            [1, 0],
+          ],
+          [0, 0],
+        ),
+      ]),
+    ).toThrow(/in no conventional cell/);
+    expect(
+      plane.pointGroupOf([
+        op(
+          [
+            [0, 1],
+            [1, 0],
+          ],
+          [0, 0],
+        ),
+      ]),
+    ).toEqual({ key: 'm' });
+    expect(() =>
+      plane.planeGroupOf([
+        op(
+          [
+            [1, 0],
+            [0, 1],
+          ],
+          [0.5, 0],
+        ),
+      ]),
+    ).toThrow(/translation x\+1\/2,y besides the lattice/);
+    // A fourfold rotation with the centring of a square cell: p4 in a cell twice too large.
+    const quarter = op(
+      [
+        [0, -1],
+        [1, 0],
+      ],
+      [0, 0],
+    );
+    expect(() =>
+      plane.planeGroupOf([
+        quarter,
+        op(
+          [
+            [1, 0],
+            [0, 1],
+          ],
+          [0.5, 0.5],
+        ),
+      ]),
+    ).toThrow(/translation/);
+    // A fourfold rotation about 0,1/2 is p4 with another origin.
+    expect(
+      plane.planeGroupOf([
+        op(
+          [
+            [0, -1],
+            [1, 0],
+          ],
+          [0.5, 0.5],
+        ),
+      ]),
+    ).toEqual({ key: 'p4' });
+    expect(() =>
+      plane.pointGroupOf([
+        op(
+          [
+            [1, 1],
+            [0, 1],
+          ],
+          [0, 0],
+        ),
+      ]),
+    ).toThrow(/no finite group/);
+    expect(() =>
+      plane.pointGroupOf([
+        op(
+          [
+            [2, 0],
+            [0, 1],
+          ],
+          [0, 0],
+        ),
+      ]),
+    ).toThrow(/determinant ±1/);
+  });
+});
+
+describe('the site symmetry of a Wyckoff position of a plane group (#208)', () => {
+  it('holds the operations that fix the first doublet, |G|/multiplicity of them, those of a point on it', () => {
+    for (const key of plane.PLANE_GROUP_KEYS) {
+      const order = plane.operations(key).length;
+      for (const w of plane.wyckoffPositions(key)) {
+        const where = `${key} ${w.letter}`;
+        expect(w.siteSymmetryOperations.length * w.multiplicity, where).toBe(order);
+        // A point of the first doublet for parameters that put it on no other position.
+        const { matrix, translation } = toPlain(parseOperation(w.coordinates[0]));
+        const [x, y] = [0.1234, 0.3721];
+        const point = matrix.map((row, i) => row[0] * x + row[1] * y + translation[i]);
+        expect(plane.siteSymmetry(key, { point }).operations, where).toEqual(w.siteSymmetryOperations);
+      }
+    }
   });
 });
