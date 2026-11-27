@@ -59,18 +59,12 @@ export interface CartesianOperation {
     readonly timeReversal?: false;
 }
 
-// Warning: (ae-forgotten-export) The symbol "CartesianOperationDescription_2" needs to be exported by the entry point index.d.ts
-//
 // @public
-export type CartesianOperationDescription = Omit<CartesianOperationDescription_2, 'timeReversal'>;
-
-// @public
-interface CartesianOperationDescription_2 {
+export interface CartesianOperationDescription {
     readonly axis?: CartesianAxis;
     readonly kind: OperationKind;
     readonly n: number;
     readonly sense?: '+' | '-';
-    readonly timeReversal: boolean;
 }
 
 // @public
@@ -313,18 +307,12 @@ export interface Operation {
     readonly matrix: Mat3;
 }
 
-// Warning: (ae-forgotten-export) The symbol "OperationDescription_2" needs to be exported by the entry point index.d.ts
-//
 // @public
-export type OperationDescription = Omit<OperationDescription_2, 'timeReversal'>;
-
-// @public
-interface OperationDescription_2 {
+export interface OperationDescription {
     readonly axis?: Axis;
     readonly kind: OperationKind;
     readonly n: number;
     readonly sense?: '+' | '-';
-    readonly timeReversal: boolean;
 }
 
 // @public

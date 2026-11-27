@@ -51,15 +51,14 @@ export {
 } from './coordinates.js';
 export { cellTransformation, type BravaisLattice, type Cell, type OrthorhombicSetting } from './cellTransformation.js';
 
-import type { MagneticPointGroupKey, PointGroup as PointGroupOf } from './pointGroups/pointGroups.js';
+import type { MagneticPointGroupKey } from './pointGroups/pointGroups.js';
 
 // The key of a crystal class, one of the 32: the type of `crystalClass` and `laueClass` of a point
 // group and of `holohedry()` (`PointGroupKey` of the crystallographic API), and the 32 keys.
 export { POINT_GROUP_KEYS as CRYSTAL_CLASS_KEYS, type PointGroupKey as CrystalClassKey } from './pointGroups/keys.js';
 /** The key of a magnetic point group: a crystal class (white group), a grey or a black-and-white group. */
 export type PointGroupKey = MagneticPointGroupKey;
-/** A magnetic point group with the properties that are fixed by its operations (docs/conventions.md, "Properties"). */
-export type PointGroup<K extends PointGroupKey = PointGroupKey> = PointGroupOf<K>;
+export type { PointGroup } from './pointGroups/pointGroups.js';
 export type { MagneticPointGroupKey } from './pointGroups/pointGroups.js';
 export {
   BLACK_WHITE_POINT_GROUP_KEYS,

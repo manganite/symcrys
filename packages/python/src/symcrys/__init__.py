@@ -479,10 +479,12 @@ class CartesianAxis(TypedDict):
 
 @final
 class CartesianOperationDescription(TypedDict):
-    """One operation of any list described geometrically (``describe_operations_of``)."""
+    """One operation of any list described geometrically (``describe_operations_of``), as in the
+    magnetic API without time reversal (a test checks that the two agree).
+    """
 
     kind: OperationKind
-    """What the operation is, without time reversal."""
+    """What the operation is."""
     n: int
     """The n of the symbol n or n̄ (n for an n-fold rotation): 1 for the identity and the inversion, 2
     for a reflection (m = 2̄), otherwise the order of the rotation part.
@@ -491,7 +493,7 @@ class CartesianOperationDescription(TypedDict):
     """Rotation axis, rotoinversion axis or the normal of the mirror plane; absent for the identity and
     the inversion.
     """
-    sense: NotRequired[Literal["+", "-"]]
+    sense: NotRequired[Literal["-", "+"]]
     """For n ≥ 3: ``'+'`` if the rotation part turns by +360°/n about ``axis`` (counter-clockwise seen
     from the tip of ``axis`` looking towards the origin), ``'-'`` if by −360°/n.
     """
@@ -513,10 +515,13 @@ class Axis(TypedDict):
 
 @final
 class OperationDescription(TypedDict):
-    """One point operation described geometrically."""
+    """One point operation described geometrically: the description of the magnetic API without time
+    reversal (written out, so that the crystallographic API names its own type; a test checks that
+    the two agree).
+    """
 
     kind: OperationKind
-    """What the operation is, without time reversal."""
+    """What the operation is."""
     n: int
     """The n of the symbol n or n̄ (n for an n-fold rotation): 1 for the identity and the inversion, 2
     for a reflection (m = 2̄), otherwise the order of the rotation part.
@@ -525,7 +530,7 @@ class OperationDescription(TypedDict):
     """Rotation axis, rotoinversion axis or the normal of the mirror plane; absent for the identity and
     the inversion.
     """
-    sense: NotRequired[Literal["+", "-"]]
+    sense: NotRequired[Literal["-", "+"]]
     """For n ≥ 3: ``'+'`` if the rotation part turns by +360°/n about ``axis`` (counter-clockwise seen
     from the tip of ``axis`` looking towards the origin), ``'-'`` if by −360°/n.
     """

@@ -375,7 +375,7 @@ class OperationDescription(TypedDict):
     """Rotation axis, rotoinversion axis or the normal of the mirror plane; absent for the identity and
     the inversion.
     """
-    sense: NotRequired[Literal["+", "-"]]
+    sense: NotRequired[Literal["-", "+"]]
     """For n ≥ 3: ``'+'`` if the rotation part turns by +360°/n about ``axis`` (counter-clockwise seen
     from the tip of ``axis`` looking towards the origin), ``'-'`` if by −360°/n.
     """
@@ -460,7 +460,7 @@ class CartesianOperationDescription(TypedDict):
     """Rotation axis, rotoinversion axis or the normal of the mirror plane; absent for the identity and
     the inversion.
     """
-    sense: NotRequired[Literal["+", "-"]]
+    sense: NotRequired[Literal["-", "+"]]
     """For n ≥ 3: ``'+'`` if the rotation part turns by +360°/n about ``axis`` (counter-clockwise seen
     from the tip of ``axis`` looking towards the origin), ``'-'`` if by −360°/n.
     """
@@ -510,8 +510,8 @@ class OrbitPole(TypedDict):
 
 @final
 class PointGroup(TypedDict):
-    """A point group with the properties that are fixed by its operations. None of them depends on
-    the setting (docs/conventions.md, "Properties").
+    """A magnetic point group (a crystal class included) with the properties that are fixed by its
+    operations. None of them depends on the setting (docs/conventions.md, "Properties").
     """
 
     key: str
