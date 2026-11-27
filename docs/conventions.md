@@ -1566,7 +1566,13 @@ is obtained if a symmetry centre is added to its point group", ITA § 3.2.1.1, p
 six Laue classes 2, 2mm, 4, 4mm, 6, 6mm. `cellRestrictions(system)` gives the restrictions of
 Table 2.1.1.1 for the conventional cell as data: the parameters to be determined (`['a']` for
 square), the pairs of equal parameters (`[['a', 'b']]`), the fixed angles (`{ gamma: 120 }`) and the
-angles conventionally taken non-acute (γ of the oblique system, the footnote of the table). The cell
+angles conventionally taken non-acute (γ of the oblique system, the footnote of the table). They are
+computed from the holohedry of the system (2, 2mm, 4mm, 6mm, the Laue class of highest order): the
+metric tensors G that all its operations keep, WᵀGW = G, form a linear space, which gives a = b
+where g₁₁ = g₂₂ throughout and a fixed γ where cos γ = g₁₂/g₁₁ is fixed (0 or −1/2); the free angle
+is taken non-acute by the footnote (convention data). The Bravais lattices are the family symbol
+(vocabulary) with the lattice letters of the system's plane groups. Both equal the printed table
+(tested). The cell
 functions have the names of the other entry points, for 2 × 2 matrices whose columns are a and b:
 `latticeFromParameters({ a, b, gamma })` (a along x, b at γ from a towards +y),
 `latticeParameters(basis)`, `metricTensor(basis)` and `reciprocalBasis(basis)` (a_i · a*_j = δ_ij),

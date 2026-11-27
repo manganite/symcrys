@@ -17,7 +17,8 @@ import { planeAsymmetricUnit, planeElements, planeElementsInBox } from './spaceG
 import { checkUnimodular, toPlain, type ExactOperation, type IntMatrix } from './spaceGroups/affine.js';
 import { type PlaneSystem } from './spaceGroups/planeGroupData.js';
 import {
-  PLANE_FAMILIES,
+  PLANE_SYSTEMS,
+  planeCellRestrictions,
   planeBravaisLattice,
   planeLatticeFromParameters,
   planeLatticeParameters,
@@ -1399,8 +1400,6 @@ export function symmetryElements(key: PlaneGroupKey, options?: SymmetryElementsO
 
 // --- lattices and cells --------------------------------------------------------------------------
 
-const PLANE_SYSTEMS = Object.keys(PLANE_FAMILIES) as PlaneSystem[];
-
 const copy = (m: Mat2): Mat2 => [
   [m[0][0], m[0][1]],
   [m[1][0], m[1][1]],
@@ -1412,19 +1411,14 @@ const copy = (m: Mat2): Mat2 => [
  * angles, and the angles conventionally taken non-acute. Throws a RangeError for anything that is
  * not one of the four crystal systems of the plane.
  *
- * @remarks Source: ITA (2016), Table 2.1.1.1, p. 143.
+ * @remarks Computed from the holohedry of the system (the metrics its operations keep); equal to ITA
+ * (2016), Table 2.1.1.1, p. 143.
  */
 export function cellRestrictions(system: PlaneSystem): CellRestrictions {
   if (!(PLANE_SYSTEMS as readonly unknown[]).includes(system)) {
     throw new RangeError(`Unknown crystal system of the plane: ${shown(system)} (${PLANE_SYSTEMS.join(', ')})`);
   }
-  const r = PLANE_FAMILIES[system].restrictions;
-  return deepFreeze({
-    parameters: [...r.parameters],
-    equal: r.equal.map((pair) => [...pair]),
-    angles: { ...r.angles },
-    nonAcute: [...r.nonAcute],
-  });
+  return deepFreeze(planeCellRestrictions(system));
 }
 
 /**

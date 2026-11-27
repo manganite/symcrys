@@ -1,6 +1,7 @@
 /**
- * The lattices of the plane: the crystal families with their Bravais lattices and cell restrictions
- * (ITA 2016 Table 2.1.1.1, p. 143, block "Two dimensions"), the Laue class of a plane point group
+ * The lattices of the plane: the crystal families with their Bravais lattices and cell restrictions,
+ * computed from the plane groups and the holohedries (equal to ITA 2016 Table 2.1.1.1, p. 143, block
+ * "Two dimensions"), the Laue class of a plane point group
  * (ITA 2016 § 3.2.1.1, p. 720), and the cell functions for d = 2. Internal; the
  * entry point is `symcrys/plane`.
  */
@@ -12,8 +13,10 @@ import {
   PLANE_POINT_GROUP_KEYS,
   planePointGroupOperations,
   planePointGroupSettingCount,
+  planePointGroupSystem,
   type PlanePointGroupKey,
 } from './planePointGroups.js';
+import { PLANE_GROUP_KEYS, planeGroupSystem } from './planeGroups.js';
 
 /**
  * A Bravais lattice of the plane, by its ITA symbol: family symbol and centring.
@@ -55,44 +58,126 @@ export interface CellRestrictions {
   readonly nonAcute: readonly PlaneCellParameter[];
 }
 
-/** One crystal family of the plane as Table 2.1.1.1 prints it; each has one crystal system. */
-interface PlaneFamily {
-  /** The family symbol (column "Symbol"). */
-  readonly symbol: 'm' | 'o' | 't' | 'h';
-  /** The Bravais lattices. */
-  readonly bravaisLattices: readonly PlaneBravaisLattice[];
-  readonly restrictions: CellRestrictions;
+/**
+ * Vocabulary: the symbol of the crystal family of each crystal system of the plane, the first letter
+ * of a Bravais-lattice symbol (ITA 2016 Table 2.1.1.1, p. 143, column "Symbol").
+ */
+export const PLANE_FAMILY_SYMBOLS: Readonly<Record<PlaneSystem, 'm' | 'o' | 't' | 'h'>> = Object.freeze({
+  oblique: 'm',
+  rectangular: 'o',
+  square: 't',
+  hexagonal: 'h',
+});
+
+/** The four crystal systems of the plane. */
+export const PLANE_SYSTEMS = Object.freeze(Object.keys(PLANE_FAMILY_SYMBOLS) as PlaneSystem[]);
+
+/** The Bravais lattices of a crystal system: the family symbol with the lattice letter of each of its plane groups. */
+export function planeBravaisLattices(system: PlaneSystem): PlaneBravaisLattice[] {
+  const letters = PLANE_GROUP_KEYS.filter((k) => planeGroupSystem(k) === system).map((k) => k[0]);
+  return [...new Set(letters)]
+    .sort((a, b) => (a === 'p' ? -1 : b === 'p' ? 1 : 0))
+    .map((letter) => `${PLANE_FAMILY_SYMBOLS[system]}${letter}` as PlaneBravaisLattice);
 }
 
-/** ITA 2016 Table 2.1.1.1, p. 143, block "Two dimensions" (references/itc/vol-a-table-2.1.1.1.md). */
-export const PLANE_FAMILIES: Readonly<Record<PlaneSystem, PlaneFamily>> = {
-  oblique: {
-    symbol: 'm',
-    bravaisLattices: ['mp'],
-    restrictions: { parameters: ['a', 'b', 'gamma'], equal: [], angles: {}, nonAcute: ['gamma'] },
-  },
-  rectangular: {
-    symbol: 'o',
-    bravaisLattices: ['op', 'oc'],
-    restrictions: { parameters: ['a', 'b'], equal: [], angles: { gamma: 90 }, nonAcute: [] },
-  },
-  square: {
-    symbol: 't',
-    bravaisLattices: ['tp'],
-    restrictions: { parameters: ['a'], equal: [['a', 'b']], angles: { gamma: 90 }, nonAcute: [] },
-  },
-  hexagonal: {
-    symbol: 'h',
-    bravaisLattices: ['hp'],
-    restrictions: { parameters: ['a'], equal: [['a', 'b']], angles: { gamma: 120 }, nonAcute: [] },
-  },
-};
+/**
+ * The holohedry of a crystal system of the plane: of its point groups the Laue class of the highest
+ * order, the point symmetry of its lattice (2, 2mm, 4mm, 6mm).
+ */
+function holohedry(system: PlaneSystem): PlanePointGroupKey {
+  const own = PLANE_POINT_GROUP_KEYS.filter((k) => planePointGroupSystem(k) === system);
+  const order = (k: PlanePointGroupKey) => planePointGroupOperations(k).length;
+  return own.map(planeLaueClass).reduce((a, b) => (order(b) > order(a) ? b : a));
+}
+
+/**
+ * The restrictions on the conventional cell of a crystal system of the plane, computed from its
+ * holohedry: the metric tensors G = [[a², ab cos γ], [ab cos γ, b²]] that every operation W of the
+ * holohedry keeps (WᵀGW = G) form a linear space; a = b where it has g₁₁ = g₂₂ throughout, γ is
+ * fixed where g₁₂ is a fixed multiple of g₁₁ (cos γ = g₁₂/g₁₁, 0 or −1/2), and the parameters to be
+ * determined are the others. Convention data: an angle the holohedry leaves free is taken
+ * non-acute (ITA 2016 Table 2.1.1.1, p. 143, footnote §).
+ */
+export function planeCellRestrictions(system: PlaneSystem): CellRestrictions {
+  // The conditions on (g11, g12, g22), one row per entry of WᵀGW − G, solved exactly over the integers.
+  const rows: number[][] = [];
+  for (const op of planePointGroupOperations(holohedry(system))) {
+    const [[p, q], [r, s]] = op.matrix;
+    // (WᵀGW)_ij = Σ W_ki G_kl W_lj, with G = [[g11, g12], [g12, g22]].
+    const entry = (i: number, j: number): number[] => {
+      const w = [
+        [p, q],
+        [r, s],
+      ];
+      const c = [0, 0, 0];
+      for (let k = 0; k < 2; k++)
+        for (let l = 0; l < 2; l++) {
+          const f = w[k][i] * w[l][j];
+          c[k === 0 && l === 0 ? 0 : k === 1 && l === 1 ? 2 : 1] += f;
+        }
+      c[i === 0 && j === 0 ? 0 : i === 1 && j === 1 ? 2 : 1] -= 1;
+      return c;
+    };
+    rows.push(entry(0, 0), entry(0, 1), entry(1, 1));
+  }
+  const basis = nullSpace(rows);
+  const equalAB = basis.every((g) => g[0] === g[2]);
+  // cos γ = g12/√(g11 g22) is the same for every G of the space when g12 = k·g11 with a = b, or g12 = 0.
+  const fixedCos = basis.every((g) => g[1] === 0)
+    ? 0
+    : equalAB && basis.length === 1
+      ? basis[0][1] / basis[0][0]
+      : undefined;
+  const gamma = fixedCos === undefined ? undefined : Math.round((Math.acos(fixedCos) * 180) / Math.PI);
+  const parameters: PlaneCellParameter[] = [
+    'a',
+    ...(equalAB ? [] : ['b' as const]),
+    ...(gamma === undefined ? ['gamma' as const] : []),
+  ];
+  return {
+    parameters,
+    equal: equalAB ? [['a', 'b']] : [],
+    angles: gamma === undefined ? {} : { gamma },
+    nonAcute: gamma === undefined ? ['gamma'] : [],
+  };
+}
+
+/** A basis of the integer null space of a matrix with three columns, by exact elimination. */
+function nullSpace(rows: readonly (readonly number[])[]): number[][] {
+  const m = rows.map((r) => [...r]);
+  const pivots: number[] = [];
+  let row = 0;
+  for (let col = 0; col < 3 && row < m.length; col++) {
+    const p = m.findIndex((r, i) => i >= row && r[col] !== 0);
+    if (p < 0) continue;
+    [m[row], m[p]] = [m[p], m[row]];
+    for (let i = 0; i < m.length; i++) {
+      if (i === row || m[i][col] === 0) continue;
+      const f = m[i][col];
+      const g = m[row][col];
+      m[i] = m[i].map((x, j) => x * g - m[row][j] * f);
+    }
+    pivots.push(col);
+    row++;
+  }
+  const free = [0, 1, 2].filter((c) => !pivots.includes(c));
+  return free.map((f) => {
+    // One solution per free column: x_f = the product of the pivots, the pivot variables solved.
+    const scale = pivots.reduce((s, c, i) => s * m[i][c], 1);
+    const x = [0, 0, 0];
+    x[f] = scale;
+    pivots.forEach((c, i) => {
+      x[c] = (-m[i][f] * scale) / m[i][c];
+    });
+    const sign = x.find((v) => v !== 0)! < 0 ? -1 : 1;
+    return x.map((v) => v * sign + 0);
+  });
+}
 
 /** The Bravais lattice of a plane group: the family symbol of its system and its lattice letter. */
 export function planeBravaisLattice(system: PlaneSystem, groupSymbol: string): PlaneBravaisLattice {
-  const family = PLANE_FAMILIES[system];
-  const lattice = `${family.symbol}${groupSymbol[0]}` as PlaneBravaisLattice;
-  if (!family.bravaisLattices.includes(lattice)) {
+  const lattice = `${PLANE_FAMILY_SYMBOLS[system]}${groupSymbol[0]}` as PlaneBravaisLattice;
+  if (!planeBravaisLattices(system).includes(lattice)) {
     throw new Error(`The plane group ${groupSymbol} has the lattice ${lattice}, not one of its family`);
   }
   return lattice;
