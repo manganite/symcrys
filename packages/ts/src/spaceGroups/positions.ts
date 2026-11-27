@@ -49,9 +49,20 @@ function tolerance(options?: ToleranceOptions): number {
   return toleranceOf(options, 'points');
 }
 
+/**
+ * The largest coordinate of a point of the plane: beyond about 2⁵² a double has no fractional part,
+ * so the position of a point in its cell is lost long before; 10⁶ cells keep about 10 decimals of it.
+ */
+export const MAX_COORDINATE = 1e6;
+
 function checkPoint(point: readonly number[]): void {
   if (!Array.isArray(point) || point.length !== 2 || !point.every((x) => typeof x === 'number' && Number.isFinite(x))) {
     throw new RangeError(`A point of the plane has two finite coordinates, not ${shown(point)}`);
+  }
+  if (point.some((x) => Math.abs(x) > MAX_COORDINATE)) {
+    throw new RangeError(
+      `A point of the plane has coordinates of at most ${MAX_COORDINATE} in magnitude, not ${shown(point)}: reduce it modulo the lattice first`,
+    );
   }
 }
 

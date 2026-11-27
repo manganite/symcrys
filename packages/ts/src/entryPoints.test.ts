@@ -25,12 +25,15 @@ describe('the entry points', () => {
     expect(Object.keys(pkg.exports)).toEqual(['.', './magnetic', './plane', './package.json']);
   });
 
-  it('export the same names; only the Wyckoff positions and the crystal forms are crystallographic alone', () => {
+  it('export the same names; only the Wyckoff positions and the crystal forms are crystallographic alone, the key lists of the three types magnetic alone', () => {
     const onlyClasses = ['CRYSTAL_FORM_TYPES', 'crystalForms', 'wyckoffPosition', 'wyckoffPositions'];
-    expect(Object.keys(classes).sort()).toEqual([...Object.keys(magnetic), ...onlyClasses].sort());
-    for (const name of Object.keys(magnetic) as (keyof typeof magnetic)[]) {
+    const onlyMagnetic = ['BLACK_WHITE_POINT_GROUP_KEYS', 'CRYSTAL_CLASS_KEYS', 'GREY_POINT_GROUP_KEYS'];
+    const shared = Object.keys(magnetic).filter((name) => !onlyMagnetic.includes(name));
+    expect(Object.keys(classes).sort()).toEqual([...shared, ...onlyClasses].sort());
+    for (const name of shared as (keyof typeof classes & keyof typeof magnetic)[]) {
       expect(typeof classes[name], name).toBe(typeof magnetic[name]);
     }
+    expect(magnetic.CRYSTAL_CLASS_KEYS).toEqual(classes.POINT_GROUP_KEYS);
   });
 
   it('share the version', () => {
@@ -932,4 +935,15 @@ describe('one tolerance contract (#93)', () => {
       }
     });
   }
+});
+
+describe('the functions of directions in symcrys/magnetic', () => {
+  it('take operations without timeReversal, read as false, and refuse one that is not a boolean', () => {
+    const ops = magnetic.operations('4mm').map((op) => ({ cartesian: op.cartesian }));
+    expect(magnetic.siteSymmetryOf(ops, [0, 0, 1]).operations).toHaveLength(8);
+    expect(magnetic.orbitOf(ops, [1, 0, 0])).toHaveLength(4);
+    const wrong = [{ cartesian: ops[0].cartesian, timeReversal: 'yes' as unknown as boolean }];
+    expect(() => magnetic.siteSymmetryOf(wrong, [0, 0, 1])).toThrow(/timeReversal must be true, false or absent/);
+    expect(() => magnetic.orbitOf(wrong, [0, 0, 1])).toThrow(/timeReversal must be true, false or absent/);
+  });
 });

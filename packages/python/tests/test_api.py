@@ -90,7 +90,8 @@ def test_every_key_of_a_group_is_a_str() -> None:
 def test_the_two_modules_have_the_same_names() -> None:
     only_classes = {"magnetic", "plane", "CRYSTAL_FORM_TYPES", "crystal_forms", "wyckoff_position", "wyckoff_positions"}
     only_classes |= {"CrystalForm", "CrystalFormType", "CrystalFormTypeKey", "WyckoffPosition"}
-    only_magnetic = {"PointGroupType", "TimeParity"}
+    only_magnetic = {"PointGroupType", "TimeParity", "CRYSTAL_CLASS_KEYS", "GREY_POINT_GROUP_KEYS"}
+    only_magnetic |= {"BLACK_WHITE_POINT_GROUP_KEYS"}
     assert set(symcrys.__all__) - only_classes == set(magnetic.__all__) - only_magnetic
     assert symcrys.magnetic is magnetic and magnetic.VERSION == symcrys.VERSION == symcrys.__version__
 

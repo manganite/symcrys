@@ -190,20 +190,22 @@ function resolve(specOrName: TensorSpec | TensorPropertyName, options: VoigtOpti
  */
 export function toVoigt(
   tensor: readonly number[],
-  specOrName: TensorSpec | TensorPropertyName,
+  spec: TensorSpec | TensorPropertyName,
   options?: VoigtOptions,
 ): readonly number[] | readonly (readonly number[])[] {
   const who = 'toVoigt';
-  const { spec, perms, layout, factors, tolerance } = resolve(specOrName, options, who);
-  const dim = 3 ** spec.rank;
+  const resolved = resolve(spec, options, who);
+  const { perms, layout, factors, tolerance } = resolved;
+  const rank = resolved.spec.rank;
+  const dim = 3 ** rank;
   if (
     !Array.isArray(tensor) ||
     tensor.length !== dim ||
     !tensor.every((x) => typeof x === 'number' && Number.isFinite(x))
   ) {
-    throw new RangeError(`${who}: a tensor of rank ${spec.rank} is ${dim} finite numbers, not ${shown(tensor)}`);
+    throw new RangeError(`${who}: a tensor of rank ${rank} is ${dim} finite numbers, not ${shown(tensor)}`);
   }
-  checkSymmetry(tensor, spec.rank, perms, tolerance, who);
+  checkSymmetry(tensor, rank, perms, tolerance, who);
   const out =
     layout.shape.length === 1
       ? new Array<number>(6).fill(0)
@@ -211,7 +213,7 @@ export function toVoigt(
   for (let o = 0; o < dim; o++) {
     const { index, factor } = voigtIndex(o, layout, factors);
     // The representative index of each Voigt cell: the pair in the order of PAIR.
-    const d = digitsOf(o, spec.rank);
+    const d = digitsOf(o, rank);
     const canonical = layout.pairs.every((first) => {
       const alpha = ALPHA[d[first]][d[first + 1]];
       return PAIR[alpha][0] === d[first] && PAIR[alpha][1] === d[first + 1];
@@ -236,11 +238,13 @@ export function toVoigt(
  */
 export function fromVoigt(
   voigt: readonly number[] | readonly (readonly number[])[],
-  specOrName: TensorSpec | TensorPropertyName,
+  spec: TensorSpec | TensorPropertyName,
   options?: VoigtOptions,
 ): readonly number[] {
   const who = 'fromVoigt';
-  const { spec, perms, layout, factors, tolerance } = resolve(specOrName, options, who);
+  const resolved = resolve(spec, options, who);
+  const { perms, layout, factors, tolerance } = resolved;
+  const rank = resolved.spec.rank;
   const shapeOk =
     layout.shape.length === 1
       ? Array.isArray(voigt) && voigt.length === 6 && voigt.every((x) => typeof x === 'number' && Number.isFinite(x))
@@ -257,7 +261,7 @@ export function fromVoigt(
       `${who}: a Voigt array of shape ${layout.shape.join(' × ')} of finite numbers, not ${shown(voigt)}`,
     );
   }
-  const dim = 3 ** spec.rank;
+  const dim = 3 ** rank;
   const out = new Array<number>(dim);
   for (let o = 0; o < dim; o++) {
     const { index, factor } = voigtIndex(o, layout, factors);
@@ -267,6 +271,6 @@ export function fromVoigt(
         : (voigt as readonly (readonly number[])[])[index[0]][index[1]];
     out[o] = v / factor + 0;
   }
-  checkSymmetry(out, spec.rank, perms, tolerance, who);
+  checkSymmetry(out, rank, perms, tolerance, who);
   return deepFreeze(out);
 }

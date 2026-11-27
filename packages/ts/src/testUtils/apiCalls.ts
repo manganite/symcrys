@@ -172,6 +172,10 @@ function pointGroupCalls(entry: 'symcrys' | 'symcrys/magnetic'): ApiCall[] {
     out.push({ entry, name });
   }
   if (entry === 'symcrys') out.push({ entry, name: 'CRYSTAL_FORM_TYPES' });
+  if (entry === 'symcrys/magnetic') {
+    for (const name of ['CRYSTAL_CLASS_KEYS', 'GREY_POINT_GROUP_KEYS', 'BLACK_WHITE_POINT_GROUP_KEYS'])
+      out.push({ entry, name });
+  }
   return out;
 }
 
