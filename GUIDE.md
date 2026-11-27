@@ -58,9 +58,10 @@ results. It is not a digital interface to printed tables.
     and in `docs/conventions.md`).
 - **Everything else is computed** from these: operations and their order, Wyckoff positions,
   crystal forms, symbols, signs of axes, cell changes, tensor forms.
-- **No library module holds a table in printed form or printed order**, except vocabulary, which
-  keeps its printed names (the 47 crystal forms with the numbers of faces and eigensymmetries that
-  define them). Notation in results (`x,-y,z`, `h,0,l`, symbols) is formatted output of computed
+- **No library module holds a table in printed form or printed order**, except vocabulary: the
+  established names of the field are standard vocabulary, not inventions of a print source, and
+  stay as they are (the 47 crystal forms with the numbers of faces and eigensymmetries that define
+  them, `formTypes.ts`), named by their content, never by the table that prints them. Notation in results (`x,-y,z`, `h,0,l`, symbols) is formatted output of computed
   structures. Library modules that
   still hold printed tables (`pointGroups/seitzData.ts`, `shubnikovData.ts`, `blackWhiteData.ts`,
   `CELL_CHANGES` of `cellTransformation.ts`) are rebuilt by this rule, module by module; no new one
