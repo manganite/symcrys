@@ -3,6 +3,8 @@ import { INVERSION, rotationZ, type Mat3 } from './linalg.js';
 import { compose, operation, operationsEqual, type CartesianOperation } from './operations.js';
 import { closeWithin, idealGroup } from './closure.js';
 import { operations } from './pointGroups/pointGroups.js';
+import * as classes from './index.js';
+import { noisy, seededRandom } from './testUtils/noise.js';
 
 const round = (m: Mat3, decimals: number): Mat3 =>
   m.map((row) => row.map((x) => Math.round(x * 10 ** decimals) / 10 ** decimals)) as unknown as Mat3;
@@ -110,5 +112,99 @@ describe('idealGroup', () => {
         ).toBe(true);
       }
     }
+  });
+});
+
+// --- the safety net of #234: tests that fail on 0.15.0 (it.fails); each fix removes its mark -------
+
+describe('#241: the postconditions of idealGroup', () => {
+  // The 12 operations of 23 with every entry moved by up to 0.03 (seed 8), within the tolerance
+  // 0.09 of an exact 23. On 0.15.0 the closure is no group of orthogonal matrices, pointGroupOf gives
+  // undefined and tensorFormOf throws a plain Error. Right is either a RangeError or the answer for
+  // 23: 12 operations, the class 23, one piezoelectric component (ITA 2016 Table 3.2.2.1, p. 738).
+  const input = noisy(
+    classes.operations('23').map((op) => ({ cartesian: op.cartesian, timeReversal: false })),
+    0.03,
+    seededRandom(8),
+  );
+  const tolerance = 0.09;
+  /** The same operations as the crystallographic API takes them, without the field timeReversal. */
+  const spatial = input.map(({ cartesian }) => ({ cartesian }));
+  /** A RangeError, or the value of `f`. */
+  const rangeErrorOr = <T>(f: () => T): T | 'RangeError' => {
+    try {
+      return f();
+    } catch (e) {
+      if (e instanceof RangeError) return 'RangeError';
+      throw e;
+    }
+  };
+  const orthogonal = (m: Mat3) =>
+    m.every((_, i) =>
+      m.every((_, j) => Math.abs(m[0][i] * m[0][j] + m[1][i] * m[1][j] + m[2][i] * m[2][j] - (i === j ? 1 : 0)) < 1e-9),
+    );
+
+  it.fails('idealGroup gives the 12 orthogonal operations of 23, or refuses', () => {
+    const got = rangeErrorOr(() => idealGroup(input, tolerance));
+    if (got !== 'RangeError') {
+      expect(got.operations).toHaveLength(12);
+      expect(got.operations.every((op) => orthogonal(op.cartesian))).toBe(true);
+    }
+  });
+
+  it.fails('pointGroupOf gives the class 23, or refuses', () => {
+    const got = rangeErrorOr(() => classes.pointGroupOf(spatial, { tolerance }));
+    if (got !== 'RangeError') expect(got?.key).toBe('23');
+  });
+
+  it.fails('tensorFormOf gives one piezoelectric component, or refuses with a RangeError', () => {
+    const got = rangeErrorOr(() => classes.tensorFormOf(spatial, 'piezoelectric', { tolerance }));
+    if (got !== 'RangeError') expect(got.basis).toHaveLength(1);
+  });
+
+  it.fails('an accepted result is a group of orthogonal matrices within the tolerance of the input', () => {
+    // Products within 10⁻⁹ of an element, RᵀR within 10⁻⁹ of the identity, every operation of the
+    // caller within the tolerance of an element.
+    const mul = (a: Mat3, b: Mat3) =>
+      a.map((row) => b[0].map((_, j) => row[0] * b[0][j] + row[1] * b[1][j] + row[2] * b[2][j]));
+    const maxDiff = (a: readonly (readonly number[])[], b: readonly (readonly number[])[]) =>
+      Math.max(...a.flatMap((row, i) => row.map((v, j) => Math.abs(v - b[i][j]))));
+    const I = [
+      [1, 0, 0],
+      [0, 1, 0],
+      [0, 0, 1],
+    ];
+    const wrong: string[] = [];
+    // Large noise at large tolerances, where 0.15.0 violates them (in 4 of these 400 inputs), and small
+    // noise as a check that the bounds hold for ordinary input.
+    for (const key of ['m-3m', '6/mmm', '4/mmm', '23'] as const) {
+      for (const amplitude of [1e-3, 2e-2]) {
+        for (const tol of [0.05, 0.09]) {
+          for (let seed = 1; seed <= 25; seed++) {
+            const given = noisy(
+              classes.operations(key).map((op) => ({ cartesian: op.cartesian, timeReversal: false })),
+              amplitude,
+              seededRandom(seed),
+            );
+            let group;
+            try {
+              group = idealGroup(given, tol);
+            } catch (e) {
+              if (!(e instanceof RangeError)) wrong.push(`${key} ${amplitude} ${tol} ${seed}: ${String(e)}`);
+              continue;
+            }
+            const R = group.operations.map((op) => op.cartesian);
+            const where = `${key} ${amplitude} ${tol} ${seed}`;
+            if (R.some((a) => maxDiff(mul(a[0].map((_, j) => a.map((row) => row[j])) as unknown as Mat3, a), I) > 1e-9))
+              wrong.push(`${where}: not orthogonal`);
+            if (R.some((a) => R.some((b) => Math.min(...R.map((c) => maxDiff(mul(a, b), c))) > 1e-9)))
+              wrong.push(`${where}: not closed`);
+            if (given.some((g) => Math.min(...R.map((c) => maxDiff(g.cartesian, c))) >= tol))
+              wrong.push(`${where}: farther than the tolerance from the input`);
+          }
+        }
+      }
+    }
+    expect(wrong.slice(0, 5)).toEqual([]);
   });
 });

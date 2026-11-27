@@ -9,7 +9,9 @@ import { planeAsymmetricUnit, planeElements } from './spaceGroups/cell.js';
 import { describePlaneOperation } from './spaceGroups/describe.js';
 import { compose, parseOperation, toPlain, translationOperation } from './spaceGroups/affine.js';
 import { planeGroupOperations } from './spaceGroups/planeGroups.js';
-import { rational, toNumber } from './spaceGroups/rational.js';
+import { parseRational, rational, toNumber } from './spaceGroups/rational.js';
+import { readReference, section, tableRows } from './testUtils/references.js';
+import { numbersIn } from './testUtils/noise.js';
 
 const key = (m: readonly (readonly number[])[]) => JSON.stringify(m);
 
@@ -1081,5 +1083,155 @@ describe('lists of operations: what the review of #229 found', () => {
     expect(() => plane.orbit('4mm', { hk: [1, 0] }, { tolerance: null } as never)).toThrow(/tolerance/);
     expect(() => plane.orbit('6mm', { uv: [2 ** 53 - 1, -(2 ** 53 - 2)] })).toThrow(/at most/);
     expect(plane.orbit('6mm', { uv: [2 ** 51, 1] })).toHaveLength(12);
+  });
+});
+
+// --- the safety net of #234: tests that fail on 0.15.0 (it.fails); each fix removes its mark -------
+
+describe('#235: one measure for a key and a list, and the accuracy of the operations', () => {
+  // ITA (2016), plane group 3 pm, p. 178: position 1 a .m. 0,y on the mirror 0,y. The point lies
+  // 7.5·10⁻⁶ from it, within the default tolerance 10⁻⁵; its image under the mirror lies 1.5·10⁻⁵ away.
+  const point = [0.0000075, 0.2];
+
+  it('siteSymmetry of the key puts the point on the mirror', () => {
+    expect(plane.siteSymmetry('pm', { point }).multiplicity).toBe(1);
+  });
+
+  it.fails('siteSymmetryOf the operations of pm does the same', () => {
+    expect(plane.siteSymmetryOf(plane.operations('pm'), { point }).multiplicity).toBe(1);
+  });
+
+  it.fails('a tolerance below the deviation of the operations is refused, naming both numbers', () => {
+    // A twofold rotation with the translation 0.333333 for 1/3: read as 1/3, it moves a point of the
+    // cell by 3.3·10⁻⁷ from where the exact operation moves it.
+    const ops = [
+      { matrix: [[1, 0], [0, 1]], translation: [0, 0] },
+      { matrix: [[-1, 0], [0, -1]], translation: [0.333333, 0] },
+    ]; // prettier-ignore
+    let error: unknown;
+    try {
+      plane.siteSymmetryOf(ops, { point: [0.1, 0.2] }, { tolerance: 1e-7 });
+    } catch (e) {
+      error = e;
+    }
+    expect(error).toBeInstanceOf(RangeError);
+    const named = numbersIn((error as Error).message);
+    expect(named).toContain(1e-7);
+    // The deviation 3.3·10⁻⁷, written to a few digits.
+    expect(named.some((x) => Math.abs(x / (1 / 3 - 0.333333) - 1) < 0.05)).toBe(true);
+  });
+});
+
+describe('#236: integer arithmetic of the plane beyond 2⁵³', () => {
+  it.fails('orbitOf with a lattice operation of large entries refuses an image beyond the safe integers', () => {
+    // [[-1, 3], [0, 1]] is an involution of determinant −1; the image of [0, 2⁵² − 1] has the first
+    // component 3·(2⁵² − 1) > 2⁵³.
+    const ops = [
+      { matrix: [[1, 0], [0, 1]], translation: [0, 0] },
+      { matrix: [[-1, 3], [0, 1]], translation: [0, 0] },
+    ]; // prettier-ignore
+    expect(() => plane.orbitOf(ops, { uv: [0, 2 ** 52 - 1] })).toThrow(RangeError);
+  });
+});
+
+describe('#238: wyckoffDistances in a skew basis', () => {
+  // The positions of p2 as ITA (2016) prints them, plane group 2, p. 177.
+  const printed = tableRows(section(readReference('itc/vol-a-2016-plane-groups.md'), '## 2 — p2'))
+    .slice(1)
+    .map(([, letter, , coordinates]) => ({ letter, coordinates }));
+  const pointOf = (text: string) => text.split(',').map((c) => toNumber(parseRational(c)));
+  const metric = (B: number[][]) => [
+    [B[0][0] ** 2 + B[1][0] ** 2, B[0][0] * B[0][1] + B[1][0] * B[1][1]],
+    [B[0][0] * B[0][1] + B[1][0] * B[1][1], B[0][1] ** 2 + B[1][1] ** 2],
+  ];
+  /** The distance of x to the nearest lattice translate of p, by a search over ±40 cells. */
+  const nearest = (x: number[], p: number[], B: number[][]) => {
+    const G = metric(B);
+    let best = Infinity;
+    for (let i = -40; i <= 40; i++)
+      for (let j = -40; j <= 40; j++) {
+        const r = [x[0] - p[0] - i, x[1] - p[1] - j];
+        best = Math.min(
+          best,
+          Math.sqrt(r[0] * (G[0][0] * r[0] + G[0][1] * r[1]) + r[1] * (G[1][0] * r[0] + G[1][1] * r[1])),
+        );
+      }
+    return best;
+  };
+  /** The distances of x to the four twofold points of p2, by brute force, sorted. */
+  const bruteForce = (x: number[], B: number[][]) =>
+    printed
+      .filter((p) => p.letter !== 'e')
+      .map((p) => nearest(x, pointOf(p.coordinates), B))
+      .sort((a, b) => a - b);
+  const computed = (x: number[], B: number[][]) =>
+    plane
+      .wyckoffDistances('p2', { point: x }, { basis: B })
+      .filter((d) => d.letter !== 'e')
+      .map((d) => d.distance)
+      .sort((a, b) => a - b);
+
+  it('setup: p2 has the general position e and the four twofold points a–d', () => {
+    expect(printed.map((p) => p.letter)).toEqual(['e', 'd', 'c', 'b', 'a']);
+  });
+
+  it.fails('the basis [[1, 10], [0, 1]] of the issue: the distances of a full search', () => {
+    const B = [
+      [1, 10],
+      [0, 1],
+    ];
+    const x = [0, 0.49];
+    const want = Object.fromEntries(
+      printed.filter((p) => p.letter !== 'e').map((p) => [p.letter, nearest(x, pointOf(p.coordinates), B)]),
+    );
+    const got = Object.fromEntries(
+      plane.wyckoffDistances('p2', { point: x }, { basis: B }).map((d) => [d.letter, d.distance]),
+    );
+    for (const letter of ['a', 'b', 'c', 'd']) expect(got[letter], letter).toBeCloseTo(want[letter], 12);
+  });
+
+  it.fails('a sheared basis of the same lattice gives the same distances (shears up to ±100)', () => {
+    const B0 = [
+      [1, 0.3],
+      [0, 1.2],
+    ];
+    const x0 = [0.37, 0.21];
+    const reference = bruteForce(x0, B0);
+    const wrong: string[] = [];
+    for (const k of [-100, -37, -10, -3, 3, 10, 37, 100]) {
+      for (const U of [
+        [
+          [1, k],
+          [0, 1],
+        ],
+        [
+          [1, 0],
+          [k, 1],
+        ],
+      ]) {
+        // B = B0·U; the point in the new basis is U⁻¹·x0 (det U = 1).
+        const B = B0.map((row) => [row[0] * U[0][0] + row[1] * U[1][0], row[0] * U[0][1] + row[1] * U[1][1]]);
+        const x = [U[1][1] * x0[0] - U[0][1] * x0[1], -U[1][0] * x0[0] + U[0][0] * x0[1]];
+        const d = computed(x, B);
+        if (d.some((v, i) => Math.abs(v - reference[i]) > 1e-9))
+          wrong.push(`${JSON.stringify(U)}: ${d.map((v) => v.toFixed(4))}`);
+      }
+    }
+    expect(wrong).toEqual([]);
+  });
+
+  it.fails(
+    'a basis that contradicts the cell of p4 (ITA 2016 Table 2.1.1.1, p. 143: a = b, γ = 90°) is refused',
+    () => {
+      expect(() => plane.wyckoffDistances('p4', { point: [0.1, 0.2] }, { basis: [[1, 0.3], [0, 1.1]] })).toThrow(RangeError); // prettier-ignore
+    },
+  );
+
+  it.fails('a basis that contradicts the cell of pm (γ = 90°) is refused', () => {
+    expect(() => plane.wyckoffDistances('pm', { point: [0.1, 0.2] }, { basis: [[1, 0.3], [0, 1.1]] })).toThrow(RangeError); // prettier-ignore
+  });
+
+  it('a basis that satisfies the cell restrictions is taken', () => {
+    expect(plane.wyckoffDistances('p4', { point: [0.1, 0.2] }, { basis: [[2, 0], [0, 2]] })).toHaveLength(4); // prettier-ignore
   });
 });
