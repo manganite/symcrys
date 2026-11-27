@@ -21,10 +21,9 @@ const EXPECTED = {
     'OperationDescription_2',
   ],
   'symcrys-magnetic.api.md': [
-    // PointGroup and PointGroupInSetting are aliases of these, generic over the key with another
-    // default than in the crystallographic API.
+    // PointGroup is an alias of this, generic over the key with another default than in the
+    // crystallographic API.
     'PointGroup_2',
-    'PointGroupInSetting_2',
   ],
   'symcrys-plane.api.md': /** @type {string[]} */ ([]),
 };

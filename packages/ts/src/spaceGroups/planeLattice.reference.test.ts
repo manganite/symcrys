@@ -135,7 +135,7 @@ describe('Patterson symmetry (ITA Chapter 2.2 headlines)', () => {
       expect(patterson.pointGroup, g.key).toBe(plane.pointGroup(g.pointGroup).laueClass);
       // Symmorphic: the operations of the (0,0)+ set have no translation.
       const ops = plane.operations(patterson.key);
-      const primitive = ops.slice(0, ops.length / (1 + patterson.centring.length));
+      const primitive = ops.slice(0, ops.length / (1 + patterson.centringTranslations.length));
       expect(
         primitive.every((op) => op.translation.every((t) => t === 0)),
         patterson.key,

@@ -91,16 +91,57 @@ export function describeOperations(key: PlaneGroupKey | PointGroupKey, options?:
 export function describeOperationsOf(operations: readonly PlaneOperation[], options?: ToleranceOptions): readonly OperationDescription[];
 
 // @public
+export interface DirectionIndices {
+    readonly uv: readonly number[];
+}
+
+// @public
+export interface DirectionOrbitEntry {
+    readonly operations: readonly number[];
+    readonly uv: readonly number[];
+}
+
+// @public
+export interface DirectionSiteSymmetry {
+    readonly general: boolean;
+    readonly multiplicity: number;
+    readonly operations: readonly number[];
+}
+
+// @public
+export interface EdgeIndices {
+    readonly hk: readonly number[];
+}
+
+// @public
+export interface EdgeOrbitEntry {
+    readonly hk: readonly number[];
+    readonly operations: readonly number[];
+}
+
+// @public
 export const EPSILON = 0.00001;
 
 // @public
-export function findPlaneGroup(symbol: string): PlaneGroupFound | undefined;
+export function findPlaneGroup(symbol: string): IdentifiedPlaneGroup | undefined;
 
 // @public
-export function findPointGroup(symbol: string): PointGroupInSetting | undefined;
+export function findPointGroup(symbol: string): IdentifiedPointGroup | undefined;
 
 // @public
 export function generators(key: PlaneGroupKey | PointGroupKey, options?: SettingOptions): readonly PlaneOperation[];
+
+// @public
+export interface IdentifiedPlaneGroup {
+    readonly key: PlaneGroupKey;
+    readonly setting?: number;
+}
+
+// @public
+export interface IdentifiedPointGroup {
+    readonly key: PointGroupKey;
+    readonly setting?: number;
+}
 
 // @public
 export interface InverseTransformation {
@@ -113,6 +154,11 @@ export function isPlaneGroupKey(key: string): key is PlaneGroupKey;
 
 // @public
 export function isPointGroupKey(key: string): key is PointGroupKey;
+
+// @public
+export interface LatticeAxis {
+    readonly lattice: readonly number[];
+}
 
 // @public
 export function latticeFromParameters(parameters: LatticeParameters): Mat2;
@@ -135,12 +181,12 @@ export function metricTensor(basis: Mat2): Mat2;
 
 // @public
 export interface OperationDescription {
-    readonly axis?: readonly number[];
+    readonly axis?: LatticeAxis;
     readonly direction?: readonly number[];
     readonly glide?: readonly number[];
     readonly kind: PlaneOperationKind;
-    readonly location?: readonly number[];
     readonly n: number;
+    readonly point?: readonly number[];
     readonly sense?: '+' | '-';
     readonly translation?: readonly number[];
 }
@@ -149,7 +195,28 @@ export interface OperationDescription {
 export function operations(key: PlaneGroupKey | PointGroupKey, options?: SettingOptions): readonly PlaneOperation[];
 
 // @public
-export function orbit(key: PlaneGroupKey, point: PlanePoint, options?: ToleranceOptions): readonly PointOrbitEntry[];
+export function orbit(key: PlaneGroupKey, point: PlanePoint, options?: SettingOptions & ToleranceOptions): readonly PointOrbitEntry[];
+
+// @public (undocumented)
+export function orbit(key: PointGroupKey, direction: DirectionIndices, options?: SettingOptions & ToleranceOptions): readonly DirectionOrbitEntry[];
+
+// @public (undocumented)
+export function orbit(key: PointGroupKey, edge: EdgeIndices, options?: SettingOptions & ToleranceOptions): readonly EdgeOrbitEntry[];
+
+// @public (undocumented)
+export function orbit(key: PlaneGroupKey | PointGroupKey, input: SiteInput, options?: SettingOptions & ToleranceOptions): readonly PointOrbitEntry[] | readonly DirectionOrbitEntry[] | readonly EdgeOrbitEntry[];
+
+// @public
+export function orbitOf(operations: readonly PlaneOperation[], point: PlanePoint, options?: ToleranceOptions): readonly PointOrbitEntry[];
+
+// @public (undocumented)
+export function orbitOf(operations: readonly PlaneOperation[], direction: DirectionIndices, options?: ToleranceOptions): readonly DirectionOrbitEntry[];
+
+// @public (undocumented)
+export function orbitOf(operations: readonly PlaneOperation[], edge: EdgeIndices, options?: ToleranceOptions): readonly EdgeOrbitEntry[];
+
+// @public (undocumented)
+export function orbitOf(operations: readonly PlaneOperation[], input: SiteInput, options?: ToleranceOptions): readonly PointOrbitEntry[] | readonly DirectionOrbitEntry[] | readonly EdgeOrbitEntry[];
 
 // @public
 export const PLANE_GROUP_KEYS: readonly PlaneGroupKey[];
@@ -173,11 +240,11 @@ export interface PlaneFixedAngles {
 // @public
 export interface PlaneGroup {
     readonly bravaisLattice: PlaneBravaisLattice;
-    readonly centring: readonly (readonly number[])[];
+    readonly centringTranslations: readonly (readonly number[])[];
     readonly crystalSystem: PlaneSystem;
     readonly key: PlaneGroupKey;
     readonly number: number;
-    readonly origin: string;
+    readonly originSiteSymmetry: string;
     readonly pattersonSymmetry: PlaneGroupKey;
     readonly pointGroup: PointGroupKey;
     readonly pointGroupSetting: number;
@@ -187,12 +254,10 @@ export interface PlaneGroup {
 export function planeGroup(key: PlaneGroupKey): PlaneGroup;
 
 // @public
-export interface PlaneGroupFound {
-    readonly key: PlaneGroupKey;
-}
+export type PlaneGroupKey = 'p1' | 'p2' | 'pm' | 'pg' | 'cm' | 'p2mm' | 'p2mg' | 'p2gg' | 'c2mm' | 'p4' | 'p4mm' | 'p4gm' | 'p3' | 'p3m1' | 'p31m' | 'p6' | 'p6mm';
 
 // @public
-export type PlaneGroupKey = 'p1' | 'p2' | 'pm' | 'pg' | 'cm' | 'p2mm' | 'p2mg' | 'p2gg' | 'c2mm' | 'p4' | 'p4mm' | 'p4gm' | 'p3' | 'p3m1' | 'p31m' | 'p6' | 'p6mm';
+export function planeGroupOf(operations: readonly PlaneOperation[], options?: ToleranceOptions): IdentifiedPlaneGroup;
 
 // @public
 export function planeGroups(): readonly PlaneGroup[];
@@ -232,13 +297,10 @@ export interface PointGroup {
 export function pointGroup(key: PointGroupKey): PointGroup;
 
 // @public
-export interface PointGroupInSetting {
-    readonly key: PointGroupKey;
-    readonly setting: number;
-}
+export type PointGroupKey = PlanePointGroupKey;
 
 // @public
-export type PointGroupKey = PlanePointGroupKey;
+export function pointGroupOf(operations: readonly PlaneOperation[], options?: ToleranceOptions): IdentifiedPointGroup;
 
 // @public
 export function pointGroups(): readonly PointGroup[];
@@ -274,7 +336,10 @@ export interface SettingOptions {
 }
 
 // @public
-export function settings(key: PointGroupKey): readonly Setting[];
+export function settings(key: PlaneGroupKey | PointGroupKey): readonly Setting[];
+
+// @public
+export type SiteInput = PlanePoint | DirectionIndices | EdgeIndices;
 
 // @public
 export interface SiteSymmetry {
@@ -285,7 +350,28 @@ export interface SiteSymmetry {
 }
 
 // @public
-export function siteSymmetry(key: PlaneGroupKey, point: PlanePoint, options?: ToleranceOptions): SiteSymmetry;
+export function siteSymmetry(key: PlaneGroupKey, point: PlanePoint, options?: SettingOptions & ToleranceOptions): SiteSymmetry;
+
+// @public (undocumented)
+export function siteSymmetry(key: PointGroupKey, direction: DirectionIndices, options?: SettingOptions & ToleranceOptions): DirectionSiteSymmetry;
+
+// @public (undocumented)
+export function siteSymmetry(key: PointGroupKey, edge: EdgeIndices, options?: SettingOptions & ToleranceOptions): DirectionSiteSymmetry;
+
+// @public (undocumented)
+export function siteSymmetry(key: PlaneGroupKey | PointGroupKey, input: SiteInput, options?: SettingOptions & ToleranceOptions): SiteSymmetry | DirectionSiteSymmetry;
+
+// @public
+export function siteSymmetryOf(operations: readonly PlaneOperation[], point: PlanePoint, options?: ToleranceOptions): SiteSymmetry;
+
+// @public (undocumented)
+export function siteSymmetryOf(operations: readonly PlaneOperation[], direction: DirectionIndices, options?: ToleranceOptions): DirectionSiteSymmetry;
+
+// @public (undocumented)
+export function siteSymmetryOf(operations: readonly PlaneOperation[], edge: EdgeIndices, options?: ToleranceOptions): DirectionSiteSymmetry;
+
+// @public (undocumented)
+export function siteSymmetryOf(operations: readonly PlaneOperation[], input: SiteInput, options?: ToleranceOptions): SiteSymmetry | DirectionSiteSymmetry;
 
 // @public
 export function symbol(key: PlaneGroupKey | PointGroupKey, options?: SymbolOptions): string;
@@ -311,7 +397,7 @@ export interface SymmetryElementsOptions {
 
 // @public
 export interface SymmetryLine {
-    readonly axis: readonly number[];
+    readonly axis: LatticeAxis;
     readonly direction: readonly number[];
     readonly glide: readonly number[];
     readonly kind: 'mirror' | 'glide';
@@ -353,11 +439,20 @@ export interface WyckoffPosition {
     readonly millerIndices?: string;
     readonly multiplicity: number;
     readonly siteSymmetry: string;
-    readonly siteSymmetryOperations?: readonly number[];
+    readonly siteSymmetryOperations: readonly number[];
 }
 
 // @public
-export function wyckoffPosition(key: PlaneGroupKey, point: PlanePoint, options?: ToleranceOptions): WyckoffPosition;
+export function wyckoffPosition(key: PlaneGroupKey, point: PlanePoint, options?: SettingOptions & ToleranceOptions): WyckoffPosition;
+
+// @public (undocumented)
+export function wyckoffPosition(key: PointGroupKey, direction: DirectionIndices, options?: SettingOptions & ToleranceOptions): WyckoffPosition;
+
+// @public (undocumented)
+export function wyckoffPosition(key: PointGroupKey, edge: EdgeIndices, options?: SettingOptions & ToleranceOptions): WyckoffPosition;
+
+// @public (undocumented)
+export function wyckoffPosition(key: PlaneGroupKey | PointGroupKey, input: SiteInput, options?: SettingOptions & ToleranceOptions): WyckoffPosition;
 
 // @public
 export function wyckoffPositions(key: PlaneGroupKey | PointGroupKey, options?: SettingOptions): readonly WyckoffPosition[];

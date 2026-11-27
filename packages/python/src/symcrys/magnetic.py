@@ -425,15 +425,16 @@ class SymmetryDirection(TypedDict):
 
 @final
 class IdentifiedPointGroup(TypedDict):
-    """The point group of a list of operations: its key, and the setting if the operations are
-    exactly those of one.
+    """A point group found by its symbol (``find_point_group``) or identified from operations
+    (``point_group_of``): its key, and the setting if the operations are exactly those of one.
     """
 
     key: str
-    """The key of the point group the operations generate."""
+    """The key of the point group."""
     setting: NotRequired[int]
-    """The 1-based index of the setting whose operations the group equals, in the Cartesian frame of
-    symcrys; absent if the group is the point group in another orientation.
+    """The 1-based index of the setting: always for ``find_point_group``; for ``point_group_of`` the
+    setting whose operations the group equals, in the Cartesian frame of symcrys, absent if the group is
+    the point group in another orientation.
     """
 
 
@@ -564,16 +565,6 @@ class Setting(TypedDict):
     """
     is_default: bool
     """True for the ITC default setting."""
-
-
-@final
-class PointGroupInSetting(TypedDict):
-    """A point group in a given setting."""
-
-    key: str
-    """The key of the point group."""
-    setting: int
-    """The 1-based index of the setting."""
 
 
 @final
@@ -759,7 +750,6 @@ _S_Setting = (
         "isDefault": _V,
     },
 )
-_S_PointGroupInSetting = ("d", {"key": _V, "setting": _I})
 _S_SiteSymmetry = (
     "d",
     {
@@ -815,7 +805,6 @@ __all__ = [
     "Operations",
     "OrbitPole",
     "PointGroup",
-    "PointGroupInSetting",
     "PointGroupType",
     "Setting",
     "SiteSymmetry",
@@ -1914,7 +1903,7 @@ def find_point_group(
     *,
     axes: Optional[Literal["hexagonal", "rhombohedral"]] = None,
     unique_axis: Optional[Literal["a", "b", "c"]] = None,
-) -> Optional[PointGroupInSetting]:
+) -> Optional[IdentifiedPointGroup]:
     """Finds one of the 122 magnetic point groups (the 32 crystal classes included) by a symbol,
     read tolerantly. A prime marks time reversal: ``4'/mmm'``, ``2221'``. It reads, spaces ignored
     (docs/conventions.md, "Reading symbols"): the key; the short or full symbol of a setting
@@ -1942,9 +1931,9 @@ def find_point_group(
         The unique axis of a monoclinic group, as ITA's headlines name it (``'b'``, the standard,
         ``'c'``, ``'a'``). A SymcrysError for another system.
     """
-    result: Optional[PointGroupInSetting] = _shared.convert(
+    result: Optional[IdentifiedPointGroup] = _shared.convert(
         _call("findPointGroup", symbol, _shared.options(axes=axes, unique_axis=unique_axis)),
-        ("o", _S_PointGroupInSetting),
+        ("o", _S_IdentifiedPointGroup),
     )
     return result
 

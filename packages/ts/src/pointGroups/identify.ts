@@ -17,13 +17,17 @@ import {
   type MagneticPointGroupKey,
 } from './pointGroups.js';
 
-/** The point group of a list of operations: its key, and the setting if the operations are exactly those of one. */
+/**
+ * A point group found by its symbol (`findPointGroup`) or identified from operations
+ * (`pointGroupOf`): its key, and the setting if the operations are exactly those of one.
+ */
 export interface IdentifiedPointGroup {
-  /** The key of the point group the operations generate. */
+  /** The key of the point group. */
   readonly key: MagneticPointGroupKey;
   /**
-   * The 1-based index of the setting whose operations the group equals, in the Cartesian frame of
-   * symcrys; absent if the group is the point group in another orientation.
+   * The 1-based index of the setting: always for `findPointGroup`; for `pointGroupOf` the setting
+   * whose operations the group equals, in the Cartesian frame of symcrys, absent if the group is the
+   * point group in another orientation.
    */
   readonly setting?: number;
 }

@@ -95,7 +95,7 @@ describe('keys', () => {
           const found = classes.findPointGroup(hm);
           const what = `${hm} (${key})`;
           expect(found?.key, what).toBe(key);
-          const again = classes.settings(key)[found!.setting - 1];
+          const again = classes.settings(key)[found!.setting! - 1];
           expect([again.symbol, again.fullSymbol], what).toContain(hm);
         }
       }
@@ -795,6 +795,10 @@ describe('every result is frozen, nested values included', () => {
     wyckoffPosition: ['p4', { point: [0, 0] }],
     wyckoffDistances: ['p4', { point: [0.01, 0] }],
     orbit: ['p4', { point: [0.1, 0.2] }],
+    siteSymmetryOf: [plane.operations('p4'), { point: [0, 0] }],
+    orbitOf: [plane.operations('4mm'), { uv: [1, 0] }],
+    pointGroupOf: [plane.operations('p31m')],
+    planeGroupOf: [plane.operations('c2mm')],
     asymmetricUnit: ['p4'],
     symmetryElements: ['p4gm'],
   };

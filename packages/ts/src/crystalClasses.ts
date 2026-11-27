@@ -102,14 +102,6 @@ export interface PointGroup {
   readonly laueClass: PointGroupKey;
 }
 
-/** A crystal class in a given setting. */
-export interface PointGroupInSetting {
-  /** The key of the crystal class. */
-  readonly key: PointGroupKey;
-  /** The 1-based index of the setting. */
-  readonly setting: number;
-}
-
 /** One point operation described geometrically. */
 export type OperationDescription = Omit<MagneticOperationDescription, 'timeReversal'>;
 
@@ -314,7 +306,7 @@ export function pointGroups(): readonly PointGroup[] {
  * @remarks The two spellings of the Schoenflies symbols are those of ITA (`C3i`) and of ITC Vol. D
  * (`S6`).
  */
-export function findPointGroup(symbol: string, options?: AxesOptions): PointGroupInSetting | undefined {
+export function findPointGroup(symbol: string, options?: AxesOptions): IdentifiedPointGroup | undefined {
   if (arguments.length > 2) groups.rejectConventionArgument(arguments.length);
   return deepFreeze(groups.findPointGroup(symbol, options));
 }
@@ -398,13 +390,17 @@ export function isEnantiomorphicOf(operations: readonly CartesianOperation[], op
 
 // --- the point group of a list of operations -------------------------------------------------------
 
-/** The crystal class of a list of operations: its key, and the setting if the operations are exactly those of one. */
+/**
+ * A crystal class found by its symbol (`findPointGroup`) or identified from operations
+ * (`pointGroupOf`): its key, and the setting if the operations are exactly those of one.
+ */
 export interface IdentifiedPointGroup {
-  /** The key of the crystal class the operations generate. */
+  /** The key of the crystal class. */
   readonly key: PointGroupKey;
   /**
-   * The 1-based index of the setting whose operations the group equals, in the Cartesian frame of
-   * symcrys; absent if the group is the class in another orientation.
+   * The 1-based index of the setting: always for `findPointGroup`; for `pointGroupOf` the setting
+   * whose operations the group equals, in the Cartesian frame of symcrys, absent if the group is the
+   * class in another orientation.
    */
   readonly setting?: number;
 }

@@ -179,14 +179,23 @@ function errorPins(add: (id: string, f: () => unknown) => void): void {
  * Descriptions in the shape of the pins (captured before #121 step 7c): `order` for `n`,
  * `'mirror'` for `'reflection'`, `'glide'` for `'glide-reflection'`.
  */
-const oldDescriptions = (list: readonly { readonly kind: string; readonly n: number; readonly axis?: unknown }[]) =>
-  list.map(({ kind, n, axis, ...rest }) => ({
+const oldDescriptions = (
+  list: readonly { readonly kind: string; readonly n: number; readonly axis?: object; readonly point?: unknown }[],
+) =>
+  list.map(({ kind, n, axis, point, ...rest }) => ({
     kind: kind === 'reflection' ? 'mirror' : kind === 'glide-reflection' ? 'glide' : kind,
     order: n,
     ...rest,
-    // The plane groups gave the axis of a reflection as `normal` (before #121 step 7d).
-    ...(axis === undefined ? {} : Array.isArray(axis) ? { normal: axis } : { axis }),
+    // The plane groups gave the point of a rotation or a line as `location` (before #208).
+    ...(point === undefined ? {} : { location: point }),
+    // The plane groups gave the axis of a reflection as `normal` (before #121 step 7d), a bare
+    // lattice vector (before #208, now `{ lattice }`).
+    ...(axis === undefined ? {} : 'cartesian' in axis ? { axis } : { normal: (axis as plane.LatticeAxis).lattice }),
   }));
+
+/** A Wyckoff position of a plane group without `siteSymmetryOperations`, which came after the pins (#208). */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const oldPlaneWyckoff = ({ siteSymmetryOperations, ...rest }: plane.WyckoffPosition) => rest;
 
 /** A Wyckoff position of a class with its first printed point only, as `coordinates` was up to #121 step 7d. */
 const oldWyckoff = <W extends { readonly coordinates: readonly string[] }>({ coordinates, ...rest }: W) => ({
@@ -222,7 +231,7 @@ const oldPointGroup = ({ enantiomorphic, ...rest }: { readonly enantiomorphic: b
 const oldElements = ({ rotationPoints, lines }: plane.SymmetryElements) => ({
   rotations: rotationPoints.map(({ n, point }) => ({ order: n, point })),
   lines: lines
-    .map(({ axis, point, ...rest }) => ({ ...rest, normal: axis, segment: clipToCell(point, rest.direction) }))
+    .map(({ axis, point, ...rest }) => ({ ...rest, normal: axis.lattice, segment: clipToCell(point, rest.direction) }))
     .filter((l) => l.segment !== undefined)
     .sort(
       (a, b) =>
@@ -486,9 +495,13 @@ function planeGroupPins(add: (id: string, f: () => unknown) => void, key: plane.
   // bravaisLattice and pattersonSymmetry came in 0.12, after the pins.
   add(`${key}: planeGroup`, () => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { bravaisLattice, pattersonSymmetry, ...rest } = plane.planeGroup(key);
+    const { bravaisLattice, pattersonSymmetry, centringTranslations, originSiteSymmetry, ...rest } =
+      plane.planeGroup(key);
     return {
       ...rest,
+      // `centring` and `origin` before #208.
+      centring: centringTranslations,
+      origin: originSiteSymmetry,
       fullSymbol: plane.symbol(key, { form: 'full' }).replace(/ /g, ''),
       order: plane.operations(key).length,
     };
@@ -497,7 +510,7 @@ function planeGroupPins(add: (id: string, f: () => unknown) => void, key: plane.
   add(`${key}: generators`, () => plane.generators(key));
   add(`${key}: describeOperations`, () => oldDescriptions(plane.describeOperations(key)));
   add(`${key}: describeOperationsOf(operations)`, () => oldDescriptions(plane.describeOperationsOf(ops)));
-  add(`${key}: wyckoffPositions`, () => plane.wyckoffPositions(key));
+  add(`${key}: wyckoffPositions`, () => plane.wyckoffPositions(key).map(oldPlaneWyckoff));
   add(`${key}: asymmetricUnit`, () => oldUnit(plane.asymmetricUnit(key)));
   add(`${key}: symmetryElements`, () =>
     oldElements(
@@ -511,7 +524,7 @@ function planeGroupPins(add: (id: string, f: () => unknown) => void, key: plane.
   );
   for (const p of POINTS) {
     add(`${key}: siteSymmetry (${p})`, () => plane.siteSymmetry(key, { point: p }));
-    add(`${key}: wyckoffPositionOf (${p})`, () => plane.wyckoffPosition(key, { point: p }));
+    add(`${key}: wyckoffPositionOf (${p})`, () => oldPlaneWyckoff(plane.wyckoffPosition(key, { point: p })));
     // Bare points before #121 step 7d.
     add(`${key}: orbit (${p})`, () => plane.orbit(key, { point: p }).map((e) => e.point));
   }
@@ -521,7 +534,7 @@ function planeGroupPins(add: (id: string, f: () => unknown) => void, key: plane.
         plane.siteSymmetry(key, { point: p }, { tolerance }),
       );
       add(`${key}: wyckoffPositionOf (${p}) tolerance ${tolerance}`, () =>
-        plane.wyckoffPosition(key, { point: p }, { tolerance }),
+        oldPlaneWyckoff(plane.wyckoffPosition(key, { point: p }, { tolerance })),
       );
     }
   }

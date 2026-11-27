@@ -63,11 +63,10 @@
     "symcrys.plane": {
       "float64": [
         "translation",
-        "location",
         "glide",
         "point",
         "vertices",
-        "centring",
+        "centringTranslations",
         "linearPart",
         "originShift",
         "points",
@@ -75,7 +74,7 @@
         "planes",
         "metric"
       ],
-      "int64": ["direction", "axis", "operations", "edges", "inequalities", "siteSymmetryOperations"]
+      "int64": ["direction", "operations", "edges", "inequalities", "siteSymmetryOperations", "lattice", "uv", "hk"]
     }
   },
   "shapes": {
@@ -90,14 +89,15 @@
       "directions": [-1, 2],
       "planes": [-1, 2],
       "translation": [2],
-      "location": [2],
       "glide": [2],
       "point": [2],
       "vertices": [-1, 2],
-      "centring": [-1, 2],
       "inequalities": [-1, 3],
       "direction": [2],
-      "axis": [2]
+      "centringTranslations": [-1, 2],
+      "lattice": [2],
+      "uv": [2],
+      "hk": [2]
     }
   },
   "numbers": {

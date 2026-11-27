@@ -216,6 +216,21 @@ function planeCalls(): ApiCall[] {
     }
     c('wyckoffDistances', key, { point: [0.1, 0.23] }, { basis: [[2, 0], [0, 3]] }); // prettier-ignore
     c('residualOperations', plane.operations(key), [[1, 0], [0, 1.5]]); // prettier-ignore
+    c('settings', key);
+    // A symmorphic plane group has the operations of its point group, which is called below.
+    if (plane.operations(key).some((op) => op.translation.some((t) => t !== 0)))
+      c('pointGroupOf', plane.operations(key));
+    c('planeGroupOf', plane.operations(key));
+    c('planeGroupOf', plane.generators(key));
+    for (const point of [
+      [0.1, 0.23],
+      [0.5, 0],
+    ]) {
+      c('siteSymmetryOf', plane.operations(key), { point });
+      c('orbitOf', plane.operations(key), { point });
+    }
+    c('siteSymmetryOf', plane.operations(key), { uv: [1, 1] });
+    c('orbitOf', plane.operations(key), { hk: [1, 2] });
   }
   for (const key of plane.POINT_GROUP_KEYS) {
     c('pointGroup', key);
@@ -230,6 +245,21 @@ function planeCalls(): ApiCall[] {
       c('describeOperations', key, o);
       c('wyckoffPositions', key, o);
       c('crystalForms', key, o);
+      c('pointGroupOf', plane.operations(key, o));
+      for (const input of [
+        { uv: [1, 0] },
+        { uv: [1, 1] },
+        { uv: [1, 2] },
+        { hk: [1, 0] },
+        { hk: [1, 1] },
+        { hk: [1, 2] },
+      ]) {
+        c('siteSymmetry', key, input, o);
+        c('wyckoffPosition', key, input, o);
+        c('orbit', key, input, o);
+      }
+      c('siteSymmetryOf', plane.operations(key, o), { hk: [1, 0] });
+      c('orbitOf', plane.operations(key, o), { uv: [1, 2] });
     }
   }
   c('planeGroups');

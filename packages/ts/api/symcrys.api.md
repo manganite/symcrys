@@ -214,7 +214,7 @@ export interface FaceOrbitEntry {
 }
 
 // @public
-export function findPointGroup(symbol: string, options?: AxesOptions): PointGroupInSetting | undefined;
+export function findPointGroup(symbol: string, options?: AxesOptions): IdentifiedPointGroup | undefined;
 
 // @public
 export type FourIndices = readonly [number, number, number, number];
@@ -376,12 +376,6 @@ export interface PointGroup {
 
 // @public
 export function pointGroup(key: PointGroupKey): PointGroup;
-
-// @public
-export interface PointGroupInSetting {
-    readonly key: PointGroupKey;
-    readonly setting: number;
-}
 
 // @public
 export type PointGroupKey = Extract<(typeof POINT_GROUP_KEYS)[number], string>;

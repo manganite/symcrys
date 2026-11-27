@@ -180,7 +180,7 @@ describe('the axis of every operation has the sign of its printed Seitz symbol (
         const ops = plane.operations(key as never, { setting });
         plane.describeOperations(key as never, { setting }).forEach((d, i) => {
           if (d.kind !== 'reflection' && d.kind !== 'glide-reflection') return;
-          expect([...(d.axis ?? [])], `${key} #${setting} op ${i + 1}`).toEqual(
+          expect([...(d.axis?.lattice ?? [])], `${key} #${setting} op ${i + 1}`).toEqual(
             printedSeitz(table, ops[i].matrix).direction,
           );
         });
