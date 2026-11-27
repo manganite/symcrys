@@ -1,5 +1,5 @@
 /**
- * The Shubnikov symbols against print (fixture class (a)): ITC Vol. D (2013) Table 1.5.2.3,
+ * The computed Shubnikov symbols against print (fixture class (a)): ITC Vol. D (2013) Table 1.5.2.3,
  * column 3 (pp. 111–112), re-parsed from references/itc/vol-d-table-1.5.2.3.md and written with
  * combining characters by this test's own reading of the transcription's notation (`_` underline,
  * `-` overbar, `.` centred dot). The grey groups, which ITC does not print, follow symcrys's rule
@@ -10,7 +10,6 @@ import { describe, expect, it } from 'vitest';
 import * as classes from '../index.js';
 import * as magnetic from '../magnetic.js';
 import { readReference, tableRows } from '../testUtils/references.js';
-import { SHUBNIKOV } from './shubnikovData.js';
 
 const rows = tableRows(readReference('itc/vol-d-table-1.5.2.3.md')).slice(1);
 
@@ -23,9 +22,9 @@ const asPrinted = (t: string) =>
 const keyOf = (short: string) => magnetic.findPointGroup(short)!.key;
 
 describe('ITC Vol. D Table 1.5.2.3: Shubnikov symbols', () => {
-  it('90 printed groups, each found by its short symbol; the data are the transcription', () => {
+  it('90 printed groups, each found by its short symbol', () => {
     expect(rows).toHaveLength(90);
-    expect(Object.fromEntries(rows.map((r) => [keyOf(r[3]), r[2]]))).toEqual(SHUBNIKOV);
+    expect(new Set(rows.map((r) => keyOf(r[3]))).size).toBe(90);
   });
 
   it("symbol(key, { form: 'shubnikov' }) writes the printed symbol, in every setting", () => {
