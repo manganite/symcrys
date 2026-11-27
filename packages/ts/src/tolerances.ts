@@ -129,13 +129,15 @@ export const FLAT_CELL_RADICAND = 1e-12;
 
 /**
  * Two unit vectors whose dot product is within this of ±1 are parallel: the axis of an operation
- * along a symmetry direction (pointGroups/elements.ts). A deviation of 10⁻⁶ is an angle of about
+ * along a symmetry direction (pointGroups/elements.ts), and the axes and normals that build a
+ * Shubnikov symbol (pointGroups/shubnikov.ts). A deviation of 10⁻⁶ is an angle of about
  * 1.4·10⁻³ rad, far below the angle between two symmetry directions.
  */
 export const AXIS_EPSILON = 1e-6;
 
 /**
- * A rotation by an angle (radians) below this is the identity (pointGroups/elements.ts); the
+ * A rotation by an angle (radians) below this is the identity (pointGroups/elements.ts,
+ * pointGroups/shubnikov.ts); the
  * smallest rotation of a point group is 60°.
  */
 export const ANGLE_EPSILON = 1e-6;

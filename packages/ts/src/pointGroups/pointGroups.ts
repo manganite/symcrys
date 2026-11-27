@@ -807,14 +807,14 @@ export function symbol(key: MagneticPointGroupKey, options?: SymbolOptions): str
 const LOW_LINE = '\u0332';
 const OVERBAR = '\u0305';
 
+const shubnikovCache = new Map<string, string>();
+
 /**
  * The Shubnikov symbol of a group, computed from its operations (shubnikov.ts; equal to ITC Vol. D
  * Table 1.5.2.3, column 3, for types I and III), written with combining characters; for a grey
  * group, which ITC does not print, the symbol of its class, a centred dot and an underlined 1, as
  * Shubnikov & Belov (1964, pp. 113–114) write it (`m·1̲`, `4·1̲`).
  */
-const shubnikovCache = new Map<string, string>();
-
 function shubnikov(d: GroupData): string {
   const cached = shubnikovCache.get(d.key);
   if (cached !== undefined) return cached;

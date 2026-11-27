@@ -6,6 +6,7 @@
  */
 
 import { det, trace, type Mat3, type Vec3 } from '../linalg.js';
+import { ANGLE_EPSILON, AXIS_EPSILON } from '../tolerances.js';
 
 /** A Cartesian operation and whether it carries time reversal. */
 export interface ShubnikovOperation {
@@ -22,21 +23,20 @@ interface Element {
   readonly timeReversal: boolean;
 }
 
-const EPS = 1e-6;
 const dot = (a: Vec3, b: Vec3): number => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 const unit = (v: Vec3): Vec3 => {
   const l = Math.hypot(v[0], v[1], v[2]);
   return [v[0] / l, v[1] / l, v[2] / l];
 };
-const parallel = (a: Vec3, b: Vec3): boolean => Math.abs(Math.abs(dot(a, b)) - 1) < EPS;
-const perpendicular = (a: Vec3, b: Vec3): boolean => Math.abs(dot(a, b)) < EPS;
+const parallel = (a: Vec3, b: Vec3): boolean => Math.abs(Math.abs(dot(a, b)) - 1) < AXIS_EPSILON;
+const perpendicular = (a: Vec3, b: Vec3): boolean => Math.abs(dot(a, b)) < AXIS_EPSILON;
 
 function element(op: ShubnikovOperation): Element {
   const proper = det(op.cartesian) > 0;
   const r = proper ? op.cartesian : (op.cartesian.map((row) => row.map((x) => -x)) as unknown as Mat3);
   const cos = Math.max(-1, Math.min(1, (trace(r) - 1) / 2));
   const angle = Math.acos(cos);
-  const n = angle < EPS ? 1 : Math.round((2 * Math.PI) / angle);
+  const n = angle < ANGLE_EPSILON ? 1 : Math.round((2 * Math.PI) / angle);
   if (n === 1) return { proper, n, timeReversal: op.timeReversal };
   // The axis: a nonzero column of r + 1 for a twofold part, the axial vector otherwise.
   let axis: Vec3;
@@ -57,13 +57,15 @@ const mark = (role: readonly Element[]): string => (role.length > 0 && role.ever
  *
  * - Cubic groups: the threefold axes (`3`, or `-6` for 3̄, the rotoreflection 6̃), `/`, the element
  *   along the cube axes (`4`, `-4` or `2`).
- * - Otherwise along the main axis, the axis of highest order (of the proper parts; among twofold
- *   axes one whose rotation carries no time reversal): `n` for a rotation, `-4` for 4̄, `-6` for 3̄,
- *   `3` with `:m` for 6̄ (= 3/m), `-2` for 1̄, `m` for a group of one reflection; then `m.n:m` with
- *   a mirror normal to the axis and mirrors containing it, `n:m` with the first only, `n.m` with
- *   the second only, `n:2` with twofold axes normal to it.
- * - An element is underlined where every operation it stands for carries time reversal, so that of
- *   two kinds of mirrors or twofold axes containing or normal to the axis, one without time
+ * - Otherwise along the main axis: the axis of the highest order of a proper part (−W for an
+ *   improper operation, so that a mirror normal counts as a twofold axis), and of several, the axis
+ *   of a rotation without time reversal, else of a rotation, else of a rotoinversion. On it `n` for
+ *   a rotation, `-4` for 4̄, `-6` for 3̄, `3` with `:m` for 6̄ (= 3/m), `-2` for 1̄, `m` for a group of
+ *   one reflection; then `m.n:m` with a mirror normal to the axis and mirrors containing it, `n:m`
+ *   with the first only, `n.m` with the second only, `n:2` with twofold axes normal to it.
+ * - An element is underlined where every operation of its role carries time reversal: the rotations
+ *   (or rotoinversions) of its order about the main axis, the mirrors normal to or containing it,
+ *   the twofold axes normal to it. So of two kinds of mirrors or twofold axes, one without time
  *   reversal is written.
  */
 export function shubnikovSymbol(operations: readonly ShubnikovOperation[]): string {
@@ -73,15 +75,9 @@ export function shubnikovSymbol(operations: readonly ShubnikovOperation[]): stri
   const threefoldAxes = threefold.filter((e, i) => threefold.findIndex((f) => parallel(f.axis!, e.axis!)) === i);
   const inversion = all.filter((e) => !e.proper && e.n === 1);
   if (threefoldAxes.length === 4) {
-    const along = (n: number, proper: boolean): Element[] =>
-      all.filter(
-        (e) =>
-          e.proper === proper &&
-          e.n === n &&
-          e.axis &&
-          threefoldAxes.every((t) => !parallel(t.axis!, e.axis!)) &&
-          cubeAxis(e.axis, threefoldAxes),
-      );
+    // The fourfold rotations and rotoinversions, and in 23 and m-3 the twofold rotations, lie on the
+    // cube axes only.
+    const along = (n: number, proper: boolean): Element[] => all.filter((e) => e.proper === proper && e.n === n);
     const a = inversion.length > 0 ? `${mark(all.filter((e) => !e.proper && e.n === 3))}-6` : `${mark(threefold)}3`;
     const four = along(4, true);
     const roto = along(4, false);
@@ -106,29 +102,22 @@ export function shubnikovSymbol(operations: readonly ShubnikovOperation[]): stri
   const horizontalTwofold = all.filter((e) => e.proper && e.n === 2 && perpendicular(e.axis!, c));
   const nRotation = Math.max(1, ...all.filter((e) => e.proper && e.axis && parallel(e.axis, c)).map((e) => e.n));
   let main: string;
-  let mirrorNormal = horizontalMirror;
   if (nRotation === 3 && about(false, 6).length > 0) {
     // 6̄ = 3/m: the threefold rotation and the mirror normal to it.
     main = `${mark(about(true, 3))}3`;
   } else if (nRotation === 3 && inversion.length > 0) {
     main = `${mark(about(false, 3))}-6`;
   } else if (nRotation === 2 && about(false, 4).length > 0) {
+    // 4̄ with a mirror normal to it would generate a fourfold rotation: no such mirror here.
     main = `${mark(about(false, 4))}-4`;
-    mirrorNormal = [];
   } else {
     main = `${mark(about(true, nRotation))}${nRotation}`;
   }
   const vertical = verticalMirrors.length > 0 ? `${mark(verticalMirrors)}m` : '';
-  const normal = mirrorNormal.length > 0 ? `${mark(mirrorNormal)}m` : '';
+  const normal = horizontalMirror.length > 0 ? `${mark(horizontalMirror)}m` : '';
   if (normal && vertical) return `${vertical}.${main}:${normal}`;
   if (normal) return `${main}:${normal}`;
   if (vertical) return `${main}.${vertical}`;
   if (horizontalTwofold.length > 0) return `${main}:${mark(horizontalTwofold)}2`;
   return main;
-}
-
-/** True if the axis is a cube axis: normal to none and at equal angles to all four threefold axes. */
-function cubeAxis(axis: Vec3, threefold: readonly Element[]): boolean {
-  const cosines = threefold.map((t) => Math.abs(dot(t.axis!, axis)));
-  return cosines.every((x) => Math.abs(x - cosines[0]) < EPS) && cosines[0] > EPS;
 }

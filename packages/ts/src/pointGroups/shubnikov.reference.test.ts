@@ -10,6 +10,7 @@ import { describe, expect, it } from 'vitest';
 import * as classes from '../index.js';
 import * as magnetic from '../magnetic.js';
 import { readReference, tableRows } from '../testUtils/references.js';
+import { shubnikovSymbol } from './shubnikov.js';
 
 const rows = tableRows(readReference('itc/vol-d-table-1.5.2.3.md')).slice(1);
 
@@ -34,6 +35,19 @@ describe('ITC Vol. D Table 1.5.2.3: Shubnikov symbols', () => {
         expect(magnetic.symbol(key, { form: 'shubnikov', setting: s.index }), `${r[3]} setting ${s.index}`).toBe(
           asPrinted(r[2]),
         );
+      }
+    }
+  });
+
+  it('the rule gives the printed symbol from the operations of every setting, not only the default', () => {
+    // symbol() computes from the default setting; the rule itself must not depend on the orientation.
+    for (const r of rows) {
+      const key = keyOf(r[3]);
+      for (const s of magnetic.settings(key)) {
+        const ops = magnetic
+          .operations(key, { setting: s.index })
+          .map((op) => ({ cartesian: op.cartesian, timeReversal: op.timeReversal === true }));
+        expect(shubnikovSymbol(ops), `${r[3]} setting ${s.index}`).toBe(r[2]);
       }
     }
   });

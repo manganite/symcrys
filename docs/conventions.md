@@ -426,13 +426,16 @@ writes; ITC Vol. D and the magnetic API write `S6`).
   the printed one for all 90 groups:
   - **Cubic groups:** the threefold axes (`3`, or `6̅` for 3̄), `/`, the element along the cube axes
     (`4`, `4̅` or `2`): `3/2`, `6̅/2`, `3/4`, `3/4̅`, `6̅/4`.
-  - **The others**, along the main axis, the axis of highest order: `n` for a rotation, `4̅` for 4̄,
+  - **The others**, along the main axis, the axis of the highest order of a proper part (−W for an
+    improper operation; of several, that of a rotation without time reversal, else of a rotation):
+    `n` for a rotation, `4̅` for 4̄,
     `6̅` for 3̄, `3` with `:m` for 6̄ (= 3/m), `2̅` for 1̄, `m` for a group of one reflection; then
     `m·n:m` with a mirror normal to the axis and mirrors containing it, `n:m` with the first only,
     `n·m` with the second only, `n:2` with twofold axes normal to it (`m·2:m` for mmm, `4̅·m` for
     -42m, `m·3:m` for -6m2).
-  - **Underline:** an element is underlined where every operation it stands for carries time
-    reversal; so of two kinds of mirrors or twofold axes containing or normal to the axis, and of
+  - **Underline:** an element is underlined where every operation of its role carries time
+    reversal (the rotations or rotoinversions of its order about the main axis, the mirrors normal
+    to or containing it, the twofold axes normal to it); so of two kinds of mirrors or twofold axes containing or normal to the axis, and of
     the twofold axes of the orthorhombic groups as main axis, one without time reversal is written
     (`m·4̲:m` for `4'/mmm'`, `m̲·2:m` for `mm'm'`).
 
