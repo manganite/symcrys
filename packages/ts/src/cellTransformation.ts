@@ -128,7 +128,7 @@ const CELL_DEFINITIONS = {
 function settingBasis(setting: string): RMatrix {
   const columns = (setting.match(/-?[abc]/g) ?? []).map((t) => {
     const v = [ZERO, ZERO, ZERO].slice();
-    v['abc'.indexOf(t.replace('-', ''))] = rational(t.startsWith('-') ? -1 : 1);
+    v['abc'.indexOf(t.replace(/^-/, ''))] = rational(/^-/.test(t) ? -1 : 1);
     return v;
   });
   return [0, 1, 2].map((i) => columns.map((col) => col[i]));
