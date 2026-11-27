@@ -10,6 +10,8 @@ import {
   ZERO,
   add,
   checkSafeInteger,
+  multiply,
+  rational,
   formatRational,
   isInteger,
   mod1,
@@ -92,7 +94,8 @@ function applyMatrix(m: IntMatrix, v: readonly Rational[]): Rational[] {
   return m.map((row) => row.reduce<Rational>((sum, mij, j) => add(sum, scale(mij, v[j])), ZERO));
 }
 
-function multiplyMatrices(a: IntMatrix, b: IntMatrix): number[][] {
+/** The product of two integer matrices, exactly (an intermediate value outside the safe integers throws). */
+export function multiplyMatrices(a: IntMatrix, b: IntMatrix): number[][] {
   return a.map((row) =>
     b[0].map((_, j) => row.reduce((sum, aik, k) => safeSum(sum, safeProduct(aik, b[k][j])), 0) + 0),
   );
@@ -164,12 +167,53 @@ export function inverse(op: ExactOperation): ExactOperation {
   return { matrix: inv, translation: applyMatrix(inv, op.translation).map(negate) };
 }
 
+/** The inverse of an integer matrix of determinant ±1, exactly; throws for another determinant. */
+export function inverseMatrix(m: IntMatrix): number[][] {
+  return inverse({ matrix: m, translation: m.map(() => ZERO) }).matrix as number[][];
+}
+
+/**
+ * The operations of a group from its generators by ITA's rule, modulo the lattice: from the
+ * identity, each generator g extends the group H built so far by the cosets gH, g²H, … until a
+ * power of g lies in H (ITA 2016 § 1.4.3, p. 60, Table 1.4.3.2; 5th ed. § 2.2.11 (iv), p. 27, and
+ * § 8.3.5, p. 737). This gives ITA's numbering of the general position, for the point groups (whose
+ * translations are zero) and the plane groups alike. Translations are reduced into [0, 1). Throws
+ * an Error (a fault of the data) if more than `maxOrder` operations arise or the result is not
+ * closed modulo the lattice.
+ */
+export function cosetsByGenerators(
+  generators: readonly ExactOperation[],
+  dimension: number,
+  maxOrder: number,
+): ExactOperation[] {
+  const has = (list: readonly ExactOperation[], op: ExactOperation): boolean =>
+    list.some((x) => equalModLattice(x, op));
+  const list: ExactOperation[] = [identity(dimension)];
+  for (const g of generators) {
+    const h = list.slice();
+    for (let power = g; !has(h, power); power = compose(power, g)) {
+      // A generator of infinite order modulo the lattice would not end the loop.
+      if (list.length > maxOrder) throw new Error(`The generators give no group of at most ${maxOrder} operations`);
+      for (const x of h) list.push(reduceModLattice(compose(power, x)));
+    }
+  }
+  // The cosets form a group only if each generator normalises the group built so far; check
+  // closure, so that a mistake in the transcribed generators fails here rather than in a caller.
+  for (const a of list) {
+    for (const b of list) {
+      if (!has(list, compose(a, b))) throw new Error(`The generators give no group: ${formatOperation(compose(a, b))}`);
+    }
+  }
+  return list;
+}
+
 /** The operation with its translation reduced modulo 1 into [0, 1): the representative of its coset. */
 export function reduceModLattice(op: ExactOperation): ExactOperation {
   return { matrix: op.matrix, translation: op.translation.map(mod1) };
 }
 
-function matricesEqual(a: IntMatrix, b: IntMatrix): boolean {
+/** True if two integer matrices are equal entry by entry. */
+export function matricesEqual(a: IntMatrix, b: IntMatrix): boolean {
   return a.length === b.length && a.every((row, i) => row.length === b[i].length && row.every((v, j) => v === b[i][j]));
 }
 
@@ -313,4 +357,54 @@ export function formatOperation(op: ExactOperation): string {
 /** The operation as plain data for the API: integer matrix, translation as the nearest doubles. */
 export function toPlain(op: ExactOperation): PlainOperation {
   return { matrix: op.matrix.map((row) => [...row]), translation: op.translation.map(toNumber) };
+}
+
+// --- rational matrices ------------------------------------------------------------------------------
+
+/** A matrix with rational entries, rows first: a change of basis P, which need not be integer. */
+export type RMatrix = readonly (readonly Rational[])[];
+
+/** The product of two rational matrices. */
+export function rationalProduct(a: RMatrix, b: RMatrix): RMatrix {
+  return a.map((row) => b[0].map((_, j) => row.reduce((s, x, k) => add(s, multiply(x, b[k][j])), ZERO)));
+}
+
+/** A rational matrix applied to a rational vector. */
+export function rationalApply(a: RMatrix, v: readonly Rational[]): Rational[] {
+  return a.map((row) => row.reduce((s, x, k) => add(s, multiply(x, v[k])), ZERO));
+}
+
+/** The determinant of a 2 × 2 or 3 × 3 rational matrix. */
+export function rationalDeterminant(m: RMatrix): Rational {
+  const t = (i: number, j: number) => m[i][j];
+  if (m.length === 2) return subtract(multiply(t(0, 0), t(1, 1)), multiply(t(0, 1), t(1, 0)));
+  const minor = (i: number, j: number, k: number, l: number) =>
+    subtract(multiply(t(i, j), t(k, l)), multiply(t(i, l), t(k, j)));
+  return add(
+    subtract(multiply(t(0, 0), minor(1, 1, 2, 2)), multiply(t(0, 1), minor(1, 0, 2, 2))),
+    multiply(t(0, 2), minor(1, 0, 2, 1)),
+  );
+}
+
+/** The inverse of a regular 2 × 2 or 3 × 3 rational matrix, by the adjugate. */
+export function rationalInverse(m: RMatrix): RMatrix {
+  const det = rationalDeterminant(m);
+  const over = (x: Rational) => multiply(x, rational(det[1], det[0]));
+  if (m.length === 2) {
+    return [
+      [over(m[1][1]), over(negate(m[0][1]))],
+      [over(negate(m[1][0])), over(m[0][0])],
+    ];
+  }
+  const c = (i: number, j: number) => {
+    const rows = [0, 1, 2].filter((r) => r !== i);
+    const cols = [0, 1, 2].filter((k) => k !== j);
+    const minor = subtract(
+      multiply(m[rows[0]][cols[0]], m[rows[1]][cols[1]]),
+      multiply(m[rows[0]][cols[1]], m[rows[1]][cols[0]]),
+    );
+    return (i + j) % 2 === 0 ? minor : negate(minor);
+  };
+  // The inverse is the transposed matrix of cofactors over the determinant.
+  return [0, 1, 2].map((i) => [0, 1, 2].map((j) => over(c(j, i))));
 }

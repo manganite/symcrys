@@ -356,16 +356,8 @@ export function planeToFourIndices(hkl: Vec3): FourIndices;
 // @public
 export const POINT_GROUP_KEYS: readonly MagneticPointGroupKey[];
 
-// Warning: (ae-forgotten-export) The symbol "PointGroup_2" needs to be exported by the entry point magnetic.d.ts
-//
 // @public
-export type PointGroup<K extends PointGroupKey = PointGroupKey> = PointGroup_2<K>;
-
-// @public
-export function pointGroup<K extends MagneticPointGroupKey>(key: K): PointGroup_2<K>;
-
-// @public
-interface PointGroup_2<K extends MagneticPointGroupKey = CrystalClassKey> {
+export interface PointGroup<K extends MagneticPointGroupKey = MagneticPointGroupKey> {
     readonly centrosymmetric: boolean;
     readonly crystalClass: CrystalClassKey;
     readonly crystalSystem: CrystalSystem;
@@ -378,13 +370,16 @@ interface PointGroup_2<K extends MagneticPointGroupKey = CrystalClassKey> {
 }
 
 // @public
+export function pointGroup<K extends MagneticPointGroupKey>(key: K): PointGroup<K>;
+
+// @public
 export type PointGroupKey = MagneticPointGroupKey;
 
 // @public
 export function pointGroupOf(operations: readonly CartesianOperation[], options?: ToleranceOptions): IdentifiedPointGroup | undefined;
 
 // @public
-export function pointGroups(): readonly PointGroup_2<MagneticPointGroupKey>[];
+export function pointGroups(): readonly PointGroup<MagneticPointGroupKey>[];
 
 // @public
 export type PointGroupType = 'I' | 'II' | 'III';

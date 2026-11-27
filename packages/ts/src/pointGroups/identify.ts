@@ -5,7 +5,7 @@
  */
 
 import { TOLERANCE_KEYS, checkOptions } from '../checks.js';
-import { det, trace, type Mat3, type Vec3 } from '../linalg.js';
+import { det, dot, trace, type Mat3, type Vec3 } from '../linalg.js';
 import { closedGroup, sameWithin } from '../closure.js';
 import { checkCartesianOperations, checkTimeReversal, type CartesianOperation } from '../operations.js';
 import { EPSILON, MAX_POINT_GROUP_ORDER, toleranceOf, type ToleranceOptions } from '../tolerances.js';
@@ -155,8 +155,6 @@ function signed(v: Vec3, tolerance: number): { axis: Vec3; flip: boolean } {
   const first = v.find((x) => Math.abs(x) >= Math.max(tolerance, EPSILON)) ?? 0;
   return first < 0 ? { axis: [-v[0] + 0, -v[1] + 0, -v[2] + 0], flip: true } : { axis: v, flip: false };
 }
-
-const dot = (a: Vec3, b: Vec3): number => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 
 function describe(op: CartesianOperation, i: number, tolerance: number): CartesianOperationDescription {
   const notCrystallographic = `Operation ${i} is not a crystallographic point operation`;

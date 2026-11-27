@@ -15,16 +15,8 @@ const API = fileURLToPath(new URL('../packages/ts/api/', import.meta.url));
 
 /** The types each report may write out without an export by name: those behind the aliases. */
 const EXPECTED = {
-  'symcrys.api.md': [
-    // The crystallographic descriptions are those of the magnetic API without time reversal (Omit).
-    'CartesianOperationDescription_2',
-    'OperationDescription_2',
-  ],
-  'symcrys-magnetic.api.md': [
-    // PointGroup is an alias of this, generic over the key with another default than in the
-    // crystallographic API.
-    'PointGroup_2',
-  ],
+  'symcrys.api.md': /** @type {string[]} */ ([]),
+  'symcrys-magnetic.api.md': /** @type {string[]} */ ([]),
   'symcrys-plane.api.md': /** @type {string[]} */ ([]),
 };
 

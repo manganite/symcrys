@@ -5,7 +5,7 @@
  */
 
 import { checkObject, checkOptions, shown, TOLERANCE_KEYS } from './checks.js';
-import { apply, inverse, isSingular, multiply, transpose, type Mat3, type Vec3 } from './linalg.js';
+import { apply, dot, inverse, isSingular, multiply, transpose, type Mat3, type Vec3 } from './linalg.js';
 import { checkTimeReversal, type CartesianOperation as MagneticOperation } from './operations.js';
 import { FLAT_CELL_RADICAND, INTEGER_EPSILON, toleranceOf, type ToleranceOptions } from './tolerances.js';
 import { deepFreeze } from './freeze.js';
@@ -148,7 +148,6 @@ function columns(basis: Mat3): [Vec3, Vec3, Vec3] {
 }
 
 const norm = (v: Vec3): number => Math.hypot(v[0], v[1], v[2]);
-const dot = (u: Vec3, v: Vec3): number => u[0] * v[0] + u[1] * v[1] + u[2] * v[2];
 
 function checkBasis(basis: Mat3, who: string): void {
   const ok =

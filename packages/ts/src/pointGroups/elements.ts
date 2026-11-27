@@ -7,7 +7,7 @@
 
 import { ANGLE_EPSILON, AXIS_EPSILON } from '../tolerances.js';
 import { SETTING_KEYS, checkOptions } from '../checks.js';
-import { det, trace, type Mat3, type Vec3 } from '../linalg.js';
+import { det, dot, trace, type Mat3, type Vec3 } from '../linalg.js';
 import { crystalFamily } from '../lattice.js';
 import type { Operation } from '../operations.js';
 import type { Uvw } from '../symmetryDirections.js';
@@ -101,8 +101,6 @@ function normalize(v: Vec3): Vec3 {
   const n = Math.hypot(v[0], v[1], v[2]);
   return [v[0] / n, v[1] / n, v[2] / n];
 }
-
-const dot = (a: Vec3, b: Vec3): number => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 
 /** [uvw] in the basis `b` (columns a, b, c) as a Cartesian unit vector, with the direction itself. */
 function axisOf(b: Mat3, uvw: Uvw): Axis {

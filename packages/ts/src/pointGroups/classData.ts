@@ -22,6 +22,14 @@ import { IDENTITY as LINEAR_IDENTITY, inverse, multiply, snap, type Mat3 } from 
 import type { PointGroupKey } from './keys.js';
 import { LATTICE_SYMMETRY_DIRECTIONS, type Uvw } from '../symmetryDirections.js';
 import { SELECTED_GENERATORS, type IntMat3 } from './generatorData.js';
+import {
+  cosetsByGenerators,
+  inverseMatrix,
+  matricesEqual,
+  multiplyMatrices,
+  type ExactOperation,
+} from '../spaceGroups/affine.js';
+import { ZERO } from '../spaceGroups/rational.js';
 
 /** One ITC setting of a class. */
 export interface ClassSetting {
@@ -231,31 +239,14 @@ export function classSettingData(key: PointGroupKey, index: number): ClassSettin
   return s;
 }
 
-// --- exact integer matrices -----------------------------------------------------------------------
-
-/** The product of two integer matrices; + 0 turns −0 into 0, so that equal matrices compare equal. */
-const imul = (a: IntMat3, b: IntMat3): IntMat3 =>
-  [0, 1, 2].map((i) =>
-    [0, 1, 2].map((j) => a[i][0] * b[0][j] + a[i][1] * b[1][j] + a[i][2] * b[2][j] + 0),
-  ) as unknown as IntMat3;
-
-const iequal = (a: IntMat3, b: IntMat3): boolean => a.every((row, i) => row.every((x, j) => x === b[i][j]));
-
-/** The inverse of an integer matrix of determinant ±1, exactly (the adjugate divided by ±1). */
-function iinverse(m: IntMat3): IntMat3 {
-  const [[a, b, c], [d, e, f], [g, h, i]] = m;
-  const det = a * (e * i - f * h) - b * (d * i - f * g) + c * (d * h - e * g);
-  if (det !== 1 && det !== -1) throw new RangeError(`Not unimodular: ${shown(m)}`);
-  const adj = [
-    [e * i - f * h, c * h - b * i, b * f - c * e],
-    [f * g - d * i, a * i - c * g, c * d - a * f],
-    [d * h - e * g, b * g - a * h, a * e - b * d],
-  ];
-  return adj.map((row) => row.map((x) => x * det + 0)) as unknown as IntMat3;
-}
+// --- exact integer matrices (spaceGroups/affine.ts) ---------------------------------------------
 
 /** W in the basis P: P⁻¹·W·P. */
-const transform = (w: IntMat3, p: IntMat3): IntMat3 => imul(imul(iinverse(p), w), p);
+const transform = (w: IntMat3, p: IntMat3): IntMat3 =>
+  multiplyMatrices(multiplyMatrices(inverseMatrix(p), w), p) as unknown as IntMat3;
+
+/** A matrix as a point operation (W, 0), for the exact group arithmetic of affine.ts. */
+const asOperation = (w: IntMat3): ExactOperation => ({ matrix: w, translation: [ZERO, ZERO, ZERO] });
 
 /** ITA's selected generators of a setting, or those of the printed setting it comes from, carried by P. */
 export function settingLatticeGenerators(key: PointGroupKey, index: number): readonly IntMat3[] {
@@ -269,9 +260,8 @@ export function settingLatticeGenerators(key: PointGroupKey, index: number): rea
 const operationCache = new Map<string, readonly IntMat3[]>();
 
 /**
- * The operations of a setting in ITA's order: starting from the identity, each generator g extends
- * the group H generated so far by the cosets gH, g²H, … until a power of g lies in H (ITA 5th ed.,
- * § 2.2.11 (iv), p. 27; § 8.3.5, p. 737). A setting carried from a printed one keeps its order.
+ * The operations of a setting in ITA's order, from ITA's selected generators by ITA's rule
+ * (`cosetsByGenerators`). A setting carried from a printed one keeps its order.
  */
 export function settingLatticeOperations(key: PointGroupKey, index: number): readonly IntMat3[] {
   const cacheKey = `${key}#${index}`;
@@ -281,24 +271,14 @@ export function settingLatticeOperations(key: PointGroupKey, index: number): rea
     if (s.from) {
       ops = settingLatticeOperations(key, s.from.index).map((w) => transform(w, s.from!.basis));
     } else {
-      const has = (list: readonly IntMat3[], w: IntMat3) => list.some((x) => iequal(x, w));
-      const list: IntMat3[] = [LINEAR_IDENTITY];
-      for (const g of settingLatticeGenerators(key, index)) {
-        const h = list.slice();
-        for (let power = g; !has(h, power); power = imul(power, g)) {
-          if (list.length > MAX_CLASS_ORDER)
-            throw new Error(`The generators of ${key} setting ${index} give no point group`);
-          for (const x of h) list.push(imul(power, x));
-        }
+      // ITA's rule, as for the plane groups; a point operation has no translation.
+      try {
+        ops = cosetsByGenerators(settingLatticeGenerators(key, index).map(asOperation), 3, MAX_CLASS_ORDER).map(
+          (op) => op.matrix as unknown as IntMat3,
+        );
+      } catch (e) {
+        throw new Error(`${key} setting ${index}: ${(e as Error).message}`, { cause: e });
       }
-      // The cosets form a group only if each generator normalises the group built so far; check
-      // closure, so that a mistake in the transcribed generators fails here rather than in a caller.
-      for (const a of list) {
-        for (const b of list) {
-          if (!has(list, imul(a, b))) throw new Error(`The operations of ${key} setting ${index} are not closed`);
-        }
-      }
-      ops = list;
     }
     operationCache.set(cacheKey, Object.freeze(ops));
   }
@@ -381,12 +361,12 @@ export function settingTimeReversal(
   const ops = settingLatticeOperations(key, index);
   const gens = settingLatticeGenerators(key, index);
   if (flags.length !== gens.length) throw new RangeError(`${key} setting ${index} has ${gens.length} generators`);
-  const indexOf = (w: IntMat3) => ops.findIndex((x) => iequal(x, w));
+  const indexOf = (w: IntMat3) => ops.findIndex((x) => matricesEqual(x, w));
   const parity: (boolean | undefined)[] = ops.map((_, i) => (i === 0 ? false : undefined));
   for (let queue = [0]; queue.length > 0;) {
     const i = queue.shift()!;
     for (const [k, g] of gens.entries()) {
-      const j = indexOf(imul(g, ops[i]));
+      const j = indexOf(multiplyMatrices(g, ops[i]) as unknown as IntMat3);
       const p = parity[i] !== flags[k];
       if (parity[j] === undefined) {
         parity[j] = p;

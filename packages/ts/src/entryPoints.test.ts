@@ -951,3 +951,15 @@ describe('the functions of directions in symcrys/magnetic', () => {
     expect(() => magnetic.orbitOf(wrong, [0, 0, 1])).toThrow(/timeReversal must be true, false or absent/);
   });
 });
+
+describe('the description types of the two point-group entry points agree', () => {
+  it('the crystallographic ones are the magnetic ones without time reversal (checked by the compiler)', () => {
+    type Same<A, B> = [A] extends [B] ? ([B] extends [A] ? true : false) : false;
+    const operation: Same<classes.OperationDescription, Omit<magnetic.OperationDescription, 'timeReversal'>> = true;
+    const cartesian: Same<
+      classes.CartesianOperationDescription,
+      Omit<magnetic.CartesianOperationDescription, 'timeReversal'>
+    > = true;
+    expect([operation, cartesian]).toEqual([true, true]);
+  });
+});

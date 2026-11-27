@@ -57,10 +57,10 @@ export { MAGNETIC_POINT_GROUP_KEYS, POINT_GROUP_KEYS, type MagneticPointGroupKey
 export type PointGroupType = 'I' | 'II' | 'III';
 
 /**
- * A point group with the properties that are fixed by its operations. None of them depends on the
- * setting (docs/conventions.md, "Properties").
+ * A magnetic point group (a crystal class included) with the properties that are fixed by its
+ * operations. None of them depends on the setting (docs/conventions.md, "Properties").
  */
-export interface PointGroup<K extends MagneticPointGroupKey = PointGroupKey> {
+export interface PointGroup<K extends MagneticPointGroupKey = MagneticPointGroupKey> {
   /** The key (docs/conventions.md, "Keys"). */
   readonly key: K;
   /** `'I'` crystal class (white group), `'II'` grey group, `'III'` black-and-white group (docs/conventions.md, "Types"). */
@@ -633,7 +633,7 @@ export function pointGroup<K extends MagneticPointGroupKey>(key: K): PointGroup<
 }
 
 /** All 32 crystal classes, in the order of `POINT_GROUP_KEYS` (by crystal system, as in ITA). */
-export function pointGroups(): readonly PointGroup[] {
+export function pointGroups(): readonly PointGroup<PointGroupKey>[] {
   return deepFreeze(POINT_GROUP_KEYS.map((key) => pointGroup(key)));
 }
 
