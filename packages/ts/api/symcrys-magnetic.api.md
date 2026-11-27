@@ -212,7 +212,7 @@ export function fromVoigt(voigt: readonly number[] | readonly (readonly number[]
 // @public
 export function generators(key: MagneticPointGroupKey, options?: SettingOptions): readonly Operation[];
 
-// @public (undocumented)
+// @public
 export const GREY_POINT_GROUP_KEYS: readonly GreyPointGroupKey[];
 
 // @public

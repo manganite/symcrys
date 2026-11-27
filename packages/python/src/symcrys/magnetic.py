@@ -691,7 +691,10 @@ _S_TensorForm = (
 __all__ = [
     "VERSION",
     "EPSILON",
+    "CRYSTAL_CLASS_KEYS",
     "LATTICE_SYMMETRY_DIRECTIONS",
+    "GREY_POINT_GROUP_KEYS",
+    "BLACK_WHITE_POINT_GROUP_KEYS",
     "POINT_GROUP_KEYS",
     "TENSOR_PROPERTIES",
     "SymcrysError",
@@ -797,6 +800,9 @@ directions, points): two numbers closer than this count as equal, in the metric 
 (docs/conventions.md, "Tolerances"). Operations rounded to 6 decimals pass with it in any
 orientation; rounded to n decimals they need about 10^(1−n).
 """
+CRYSTAL_CLASS_KEYS: tuple[str, ...] = _shared.convert(_value("CRYSTAL_CLASS_KEYS"), ("t", _V))
+"""Keys of the 32 crystal classes: the ITC short symbol of the class (docs/conventions.md, "Keys").
+"""
 LATTICE_SYMMETRY_DIRECTIONS: dict[str, list[NDArray[np.int64]]] = _shared.convert(
     _value("LATTICE_SYMMETRY_DIRECTIONS"),
     ("x", "lattice_symmetry_directions"),
@@ -810,6 +816,15 @@ unique axis b, [001] for unique axis c, [100] for unique axis a), and the full s
 the other two positions (``1 2/m 1``).
 
 In Python: family → one int64 array of shape (n, 3) per position, the n directions [uvw] as rows.
+"""
+GREY_POINT_GROUP_KEYS: tuple[str, ...] = _shared.convert(_value("GREY_POINT_GROUP_KEYS"), ("t", _V))
+"""Keys of the 32 grey groups, in the order of the crystal classes."""
+BLACK_WHITE_POINT_GROUP_KEYS: tuple[str, ...] = _shared.convert(
+    _value("BLACK_WHITE_POINT_GROUP_KEYS"),
+    ("t", _V),
+)
+"""Keys of the 58 black-and-white groups: their ITC short Hermann–Mauguin symbols, in ITC's order
+(docs/conventions.md, "Keys").
 """
 POINT_GROUP_KEYS: tuple[str, ...] = _shared.convert(_value("POINT_GROUP_KEYS"), ("t", _V))
 """Keys of the 122 magnetic point groups: the 32 crystal classes (white groups), the 32 grey groups
@@ -2240,7 +2255,7 @@ def allowed_properties_of(
 
 def to_voigt(
     tensor: ArrayLike,
-    spec_or_name: TensorSpec | Mapping[str, Any] | TensorPropertyName,
+    spec: TensorSpec | Mapping[str, Any] | TensorPropertyName,
     *,
     factors: Optional[ArrayLike] = None,
     tolerance: Optional[float] = None,
@@ -2280,7 +2295,7 @@ def to_voigt(
         _call(
             "toVoigt",
             _shared.array(tensor, "tensor", np.float64).reshape(-1),
-            _shared.spec(spec_or_name),
+            _shared.spec(spec),
             _shared.options(factors=None if factors is None else _shared.array(factors, "factors", np.float64), tolerance=tolerance),
         ),
         ("a", np.float64, None),
@@ -2290,7 +2305,7 @@ def to_voigt(
 
 def from_voigt(
     voigt: ArrayLike,
-    spec_or_name: TensorSpec | Mapping[str, Any] | TensorPropertyName,
+    spec: TensorSpec | Mapping[str, Any] | TensorPropertyName,
     *,
     factors: Optional[ArrayLike] = None,
     tolerance: Optional[float] = None,
@@ -2327,7 +2342,7 @@ def from_voigt(
         _call(
             "fromVoigt",
             _shared.array(voigt, "voigt", np.float64),
-            _shared.spec(spec_or_name),
+            _shared.spec(spec),
             _shared.options(factors=None if factors is None else _shared.array(factors, "factors", np.float64), tolerance=tolerance),
         ),
         ("x", "tensor"),

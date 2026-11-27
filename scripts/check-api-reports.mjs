@@ -26,7 +26,7 @@ const EXPECTED = {
     'PointGroup_2',
     'PointGroupInSetting_2',
   ],
-  'symcrys-plane.api.md': [],
+  'symcrys-plane.api.md': /** @type {string[]} */ ([]),
 };
 
 const problems = [];
