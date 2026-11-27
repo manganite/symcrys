@@ -100,6 +100,10 @@ records: reasons live in issues and pull requests.
 
 The rules are in `GUIDE.md`; here the commands and the places in the code.
 
+- **A test that fails before its fix** goes onto `main` marked: `it.fails` in vitest,
+  `pytest.mark.xfail(strict=True)` in Python, with the issue in the name or the reason. It passes
+  while it fails; the fix that makes it pass turns it red, and the pull request of the fix removes
+  the mark.
 - **Pins:** the ITC baseline pins and the API pins are re-captured from a clean checkout with
   `npm run audit:itc-baseline`; a change of the API's shape alone changes
   `testUtils/itcBaseline.ts`, which maps the current API back to the shape of the ITC baseline

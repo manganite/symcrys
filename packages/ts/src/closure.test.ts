@@ -3,6 +3,8 @@ import { INVERSION, rotationZ, type Mat3 } from './linalg.js';
 import { compose, operation, operationsEqual, type CartesianOperation } from './operations.js';
 import { closeWithin, idealGroup } from './closure.js';
 import { operations } from './pointGroups/pointGroups.js';
+import * as classes from './index.js';
+import { noisy, seededRandom } from './testUtils/noise.js';
 
 const round = (m: Mat3, decimals: number): Mat3 =>
   m.map((row) => row.map((x) => Math.round(x * 10 ** decimals) / 10 ** decimals)) as unknown as Mat3;
@@ -110,5 +112,79 @@ describe('idealGroup', () => {
         ).toBe(true);
       }
     }
+  });
+});
+
+// --- the safety net of #234: tests that fail on 0.15.0 (it.fails); each fix removes its mark -------
+
+describe('#241: the postconditions of idealGroup', () => {
+  // The 12 operations of 23 with every entry moved by up to 0.02 (seed 22), closed at the tolerance
+  // 0.09: on 0.15.0 the "group" has 16 elements and is not orthogonal. No group of order 16 holds
+  // a rotation of order 3 (Lagrange: 3 does not divide 16), so these are no group of 23 at all.
+  const input = noisy(
+    classes.operations('23').map((op) => ({ cartesian: op.cartesian, timeReversal: false })),
+    0.02,
+    seededRandom(22),
+  );
+  const tolerance = 0.09;
+  /** The same operations as the crystallographic API takes them, without the field timeReversal. */
+  const spatial = input.map(({ cartesian }) => ({ cartesian }));
+
+  it.fails('idealGroup refuses input that does not settle into a group of orthogonal matrices', () => {
+    expect(() => idealGroup(input, tolerance)).toThrow(RangeError);
+  });
+
+  it.fails('tensorFormOf refuses it with a RangeError, not a plain Error', () => {
+    expect(() => classes.tensorFormOf(spatial, 'piezoelectric', { tolerance })).toThrow(RangeError);
+  });
+
+  it.fails('pointGroupOf refuses it with a RangeError, not undefined', () => {
+    expect(() => classes.pointGroupOf(spatial, { tolerance })).toThrow(RangeError);
+  });
+
+  it.fails('an accepted result is a group of orthogonal matrices within the tolerance of the input', () => {
+    // Products within 10⁻⁹ of an element, RᵀR within 10⁻⁹ of the identity, every operation of the
+    // caller within the tolerance of an element.
+    const mul = (a: Mat3, b: Mat3) =>
+      a.map((row) => b[0].map((_, j) => row[0] * b[0][j] + row[1] * b[1][j] + row[2] * b[2][j]));
+    const maxDiff = (a: readonly (readonly number[])[], b: readonly (readonly number[])[]) =>
+      Math.max(...a.flatMap((row, i) => row.map((v, j) => Math.abs(v - b[i][j]))));
+    const I = [
+      [1, 0, 0],
+      [0, 1, 0],
+      [0, 0, 1],
+    ];
+    const wrong: string[] = [];
+    // Large noise at large tolerances, where 0.15.0 violates them (4 of these 400 inputs), and small
+    // noise as a check that the bounds hold for ordinary input.
+    for (const key of ['m-3m', '6/mmm', '4/mmm', '23'] as const) {
+      for (const amplitude of [1e-3, 2e-2]) {
+        for (const tol of [0.05, 0.09]) {
+          for (let seed = 1; seed <= 25; seed++) {
+            const given = noisy(
+              classes.operations(key).map((op) => ({ cartesian: op.cartesian, timeReversal: false })),
+              amplitude,
+              seededRandom(seed),
+            );
+            let group;
+            try {
+              group = idealGroup(given, tol);
+            } catch (e) {
+              if (!(e instanceof RangeError)) wrong.push(`${key} ${amplitude} ${tol} ${seed}: ${String(e)}`);
+              continue;
+            }
+            const R = group.operations.map((op) => op.cartesian);
+            const where = `${key} ${amplitude} ${tol} ${seed}`;
+            if (R.some((a) => maxDiff(mul(a[0].map((_, j) => a.map((row) => row[j])) as unknown as Mat3, a), I) > 1e-9))
+              wrong.push(`${where}: not orthogonal`);
+            if (R.some((a) => R.some((b) => Math.min(...R.map((c) => maxDiff(mul(a, b), c))) > 1e-9)))
+              wrong.push(`${where}: not closed`);
+            if (given.some((g) => Math.min(...R.map((c) => maxDiff(g.cartesian, c))) >= tol))
+              wrong.push(`${where}: farther than the tolerance from the input`);
+          }
+        }
+      }
+    }
+    expect(wrong.slice(0, 5)).toEqual([]);
   });
 });

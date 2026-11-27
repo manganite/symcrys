@@ -14,6 +14,9 @@ import {
   reduceIndices,
   zoneAxis,
 } from './indices.js';
+import { faceNormal, latticeBasis, orbit } from './index.js';
+import type { Vec3 } from './linalg.js';
+import { seededRandom } from './testUtils/noise.js';
 
 describe('reduceIndices', () => {
   it('divides by the greatest common divisor and keeps the signs', () => {
@@ -141,4 +144,85 @@ describe('millerIndices', () => {
     expect(() => millerIndices('1 0,0,1', {})).toThrow(/Unreadable/);
     expect(() => millerIndices('i,k,l', { h: 1, k: 2, l: 3 })).toThrow(/i among three/);
   });
+});
+
+// --- the safety net of #234: tests that fail on 0.15.0 (it.fails); each fix removes its mark -------
+
+describe('#236: integer arithmetic beyond 2⁵³', () => {
+  it.fails('zoneAxis refuses planes whose cross product needs products beyond the safe integers', () => {
+    // n² − (n − 1)(n + 1) = 1: the exact zone axis is [0, 0, 1], but n² = 10¹⁶ is no safe integer,
+    // and checked arithmetic refuses an intermediate value outside them.
+    const n = 1e8;
+    expect(() => zoneAxis([n, n - 1, 0], [n + 1, n, 0])).toThrow(RangeError);
+  });
+
+  it.fails('planeToFourIndices refuses an index i = −(h + k) beyond the safe integers', () => {
+    expect(() => planeToFourIndices([Number.MAX_SAFE_INTEGER, 2, 0])).toThrow(RangeError);
+  });
+
+  /**
+   * Pairs of indices, seeded: of every magnitude up to the safe integers, and nearly parallel ones
+   * (b = a + a small shift), whose cross product is small while its products are large, so that
+   * rounding would not show in the size of the result.
+   */
+  const random = seededRandom(3);
+  const draws: (readonly [number, number, number])[] = [];
+  for (let k = 0; k < 300; k++) {
+    const scale = k % 2 === 0 ? 10 ** (k % 16) : Math.floor(Number.MAX_SAFE_INTEGER / 2);
+    const one = () => Math.round((2 * random() - 1) * scale);
+    const a = [one(), one(), one()] as const;
+    const shift = () => Math.round((2 * random() - 1) * 10);
+    draws.push(a, k % 3 === 0 ? ([a[0] + shift(), a[1] + shift(), a[2] + shift()] as const) : [one(), one(), one()]);
+  }
+  const reduceBig = (v: readonly bigint[]) => {
+    const abs = (x: bigint) => (x < 0n ? -x : x);
+    const gcdBig = (a: bigint, b: bigint): bigint => (b === 0n ? abs(a) : gcdBig(b, a % b));
+    const g = v.reduce(gcdBig, 0n);
+    return v.map((x) => x / g);
+  };
+  /** The exact result, from BigInt in this test; the library must give it or throw. */
+  const exactOrThrows = (f: () => readonly number[] | undefined, exact: readonly bigint[] | undefined): string => {
+    let got: readonly number[] | undefined;
+    try {
+      got = f();
+    } catch (e) {
+      return e instanceof RangeError ? '' : `threw ${String(e)}`;
+    }
+    const want = exact?.map(String).join();
+    return got?.map((x) => BigInt(x).toString()).join() === want ? '' : `${got?.join()} ≠ ${want}`;
+  };
+
+  it.fails('zoneAxis, planeToFourIndices and directionToFourIndices are exact or throw (BigInt in the test)', () => {
+    const wrong: string[] = [];
+    for (let k = 0; k + 1 < draws.length; k += 2) {
+      const [a, b] = [draws[k], draws[k + 1]];
+      if (a.every((x) => x === 0) || b.every((x) => x === 0)) continue;
+      const [A, B] = [a.map(BigInt), b.map(BigInt)];
+      const cross = [A[1] * B[2] - A[2] * B[1], A[2] * B[0] - A[0] * B[2], A[0] * B[1] - A[1] * B[0]];
+      const zone = cross.every((x) => x === 0n) ? undefined : reduceBig(cross);
+      const w1 = exactOrThrows(() => zoneAxis([...a], [...b]), zone);
+      if (w1) wrong.push(`zoneAxis ${a} ${b}: ${w1}`);
+      const four = [A[0], A[1], -(A[0] + A[1]), A[2]];
+      const w2 = exactOrThrows(() => planeToFourIndices([...a]), four);
+      if (w2) wrong.push(`planeToFourIndices ${a}: ${w2}`);
+      const dir = reduceBig([2n * A[0] - A[1], 2n * A[1] - A[0], -(A[0] + A[1]), 3n * A[2]]);
+      const w3 = exactOrThrows(() => directionToFourIndices([...a]), dir);
+      if (w3) wrong.push(`directionToFourIndices ${a}: ${w3}`);
+    }
+    expect(wrong.slice(0, 5)).toEqual([]);
+  });
+});
+
+describe('#236: a sparse array is refused as indices', () => {
+  /** [x, <hole>, z]: `.every()` skips the hole. */
+  const sparse = (x: number, z: number): Vec3 => {
+    const v = new Array<number>(3);
+    v[0] = x;
+    v[2] = z;
+    return v as unknown as Vec3;
+  };
+  it.fails('reduceIndices', () => expect(() => reduceIndices(sparse(1, 3))).toThrow(RangeError));
+  it.fails('planeToFourIndices', () => expect(() => planeToFourIndices(sparse(1, 0))).toThrow(RangeError));
+  it.fails('orbit of a key', () => expect(() => orbit('4', { hkl: sparse(1, 0) })).toThrow(RangeError));
+  it.fails('faceNormal', () => expect(() => faceNormal(latticeBasis('m-3m'), sparse(1, 0))).toThrow(RangeError));
 });
