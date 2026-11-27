@@ -936,3 +936,14 @@ describe('one tolerance contract (#93)', () => {
     });
   }
 });
+
+describe('the functions of directions in symcrys/magnetic', () => {
+  it('take operations without timeReversal, read as false, and refuse one that is not a boolean', () => {
+    const ops = magnetic.operations('4mm').map((op) => ({ cartesian: op.cartesian }));
+    expect(magnetic.siteSymmetryOf(ops, [0, 0, 1]).operations).toHaveLength(8);
+    expect(magnetic.orbitOf(ops, [1, 0, 0])).toHaveLength(4);
+    const wrong = [{ cartesian: ops[0].cartesian, timeReversal: 'yes' as unknown as boolean }];
+    expect(() => magnetic.siteSymmetryOf(wrong, [0, 0, 1])).toThrow(/timeReversal must be true, false or absent/);
+    expect(() => magnetic.orbitOf(wrong, [0, 0, 1])).toThrow(/timeReversal must be true, false or absent/);
+  });
+});

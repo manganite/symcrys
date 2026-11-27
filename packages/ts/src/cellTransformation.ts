@@ -303,7 +303,8 @@ function cellKey(lattice: BravaisLattice, cell: unknown, what: string): string {
  *
  * cI and cF: `centring` `'P'`, the primitive cell, the one ITA gives for the conventional cell.
  *
- * Fractions such as 1/3 are the nearest numbers, which `changeOfCoordinates` reads back as fractions.
+ * Fractions such as 1/3 are the nearest numbers, which `changeOfCoordinates` reads back as the
+ * same fractions at any tolerance.
  *
  * @example
  * ```ts

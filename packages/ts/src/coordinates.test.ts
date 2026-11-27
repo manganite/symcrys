@@ -326,3 +326,46 @@ describe('changeOfCoordinates of symcrys/plane', () => {
     ]);
   });
 });
+
+describe('changeOfCoordinates: a linear part that is not rational within the tolerance', () => {
+  const c = Math.cos(Math.PI / 6);
+  const s = Math.sin(Math.PI / 6);
+  const rotation: Mat3 = [
+    [c, -s, 0],
+    [s, c, 0],
+    [0, 0, 1],
+  ];
+  it('refuses a rotation by 30°, and names rotateTensor in 3D only', () => {
+    for (const tolerance of [1e-3, 1e-5, 1e-6]) {
+      expect(() =>
+        classes.changeOfCoordinates({ linearPart: rotation }, { points: [[0.1, 0.2, 0.3]] }, { tolerance }),
+      ).toThrow(/not rational within the tolerance.*rotateTensor/);
+    }
+    const flat: plane.Mat2 = [
+      [c, -s],
+      [s, c],
+    ];
+    expect(() => plane.changeOfCoordinates({ linearPart: flat }, { points: [[0.1, 0.2]] })).toThrow(
+      /not rational within the tolerance \S+: its entry [^;]*\)$/,
+    );
+  });
+
+  it('reads a fraction to rounding as itself at any tolerance (1/3, 2/3, 1/16)', () => {
+    const third: Mat3 = [
+      [2 / 3, -1 / 3, -1 / 3],
+      [1 / 3, 1 / 3, -2 / 3],
+      [1 / 3, 1 / 3, 1 / 3],
+    ];
+    const sixteenth: Mat3 = [
+      [1, 0, 0],
+      [0, 1, 0],
+      [0, 0, 1 / 16],
+    ];
+    for (const tolerance of [1e-5, 1e-3, 1e-2, 0.05, 0.09]) {
+      const r = classes.changeOfCoordinates({ linearPart: third }, { points: [[1 / 3, 1 / 3, 1 / 3]] }, { tolerance });
+      expect(r.inverse.linearPart[0][0]).toBe(1);
+      const t = classes.changeOfCoordinates({ linearPart: sixteenth }, { points: [[0, 0, 0.5]] }, { tolerance });
+      expect(t.points![0][2]).toBe(8);
+    }
+  });
+});

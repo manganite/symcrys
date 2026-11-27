@@ -1036,8 +1036,8 @@ def site_symmetry(key: str, point: ArrayLike, *, tolerance: Optional[float] = No
     """The site symmetry of a point (lattice basis) under a plane group, as one notion with its
     Wyckoff position: the point is set onto the position it lies on within the tolerance
     (``wyckoff_position``), and the site symmetry is that of the point there; ``point`` is the point
-    on the position. Raises SymcrysError for an unknown key, a point that is not two finite numbers,
-    or a tolerance outside (0, 1/2).
+    on the position. Raises SymcrysError for an unknown key, a point that is not two finite numbers
+    or has a coordinate beyond 10⁶ in magnitude, or a tolerance outside (0, 1/2).
 
     Parameters
     ----------
@@ -1116,7 +1116,8 @@ def wyckoff_distances(
     the conventional one: the nearest lattice translate is sought near the rounded coordinates. How
     to snap a dragged point onto a position (which position wins, within which radius) is the
     application's choice; this gives the numbers for it. Raises SymcrysError for an unknown key, a
-    point that is not two finite numbers, and a basis that is not a non-singular 2 × 2 matrix.
+    point that is not two finite numbers or has a coordinate beyond 10⁶ in magnitude, and a basis
+    that is not a non-singular 2 × 2 matrix.
 
     Parameters
     ----------
@@ -1362,14 +1363,15 @@ def change_of_coordinates(
     indices (hk)′ = (hk)P, the metric tensor G′ = PᵀGP, and operations W′ = P⁻¹WP, w′ = P⁻¹(w + (W −
     I)p); and gives the inverse pair (Q, q) = (P⁻¹, −P⁻¹p). det P may be negative.
 
-    P, p and the operations are read each number as the simplest fraction within the tolerance
-    (default ``EPSILON``; 0.3333333 is 1/3) and transformed exactly, so that every result, the
-    inverse pair included, can be passed back; the other quantities are floating point. P is
-    rational in a change between lattice bases, as in ITA; an irrational P (a rotation by 30°) is
-    read as the nearby fractions, about as exact as the tolerance, and a much smaller tolerance can
-    make the exact products leave the safe integers, a SymcrysError. A transformed operation has a
-    ``matrix`` and a ``translation``. Raises SymcrysError for a singular P, a quantity of the wrong
-    shape, an unknown quantity, an operation with det W ≠ ±1, and one whose W′ is not integral.
+    P, p and the operations are read each number as a fraction, transformed exactly, so that every
+    result, the inverse pair included, can be passed back; the other quantities are floating point.
+    A number that is a fraction to rounding is that fraction; another is read as the simplest
+    fraction within the tolerance (default ``EPSILON``; 0.3333333 is 1/3). P is rational in a change
+    between lattice bases, as in ITA: an entry of P that needs a fraction with a denominator above
+    tolerance^(−1/3) (46 at 10⁻⁵) is refused (docs/conventions.md, "Tolerances"). A transformed
+    operation has a ``matrix`` and a ``translation``. Raises SymcrysError for a singular P, an entry
+    of P that is not rational within the tolerance, a quantity of the wrong shape, an unknown
+    quantity, an operation with det W ≠ ±1, and one whose W′ is not integral.
 
     Parameters
     ----------

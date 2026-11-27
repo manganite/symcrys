@@ -249,3 +249,20 @@ describe('plane groups: each printed page is consistent', () => {
     }
   }
 });
+
+describe('ITA 2016 Table 2.1.3.2, p. 152: the short symbols of International Tables (1952)', () => {
+  it('finds the plane groups by them', () => {
+    // The symbols that differ from those of ITA since 1983, as the table prints them side by side.
+    const old: Record<string, string> = {
+      pmm: 'p2mm',
+      pmg: 'p2mg',
+      pgg: 'p2gg',
+      cmm: 'c2mm',
+      p4m: 'p4mm',
+      p4g: 'p4gm',
+      p6m: 'p6mm',
+    };
+    for (const [symbol, key] of Object.entries(old)) expect(plane.findPlaneGroup(symbol)?.key, symbol).toBe(key);
+    expect(plane.findPlaneGroup('p 4 g')?.key).toBe('p4gm');
+  });
+});

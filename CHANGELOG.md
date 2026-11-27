@@ -26,16 +26,9 @@ All notable changes to symcrys are recorded here. The format follows
   `symcrys` (#208); in Python `symcrys.magnetic.to_voigt` and `from_voigt` take `spec=`, was
   `spec_or_name=`.
 - `siteSymmetryOf` and `orbitOf` of `symcrys/magnetic` take operations with or without
-  `timeReversal` (`DirectionOperation`), as they ignore it (#208); before, `siteSymmetryOf` was
-  typed to require it.
-- `changeOfCoordinates` refuses a linear part P whose entries are no fractions with small
-  denominators within the tolerance (at most tolerance^(-1/3), 46 at 10⁻⁵), such as a rotation by
-  30°, with a RangeError that names `rotateTensor` (#208). Since 0.14.0, with the tolerance 10⁻⁵,
-  such a P was read as nearby fractions and gave slightly wrong coordinates; before, it failed with
-  an error about safe integers.
-- The functions of a point of the plane refuse a coordinate beyond 10⁶ in magnitude (#208): beyond
-  about 2⁵² a double has no fractional part, and `orbit('p4mm', { point: [1e300, 0] })` gave the
-  origin with its full site symmetry.
+  `timeReversal` (`DirectionOperation`), read as false when left out (#208); before,
+  `siteSymmetryOf` was typed to require it. A given `timeReversal` that is not a boolean is a
+  RangeError.
 
 - `findPointGroup` refuses every Shubnikov symbol that `symbol()` writes without Shubnikov's own
   characters and that does not read as the same group in Hermann–Mauguin, with a RangeError that
@@ -72,6 +65,15 @@ All notable changes to symcrys are recorded here. The format follows
 
 ### Fixed
 
+- `changeOfCoordinates` refuses an entry of P that is no fraction with a denominator of at most
+  tolerance^(−1/3) (46 at 10⁻⁵) within the tolerance, such as cos 30° of a rotation, with a
+  RangeError (#208). Before, such a P was read as nearby fractions, coordinates off by about the
+  tolerance (a rotation by 30°), or failed with an error about safe integers (a general rotation).
+  An entry that is a fraction to rounding is now that fraction at any tolerance: before, at a
+  large tolerance 1/16 was read as the simplest fraction within it (1/9 at 0.05). Since 0.12.0.
+- The functions of a point of the plane refuse a coordinate beyond 10⁶ in magnitude (#208): beyond
+  about 2⁵² a double has no fractional part, and `orbit('p4mm', { point: [1e300, 0] })` gave the
+  origin with its full site symmetry.
 - `describeOperationsOf` (both point-group entry points) described a matrix far outside the
   tolerance as a crystallographic operation (#205): it checked only that the trace is an integer
   within 3·tolerance, which near 0° and 180° holds for matrices off by about 10⁻³ (a rotation by

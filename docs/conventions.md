@@ -504,7 +504,7 @@ normalisation before the comparison:
 Schoenflies or Birss symbols to read: `findPlaneGroup` the key or the full
 symbol of a plane group (`'pm'`, `'p1m1'`, `'p 1 m 1'`), or the short symbol of International
 Tables (1952) still in common use (`'pmm'`, `'pmg'`, `'pgg'`, `'cmm'`, `'p4m'`, `'p4g'`, `'p6m'`;
-vocabulary, `OLD_SHORT_SYMBOLS` in plane.ts), and gives `{ key }`; `findPointGroup` the key
+ITA 2016 Table 2.1.3.2, p. 152; vocabulary, `OLD_SHORT_SYMBOLS` in `plane.ts`), and gives `{ key }`; `findPointGroup` the key
 or the symbol of a setting of a plane point group (`'31m'`, `'3 1 m'`) and gives `{ key, setting }`,
 the key `'3m'` its default setting; `{ setting }` takes the index or the symbol of a setting. The
 lattice letter is lower case, as ITA prints it: `'P2mg'` names no plane group, so that a symbol of a
@@ -590,7 +590,14 @@ when they differ by less than the tolerance, in the metric of their kind:
   `EPSILON`). The translations read by `describeOperationsOf` of `symcrys/plane` are compared per
   coordinate; one that lies within the tolerance of two fractions with denominators up to 12
   (which can be 1/132 apart) is refused. `changeOfCoordinates` reads each entry of P, p, W and w as
-  the simplest fraction within the tolerance, which is unique.
+  a fraction: one that is a fraction with a denominator of at most 1000 to rounding (10⁻⁹) as that
+  fraction, at any tolerance; another as the simplest fraction within the tolerance, which is
+  unique. An entry of P that then needs a denominator above tolerance^(−1/3) (46 at 10⁻⁵) is
+  refused: every number lies within 1/q² of some fraction p/q, so a fraction found within the
+  tolerance says something only for small q (an irrational entry, such as cos 30° of a rotation,
+  passes this bound with a chance of about tolerance^(1/3)). A point of the plane may have
+  coordinates of at most 10⁶ in magnitude (`MAX_COORDINATE`): beyond about 2⁵² a double has no
+  fractional part.
 - **Operations of a caller are made exact.** `tensorFormOf`, `isCentrosymmetricOf`,
   `allowsPropertyOf` and `allowedPropertiesOf` close the list into a group within the tolerance and
   replace it by the exact group nearest to it before they compute anything: each matrix f(x) by

@@ -541,7 +541,8 @@ export function pointGroups(): readonly PointGroup[] {
 
 /**
  * Vocabulary: the short symbols of International Tables (1952) still in common use, for the plane
- * groups whose short symbol ITA (since 1983) writes with the twofold rotation or the full mirror.
+ * groups whose short symbol ITA (since 1983) writes with the twofold rotation or the full mirror
+ * (ITA 2016 Table 2.1.3.2, p. 152).
  */
 const OLD_SHORT_SYMBOLS: Readonly<Record<string, PlaneGroupKey>> = Object.freeze({
   pmm: 'p2mm',
@@ -559,6 +560,8 @@ const OLD_SHORT_SYMBOLS: Readonly<Record<string, PlaneGroupKey>> = Object.freeze
  * `'cmm'`, `'p4m'`, `'p4g'`, `'p6m'`), spaces ignored (docs/conventions.md, "Reading symbols"). The
  * lattice letter is lower case, as in ITA's notation. Gives `undefined` if the symbol names no plane
  * group; throws a RangeError for a value that is not a string.
+ *
+ * @remarks The short symbols of 1952: ITA (6th ed., 2016), Table 2.1.3.2, p. 152.
  */
 export function findPlaneGroup(symbol: string): PlaneGroupFound | undefined {
   if (typeof symbol !== 'string') throw new RangeError(`A symbol is a string, not ${shown(symbol)}`);
@@ -812,7 +815,7 @@ function pointOf(input: unknown, name: string): readonly number[] {
  * The site symmetry of a point (lattice basis) under a plane group, as one notion with its Wyckoff
  * position: the point is set onto the position it lies on within the tolerance
  * (`wyckoffPosition`), and the site symmetry is that of the point there; `point` is the point on the
- * position. Throws a RangeError for an unknown key, a point that is not two finite numbers, or a
+ * position. Throws a RangeError for an unknown key, a point that is not two finite numbers or has a coordinate beyond 10⁶ in magnitude, or a
  * tolerance outside (0, 1/2).
  */
 export function siteSymmetry(key: PlaneGroupKey, point: PlanePoint, options?: ToleranceOptions): SiteSymmetry {
@@ -854,7 +857,7 @@ export function wyckoffPosition(key: PlaneGroupKey, point: PlanePoint, options?:
  * such as the conventional one: the nearest lattice translate is sought near the rounded
  * coordinates. How to snap a dragged point onto a position (which position wins, within
  * which radius) is the application's choice; this gives the numbers for it. Throws a RangeError for
- * an unknown key, a point that is not two finite numbers, and a basis that is not a non-singular
+ * an unknown key, a point that is not two finite numbers or has a coordinate beyond 10⁶ in magnitude, and a basis that is not a non-singular
  * 2 × 2 matrix.
  */
 export function wyckoffDistances(
@@ -1150,14 +1153,15 @@ export interface CoordinateChange {
  * tensor G′ = PᵀGP, and operations W′ = P⁻¹WP, w′ = P⁻¹(w + (W − I)p); and gives the inverse pair
  * (Q, q) = (P⁻¹, −P⁻¹p). det P may be negative.
  *
- * P, p and the operations are read each number as the simplest fraction within the tolerance
- * (default `EPSILON`; 0.3333333 is 1/3) and transformed exactly, so that every result, the inverse
- * pair included, can be passed back; the other quantities are floating point. P is rational in a
- * change between lattice bases, as in ITA; an irrational P (a rotation by 30°) is read as the
- * nearby fractions, about as exact as the tolerance, and a much smaller tolerance can make the exact
- * products leave the safe integers, a RangeError.
- * A transformed operation has a `matrix` and a `translation`. Throws a RangeError for a singular P, a quantity of the
- * wrong shape, an unknown quantity, an operation with det W ≠ ±1, and one whose W′ is not integral.
+ * P, p and the operations are read each number as a fraction, transformed exactly, so that every
+ * result, the inverse pair included, can be passed back; the other quantities are floating point. A
+ * number that is a fraction to rounding is that fraction; another is read as the simplest fraction
+ * within the tolerance (default `EPSILON`; 0.3333333 is 1/3). P is rational in a change between
+ * lattice bases, as in ITA: an entry of P that needs a fraction with a denominator above
+ * tolerance^(−1/3) (46 at 10⁻⁵) is refused (docs/conventions.md, "Tolerances"). A transformed
+ * operation has a `matrix` and a `translation`. Throws a RangeError for a singular P, an entry of P
+ * that is not rational within the tolerance, a quantity of the wrong shape, an unknown quantity, an
+ * operation with det W ≠ ±1, and one whose W′ is not integral.
  *
  * @remarks Source: ITA (6th ed., 2016), § 1.5.1.3, p. 83 (the pair (P, p)); § 1.5.2, pp. 83–85 (the
  * equations).

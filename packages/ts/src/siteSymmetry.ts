@@ -6,7 +6,12 @@
 import { checkNumbers, checkOptions, shown, TOLERANCE_KEYS } from './checks.js';
 import { apply, multiply, type Vec3 } from './linalg.js';
 import { checkGroup, closeIndices } from './closure.js';
-import { checkCartesianOperations, type CartesianOperation, type DirectionOperation } from './operations.js';
+import {
+  checkCartesianOperations,
+  checkOptionalTimeReversal,
+  type CartesianOperation,
+  type DirectionOperation,
+} from './operations.js';
 import {
   EPSILON,
   ROUNDING_EPSILON,
@@ -134,7 +139,8 @@ export function siteSymmetryOf(
       general: true,
     });
   }
-  // Time reversal does not change a direction: an operation that leaves it out counts as without it.
+  // Left out, time reversal is false (it does not move a direction).
+  checkOptionalTimeReversal(operations, 'siteSymmetryOf');
   const ops = operations.map((op) => ({ cartesian: op.cartesian, timeReversal: op.timeReversal === true }));
   checkGroup(ops, Math.max(within, EPSILON), 'siteSymmetryOf');
   return siteSymmetryInGroup(ops, v, tolerance, direction);

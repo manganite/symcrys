@@ -24,13 +24,28 @@ export interface CartesianOperation {
 
 /**
  * An operation as the functions of directions read it (`siteSymmetryOf`, `orbitOf`): its Cartesian
- * matrix; time reversal, which does not change a direction, may be given or left out.
+ * matrix, and whether it is combined with time reversal; one that leaves it out counts as one
+ * without it. Time
+ * reversal does not move a direction; it only tells apart the two copies of a matrix in a grey
+ * group.
  */
 export interface DirectionOperation {
   /** The orthogonal Cartesian 3×3 matrix, rows first. */
   readonly cartesian: Mat3;
-  /** Whether the operation is combined with time reversal; ignored. */
+  /** Whether the operation is combined with time reversal; left out, it is not. */
   readonly timeReversal?: boolean;
+}
+
+/** Throws a RangeError for an operation whose `timeReversal`, given, is not a boolean. */
+export function checkOptionalTimeReversal(operations: readonly unknown[], who: string): void {
+  // A list that is no array is refused by the check of the operations themselves.
+  if (!Array.isArray(operations)) return;
+  operations.forEach((op, i) => {
+    const t = (op as { readonly timeReversal?: unknown } | null)?.timeReversal;
+    if (t !== undefined && typeof t !== 'boolean') {
+      throw new RangeError(`${who}: operation ${i}: timeReversal must be true, false or absent, not ${shown(t)}`);
+    }
+  });
 }
 
 /**

@@ -671,3 +671,12 @@ describe('plane cells (#119)', () => {
     expect(oblique[0][1]).toBeCloseTo(12 * Math.cos((104 * Math.PI) / 180), 12);
   });
 });
+
+describe('a point of the plane', () => {
+  it('has coordinates of at most 10⁶ in magnitude', () => {
+    expect(() => plane.orbit('p4mm', { point: [1e300, 0] })).toThrow(RangeError);
+    expect(() => plane.siteSymmetry('p4mm', { point: [2e6, 0] })).toThrow(/at most 1000000/);
+    expect(() => plane.wyckoffPosition('p4mm', { point: [0, -2e6] })).toThrow(RangeError);
+    expect(plane.orbit('p4mm', { point: [1e6, 0.25] }).length).toBeGreaterThan(0);
+  });
+});

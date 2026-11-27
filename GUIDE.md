@@ -101,7 +101,8 @@ Library code is everything in `packages/ts/src` except test-only code ("Correctn
   API. `timeParity: 'even'` and `timeReversal: false` are accepted, so that data of the magnetic API
   without time reversal can be passed on. Where the result depends on time reversal (tensors,
   identification), the magnetic API refuses an operation that does not say whether it carries it;
-  the functions of directions (`siteSymmetryOf`, `orbitOf`) ignore it and need not be told.
+  the functions whose result does not depend on it (`siteSymmetryOf`, `orbitOf`,
+  `changeOfCoordinates`) read it as false when it is left out.
 - **One implementation serves both point-group entry points**: the shared modules compute for all
   122 groups, and `crystalClasses.ts` checks what comes in and leaves time reversal out of what goes
   back. A new point-group function goes into the shared modules and is exported by both, unless it
@@ -132,7 +133,8 @@ Library code is everything in `packages/ts/src` except test-only code ("Correctn
 
 - **Keys** are the ITC short symbols (`docs/conventions.md`, "Keys").
 - **Tolerant input** is a pure normalisation before the comparison (spaces, spellings of the
-  overbar and the prime, the printed cubic and grey-group spellings, Schoenflies symbols). It never changes the
+  overbar and the prime, the printed cubic and grey-group spellings, Schoenflies symbols, the short
+  symbols of the plane groups of International Tables (1952)). It never changes the
   meaning: an input that could name two groups or settings is an error that lists the candidates,
   and a string symcrys writes is read back as the same group or refused, never as another group.
 - **A wrong input is an error, never a silent answer.** A vector in the wrong basis, a list that is
