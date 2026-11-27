@@ -6,14 +6,12 @@
  */
 
 import { ANGLE_EPSILON, AXIS_EPSILON } from '../tolerances.js';
-import { SETTING_KEYS, checkOptions, shown } from '../checks.js';
+import { SETTING_KEYS, checkOptions } from '../checks.js';
 import { det, trace, type Mat3, type Vec3 } from '../linalg.js';
 import { crystalFamily } from '../lattice.js';
 import type { Operation } from '../operations.js';
 import type { Uvw } from '../symmetryDirections.js';
-import type { IntMat3 } from './generatorData.js';
-import { settingBasis, classSettingData, settingSymmetryDirections } from './classData.js';
-import { seitzOf, type SeitzAxes } from './seitzData.js';
+import { settingBasis, settingSymmetryDirections } from './classData.js';
 import {
   classSettingOf,
   operations,
@@ -161,36 +159,31 @@ function findAxis(axes: readonly Axis[], u: Vec3, what: string): Axis {
 const parallel = (a: Vec3, b: Vec3): boolean => Math.abs(Math.abs(dot(a, b)) - 1) < AXIS_EPSILON;
 
 /**
- * An operation described geometrically. Its axis lies along a symmetry direction of the setting and
- * carries the sign of the operation's Seitz symbol (ITA 2016 Tables 1.4.2.1–1.4.2.3),
- * which for n ≥ 3 fixes what the sense refers to; the sense, computed from the matrix, is
- * checked against the printed one.
+ * The direction of a Seitz symbol: the lattice symmetry direction of ITA Table 2.1.3.1, reversed
+ * where none of its components is positive. This gives every subscript of ITA 2016 Tables
+ * 1.4.2.1–1.4.2.3 (p. 52), which print [110] and [210] for the hexagonal directions [1̄1̄0] and
+ * [2̄1̄0] and keep [1̄11̄], [1̄01] (tested against the tables).
  */
-function describe(
-  op: Operation,
-  axes: readonly Axis[],
-  basis: Mat3,
-  seitzAxes: SeitzAxes,
-  what: string,
-): OperationDescription {
+const seitzDirection = (uvw: Uvw): Uvw =>
+  uvw.some((x) => x > 0) ? uvw : (Object.freeze(uvw.map((x) => -x + 0)) as unknown as Uvw);
+
+/**
+ * An operation described geometrically. Its axis lies along a symmetry direction of the setting and
+ * carries the sign of the operation's Seitz symbol (`seitzDirection`), which for n ≥ 3 fixes what
+ * the sense refers to; the sense is computed from the matrix.
+ */
+function describe(op: Operation, axes: readonly Axis[], basis: Mat3, what: string): OperationDescription {
   const proper = det(op.cartesian) > 0;
   const { r, n } = rotationPart(op.cartesian);
   const timeReversal = op.timeReversal;
   if (n === 1) return Object.freeze({ kind: proper ? 'identity' : 'inversion', n: 1, timeReversal });
   const direction = findAxis(axes, rotationAxis(r, n), what);
-  const seitz = seitzOf(seitzAxes, op.matrix as unknown as IntMat3);
-  if (!seitz?.axis) throw new Error(`${what}: no Seitz symbol for the matrix ${shown(op.matrix)}`);
-  // A frozen copy: the result must not share the table's array (every result frozen).
-  const signed = axisOf(basis, Object.freeze([...seitz.axis]) as unknown as Uvw);
-  if (!parallel(signed.cartesian, direction.cartesian)) {
-    throw new Error(`${what}: the Seitz direction [${seitz.axis.join(',')}] is not along the axis of the operation`);
-  }
+  const seitz = seitzDirection(direction.lattice);
   // The object of the symmetry direction where the signs agree, so that the two match by identity there.
-  const axis = dot(signed.cartesian, direction.cartesian) > 0 ? direction : signed;
+  const axis = seitz === direction.lattice ? direction : axisOf(basis, seitz);
   const kind: OperationKind = proper ? 'rotation' : n === 2 ? 'reflection' : 'rotoinversion';
   if (n === 2) return Object.freeze({ kind, n: 2, axis, timeReversal });
   const sense = dot(axialVector(r), axis.cartesian) > 0 ? '+' : '-';
-  if (sense !== seitz.sense) throw new Error(`${what}: the sense ${sense} differs from the Seitz symbol's`);
   return Object.freeze({ kind, n, axis, sense, timeReversal });
 }
 
@@ -217,13 +210,7 @@ function analysis(key: MagneticPointGroupKey, options?: SettingOptions): Analysi
   const positions = settingSymmetryDirections(c.key, c.index).map((dirs) => dirs.map((d) => axisOf(basis, d)));
   const all = positions.flat();
   const what = `Point group ${key}`;
-  const seitzAxes: SeitzAxes =
-    family !== 'hexagonal'
-      ? 'cubic'
-      : classSettingData(c.key, c.index).axes === 'rhombohedral'
-        ? 'rhombohedral'
-        : 'hexagonal';
-  const descriptions = Object.freeze(ops.map((op) => describe(op, all, basis, seitzAxes, what)));
+  const descriptions = Object.freeze(ops.map((op) => describe(op, all, basis, what)));
 
   // The full symbol of a grey group ends in 1', which is no position of the symbol.
   const tokens =

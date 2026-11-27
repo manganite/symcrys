@@ -680,10 +680,11 @@ perpendicular.
   directions; the axis is that direction, as [uvw] and as a Cartesian unit vector in the frame of
   the setting, with the sign of the operation's **Seitz symbol** (ITA 6th ed., Tables 1.4.2.1–1.4.2.3,
   p. 52): the direction its subscript names, for every matrix W of the setting.
-  Where Table 2.1.3.1 lists the opposite representative, the two differ in sign: in the hexagonal
-  family the twofold axes and mirror normals 2₁₁₀, m₁₁₀ and 2₂₁₀, m₂₁₀ are [1, 1, 0] and [2, 1, 0],
-  where the table lists [1̄, 1̄, 0] and [2̄, 1̄, 0]; for the other families and for n ≥ 3 the two
-  agree. `symmetryDirections` keeps the sign of Table 2.1.3.1, so match an axis with a direction up
+  symcrys computes it: the lattice symmetry direction of Table 2.1.3.1, reversed where none of its
+  components is positive. So the two differ in sign only in the hexagonal family, where the twofold
+  axes and mirror normals 2₁₁₀, m₁₁₀ and 2₂₁₀, m₂₁₀ are [1, 1, 0] and [2, 1, 0] and the table lists
+  [1̄, 1̄, 0] and [2̄, 1̄, 0]; directions such as [1̄, 1, 1̄] (3⁺ in the cubic family) and [1̄, 0, 1]
+  keep their sign. ITA states no rule for the signs; this one gives every printed subscript. `symmetryDirections` keeps the sign of Table 2.1.3.1, so match an axis with a direction up
   to sign. Tested against the printed tables for every operation of every setting
   (`seitz.reference.test.ts`), with the printed entries checked against their own matrices (axis,
   normal, sense); Table 1.4.2.1 prints No. 32 without the overbar of its type (erratum in the
