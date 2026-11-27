@@ -32,6 +32,9 @@ All notable changes to symcrys are recorded here. The format follows
 
 ### Changed
 
+- `OperationDescription` and `CartesianOperationDescription` of `symcrys` and `PointGroup` of
+  `symcrys/magnetic` are interfaces, were type aliases of the same shape (#208); nothing changes for
+  a caller that reads them.
 - `symcrys/plane`, in the names of the other entry points (#208): the `axis` of a reflection or
   glide reflection (`describeOperations`, `describeOperationsOf`, the lines of `symmetryElements`)
   is a record `{ lattice }`, was the bare vector; the point of a rotation or a line in

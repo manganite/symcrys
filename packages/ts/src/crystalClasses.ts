@@ -103,11 +103,9 @@ export interface PointGroup {
   readonly laueClass: PointGroupKey;
 }
 
-/**
- * One point operation described geometrically: the description of the magnetic API without time
- * reversal (written out, so that the crystallographic API names its own type; a test checks that
- * the two agree).
- */
+// Written out, so that the crystallographic API names its own type; entryPoints.test.ts checks
+// that it is the description of the magnetic API without time reversal.
+/** One point operation described geometrically. */
 export interface OperationDescription {
   /** What the operation is. */
   readonly kind: OperationKind;
@@ -427,10 +425,8 @@ export interface IdentifiedPointGroup {
   readonly setting?: number;
 }
 
-/**
- * One operation of any list described geometrically (`describeOperationsOf`), as in the magnetic API
- * without time reversal (a test checks that the two agree).
- */
+// Written out as `OperationDescription` is; checked by the same test.
+/** One operation of any list described geometrically (`describeOperationsOf`). */
 export interface CartesianOperationDescription {
   /** What the operation is. */
   readonly kind: OperationKind;

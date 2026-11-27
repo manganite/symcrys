@@ -479,9 +479,7 @@ class CartesianAxis(TypedDict):
 
 @final
 class CartesianOperationDescription(TypedDict):
-    """One operation of any list described geometrically (``describe_operations_of``), as in the
-    magnetic API without time reversal (a test checks that the two agree).
-    """
+    """One operation of any list described geometrically (``describe_operations_of``)."""
 
     kind: OperationKind
     """What the operation is."""
@@ -515,10 +513,7 @@ class Axis(TypedDict):
 
 @final
 class OperationDescription(TypedDict):
-    """One point operation described geometrically: the description of the magnetic API without time
-    reversal (written out, so that the crystallographic API names its own type; a test checks that
-    the two agree).
-    """
+    """One point operation described geometrically."""
 
     kind: OperationKind
     """What the operation is."""

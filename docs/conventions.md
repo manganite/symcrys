@@ -1569,7 +1569,8 @@ square), the pairs of equal parameters (`[['a', 'b']]`), the fixed angles (`{ ga
 angles conventionally taken non-acute (γ of the oblique system, the footnote of the table). They are
 computed from the holohedry of the system (2, 2mm, 4mm, 6mm, the Laue class of highest order): the
 metric tensors G that all its operations keep, WᵀGW = G, form a linear space, which gives a = b
-where g₁₁ = g₂₂ throughout and a fixed γ where cos γ = g₁₂/g₁₁ is fixed (0 or −1/2); the free angle
+where g₁₁ = g₂₂ throughout and a fixed γ where cos γ = g₁₂/√(g₁₁g₂₂) is the same for every G
+(g₁₂ = 0 throughout, or a = b and g₁₂ a fixed multiple of g₁₁: 0 or −1/2); the free angle
 is taken non-acute by the footnote (convention data). The Bravais lattices are the family symbol
 (vocabulary) with the lattice letters of the system's plane groups. Both equal the printed table
 (tested). The cell

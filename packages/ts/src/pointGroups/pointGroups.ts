@@ -633,7 +633,7 @@ export function pointGroup<K extends MagneticPointGroupKey>(key: K): PointGroup<
 }
 
 /** All 32 crystal classes, in the order of `POINT_GROUP_KEYS` (by crystal system, as in ITA). */
-export function pointGroups(): readonly PointGroup[] {
+export function pointGroups(): readonly PointGroup<PointGroupKey>[] {
   return deepFreeze(POINT_GROUP_KEYS.map((key) => pointGroup(key)));
 }
 

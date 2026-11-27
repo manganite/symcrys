@@ -16,7 +16,6 @@ import {
   planePointGroupSystem,
   type PlanePointGroupKey,
 } from './planePointGroups.js';
-import { PLANE_GROUP_KEYS, planeGroupSystem } from './planeGroups.js';
 
 /**
  * A Bravais lattice of the plane, by its ITA symbol: family symbol and centring.
@@ -62,7 +61,7 @@ export interface CellRestrictions {
  * Vocabulary: the symbol of the crystal family of each crystal system of the plane, the first letter
  * of a Bravais-lattice symbol (ITA 2016 Table 2.1.1.1, p. 143, column "Symbol").
  */
-export const PLANE_FAMILY_SYMBOLS: Readonly<Record<PlaneSystem, 'm' | 'o' | 't' | 'h'>> = Object.freeze({
+const PLANE_FAMILY_SYMBOLS: Readonly<Record<PlaneSystem, 'm' | 'o' | 't' | 'h'>> = Object.freeze({
   oblique: 'm',
   rectangular: 'o',
   square: 't',
@@ -71,14 +70,6 @@ export const PLANE_FAMILY_SYMBOLS: Readonly<Record<PlaneSystem, 'm' | 'o' | 't' 
 
 /** The four crystal systems of the plane. */
 export const PLANE_SYSTEMS = Object.freeze(Object.keys(PLANE_FAMILY_SYMBOLS) as PlaneSystem[]);
-
-/** The Bravais lattices of a crystal system: the family symbol with the lattice letter of each of its plane groups. */
-export function planeBravaisLattices(system: PlaneSystem): PlaneBravaisLattice[] {
-  const letters = PLANE_GROUP_KEYS.filter((k) => planeGroupSystem(k) === system).map((k) => k[0]);
-  return [...new Set(letters)]
-    .sort((a, b) => (a === 'p' ? -1 : b === 'p' ? 1 : 0))
-    .map((letter) => `${PLANE_FAMILY_SYMBOLS[system]}${letter}` as PlaneBravaisLattice);
-}
 
 /**
  * The holohedry of a crystal system of the plane: of its point groups the Laue class of the highest
@@ -94,8 +85,9 @@ function holohedry(system: PlaneSystem): PlanePointGroupKey {
  * The restrictions on the conventional cell of a crystal system of the plane, computed from its
  * holohedry: the metric tensors G = [[a², ab cos γ], [ab cos γ, b²]] that every operation W of the
  * holohedry keeps (WᵀGW = G) form a linear space; a = b where it has g₁₁ = g₂₂ throughout, γ is
- * fixed where g₁₂ is a fixed multiple of g₁₁ (cos γ = g₁₂/g₁₁, 0 or −1/2), and the parameters to be
- * determined are the others. Convention data: an angle the holohedry leaves free is taken
+ * fixed where cos γ = g₁₂/√(g₁₁g₂₂) is the same for every G of the space (g₁₂ = 0 throughout, or
+ * a = b and g₁₂ a fixed multiple of g₁₁: 0 or −1/2), and the parameters to be determined are the
+ * others. Convention data: an angle the holohedry leaves free is taken
  * non-acute (ITA 2016 Table 2.1.1.1, p. 143, footnote §).
  */
 export function planeCellRestrictions(system: PlaneSystem): CellRestrictions {
@@ -174,13 +166,12 @@ function nullSpace(rows: readonly (readonly number[])[]): number[][] {
   });
 }
 
-/** The Bravais lattice of a plane group: the family symbol of its system and its lattice letter. */
+/**
+ * The Bravais lattice of a plane group: the family symbol of its system and its lattice letter
+ * (`'oc'` for `cm`); the lattices of a system are those of its plane groups.
+ */
 export function planeBravaisLattice(system: PlaneSystem, groupSymbol: string): PlaneBravaisLattice {
-  const lattice = `${PLANE_FAMILY_SYMBOLS[system]}${groupSymbol[0]}` as PlaneBravaisLattice;
-  if (!planeBravaisLattices(system).includes(lattice)) {
-    throw new Error(`The plane group ${groupSymbol} has the lattice ${lattice}, not one of its family`);
-  }
-  return lattice;
+  return `${PLANE_FAMILY_SYMBOLS[system]}${groupSymbol[0]}` as PlaneBravaisLattice;
 }
 
 const matrixKey = (m: readonly (readonly number[])[]): string => m.map((r) => r.join(',')).join(';');
