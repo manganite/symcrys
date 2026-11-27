@@ -57,10 +57,13 @@ those found in a pattern.
 ## Operations of a pattern: plane group, site symmetry, orbit
 
 `planeGroupOf` names the plane group of operations found in a pattern, given in a conventional cell
-of its lattice; generators suffice, and the origin does not matter. Setting 1 means they are ITA's
-operations of that group; with another origin or orientation it is absent. `pointGroupOf` names the
-plane point group of the linear parts, and `siteSymmetryOf` and `orbitOf` answer for the list what
-`siteSymmetry` and `orbit` answer for a key:
+of its lattice; generators suffice, and the origin does not matter (translations are read as
+fractions with denominators up to 12). Setting 1 means they are ITA's operations of that group;
+with another origin or orientation it is absent. `pointGroupOf` names the plane point group of the
+linear parts, and `siteSymmetryOf` and `orbitOf` answer for the list what `siteSymmetry` and
+`orbit` answer for a key, for a point on its position. Near a position the tolerance measures
+another distance: the key functions the distance to the position, the list functions, which have
+no positions, the distance of the images, twice as large at a mirror line:
 
 ```{code-cell} ipython3
 found = [{"matrix": [[-1, 0], [0, 1]], "translation": [0.5, 0.5]}, {"matrix": [[0, -1], [1, 0]], "translation": [0, 0]}]

@@ -9,7 +9,8 @@ All notable changes to symcrys are recorded here. The format follows
 ### Added
 
 - `symcrys/plane` is on par with the other entry points (#208): `planeGroupOf` names the plane
-  group of a list of operations in a conventional cell (generators suffice, any origin; setting 1
+  group of a list of operations in a conventional cell (generators suffice, any origin with
+  translations of denominator up to 12; setting 1
   if they are ITA's operations), `pointGroupOf` the plane point group of their linear parts;
   `siteSymmetryOf` and `orbitOf` take a list of operations with a point (modulo the lattice), a
   lattice direction `{ uv }` or an edge `{ hk }`; `siteSymmetry`, `wyckoffPosition` and `orbit`

@@ -217,7 +217,9 @@ function planeCalls(): ApiCall[] {
     c('wyckoffDistances', key, { point: [0.1, 0.23] }, { basis: [[2, 0], [0, 3]] }); // prettier-ignore
     c('residualOperations', plane.operations(key), [[1, 0], [0, 1.5]]); // prettier-ignore
     c('settings', key);
-    c('pointGroupOf', plane.operations(key));
+    // A symmorphic plane group has the operations of its point group, which is called below.
+    if (plane.operations(key).some((op) => op.translation.some((t) => t !== 0)))
+      c('pointGroupOf', plane.operations(key));
     c('planeGroupOf', plane.operations(key));
     c('planeGroupOf', plane.generators(key));
     for (const point of [

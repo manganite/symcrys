@@ -999,7 +999,7 @@ describe('the point group and the plane group of a list of operations (#208)', (
           [0, 0],
         ),
       ]),
-    ).toThrow(/determinant ±1/);
+    ).toThrow(/Determinant 2 is not ±1/);
   });
 });
 
@@ -1017,5 +1017,69 @@ describe('the site symmetry of a Wyckoff position of a plane group (#208)', () =
         expect(plane.siteSymmetry(key, { point }).operations, where).toEqual(w.siteSymmetryOperations);
       }
     }
+  });
+});
+
+describe('lists of operations: what the review of #229 found', () => {
+  const op = (matrix: number[][], translation: number[]) => ({ matrix, translation });
+  const I = [
+    [1, 0],
+    [0, 1],
+  ];
+
+  it('refuse a singular matrix, which is closed under products too', () => {
+    const zero = op(
+      [
+        [0, 0],
+        [0, 0],
+      ],
+      [0, 0],
+    );
+    expect(() => plane.siteSymmetryOf([zero], { point: [0.3, 0.2] })).toThrow(/Determinant 0/);
+    expect(() => plane.orbitOf([zero], { uv: [1, 0] })).toThrow(/Determinant 0/);
+    const projection = op(
+      [
+        [1, 0],
+        [0, 0],
+      ],
+      [0, 0],
+    );
+    expect(() => plane.siteSymmetryOf([op(I, [0, 0]), projection], { uv: [1, 0] })).toThrow(RangeError);
+  });
+
+  it('read the operations within EPSILON, whatever the tolerance of the point', () => {
+    const near = { point: [0.25, 0.01] };
+    expect(plane.siteSymmetryOf(plane.operations('p2mg'), near, { tolerance: 0.05 }).operations).toEqual(
+      plane.siteSymmetryOf(plane.operations('p2mg'), { point: [0.25, 0] }).operations,
+    );
+    const twelfth = [
+      op(I, [0, 0]),
+      op(
+        [
+          [-1, 0],
+          [0, 1],
+        ],
+        [1 / 12, 0],
+      ),
+    ];
+    expect(plane.orbitOf(twelfth, { point: [0.3, 0.2] }, { tolerance: 0.01 })).toHaveLength(2);
+  });
+
+  it('measure the distance of the images, twice the distance to a mirror line', () => {
+    // pm: 0.012 from the mirror x = 0 lies on it at 0.02 for the key, its image 0.024 away does not.
+    expect(plane.siteSymmetry('pm', { point: [0.012, 0.3] }, { tolerance: 0.02 }).multiplicity).toBe(1);
+    expect(
+      plane.siteSymmetryOf(plane.operations('pm'), { point: [0.012, 0.3] }, { tolerance: 0.02 }).multiplicity,
+    ).toBe(2);
+    expect(
+      plane.siteSymmetryOf(plane.operations('pm'), { point: [0.012, 0.3] }, { tolerance: 0.03 }).multiplicity,
+    ).toBe(1);
+  });
+
+  it('check the tolerance for a direction or an edge too, and bound their components', () => {
+    expect(() => plane.siteSymmetry('4mm', { uv: [1, 0] }, { tolerance: -5 })).toThrow(/tolerance/);
+    expect(() => plane.orbit('4mm', { hk: [1, 0] }, { tolerance: null } as never)).toThrow(/tolerance/);
+    expect(() => plane.orbit('6mm', { uv: [2 ** 53 - 1, -(2 ** 53 - 2)] })).toThrow(/at most/);
+    expect(plane.orbit('6mm', { uv: [2 ** 51, 1] })).toHaveLength(12);
   });
 });

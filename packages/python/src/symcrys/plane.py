@@ -1448,18 +1448,20 @@ def site_symmetry_of(
 ) -> SiteSymmetry | DirectionSiteSymmetry:
     """The site symmetry under a list of operations of the plane (lattice basis), for instance those
     of a pattern, named by the field of the input. Of a point (field ``point``): the operations (W,
-    w) that map it onto itself modulo the lattice within the tolerance, closed under products, the
-    point set onto their fixed space (the mean of its images), repeated until stable, so that the
-    result is a subgroup and the set point lies exactly on its elements; ``point`` is that point, in
-    [0, 1). The list is a plane group given as one operation per coset of the lattice translations,
-    all of them. Of a lattice direction (``uv``) or an edge (``hk``): the operations whose linear
-    part leaves it fixed, exactly; the linear parts must be closed under products. An empty list is
-    the group 1. Each matrix must have integer entries within the tolerance and each translation
-    component is read as a fraction with a denominator of at most 12, as in
-    ``describe_operations_of``. Raises SymcrysError for such input, for a list that is not a group
-    (the error names the missing product or the operations equal modulo the lattice), for a point or
-    a vector as ``site_symmetry`` refuses it, and if the operations do not settle (a tolerance far
-    too large).
+    w) that map it onto itself modulo the lattice within the tolerance (the distance of its image,
+    per coordinate, which at a mirror line is twice the distance to it that ``site_symmetry`` of a
+    key measures), closed under products, the point set onto their fixed space (the mean of its
+    images), repeated until stable, so that the result is a subgroup and the set point lies exactly
+    on its elements; ``point`` is that point, in [0, 1). The list is a plane group given as one
+    operation per coset of the lattice translations, all of them. Of a lattice direction (``uv``) or
+    an edge (``hk``): the operations whose linear part leaves it fixed, exactly; the linear parts
+    must be closed under products. An empty list is the group 1. Each matrix must have integer
+    entries within ``EPSILON`` and determinant ±1, and each translation component is read as a
+    fraction with a denominator of at most 12 within ``EPSILON``, as in ``describe_operations_of``
+    (the tolerance is that of the point). Raises SymcrysError for such input, for a list that is not
+    a group (the error names the missing product or the operations equal modulo the lattice), for a
+    point or a vector as ``site_symmetry`` refuses it, and if the operations do not settle (a
+    tolerance far too large).
 
     Parameters
     ----------
@@ -1594,12 +1596,13 @@ def plane_group_of(
     group with another origin or orientation (``p2mg`` with the mirror lines normal to b). The list
     is closed modulo the lattice first, so generators suffice. The type follows from the point
     group, the centring and, per direction of mirror lines, whether a reflection is among the
-    operations or only glide reflections; it does not depend on the origin. Matrices and
-    translations are read as in ``describe_operations_of``. Raises SymcrysError for such input, and
-    for operations that are not in a conventional cell: a translation besides the lattice
-    translations other than the centring (1/2, 1/2) of a rectangular lattice, linear parts that no
-    conventional cell gives (a mirror along a diagonal of a rectangular cell, a square or hexagonal
-    group in another basis), and operations that generate no plane group.
+    operations or only glide reflections; it does not depend on the origin (of the origins whose
+    translations have denominators of at most 12, as they are read). Matrices and translations are
+    read as in ``describe_operations_of``. Raises SymcrysError for such input, and for operations
+    that are not in a conventional cell: a translation besides the lattice translations other than
+    the centring (1/2, 1/2) of a rectangular lattice, linear parts that no conventional cell gives
+    (a mirror along a diagonal of a rectangular cell, a square or hexagonal group in another basis),
+    and operations that generate no plane group.
 
     Parameters
     ----------

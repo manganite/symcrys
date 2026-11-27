@@ -1500,7 +1500,8 @@ multiplicity (c2mm: 4c, a point, against 4d and 4e, lines).
 
 **Directions and edges.** `siteSymmetry`, `wyckoffPosition` and `orbit` take the key of a plane
 point group (and its `setting`) with a lattice direction `{ uv: [u, v] }` or an edge
-`{ hk: [h, k] }` (hexagonal axes: without i), two integers not both zero, as the crystal classes
+`{ hk: [h, k] }` (hexagonal axes: without i), two integers not both zero and of at most 2⁵² in
+magnitude (so that their images stay exact), as the crystal classes
 take `{ uvw }` and `{ hkl }`; the field says what is meant, and a point goes with a plane group
 only. They are exact: the site symmetry is the operations whose W fixes the direction (W·u = u)
 or the edge ((hk)·W⁻¹ = (hk), as Miller indices transform), the orbit its distinct images in the
@@ -1511,18 +1512,21 @@ groups and both settings of `3m`).
 
 **Lists of operations.** `siteSymmetryOf` and `orbitOf` take a list of operations
 `{ matrix, translation }` of the plane, for instance those of a pattern, and the same inputs: of a
-point, the operations (W, w) that fix it modulo the lattice within the tolerance, closed under
+point, the operations (W, w) that fix it modulo the lattice within the tolerance (the distance of
+its image, per coordinate, which at a mirror line is twice the distance to the line that the
+functions of a key measure: a list has no Wyckoff positions to measure to), closed under
 products, the point set onto their fixed space until stable, as `siteSymmetryOf` does for
 directions in 3D; of a direction or an edge, the linear parts, exactly. The list is a group: for a
 point one operation per coset of the lattice translations, closed under products modulo the
 lattice; for a direction or an edge, linear parts closed under products (a matrix may occur twice,
-as in `cm`). A list that is not one is a RangeError naming a missing product or two operations
+as in `cm`). The operations are read within `EPSILON` whatever the tolerance of the point, with
+determinant ±1 (a projection is closed under products too). A list that is not one is a RangeError naming a missing product or two operations
 equal modulo the lattice; the empty list is the group 1. `pointGroupOf` gives the plane point
 group of the group the linear parts generate, by its order and whether it holds a reflection, with
 the setting whose operations they are (absent in another basis, a mirror along a diagonal).
 `planeGroupOf` gives the plane group of a list (W, w) given in a conventional cell of their
 lattice, closed modulo the lattice first, so that generators suffice. The type does not depend on
-the origin and follows from the point group, the centring and, per direction of mirror lines,
+the origin (among the origins whose translations are read, with denominators up to 12) and follows from the point group, the centring and, per direction of mirror lines,
 whether a reflection (glide vector zero modulo the lattice) is among the operations or only glide
 reflections: `pm`/`pg`, `p2mm`/`p2mg`/`p2gg`, `p4mm`/`p4gm`, and `p3m1`/`p31m` from the setting
 of `3m`. Setting 1 is given if the operations are those of `operations(key)` modulo the lattice;

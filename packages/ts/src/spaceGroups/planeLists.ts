@@ -36,8 +36,15 @@ const IDENTITY: IntMatrix = [
 ];
 
 /**
- * A direction [uv] or an edge (hk) as a caller passes it, checked: two safe integers, not both
- * zero. `name` is the field (`uv`, `hk`) the error names.
+ * The largest component of a direction or an edge: an image under an operation of a plane point
+ * group has components up to twice as large (a hexagonal W has two entries ±1 in a row), which stay
+ * safe integers.
+ */
+const MAX_INDEX = Math.floor(Number.MAX_SAFE_INTEGER / 2);
+
+/**
+ * A direction [uv] or an edge (hk) as a caller passes it, checked: two integers of at most
+ * `MAX_INDEX` in magnitude, not both zero. `kind` is the field (`uv`, `hk`) the error names.
  */
 export function checkVector(value: unknown, kind: VectorKind): number[] {
   const what = kind === 'uv' ? 'A lattice direction [uv]' : 'An edge (hk)';
@@ -48,6 +55,11 @@ export function checkVector(value: unknown, kind: VectorKind): number[] {
     (value[0] === 0 && value[1] === 0)
   ) {
     throw new RangeError(`${what} is two integers, not both zero, not ${shown(value)}`);
+  }
+  if (value.some((x) => Math.abs(x) > MAX_INDEX)) {
+    throw new RangeError(
+      `${what} has components of at most ${MAX_INDEX} in magnitude, so that its images are exact, not ${shown(value)}`,
+    );
   }
   return [value[0] + 0, value[1] + 0];
 }

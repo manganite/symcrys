@@ -14,7 +14,7 @@ import { planeWyckoffRows } from './spaceGroups/planeWyckoff.js';
 import { TOLERANCE_KEYS, checkOptions, shown } from './checks.js';
 import { describePlaneOperation, type PlaneOperationKind } from './spaceGroups/describe.js';
 import { planeAsymmetricUnit, planeElements, planeElementsInBox } from './spaceGroups/cell.js';
-import { toPlain, type ExactOperation, type IntMatrix } from './spaceGroups/affine.js';
+import { checkUnimodular, toPlain, type ExactOperation, type IntMatrix } from './spaceGroups/affine.js';
 import { type PlaneSystem } from './spaceGroups/planeGroupData.js';
 import {
   PLANE_FAMILIES,
@@ -86,7 +86,7 @@ export {
   type CrystalFormType,
   type CrystalFormTypeKey,
 } from './spaceGroups/planePointGroupForms.js';
-import { TOLERANCE_BOUND, toleranceOf, type ToleranceOptions } from './tolerances.js';
+import { EPSILON, toleranceOf, type ToleranceOptions } from './tolerances.js';
 import { compactSymbol } from './notation.js';
 export type { PlaneSystem } from './spaceGroups/planeGroupData.js';
 export type {
@@ -989,6 +989,8 @@ export function siteSymmetry(
 ): SiteSymmetry | DirectionSiteSymmetry {
   checkOptions(options, ['setting', ...TOLERANCE_KEYS], 'siteSymmetry');
   const read = readKeyInput(key, input, 'siteSymmetry');
+  // Checked for a direction or an edge too, which are compared exactly.
+  toleranceOf(options, read.kind === 'point' ? 'points' : 'directions');
   if (read.kind === 'point') {
     exact(key, options, true);
     return frozenSite(planeSiteOfPosition(key as PlaneGroupKey, read.point, options));
@@ -1032,6 +1034,7 @@ export function wyckoffPosition(
 ): WyckoffPosition {
   checkOptions(options, ['setting', ...TOLERANCE_KEYS], 'wyckoffPosition');
   const read = readKeyInput(key, input, 'wyckoffPosition');
+  toleranceOf(options, read.kind === 'point' ? 'points' : 'directions');
   const setting = options?.setting === undefined ? undefined : { setting: options.setting };
   if (read.kind === 'point') {
     const k = key as PlaneGroupKey;
@@ -1152,6 +1155,7 @@ export function orbit(
 ): readonly PointOrbitEntry[] | readonly DirectionOrbitEntry[] | readonly EdgeOrbitEntry[] {
   checkOptions(options, ['setting', ...TOLERANCE_KEYS], 'orbit');
   const read = readKeyInput(key, input, 'orbit');
+  toleranceOf(options, read.kind === 'point' ? 'points' : 'directions');
   if (read.kind === 'point') {
     exact(key, options, true);
     return frozenPointOrbit(planeOrbit(key as PlaneGroupKey, read.point, options));
@@ -1169,21 +1173,27 @@ function exactList(operations: unknown, name: string, tolerance: number): ExactO
   if (!Array.isArray(operations)) {
     throw new RangeError(`${name} takes a list of operations { matrix, translation }, not ${shown(operations)}`);
   }
-  return operations.map((op) => exactOf(op, tolerance));
+  return operations.map((op) => {
+    const exactOp = exactOf(op, tolerance);
+    // A singular matrix (a projection) would pass the group checks, which only test products.
+    checkUnimodular(exactOp);
+    return exactOp;
+  });
 }
 
 /**
  * The site symmetry under a list of operations of the plane (lattice basis), for instance those of
  * a pattern, named by the field of the input. Of a point (field `point`): the operations (W, w) that map
- * it onto itself modulo the lattice within the tolerance, closed under products, the point set onto
+ * it onto itself modulo the lattice within the tolerance (the distance of its image, per coordinate,
+ * which at a mirror line is twice the distance to it that `siteSymmetry` of a key measures), closed under products, the point set onto
  * their fixed space (the mean of its images), repeated until stable, so that the result is a
  * subgroup and the set point lies exactly on its elements; `point` is that point, in [0, 1). The list
  * is a plane group given as one operation per coset of the lattice translations, all of them. Of a
  * lattice direction (`uv`) or an edge (`hk`): the operations whose linear part leaves it fixed,
  * exactly; the linear parts must be closed under products. An empty list is the group 1. Each
- * matrix must have integer entries within the tolerance and each translation component is read as
- * a fraction with a denominator of at most 12, as in `describeOperationsOf`. Throws a RangeError for
- * such input, for a list that is not a group (the error names the missing product or the operations
+ * matrix must have integer entries within `EPSILON` and determinant ±1, and each translation
+ * component is read as a fraction with a denominator of at most 12 within `EPSILON`, as in
+ * `describeOperationsOf` (the tolerance is that of the point). Throws a RangeError for such input, for a list that is not a group (the error names the missing product or the operations
  * equal modulo the lattice), for a point or a vector as `siteSymmetry` refuses it, and if the
  * operations do not settle (a tolerance far too large).
  */
@@ -1214,8 +1224,10 @@ export function siteSymmetryOf(
 ): SiteSymmetry | DirectionSiteSymmetry {
   checkOptions(options, TOLERANCE_KEYS, 'siteSymmetryOf');
   const read = readInput(input, 'siteSymmetryOf');
-  const tolerance = toleranceOf(options, read.kind === 'point' ? 'points' : 'operations');
-  const ops = exactList(operations, 'siteSymmetryOf', Math.min(tolerance, TOLERANCE_BOUND.operations));
+  toleranceOf(options, read.kind === 'point' ? 'points' : 'directions');
+  // The operations are read within EPSILON: the tolerance is that of the point, and a translation
+  // read within it could lie within it of two fractions.
+  const ops = exactList(operations, 'siteSymmetryOf', EPSILON);
   if (read.kind === 'point') {
     if (ops.length === 0) return frozenSite(emptySite(read.point));
     return frozenSite(siteSymmetryIn(listGroupData(ops), read.point, options));
@@ -1265,8 +1277,8 @@ export function orbitOf(
 ): readonly PointOrbitEntry[] | readonly DirectionOrbitEntry[] | readonly EdgeOrbitEntry[] {
   checkOptions(options, TOLERANCE_KEYS, 'orbitOf');
   const read = readInput(input, 'orbitOf');
-  const tolerance = toleranceOf(options, read.kind === 'point' ? 'points' : 'operations');
-  const ops = exactList(operations, 'orbitOf', Math.min(tolerance, TOLERANCE_BOUND.operations));
+  toleranceOf(options, read.kind === 'point' ? 'points' : 'directions');
+  const ops = exactList(operations, 'orbitOf', EPSILON);
   if (read.kind === 'point') {
     if (ops.length === 0) {
       const site = emptySite(read.point);
@@ -1302,7 +1314,8 @@ export function pointGroupOf(operations: readonly PlaneOperation[], options?: To
  * with another origin or orientation (`p2mg` with the mirror lines normal to b). The list is closed
  * modulo the lattice first, so generators suffice. The type follows from the point group, the
  * centring and, per direction of mirror lines, whether a reflection is among the operations or only
- * glide reflections; it does not depend on the origin. Matrices and translations are read as in
+ * glide reflections; it does not depend on the origin (of the origins whose translations have
+ * denominators of at most 12, as they are read). Matrices and translations are read as in
  * `describeOperationsOf`. Throws a RangeError for such input, and for operations that are not in a
  * conventional cell: a translation besides the lattice translations other than the centring
  * (1/2, 1/2) of a rectangular lattice, linear parts that no conventional cell gives (a mirror along
