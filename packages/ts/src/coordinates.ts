@@ -30,7 +30,8 @@ import {
 
 /** A matrix as rows of numbers. */
 type Rows = readonly (readonly number[])[];
-type RMatrix = readonly (readonly Rational[])[];
+/** A matrix of exact rationals, rows first. */
+export type RMatrix = readonly (readonly Rational[])[];
 
 /** The pair (P, p): the new basis (a′, b′, c′) = (a, b, c)·P and the new origin O′ = O + p. */
 export interface GenericTransformation {
@@ -87,7 +88,8 @@ function isVector(v: unknown, d: number): v is readonly number[] {
   return Array.isArray(v) && v.length === d && v.every((x) => typeof x === 'number' && Number.isFinite(x));
 }
 
-function product(a: RMatrix, b: RMatrix): RMatrix {
+/** The product of two rational matrices. */
+export function product(a: RMatrix, b: RMatrix): RMatrix {
   return a.map((row) => b[0].map((_, j) => row.reduce((s, x, k) => add(s, multiply(x, b[k][j])), ZERO)));
 }
 
@@ -108,7 +110,7 @@ function determinant(m: RMatrix): Rational {
 }
 
 /** The inverse of a regular 2 × 2 or 3 × 3 rational matrix, by the adjugate. */
-function inverse(m: RMatrix): RMatrix {
+export function inverse(m: RMatrix): RMatrix {
   const det = determinant(m);
   const over = (x: Rational) => multiply(x, rational(det[1], det[0]));
   if (m.length === 2) {

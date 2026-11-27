@@ -684,8 +684,10 @@ group they generate.
 
 ## Symmetry directions and elements
 
-**Symmetry directions** (`LATTICE_SYMMETRY_DIRECTIONS`) are the lattice directions of ITA Table
-2.1.3.1 (monoclinic: see below), grouped by position of the full symbol, in the printed order and with the printed signs:
+**Symmetry directions** (`LATTICE_SYMMETRY_DIRECTIONS`, convention data: which representative of
+each direction and in which order cannot be derived) are the lattice directions of ITA Table
+2.1.3.1 (monoclinic: see below), grouped by position of the full symbol, in the printed order and
+with the printed signs:
 primary, secondary, tertiary (hexagonal family: the row "Hexagonal", also for the trigonal classes
 with hexagonal axes). The monoclinic full symbol reads along a, b, c (ITA § 2.1.3.15, p. 171), so
 the monoclinic family has the orthorhombic positions; of these, only the unique axis is a lattice
@@ -1137,21 +1139,23 @@ where ITA's definitions have one, and are convention data otherwise (`cellTransf
 `basisOf`):
 
 - **Rules:** an orthorhombic setting from its symbol (`ba-c`: a′ = b, b′ = a, c′ = −c); the
-  primitive cell of an I lattice t − a, t − b, t − c with t = (a + b + c)/2, of an F lattice the
-  three centring vectors (b + c)/2, (a + c)/2, (a + b)/2 (also for `tI`, `cI`, `cF`); monoclinic
+  primitive cell of an I lattice t − a, t − b, t − c with t = (a + b + c)/2 (also `tI`, `cI`), of
+  an F lattice the three centring vectors (b + c)/2, (a + c)/2, (a + b)/2 (also `cF`), of `hR` the
+  obverse centring vector (2/3, 1/3, 1/3) and its turns by the threefold rotation; monoclinic
   unique axes c and a the settings cab and bca, and cell choice k the step 1 → 2 of unique axis b
-  applied k − 1 times, relabelled for the other axes; the triple hexagonal cells R₁, R₂, R₃ of `hR`
-  as R₁ turned 0, 1, 2 times by the threefold rotation, the reverse ones these turned by the twofold
-  rotation about c, and the monoclinic cells C₂, C₃ likewise from C₁, A₁–A₃ as C₁–C₃ with unique
-  axis c.
-- **Convention data,** as ITA defines them: the monoclinic step 1 → 2 (unique axis b), the
-  tetragonal C₁, C₂ (and F₁, F₂), the hexagonal C₁–C₃, H₁–H₃, D₁, D₂, the primitive rhombohedral
-  cell and the monoclinic C₁ of `hR`.
+  applied k − 1 times, relabelled for the other axes; the further cells of each kind as the first
+  turned by a rotation of the lattice about c: tetragonal C₂ (F₂) by the fourfold, hexagonal C₂, C₃
+  and H₂, H₃ by the sixfold once and twice, D₂ by the twofold; the triple hexagonal cells R₂, R₃ of
+  `hR` by the threefold, the reverse ones by the twofold, the monoclinic C₂, C₃ likewise from C₁,
+  and A₁–A₃ as C₁–C₃ with unique axis c.
+- **Convention data,** as ITA defines them: the first cell of each kind, the monoclinic step
+  1 → 2 (unique axis b), the tetragonal C₁ (F₁), the hexagonal C₁, H₁, D₁ and the monoclinic C₁ of
+  `hR`.
 
 Every printed row of ITA 2016 Table 1.5.1.1 (pp. 77–80) is the P computed for its two cells
 (tested). The triple hexagonal cell R from which the table gives the monoclinic cells of an `hR`
-lattice is R₁ obverse; the F-centred cells F₁, F₂ of `tI` have no primitive cell of their own. The change back is
-`cellTransformation(bravaisLattice, toCell, fromCell)`.
+lattice is R₁ obverse. The primitive cell of `tI` is that of its I cell; F₁ and F₂ have none of
+their own. The change back is `cellTransformation(bravaisLattice, toCell, fromCell)`.
 
 ## Tensors
 

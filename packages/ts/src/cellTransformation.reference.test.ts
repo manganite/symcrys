@@ -182,7 +182,7 @@ describe('the changes of cell against print (ITA 2016 Table 1.5.1.1)', () => {
 });
 
 describe('cellTransformation', () => {
-  it('joins any two cells of a lattice by a product of the printed matrices', () => {
+  it('joins any two cells of a lattice; the change back is the inverse', () => {
     const t = cellTransformation('hR', hex(2, 'reverse'), { centring: 'A', cell: 3 });
     const back = cellTransformation('hR', { centring: 'A', cell: 3 }, hex(2, 'reverse'));
     const round = changeOfCoordinates(t, {

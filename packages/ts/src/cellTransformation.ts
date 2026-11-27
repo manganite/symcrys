@@ -8,20 +8,10 @@
  */
 
 import { checkObject, shown } from './checks.js';
-import type { CoordinateTransformation } from './coordinates.js';
+import { inverse, product, type CoordinateTransformation, type RMatrix } from './coordinates.js';
 import { deepFreeze } from './freeze.js';
 import type { Mat3 } from './linalg.js';
-import {
-  add,
-  multiply,
-  negate,
-  parseRational,
-  rational,
-  subtract,
-  toNumber,
-  ZERO,
-  type Rational,
-} from './spaceGroups/rational.js';
+import { negate, parseRational, rational, toNumber, ZERO } from './spaceGroups/rational.js';
 
 /**
  * A Bravais type of lattice in three dimensions, in ITA's notation: the crystal family (a, m, o, t,
@@ -77,46 +67,27 @@ const LATTICES: readonly BravaisLattice[] = [
 ];
 const SETTINGS: readonly OrthorhombicSetting[] = ['abc', 'ba-c', 'cab', '-cba', 'bca', 'a-cb'];
 
-type RMatrix = readonly (readonly Rational[])[];
-
 const parse = (s: string): RMatrix => s.split(';').map((row) => row.trim().split(/\s+/).map(parseRational));
-const product = (a: RMatrix, b: RMatrix): RMatrix =>
-  a.map((row) => [0, 1, 2].map((j) => row.reduce((s, x, k) => add(s, multiply(x, b[k][j])), ZERO)));
 const power = (m: RMatrix, k: number): RMatrix =>
   k === 0 ? parse('1 0 0; 0 1 0; 0 0 1') : product(m, power(m, k - 1));
-
-const divide = (a: Rational, b: Rational): Rational => multiply(a, rational(b[1], b[0]));
-
-/** The inverse of a 3×3 matrix of rationals, by the adjugate. */
-function inverse(m: RMatrix): RMatrix {
-  const c = (i: number, j: number): Rational => {
-    const r = [0, 1, 2].filter((x) => x !== i);
-    const s = [0, 1, 2].filter((x) => x !== j);
-    const minor = subtract(multiply(m[r[0]][s[0]], m[r[1]][s[1]]), multiply(m[r[0]][s[1]], m[r[1]][s[0]]));
-    return (i + j) % 2 === 0 ? minor : negate(minor);
-  };
-  const det = [0, 1, 2].reduce((s, j) => add(s, multiply(m[0][j], c(0, j))), ZERO);
-  return [0, 1, 2].map((i) => [0, 1, 2].map((j) => divide(c(j, i), det)));
-}
 
 /**
  * Convention data: the definitions of the cells ITA names that no rule below gives, as the basis
  * (a′, b′, c′) = (a, b, c)·P of each in the conventional cell of the standard setting, the columns of
- * P (ITA 2016 Table 1.5.1.1, pp. 77–80, where the cells are defined).
+ * P (ITA 2016 Table 1.5.1.1, pp. 77–80, where the cells are defined). The further cells of each kind
+ * are these turned by a rotation of the lattice (`basisOf`).
  */
 const CELL_DEFINITIONS = {
   /** Monoclinic, unique axis b: cell choice 2 (choice 3 is the same step again, ITA's cycle 1 → 2 → 3 → 1). */
   monoclinicCellChoice2: parse('-1 0 1; 0 1 0; -1 0 0'),
-  /** Tetragonal: the C-centred cells C₁, C₂ of a P lattice, the F-centred cells F₁, F₂ of an I lattice. */
-  tetragonal: [parse('1 1 0; -1 1 0; 0 0 1'), parse('1 -1 0; 1 1 0; 0 0 1')],
-  /** Hexagonal P: the orthohexagonal cells C₁, C₂, C₃. */
-  orthohexagonal: [parse('1 1 0; 0 2 0; 0 0 1'), parse('1 -1 0; 1 1 0; 0 0 1'), parse('0 -2 0; 1 -1 0; 0 0 1')],
-  /** Hexagonal P: the triple hexagonal cells H₁, H₂, H₃. */
-  tripleHexagonal: [parse('1 1 0; -1 2 0; 0 0 1'), parse('2 -1 0; 1 1 0; 0 0 1'), parse('1 -2 0; 2 -1 0; 0 0 1')],
-  /** Hexagonal P: the triple rhombohedral cells D₁, D₂. */
-  tripleRhombohedral: [parse('1 0 -1; 0 1 -1; 1 1 1'), parse('-1 0 1; 0 -1 1; 1 1 1')],
-  /** hR: the primitive rhombohedral cell in the triple hexagonal cell R₁ obverse. */
-  rhombohedral: parse('2/3 -1/3 -1/3; 1/3 1/3 -2/3; 1/3 1/3 1/3'),
+  /** Tetragonal: the C-centred cell C₁ of a P lattice, the F-centred cell F₁ of an I lattice. */
+  tetragonal1: parse('1 1 0; -1 1 0; 0 0 1'),
+  /** Hexagonal P: the orthohexagonal cell C₁. */
+  orthohexagonal1: parse('1 1 0; 0 2 0; 0 0 1'),
+  /** Hexagonal P: the triple hexagonal cell H₁. */
+  tripleHexagonal1: parse('1 1 0; -1 2 0; 0 0 1'),
+  /** Hexagonal P: the triple rhombohedral cell D₁. */
+  tripleRhombohedral1: parse('1 0 -1; 0 1 -1; 1 1 1'),
   /** hR: the C-centred monoclinic cell C₁ (unique axis b₁ along a twofold axis of the lattice). */
   monoclinicC1: parse('2/3 0 0; 1/3 1 0; -2/3 0 1'),
 };
@@ -128,15 +99,22 @@ const CELL_DEFINITIONS = {
 function settingBasis(setting: string): RMatrix {
   const columns = (setting.match(/-?[abc]/g) ?? []).map((t) => {
     const v = [ZERO, ZERO, ZERO].slice();
+    // A regular expression, not the string '-': a lone '-' literal here changes the order in which
+    // TypeScript prints the union '+' | '-' in the declarations, and so the generated Python types.
     v['abc'.indexOf(t.replace(/^-/, ''))] = rational(/^-/.test(t) ? -1 : 1);
     return v;
   });
   return [0, 1, 2].map((i) => columns.map((col) => col[i]));
 }
 
-/** The threefold rotation about c of a hexagonal basis (a → b → −a − b) and the twofold rotation about c. */
+/** Rotations about c of a hexagonal basis: a → a + b (sixfold), a → b (threefold), a → −a (twofold); and the fourfold of a tetragonal one. */
+const SIXFOLD = parse('1 -1 0; 1 0 0; 0 0 1');
 const THREEFOLD = parse('0 -1 0; 1 -1 0; 0 0 1');
 const TWOFOLD = parse('-1 0 0; 0 -1 0; 0 0 1');
+const FOURFOLD = parse('0 -1 0; 1 0 0; 0 0 1');
+
+/** The obverse rhombohedral centring vector of the triple hexagonal cell R₁, (2/3, 1/3, 1/3). */
+const OBVERSE_CENTRING = parse('2/3; 1/3; 1/3');
 
 /**
  * The basis of a named cell in the conventional cell of the standard setting, P with
@@ -147,11 +125,16 @@ const TWOFOLD = parse('-1 0 0; 0 -1 0; 0 0 1');
  *   axes the same cell relabelled (P_b^(k−1)·S);
  * - orthorhombic: the setting from its symbol (`settingBasis`); the primitive cell of I is
  *   t − a, t − b, t − c with the centring vector t = (a + b + c)/2, that of F the three centring
- *   vectors (b + c)/2, (a + c)/2, (a + b)/2; so also for tI, cI and cF;
- * - hR: the triple hexagonal cells R₁, R₂, R₃ are R₁ turned by the threefold rotation 0, 1, 2 times,
- *   the reverse ones these turned by the twofold rotation about c; the monoclinic cells C₂, C₃ are
- *   C₁ turned likewise, and A₁, A₂, A₃ are C₁, C₂, C₃ with the unique axis c (the setting cab);
- * - the others as `CELL_DEFINITIONS`.
+ *   vectors (b + c)/2, (a + c)/2, (a + b)/2; the I rule also for tI and cI, the F rule for cF;
+ * - tetragonal: C₂ (F₂) is C₁ (F₁) turned by the fourfold rotation about c;
+ * - hP: C₂, C₃ and H₂, H₃ are C₁ and H₁ turned once and twice by the sixfold rotation, D₂ is D₁
+ *   turned by the twofold rotation;
+ * - hR: the primitive rhombohedral cell is the obverse centring vector t = (2/3, 1/3, 1/3) and its
+ *   turns by the threefold rotation; the triple hexagonal cells R₁, R₂, R₃ are R₁ turned by the
+ *   threefold rotation 0, 1, 2 times, the reverse ones these turned by the twofold rotation about c;
+ *   the monoclinic cells C₂, C₃ are C₁ turned likewise, and A₁, A₂, A₃ are C₁, C₂, C₃ with the unique
+ *   axis c (the setting cab);
+ * - the first cell of each kind as `CELL_DEFINITIONS`.
  */
 function basisOf(lattice: BravaisLattice, key: string): RMatrix {
   const identity = parse('1 0 0; 0 1 0; 0 0 1');
@@ -168,19 +151,22 @@ function basisOf(lattice: BravaisLattice, key: string): RMatrix {
   if (lattice === 'tI' && key === 'P') return iPrimitive;
   if (lattice === 'cI' && key === 'P') return iPrimitive;
   if (lattice === 'cF' && key === 'P') return fPrimitive;
-  if (lattice === 'tP' || lattice === 'tI')
-    return key === lattice[1] ? identity : CELL_DEFINITIONS.tetragonal[Number(key[1]) - 1];
+  if (lattice === 'tP' || lattice === 'tI') {
+    return key === lattice[1] ? identity : product(power(FOURFOLD, Number(key[1]) - 1), CELL_DEFINITIONS.tetragonal1);
+  }
   if (lattice === 'hP') {
     if (key === 'P') return identity;
     const k = Number(key[1]) - 1;
-    return {
-      C: CELL_DEFINITIONS.orthohexagonal,
-      H: CELL_DEFINITIONS.tripleHexagonal,
-      D: CELL_DEFINITIONS.tripleRhombohedral,
-    }[key[0] as 'C' | 'H' | 'D'][k];
+    if (key[0] === 'C') return product(power(SIXFOLD, k), CELL_DEFINITIONS.orthohexagonal1);
+    if (key[0] === 'H') return product(power(SIXFOLD, k), CELL_DEFINITIONS.tripleHexagonal1);
+    return product(power(TWOFOLD, k), CELL_DEFINITIONS.tripleRhombohedral1);
   }
   if (lattice === 'hR') {
-    if (key === 'rhombohedral') return CELL_DEFINITIONS.rhombohedral;
+    if (key === 'rhombohedral') {
+      // The centring vector and its turns by the threefold rotation.
+      const columns = [0, 1, 2].map((k) => product(power(THREEFOLD, k), OBVERSE_CENTRING));
+      return [0, 1, 2].map((i) => columns.map((col) => col[i][0]));
+    }
     const k = Number(key[1]) - 1;
     if (key[0] === 'R') {
       const obverse = power(THREEFOLD, k);
