@@ -2111,11 +2111,11 @@ def site_symmetry_of(
     """The site symmetry of ``direction`` (any non-zero vector, Cartesian) under ``operations``, a
     point group given as the list of all its operations (for instance those of a distorted crystal).
     Time reversal is ignored: a direction or a face normal is not changed by it. The list is made an
-    exact group once (the group within ``EPSILON`` or the tolerance nearest to it); the site
-    symmetry is that of the most special symmetry element (a mirror plane or a rotation axis) whose
-    distance to the unit vector of the direction is below the tolerance, the direction set onto it;
-    of elements fixed by equally many operations, the nearest. The indices refer to the given list.
-    An empty list is the group 1. Each operation is read by its Cartesian matrix (``cartesian``).
+    exact group once, near it (its own matrices averaged over its product table); the site symmetry
+    is that of the most special symmetry element (a mirror plane or a rotation axis) whose distance
+    to the unit vector of the direction is below the tolerance, the direction set onto it; of
+    elements fixed by equally many operations, the nearest. The indices refer to the given list. An
+    empty list is the group 1. Each operation is read by its Cartesian matrix (``cartesian``).
     Raises SymcrysError for an operation without an orthogonal Cartesian matrix (``cartesian``;
     within ``tolerance``, at least ``EPSILON``), for a list that is not closed under products (only
     generators, for instance; the error names the missing product), for a tolerance below the

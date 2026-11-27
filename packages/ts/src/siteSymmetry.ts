@@ -5,7 +5,7 @@
 
 import { checkNumbers, checkOptions, shown, TOLERANCE_KEYS } from './checks.js';
 import { apply, IDENTITY, multiply, operatorNorm, type Mat3, type Vec3 } from './linalg.js';
-import { checkGroup, idealGroup } from './closure.js';
+import { checkGroup, idealOfList } from './closure.js';
 import {
   checkCartesianOperations,
   checkOptionalTimeReversal,
@@ -93,35 +93,16 @@ interface ExactList {
 const exactLists = new Map<string, ExactList>();
 const EXACT_LISTS = 64;
 
-/**
- * The exact group of a list that `checkGroup` has accepted (`idealGroup`), aligned with the list:
- * each given operation paired with the exact one of the same time reversal nearest to it, once each.
- */
+/** The exact group of a list that `checkGroup` has accepted, index for index with the list. */
 function exactList(operations: readonly CartesianOperation[], within: number): ExactList {
   const key = `${within}|${operations
     .map((op) => `${op.timeReversal === true ? 1 : 0}${op.cartesian.flat().join(',')}`)
     .join(';')}`;
   const known = exactLists.get(key);
   if (known) return known;
-  const ideal = idealGroup(operations, within).operations;
-  const used = new Set<number>();
-  const aligned = operations.map((op) => {
-    let best = -1;
-    let bestDistance = Infinity;
-    ideal.forEach((e, k) => {
-      if (used.has(k) || e.timeReversal !== (op.timeReversal === true)) return;
-      const d = Math.max(...e.cartesian.flatMap((row, i) => row.map((v, j) => Math.abs(v - op.cartesian[i][j]))));
-      if (d < bestDistance) {
-        best = k;
-        bestDistance = d;
-      }
-    });
-    if (best < 0 || ideal.length !== operations.length) {
-      throw new RangeError(`The operations do not settle into a group of ${operations.length} within ${within}`);
-    }
-    used.add(best);
-    return ideal[best];
-  });
+  // The list itself is made exact, index for index: checkGroup has found it closed within the
+  // tolerance, and closing it again would count the errors of products of products against it.
+  const aligned = idealOfList(operations, within).operations;
   const deviation = Math.max(
     ...operations.map((op, i) =>
       operatorNorm(op.cartesian.map((row, a) => row.map((v, b) => v - aligned[i].cartesian[a][b])) as unknown as Mat3),
@@ -202,6 +183,8 @@ function elementsOf(operations: readonly CartesianOperation[]): readonly Element
     const projectors: Mat3[] = [IDENTITY];
     for (const op of operations) {
       const P = fixedSpaceProjector(op.cartesian);
+      // The inversion and the rotoinversions fix no direction: no element.
+      if (P.every((row) => row.every((x) => Math.abs(x) < ROUNDING_EPSILON))) continue;
       if (!projectors.some((Q) => near(P, Q))) projectors.push(P);
     }
     elements = projectors.map((P) => ({
@@ -252,7 +235,7 @@ function siteInExactGroup(operations: readonly CartesianOperation[], v: Vec3, to
  * The site symmetry of `direction` (any non-zero vector, Cartesian) under `operations`, a point
  * group given as the list of all its operations (for instance those of a distorted crystal). Time
  * reversal is ignored: a direction or a face normal is not changed by it. The list is made an exact
- * group once (the group within `EPSILON` or the tolerance nearest to it); the site symmetry is that
+ * group once, near it (its own matrices averaged over its product table); the site symmetry is that
  * of the most special symmetry element (a mirror plane or a rotation axis) whose distance to the
  * unit vector of the direction is below the tolerance, the direction set onto it; of elements fixed
  * by equally many operations, the nearest. The indices refer to the given list. An empty list is

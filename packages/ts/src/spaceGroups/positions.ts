@@ -253,7 +253,9 @@ export function siteSymmetryIn(
     Math.max(...x.map((v, k) => Math.abs(v - y[k] - Math.round(v - y[k]))));
   for (const op of ops) {
     const [[a, b], [c, d]] = op.matrix;
-    const w = op.translation;
+    // The translation modulo the lattice, so that the windows below find the nearest elements also for
+    // a translation given with whole cells added.
+    const w = op.translation.map((x) => x - Math.floor(x));
     const det = a * d - b * c;
     if (a === 1 && b === 0 && c === 0 && d === 1) {
       // The identity fixes the plane; a translation, nothing.

@@ -192,3 +192,43 @@ describe('#235: orbitOf below the accuracy of the operations', () => {
     expect(() => classes.orbitOf(ops, [1, 0, 0], { tolerance: 1e-8 })).toThrow(RangeError);
   });
 });
+
+describe('#235: what the review of #244 found', () => {
+  it('a noisy list that is a group at the default tolerance is not refused for its closure', () => {
+    // Entries moved by ±2·10⁻⁶ in a fixed pattern: the list is a group within 10⁻⁵ and deviates by
+    // 6·10⁻⁶; closing it again from generators would pile up the errors of products of products.
+    const ops = classes.operations('4mm').map((o, k) => ({
+      cartesian: o.cartesian.map((r, i) => r.map((v, j) => v + 2e-6 * ((k + i + j) % 2 ? 1 : -1))) as unknown as Mat3,
+    }));
+    // ITA (2016) Table 3.2.3.2, 4mm, p. 750: position 1 a 4mm 0,0,z.
+    expect(classes.siteSymmetryOf(ops, [0, 0, 1]).operations).toEqual([0, 1, 2, 3, 4, 5, 6, 7]);
+    expect(classes.orbitOf(ops, [0, 0, 1])).toHaveLength(1);
+  });
+
+  it('noisy lists of every group at errors of 3·10⁻⁶ are taken at the default tolerance', () => {
+    const random = seededRandom(11);
+    const refused: string[] = [];
+    for (const key of magnetic.POINT_GROUP_KEYS) {
+      const exact = magnetic.operations(key);
+      const given = noisy(exact, 3e-6, random);
+      // Below the default tolerance 10⁻⁵ unless the deviation of the list exceeds it.
+      if (deviation(given, exact) >= 5e-6) continue;
+      try {
+        magnetic.siteSymmetryOf(given, [0.3, 0.4, 0.86]);
+      } catch (e) {
+        refused.push(`${key}: ${String(e)}`);
+      }
+    }
+    expect(refused).toEqual([]);
+  });
+
+  it('the inversion is no element: a tolerance just below 1 gives a direction, not NaN', () => {
+    const site = classes.siteSymmetry(
+      '-1',
+      { cartesian: [0.25217342376708984, -0.4891653060913086, 0.4031553529202938] },
+      { tolerance: 1 - 2 ** -53 },
+    );
+    expect(site.operations).toEqual([0]);
+    expect(site.direction.every((x) => Number.isFinite(x))).toBe(true);
+  });
+});

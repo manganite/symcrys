@@ -265,6 +265,9 @@ describe('siteSymmetry', () => {
     // Before #133 the product of two operations was looked up by its matrix alone, so in a grey group
     // it always found the copy without time reversal: 6mm1' at [0.74, -0.16, -0.14], tolerance 0.7,
     // gave 15 of its 24 operations.
+    // 6mm1' at 0.7: the direction lies 0.21 from the mirror normal to y and 0.98 from the sixfold
+    // axis, so the site symmetry is that mirror with its primed copy, 1, 1', m, m'.
+    expect(siteSymmetryOf(operations("6mm1'"), [0.74, -0.16, -0.14], { tolerance: 0.7 }).operations).toHaveLength(4);
     expect(GREY_POINT_GROUP_KEYS).toHaveLength(32);
     for (const key of GREY_POINT_GROUP_KEYS) {
       const ops = operations(key);

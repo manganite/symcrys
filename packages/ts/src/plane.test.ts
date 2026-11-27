@@ -1236,3 +1236,14 @@ describe('#238: wyckoffDistances in a skew basis', () => {
     expect(plane.wyckoffDistances('p4', { point: [0.1, 0.2] }, { basis: [[2, 0], [0, 2]] })).toHaveLength(4); // prettier-ignore
   });
 });
+
+describe('#235: what the review of #244 found', () => {
+  it('a mirror given with whole cells added to its translation is still a mirror', () => {
+    // −x, y + 3 is the mirror x = 0 (ITA 2016, pm, p. 178) shifted by three cells along it.
+    const ops = [
+      { matrix: [[1, 0], [0, 1]], translation: [0, 0] },
+      { matrix: [[-1, 0], [0, 1]], translation: [0, 3] },
+    ]; // prettier-ignore
+    expect(plane.siteSymmetryOf(ops, { point: [1e-6, 0.3] }).operations).toEqual([0, 1]);
+  });
+});

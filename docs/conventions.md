@@ -772,7 +772,8 @@ read in the basis a, b, c along x, y, z, which gives the right site symmetry for
 **Site symmetry.** `siteSymmetryOf(operations, direction, { tolerance })` returns the operations of
 any list (a point group, or for example the operations left after distorting a crystal) that fix
 the direction. The tolerance (default `EPSILON`, 10⁻⁵) measures the distance to the symmetry
-element: the list is made an exact group once (the group nearest to it, `idealGroup`), and of the
+element: the list is made an exact group once, near it (its own matrices averaged over its product
+table), and of the
 elements of that group, the fixed spaces of its operations (a mirror plane, a rotation axis, the
 whole space for the identity), those whose distance to the unit vector of the direction (‖v − Pv‖,
 P the projector onto the element) is below the tolerance are candidates. The most special

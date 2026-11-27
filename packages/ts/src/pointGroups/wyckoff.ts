@@ -296,8 +296,7 @@ const sortedKey = (list: readonly number[]): string => [...list].sort((a, b) => 
  * The Wyckoff position of a face (field `hkl`), a lattice direction (`uvw`) or a Cartesian
  * direction (`cartesian`) in a crystal class: the position whose first face has a site symmetry conjugate
  * to that of the direction (ITA's definition). `tolerance` as for `siteSymmetryOf`. Throws a
- * RangeError as `siteSymmetry` does, and if the operations found within the tolerance do not match
- * any position (a tolerance too large).
+ * RangeError as `siteSymmetry` does.
  */
 export function wyckoffPosition(
   key: PointGroupKey,

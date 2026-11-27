@@ -303,7 +303,23 @@ export interface IdealGroup {
  * elements or do not settle into a group (a tolerance too large or too small for their errors).
  */
 export function idealGroup(operations: readonly CartesianOperation[], tolerance: number): IdealGroup {
-  const group = closedGroup(operations, tolerance);
+  return idealOfGroup(closedGroup(operations, tolerance), tolerance);
+}
+
+/**
+ * A list that is a group within `tolerance` already (`checkGroup`), made exact as `idealGroup` makes
+ * its closure, index for index: the list is not closed again, so the errors of products of products
+ * do not count against the tolerance.
+ */
+export function idealOfList(operations: readonly CartesianOperation[], tolerance: number): IdealGroup {
+  return idealOfGroup(
+    operations.map((op) => ({ cartesian: op.cartesian, timeReversal: op.timeReversal === true })),
+    tolerance,
+  );
+}
+
+/** The averaging of `idealGroup` on a list that is a group within `tolerance`, index for index. */
+function idealOfGroup(group: readonly CartesianOperation[], tolerance: number): IdealGroup {
   const n = group.length;
   // The product table: the element nearest to each product, of the same time reversal, sought
   // among the elements of its kind first and among all if none of them is near enough.

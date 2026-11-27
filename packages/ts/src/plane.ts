@@ -1178,7 +1178,6 @@ export function orbit(
 
 // --- lists of operations ---------------------------------------------------------------------------
 
-/** The operations of a caller, read exactly: integer matrices, translations as fractions within the tolerance. */
 /**
  * How far operations read exactly lie from the given numbers: the largest displacement per coordinate
  * of a point of the cell, max over operations and rows of Σⱼ |ΔWᵢⱼ| + |Δwᵢ|.
@@ -1208,6 +1207,7 @@ function checkPointTolerance(who: string, tolerance: number, deviation: number):
   }
 }
 
+/** The operations of a caller, read exactly: integer matrices, translations as fractions within the tolerance. */
 function exactList(operations: unknown, name: string, tolerance: number): ExactOperation[] {
   if (!Array.isArray(operations)) {
     throw new RangeError(`${name} takes a list of operations { matrix, translation }, not ${shown(operations)}`);
