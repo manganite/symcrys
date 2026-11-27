@@ -36,6 +36,13 @@ export type DirectionInput = FaceIndices | DirectionIndices | CartesianDirection
 
 const FIELDS = ['hkl', 'uvw', 'cartesian'] as const;
 
+/**
+ * The largest component of indices: an image under an operation of a point group (a matrix W or
+ * its inverse transpose with at most three entries ±1 in a row) has components up to three times as
+ * large, which stay safe integers.
+ */
+const MAX_INDEX = Math.floor(Number.MAX_SAFE_INTEGER / 3);
+
 /** Three integers, not all zero, as indices of a face or a lattice direction; a RangeError otherwise. */
 export function indicesOf(value: unknown, name: string): readonly [number, number, number] {
   if (
@@ -45,6 +52,11 @@ export function indicesOf(value: unknown, name: string): readonly [number, numbe
     value.every((x) => x === 0)
   ) {
     throw new RangeError(`${name} must be three (safe) integers, not all zero: ${shown(value)}`);
+  }
+  if (value.some((x) => Math.abs(x) > MAX_INDEX)) {
+    throw new RangeError(
+      `${name} must have components of at most ${MAX_INDEX} in magnitude, so that their images are exact: ${shown(value)}`,
+    );
   }
   return [value[0] + 0, value[1] + 0, value[2] + 0];
 }

@@ -146,6 +146,9 @@ const RENAMED_INTRINSIC: Readonly<Record<string, IntrinsicSymmetry>> = {
 };
 const RENAMED_TIME_PARITY: Readonly<Record<string, TimeParity>> = { i: 'even', c: 'odd' };
 
+/** The fields of a tensor specification; another is a mistake (a misspelt `timeParity` would read as even). */
+const SPEC_FIELDS: readonly string[] = ['rank', 'kind', 'timeParity', 'intrinsic'];
+
 /** Checks a specification and returns the signed index permutations that generate its intrinsic symmetry. */
 function checkSpec(spec: TensorSpec): SignedPermutation[] {
   const { rank, kind, timeParity, intrinsic } = spec;
@@ -153,6 +156,10 @@ function checkSpec(spec: TensorSpec): SignedPermutation[] {
     throw new RangeError(
       `The field parity of a tensor specification is named kind since symcrys 0.11 ('polar' or 'axial')`,
     );
+  }
+  const unknown = Object.keys(spec).filter((k) => !SPEC_FIELDS.includes(k));
+  if (unknown.length > 0) {
+    throw new RangeError(`Unknown field ${shown(unknown[0])} of a tensor specification (${SPEC_FIELDS.join(', ')})`);
   }
   if (!RANKS.includes(rank)) throw new RangeError(`Tensor rank must be 0 to 4, not ${shown(rank)}`);
   if (kind !== 'polar' && kind !== 'axial') {

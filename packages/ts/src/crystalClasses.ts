@@ -26,6 +26,8 @@ import * as wyckoff from './pointGroups/wyckoff.js';
 import * as directions from './pointGroups/directions.js';
 import type { CartesianDirection, DirectionInput } from './pointGroups/directions.js';
 import * as cell from './cell.js';
+import * as coordinates from './coordinates.js';
+import type { CoordinateChange, CoordinateQuantities, CoordinateTransformation } from './coordinates.js';
 import * as site from './siteSymmetry.js';
 import { TENSOR_PROPERTIES as ALL_TENSOR_PROPERTIES } from './tensors/propertyTable.js';
 import type { TensorPropertyName as MagneticTensorPropertyName } from './tensors/propertyTable.js';
@@ -570,16 +572,19 @@ export function siteSymmetry(
   direction: FaceIndices,
   options?: SettingOptions & ToleranceOptions,
 ): SiteSymmetry;
+/** The site symmetry of a lattice direction [uvw]; see the first signature. */
 export function siteSymmetry(
   key: PointGroupKey,
   direction: DirectionIndices,
   options?: SettingOptions & ToleranceOptions,
 ): SiteSymmetry;
+/** The site symmetry of a Cartesian direction; see the first signature. */
 export function siteSymmetry(
   key: PointGroupKey,
   direction: CartesianDirection,
   options?: SettingOptions & ToleranceOptions,
 ): SiteSymmetry;
+/** The site symmetry of a face, a lattice direction or a Cartesian direction; see the first signature. */
 export function siteSymmetry(
   key: PointGroupKey,
   direction: DirectionInput,
@@ -615,16 +620,19 @@ export function wyckoffPosition(
   direction: FaceIndices,
   options?: SettingOptions & ToleranceOptions,
 ): WyckoffPosition;
+/** The Wyckoff position of a lattice direction [uvw]; see the first signature. */
 export function wyckoffPosition(
   key: PointGroupKey,
   direction: DirectionIndices,
   options?: SettingOptions & ToleranceOptions,
 ): WyckoffPosition;
+/** The Wyckoff position of a Cartesian direction; see the first signature. */
 export function wyckoffPosition(
   key: PointGroupKey,
   direction: CartesianDirection,
   options?: SettingOptions & ToleranceOptions,
 ): WyckoffPosition;
+/** The Wyckoff position of a face, a lattice direction or a Cartesian direction; see the first signature. */
 export function wyckoffPosition(
   key: PointGroupKey,
   direction: DirectionInput,
@@ -683,11 +691,13 @@ export function residualOperations<T extends CellOperation>(
  * given, as three integers not all zero (hexagonal axes: three indices, without i).
  */
 export function orbit(key: PointGroupKey, indices: FaceIndices, options?: SettingOptions): readonly FaceOrbitEntry[];
+/** The orbit of a lattice direction [uvw]; see the first signature. */
 export function orbit(
   key: PointGroupKey,
   indices: DirectionIndices,
   options?: SettingOptions,
 ): readonly DirectionOrbitEntry[];
+/** The orbit of a face (hkl); see the first signature. */
 export function orbit(
   key: PointGroupKey,
   indices: FaceIndices | DirectionIndices,
@@ -881,4 +891,49 @@ export function allowedPropertiesOf(
       return tensors.allowsTensor(group.operations, spec, perms);
     }),
   );
+}
+
+// --- changes of the coordinate system ------------------------------------------------------------
+
+/**
+ * Changes the coordinate system by the pair (P, p): the new basis is (a′, b′, c′) = (a, b, c)·P and
+ * the new origin lies at p. Transforms the given quantities by ITA's equations: point coordinates
+ * x′ = P⁻¹(x − p), vector coefficients [uvw]′ = P⁻¹[uvw], Miller indices (hkl)′ = (hkl)P, the
+ * metric tensor G′ = PᵀGP, and operations W′ = P⁻¹WP, w′ = P⁻¹(w + (W − I)p); and gives the inverse
+ * pair (Q, q) = (P⁻¹, −P⁻¹p). det P may be negative (a change of handedness, which ITA allows).
+ *
+ * P and the matrices W are read each number as a fraction and transformed exactly, so that every
+ * result, the inverse pair included, can be passed back: a number that is a fraction to rounding is
+ * that fraction, another is read as the simplest fraction within the tolerance (default `EPSILON`;
+ * 0.3333333 is 1/3). The origin shift p and the translations w are positions: a fraction to rounding
+ * (1/3 as 0.3333333333) is that fraction, another number is taken as it is (0.1234 stays 0.1234). P is rational in a change between
+ * lattice bases, as in ITA: an entry of P that needs a fraction with a denominator above
+ * tolerance^(−1/3) (46 at 10⁻⁵), such as cos 30° of a rotation, is refused
+ * (docs/conventions.md, "Tolerances").
+ * A transformed
+ * operation has a `matrix` and a `translation` alone: other fields of the record (`cartesian`, in the
+ * magnetic API `timeReversal`) are not carried over, so they are matched by index. Throws a
+ * RangeError for an operation combined with time reversal (`timeReversal` set and not `false`;
+ * time reversal belongs to the magnetic API), a singular P, an entry of P that is not rational within the tolerance, a quantity
+ * of the wrong shape, an unknown quantity, an operation with
+ * det W ≠ ±1, and one whose W′ is not integral (the new basis does not span a lattice that the
+ * operation maps onto itself).
+ *
+ * @remarks Source: ITA (6th ed., 2016), § 1.5.1.3, p. 83 (the pair (P, p)); § 1.5.2, pp. 83–85 (the
+ * equations); § 1.5.1.2, p. 76 (a negative det P).
+ */
+export function changeOfCoordinates(
+  transformation: CoordinateTransformation,
+  quantities: CoordinateQuantities,
+  options?: ToleranceOptions,
+): CoordinateChange {
+  const ops = (quantities as { readonly operations?: unknown } | null)?.operations;
+  if (Array.isArray(ops)) {
+    try {
+      checkUnitary(ops as readonly { readonly timeReversal?: false }[]);
+    } catch (e) {
+      throw new RangeError(`changeOfCoordinates: ${(e as Error).message}`, { cause: e });
+    }
+  }
+  return coordinates.changeOfCoordinates(transformation, quantities, options);
 }

@@ -6,7 +6,7 @@
 import { checkNumbers, checkOptions, SETTING_KEYS, shown, TOLERANCE_KEYS } from '../checks.js';
 import { apply, inverse, type Mat3, type Vec3 } from '../linalg.js';
 import { checkCartesianOperations, checkOptionalTimeReversal, type DirectionOperation } from '../operations.js';
-import { siteTolerance } from '../siteSymmetry.js';
+import { orbitInGroup, siteTolerance } from '../siteSymmetry.js';
 import { checkGroup } from '../closure.js';
 import { EPSILON, TOLERANCE_BOUND } from '../tolerances.js';
 import type { ToleranceOptions } from '../tolerances.js';
@@ -62,11 +62,13 @@ export function orbit(
   indices: FaceIndices,
   options?: SettingOptions,
 ): readonly FaceOrbitEntry[];
+/** The orbit of a lattice direction [uvw]; see the first signature. */
 export function orbit(
   key: MagneticPointGroupKey,
   indices: DirectionIndices,
   options?: SettingOptions,
 ): readonly DirectionOrbitEntry[];
+/** The orbit of a face (hkl); see the first signature. */
 export function orbit(
   key: MagneticPointGroupKey,
   indices: FaceIndices | DirectionIndices,
@@ -115,7 +117,7 @@ function integerInverseTranspose(w: Mat3): Mat3 {
 
 /** One pole of the orbit of a direction under a list of operations. */
 export interface OrbitPole {
-  /** The image of the given direction as a Cartesian unit vector (the first operation's image where several coincide). */
+  /** The image of the direction set onto the fixed space of its site symmetry, a Cartesian unit vector. */
   readonly direction: Vec3;
   /** Indices into the given operations of those that map the direction here, ascending. */
   readonly operations: readonly number[];
@@ -123,10 +125,11 @@ export interface OrbitPole {
 
 /**
  * The orbit of a direction (any non-zero vector, Cartesian, e.g. a face normal) under a list of
- * operations, for instance those of a distorted crystal: the images of its unit vector under each
- * operation, coinciding images merged (closer than `tolerance`, default `EPSILON`, as for
- * `siteSymmetryOf`), in the order in which the operations reach them, each with the indices of the
- * operations that map the direction there. The list is a point group given as all its operations;
+ * operations, for instance those of a distorted crystal: one image per coset of its site symmetry
+ * (`siteSymmetryOf`, with the same `tolerance`), the unit vector set onto the fixed space of the site
+ * symmetry and turned by the operations, in the order in which the operations reach them, each with
+ * the indices of the operations that map the direction there; so the entry with the identity holds
+ * the operations of `siteSymmetryOf`, and the number of entries is its multiplicity. The list is a point group given as all its operations;
  * an empty list is the group 1, whose orbit is the direction itself. Time reversal does not move a
  * direction; an operation that leaves it out counts as one without it.
  * Throws a RangeError for a zero vector, for an operation without an orthogonal Cartesian matrix
@@ -153,16 +156,9 @@ export function orbitOf(
       Object.freeze({ direction: Object.freeze(u) as unknown as Vec3, operations: Object.freeze([]) }),
     ]);
   }
-  checkGroup(operations, Math.max(within, EPSILON), 'orbitOf');
-  const poles: { direction: Vec3; operations: number[] }[] = [];
-  operations.forEach((op, i) => {
-    const w = apply(op.cartesian, u);
-    const pole = poles.find(
-      (p) => Math.hypot(p.direction[0] - w[0], p.direction[1] - w[1], p.direction[2] - w[2]) < tolerance,
-    );
-    if (pole) pole.operations.push(i);
-    else poles.push({ direction: w, operations: [i] });
-  });
+  const ops = operations.map((op) => ({ cartesian: op.cartesian, timeReversal: op.timeReversal === true }));
+  checkGroup(ops, Math.max(within, EPSILON), 'orbitOf');
+  const poles = orbitInGroup(ops, u, tolerance);
   return Object.freeze(
     poles.map((p) =>
       Object.freeze({

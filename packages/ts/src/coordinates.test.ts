@@ -369,3 +369,37 @@ describe('changeOfCoordinates: a linear part that is not rational within the tol
     }
   });
 });
+
+describe('changeOfCoordinates: what the review before 0.15.0 found', () => {
+  const I: Mat3 = [
+    [1, 0, 0],
+    [0, 1, 0],
+    [0, 0, 1],
+  ];
+  it('takes an origin shift and translations that are no fractions to rounding as they are', () => {
+    const c = classes.changeOfCoordinates(
+      { linearPart: I, originShift: [0.3333, 0.1234, 1 / 3] },
+      { points: [[0.5, 0.5, 0.5]], operations: [{ matrix: I, translation: [0.1234, 0, 0] }] },
+    );
+    const [x, y, z] = c.points![0];
+    expect(x).toBeCloseTo(0.1667, 14);
+    expect(y).toBeCloseTo(0.3766, 14);
+    expect(z).toBe(0.5 - 1 / 3);
+    expect(c.operations![0].translation[0]).toBeCloseTo(0.1234, 15);
+    expect(c.inverse.originShift[1]).toBeCloseTo(-0.1234, 15);
+  });
+
+  it('refuses time reversal in symcrys and a timeReversal that is not a boolean in both entry points', () => {
+    const op = { matrix: I, translation: [0, 0, 0] };
+    expect(() =>
+      classes.changeOfCoordinates({ linearPart: I }, { operations: [{ ...op, timeReversal: true } as never] }),
+    ).toThrow(/magnetic/);
+    expect(() =>
+      magnetic.changeOfCoordinates({ linearPart: I }, { operations: [{ ...op, timeReversal: 'yes' } as never] }),
+    ).toThrow(/timeReversal must be true, false or absent/);
+    expect(
+      magnetic.changeOfCoordinates({ linearPart: I }, { operations: [{ ...op, timeReversal: true } as never] })
+        .operations,
+    ).toHaveLength(1);
+  });
+});

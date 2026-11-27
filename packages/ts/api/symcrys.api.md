@@ -324,10 +324,10 @@ export function operations(key: PointGroupKey, options?: SettingOptions): readon
 // @public
 export function orbit(key: PointGroupKey, indices: FaceIndices, options?: SettingOptions): readonly FaceOrbitEntry[];
 
-// @public (undocumented)
+// @public
 export function orbit(key: PointGroupKey, indices: DirectionIndices, options?: SettingOptions): readonly DirectionOrbitEntry[];
 
-// @public (undocumented)
+// @public
 export function orbit(key: PointGroupKey, indices: FaceIndices | DirectionIndices, options?: SettingOptions): readonly FaceOrbitEntry[] | readonly DirectionOrbitEntry[];
 
 // @public
@@ -415,13 +415,13 @@ export interface SiteSymmetry {
 // @public
 export function siteSymmetry(key: PointGroupKey, direction: FaceIndices, options?: SettingOptions & ToleranceOptions): SiteSymmetry;
 
-// @public (undocumented)
+// @public
 export function siteSymmetry(key: PointGroupKey, direction: DirectionIndices, options?: SettingOptions & ToleranceOptions): SiteSymmetry;
 
-// @public (undocumented)
+// @public
 export function siteSymmetry(key: PointGroupKey, direction: CartesianDirection, options?: SettingOptions & ToleranceOptions): SiteSymmetry;
 
-// @public (undocumented)
+// @public
 export function siteSymmetry(key: PointGroupKey, direction: DirectionInput, options?: SettingOptions & ToleranceOptions): SiteSymmetry;
 
 // @public
@@ -530,13 +530,13 @@ export interface WyckoffPosition {
 // @public
 export function wyckoffPosition(key: PointGroupKey, direction: FaceIndices, options?: SettingOptions & ToleranceOptions): WyckoffPosition;
 
-// @public (undocumented)
+// @public
 export function wyckoffPosition(key: PointGroupKey, direction: DirectionIndices, options?: SettingOptions & ToleranceOptions): WyckoffPosition;
 
-// @public (undocumented)
+// @public
 export function wyckoffPosition(key: PointGroupKey, direction: CartesianDirection, options?: SettingOptions & ToleranceOptions): WyckoffPosition;
 
-// @public (undocumented)
+// @public
 export function wyckoffPosition(key: PointGroupKey, direction: DirectionInput, options?: SettingOptions & ToleranceOptions): WyckoffPosition;
 
 // @public

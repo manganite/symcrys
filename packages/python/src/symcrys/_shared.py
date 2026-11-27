@@ -5,7 +5,8 @@ from __future__ import annotations
 
 import dataclasses
 import operator
-from typing import Any, Mapping
+import functools
+from typing import Any, Callable, Mapping, TypeVar, cast
 
 import numpy as np
 from numpy.typing import NDArray
@@ -28,6 +29,29 @@ def to_js(x: Any) -> Any:
         raise _engine.SymcrysError(str(e), "RangeError") from None
 
 
+_F = TypeVar("_F", bound=Callable[..., Any])
+
+
+def by_keyword(positional: int, fields: tuple[str, ...]) -> Callable[[_F], _F]:
+    """A function whose input is one of the keyword arguments ``fields`` (``point=``, ``hkl=``):
+    one passed by position is a SymcrysError that names them, not Python's bare TypeError."""
+
+    def wrap(function: _F) -> _F:
+        @functools.wraps(function)
+        def checked(*args: Any, **kwargs: Any) -> Any:
+            if len(args) > positional:
+                names = ", ".join(f"{f}=" for f in fields[:-1]) + f" or {fields[-1]}=" if len(fields) > 1 else f"{fields[0]}="
+                raise _engine.SymcrysError(
+                    f"{function.__name__} takes its input by keyword, {names}, not as positional argument {positional + 1}",
+                    "RangeError",
+                )
+            return function(*args, **kwargs)
+
+        return cast(_F, checked)
+
+    return wrap
+
+
 def _is_operations(x: Any) -> bool:
     """True for an instance of the ``Operations`` of a module (they carry ``_symcrys_operations``)."""
     return not isinstance(x, type) and getattr(type(x), "_symcrys_operations", False) is True
@@ -45,7 +69,8 @@ def operation_list(operations: Any, keys: tuple[str, ...] = ("cartesian",), bare
         return records(operations)
     shape = "{" + ", ".join(f'"{k}"' for k in keys) + "}"
     wanted = f"Operations, as operations() returns them, or a list of operations {shape}"
-    if isinstance(operations, (Mapping, str, bytes, type)) or not hasattr(operations, "__iter__"):
+    zero_dimensional = isinstance(operations, np.ndarray) and operations.ndim == 0
+    if isinstance(operations, (Mapping, str, bytes, type)) or not hasattr(operations, "__iter__") or zero_dimensional:
         raise _engine.SymcrysError(f"operations must be {wanted}, not {type(operations).__name__}", "RangeError")
     ops = list(operations)
     if not all(isinstance(op, Mapping) for op in ops):

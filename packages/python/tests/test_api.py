@@ -568,7 +568,7 @@ def test_an_error_of_the_library_other_than_a_range_error_is_internal(monkeypatc
         symcrys.point_group("32")
 
 
-def test_input_of_the_wrong_type_is_a_symcrys_error_that_names_the_argument() -> None:
+def test_input_of_the_wrong_type_is_a_symcrys_error_that_names_the_function() -> None:
     # The review of #121 step 8b: these raised NumPy's ValueError or Python's TypeError before.
     ops = symcrys.operations("4mm")
     cases = [
@@ -581,8 +581,8 @@ def test_input_of_the_wrong_type_is_a_symcrys_error_that_names_the_argument() ->
         (lambda: symcrys.tensor_form("32", 3), "spec must be a mapping"),  # type: ignore[arg-type]
         (lambda: symcrys.site_symmetry_of(ops, [1, 0, 1j]), "direction must be an array of real numbers"),
         (lambda: symcrys.site_symmetry_of(ops, "z"), "direction must be an array of real numbers"),
-        (lambda: symcrys.operations("32", setting=object()), "Argument 2 of operations cannot be passed"),  # type: ignore[arg-type]
-        (lambda: symcrys.site_symmetry_of(ops, [0, np.nan, 1]), "Argument 2 of site_symmetry_of: every number"),
+        (lambda: symcrys.operations("32", setting=object()), "operations: an argument cannot be passed"),  # type: ignore[arg-type]
+        (lambda: symcrys.site_symmetry_of(ops, [0, np.nan, 1]), "site_symmetry_of: every number"),
         (lambda: plane.orbit("p4", point=[[0.1], [0.2, 0.3]]), "two finite coordinates"),
     ]
     for call, message in cases:
@@ -779,3 +779,14 @@ def test_integers_beyond_2_53_are_refused_on_every_path() -> None:
 def test_a_field_of_transformed_operations_is_named_by_its_class() -> None:
     with pytest.raises(symcrys.SymcrysError, match="TransformedOperations.matrix"):
         symcrys.TransformedOperations(matrix=np.full((1, 3, 3), 0.5), translation=np.zeros((1, 3)))
+
+
+def test_an_input_passed_by_position_names_its_keywords() -> None:
+    with pytest.raises(symcrys.SymcrysError, match=r"point=, uv= or hk=, not as positional argument 2"):
+        plane.site_symmetry("p4mm", [0.5, 0.5])  # type: ignore[misc]
+    with pytest.raises(symcrys.SymcrysError, match=r"hkl=, uvw= or cartesian="):
+        symcrys.wyckoff_position("6/mmm", [2, 1, 0])  # type: ignore[misc]
+    with pytest.raises(symcrys.SymcrysError, match=r"a point point= .*an edge hk=, by one field"):
+        plane.site_symmetry("p4mm")
+    with pytest.raises(symcrys.SymcrysError, match="not ndarray"):
+        symcrys.point_group_of(np.array(1))

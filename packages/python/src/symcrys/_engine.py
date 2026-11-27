@@ -84,16 +84,16 @@ def invoke(name: str, *args: Any) -> Any:
     except (TypeError, ValueError):
         # JSON has no NaN or infinity, and no other Python objects; without this check the engine's
         # parser would report "unexpected token". The message names the argument.
-        for i, arg in enumerate(args):
+        for arg in args:
             try:
                 json.dumps(arg, allow_nan=False)
             except ValueError:
                 raise SymcrysError(
-                    python_terms(f"Argument {i + 1} of {name}: every number passed to symcrys must be finite, not NaN or infinite"),
+                    python_terms(f"{name}: every number passed to symcrys must be finite, not NaN or infinite"),
                     "RangeError",
                 ) from None
             except TypeError as e:
-                raise SymcrysError(python_terms(f"Argument {i + 1} of {name} cannot be passed to symcrys: {e}"), "RangeError") from None
+                raise SymcrysError(python_terms(f"{name}: an argument cannot be passed to symcrys: {e}"), "RangeError") from None
         raise
     answer = json.loads(call(name, args_json))
     if "error" in answer:
@@ -109,6 +109,8 @@ _CAMEL = re.compile(r"\b([a-z]{2,}(?:[A-Z][a-z0-9]*)+)\b")
 _LITERALS = {"undefined": "None", "null": "None", "true": "True", "false": "False"}
 _LITERAL = re.compile(r"\b(undefined|null|true|false)\b")
 _OPTION = re.compile(r"\{ (\w+): ([^{}]*?) \}")
+# A record named by its fields, { point } or { uv, hk }: in Python the keyword arguments.
+_FIELDS = re.compile(r"\{ (\w+(?:, \w+)*) \}")
 
 
 # A string in double quotes, as the library shows a value it was given; group 1 is set when it is the
@@ -118,6 +120,7 @@ _STRING = re.compile(r'"(?:[^"\\]|\\.)*"(?=(:)?)')
 
 def _terms(text: str) -> str:
     text = _OPTION.sub(lambda m: f"{m.group(1)}={m.group(2)}", text)
+    text = _FIELDS.sub(lambda m: ", ".join(f"{name}=" for name in m.group(1).split(", ")), text)
     text = _CAMEL.sub(lambda m: re.sub(r"([A-Z])", lambda c: "_" + c.group(1).lower(), m.group(1)), text)
     return _LITERAL.sub(lambda m: _LITERALS[m.group(1)], text)
 

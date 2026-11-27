@@ -261,16 +261,19 @@ export function siteSymmetry(
   direction: FaceIndices,
   options?: SettingOptions & ToleranceOptions,
 ): SiteSymmetry;
+/** The site symmetry of a lattice direction [uvw]; see the first signature. */
 export function siteSymmetry(
   key: MagneticPointGroupKey,
   direction: DirectionIndices,
   options?: SettingOptions & ToleranceOptions,
 ): SiteSymmetry;
+/** The site symmetry of a Cartesian direction; see the first signature. */
 export function siteSymmetry(
   key: MagneticPointGroupKey,
   direction: CartesianDirection,
   options?: SettingOptions & ToleranceOptions,
 ): SiteSymmetry;
+/** The site symmetry of a face, a lattice direction or a Cartesian direction; see the first signature. */
 export function siteSymmetry(
   key: MagneticPointGroupKey,
   direction: DirectionInput,

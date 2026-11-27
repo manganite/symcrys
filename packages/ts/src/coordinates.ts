@@ -4,15 +4,16 @@
  * entry points wrap it with their matrix types (docs/conventions.md, "Change of the coordinate
  * system").
  *
- * The linear part P, the origin shift p and the operations (W, w) are read each number as the
- * simplest fraction within the tolerance and transformed exactly, so that W′ = P⁻¹WP is exactly
- * integral where it is and every result, the inverse pair included, is read back exactly; points,
- * direction and plane coefficients and the metric are floating point.
+ * The linear part P and the matrices W are read each number as the simplest fraction within the
+ * tolerance and transformed exactly, so that W′ = P⁻¹WP is exactly integral where it is; the origin
+ * shift p and the translations w are exact when every number of them is a fraction to rounding and
+ * floating point otherwise, as are points, direction and plane coefficients and the metric.
  */
 
 import { checkObject, checkOptions, shown, TOLERANCE_KEYS } from './checks.js';
 import { EXACT_DENOMINATOR, ROUNDING_EPSILON, toleranceOf, type ToleranceOptions } from './tolerances.js';
 import { deepFreeze } from './freeze.js';
+import { checkOptionalTimeReversal } from './operations.js';
 import {
   rationalApply,
   rationalDeterminant,
@@ -178,12 +179,17 @@ function transform(
     transformation.originShift === undefined ? Array.from({ length: d }, () => 0) : transformation.originShift;
   if (!isVector(shift0, d))
     throw new RangeError(`${who}: the origin shift p must be ${d} numbers, not ${shown(shift0)}`);
-  const p = shift0.map((x) => fraction(x, 'coordinate of p'));
+  // p and w are positions, not a basis: a number that is a fraction to rounding (1/3 written as
+  // 0.3333333333) is that fraction, any other is taken as it is (0.1234 stays 0.1234). The tolerance
+  // reads only the matrices.
+  const position = (x: number): Rational | undefined => exact(x);
+  const pExact = shift0.map(position);
   const Q = rationalInverse(P);
-  const q = rationalApply(Q, p).map(negate);
   const Pf = floats(P);
   const Qf = floats(Q);
-  const pf = numbers(p);
+  const pf = shift0.map((x, i) => (pExact[i] ? toNumber(pExact[i]) : x) + 0);
+  const pAll = pExact.every((x) => x !== undefined) ? (pExact as Rational[]) : undefined;
+  const q = pAll ? numbers(rationalApply(Q, pAll).map(negate)) : floatApply(Qf, pf).map((x) => -x + 0);
 
   const vectors = (name: string, list: unknown): readonly (readonly number[])[] => {
     if (!Array.isArray(list) || !list.every((v) => isVector(v, d))) {
@@ -192,7 +198,7 @@ function transform(
     return list as readonly (readonly number[])[];
   };
 
-  const result: Record<string, unknown> = { inverse: { linearPart: floats(Q), originShift: numbers(q) } };
+  const result: Record<string, unknown> = { inverse: { linearPart: floats(Q), originShift: q } };
   if (quantities.points !== undefined) {
     result.points = vectors('points', quantities.points).map((x) =>
       floatApply(
@@ -242,7 +248,7 @@ function transform(
       if (!isVector(t0, d)) {
         throw new RangeError(`${who}: the translation of operation ${n + 1} must be ${d} numbers, not ${shown(t0)}`);
       }
-      const w = t0.map((x) => fraction(x, 'translation'));
+      const wExact = t0.map(position);
       const W1 = rationalProduct(rationalProduct(Q, W), P);
       if (!W1.every((row) => row.every(isInteger))) {
         throw new RangeError(
@@ -250,10 +256,15 @@ function transform(
             'the new basis does not span a lattice that the operation maps onto itself',
         );
       }
-      // w′ = Q(w + (W − I)p)
+      // w′ = Q(w + (W − I)p), exactly where w and p are fractions, else in floating point.
       const WminusI = W.map((row, i) => row.map((x, j) => (i === j ? subtract(x, ONE) : x)));
-      const shifted = rationalApply(WminusI, p).map((x, i) => add(w[i], x));
-      return { matrix: floats(W1), translation: numbers(rationalApply(Q, shifted)) };
+      if (pAll && wExact.every((x) => x !== undefined)) {
+        const shifted = rationalApply(WminusI, pAll).map((x, i) => add((wExact as Rational[])[i], x));
+        return { matrix: floats(W1), translation: numbers(rationalApply(Q, shifted)) };
+      }
+      const wf = t0.map((x, i) => (wExact[i] ? toNumber(wExact[i]) : x));
+      const shifted = floatApply(floats(WminusI), pf).map((x, i) => x + wf[i]);
+      return { matrix: floats(W1), translation: floatApply(Qf, shifted) };
     });
   }
   return result as unknown as GenericChange;
@@ -364,10 +375,11 @@ export interface CoordinateChange {
  * metric tensor G′ = PᵀGP, and operations W′ = P⁻¹WP, w′ = P⁻¹(w + (W − I)p); and gives the inverse
  * pair (Q, q) = (P⁻¹, −P⁻¹p). det P may be negative (a change of handedness, which ITA allows).
  *
- * P, p and the operations are read each number as a fraction, transformed exactly, so that every
- * result, the inverse pair included, can be passed back; the other quantities are floating point. A
- * number that is a fraction to rounding is that fraction; another is read as the simplest fraction
- * within the tolerance (default `EPSILON`; 0.3333333 is 1/3). P is rational in a change between
+ * P and the matrices W are read each number as a fraction and transformed exactly, so that every
+ * result, the inverse pair included, can be passed back: a number that is a fraction to rounding is
+ * that fraction, another is read as the simplest fraction within the tolerance (default `EPSILON`;
+ * 0.3333333 is 1/3). The origin shift p and the translations w are positions: a fraction to rounding
+ * (1/3 as 0.3333333333) is that fraction, another number is taken as it is (0.1234 stays 0.1234). P is rational in a change between
  * lattice bases, as in ITA: an entry of P that needs a fraction with a denominator above
  * tolerance^(−1/3) (46 at 10⁻⁵), such as cos 30° of a rotation, is refused
  * (docs/conventions.md, "Tolerances").
@@ -387,6 +399,9 @@ export function changeOfCoordinates(
   quantities: CoordinateQuantities,
   options?: ToleranceOptions,
 ): CoordinateChange {
+  // Not a boolean is a mistake of the caller in either entry point.
+  const ops = (quantities as { readonly operations?: unknown } | null)?.operations;
+  if (Array.isArray(ops)) checkOptionalTimeReversal(ops, 'changeOfCoordinates');
   return deepFreeze(
     changeCoordinates(3, transformation, quantities, options, 'changeOfCoordinates') as unknown as CoordinateChange,
   );

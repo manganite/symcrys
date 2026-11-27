@@ -35,7 +35,6 @@ export {
   type MillerValues,
 } from './indices.js';
 export {
-  changeOfCoordinates,
   type AffineOperation,
   type CoordinateChange,
   type CoordinateQuantities,
@@ -66,6 +65,7 @@ export {
   allowsPropertyOf,
   crystalForms,
   describeOperations,
+  changeOfCoordinates,
   describeOperationsOf,
   findPointGroup,
   generators,
