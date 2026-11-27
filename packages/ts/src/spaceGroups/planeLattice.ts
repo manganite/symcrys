@@ -224,6 +224,9 @@ function cosDeg(x: number): number {
  */
 export function planeLatticeFromParameters(p: LatticeParameters, who: string): Mat2 {
   checkObject(p, `${who} takes the parameters { a, b, gamma }`);
+  const unknown = Object.keys(p).filter((k) => !['a', 'b', 'gamma'].includes(k));
+  if (unknown.length > 0)
+    throw new RangeError(`${who}: the parameters have no field ${shown(unknown[0])} (a, b, gamma)`);
   for (const name of ['a', 'b'] as const) {
     const x = p[name];
     if (!(typeof x === 'number' && Number.isFinite(x) && x > 0)) {

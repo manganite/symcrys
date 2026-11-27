@@ -259,26 +259,6 @@ class TransformedOperations:
 
 
 @final
-class LatticeParameters(TypedDict):
-    """The lattice parameters of a cell: edge lengths and angles in degrees (α between b and c, β
-    between a and c, γ between a and b).
-    """
-
-    a: float
-    """Edge length a."""
-    b: float
-    """Edge length b."""
-    c: float
-    """Edge length c."""
-    alpha: float
-    """Angle α between b and c, in degrees."""
-    beta: float
-    """Angle β between a and c, in degrees."""
-    gamma: float
-    """Angle γ between a and b, in degrees."""
-
-
-@final
 class InverseTransformation(TypedDict):
     """The inverse change of the coordinate system (Q, q) = (P, p)⁻¹."""
 
@@ -306,6 +286,26 @@ class CoordinateChange(TypedDict):
     """The metric tensor in the new basis."""
     operations: NotRequired[TransformedOperations]
     """The operations, as given, in the new coordinate system."""
+
+
+@final
+class LatticeParameters(TypedDict):
+    """The lattice parameters of a cell: edge lengths and angles in degrees (α between b and c, β
+    between a and c, γ between a and b).
+    """
+
+    a: float
+    """Edge length a."""
+    b: float
+    """Edge length b."""
+    c: float
+    """Edge length c."""
+    alpha: float
+    """Angle α between b and c, in degrees."""
+    beta: float
+    """Angle β between a and c, in degrees."""
+    gamma: float
+    """Angle γ between a and b, in degrees."""
 
 
 @final
@@ -501,8 +501,8 @@ class OrbitPole(TypedDict):
     """One pole of the orbit of a direction under a list of operations."""
 
     direction: NDArray[np.float64]
-    """The image of the given direction as a Cartesian unit vector (the first operation's image where
-    several coincide).
+    """The image of the direction set onto the fixed space of its site symmetry, a Cartesian unit
+    vector.
     """
     operations: NDArray[np.int64]
     """Indices into the given operations of those that map the direction here, ascending."""
@@ -644,7 +644,6 @@ _OPERATION_FIELDS = {"matrix": (np.int64, (3, 3)), "cartesian": (np.float64, (3,
 _S_Operations = ("ops", Operations, {"matrix": (np.int64, (3, 3)), "cartesian": (np.float64, (3, 3)), "timeReversal": (np.bool_, ())})
 _TRANSFORMED_FIELDS = {"matrix": (np.int64, (3, 3)), "translation": (np.float64, (3,))}
 _S_TransformedOperations = ("ops", TransformedOperations, {"matrix": (np.int64, (3, 3)), "translation": (np.float64, (3,))})
-_S_LatticeParameters = ("d", {"a": _F, "b": _F, "c": _F, "alpha": _F, "beta": _F, "gamma": _F})
 _S_InverseTransformation = (
     "d",
     {
@@ -663,6 +662,7 @@ _S_CoordinateChange = (
         "operations": _S_TransformedOperations,
     },
 )
+_S_LatticeParameters = ("d", {"a": _F, "b": _F, "c": _F, "alpha": _F, "beta": _F, "gamma": _F})
 _S_Cell = (
     "d",
     {
@@ -966,6 +966,80 @@ def residual_operations(
     return result
 
 
+def change_of_coordinates(
+    linear_part: ArrayLike,
+    *,
+    origin_shift: Optional[ArrayLike] = None,
+    points: Optional[ArrayLike] = None,
+    directions: Optional[ArrayLike] = None,
+    planes: Optional[ArrayLike] = None,
+    metric: Optional[ArrayLike] = None,
+    operations: Optional[Operations | TransformedOperations | Sequence[Mapping[str, Any]]] = None,
+    tolerance: Optional[float] = None,
+) -> CoordinateChange:
+    """Changes the coordinate system by the pair (P, p): the new basis is (a′, b′, c′) = (a, b, c)·P
+    and the new origin lies at p. Transforms the given quantities by ITA's equations: point
+    coordinates x′ = P⁻¹(x − p), vector coefficients [uvw]′ = P⁻¹[uvw], Miller indices (hkl)′ =
+    (hkl)P, the metric tensor G′ = PᵀGP, and operations W′ = P⁻¹WP, w′ = P⁻¹(w + (W − I)p); and
+    gives the inverse pair (Q, q) = (P⁻¹, −P⁻¹p). det P may be negative (a change of handedness,
+    which ITA allows).
+
+    P and the matrices W are read each number as a fraction and transformed exactly, so that every
+    result, the inverse pair included, can be passed back: a number that is a fraction to rounding
+    is that fraction, another is read as the simplest fraction within the tolerance (default
+    ``EPSILON``; 0.3333333 is 1/3). The origin shift p and the translations w are positions: a
+    fraction to rounding (1/3 as 0.3333333333) is that fraction, another number is taken as it is
+    (0.1234 stays 0.1234). P is rational in a change between lattice bases, as in ITA: an entry of P
+    that needs a fraction with a denominator above tolerance^(−1/3) (46 at 10⁻⁵), such as cos 30° of
+    a rotation, is refused (docs/conventions.md, "Tolerances"). A transformed operation has a
+    ``matrix`` and a ``translation`` alone: other fields of the record (``cartesian``, in the
+    magnetic API ``time_reversal``) are not carried over, so they are matched by index. Raises
+    SymcrysError for a singular P, an entry of P that is not rational within the tolerance, a
+    quantity of the wrong shape, an unknown quantity, an operation with det W ≠ ±1, and one whose W′
+    is not integral (the new basis does not span a lattice that the operation maps onto itself).
+
+    Parameters
+    ----------
+    linear_part
+        P, the linear part: its columns are the new basis vectors a′, b′, c′ in the old basis; det P
+        ≠ 0, also negative.
+    origin_shift : keyword-only, optional
+        p, the origin shift: the coordinates of the new origin in the old coordinate system; default
+        zero.
+    points : keyword-only, optional
+        Point coordinates x: x′ = P⁻¹(x − p).
+    directions : keyword-only, optional
+        Coefficients [uvw] of vectors, e.g. directions: [uvw]′ = P⁻¹[uvw]; not changed by the origin
+        shift.
+    planes : keyword-only, optional
+        Miller indices (hkl) of planes: (hkl)′ = (hkl)P; not changed by the origin shift.
+    metric : keyword-only, optional
+        The metric tensor G: G′ = PᵀGP.
+    operations : keyword-only, optional
+        Operations (W, w): W′ = P⁻¹WP, w′ = P⁻¹(w + (W − I)p).
+    tolerance : keyword-only, optional
+        Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁵). It is measured per
+        matrix entry for operations, as the distance of unit vectors for directions and per
+        coordinate modulo the lattice for points (docs/conventions.md, "Tolerances").
+    """
+    result: CoordinateChange = _shared.convert(
+        _call(
+            "changeOfCoordinates",
+            _shared.options(linear_part=linear_part, origin_shift=origin_shift),
+            _shared.options(
+                points=points,
+                directions=directions,
+                planes=planes,
+                metric=metric,
+                operations=None if operations is None else _shared.operation_list(operations, ("matrix",)),
+            ),
+            _shared.options(tolerance=tolerance),
+        ),
+        _S_CoordinateChange,
+    )
+    return result
+
+
 def crystal_family(system: CrystalSystem) -> CrystalFamily:
     """The crystal family of a crystal system: trigonal and hexagonal form the hexagonal family.
     Throws a SymcrysError for anything that is not one of the seven crystal systems.
@@ -1036,8 +1110,10 @@ def is_valid_cell(
     not in one plane (the volume radicand 1 − cos²α − cos²β − cos²γ + 2 cos α cos β cos γ exceeds
     10⁻¹², i.e. V/(abc) > 10⁻⁶: a cell that is flat within rounding is refused). With
     ``min_volume_ratio`` (from 0 to 1, default 0) also refuses nearly flat cells, whose ratio
-    V/(abc), the square root of the radicand, is smaller. Raises SymcrysError for a
-    ``min_volume_ratio`` that is not a number from 0 to 1.
+    V/(abc), the square root of the radicand, is smaller. The parameters of a whole cell may be
+    passed; its edges are not read. Raises SymcrysError for a ``min_volume_ratio`` that is not a
+    number from 0 to 1, an angle that is not a finite number, and a field other than the angles and
+    the edges.
 
     Parameters
     ----------
@@ -1230,79 +1306,6 @@ def zone_axis(h1: ArrayLike, h2: ArrayLike) -> Optional[NDArray[np.int64]]:
     result: Optional[NDArray[np.int64]] = _shared.convert(
         _call("zoneAxis", _shared.array(h1, "h1"), _shared.array(h2, "h2")),
         ("o", ("a", np.int64, None)),
-    )
-    return result
-
-
-def change_of_coordinates(
-    linear_part: ArrayLike,
-    *,
-    origin_shift: Optional[ArrayLike] = None,
-    points: Optional[ArrayLike] = None,
-    directions: Optional[ArrayLike] = None,
-    planes: Optional[ArrayLike] = None,
-    metric: Optional[ArrayLike] = None,
-    operations: Optional[Operations | TransformedOperations | Sequence[Mapping[str, Any]]] = None,
-    tolerance: Optional[float] = None,
-) -> CoordinateChange:
-    """Changes the coordinate system by the pair (P, p): the new basis is (a′, b′, c′) = (a, b, c)·P
-    and the new origin lies at p. Transforms the given quantities by ITA's equations: point
-    coordinates x′ = P⁻¹(x − p), vector coefficients [uvw]′ = P⁻¹[uvw], Miller indices (hkl)′ =
-    (hkl)P, the metric tensor G′ = PᵀGP, and operations W′ = P⁻¹WP, w′ = P⁻¹(w + (W − I)p); and
-    gives the inverse pair (Q, q) = (P⁻¹, −P⁻¹p). det P may be negative (a change of handedness,
-    which ITA allows).
-
-    P, p and the operations are read each number as a fraction, transformed exactly, so that every
-    result, the inverse pair included, can be passed back; the other quantities are floating point.
-    A number that is a fraction to rounding is that fraction; another is read as the simplest
-    fraction within the tolerance (default ``EPSILON``; 0.3333333 is 1/3). P is rational in a change
-    between lattice bases, as in ITA: an entry of P that needs a fraction with a denominator above
-    tolerance^(−1/3) (46 at 10⁻⁵), such as cos 30° of a rotation, is refused (docs/conventions.md,
-    "Tolerances"). A transformed operation has a ``matrix`` and a ``translation`` alone: other
-    fields of the record (``cartesian``, in the magnetic API ``time_reversal``) are not carried
-    over, so they are matched by index. Raises SymcrysError for a singular P, an entry of P that is
-    not rational within the tolerance, a quantity of the wrong shape, an unknown quantity, an
-    operation with det W ≠ ±1, and one whose W′ is not integral (the new basis does not span a
-    lattice that the operation maps onto itself).
-
-    Parameters
-    ----------
-    linear_part
-        P, the linear part: its columns are the new basis vectors a′, b′, c′ in the old basis; det P
-        ≠ 0, also negative.
-    origin_shift : keyword-only, optional
-        p, the origin shift: the coordinates of the new origin in the old coordinate system; default
-        zero.
-    points : keyword-only, optional
-        Point coordinates x: x′ = P⁻¹(x − p).
-    directions : keyword-only, optional
-        Coefficients [uvw] of vectors, e.g. directions: [uvw]′ = P⁻¹[uvw]; not changed by the origin
-        shift.
-    planes : keyword-only, optional
-        Miller indices (hkl) of planes: (hkl)′ = (hkl)P; not changed by the origin shift.
-    metric : keyword-only, optional
-        The metric tensor G: G′ = PᵀGP.
-    operations : keyword-only, optional
-        Operations (W, w): W′ = P⁻¹WP, w′ = P⁻¹(w + (W − I)p).
-    tolerance : keyword-only, optional
-        Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁵). It is measured per
-        matrix entry for operations, as the distance of unit vectors for directions and per
-        coordinate modulo the lattice for points (docs/conventions.md, "Tolerances").
-    """
-    result: CoordinateChange = _shared.convert(
-        _call(
-            "changeOfCoordinates",
-            _shared.options(linear_part=linear_part, origin_shift=origin_shift),
-            _shared.options(
-                points=points,
-                directions=directions,
-                planes=planes,
-                metric=metric,
-                operations=None if operations is None else _shared.operation_list(operations, ("matrix",)),
-            ),
-            _shared.options(tolerance=tolerance),
-        ),
-        _S_CoordinateChange,
     )
     return result
 
@@ -1610,6 +1613,7 @@ def orbit(
 ) -> list[DirectionOrbitEntry]: ...
 
 
+@_shared.by_keyword(1, ("hkl", "uvw"))
 def orbit(
     key: str,
     *,
@@ -1672,15 +1676,17 @@ def orbit_of(
     tolerance: Optional[float] = None,
 ) -> list[OrbitPole]:
     """The orbit of a direction (any non-zero vector, Cartesian, e.g. a face normal) under a list of
-    operations, for instance those of a distorted crystal: the images of its unit vector under each
-    operation, coinciding images merged (closer than ``tolerance``, default ``EPSILON``, as for
-    ``site_symmetry_of``), in the order in which the operations reach them, each with the indices of
-    the operations that map the direction there. The list is a point group given as all its
-    operations; an empty list is the group 1, whose orbit is the direction itself. Time reversal
-    does not move a direction; an operation that leaves it out counts as one without it. Raises
-    SymcrysError for a zero vector, for an operation without an orthogonal Cartesian matrix
-    (``cartesian``; within ``tolerance``, at least ``EPSILON``) and for a list that is not closed
-    under products (only generators, for instance; the error names the missing product).
+    operations, for instance those of a distorted crystal: one image per coset of its site symmetry
+    (``site_symmetry_of``, with the same ``tolerance``), the unit vector set onto the fixed space of
+    the site symmetry and turned by the operations, in the order in which the operations reach them,
+    each with the indices of the operations that map the direction there; so the first entry holds
+    the operations of ``site_symmetry_of``, and the number of entries is its multiplicity. The list
+    is a point group given as all its operations; an empty list is the group 1, whose orbit is the
+    direction itself. Time reversal does not move a direction; an operation that leaves it out
+    counts as one without it. Raises SymcrysError for a zero vector, for an operation without an
+    orthogonal Cartesian matrix (``cartesian``; within ``tolerance``, at least ``EPSILON``) and for
+    a list that is not closed under products (only generators, for instance; the error names the
+    missing product).
 
     Parameters
     ----------
@@ -2032,6 +2038,7 @@ def site_symmetry(
 ) -> SiteSymmetry: ...
 
 
+@_shared.by_keyword(1, ("hkl", "uvw", "cartesian"))
 def site_symmetry(
     key: str,
     *,

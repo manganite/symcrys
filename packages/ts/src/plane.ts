@@ -968,16 +968,19 @@ export function siteSymmetry(
   point: PlanePoint,
   options?: SettingOptions & ToleranceOptions,
 ): SiteSymmetry;
+/** The site symmetry of a lattice direction [uv]; see the first signature. */
 export function siteSymmetry(
   key: PointGroupKey,
   direction: DirectionIndices,
   options?: SettingOptions & ToleranceOptions,
 ): DirectionSiteSymmetry;
+/** The site symmetry of an edge (hk); see the first signature. */
 export function siteSymmetry(
   key: PointGroupKey,
   edge: EdgeIndices,
   options?: SettingOptions & ToleranceOptions,
 ): DirectionSiteSymmetry;
+/** The site symmetry of a point, a lattice direction or an edge; see the first signature. */
 export function siteSymmetry(
   key: PlaneGroupKey | PointGroupKey,
   input: SiteInput,
@@ -1013,16 +1016,19 @@ export function wyckoffPosition(
   point: PlanePoint,
   options?: SettingOptions & ToleranceOptions,
 ): WyckoffPosition;
+/** The Wyckoff position of a lattice direction [uv]; see the first signature. */
 export function wyckoffPosition(
   key: PointGroupKey,
   direction: DirectionIndices,
   options?: SettingOptions & ToleranceOptions,
 ): WyckoffPosition;
+/** The Wyckoff position of an edge (hk); see the first signature. */
 export function wyckoffPosition(
   key: PointGroupKey,
   edge: EdgeIndices,
   options?: SettingOptions & ToleranceOptions,
 ): WyckoffPosition;
+/** The Wyckoff position of a point, a lattice direction or an edge; see the first signature. */
 export function wyckoffPosition(
   key: PlaneGroupKey | PointGroupKey,
   input: SiteInput,
@@ -1134,16 +1140,19 @@ export function orbit(
   point: PlanePoint,
   options?: SettingOptions & ToleranceOptions,
 ): readonly PointOrbitEntry[];
+/** The orbit of a lattice direction [uv]; see the first signature. */
 export function orbit(
   key: PointGroupKey,
   direction: DirectionIndices,
   options?: SettingOptions & ToleranceOptions,
 ): readonly DirectionOrbitEntry[];
+/** The orbit of an edge (hk); see the first signature. */
 export function orbit(
   key: PointGroupKey,
   edge: EdgeIndices,
   options?: SettingOptions & ToleranceOptions,
 ): readonly EdgeOrbitEntry[];
+/** The orbit of a point, a lattice direction or an edge; see the first signature. */
 export function orbit(
   key: PlaneGroupKey | PointGroupKey,
   input: SiteInput,
@@ -1203,16 +1212,19 @@ export function siteSymmetryOf(
   point: PlanePoint,
   options?: ToleranceOptions,
 ): SiteSymmetry;
+/** The site symmetry, under a list of operations, of a lattice direction [uv]; see the first signature. */
 export function siteSymmetryOf(
   operations: readonly PlaneOperation[],
   direction: DirectionIndices,
   options?: ToleranceOptions,
 ): DirectionSiteSymmetry;
+/** The site symmetry, under a list of operations, of an edge (hk); see the first signature. */
 export function siteSymmetryOf(
   operations: readonly PlaneOperation[],
   edge: EdgeIndices,
   options?: ToleranceOptions,
 ): DirectionSiteSymmetry;
+/** The site symmetry, under a list of operations, of a point, a lattice direction or an edge; see the first signature. */
 export function siteSymmetryOf(
   operations: readonly PlaneOperation[],
   input: SiteInput,
@@ -1256,16 +1268,19 @@ export function orbitOf(
   point: PlanePoint,
   options?: ToleranceOptions,
 ): readonly PointOrbitEntry[];
+/** The orbit, under a list of operations, of a lattice direction [uv]; see the first signature. */
 export function orbitOf(
   operations: readonly PlaneOperation[],
   direction: DirectionIndices,
   options?: ToleranceOptions,
 ): readonly DirectionOrbitEntry[];
+/** The orbit, under a list of operations, of an edge (hk); see the first signature. */
 export function orbitOf(
   operations: readonly PlaneOperation[],
   edge: EdgeIndices,
   options?: ToleranceOptions,
 ): readonly EdgeOrbitEntry[];
+/** The orbit, under a list of operations, of a point, a lattice direction or an edge; see the first signature. */
 export function orbitOf(
   operations: readonly PlaneOperation[],
   input: SiteInput,
@@ -1580,10 +1595,11 @@ export interface CoordinateChange {
  * tensor G′ = PᵀGP, and operations W′ = P⁻¹WP, w′ = P⁻¹(w + (W − I)p); and gives the inverse pair
  * (Q, q) = (P⁻¹, −P⁻¹p). det P may be negative.
  *
- * P, p and the operations are read each number as a fraction, transformed exactly, so that every
- * result, the inverse pair included, can be passed back; the other quantities are floating point. A
- * number that is a fraction to rounding is that fraction; another is read as the simplest fraction
- * within the tolerance (default `EPSILON`; 0.3333333 is 1/3). P is rational in a change between
+ * P and the matrices W are read each number as a fraction and transformed exactly, so that every
+ * result, the inverse pair included, can be passed back: a number that is a fraction to rounding is
+ * that fraction, another is read as the simplest fraction within the tolerance (default `EPSILON`;
+ * 0.3333333 is 1/3). The origin shift p and the translations w are positions: a fraction to rounding
+ * (1/3 as 0.3333333333) is that fraction, another number is taken as it is (0.1234 stays 0.1234). P is rational in a change between
  * lattice bases, as in ITA: an entry of P that needs a fraction with a denominator above
  * tolerance^(−1/3) (46 at 10⁻⁵) is refused (docs/conventions.md, "Tolerances"). A transformed
  * operation has a `matrix` and a `translation`. Throws a RangeError for a singular P, an entry of P

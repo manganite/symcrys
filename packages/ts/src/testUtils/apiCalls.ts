@@ -88,6 +88,8 @@ function pointGroupCalls(entry: 'symcrys' | 'symcrys/magnetic'): ApiCall[] {
     for (const name of properties) c('tensorForm', key, name);
     for (const s of api.settings(key as never)) {
       const o = { setting: s.index };
+      // The forms of the default setting are pinned above, without the option.
+      if (s.index > 1) for (const name of properties) c('tensorForm', key, name, o);
       c('operations', key, o);
       c('generators', key, o);
       for (const form of ['short', 'full', 'schoenflies', 'shubnikov']) c('symbol', key, { ...o, form });

@@ -1054,8 +1054,23 @@ async function generate(name, cfg) {
         ...(keywords.length ? ['*', ...keywords.map((k) => `${k.py}: ${k.ann} = None`)] : []),
       ];
       const head = `def ${py}(${signature.join(', ')}) -> ${ann}:`;
-      const defLines =
-        head.length <= WIDTH ? [head] : [`def ${py}(`, ...signature.map((s) => `    ${s},`), `) -> ${ann}:`];
+      // The alternatives of an overloaded object parameter (point=, uv=, hk=) are keywords; one
+      // passed by position gets a SymcrysError that names them, not Python's bare TypeError.
+      const alternatives =
+        objectParam && sigs.length > 1
+          ? objectParam.fields
+              .filter((/** @type {any} */ f) => !f.required)
+              .map((/** @type {any} */ f) => snake(f.name))
+          : [];
+      const decorator = alternatives.length
+        ? [
+            `@_shared.by_keyword(${params.length}, (${alternatives.map((n) => `"${n}"`).join(', ')}${alternatives.length === 1 ? ',' : ''}))`,
+          ]
+        : [];
+      const defLines = [
+        ...decorator,
+        ...(head.length <= WIDTH ? [head] : [`def ${py}(`, ...signature.map((s) => `    ${s},`), `) -> ${ann}:`]),
+      ];
       const doc = quote(functionDocstring(d, extra[py], where, '    '), '    ');
       const call = `_call("${d.name}"${args.map((a) => `, ${a}`).join('')})`;
       const one = `    result: ${ann} = _shared.convert(${call}, ${sch})`;

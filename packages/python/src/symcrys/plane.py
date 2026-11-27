@@ -938,7 +938,7 @@ def plane_group(key: str) -> PlaneGroup:
     Returns
     -------
     dict
-        ``centring`` is a float64 array of shape (n, 2), n = 0 or 1.
+        ``centring_translations`` is a float64 array of shape (n, 2), n = 0 or 1.
     """
     result: PlaneGroup = _shared.convert(_call("planeGroup", key), _S_PlaneGroup)
     return result
@@ -1066,8 +1066,9 @@ def describe_operations(
     Returns
     -------
     list of dict
-        ``translation``, ``location`` and ``glide`` (where present) are float64 arrays of shape
-        (2,), ``direction`` and ``axis`` int64 arrays of shape (2,).
+        ``translation``, ``point`` and ``glide`` (where present) are float64 arrays of shape (2,),
+        ``direction`` an int64 array of shape (2,), ``axis`` a dict ``{"lattice"}`` with an int64
+        array of shape (2,).
     """
     result: list[OperationDescription] = _shared.convert(
         _call("describeOperations", key, _shared.options(setting=setting)),
@@ -1101,8 +1102,9 @@ def describe_operations_of(
     Returns
     -------
     list of dict
-        As ``describe_operations``: ``translation``, ``location`` and ``glide`` (where present)
-        float64 arrays of shape (2,), ``direction`` and ``axis`` int64 arrays of shape (2,).
+        As ``describe_operations``: ``translation``, ``point`` and ``glide`` (where present) float64
+        arrays of shape (2,), ``direction`` an int64 array of shape (2,), ``axis`` a dict
+        ``{"lattice"}`` with an int64 array of shape (2,).
     """
     result: list[OperationDescription] = _shared.convert(
         _call(
@@ -1192,6 +1194,7 @@ def site_symmetry(
 ) -> DirectionSiteSymmetry: ...
 
 
+@_shared.by_keyword(1, ("point", "uv", "hk"))
 def site_symmetry(
     key: str,
     *,
@@ -1231,8 +1234,8 @@ def site_symmetry(
     Returns
     -------
     dict
-        ``operations`` int64 array of shape (n,), ``point`` float64 array of shape (2,),
-        ``multiplicity``, ``general``.
+        ``operations`` int64 array of shape (n,), ``multiplicity``, ``general``; for a point
+        (``point=``) also ``point``, a float64 array of shape (2,).
     """
     result: SiteSymmetry | DirectionSiteSymmetry = _shared.convert(
         _call(
@@ -1276,6 +1279,7 @@ def wyckoff_position(
 ) -> WyckoffPosition: ...
 
 
+@_shared.by_keyword(1, ("point", "uv", "hk"))
 def wyckoff_position(
     key: str,
     *,
@@ -1400,6 +1404,7 @@ def orbit(
 ) -> list[EdgeOrbitEntry]: ...
 
 
+@_shared.by_keyword(1, ("point", "uv", "hk"))
 def orbit(
     key: str,
     *,
@@ -1439,8 +1444,8 @@ def orbit(
     Returns
     -------
     list of dict
-        In each, ``point`` is a float64 array of shape (2,) and ``operations`` an int64 array of
-        shape (n,).
+        In each, ``operations`` an int64 array of shape (n,), and the image: ``point`` a float64
+        array of shape (2,), or ``uv`` or ``hk`` an int64 array of shape (2,).
     """
     result: list[PointOrbitEntry] | list[DirectionOrbitEntry] | list[EdgeOrbitEntry] = _shared.convert(
         _call(
@@ -1481,6 +1486,7 @@ def site_symmetry_of(
 ) -> DirectionSiteSymmetry: ...
 
 
+@_shared.by_keyword(1, ("point", "uv", "hk"))
 def site_symmetry_of(
     operations: Operations | TransformedOperations | Sequence[Mapping[str, Any]],
     *,
@@ -1558,6 +1564,7 @@ def orbit_of(
 ) -> list[EdgeOrbitEntry]: ...
 
 
+@_shared.by_keyword(1, ("point", "uv", "hk"))
 def orbit_of(
     operations: Operations | TransformedOperations | Sequence[Mapping[str, Any]],
     *,
@@ -1702,8 +1709,9 @@ def symmetry_elements(key: str, *, box: Optional[ArrayLike] = None) -> SymmetryE
     -------
     dict
         ``rotation_points``: dicts ``{"n", "point"}``, point a float64 array of shape (2,);
-        ``lines``: dicts ``{"kind", "direction", "axis", "glide", "point"}``, direction and axis
-        int64 of shape (2,), glide and point float64 of shape (2,).
+        ``lines``: dicts ``{"kind", "direction", "axis", "glide", "point"}``, direction an int64
+        array of shape (2,), axis a dict ``{"lattice"}`` with an int64 array of shape (2,), glide
+        and point float64 of shape (2,).
     """
     result: SymmetryElements = _shared.convert(
         _call(
@@ -1842,15 +1850,17 @@ def change_of_coordinates(
     indices (hk)′ = (hk)P, the metric tensor G′ = PᵀGP, and operations W′ = P⁻¹WP, w′ = P⁻¹(w + (W −
     I)p); and gives the inverse pair (Q, q) = (P⁻¹, −P⁻¹p). det P may be negative.
 
-    P, p and the operations are read each number as a fraction, transformed exactly, so that every
-    result, the inverse pair included, can be passed back; the other quantities are floating point.
-    A number that is a fraction to rounding is that fraction; another is read as the simplest
-    fraction within the tolerance (default ``EPSILON``; 0.3333333 is 1/3). P is rational in a change
-    between lattice bases, as in ITA: an entry of P that needs a fraction with a denominator above
-    tolerance^(−1/3) (46 at 10⁻⁵) is refused (docs/conventions.md, "Tolerances"). A transformed
-    operation has a ``matrix`` and a ``translation``. Raises SymcrysError for a singular P, an entry
-    of P that is not rational within the tolerance, a quantity of the wrong shape, an unknown
-    quantity, an operation with det W ≠ ±1, and one whose W′ is not integral.
+    P and the matrices W are read each number as a fraction and transformed exactly, so that every
+    result, the inverse pair included, can be passed back: a number that is a fraction to rounding
+    is that fraction, another is read as the simplest fraction within the tolerance (default
+    ``EPSILON``; 0.3333333 is 1/3). The origin shift p and the translations w are positions: a
+    fraction to rounding (1/3 as 0.3333333333) is that fraction, another number is taken as it is
+    (0.1234 stays 0.1234). P is rational in a change between lattice bases, as in ITA: an entry of P
+    that needs a fraction with a denominator above tolerance^(−1/3) (46 at 10⁻⁵) is refused
+    (docs/conventions.md, "Tolerances"). A transformed operation has a ``matrix`` and a
+    ``translation``. Raises SymcrysError for a singular P, an entry of P that is not rational within
+    the tolerance, a quantity of the wrong shape, an unknown quantity, an operation with det W ≠ ±1,
+    and one whose W′ is not integral.
 
     Parameters
     ----------

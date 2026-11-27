@@ -128,13 +128,30 @@ export function groupDefect(
   return undefined;
 }
 
+/** The lists `checkGroup` has found to be groups, by content; the oldest goes first beyond the bound. */
+const checkedGroups = new Set<string>();
+const CHECKED_GROUPS = 64;
+
 /**
  * Throws a RangeError that says why unless the operations are a group (`groupDefect`), for the
  * functions whose results are indices into the caller's list.
  */
 export function checkGroup(operations: readonly { readonly cartesian: Mat3 }[], tolerance: number, name: string): void {
+  // A list that passed is remembered by its content (not by the array, which a caller may change in
+  // place), so that a caller who asks for many directions under one list pays the check once.
+  const key = `${tolerance}|${operations
+    .map(
+      (op) =>
+        `${(op as { readonly timeReversal?: unknown }).timeReversal === true ? 1 : 0}${op.cartesian.flat().join(',')}`,
+    )
+    .join(';')}`;
+  if (checkedGroups.has(key)) return;
   const defect = groupDefect(operations, tolerance);
-  if (!defect) return;
+  if (!defect) {
+    if (checkedGroups.size >= CHECKED_GROUPS) checkedGroups.delete(checkedGroups.values().next().value!);
+    checkedGroups.add(key);
+    return;
+  }
   const why =
     defect.kind === 'identity'
       ? 'the identity is not in the list'

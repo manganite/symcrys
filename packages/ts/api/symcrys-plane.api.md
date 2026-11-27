@@ -197,25 +197,25 @@ export function operations(key: PlaneGroupKey | PointGroupKey, options?: Setting
 // @public
 export function orbit(key: PlaneGroupKey, point: PlanePoint, options?: SettingOptions & ToleranceOptions): readonly PointOrbitEntry[];
 
-// @public (undocumented)
+// @public
 export function orbit(key: PointGroupKey, direction: DirectionIndices, options?: SettingOptions & ToleranceOptions): readonly DirectionOrbitEntry[];
 
-// @public (undocumented)
+// @public
 export function orbit(key: PointGroupKey, edge: EdgeIndices, options?: SettingOptions & ToleranceOptions): readonly EdgeOrbitEntry[];
 
-// @public (undocumented)
+// @public
 export function orbit(key: PlaneGroupKey | PointGroupKey, input: SiteInput, options?: SettingOptions & ToleranceOptions): readonly PointOrbitEntry[] | readonly DirectionOrbitEntry[] | readonly EdgeOrbitEntry[];
 
 // @public
 export function orbitOf(operations: readonly PlaneOperation[], point: PlanePoint, options?: ToleranceOptions): readonly PointOrbitEntry[];
 
-// @public (undocumented)
+// @public
 export function orbitOf(operations: readonly PlaneOperation[], direction: DirectionIndices, options?: ToleranceOptions): readonly DirectionOrbitEntry[];
 
-// @public (undocumented)
+// @public
 export function orbitOf(operations: readonly PlaneOperation[], edge: EdgeIndices, options?: ToleranceOptions): readonly EdgeOrbitEntry[];
 
-// @public (undocumented)
+// @public
 export function orbitOf(operations: readonly PlaneOperation[], input: SiteInput, options?: ToleranceOptions): readonly PointOrbitEntry[] | readonly DirectionOrbitEntry[] | readonly EdgeOrbitEntry[];
 
 // @public
@@ -352,25 +352,25 @@ export interface SiteSymmetry {
 // @public
 export function siteSymmetry(key: PlaneGroupKey, point: PlanePoint, options?: SettingOptions & ToleranceOptions): SiteSymmetry;
 
-// @public (undocumented)
+// @public
 export function siteSymmetry(key: PointGroupKey, direction: DirectionIndices, options?: SettingOptions & ToleranceOptions): DirectionSiteSymmetry;
 
-// @public (undocumented)
+// @public
 export function siteSymmetry(key: PointGroupKey, edge: EdgeIndices, options?: SettingOptions & ToleranceOptions): DirectionSiteSymmetry;
 
-// @public (undocumented)
+// @public
 export function siteSymmetry(key: PlaneGroupKey | PointGroupKey, input: SiteInput, options?: SettingOptions & ToleranceOptions): SiteSymmetry | DirectionSiteSymmetry;
 
 // @public
 export function siteSymmetryOf(operations: readonly PlaneOperation[], point: PlanePoint, options?: ToleranceOptions): SiteSymmetry;
 
-// @public (undocumented)
+// @public
 export function siteSymmetryOf(operations: readonly PlaneOperation[], direction: DirectionIndices, options?: ToleranceOptions): DirectionSiteSymmetry;
 
-// @public (undocumented)
+// @public
 export function siteSymmetryOf(operations: readonly PlaneOperation[], edge: EdgeIndices, options?: ToleranceOptions): DirectionSiteSymmetry;
 
-// @public (undocumented)
+// @public
 export function siteSymmetryOf(operations: readonly PlaneOperation[], input: SiteInput, options?: ToleranceOptions): SiteSymmetry | DirectionSiteSymmetry;
 
 // @public
@@ -445,13 +445,13 @@ export interface WyckoffPosition {
 // @public
 export function wyckoffPosition(key: PlaneGroupKey, point: PlanePoint, options?: SettingOptions & ToleranceOptions): WyckoffPosition;
 
-// @public (undocumented)
+// @public
 export function wyckoffPosition(key: PointGroupKey, direction: DirectionIndices, options?: SettingOptions & ToleranceOptions): WyckoffPosition;
 
-// @public (undocumented)
+// @public
 export function wyckoffPosition(key: PointGroupKey, edge: EdgeIndices, options?: SettingOptions & ToleranceOptions): WyckoffPosition;
 
-// @public (undocumented)
+// @public
 export function wyckoffPosition(key: PlaneGroupKey | PointGroupKey, input: SiteInput, options?: SettingOptions & ToleranceOptions): WyckoffPosition;
 
 // @public

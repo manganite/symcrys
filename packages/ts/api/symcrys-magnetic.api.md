@@ -329,10 +329,10 @@ export function operations(key: MagneticPointGroupKey, options?: SettingOptions)
 // @public
 export function orbit(key: MagneticPointGroupKey, indices: FaceIndices, options?: SettingOptions): readonly FaceOrbitEntry[];
 
-// @public (undocumented)
+// @public
 export function orbit(key: MagneticPointGroupKey, indices: DirectionIndices, options?: SettingOptions): readonly DirectionOrbitEntry[];
 
-// @public (undocumented)
+// @public
 export function orbit(key: MagneticPointGroupKey, indices: FaceIndices | DirectionIndices, options?: SettingOptions): readonly FaceOrbitEntry[] | readonly DirectionOrbitEntry[];
 
 // @public
@@ -425,13 +425,13 @@ export interface SiteSymmetry {
 // @public
 export function siteSymmetry(key: MagneticPointGroupKey, direction: FaceIndices, options?: SettingOptions & ToleranceOptions): SiteSymmetry;
 
-// @public (undocumented)
+// @public
 export function siteSymmetry(key: MagneticPointGroupKey, direction: DirectionIndices, options?: SettingOptions & ToleranceOptions): SiteSymmetry;
 
-// @public (undocumented)
+// @public
 export function siteSymmetry(key: MagneticPointGroupKey, direction: CartesianDirection, options?: SettingOptions & ToleranceOptions): SiteSymmetry;
 
-// @public (undocumented)
+// @public
 export function siteSymmetry(key: MagneticPointGroupKey, direction: DirectionInput, options?: SettingOptions & ToleranceOptions): SiteSymmetry;
 
 // @public

@@ -211,8 +211,9 @@ a list of group types counts in the orientation its positions name (`6'/mm'm`, I
 `mm2` turned by 30° in a hexagonal cell) is not a setting. The inventory of what ITC prints is
 `references/itc/orientations.md`.
 
-The operations, generators, symbols and lattice operations of the classes come from ITA's selected
-generators, exact integer matrices in the conventional basis (`pointGroups/classData.ts`); a setting
+The operations, generators and lattice operations of the classes come from ITA's selected
+generators, exact integer matrices in the conventional basis (`pointGroups/classData.ts`), which
+also holds the short, full and Schoenflies symbol of each setting as data; a setting
 ITA does not print is a printed one in another basis. A black-and-white group is given by its
 crystal class, the setting of the class that is the frame of its default, and which of ITA's
 selected generators of that frame carry time reversal (`pointGroups/blackWhiteData.ts`); its
@@ -504,7 +505,7 @@ normalisation before the comparison:
 Schoenflies or Birss symbols to read: `findPlaneGroup` the key or the full
 symbol of a plane group (`'pm'`, `'p1m1'`, `'p 1 m 1'`), or the short symbol of International
 Tables (1952) still in common use (`'pmm'`, `'pmg'`, `'pgg'`, `'cmm'`, `'p4m'`, `'p4g'`, `'p6m'`;
-ITA 2016 Table 2.1.3.2, p. 152; vocabulary, `OLD_SHORT_SYMBOLS` in `plane.ts`), and gives `{ key }`; `findPointGroup` the key
+ITA 2016 Table 2.1.3.2, p. 152; vocabulary, `OLD_SHORT_SYMBOLS` in `plane.ts`), and gives `{ key, setting: 1 }`; `findPointGroup` the key
 or the symbol of a setting of a plane point group (`'31m'`, `'3 1 m'`) and gives `{ key, setting }`,
 the key `'3m'` its default setting; `{ setting }` takes the index or the symbol of a setting. The
 lattice letter is lower case, as ITA prints it: `'P2mg'` names no plane group, so that a symbol of a
@@ -542,8 +543,9 @@ the caller's. "Not found" is `undefined`, never `null` (`findPointGroup`, `point
   `directionFromFourIndices`; "Cell, metric and indices"), in `reduceIndices`, which takes three or
   four, and in ITA's printed faces, the strings `millerIndices` of the Wyckoff positions and crystal
   forms, which keep ITA's Bravais–Miller indices for hexagonal axes; the function `millerIndices`
-  substitutes values into such a string and gives three indices. Functions of a Cartesian vector
-  (`siteSymmetry`, `orbitOf`, `faceNormal`) take or give no indices.
+  substitutes values into such a string and gives three indices. A function that takes a face or
+  a direction names its kind by the field (`{ hkl }`, `{ uvw }`, `{ cartesian }`); the functions of
+  a list of operations (`siteSymmetryOf`, `orbitOf`) take a Cartesian vector.
 
 ## Errors
 
@@ -589,10 +591,11 @@ when they differ by less than the tolerance, in the metric of their kind:
   orthogonality of the operations with its tolerance, at most 0.1 (per entry of RᵀR, at least
   `EPSILON`). The translations read by `describeOperationsOf` of `symcrys/plane` are compared per
   coordinate; one that lies within the tolerance of two fractions with denominators up to 12
-  (which can be 1/132 apart) is refused. `changeOfCoordinates` reads each entry of P, p, W and w as
-  a fraction: one that is a fraction with a denominator of at most 1000 to rounding (10⁻⁹) as that
+  (which can be 1/132 apart) is refused. `changeOfCoordinates` reads each entry of P and W as a
+  fraction: one that is a fraction with a denominator of at most 1000 to rounding (10⁻⁹) as that
   fraction, at any tolerance; another as the simplest fraction within the tolerance, which is
-  unique. An entry of P that then needs a denominator above tolerance^(−1/3) (46 at 10⁻⁵) is
+  unique. The origin shift p and the translations w are positions, not a basis, and the tolerance
+  does not read them: a fraction to rounding is that fraction, another number is taken as it is. An entry of P that then needs a denominator above tolerance^(−1/3) (46 at 10⁻⁵) is
   refused: every number lies within 1/q² of some fraction p/q, so a fraction found within the
   tolerance says something only for small q (an irrational entry, such as cos 30° of a rotation,
   passes this bound with a chance of about tolerance^(1/3)). A point of the plane may have
@@ -1049,9 +1052,10 @@ by one (`references/itc/vol-a-table-3.2.3.2-general-faces.md`).
 
 `orbitOf(operations, direction, { tolerance })` does the same for a Cartesian direction (a face
 normal, a pole) under any list of Cartesian operations, for instance those left after distorting a
-crystal: the images of its unit vector, coinciding images merged when closer than `tolerance`
-(default `EPSILON`, as for `siteSymmetryOf`), each with the operations that
-lead there. The list must be a group, as for `siteSymmetryOf`; an empty list is the group 1, whose
+crystal: one image per coset g·H of its site symmetry H (`siteSymmetryOf` with the same
+`tolerance`), the direction set onto the fixed space of H and turned by g, each with the operations
+that lead there; so the number of images is the multiplicity of `siteSymmetryOf`. Images merged by
+their distance instead would not be transitive at the tolerance and could split a coset. The list must be a group, as for `siteSymmetryOf`; an empty list is the group 1, whose
 orbit is the direction itself. For a group and a face of a crystal form, `orbit`
 and `orbitOf` give the same entries with the same operations.
 
@@ -1104,10 +1108,11 @@ quantity given, by ITA's equations (§ 1.5.2, pp. 83–85): point coordinates x�
 W′ = P⁻¹WP, w′ = P⁻¹(w + (W − I)p) (eqs. (1.5.2.12), (1.5.2.13)); hu + kv + lw is invariant, and the
 origin shift changes neither vectors, indices nor the metric. It also gives the inverse pair
 (Q, q) = (P⁻¹, −P⁻¹p), which takes the new coordinates back. det P may be negative (ITA calls a
-positive one preferable, § 1.5.1.2, p. 76); a singular P is refused. P, p and the operations are
+positive one preferable, § 1.5.1.2, p. 76); a singular P is refused. P and the matrices W are
 read each number as the simplest fraction within the tolerance (0.3333333 is 1/3, 0.0625 is 1/16)
 and transformed exactly, so that W′ is exactly integral and every result, the inverse pair included,
-can be passed back; an operation with det W ≠ ±1, or whose W′ is not integral
+can be passed back; p and w are exact where they are fractions to rounding and otherwise taken as
+given (0.1234 stays 0.1234); an operation with det W ≠ ±1, or whose W′ is not integral
 (the new basis spans no lattice that the operation maps onto itself), is refused. A transformed
 operation is `{ matrix, translation }` alone, its translation w′ not reduced modulo the lattice, as
 ITA writes it; other fields of an operation record (`cartesian`, `timeReversal`) are not carried

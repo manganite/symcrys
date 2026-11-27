@@ -158,6 +158,31 @@ export function siteSymmetryOfGroup(
   return siteSymmetryInGroup(operations, unit(direction), tolerance, direction);
 }
 
+/**
+ * The orbit of a direction under a group: one pole per left coset g·H of its site symmetry H
+ * (`siteSymmetryInGroup`), in the order in which the operations reach them, each the image of the
+ * direction set onto the fixed space of H. Images merged by a distance would not be transitive at the
+ * tolerance and could split a coset; the cosets cannot disagree with the site symmetry.
+ */
+export function orbitInGroup(
+  operations: readonly CartesianOperation[],
+  direction: Vec3,
+  tolerance: number,
+): { direction: Vec3; operations: number[] }[] {
+  const site = siteSymmetryInGroup(operations, unit(direction), tolerance, direction);
+  const product = productLookup(operations, tolerance);
+  const done = new Set<number>();
+  const poles: { direction: Vec3; operations: number[] }[] = [];
+  operations.forEach((op, i) => {
+    if (done.has(i)) return;
+    const coset = [...new Set(site.operations.map((h) => product(i, h)))].sort((a, b) => a - b);
+    if (coset.some((k) => k < 0)) throw new Error('orbitOf: a product of a checked group is not in it');
+    for (const k of coset) done.add(k);
+    poles.push({ direction: apply(op.cartesian, site.direction), operations: coset });
+  });
+  return poles;
+}
+
 /** The site symmetry in a group: `v` the unit vector, `direction` the caller's vector for messages. */
 function siteSymmetryInGroup(
   operations: readonly CartesianOperation[],

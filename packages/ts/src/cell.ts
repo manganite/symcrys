@@ -77,12 +77,15 @@ function anglesOk({ alpha, beta, gamma }: CellAngles): boolean {
  * in one plane (the volume radicand 1 − cos²α − cos²β − cos²γ + 2 cos α cos β cos γ exceeds 10⁻¹², i.e.
  * V/(abc) > 10⁻⁶: a cell that is flat within rounding is refused). With
  * `minVolumeRatio` (from 0 to 1, default 0) also refuses nearly flat cells, whose ratio V/(abc), the
- * square root of the radicand, is smaller. Throws a RangeError for a `minVolumeRatio` that is not a
- * number from 0 to 1.
+ * square root of the radicand, is smaller. The parameters of a whole cell may be passed; its edges
+ * are not read. Throws a RangeError for a `minVolumeRatio` that is not a number from 0 to 1, an
+ * angle that is not a finite number, and a field other than the angles and the edges.
  */
 export function isValidCell(angles: CellAngles, options?: IsValidCellOptions): boolean {
   checkOptions(options, ['minVolumeRatio'], 'isValidCell');
   checkObject(angles, 'isValidCell takes the angles { alpha, beta, gamma }');
+  // The parameters of a whole cell pass too; its edges are not read.
+  checkFields(angles, ['alpha', 'beta', 'gamma', 'a', 'b', 'c'], 'isValidCell: the angles');
   // Numbers out of range are no cell (false); anything else is wrong input.
   for (const name of ['alpha', 'beta', 'gamma'] as const) {
     const x = (angles as Partial<CellAngles>)[name];
@@ -99,8 +102,15 @@ export function isValidCell(angles: CellAngles, options?: IsValidCellOptions): b
   return Math.sqrt(r) >= min;
 }
 
+/** Throws a RangeError for a field of a record other than `fields`. */
+function checkFields(record: object, fields: readonly string[], what: string): void {
+  const unknown = Object.keys(record).filter((k) => !fields.includes(k));
+  if (unknown.length > 0) throw new RangeError(`${what} have no field ${shown(unknown[0])} (${fields.join(', ')})`);
+}
+
 function checkEdges(p: LatticeParameters): void {
   checkObject(p, 'latticeFromParameters takes the parameters { a, b, c, alpha, beta, gamma }');
+  checkFields(p, ['a', 'b', 'c', 'alpha', 'beta', 'gamma'], 'latticeFromParameters: the parameters');
   const { a, b, c } = p;
   for (const [name, x] of [
     ['a', a],
@@ -123,7 +133,8 @@ function checkEdges(p: LatticeParameters): void {
  */
 export function latticeFromParameters(parameters: LatticeParameters): Mat3 {
   checkEdges(parameters);
-  if (!isValidCell(parameters)) {
+  const { alpha, beta, gamma } = parameters;
+  if (!isValidCell({ alpha, beta, gamma })) {
     throw new RangeError(
       `latticeFromParameters: angles ${parameters.alpha}°, ${parameters.beta}°, ${parameters.gamma}° give no cell`,
     );

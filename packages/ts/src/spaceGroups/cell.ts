@@ -414,7 +414,7 @@ function freezeElements(rotations: { n: number; point: Rational[] }[], lines: Li
 
 const elementCache = new Map<string, CellElements>();
 
-/** The most rotation points a box may hold: a guard against a box far larger than any drawing. */
+/** The most rotation points, and the most lines, a box may meet: a guard against a box far larger than any drawing. */
 const MAX_ELEMENTS = 1_000_000;
 
 /**
@@ -454,6 +454,14 @@ export function planeElementsInBox(key: string | number, box: Box): CellElements
     throw new RangeError(
       `The box ${shown(box)} holds about ${Math.round(estimate)} rotation points, more than ${MAX_ELEMENTS}`,
     );
+  }
+  // And on the lines: the translates of a class that cross the box.
+  const lineCount = lines.reduce((sum, l) => {
+    const values = [x0, x1].flatMap((x) => [y0, y1].map((y) => -l.direction[1] * x + l.direction[0] * y));
+    return sum + (Math.max(...values) - Math.min(...values)) / num(l.step) + 1;
+  }, 0);
+  if (!(lineCount <= MAX_ELEMENTS)) {
+    throw new RangeError(`The box ${shown(box)} meets about ${Math.round(lineCount)} lines, more than ${MAX_ELEMENTS}`);
   }
   const inside: { n: number; point: Rational[] }[] = [];
   for (const { n, point } of rotations) {

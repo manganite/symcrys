@@ -21,8 +21,8 @@ All notable changes to symcrys are recorded here. The format follows
 - `findPlaneGroup` reads the short symbols of International Tables (1952) still in common use:
   `pmm`, `pmg`, `pgg`, `cmm`, `p4m`, `p4g`, `p6m` (#208).
 - `symcrys/magnetic` exports the keys of the three types of groups, `CRYSTAL_CLASS_KEYS`,
-  `GREY_POINT_GROUP_KEYS` and `BLACK_WHITE_POINT_GROUP_KEYS`, and their types `CrystalClassKey`,
-  `GreyPointGroupKey`, `BlackWhitePointGroupKey` and `MagneticPointGroupKey`; `symcrys/plane` the
+  `GREY_POINT_GROUP_KEYS` and `BLACK_WHITE_POINT_GROUP_KEYS`, and the types `GreyPointGroupKey`,
+  `BlackWhitePointGroupKey` and `MagneticPointGroupKey`; `symcrys/plane` the
   type `PlanePointGroupKey` (#208).
 
 - `findPointGroup` and the option `setting` read the symbols of ITC Vol. D Table 1.2.6.12 (p. 66)
@@ -32,6 +32,19 @@ All notable changes to symcrys are recorded here. The format follows
 
 ### Changed
 
+- `changeOfCoordinates` reads the origin shift p and the translations w as positions: a number
+  that is a fraction to rounding (1/3 as 0.3333333333) is that fraction, another is taken as it is.
+  Before, each was read as the simplest fraction within the tolerance, so that with `EPSILON`
+  10⁻⁵ an origin shift 0.1234 became 29/235 and the coordinates moved by up to 10⁻⁵. P and the
+  matrices W are read as before.
+- Unknown fields are refused in a tensor specification (`TensorSpec`; a misspelt `timeparity` was
+  read as time-even), in the parameters of a cell (`latticeFromParameters`, both entry points) and
+  in the angles of `isValidCell`, which takes the edges of a whole cell too.
+- Python: a point, direction or face passed by position to `site_symmetry`, `wyckoff_position` or
+  `orbit` is a `SymcrysError` that names the keywords (`point=`, `uv=`, `hk=`; `hkl=`, `uvw=`,
+  `cartesian=`), was Python's bare `TypeError`; messages write a record of fields as keywords
+  (`point=`, was `{ point }`) and name the function, not the position of an argument in
+  JavaScript; an array of zero dimensions as operations is a `SymcrysError`, was a `TypeError`.
 - `OperationDescription` and `CartesianOperationDescription` of `symcrys` and `PointGroup` of
   `symcrys/magnetic` are interfaces, were type aliases of the same shape (#208); nothing changes for
   a caller that reads them.
@@ -93,7 +106,8 @@ All notable changes to symcrys are recorded here. The format follows
   `'6/mmm'`; the name of a family is a RangeError that names the key to take. The type
   `FixedAngleFamily` is no longer exported. `orbit` refuses fields other than `hkl` and `uvw`.
 - `symcrys/plane`: `siteSymmetry`, `wyckoffPosition`, `orbit` and `wyckoffDistances` take the
-  point as `{ point: [x, y] }` (#202), named as in their results; in Python unchanged (`point`).
+  point as `{ point: [x, y] }` (#202), named as in their results; in Python `wyckoff_distances`
+  takes `point` as before, the other three the keyword `point=` (below).
 - `siteSymmetryOf` and `orbitOf` (both point-group entry points; in Python `site_symmetry_of`,
   `orbit_of`) take a point group given as all its operations, each once, and refuse a list that is
   not a group with a RangeError that says why: a missing product (time reversal included), an
@@ -102,6 +116,25 @@ All notable changes to symcrys are recorded here. The format follows
 
 ### Fixed
 
+- `orbitOf` (both point-group entry points) could disagree with `siteSymmetryOf` for a direction
+  within the tolerance of a symmetry element: it merged images by their distance, which is not
+  transitive, and split a coset (`orbitOf(operations('mmm'), [1, 4e-6, 4e-6])` gave four poles
+  of 3, 3, 1 and 1 operations, where `siteSymmetryOf` gives multiplicity 2). The entries are now
+  the cosets of the site symmetry of `siteSymmetryOf`, each image the direction set onto it and
+  turned. Affected since `orbitOf` was added (0.7.0); the default tolerance 10⁻⁵ of this release
+  widened the window tenfold.
+- `orbit`, `siteSymmetry` and `wyckoffPosition` of a key refuse indices above (2⁵³ − 1)/3 in
+  magnitude, whose images would leave the safe integers: `orbit('6/mmm', { hkl: [2**52 + 1,
+2**52, 1] })` gave images rounded by 1. Affected since `orbit` was added.
+- `symmetryElements` of `symcrys/plane` refuses a box that meets more than a million lines, as it
+  refused one with more than a million rotation points: a long box of `cm` ran out of memory.
+  Affected since the option `box` was added (0.11.0).
+- `changeOfCoordinates` of `symcrys` refuses an operation with `timeReversal: true`, as every
+  other function of that entry point does; in both entry points a `timeReversal` that is not a
+  boolean is a RangeError. Before, the field was dropped without notice.
+- `siteSymmetryOf` and `orbitOf` on a list asked for many directions check the list once (a list
+  checked is remembered by its content): with the check that the list is a group, a call on 48
+  operations took about 0.5 ms, ten times as long as in 0.14.0.
 - `changeOfCoordinates` refuses an entry of P that is no fraction with a denominator of at most
   tolerance^(−1/3) (46 at 10⁻⁵) within the tolerance, such as cos 30° of a rotation, with a
   RangeError (#208). Before, such a P was read as nearby fractions, coordinates off by about the
