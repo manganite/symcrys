@@ -1,8 +1,7 @@
 /**
  * The ITC data of the black-and-white groups (blackWhiteData.ts, #122 PR 2c) and the API. The API
- * reads the settings, defaults, symbols and operations of these groups in the ITC convention from
- * these data, so this test checks the wiring and the derivation: every setting names one setting of
- * its class and exactly one group (the module throws otherwise); half of the class's operations
+ * reads the settings, defaults, symbols and operations of these groups from these data, so this
+ * test checks the wiring and the derivation: one default per group; half of the class's operations
  * carry time reversal; the API gives the data's operations in the same order. That the output did
  * not change is checked by the ITC baseline pins (#121, itcBaseline.pins.test.ts), correctness by
  * blackWhiteData.reference.test.ts and magnetic.reference.test.ts.
@@ -12,17 +11,17 @@ import { describe, expect, it } from 'vitest';
 import { matricesEqual } from '../linalg.js';
 import { BLACK_WHITE_POINT_GROUP_KEYS } from './keys.js';
 import { settingLatticeOperations } from './classData.js';
-import { BLACK_WHITE_GROUPS, blackWhiteClassSetting, blackWhiteOperations } from './blackWhiteData.js';
+import { blackWhiteGroups, blackWhiteClassSetting, blackWhiteOperations } from './blackWhiteData.js';
 import { operations, pointGroup, settings, symbol } from './pointGroups.js';
 
-const SETTINGS = BLACK_WHITE_GROUPS.flatMap((g) =>
+const SETTINGS = blackWhiteGroups().flatMap((g) =>
   g.settings.map((s) => [`${g.key} #${s.index} ${s.full}`, g, s] as const),
 );
 
 describe('the ITC data of the black-and-white groups', () => {
   it('has the 58 groups in the order of BLACK_WHITE_POINT_GROUP_KEYS, one default each', () => {
-    expect(BLACK_WHITE_GROUPS.map((g) => g.key)).toEqual([...BLACK_WHITE_POINT_GROUP_KEYS]);
-    for (const g of BLACK_WHITE_GROUPS) {
+    expect(blackWhiteGroups().map((g) => g.key)).toEqual([...BLACK_WHITE_POINT_GROUP_KEYS]);
+    for (const g of blackWhiteGroups()) {
       expect(g.settings.filter((s) => s.isDefault)).toHaveLength(1);
       expect(settings(g.key)).toHaveLength(g.settings.length);
     }
@@ -38,7 +37,7 @@ describe('the ITC data of the black-and-white groups', () => {
       [1, 2, 0],
       [0, 2, 1],
     ];
-    for (const g of BLACK_WHITE_GROUPS) {
+    for (const g of blackWhiteGroups()) {
       expect(g.settings[0].isDefault, g.key).toBe(true);
       const system = pointGroup(g.key).crystalSystem;
       if (system === 'orthorhombic') {

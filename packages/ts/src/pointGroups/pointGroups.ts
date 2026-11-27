@@ -22,7 +22,8 @@ import {
 } from './classData.js';
 import type { IntMat3 } from './generatorData.js';
 import {
-  BLACK_WHITE_GROUPS,
+  BLACK_WHITE_CLASSES,
+  blackWhiteGroup,
   blackWhiteClassSetting,
   blackWhiteOperations,
   blackWhiteSetting,
@@ -238,16 +239,23 @@ for (const c of CLASSES) {
     settingCount: crystalClass.settingCount,
   });
 }
-for (const g of BLACK_WHITE_GROUPS) {
+// Black-and-white groups: their settings are built on first use (blackWhiteData.ts).
+for (const g of BLACK_WHITE_CLASSES) {
   const crystalClass = BY_KEY.get(g.crystalClass)!;
   BY_KEY.set(g.key, {
     key: g.key,
     type: 'III',
     crystalClass,
     crystalSystem: crystalClass.crystalSystem,
-    schoenflies: g.schoenflies,
-    defaultSetting: g.settings.find((s) => s.isDefault)!.index,
-    settingCount: g.settings.length,
+    get schoenflies() {
+      return blackWhiteGroup(g.key).schoenflies;
+    },
+    get defaultSetting() {
+      return blackWhiteGroup(g.key).settings.find((s) => s.isDefault)!.index;
+    },
+    get settingCount() {
+      return blackWhiteGroup(g.key).settings.length;
+    },
   });
 }
 

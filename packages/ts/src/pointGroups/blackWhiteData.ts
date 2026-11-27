@@ -9,16 +9,17 @@
  *
  * Print anchors (tests): the symbols of the ITC default settings and their operations are those of
  * ITC Vol. D Table 1.5.2.3 (pp. 111–112; `blackWhiteData.reference.test.ts`,
- * `magnetic.reference.test.ts`). Every other setting is an orientation ITC prints
- * (`references/itc/orientations.md`); where a transcribed table prints it (Tables 1.5.2.4, 1.5.7.1,
- * 1.5.8.1) the tests compare it with print.
+ * `magnetic.reference.test.ts`). The further settings are the orientations ITC prints, and every
+ * printed one is a setting (`orientations.reference.test.ts` against
+ * `references/itc/orientations.md`); where a transcribed table prints a setting (Tables 1.5.2.4,
+ * 1.5.7.1, 1.5.8.1) the tests compare it with print as well.
  *
  * Internal.
  */
 
 import { shown } from '../checks.js';
 import { crystalFamily } from '../lattice.js';
-import { det, multiply, trace, transpose, type Mat3 } from '../linalg.js';
+import { det, matricesEqual, multiply, rotationZ, trace, transpose, type Mat3 } from '../linalg.js';
 import type { CartesianOperation } from '../operations.js';
 import type { BlackWhitePointGroupKey, PointGroupKey } from './keys.js';
 import { CLASSES, classData, settingCartesianOperations, settingTimeReversal } from './classData.js';
@@ -26,9 +27,9 @@ import { primedSymbols } from './magneticSymbols.js';
 
 /** One ITC setting of a black-and-white group. */
 export interface BlackWhiteSetting {
-  /** 1-based, in the order of the settings (`bw` below). */
+  /** 1-based, in the order of the settings (`framesOf`). */
   readonly index: number;
-  /** The ITC full symbol with primes, positions separated by single spaces. */
+  /** The ITC full symbol with primes, positions separated by single spaces, written from the operations. */
   readonly full: string;
   /** Monoclinic only: the unique axis. */
   readonly uniqueAxis?: 'a' | 'b' | 'c';
@@ -164,16 +165,6 @@ const ORTHORHOMBIC_ORIENTATIONS: readonly Mat3[] = [
   ],
 ] as unknown as Mat3[];
 
-/** The rotation about z by an angle (radians). */
-const rotationZ = (angle: number): Mat3 =>
-  [
-    [Math.cos(angle), -Math.sin(angle), 0],
-    [Math.sin(angle), Math.cos(angle), 0],
-    [0, 0, 1],
-  ] as unknown as Mat3;
-
-const near = (a: Mat3, b: Mat3): boolean => a.every((row, i) => row.every((x, j) => Math.abs(x - b[i][j]) < 1e-9));
-
 /** A frame of a group: the setting of its class and the time reversal of each of its operations, in ITA's order. */
 interface Frame {
   readonly classIndex: number;
@@ -194,7 +185,7 @@ function frameOf(
     if ((s.axes === 'rhombohedral') !== rhombohedral) continue;
     const own = settingCartesianOperations(crystalClass, s.index);
     if (own.length !== ops.length) continue;
-    const timeReversal = own.map((m) => ops.find((op) => near(op.cartesian, m))?.timeReversal);
+    const timeReversal = own.map((m) => ops.find((op) => matricesEqual(op.cartesian, m))?.timeReversal);
     if (timeReversal.every((x) => x !== undefined))
       return { classIndex: s.index, timeReversal: timeReversal as boolean[] };
   }
@@ -221,9 +212,14 @@ function framesOf(crystalClass: PointGroupKey, frame: number, primed: readonly b
   const cls = classData(crystalClass);
   const family = crystalFamily(cls.crystalSystem);
   if (family === 'monoclinic') {
-    return [1, 2, 3].map((axis) => {
-      const index = cls.settings.findIndex((s) => s.uniqueAxis === (['b', 'c', 'a'] as const)[axis - 1]) + 1;
-      const t = settingTimeReversal(crystalClass, index, primed)!;
+    // The same generators with time reversal in the frames with unique axis b (the default), c, a.
+    if (cls.settings.find((s) => s.index === frame)?.uniqueAxis !== 'b') {
+      throw new Error(`${crystalClass}: the default frame of a monoclinic group has unique axis b`);
+    }
+    return (['b', 'c', 'a'] as const).map((axis) => {
+      const index = cls.settings.find((s) => s.uniqueAxis === axis)!.index;
+      const t = settingTimeReversal(crystalClass, index, primed);
+      if (!t) throw new Error(`${crystalClass}: the generators ${String(primed)} give no group`);
       return { classIndex: index, timeReversal: t };
     });
   }
@@ -239,9 +235,9 @@ function framesOf(crystalClass: PointGroupKey, frame: number, primed: readonly b
       return found;
     });
   let frames: Frame[];
-  if (family === 'orthorhombic') frames = turned(ORTHORHOMBIC_ORIENTATIONS);
-  else if (family === 'tetragonal') frames = turned([rotationZ(0), rotationZ(Math.PI / 4)]);
-  else if (family === 'hexagonal') frames = turned([rotationZ(0), rotationZ(Math.PI / 6)]);
+  if (family === 'orthorhombic') frames = [first, ...turned(ORTHORHOMBIC_ORIENTATIONS.slice(1))];
+  else if (family === 'tetragonal') frames = [first, ...turned([rotationZ(45)])];
+  else if (family === 'hexagonal') frames = [first, ...turned([rotationZ(30)])];
   else frames = [first];
   const distinct = frames.filter(
     (f, i) =>
@@ -260,6 +256,8 @@ function framesOf(crystalClass: PointGroupKey, frame: number, primed: readonly b
 /** The Schoenflies symbol of a class as ITC Vol. D writes it (`S6` for `C3i`). */
 const volumeD = (s: string): string => (s === 'C3i' ? 'S6' : s);
 
+let classSignatures: Map<string, PointGroupKey> | undefined;
+
 /**
  * The crystal class of a list of operations without time reversal: the one with the same numbers
  * of operations of each determinant and trace (they tell the 32 classes apart).
@@ -270,10 +268,10 @@ function classOfOperations(ops: readonly Mat3[]): PointGroupKey {
       .map((m) => `${Math.round(det(m))}:${Math.round(trace(m))}`)
       .sort()
       .join(' ');
-  const s = signature(ops);
-  const found = CLASSES.find((c) => signature(settingCartesianOperations(c.key, 1)) === s);
+  classSignatures ??= new Map(CLASSES.map((c) => [signature(settingCartesianOperations(c.key, 1)), c.key]));
+  const found = classSignatures.get(signature(ops));
   if (!found) throw new Error('A subgroup that is no crystal class');
-  return found.key;
+  return found;
 }
 
 function group(data: GroupData): BlackWhiteGroup {
@@ -303,16 +301,30 @@ function group(data: GroupData): BlackWhiteGroup {
   };
 }
 
-/** The 58 black-and-white groups in the order of `BLACK_WHITE_POINT_GROUP_KEYS`. */
-export const BLACK_WHITE_GROUPS: readonly BlackWhiteGroup[] = DATA.map(group);
+/** The 58 black-and-white groups with their crystal classes, in the order of `BLACK_WHITE_POINT_GROUP_KEYS`. */
+export const BLACK_WHITE_CLASSES: readonly {
+  readonly key: BlackWhitePointGroupKey;
+  readonly crystalClass: PointGroupKey;
+}[] = Object.freeze(DATA.map(([key, crystalClass]) => Object.freeze({ key, crystalClass })));
 
-const BY_KEY = new Map<string, BlackWhiteGroup>(BLACK_WHITE_GROUPS.map((g) => [g.key, g]));
+// Built on first use, so that loading the library does not build the settings of all 58 groups.
+const BY_KEY = new Map<string, BlackWhiteGroup>();
 
-/** The ITC data of a black-and-white group. */
+/** The ITC data of a black-and-white group, built on first use. */
 export function blackWhiteGroup(key: BlackWhitePointGroupKey): BlackWhiteGroup {
-  const g = BY_KEY.get(key);
-  if (!g) throw new RangeError(`Unknown black-and-white point group key: ${shown(key)}`);
+  let g = BY_KEY.get(key);
+  if (!g) {
+    const data = DATA.find((d) => d[0] === key);
+    if (!data) throw new RangeError(`Unknown black-and-white point group key: ${shown(key)}`);
+    g = group(data);
+    BY_KEY.set(key, g);
+  }
   return g;
+}
+
+/** The 58 black-and-white groups in the order of `BLACK_WHITE_POINT_GROUP_KEYS` (all built). */
+export function blackWhiteGroups(): readonly BlackWhiteGroup[] {
+  return DATA.map(([key]) => blackWhiteGroup(key));
 }
 
 /** A setting of a black-and-white group. */

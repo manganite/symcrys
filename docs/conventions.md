@@ -333,8 +333,11 @@ each distinct result once; tetragonal, the default and the default turned by 45Â
 hexagonal and trigonal, by 30Â°; each result is the setting of the class with the same operations,
 with their time reversal, kept once; for a trigonal group, last, the setting of the class with
 rhombohedral axes that has the operations of the default. Their symbols are written from their
-operations; where a transcribed table prints a setting (ITC Vol. D Tables 1.5.2.3, 1.5.2.4,
-1.5.7.1, 1.5.8.1) the tests compare it with print.
+operations. A test checks them against the inventory of the orientations ITC prints
+(`references/itc/orientations.md`): every printed orientation is a further setting of its group,
+and every further setting of a class or black-and-white group without rhombohedral axes is printed
+(`orientations.reference.test.ts`); where a transcribed table prints a setting (ITC Vol. D Tables
+1.5.2.3, 1.5.2.4, 1.5.7.1, 1.5.8.1) the tests compare its symbol and operations with print.
 
 **The six settings of `2'm'm`.** `2'm'm` (C2v(Cs)) is the one orthorhombic group whose three
 elements all differ, so every permutation of the axes gives a further orientation: six in all, and
@@ -355,7 +358,8 @@ the operations are those the symbol names, each position read along x, y, z.
 
 A setting of a black-and-white group is a frame of its crystal class, but not always the one with
 the same index: setting 1 of `-6'2m'` (twofold axes along a, x) is the frame of setting 2 of `-6m2`
-(`-62m`). The setting of the class is the one whose symbol is the group's without primes.
+(`-62m`). The setting of the class is the one with the group's operations; its symbol is the group's
+without primes.
 
 **Defaults.** The frame in which the key, read along ITA's symmetry directions (Table 2.1.3.1),
 describes the group. For the triclinic to tetragonal systems this is the frame of the operators

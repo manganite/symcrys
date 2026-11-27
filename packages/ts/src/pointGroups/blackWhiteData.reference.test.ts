@@ -11,7 +11,7 @@ import { describe, expect, it } from 'vitest';
 import { det } from '../linalg.js';
 import { expectHeader, readReference, tableRows } from '../testUtils/references.js';
 import { classData } from './classData.js';
-import { BLACK_WHITE_GROUPS, blackWhiteOperations } from './blackWhiteData.js';
+import { blackWhiteGroups, blackWhiteOperations } from './blackWhiteData.js';
 
 const rows = tableRows(readReference('itc/vol-d-table-1.5.2.3.md'));
 expectHeader(rows, ['System', 'Schoenflies', 'Shubnikov', 'Short', 'Full', 'Symmetry operators']);
@@ -41,14 +41,18 @@ describe('ITC Vol. D Table 1.5.2.3 against the ITC data of the black-and-white g
   const printed = rows.slice(1).filter((r) => r[3].includes("'"));
 
   it('prints the 58 groups of the data, each once', () => {
-    expect(printed.map((r) => r[3]).sort()).toEqual(BLACK_WHITE_GROUPS.map((g) => g.key as string).sort());
+    expect(printed.map((r) => r[3]).sort()).toEqual(
+      blackWhiteGroups()
+        .map((g) => g.key as string)
+        .sort(),
+    );
   });
 
   it.each(printed.map((r) => [r[3], r] as const))('%s: default setting as printed', (key, r) => {
-    const g = BLACK_WHITE_GROUPS.find((x) => x.key === key)!;
+    const g = blackWhiteGroups().find((x) => x.key === key)!;
     const s = g.settings.find((x) => x.isDefault)!;
     expect(s.full).toBe(r[4]);
-    expect(g.schoenflies).toBe(r[1]); // stored as printed, S6 included
+    expect(g.schoenflies).toBe(r[1]); // computed; S6 as ITC Vol. D prints it
     expect(classData(g.crystalClass).crystalSystem).toBe(r[0].toLowerCase());
     const ops = blackWhiteOperations(g.key, s.index);
     expect(ops.filter((o) => o.timeReversal)).toHaveLength(primedCount(r[5]));
