@@ -189,6 +189,19 @@ function transform(
   if (!isRows(P0, d)) throw new RangeError(`${who}: the linear part P must be a ${d} × ${d} matrix, not ${shown(P0)}`);
   const fraction = (x: number, what: string): Rational => simplestFraction(x, tolerance, what);
   const P = P0.map((row) => row.map((x) => fraction(x, 'entry of P')));
+  // Every number lies within 1/q² of a fraction p/q (Dirichlet), so a fraction found within the
+  // tolerance says something only for small q: a number without one (cos 30°, from a rotation by
+  // 30°) meets a fraction with q ≤ Q within the tolerance with a chance of about Q²·tolerance. With
+  // Q = tolerance^(-1/3) that chance is tolerance^(1/3), about 2 % at 10⁻⁵, while the
+  // denominators of a change of cell (2, 3, 4, and 16 for a sixteenfold superstructure) stay within
+  // Q (46 at 10⁻⁵).
+  const largest = Math.floor(tolerance ** (-1 / 3) + 1e-9);
+  const wide = P0.flat().find((_, k) => P.flat()[k][1] > largest);
+  if (wide !== undefined) {
+    throw new RangeError(
+      `${who}: the linear part P is not rational within the tolerance ${tolerance}: its entry ${shown(wide)} is no fraction with a denominator of at most ${largest}. P is a change of basis between lattice bases (entries such as 1, 1/2, 1/3); to turn a tensor by a rotation, use rotateTensor`,
+    );
+  }
   if (determinant(P)[0] === 0) throw new RangeError(`${who}: the linear part P is singular (det P = 0)`);
   // Only a missing origin shift is zero; null is a wrong value, not a missing one.
   const shift0 =

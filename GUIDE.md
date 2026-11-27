@@ -99,8 +99,9 @@ Library code is everything in `packages/ts/src` except test-only code ("Correctn
 - **The crystallographic API has no time reversal.** A question that involves it (a magnetic key, a
   time-odd property, an operation with `timeReversal: true`) is an error that names the magnetic
   API. `timeParity: 'even'` and `timeReversal: false` are accepted, so that data of the magnetic API
-  without time reversal can be passed on. The magnetic API refuses an operation that does not say
-  whether it carries time reversal.
+  without time reversal can be passed on. Where the result depends on time reversal (tensors,
+  identification), the magnetic API refuses an operation that does not say whether it carries it;
+  the functions of directions (`siteSymmetryOf`, `orbitOf`) ignore it and need not be told.
 - **One implementation serves both point-group entry points**: the shared modules compute for all
   122 groups, and `crystalClasses.ts` checks what comes in and leaves time reversal out of what goes
   back. A new point-group function goes into the shared modules and is exported by both, unless it

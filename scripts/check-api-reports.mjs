@@ -21,20 +21,12 @@ const EXPECTED = {
     'OperationDescription_2',
   ],
   'symcrys-magnetic.api.md': [
-    // PointGroupKey, CrystalClassKey, PointGroup and PointGroupInSetting are aliases of these.
-    'MagneticPointGroupKey',
-    'PointGroupKey_2',
-    'GreyPointGroupKey',
-    'BlackWhitePointGroupKey',
-    'POINT_GROUP_KEYS_2',
-    'BLACK_WHITE_POINT_GROUP_KEYS',
+    // PointGroup and PointGroupInSetting are aliases of these, generic over the key with another
+    // default than in the crystallographic API.
     'PointGroup_2',
     'PointGroupInSetting_2',
   ],
-  'symcrys-plane.api.md': [
-    // PointGroupKey is an alias of it.
-    'PlanePointGroupKey',
-  ],
+  'symcrys-plane.api.md': [],
 };
 
 const problems = [];

@@ -10,8 +10,6 @@ export interface AffineOperation {
     readonly translation?: Vec3;
 }
 
-// Warning: (ae-forgotten-export) The symbol "MagneticPointGroupKey" needs to be exported by the entry point magnetic.d.ts
-//
 // @public
 export function allowedProperties(key: MagneticPointGroupKey): readonly TensorPropertyName[];
 
@@ -43,12 +41,10 @@ export interface Axis {
 }
 
 // @public
-const BLACK_WHITE_POINT_GROUP_KEYS: readonly ["-1'", "2'", "m'", "2'/m'", "2/m'", "2'/m", "2'2'2", "m'm'2", "2'm'm", "mm'm'", "m'm'm'", "mmm'", "4'", "-4'", "4'/m", "4/m'", "4'/m'", "4'22'", "42'2'", "4'mm'", "4m'm'", "-4'2m'", "-4'm2'", "-42'm'", "4'/mmm'", "4/mm'm'", "4/m'm'm'", "4/m'mm", "4'/m'm'm", "-3'", "32'", "3m'", "-3m'", "-3'm'", "-3'm", "6'", "-6'", "6'/m'", "6/m'", "6'/m", "6'22'", "62'2'", "6'mm'", "6m'm'", "-6'2m'", "-6'm2'", "-6m'2'", "6'/m'mm'", "6/mm'm'", "6/m'm'm'", "6/m'mm", "6'/mmm'", "m'-3'", "4'32'", "-4'3m'", "m-3m'", "m'-3'm'", "m'-3'm"];
+export const BLACK_WHITE_POINT_GROUP_KEYS: readonly ["-1'", "2'", "m'", "2'/m'", "2/m'", "2'/m", "2'2'2", "m'm'2", "2'm'm", "mm'm'", "m'm'm'", "mmm'", "4'", "-4'", "4'/m", "4/m'", "4'/m'", "4'22'", "42'2'", "4'mm'", "4m'm'", "-4'2m'", "-4'm2'", "-42'm'", "4'/mmm'", "4/mm'm'", "4/m'm'm'", "4/m'mm", "4'/m'm'm", "-3'", "32'", "3m'", "-3m'", "-3'm'", "-3'm", "6'", "-6'", "6'/m'", "6/m'", "6'/m", "6'22'", "62'2'", "6'mm'", "6m'm'", "-6'2m'", "-6'm2'", "-6m'2'", "6'/m'mm'", "6/mm'm'", "6/m'm'm'", "6/m'mm", "6'/mmm'", "m'-3'", "4'32'", "-4'3m'", "m-3m'", "m'-3'm'", "m'-3'm"];
 
-// Warning: (ae-forgotten-export) The symbol "BLACK_WHITE_POINT_GROUP_KEYS" needs to be exported by the entry point magnetic.d.ts
-//
 // @public
-type BlackWhitePointGroupKey = Extract<(typeof BLACK_WHITE_POINT_GROUP_KEYS)[number], string>;
+export type BlackWhitePointGroupKey = Extract<(typeof BLACK_WHITE_POINT_GROUP_KEYS)[number], string>;
 
 // @public
 export type BravaisLattice = 'aP' | 'mP' | 'mS' | 'oP' | 'oS' | 'oI' | 'oF' | 'tP' | 'tI' | 'hP' | 'hR' | 'cP' | 'cI' | 'cF';
@@ -131,10 +127,11 @@ export interface CoordinateTransformation {
     readonly originShift?: Vec3;
 }
 
-// Warning: (ae-forgotten-export) The symbol "PointGroupKey_2" needs to be exported by the entry point magnetic.d.ts
-//
 // @public
-export type CrystalClassKey = PointGroupKey_2;
+export const CRYSTAL_CLASS_KEYS: readonly ["1", "-1", "2", "m", "2/m", "222", "mm2", "mmm", "4", "-4", "4/m", "422", "4mm", "-42m", "4/mmm", "3", "-3", "32", "3m", "-3m", "6", "-6", "6/m", "622", "6mm", "-6m2", "6/mmm", "23", "m-3", "432", "-43m", "m-3m"];
+
+// @public
+export type CrystalClassKey = Extract<(typeof CRYSTAL_CLASS_KEYS)[number], string>;
 
 // @public
 export type CrystalFamily = 'triclinic' | 'monoclinic' | 'orthorhombic' | 'tetragonal' | 'hexagonal' | 'cubic';
@@ -168,6 +165,12 @@ export interface DirectionIndices {
 
 // @public
 export type DirectionInput = FaceIndices | DirectionIndices | CartesianDirection;
+
+// @public
+export interface DirectionOperation {
+    readonly cartesian: Mat3;
+    readonly timeReversal?: boolean;
+}
 
 // @public
 export interface DirectionOrbitEntry {
@@ -204,19 +207,22 @@ export function findPointGroup(symbol: string, options?: AxesOptions): PointGrou
 export type FourIndices = readonly [number, number, number, number];
 
 // @public
-export function fromVoigt(voigt: readonly number[] | readonly (readonly number[])[], specOrName: TensorSpec | TensorPropertyName, options?: VoigtOptions): readonly number[];
+export function fromVoigt(voigt: readonly number[] | readonly (readonly number[])[], spec: TensorSpec | TensorPropertyName, options?: VoigtOptions): readonly number[];
 
 // @public
 export function generators(key: MagneticPointGroupKey, options?: SettingOptions): readonly Operation[];
 
+// @public (undocumented)
+export const GREY_POINT_GROUP_KEYS: readonly GreyPointGroupKey[];
+
 // @public
-type GreyPointGroupKey = `${PointGroupKey_2}1'`;
+export type GreyPointGroupKey = `${CrystalClassKey}1'`;
 
 // @public
 export type Hkl = readonly [number, number, number];
 
 // @public
-export function holohedry(latticeSystem: LatticeSystem): PointGroupKey_2;
+export function holohedry(latticeSystem: LatticeSystem): CrystalClassKey;
 
 // @public
 export interface IdentifiedPointGroup {
@@ -283,11 +289,8 @@ export interface MagneticCellOperation extends CellOperation {
     readonly timeReversal: boolean;
 }
 
-// Warning: (ae-forgotten-export) The symbol "GreyPointGroupKey" needs to be exported by the entry point magnetic.d.ts
-// Warning: (ae-forgotten-export) The symbol "BlackWhitePointGroupKey" needs to be exported by the entry point magnetic.d.ts
-//
 // @public
-type MagneticPointGroupKey = PointGroupKey_2 | GreyPointGroupKey | BlackWhitePointGroupKey;
+export type MagneticPointGroupKey = CrystalClassKey | GreyPointGroupKey | BlackWhitePointGroupKey;
 
 // @public
 export type Mat3 = readonly [Vec3, Vec3, Vec3];
@@ -335,9 +338,7 @@ export function orbit(key: MagneticPointGroupKey, indices: DirectionIndices, opt
 export function orbit(key: MagneticPointGroupKey, indices: FaceIndices | DirectionIndices, options?: SettingOptions): readonly FaceOrbitEntry[] | readonly DirectionOrbitEntry[];
 
 // @public
-export function orbitOf(operations: readonly {
-    readonly cartesian: Mat3;
-}[], direction: Vec3, options?: ToleranceOptions): readonly OrbitPole[];
+export function orbitOf(operations: readonly DirectionOperation[], direction: Vec3, options?: ToleranceOptions): readonly OrbitPole[];
 
 // @public
 export interface OrbitPole {
@@ -357,9 +358,6 @@ export function planeToFourIndices(hkl: Vec3): FourIndices;
 // @public
 export const POINT_GROUP_KEYS: readonly MagneticPointGroupKey[];
 
-// @public
-const POINT_GROUP_KEYS_2: readonly ["1", "-1", "2", "m", "2/m", "222", "mm2", "mmm", "4", "-4", "4/m", "422", "4mm", "-42m", "4/mmm", "3", "-3", "32", "3m", "-3m", "6", "-6", "6/m", "622", "6mm", "-6m2", "6/mmm", "23", "m-3", "432", "-43m", "m-3m"];
-
 // Warning: (ae-forgotten-export) The symbol "PointGroup_2" needs to be exported by the entry point magnetic.d.ts
 //
 // @public
@@ -369,13 +367,13 @@ export type PointGroup<K extends PointGroupKey = PointGroupKey> = PointGroup_2<K
 export function pointGroup<K extends MagneticPointGroupKey>(key: K): PointGroup_2<K>;
 
 // @public
-interface PointGroup_2<K extends MagneticPointGroupKey = PointGroupKey_2> {
+interface PointGroup_2<K extends MagneticPointGroupKey = CrystalClassKey> {
     readonly centrosymmetric: boolean;
-    readonly crystalClass: PointGroupKey_2;
+    readonly crystalClass: CrystalClassKey;
     readonly crystalSystem: CrystalSystem;
     readonly enantiomorphic: boolean;
     readonly key: K;
-    readonly laueClass: PointGroupKey_2;
+    readonly laueClass: CrystalClassKey;
     readonly order: number;
     readonly polar: boolean;
     readonly type: PointGroupType;
@@ -385,18 +383,13 @@ interface PointGroup_2<K extends MagneticPointGroupKey = PointGroupKey_2> {
 export type PointGroupInSetting = PointGroupInSetting_2<PointGroupKey>;
 
 // @public
-interface PointGroupInSetting_2<K extends MagneticPointGroupKey = PointGroupKey_2> {
+interface PointGroupInSetting_2<K extends MagneticPointGroupKey = CrystalClassKey> {
     readonly key: K;
     readonly setting: number;
 }
 
 // @public
 export type PointGroupKey = MagneticPointGroupKey;
-
-// Warning: (ae-forgotten-export) The symbol "POINT_GROUP_KEYS_2" needs to be exported by the entry point magnetic.d.ts
-//
-// @public
-type PointGroupKey_2 = Extract<(typeof POINT_GROUP_KEYS_2)[number], string>;
 
 // @public
 export function pointGroupOf(operations: readonly CartesianOperation[], options?: ToleranceOptions): IdentifiedPointGroup | undefined;
@@ -458,7 +451,7 @@ export function siteSymmetry(key: MagneticPointGroupKey, direction: CartesianDir
 export function siteSymmetry(key: MagneticPointGroupKey, direction: DirectionInput, options?: SettingOptions & ToleranceOptions): SiteSymmetry;
 
 // @public
-export function siteSymmetryOf(operations: readonly CartesianOperation[], direction: Vec3, options?: ToleranceOptions): SiteSymmetry;
+export function siteSymmetryOf(operations: readonly DirectionOperation[], direction: Vec3, options?: ToleranceOptions): SiteSymmetry;
 
 // @public
 export function symbol(key: MagneticPointGroupKey, options?: SymbolOptions): string;
@@ -536,7 +529,7 @@ export interface ToleranceOptions {
 }
 
 // @public
-export function toVoigt(tensor: readonly number[], specOrName: TensorSpec | TensorPropertyName, options?: VoigtOptions): readonly number[] | readonly (readonly number[])[];
+export function toVoigt(tensor: readonly number[], spec: TensorSpec | TensorPropertyName, options?: VoigtOptions): readonly number[] | readonly (readonly number[])[];
 
 // @public
 export interface TransformedOperation {

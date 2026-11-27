@@ -104,6 +104,7 @@ export type PlaneGroupKey =
 
 /** The key of a plane point group, e.g. `'2mm'`. */
 export type PointGroupKey = PlanePointGroupKey;
+export type { PlanePointGroupKey };
 
 /** The short symbols of the 17 plane groups, in ITA's order (plane group n at index n − 1). */
 export const PLANE_GROUP_KEYS: readonly PlaneGroupKey[] = Object.freeze([...GROUP_KEYS] as PlaneGroupKey[]);
@@ -539,14 +540,30 @@ export function pointGroups(): readonly PointGroup[] {
 }
 
 /**
- * Finds a plane group by a symbol: the key (the short symbol, `'pm'`) or the full symbol (`'p1m1'`,
- * `'p 1 m 1'`), spaces ignored (docs/conventions.md, "Reading symbols"). The lattice letter is
- * lower case, as in ITA's notation. Gives `undefined` if the symbol names no plane group; throws a
- * RangeError for a value that is not a string.
+ * Vocabulary: the short symbols of International Tables (1952) still in common use, for the plane
+ * groups whose short symbol ITA (since 1983) writes with the twofold rotation or the full mirror.
+ */
+const OLD_SHORT_SYMBOLS: Readonly<Record<string, PlaneGroupKey>> = Object.freeze({
+  pmm: 'p2mm',
+  pmg: 'p2mg',
+  pgg: 'p2gg',
+  cmm: 'c2mm',
+  p4m: 'p4mm',
+  p4g: 'p4gm',
+  p6m: 'p6mm',
+});
+
+/**
+ * Finds a plane group by a symbol: the key (the short symbol, `'pm'`), the full symbol (`'p1m1'`,
+ * `'p 1 m 1'`) or the short symbol of International Tables (1952) still in common use (`'pmm'`,
+ * `'cmm'`, `'p4m'`, `'p4g'`, `'p6m'`), spaces ignored (docs/conventions.md, "Reading symbols"). The
+ * lattice letter is lower case, as in ITA's notation. Gives `undefined` if the symbol names no plane
+ * group; throws a RangeError for a value that is not a string.
  */
 export function findPlaneGroup(symbol: string): PlaneGroupFound | undefined {
   if (typeof symbol !== 'string') throw new RangeError(`A symbol is a string, not ${shown(symbol)}`);
-  const wanted = compactSymbol(symbol);
+  const compact = compactSymbol(symbol);
+  const wanted = OLD_SHORT_SYMBOLS[compact] ?? compact;
   const key = PLANE_GROUP_KEYS.find((k) => k === wanted || planeGroupFullSymbol(k) === wanted);
   return key === undefined ? undefined : Object.freeze({ key });
 }

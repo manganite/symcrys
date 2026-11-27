@@ -5,7 +5,7 @@
 
 import { checkNumbers, checkOptions, SETTING_KEYS, shown, TOLERANCE_KEYS } from '../checks.js';
 import { apply, inverse, type Mat3, type Vec3 } from '../linalg.js';
-import { checkCartesianOperations } from '../operations.js';
+import { checkCartesianOperations, type DirectionOperation } from '../operations.js';
 import { siteTolerance } from '../siteSymmetry.js';
 import { checkGroup } from '../closure.js';
 import { EPSILON, TOLERANCE_BOUND } from '../tolerances.js';
@@ -133,7 +133,7 @@ export interface OrbitPole {
  * products (only generators, for instance; the error names the missing product).
  */
 export function orbitOf(
-  operations: readonly { readonly cartesian: Mat3 }[],
+  operations: readonly DirectionOperation[],
   direction: Vec3,
   options?: ToleranceOptions,
 ): readonly OrbitPole[] {

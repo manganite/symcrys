@@ -502,7 +502,9 @@ normalisation before the comparison:
 
 `symcrys/plane` reads its symbols with the same spellings, spaces ignored; it has no
 Schoenflies or Birss symbols to read: `findPlaneGroup` the key or the full
-symbol of a plane group (`'pm'`, `'p1m1'`, `'p 1 m 1'`) and gives `{ key }`; `findPointGroup` the key
+symbol of a plane group (`'pm'`, `'p1m1'`, `'p 1 m 1'`), or the short symbol of International
+Tables (1952) still in common use (`'pmm'`, `'pmg'`, `'pgg'`, `'cmm'`, `'p4m'`, `'p4g'`, `'p6m'`;
+vocabulary, `OLD_SHORT_SYMBOLS` in plane.ts), and gives `{ key }`; `findPointGroup` the key
 or the symbol of a setting of a plane point group (`'31m'`, `'3 1 m'`) and gives `{ key, setting }`,
 the key `'3m'` its default setting; `{ setting }` takes the index or the symbol of a setting. The
 lattice letter is lower case, as ITA prints it: `'P2mg'` names no plane group, so that a symbol of a

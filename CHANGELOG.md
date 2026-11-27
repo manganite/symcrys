@@ -8,12 +8,34 @@ All notable changes to symcrys are recorded here. The format follows
 
 ### Added
 
+- `findPlaneGroup` reads the short symbols of International Tables (1952) still in common use:
+  `pmm`, `pmg`, `pgg`, `cmm`, `p4m`, `p4g`, `p6m` (#208).
+- `symcrys/magnetic` exports the keys of the three types of groups, `CRYSTAL_CLASS_KEYS`,
+  `GREY_POINT_GROUP_KEYS` and `BLACK_WHITE_POINT_GROUP_KEYS`, and their types `CrystalClassKey`,
+  `GreyPointGroupKey`, `BlackWhitePointGroupKey` and `MagneticPointGroupKey`; `symcrys/plane` the
+  type `PlanePointGroupKey` (#208).
+
 - `findPointGroup` and the option `setting` read the symbols of ITC Vol. D Table 1.2.6.12 (p. 66)
   (#206): the grey groups with `1'` after the first position (`21'/m`, `41'/m`, `61'/m`) and `1'`
   alone for `11'`, and the cubic groups without the prime on the 3 (`m'-3`, `m'-3m`, `m'-3m'`), a
   spelling in common use. The table's `2'2'` is a misprint for `2'2'2` and is not read.
 
 ### Changed
+
+- `toVoigt` and `fromVoigt` of `symcrys/magnetic` name their second parameter `spec`, as in
+  `symcrys` (#208); in Python `symcrys.magnetic.to_voigt` and `from_voigt` take `spec=`, was
+  `spec_or_name=`.
+- `siteSymmetryOf` and `orbitOf` of `symcrys/magnetic` take operations with or without
+  `timeReversal` (`DirectionOperation`), as they ignore it (#208); before, `siteSymmetryOf` was
+  typed to require it.
+- `changeOfCoordinates` refuses a linear part P whose entries are no fractions with small
+  denominators within the tolerance (at most tolerance^(-1/3), 46 at 10⁻⁵), such as a rotation by
+  30°, with a RangeError that names `rotateTensor` (#208). Since 0.14.0, with the tolerance 10⁻⁵,
+  such a P was read as nearby fractions and gave slightly wrong coordinates; before, it failed with
+  an error about safe integers.
+- The functions of a point of the plane refuse a coordinate beyond 10⁶ in magnitude (#208): beyond
+  about 2⁵² a double has no fractional part, and `orbit('p4mm', { point: [1e300, 0] })` gave the
+  origin with its full site symmetry.
 
 - `findPointGroup` refuses every Shubnikov symbol that `symbol()` writes without Shubnikov's own
   characters and that does not read as the same group in Hermann–Mauguin, with a RangeError that

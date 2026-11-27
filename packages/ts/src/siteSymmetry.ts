@@ -6,7 +6,7 @@
 import { checkNumbers, checkOptions, shown, TOLERANCE_KEYS } from './checks.js';
 import { apply, multiply, type Vec3 } from './linalg.js';
 import { checkGroup, closeIndices } from './closure.js';
-import { checkCartesianOperations, type CartesianOperation } from './operations.js';
+import { checkCartesianOperations, type CartesianOperation, type DirectionOperation } from './operations.js';
 import {
   EPSILON,
   ROUNDING_EPSILON,
@@ -116,7 +116,7 @@ export function siteTolerance(options?: ToleranceOptions): number {
  * tolerance far too large, e.g. 0.5).
  */
 export function siteSymmetryOf(
-  operations: readonly CartesianOperation[],
+  operations: readonly DirectionOperation[],
   direction: Vec3,
   options?: ToleranceOptions,
 ): SiteSymmetry {
@@ -134,8 +134,10 @@ export function siteSymmetryOf(
       general: true,
     });
   }
-  checkGroup(operations, Math.max(within, EPSILON), 'siteSymmetryOf');
-  return siteSymmetryInGroup(operations, v, tolerance, direction);
+  // Time reversal does not change a direction: an operation that leaves it out counts as without it.
+  const ops = operations.map((op) => ({ cartesian: op.cartesian, timeReversal: op.timeReversal === true }));
+  checkGroup(ops, Math.max(within, EPSILON), 'siteSymmetryOf');
+  return siteSymmetryInGroup(ops, v, tolerance, direction);
 }
 
 /**

@@ -23,6 +23,17 @@ export interface CartesianOperation {
 }
 
 /**
+ * An operation as the functions of directions read it (`siteSymmetryOf`, `orbitOf`): its Cartesian
+ * matrix; time reversal, which does not change a direction, may be given or left out.
+ */
+export interface DirectionOperation {
+  /** The orthogonal Cartesian 3×3 matrix, rows first. */
+  readonly cartesian: Mat3;
+  /** Whether the operation is combined with time reversal; ignored. */
+  readonly timeReversal?: boolean;
+}
+
+/**
  * A point operation of a magnetic point group in a setting: ITA's matrix W in the lattice basis of
  * the setting (`matrix`, integer, acting on the coordinates of a lattice direction [uvw]; the
  * coordinate triplets of ITA's general position are its rows) and the same operation as an

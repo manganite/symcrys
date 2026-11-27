@@ -776,10 +776,12 @@ def point_groups() -> list[PointGroup]:
 
 
 def find_plane_group(symbol: str) -> Optional[PlaneGroupFound]:
-    """Finds a plane group by a symbol: the key (the short symbol, ``'pm'``) or the full symbol
-    (``'p1m1'``, ``'p 1 m 1'``), spaces ignored (docs/conventions.md, "Reading symbols"). The
-    lattice letter is lower case, as in ITA's notation. Gives ``None`` if the symbol names no plane
-    group; raises SymcrysError for a value that is not a string.
+    """Finds a plane group by a symbol: the key (the short symbol, ``'pm'``), the full symbol
+    (``'p1m1'``, ``'p 1 m 1'``) or the short symbol of International Tables (1952) still in common
+    use (``'pmm'``, ``'cmm'``, ``'p4m'``, ``'p4g'``, ``'p6m'``), spaces ignored
+    (docs/conventions.md, "Reading symbols"). The lattice letter is lower case, as in ITA's
+    notation. Gives ``None`` if the symbol names no plane group; raises SymcrysError for a value
+    that is not a string.
     """
     result: Optional[PlaneGroupFound] = _shared.convert(
         _call("findPlaneGroup", symbol),

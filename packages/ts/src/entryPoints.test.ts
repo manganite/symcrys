@@ -25,12 +25,15 @@ describe('the entry points', () => {
     expect(Object.keys(pkg.exports)).toEqual(['.', './magnetic', './plane', './package.json']);
   });
 
-  it('export the same names; only the Wyckoff positions and the crystal forms are crystallographic alone', () => {
+  it('export the same names; only the Wyckoff positions and the crystal forms are crystallographic alone, the key lists of the three types magnetic alone', () => {
     const onlyClasses = ['CRYSTAL_FORM_TYPES', 'crystalForms', 'wyckoffPosition', 'wyckoffPositions'];
-    expect(Object.keys(classes).sort()).toEqual([...Object.keys(magnetic), ...onlyClasses].sort());
-    for (const name of Object.keys(magnetic) as (keyof typeof magnetic)[]) {
+    const onlyMagnetic = ['BLACK_WHITE_POINT_GROUP_KEYS', 'CRYSTAL_CLASS_KEYS', 'GREY_POINT_GROUP_KEYS'];
+    const shared = Object.keys(magnetic).filter((name) => !onlyMagnetic.includes(name));
+    expect(Object.keys(classes).sort()).toEqual([...shared, ...onlyClasses].sort());
+    for (const name of shared as (keyof typeof classes & keyof typeof magnetic)[]) {
       expect(typeof classes[name], name).toBe(typeof magnetic[name]);
     }
+    expect(magnetic.CRYSTAL_CLASS_KEYS).toEqual(classes.POINT_GROUP_KEYS);
   });
 
   it('share the version', () => {

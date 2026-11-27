@@ -212,7 +212,7 @@ export interface PlanePoint {
 }
 
 // @public
-type PlanePointGroupKey = '1' | '2' | 'm' | '2mm' | '4' | '4mm' | '3' | '3m' | '6' | '6mm';
+export type PlanePointGroupKey = '1' | '2' | 'm' | '2mm' | '4' | '4mm' | '3' | '3m' | '6' | '6mm';
 
 // @public
 export type PlaneSystem = 'oblique' | 'rectangular' | 'square' | 'hexagonal';
@@ -237,8 +237,6 @@ export interface PointGroupInSetting {
     readonly setting: number;
 }
 
-// Warning: (ae-forgotten-export) The symbol "PlanePointGroupKey" needs to be exported by the entry point plane.d.ts
-//
 // @public
 export type PointGroupKey = PlanePointGroupKey;
 
