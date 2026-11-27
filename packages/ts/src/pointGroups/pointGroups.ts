@@ -4,7 +4,7 @@
  * operations, generators and symbols, as ITC gives them (GUIDE.md, "ITC as the standard").
  */
 
-import { SHUBNIKOV } from './shubnikovData.js';
+import { shubnikovSymbol } from './shubnikov.js';
 import { checkOptions, SETTING_KEYS, shown } from '../checks.js';
 import { INVERSION, det, inverse, matricesEqual, multiply, type Mat3 } from '../linalg.js';
 import { EPSILON, INTEGER_EPSILON } from '../tolerances.js';
@@ -807,16 +807,27 @@ export function symbol(key: MagneticPointGroupKey, options?: SymbolOptions): str
 const LOW_LINE = '\u0332';
 const OVERBAR = '\u0305';
 
+const shubnikovCache = new Map<string, string>();
+
 /**
- * The Shubnikov symbol of a group: the printed one of ITC Vol. D Table 1.5.2.3 (types I and III),
- * written with combining characters; for a grey group, which ITC does not print, the symbol of its
- * class, a centred dot and an underlined 1, as Shubnikov & Belov (1964, pp. 113–114) write it
- * (`m·1̲`, `4·1̲`).
+ * The Shubnikov symbol of a group, computed from its operations (shubnikov.ts; equal to ITC Vol. D
+ * Table 1.5.2.3, column 3, for types I and III), written with combining characters; for a grey
+ * group, which ITC does not print, the symbol of its class, a centred dot and an underlined 1, as
+ * Shubnikov & Belov (1964, pp. 113–114) write it (`m·1̲`, `4·1̲`).
  */
 function shubnikov(d: GroupData): string {
+  const cached = shubnikovCache.get(d.key);
+  if (cached !== undefined) return cached;
+  const result = shubnikovUncached(d);
+  shubnikovCache.set(d.key, result);
+  return result;
+}
+
+function shubnikovUncached(d: GroupData): string {
   if (d.type === 'II') return `${shubnikov(d.crystalClass)}·1${LOW_LINE}`;
-  const symbol = SHUBNIKOV[d.key];
-  if (symbol === undefined) throw new Error(`No Shubnikov symbol for ${d.key}`);
+  const symbol = shubnikovSymbol(
+    operations(d.key).map((op) => ({ cartesian: op.cartesian, timeReversal: op.timeReversal === true })),
+  );
   let out = '';
   let underline = false;
   let overbar = false;
