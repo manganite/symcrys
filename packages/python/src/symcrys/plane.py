@@ -470,16 +470,6 @@ class InverseTransformation(TypedDict):
 
 
 @final
-class TransformedOperation(TypedDict):
-    """An operation (W′, w′) in the new coordinate system."""
-
-    matrix: NDArray[np.int64]
-    """W′ = P⁻¹WP, integer entries."""
-    translation: NDArray[np.float64]
-    """w′ = P⁻¹(w + (W − I)p), not reduced modulo the lattice."""
-
-
-@final
 class CoordinateChange(TypedDict):
     """The result of ``change_of_coordinates``: the inverse pair and each given quantity in the new
     coordinate system.
@@ -495,7 +485,7 @@ class CoordinateChange(TypedDict):
     """The Miller indices, as given, in the new basis."""
     metric: NotRequired[NDArray[np.float64]]
     """The metric tensor in the new basis."""
-    operations: NotRequired[list[TransformedOperation]]
+    operations: NotRequired[Operations]
     """The operations, as given, in the new coordinate system."""
 
 
@@ -631,13 +621,6 @@ _S_InverseTransformation = (
         "originShift": ("a", np.float64, None),
     },
 )
-_S_TransformedOperation = (
-    "d",
-    {
-        "matrix": ("a", np.int64, None),
-        "translation": ("a", np.float64, (2,)),
-    },
-)
 _S_CoordinateChange = (
     "d",
     {
@@ -646,7 +629,7 @@ _S_CoordinateChange = (
         "directions": ("a", np.float64, (-1, 2)),
         "planes": ("a", np.float64, (-1, 2)),
         "metric": ("a", np.float64, None),
-        "operations": ("l", _S_TransformedOperation),
+        "operations": _S_Operations,
     },
 )
 _S_CrystalFormType = ("d", {"name": _V, "edges": _I})
@@ -685,7 +668,6 @@ __all__ = [
     "SiteSymmetry",
     "SymmetryElements",
     "SymmetryLine",
-    "TransformedOperation",
     "WyckoffDistance",
     "WyckoffPosition",
     "asymmetric_unit",
@@ -718,6 +700,10 @@ __all__ = [
     "wyckoff_position",
     "wyckoff_positions",
 ]
+
+
+def __dir__() -> list[str]:
+    return sorted({*__all__, *(n for n in ("__doc__", "__name__", "__version__") if n in globals())})
 
 
 def _call(name: str, *args: Any) -> Any:
@@ -1234,7 +1220,7 @@ def symmetry_elements(key: str, *, box: Optional[ArrayLike] = None) -> SymmetryE
     return result
 
 
-def cell_restrictions(system: str) -> CellRestrictions:
+def cell_restrictions(system: PlaneSystem) -> CellRestrictions:
     """The restrictions on the cell parameters of a crystal system of the plane, as ITA gives them
     for the conventional cell: the parameters to be determined, the pairs of equal parameters, the
     fixed angles, and the angles conventionally taken non-acute. Raises SymcrysError for anything

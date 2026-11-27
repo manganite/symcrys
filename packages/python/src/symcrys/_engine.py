@@ -8,6 +8,7 @@ module and nothing else.
 from __future__ import annotations
 
 import json
+import re
 import threading
 from importlib import resources
 from typing import Any
@@ -88,19 +89,37 @@ def invoke(name: str, *args: Any) -> Any:
                 json.dumps(arg, allow_nan=False)
             except ValueError:
                 raise SymcrysError(
-                    f"Argument {i + 1} of {name}: every number passed to symcrys must be finite, not NaN or infinite",
+                    python_terms(f"Argument {i + 1} of {name}: every number passed to symcrys must be finite, not NaN or infinite"),
                     "RangeError",
                 ) from None
             except TypeError as e:
-                raise SymcrysError(f"Argument {i + 1} of {name} cannot be passed to symcrys: {e}", "RangeError") from None
+                raise SymcrysError(python_terms(f"Argument {i + 1} of {name} cannot be passed to symcrys: {e}"), "RangeError") from None
         raise
     answer = json.loads(call(name, args_json))
     if "error" in answer:
         error = answer["error"]
         if error["name"] == "RangeError":
-            raise SymcrysError(error["message"], error["name"])
+            raise SymcrysError(python_terms(error["message"]), error["name"])
         raise SymcrysInternalError(error["message"], error["name"])
     return answer.get("result")
+
+
+# Two lower-case letters at least before the first capital, so that a Bravais lattice (hR, mP) stays.
+_CAMEL = re.compile(r"\b([a-z]{2,}(?:[A-Z][a-z0-9]*)+)\b")
+_LITERALS = {"undefined": "None", "null": "None", "true": "True", "false": "False"}
+_LITERAL = re.compile(r"\b(undefined|null|true|false)\b")
+_OPTION = re.compile(r"\{ (\w+): ([^{}]*?) \}")
+
+
+def python_terms(message: str) -> str:
+    """A message of the library in Python's terms: names in snake_case (``fromCell`` →
+    ``from_cell``), the literals of JavaScript as Python writes them (``undefined`` → ``None``,
+    ``true`` → ``True``), and an option object ``{ factors: [1, 2] }`` as the keyword argument
+    ``factors=[1, 2]``.
+    """
+    message = _OPTION.sub(lambda m: f"{m.group(1)}={m.group(2)}", message)
+    message = _CAMEL.sub(lambda m: re.sub(r"([A-Z])", lambda c: "_" + c.group(1).lower(), m.group(1)), message)
+    return _LITERAL.sub(lambda m: _LITERALS[m.group(1)], message)
 
 
 def value(name: str) -> Any:

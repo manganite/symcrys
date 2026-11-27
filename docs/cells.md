@@ -43,5 +43,5 @@ len(symcrys.residual_operations(ops, basis)), len(symcrys.residual_operations(op
 # The operations of -3m with rhombohedral axes, from the hexagonal cell of the hR lattice (its standard cell, {}).
 P = symcrys.cell_transformation("hR", {}, {"axes": "rhombohedral"})["linear_part"]
 change = symcrys.change_of_coordinates(P, operations=symcrys.operations("-3m"), metric=symcrys.metric_tensor(basis))
-change["operations"][1]["matrix"], change["inverse"]["linear_part"]
+change["operations"].matrix[1], change["inverse"]["linear_part"]
 ```

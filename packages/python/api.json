@@ -55,10 +55,9 @@
         "points",
         "directions",
         "planes",
-        "metric",
-        "translation"
+        "metric"
       ],
-      "int64": ["lattice", "hkl", "uvw", "operations", "parameters", "siteSymmetryOperations", "matrix"]
+      "int64": ["lattice", "hkl", "uvw", "operations", "parameters", "siteSymmetryOperations"]
     },
     "symcrys.plane": {
       "float64": [
@@ -75,7 +74,7 @@
         "planes",
         "metric"
       ],
-      "int64": ["direction", "axis", "operations", "edges", "inequalities", "matrix", "siteSymmetryOperations"]
+      "int64": ["direction", "axis", "operations", "edges", "inequalities", "siteSymmetryOperations"]
     }
   },
   "shapes": {
@@ -193,7 +192,11 @@
     },
     "residualOperations": {
       "operationKeys": ["matrix"],
-      "listOf": { "symcrys": "Operation", "symcrys.magnetic": "Operation", "symcrys.plane": "PlaneOperation" },
+      "listOf": {
+        "symcrys": "Operation",
+        "symcrys.magnetic": "Operation",
+        "symcrys.plane": "PlaneOperation"
+      },
       "selects": true
     },
     "tensorForm": {
@@ -257,7 +260,27 @@
         "translation": ["float64", [2]]
       },
       "doc": "The operations of a plane group or plane point group as arrays, one row per operation, in the order of ``operations``: what ``operations`` and ``generators`` return, and what ``describe_operations_of`` accepts, beside a list of dicts ``{\"matrix\", \"translation\"}``. Frozen, its arrays read-only; ``len(ops)`` is the number of operations.",
-      "keys": ["matrix", "translation"]
+      "keys": ["matrix", "translation"],
+      "also": ["TransformedOperation"]
+    }
+  },
+  "transformed": {
+    "//": "The record of arrays for the operations of a change of coordinates in Python, as for \"operations\".",
+    "symcrys": {
+      "record": "TransformedOperation",
+      "fields": {
+        "matrix": ["int64", [3, 3]],
+        "translation": ["float64", [3]]
+      },
+      "doc": "The operations of ``change_of_coordinates`` in the new coordinate system as arrays, one row per operation, in the order given: each a matrix W′ and a translation w′. Frozen, its arrays read-only; ``len(ops)`` is the number of operations; they can be passed back to ``change_of_coordinates``."
+    },
+    "symcrys.magnetic": {
+      "record": "TransformedOperation",
+      "fields": {
+        "matrix": ["int64", [3, 3]],
+        "translation": ["float64", [3]]
+      },
+      "doc": "The operations of ``change_of_coordinates`` in the new coordinate system as arrays, one row per operation, in the order given: each a matrix W′ and a translation w′. Frozen, its arrays read-only; ``len(ops)`` is the number of operations; they can be passed back to ``change_of_coordinates``."
     }
   }
 }

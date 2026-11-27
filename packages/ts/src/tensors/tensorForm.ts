@@ -118,10 +118,13 @@ export interface TensorForm {
    */
   readonly parameters: readonly (readonly number[])[];
   /**
-   * The constraints: one row r per component that is not a parameter, in ascending flat index,
-   * with r·t = 0 for every allowed tensor t, both by flat index. Row c reads
-   * t_c − Σₖ b_{k,c}·t_{parameters[k]} = 0, with b_{k,c} the component c of basis[k];
-   * a row with a single 1 says that the component vanishes.
+   * The constraints: one per component c that is not a parameter, in ascending order of the
+   * components, each a tensor r in the shape of the basis tensors with Σ r·t = 0, summed over all
+   * components, for every allowed tensor t. The constraint of c reads
+   * t_c − Σₖ b_{k,c}·t_{parameters[k]} = 0, with b_{k,c} the component c of basis[k]; one with a
+   * single 1 says that the component vanishes.
+   *
+   * @remarks In TypeScript the basis tensors and the constraints are flat, 3^rank components.
    */
   readonly relations: readonly (readonly number[])[];
 }

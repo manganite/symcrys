@@ -45,6 +45,12 @@ def operation_list(operations: Any, keys: tuple[str, ...] = ("cartesian",), bare
         matrices = None
         if not any(isinstance(op, Mapping) for op in ops):
             try:
+                given = np.asarray(ops)
+            except (TypeError, ValueError):
+                given = None
+            if given is not None and given.dtype.kind == "c":
+                raise _engine.SymcrysError(f"the matrices of the operations must be real, not {given.dtype}")
+            try:
                 matrices = np.asarray(ops, dtype=np.float64)
             except (TypeError, ValueError):
                 pass
@@ -252,16 +258,28 @@ def spec(spec_or_name: Mapping[str, Any] | str) -> Any:
     return spec_or_name if isinstance(spec_or_name, str) else mapping(spec_or_name, "spec")
 
 
+# The largest integer a double holds exactly, the safe integers of JavaScript.
+_MAX_SAFE = 2**53 - 1
+
+
 def array(value: Any, what: str, dtype: Any = None) -> NDArray[Any]:
     """An argument as a NumPy array of real numbers, or SymcrysError naming it (a ragged list, a
     string, complex numbers): the library checks the shape and the values."""
     try:
-        result = np.asarray(value, dtype=dtype)
+        # Read first as it is, so that complex numbers are refused rather than cut to their real part.
+        given = np.asarray(value)
     except (TypeError, ValueError) as e:
         raise _engine.SymcrysError(f"{what} must be an array of numbers ({e})") from None
-    if result.dtype.kind not in "biuf":
-        raise _engine.SymcrysError(f"{what} must be an array of real numbers, not of {result.dtype}")
-    return result
+    if given.dtype.kind not in "biuf":
+        raise _engine.SymcrysError(f"{what} must be an array of real numbers, not of {given.dtype}")
+    if given.dtype.kind in "iu" and given.size and int(np.max(np.abs(given.astype(object)))) > _MAX_SAFE:
+        raise _engine.SymcrysError(
+            f"{what}: integers beyond 2**53 - 1 in magnitude cannot be passed to symcrys exactly, not {given.tolist()}"
+        )
+    try:
+        return np.asarray(given, dtype=dtype)
+    except (TypeError, ValueError) as e:
+        raise _engine.SymcrysError(f"{what} must be an array of numbers ({e})") from None
 
 
 def mapping(value: Any, what: str) -> dict[str, Any]:
