@@ -92,7 +92,7 @@ def test_errors() -> None:
         plane.site_symmetry("4mm", point=[0, 0])
     with pytest.raises(symcrys.SymcrysError):
         plane.orbit("p2", point=[0.1, 0.2], tolerance=0.5)
-    with pytest.raises(symcrys.SymcrysError, match="two coordinates"):
+    with pytest.raises(symcrys.SymcrysError, match="two finite coordinates"):
         plane.site_symmetry("p2", point=[[0.1, 0.2]])
     with pytest.raises(symcrys.SymcrysError, match="by one field"):
         plane.site_symmetry("4mm", uv=[1, 0], hk=[1, 0])

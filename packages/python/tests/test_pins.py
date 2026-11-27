@@ -57,7 +57,19 @@ INT64_FIELDS = {
     "hexagonal",
     "cubic",
 }
-INT64_FIELDS_PLANE = {"matrix", "operations", "site_symmetry_operations", "axis", "direction", "edges", "inequalities"}
+# The plane: matrices W, indices, lattice directions (an axis `lattice`, a line's `direction`, `uv`) and
+# Miller indices (`hk`).
+INT64_FIELDS_PLANE = {
+    "matrix",
+    "operations",
+    "site_symmetry_operations",
+    "lattice",
+    "direction",
+    "uv",
+    "hk",
+    "edges",
+    "inequalities",
+}
 BOOL_FIELDS = {"time_reversal"}
 
 # The rule for numbers: counts, indices and numbers are int, everything else is float.

@@ -582,7 +582,7 @@ def test_input_of_the_wrong_type_is_a_symcrys_error_that_names_the_argument() ->
         (lambda: symcrys.site_symmetry_of(ops, "z"), "direction must be an array of real numbers"),
         (lambda: symcrys.operations("32", setting=object()), "Argument 2 of operations cannot be passed"),  # type: ignore[arg-type]
         (lambda: symcrys.site_symmetry_of(ops, [0, np.nan, 1]), "Argument 2 of siteSymmetryOf: every number"),
-        (lambda: plane.orbit("p4", point=[[0.1], [0.2, 0.3]]), "point must be an array of numbers"),
+        (lambda: plane.orbit("p4", point=[[0.1], [0.2, 0.3]]), "two finite coordinates"),
     ]
     for call, message in cases:
         with pytest.raises(symcrys.SymcrysError, match=message):
