@@ -6,6 +6,16 @@ All notable changes to symcrys are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.15.0] - 2026-11-27
+
+The review of 0.14.0 (#200) carried out: library data are minimal and everything else is computed
+(#201: Wyckoff positions, crystal forms, Seitz signs, Shubnikov symbols, black-and-white groups,
+plane groups and their cells, cell transformations; the results equal print as before), wrong
+input is refused instead of answered silently (#202–#206), every export is pinned for both
+languages (#207), and the three entry points and the Python layer are consistent (#208): the plane
+has the functions of a list of operations and `planeGroupOf`. Many changes break callers; each is
+marked **Breaking** below, and the removed names are under "Removed".
+
 ### Added
 
 - `symcrys/plane` is on par with the other entry points (#208): `planeGroupOf` names the plane
@@ -32,12 +42,12 @@ All notable changes to symcrys are recorded here. The format follows
 
 ### Changed
 
-- `changeOfCoordinates` reads the origin shift p and the translations w as positions: a number
+- **Breaking:** `changeOfCoordinates` reads the origin shift p and the translations w as positions: a number
   that is a fraction to rounding (1/3 as 0.3333333333) is that fraction, another is taken as it is.
   Before, each was read as the simplest fraction within the tolerance, so that with `EPSILON`
   10⁻⁵ an origin shift 0.1234 became 29/235 and the coordinates moved by up to 10⁻⁵. P and the
   matrices W are read as before.
-- Unknown fields are refused in a tensor specification (`TensorSpec`; a misspelt `timeparity` was
+- **Breaking:** Unknown fields are refused in a tensor specification (`TensorSpec`; a misspelt `timeparity` was
   read as time-even), in the parameters of a cell (`latticeFromParameters`, both entry points) and
   in the angles of `isValidCell`, which takes the edges of a whole cell too.
 - Python: a point, direction or face passed by position to `site_symmetry`, `wyckoff_position`,
@@ -48,14 +58,14 @@ All notable changes to symcrys are recorded here. The format follows
 - `OperationDescription` and `CartesianOperationDescription` of `symcrys` and `PointGroup` of
   `symcrys/magnetic` are interfaces, were type aliases of the same shape (#208); nothing changes for
   a caller that reads them.
-- `symcrys/plane`, in the names of the other entry points (#208): the `axis` of a reflection or
+- **Breaking:** `symcrys/plane`, in the names of the other entry points (#208): the `axis` of a reflection or
   glide reflection (`describeOperations`, `describeOperationsOf`, the lines of `symmetryElements`)
   is a record `{ lattice }`, was the bare vector; the point of a rotation or a line in
   `describeOperations` is `point`, was `location`; `planeGroup(key).centring` is
   `centringTranslations` and `planeGroup(key).origin` is `originSiteSymmetry`. In Python the point
   of `site_symmetry`, `wyckoff_position` and `orbit` is the keyword argument `point=`, as `hkl=` and
   `uvw=` in `symcrys`, was positional.
-- One result type for a group found or identified (#208): `findPointGroup` and `pointGroupOf`
+- **Breaking:** One result type for a group found or identified (#208): `findPointGroup` and `pointGroupOf`
   give `IdentifiedPointGroup` `{ key, setting? }` in every entry point (`PointGroupInSetting` is
   gone; `findPointGroup` always gives the setting), `findPlaneGroup` and `planeGroupOf`
   `IdentifiedPlaneGroup`, `findPlaneGroup` with `setting: 1` (`PlaneGroupFound` is gone).
@@ -64,14 +74,14 @@ All notable changes to symcrys are recorded here. The format follows
   operations (#208): the group of the caller is made exact with flat arithmetic. 48 operations of
   m-3m in a general orientation: 2–5 ms in Node, was about 11 ms (0.9: 6–13 ms); forms
   unchanged up to rounding.
-- `toVoigt` and `fromVoigt` of `symcrys/magnetic` name their second parameter `spec`, as in
+- **Breaking:** `toVoigt` and `fromVoigt` of `symcrys/magnetic` name their second parameter `spec`, as in
   `symcrys` (#208); in Python `symcrys.magnetic.to_voigt` and `from_voigt` take `spec=`, was
   `spec_or_name=`.
 - `siteSymmetryOf` and `orbitOf` of `symcrys/magnetic` take operations with or without
   `timeReversal` (`DirectionOperation`), read as false when left out (#208); before,
   `siteSymmetryOf` was typed to require it. A given `timeReversal` that is not a boolean is a
   RangeError.
-- Python (#208): messages of `SymcrysError` are in Python's terms (`from_cell`, `time_reversal`,
+- **Breaking:** Python (#208): messages of `SymcrysError` are in Python's terms (`from_cell`, `time_reversal`,
   `None`, `True`, `factors=[…]`, was `fromCell`, `timeReversal`, `undefined`, `true`,
   `{ factors: […] }`); `change_of_coordinates(...)["operations"]` is a `TransformedOperations`
   record of arrays (`matrix`, `translation`), was a list of dicts, and can be passed back; `tensor_form(...)["relations"]` has the shape
@@ -80,39 +90,49 @@ All notable changes to symcrys are recorded here. The format follows
   `ComplexWarning`), and so are integers beyond 2⁵³ − 1 in magnitude, in any argument (were
   rounded); `Cell` and `BravaisLattice`
   type the arguments of `cell_transformation`; `dir()` of the modules lists their public names.
-- `findPointGroup` refuses every Shubnikov symbol that `symbol()` writes without Shubnikov's own
+- **Breaking:** `findPointGroup` refuses every Shubnikov symbol that `symbol()` writes without Shubnikov's own
   characters and that does not read as the same group in Hermann–Mauguin, with a RangeError that
   names both readings (#206): `6̅` (-3) was read as -6; `2̅` (-1) and the cubic `3/2`, `6̅/2`, `3/4`,
   `3/4̅`, `6̅/4` were not found. The overbar stays, as ITC Vol. D Table 1.5.2.3 and Shubnikov &
   Belov print it.
-- The default tolerance `EPSILON` is 10⁻⁵, was 10⁻⁶ (#204): operations rounded to 6 decimals, the
+- **Breaking:** The default tolerance `EPSILON` is 10⁻⁵, was 10⁻⁶ (#204): operations rounded to 6 decimals, the
   usual output of files and other programs, now pass in any orientation (at 10⁻⁶, 21 of the 50
   settings of the 32 classes failed in the frame of symcrys, up to about 40 in general
   orientations); it is also spglib's default `symprec`. Results for exact
   input do not change; for a caller's numbers, values closer than 10⁻⁵ now count as equal.
-- `pointGroupOf` throws the RangeError of `tensorFormOf` where the tolerance is the problem (the
+- **Breaking:** `pointGroupOf` throws the RangeError of `tensorFormOf` where the tolerance is the problem (the
   operations close into no finite group), instead of returning `undefined`; `undefined` now means
   a finite group that is not a crystallographic point group (#204). The orthogonality error names the tolerance and the deviation it measured, and
   says to pass a larger tolerance for matrices with rounding errors.
-- A direction given to a function of a key names what it is (#202): `siteSymmetry(key, direction)`
+- **Breaking:** A direction given to a function of a key names what it is (#202): `siteSymmetry(key, direction)`
   (both point-group entry points) and `wyckoffPosition(key, direction)` (`symcrys`) take a face `{ hkl }`, a
   lattice direction `{ uvw }` or a Cartesian vector `{ cartesian }`, as `orbit` takes `{ hkl }` or
   `{ uvw }`; a bare array is a RangeError. In Python the keyword `hkl=`, `uvw=` or `cartesian=`:
   `site_symmetry("6/mmm", uvw=[2, 1, 0])`. `orbit` refuses `{ cartesian }` and names `orbitOf`.
-- `latticeBasis(key, { setting })` replaces `latticeBasis(family)` (#202): the basis B of a point
+- **Breaking:** `latticeBasis(key, { setting })` replaces `latticeBasis(family)` (#202): the basis B of a point
   group in a setting, `cartesian` = B·W·B⁻¹, for every setting, rhombohedral axes and unique axis a
   included; for the monoclinic and triclinic classes a, b, c along x, y, z, the basis symcrys takes
   for their operations. `latticeBasis('cubic')` becomes `latticeBasis('m-3m')`, `'hexagonal'`
   `'6/mmm'`; the name of a family is a RangeError that names the key to take. The type
   `FixedAngleFamily` is no longer exported. `orbit` refuses fields other than `hkl` and `uvw`.
-- `symcrys/plane`: `siteSymmetry`, `wyckoffPosition`, `orbit` and `wyckoffDistances` take the
+- **Breaking:** `symcrys/plane`: `siteSymmetry`, `wyckoffPosition`, `orbit` and `wyckoffDistances` take the
   point as `{ point: [x, y] }` (#202), named as in their results; in Python `wyckoff_distances`
   takes `point` as before, the other three the keyword `point=` (below).
-- `siteSymmetryOf` and `orbitOf` (both point-group entry points; in Python `site_symmetry_of`,
+- **Breaking:** `siteSymmetryOf` and `orbitOf` (both point-group entry points; in Python `site_symmetry_of`,
   `orbit_of`) take a point group given as all its operations, each once, and refuse a list that is
   not a group with a RangeError that says why: a missing product (time reversal included), an
   operation twice, no identity (#203). An empty list is the group 1, as for `tensorFormOf` and
   `pointGroupOf`; since 0.11.0 it was a RangeError.
+
+### Removed
+
+- **Breaking:** the types `PointGroupInSetting` (`symcrys`, `symcrys/magnetic`) and
+  `PlaneGroupFound` (`symcrys/plane`): use `IdentifiedPointGroup` and `IdentifiedPlaneGroup`
+  (above).
+- **Breaking:** the type `FixedAngleFamily` and the form `latticeBasis(family)`: use
+  `latticeBasis(key, { setting })` (above).
+- **Breaking:** the fields `centring` and `origin` of a plane group and `location` of a plane
+  description: `centringTranslations`, `originSiteSymmetry`, `point` (above).
 
 ### Fixed
 
@@ -1188,7 +1208,8 @@ k=None, l=None)` (new in this version).
 - Project scaffold: TypeScript build to `dist/` (ES modules with type declarations), tests, lint,
   format check, CI and release workflow. The only export so far is `VERSION`.
 
-[Unreleased]: https://github.com/manganite/symcrys/compare/v0.14.0...HEAD
+[Unreleased]: https://github.com/manganite/symcrys/compare/v0.15.0...HEAD
+[0.15.0]: https://github.com/manganite/symcrys/compare/v0.14.0...v0.15.0
 [0.14.0]: https://github.com/manganite/symcrys/compare/v0.13.0...v0.14.0
 [0.13.0]: https://github.com/manganite/symcrys/compare/v0.12.0...v0.13.0
 [0.12.0]: https://github.com/manganite/symcrys/compare/v0.11.0...v0.12.0
