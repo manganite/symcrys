@@ -1,7 +1,7 @@
 /**
- * The ITC data of the black-and-white groups (blackWhiteData.ts) against print (fixture class
- * (a)): ITC Vol. D Table 1.5.2.3, printed pp. 111–112, re-parsed from references/itc/. The default
- * setting of every black-and-white group has the printed full symbol, the printed Schoenflies symbol
+ * The black-and-white groups, built from their primed generators (blackWhiteData.ts), against print
+ * (fixture class (a)): ITC Vol. D Table 1.5.2.3, printed pp. 111–112, re-parsed from
+ * references/itc/. The default setting of every black-and-white group has the printed full symbol, the printed Schoenflies symbol
  * G(H) and the printed crystal system, and its operations carry time reversal exactly where the
  * printed operators carry a prime, counted by kind (the operations themselves are compared with the
  * printed operators in magnetic.reference.test.ts).

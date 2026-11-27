@@ -1,25 +1,27 @@
 /**
- * The 58 black-and-white magnetic point groups in the ITC frame: each setting is given
- * by its ITC full symbol with primes, nothing else. A black-and-white group is its crystal class
- * with half of the operations combined with time reversal (ITC Vol. D, § 1.5.2.1); its symbol in a
- * setting is the class's symbol in that setting with the primes of the operations it names
- * (magneticSymbols.ts). So the symbol without primes names the setting of the class
- * (classData.ts), and the time reversal of its operations is the one assignment, among those that
- * ITA's generators of the class allow, whose primed symbol is the stored one (checked unique).
+ * The 58 black-and-white magnetic point groups in the ITC frame. A black-and-white group is its
+ * crystal class with half of the operations combined with time reversal (ITC Vol. D, § 1.5.2.1).
+ * Data: for each group its crystal class, the frame (setting of the class) of its ITC default
+ * setting, and which of ITA's selected generators of that frame carry time reversal (the
+ * time-reversal assignment, GUIDE.md §3). Everything else is computed: the operations, the
+ * further settings (the orientations ITC prints, by the rule of docs/conventions.md, "Settings of
+ * the magnetic groups"), the symbols (magneticSymbols.ts) and the Schoenflies symbol G(H).
  *
  * Print anchors (tests): the symbols of the ITC default settings and their operations are those of
  * ITC Vol. D Table 1.5.2.3 (pp. 111–112; `blackWhiteData.reference.test.ts`,
  * `magnetic.reference.test.ts`). Every other setting is an orientation ITC prints
- * (`references/itc/orientations.md`; GUIDE.md, "ITC as the standard"); where a transcribed table
- * prints it (Tables 1.5.2.4, 1.5.7.1, 1.5.8.1) the tests compare it with print.
+ * (`references/itc/orientations.md`); where a transcribed table prints it (Tables 1.5.2.4, 1.5.7.1,
+ * 1.5.8.1) the tests compare it with print.
  *
  * Internal.
  */
 
 import { shown } from '../checks.js';
-import { operation, type CartesianOperation } from '../operations.js';
+import { crystalFamily } from '../lattice.js';
+import { det, multiply, trace, transpose, type Mat3 } from '../linalg.js';
+import type { CartesianOperation } from '../operations.js';
 import type { BlackWhitePointGroupKey, PointGroupKey } from './keys.js';
-import { settingCartesianOperations, classData, settingLatticeGenerators, settingTimeReversal } from './classData.js';
+import { CLASSES, classData, settingCartesianOperations, settingTimeReversal } from './classData.js';
 import { primedSymbols } from './magneticSymbols.js';
 
 /** One ITC setting of a black-and-white group. */
@@ -34,6 +36,10 @@ export interface BlackWhiteSetting {
   readonly axes?: 'hexagonal' | 'rhombohedral';
   /** The ITC default setting of the group. */
   readonly isDefault: boolean;
+  /** The setting of the crystal class that is the frame of this setting. */
+  readonly classIndex: number;
+  /** The time reversal of each operation of that setting of the class, in ITA's order. */
+  readonly timeReversal: readonly boolean[];
 }
 
 /** A black-and-white group with its crystal class and its ITC settings. */
@@ -45,101 +51,260 @@ export interface BlackWhiteGroup {
   readonly settings: readonly BlackWhiteSetting[];
 }
 
-/**
- * A group with its settings, given by their ITC full symbols in this order: the ITC
- * default first; monoclinic unique axis b, then c, then a; orthorhombic the orientations of the default in
- * the column order of ITA 2016 Table 1.5.4.4 (abc, ba-c, cab, -cba, bca, a-cb), each once; otherwise
- * the other orientation; for a trigonal group, last, the setting with rhombohedral axes (marked so)
- * of the hexagonal setting 1, its symbol that of setting 1 without the trailing `1`. The unique axis of a monoclinic setting is the position of its symbol
- * that is not `1`; a trigonal setting has hexagonal axes.
- */
-function bw(
+/** The data of a group: its class, the frame of its default setting, and the generators with time reversal. */
+type GroupData = readonly [
   key: BlackWhitePointGroupKey,
   crystalClass: PointGroupKey,
-  schoenflies: string,
-  fullSymbols: readonly (string | readonly [string, 'rhombohedral'])[],
-): BlackWhiteGroup {
-  const system = classData(crystalClass).crystalSystem;
+  frame: number,
+  primedGenerators: readonly boolean[],
+];
+
+/**
+ * The 58 groups in the order of `BLACK_WHITE_POINT_GROUP_KEYS`: crystal class, the setting of the
+ * class that is the frame of the ITC default, and for each of ITA's selected generators of that
+ * setting, in their order, whether it carries time reversal.
+ */
+const DATA: readonly GroupData[] = [
+  ["-1'", '-1', 1, [true]],
+  ["2'", '2', 1, [true]],
+  ["m'", 'm', 1, [true]],
+  ["2'/m'", '2/m', 1, [true, false]],
+  ["2/m'", '2/m', 1, [false, true]],
+  ["2'/m", '2/m', 1, [true, true]],
+  ["2'2'2", '222', 1, [false, true]],
+  ["m'm'2", 'mm2', 1, [false, true]],
+  ["2'm'm", 'mm2', 2, [true, false]],
+  ["mm'm'", 'mmm', 1, [true, true, false]],
+  ["m'm'm'", 'mmm', 1, [false, false, true]],
+  ["mmm'", 'mmm', 1, [false, true, true]],
+  ["4'", '4', 1, [false, true]],
+  ["-4'", '-4', 1, [false, true]],
+  ["4'/m", '4/m', 1, [false, true, false]],
+  ["4/m'", '4/m', 1, [false, false, true]],
+  ["4'/m'", '4/m', 1, [false, true, true]],
+  ["4'22'", '422', 1, [false, true, false]],
+  ["42'2'", '422', 1, [false, false, true]],
+  ["4'mm'", '4mm', 1, [false, true, false]],
+  ["4m'm'", '4mm', 1, [false, false, true]],
+  ["-4'2m'", '-42m', 1, [false, true, false]],
+  ["-4'm2'", '-42m', 2, [false, true, false]],
+  ["-42'm'", '-42m', 1, [false, false, true]],
+  ["4'/mmm'", '4/mmm', 1, [false, true, false, false]],
+  ["4/mm'm'", '4/mmm', 1, [false, false, true, false]],
+  ["4/m'm'm'", '4/mmm', 1, [false, false, false, true]],
+  ["4/m'mm", '4/mmm', 1, [false, false, true, true]],
+  ["4'/m'm'm", '4/mmm', 1, [false, true, false, true]],
+  ["-3'", '-3', 1, [false, true]],
+  ["32'", '32', 1, [false, true]],
+  ["3m'", '3m', 1, [false, true]],
+  ["-3m'", '-3m', 1, [false, true, false]],
+  ["-3'm'", '-3m', 1, [false, false, true]],
+  ["-3'm", '-3m', 1, [false, true, true]],
+  ["6'", '6', 1, [false, true]],
+  ["-6'", '-6', 1, [false, true]],
+  ["6'/m'", '6/m', 1, [false, true, false]],
+  ["6/m'", '6/m', 1, [false, false, true]],
+  ["6'/m", '6/m', 1, [false, true, true]],
+  ["6'22'", '622', 1, [false, true, false]],
+  ["62'2'", '622', 1, [false, false, true]],
+  ["6'mm'", '6mm', 1, [false, true, false]],
+  ["6m'm'", '6mm', 1, [false, false, true]],
+  ["-6'2m'", '-6m2', 2, [false, true, false]],
+  ["-6'm2'", '-6m2', 1, [false, true, false]],
+  ["-6m'2'", '-6m2', 1, [false, false, true]],
+  ["6'/m'mm'", '6/mmm', 1, [false, true, false, false]],
+  ["6/mm'm'", '6/mmm', 1, [false, false, true, false]],
+  ["6/m'm'm'", '6/mmm', 1, [false, false, false, true]],
+  ["6/m'mm", '6/mmm', 1, [false, false, true, true]],
+  ["6'/mmm'", '6/mmm', 1, [false, true, true, true]],
+  ["m'-3'", 'm-3', 1, [false, false, false, true]],
+  ["4'32'", '432', 1, [false, false, false, true]],
+  ["-4'3m'", '-43m', 1, [false, false, false, true]],
+  ["m-3m'", 'm-3m', 1, [false, false, false, true, false]],
+  ["m'-3'm'", 'm-3m', 1, [false, false, false, false, true]],
+  ["m'-3'm", 'm-3m', 1, [false, false, false, true, true]],
+];
+
+/**
+ * The orthorhombic orientations of ITA 2016 Table 1.5.4.4 in its column order (abc, ba-c, cab,
+ * -cba, bca, a-cb), as the matrices P whose columns are the new basis vectors in the old
+ * (eq. (1.5.1.4), p. 76); in the orthonormal frame of the orthorhombic family an operation W of the
+ * old frame is P⁻¹WP = PᵀWP in the new one.
+ */
+const ORTHORHOMBIC_ORIENTATIONS: readonly Mat3[] = [
+  [
+    [1, 0, 0],
+    [0, 1, 0],
+    [0, 0, 1],
+  ],
+  [
+    [0, 1, 0],
+    [1, 0, 0],
+    [0, 0, -1],
+  ],
+  [
+    [0, 1, 0],
+    [0, 0, 1],
+    [1, 0, 0],
+  ],
+  [
+    [0, 0, 1],
+    [0, 1, 0],
+    [-1, 0, 0],
+  ],
+  [
+    [0, 0, 1],
+    [1, 0, 0],
+    [0, 1, 0],
+  ],
+  [
+    [1, 0, 0],
+    [0, 0, 1],
+    [0, -1, 0],
+  ],
+] as unknown as Mat3[];
+
+/** The rotation about z by an angle (radians). */
+const rotationZ = (angle: number): Mat3 =>
+  [
+    [Math.cos(angle), -Math.sin(angle), 0],
+    [Math.sin(angle), Math.cos(angle), 0],
+    [0, 0, 1],
+  ] as unknown as Mat3;
+
+const near = (a: Mat3, b: Mat3): boolean => a.every((row, i) => row.every((x, j) => Math.abs(x - b[i][j]) < 1e-9));
+
+/** A frame of a group: the setting of its class and the time reversal of each of its operations, in ITA's order. */
+interface Frame {
+  readonly classIndex: number;
+  readonly timeReversal: readonly boolean[];
+}
+
+/**
+ * The frame of the class whose operations are `ops` (Cartesian, with time reversal) as a set, and
+ * the time reversal in that frame's order; among the settings of the class with rhombohedral axes
+ * only if `rhombohedral`. Undefined if no setting of the class has these operations.
+ */
+function frameOf(
+  crystalClass: PointGroupKey,
+  ops: readonly CartesianOperation[],
+  rhombohedral: boolean,
+): Frame | undefined {
+  for (const s of classData(crystalClass).settings) {
+    if ((s.axes === 'rhombohedral') !== rhombohedral) continue;
+    const own = settingCartesianOperations(crystalClass, s.index);
+    if (own.length !== ops.length) continue;
+    const timeReversal = own.map((m) => ops.find((op) => near(op.cartesian, m))?.timeReversal);
+    if (timeReversal.every((x) => x !== undefined))
+      return { classIndex: s.index, timeReversal: timeReversal as boolean[] };
+  }
+  return undefined;
+}
+
+const operationsOf = (crystalClass: PointGroupKey, frame: Frame): CartesianOperation[] =>
+  settingCartesianOperations(crystalClass, frame.classIndex).map((m, i) => ({
+    cartesian: m,
+    timeReversal: frame.timeReversal[i],
+  }));
+
+/**
+ * The frames of a group's settings, in order (docs/conventions.md, "Settings of the magnetic
+ * groups"): the default; monoclinic the unique axes b, c, a; orthorhombic the distinct orientations
+ * of the default by Table 1.5.4.4 in its column order; tetragonal the default turned by 45° about z,
+ * hexagonal and trigonal by 30°, where that gives other operations with time reversal; trigonal,
+ * last, the rhombohedral axes in the frame of the hexagonal default.
+ */
+function framesOf(crystalClass: PointGroupKey, frame: number, primed: readonly boolean[]): Frame[] {
+  const timeReversal = settingTimeReversal(crystalClass, frame, primed);
+  if (!timeReversal) throw new Error(`${crystalClass}: the generators ${String(primed)} give no group`);
+  const first: Frame = { classIndex: frame, timeReversal };
+  const cls = classData(crystalClass);
+  const family = crystalFamily(cls.crystalSystem);
+  if (family === 'monoclinic') {
+    return [1, 2, 3].map((axis) => {
+      const index = cls.settings.findIndex((s) => s.uniqueAxis === (['b', 'c', 'a'] as const)[axis - 1]) + 1;
+      const t = settingTimeReversal(crystalClass, index, primed)!;
+      return { classIndex: index, timeReversal: t };
+    });
+  }
+  const ops = operationsOf(crystalClass, first);
+  const turned = (maps: readonly Mat3[]): Frame[] =>
+    maps.map((p) => {
+      const image = ops.map((op) => ({
+        cartesian: multiply(multiply(transpose(p), op.cartesian), p),
+        timeReversal: op.timeReversal,
+      }));
+      const found = frameOf(crystalClass, image, false);
+      if (!found) throw new Error(`${crystalClass}: an orientation of the default is no setting of the class`);
+      return found;
+    });
+  let frames: Frame[];
+  if (family === 'orthorhombic') frames = turned(ORTHORHOMBIC_ORIENTATIONS);
+  else if (family === 'tetragonal') frames = turned([rotationZ(0), rotationZ(Math.PI / 4)]);
+  else if (family === 'hexagonal') frames = turned([rotationZ(0), rotationZ(Math.PI / 6)]);
+  else frames = [first];
+  const distinct = frames.filter(
+    (f, i) =>
+      frames.findIndex(
+        (g) => g.classIndex === f.classIndex && g.timeReversal.every((x, k) => x === f.timeReversal[k]),
+      ) === i,
+  );
+  if (cls.crystalSystem === 'trigonal') {
+    const rhombohedral = frameOf(crystalClass, ops, true);
+    if (!rhombohedral) throw new Error(`${crystalClass}: no setting with rhombohedral axes`);
+    distinct.push(rhombohedral);
+  }
+  return distinct;
+}
+
+/** The Schoenflies symbol of a class as ITC Vol. D writes it (`S6` for `C3i`). */
+const volumeD = (s: string): string => (s === 'C3i' ? 'S6' : s);
+
+/**
+ * The crystal class of a list of operations without time reversal: the one with the same numbers
+ * of operations of each determinant and trace (they tell the 32 classes apart).
+ */
+function classOfOperations(ops: readonly Mat3[]): PointGroupKey {
+  const signature = (list: readonly Mat3[]): string =>
+    list
+      .map((m) => `${Math.round(det(m))}:${Math.round(trace(m))}`)
+      .sort()
+      .join(' ');
+  const s = signature(ops);
+  const found = CLASSES.find((c) => signature(settingCartesianOperations(c.key, 1)) === s);
+  if (!found) throw new Error('A subgroup that is no crystal class');
+  return found.key;
+}
+
+function group(data: GroupData): BlackWhiteGroup {
+  const [key, crystalClass, frame, primed] = data;
+  const cls = classData(crystalClass);
+  const frames = framesOf(crystalClass, frame, primed);
+  const subgroup = operationsOf(crystalClass, frames[0])
+    .filter((op) => !op.timeReversal)
+    .map((op) => op.cartesian);
   return {
     key,
     crystalClass,
-    schoenflies,
-    settings: fullSymbols.map((entry, i) => {
-      const full = typeof entry === 'string' ? entry : entry[0];
-      const unique = full.split(' ').findIndex((t) => t !== '1');
-      const axes = typeof entry === 'string' ? 'hexagonal' : 'rhombohedral';
+    schoenflies: `${volumeD(cls.schoenflies)}(${volumeD(classData(classOfOperations(subgroup)).schoenflies)})`,
+    settings: frames.map((f, i) => {
+      const classSetting = cls.settings.find((s) => s.index === f.classIndex)!;
+      const full = primedSymbols(classSetting, cls.crystalSystem, operationsOf(crystalClass, f)).full;
       return {
         index: i + 1,
         full,
-        ...(system === 'monoclinic' ? { uniqueAxis: (['a', 'b', 'c'] as const)[unique] } : {}),
-        ...(system === 'trigonal' ? { axes } : {}),
+        ...(classSetting.uniqueAxis ? { uniqueAxis: classSetting.uniqueAxis } : {}),
+        ...(classSetting.axes ? { axes: classSetting.axes } : {}),
         isDefault: i === 0,
+        classIndex: f.classIndex,
+        timeReversal: Object.freeze([...f.timeReversal]),
       };
     }),
   };
 }
 
 /** The 58 black-and-white groups in the order of `BLACK_WHITE_POINT_GROUP_KEYS`. */
-export const BLACK_WHITE_GROUPS: readonly BlackWhiteGroup[] = [
-  bw("-1'", '-1', 'Ci(C1)', ["-1'"]),
-  bw("2'", '2', 'C2(C1)', ["1 2' 1", "1 1 2'", "2' 1 1"]),
-  bw("m'", 'm', 'Cs(C1)', ["1 m' 1", "1 1 m'", "m' 1 1"]),
-  bw("2'/m'", '2/m', 'C2h(Ci)', ["1 2'/m' 1", "1 1 2'/m'", "2'/m' 1 1"]),
-  bw("2/m'", '2/m', 'C2h(C2)', ["1 2/m' 1", "1 1 2/m'", "2/m' 1 1"]),
-  bw("2'/m", '2/m', 'C2h(Cs)', ["1 2'/m 1", "1 1 2'/m", "2'/m 1 1"]),
-  bw("2'2'2", '222', 'D2(C2)', ["2' 2' 2", "2 2' 2'", "2' 2 2'"]),
-  bw("m'm'2", 'mm2', 'C2v(C2)', ["m' m' 2", "2 m' m'", "m' 2 m'"]),
-  bw("2'm'm", 'mm2', 'C2v(Cs)', ["2' m' m", "m' 2' m", "m 2' m'", "m m' 2'", "m' m 2'", "2' m m'"]),
-  bw("mm'm'", 'mmm', 'D2h(C2h)', ["2/m 2'/m' 2'/m'", "2'/m' 2/m 2'/m'", "2'/m' 2'/m' 2/m"]),
-  bw("m'm'm'", 'mmm', 'D2h(D2)', ["2/m' 2/m' 2/m'"]),
-  bw("mmm'", 'mmm', 'D2h(C2v)', ["2'/m 2'/m 2/m'", "2/m' 2'/m 2'/m", "2'/m 2/m' 2'/m"]),
-  bw("4'", '4', 'C4(C2)', ["4'"]),
-  bw("-4'", '-4', 'S4(C2)', ["-4'"]),
-  bw("4'/m", '4/m', 'C4h(C2h)', ["4'/m"]),
-  bw("4/m'", '4/m', 'C4h(C4)', ["4/m'"]),
-  bw("4'/m'", '4/m', 'C4h(S4)', ["4'/m'"]),
-  bw("4'22'", '422', 'D4(D2)', ["4' 2 2'", "4' 2' 2"]),
-  bw("42'2'", '422', 'D4(C4)', ["4 2' 2'"]),
-  bw("4'mm'", '4mm', 'C4v(C2v)', ["4' m m'", "4' m' m"]),
-  bw("4m'm'", '4mm', 'C4v(C4)', ["4 m' m'"]),
-  bw("-4'2m'", '-42m', 'D2d(D2)', ["-4' 2 m'", "-4' m' 2"]),
-  bw("-4'm2'", '-42m', 'D2d(C2v)', ["-4' m 2'", "-4' 2' m"]),
-  bw("-42'm'", '-42m', 'D2d(S4)', ["-4 2' m'", "-4 m' 2'"]),
-  bw("4'/mmm'", '4/mmm', 'D4h(D2h)', ["4'/m 2/m 2'/m'", "4'/m 2'/m' 2/m"]),
-  bw("4/mm'm'", '4/mmm', 'D4h(C4h)', ["4/m 2'/m' 2'/m'"]),
-  bw("4/m'm'm'", '4/mmm', 'D4h(D4)', ["4/m' 2/m' 2/m'"]),
-  bw("4/m'mm", '4/mmm', 'D4h(C4v)', ["4/m' 2'/m 2'/m"]),
-  bw("4'/m'm'm", '4/mmm', 'D4h(D2d)', ["4'/m' 2/m' 2'/m", "4'/m' 2'/m 2/m'"]),
-  bw("-3'", '-3', 'S6(C3)', ["-3'", ["-3'", 'rhombohedral']]),
-  bw("32'", '32', 'D3(C3)', ["3 2' 1", "3 1 2'", ["3 2'", 'rhombohedral']]),
-  bw("3m'", '3m', 'C3v(C3)', ["3 m' 1", "3 1 m'", ["3 m'", 'rhombohedral']]),
-  bw("-3m'", '-3m', 'D3d(S6)', ["-3 2'/m' 1", "-3 1 2'/m'", ["-3 2'/m'", 'rhombohedral']]),
-  bw("-3'm'", '-3m', 'D3d(D3)', ["-3' 2/m' 1", "-3' 1 2/m'", ["-3' 2/m'", 'rhombohedral']]),
-  bw("-3'm", '-3m', 'D3d(C3v)', ["-3' 2'/m 1", "-3' 1 2'/m", ["-3' 2'/m", 'rhombohedral']]),
-  bw("6'", '6', 'C6(C3)', ["6'"]),
-  bw("-6'", '-6', 'C3h(C3)', ["-6'"]),
-  bw("6'/m'", '6/m', 'C6h(S6)', ["6'/m'"]),
-  bw("6/m'", '6/m', 'C6h(C6)', ["6/m'"]),
-  bw("6'/m", '6/m', 'C6h(C3h)', ["6'/m"]),
-  bw("6'22'", '622', 'D6(D3)', ["6' 2 2'", "6' 2' 2"]),
-  bw("62'2'", '622', 'D6(C6)', ["6 2' 2'"]),
-  bw("6'mm'", '6mm', 'C6v(C3v)', ["6' m m'", "6' m' m"]),
-  bw("6m'm'", '6mm', 'C6v(C6)', ["6 m' m'"]),
-  bw("-6'2m'", '-6m2', 'D3h(D3)', ["-6' 2 m'", "-6' m' 2"]),
-  bw("-6'm2'", '-6m2', 'D3h(C3v)', ["-6' m 2'", "-6' 2' m"]),
-  bw("-6m'2'", '-6m2', 'D3h(C3h)', ["-6 m' 2'", "-6 2' m'"]),
-  bw("6'/m'mm'", '6/mmm', 'D6h(D3d)', ["6'/m' 2/m 2'/m'", "6'/m' 2'/m' 2/m"]),
-  bw("6/mm'm'", '6/mmm', 'D6h(C6h)', ["6/m 2'/m' 2'/m'"]),
-  bw("6/m'm'm'", '6/mmm', 'D6h(D6)', ["6/m' 2/m' 2/m'"]),
-  bw("6/m'mm", '6/mmm', 'D6h(C6v)', ["6/m' 2'/m 2'/m"]),
-  bw("6'/mmm'", '6/mmm', 'D6h(D3h)', ["6'/m 2'/m 2/m'", "6'/m 2/m' 2'/m"]),
-  bw("m'-3'", 'm-3', 'Th(T)', ["2/m' -3'"]),
-  bw("4'32'", '432', 'O(T)', ["4' 3 2'"]),
-  bw("-4'3m'", '-43m', 'Td(T)', ["-4' 3 m'"]),
-  bw("m-3m'", 'm-3m', 'Oh(Th)', ["4'/m -3 2'/m'"]),
-  bw("m'-3'm'", 'm-3m', 'Oh(O)', ["4/m' -3' 2/m'"]),
-  bw("m'-3'm", 'm-3m', 'Oh(Td)', ["4'/m' -3' 2'/m"]),
-];
+export const BLACK_WHITE_GROUPS: readonly BlackWhiteGroup[] = DATA.map(group);
 
 const BY_KEY = new Map<string, BlackWhiteGroup>(BLACK_WHITE_GROUPS.map((g) => [g.key, g]));
 
@@ -157,50 +322,14 @@ export function blackWhiteSetting(key: BlackWhitePointGroupKey, index: number): 
   return s;
 }
 
-/** The setting of the crystal class that a setting of the group lies in: the one whose full symbol is the group's without primes. */
+/** The setting of the crystal class that a setting of the group lies in. */
 export function blackWhiteClassSetting(key: BlackWhitePointGroupKey, index: number): number {
-  const g = blackWhiteGroup(key);
-  const s = blackWhiteSetting(key, index);
-  const plain = s.full.replace(/'/g, '');
-  const matches = classData(g.crystalClass).settings.filter((c) => c.full === plain && c.axes === s.axes);
-  if (matches.length !== 1)
-    throw new Error(
-      `${key} setting ${index}: ${matches.length} settings of ${g.crystalClass} have the symbol ${plain}`,
-    );
-  return matches[0].index;
+  return blackWhiteSetting(key, index).classIndex;
 }
 
-const operationCache = new Map<string, readonly CartesianOperation[]>();
-
-/**
- * The operations of a setting: those of the class setting it lies in, in ITA's order, each with
- * its time reversal. Throws unless exactly one assignment of time reversal to ITA's generators of
- * the class gives a group whose primed full symbol is the stored one.
- */
+/** The operations of a setting: those of the class setting it lies in, in ITA's order, each with its time reversal. */
 export function blackWhiteOperations(key: BlackWhitePointGroupKey, index: number): readonly CartesianOperation[] {
-  const cacheKey = `${key}#${index}`;
-  let result = operationCache.get(cacheKey);
-  if (!result) {
-    const g = blackWhiteGroup(key);
-    const full = blackWhiteSetting(key, index).full;
-    const classIndex = blackWhiteClassSetting(key, index);
-    const cls = classData(g.crystalClass);
-    const classSetting = cls.settings.find((s) => s.index === classIndex)!;
-    const matrices = settingCartesianOperations(g.crystalClass, classIndex);
-    const n = settingLatticeGenerators(g.crystalClass, classIndex).length;
-    const found: CartesianOperation[][] = [];
-    // Every assignment of time reversal to the generators but the one without any.
-    for (let bits = 1; bits < 1 << n; bits++) {
-      const flags = Array.from({ length: n }, (_, k) => (bits & (1 << k)) !== 0);
-      const parity = settingTimeReversal(g.crystalClass, classIndex, flags);
-      if (!parity) continue;
-      const ops = matrices.map((m, i) => ({ ...operation(m), timeReversal: parity[i] }));
-      const symbols = primedSymbols(classSetting, cls.crystalSystem, ops);
-      if (symbols.full === full) found.push(ops);
-    }
-    if (found.length !== 1) throw new Error(`${key} setting ${index}: ${found.length} groups have the symbol ${full}`);
-    result = Object.freeze(found[0]);
-    operationCache.set(cacheKey, result);
-  }
-  return result;
+  const g = blackWhiteGroup(key);
+  const s = blackWhiteSetting(key, index);
+  return Object.freeze(operationsOf(g.crystalClass, s));
 }

@@ -2,9 +2,8 @@
  * Hermann–Mauguin symbols of the black-and-white point groups. The symbol of such a group in a
  * given frame is the symbol of its crystal class in that frame, each position carrying a prime if
  * the operation it names is combined with time reversal (ITC Vol. D, § 1.5.2.1, Table 1.5.2.3).
- * The ITC symbols of these groups are stored (blackWhiteData.ts); this module writes the symbol a
- * group has with given operations, from which the time reversal of the operations is derived
- * (docs/conventions.md, "Symbols").
+ * This module writes the symbol a group has with given operations (docs/conventions.md, "Symbols");
+ * the operations and their time reversal come from blackWhiteData.ts.
  */
 
 import { shown } from '../checks.js';

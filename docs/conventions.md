@@ -213,8 +213,11 @@ a list of group types counts in the orientation its positions name (`6'/mm'm`, I
 
 The operations, generators, symbols and lattice operations of the classes come from ITA's selected
 generators, exact integer matrices in the conventional basis (`pointGroups/classData.ts`); a setting
-ITA does not print is a printed one in another basis. A black-and-white group is given by its ITC
-symbol in each setting, from which its operations follow (`pointGroups/blackWhiteData.ts`).
+ITA does not print is a printed one in another basis. A black-and-white group is given by its
+crystal class, the setting of the class that is the frame of its default, and which of ITA's
+selected generators of that frame carry time reversal (`pointGroups/blackWhiteData.ts`); its
+further settings follow by the rule below, and its symbols, in every setting, are written from its
+operations.
 
 **Numbering:** the ITC default is setting 1; then, for the monoclinic classes, unique
 axis c and unique axis a; for the orthorhombic groups, the further orientations in the order of the columns of ITA
@@ -322,6 +325,16 @@ numbered as above:
 - hexagonal `6'22'`, `6'mm'`, `-6'2m'`, `-6'm2'`, `-6m'2'`, `6'/m'mm'`, `6'/mmm'`: two settings 30°
   apart about z;
 - all other groups: one setting.
+
+These settings are computed from the default (`pointGroups/blackWhiteData.ts`): monoclinic, the
+same generators with time reversal in the settings of the class with unique axis b, c and a;
+orthorhombic, the default carried by the six orientations of Table 1.5.4.4 in its column order,
+each distinct result once; tetragonal, the default and the default turned by 45° about z;
+hexagonal and trigonal, by 30°; each result is the setting of the class with the same operations,
+with their time reversal, kept once; for a trigonal group, last, the setting of the class with
+rhombohedral axes that has the operations of the default. Their symbols are written from their
+operations; where a transcribed table prints a setting (ITC Vol. D Tables 1.5.2.3, 1.5.2.4,
+1.5.7.1, 1.5.8.1) the tests compare it with print.
 
 **The six settings of `2'm'm`.** `2'm'm` (C2v(Cs)) is the one orthorhombic group whose three
 elements all differ, so every permutation of the axes gives a further orientation: six in all, and
