@@ -167,7 +167,7 @@ Library code is everything in `packages/ts/src` except test-only code ("Correctn
   record becomes a dict typed by a TypedDict of the TypeScript interface's name, a named union of
   strings a Literal type; a list of operations becomes one `Operations` record of arrays (the
   operations of a change of coordinates `TransformedOperations`), and a tensor basis and its
-  relations arrays of shape (3, …, 3) per tensor; complex numbers and integers beyond 2⁵³ are
+  relations arrays of shape (3, …, 3) per tensor; complex numbers and integers beyond 2⁵³ − 1 are
   refused; a `RangeError` raises `SymcrysError` (a `ValueError`) with its message in Python's
   terms (snake_case names, `None`, `True`, keyword arguments), any other error
   `SymcrysInternalError` (a `RuntimeError`).

@@ -18,11 +18,11 @@ All notable changes to symcrys are recorded here. The format follows
 - Python (#208): messages of `SymcrysError` are in Python's terms (`from_cell`, `time_reversal`,
   `None`, `True`, `factors=[…]`, was `fromCell`, `timeReversal`, `undefined`, `true`,
   `{ factors: […] }`); `change_of_coordinates(...)["operations"]` is a `TransformedOperations`
-  record of arrays (`matrix`, `translation`; in `symcrys.plane` an `Operations`), was a list of
-  dicts, and can be passed back; `tensor_form(...)["relations"]` has the shape
+  record of arrays (`matrix`, `translation`), was a list of dicts, and can be passed back; `tensor_form(...)["relations"]` has the shape
   (3**rank − p, 3, …, 3) of the basis tensors, was (3**rank − p, 3**rank), so that
   `(r * t).sum() == 0`; an array of complex numbers is refused (was cut to its real part with a
-  `ComplexWarning`), and so are integers beyond 2⁵³ (were rounded); `Cell` and `BravaisLattice`
+  `ComplexWarning`), and so are integers beyond 2⁵³ − 1 in magnitude, in any argument (were
+  rounded); `Cell` and `BravaisLattice`
   type the arguments of `cell_transformation`; `dir()` of the modules lists their public names.
 
 - `findPointGroup` refuses every Shubnikov symbol that `symbol()` writes without Shubnikov's own

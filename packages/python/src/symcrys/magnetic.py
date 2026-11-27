@@ -218,9 +218,9 @@ class TransformedOperation(TypedDict):
 @dataclass(frozen=True, eq=False)
 class TransformedOperations:
     """The operations of ``change_of_coordinates`` in the new coordinate system as arrays, one row
-    per operation, in the order given: each a matrix W′ and a translation w′. Frozen, its arrays
-    read-only; ``len(ops)`` is the number of operations; they can be passed back to
-    ``change_of_coordinates``.
+    per operation, in the order given: each a matrix W′ and a translation w′, not reduced modulo the
+    lattice. Frozen, its arrays read-only; ``len(ops)`` is the number of operations; they can be
+    passed back to ``change_of_coordinates``.
     """
 
     matrix: NDArray[np.int64]
@@ -1238,7 +1238,7 @@ def change_of_coordinates(
     directions: Optional[ArrayLike] = None,
     planes: Optional[ArrayLike] = None,
     metric: Optional[ArrayLike] = None,
-    operations: Optional[Operations | Sequence[Mapping[str, Any]]] = None,
+    operations: Optional[Operations | TransformedOperations | Sequence[Mapping[str, Any]]] = None,
     tolerance: Optional[float] = None,
 ) -> CoordinateChange:
     """Changes the coordinate system by the pair (P, p): the new basis is (a′, b′, c′) = (a, b, c)·P

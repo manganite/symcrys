@@ -754,4 +754,27 @@ def test_change_of_coordinates_gives_its_operations_as_arrays_that_can_be_passed
     back = symcrys.change_of_coordinates(there["inverse"]["linear_part"], operations=transformed)
     assert (back["operations"].matrix == ops.matrix).all()
     planar = plane.change_of_coordinates([[1, 1], [-1, 1]], operations=plane.operations("p4mm"))
-    assert isinstance(planar["operations"], plane.Operations)
+    assert isinstance(planar["operations"], plane.TransformedOperations)
+    assert planar["operations"].matrix.shape == (8, 2, 2)
+
+
+def test_messages_keep_the_values_the_caller_passed() -> None:
+    with pytest.raises(symcrys.SymcrysError, match=r'"4/mmmFoo"'):
+        symcrys.point_group("4/mmmFoo")
+    with pytest.raises(symcrys.SymcrysError, match=r'"true"'):
+        symcrys.point_group("true")
+    assert _engine.python_terms('the cell {"cellChoice":9} of "xyZ"') == 'the cell {"cell_choice":9} of "xyZ"'
+
+
+def test_integers_beyond_2_53_are_refused_on_every_path() -> None:
+    with pytest.raises(symcrys.SymcrysError, match="2\\*\\*53"):
+        symcrys.cell_transformation("mP", {"cell_choice": 2**60}, {})
+    with pytest.raises(symcrys.SymcrysError, match="2\\*\\*53"):
+        symcrys.change_of_coordinates(np.eye(3), operations=[{"matrix": [[2**53 + 1, 0, 0], [0, 1, 0], [0, 0, 1]], "translation": [0, 0, 0]}])
+    with pytest.raises(symcrys.SymcrysError, match="2\\*\\*53"):
+        symcrys.reduce_indices([2**70, 1, 0])
+
+
+def test_a_field_of_transformed_operations_is_named_by_its_class() -> None:
+    with pytest.raises(symcrys.SymcrysError, match="TransformedOperations.matrix"):
+        symcrys.TransformedOperations(matrix=np.full((1, 3, 3), 0.5), translation=np.zeros((1, 3)))

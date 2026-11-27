@@ -460,8 +460,7 @@ function numberType(ctx, field, where) {
  * @param {any} ir
  */
 function isOperations(ctx, ir) {
-  if (!(ir.k === 'arr' && ir.of.k === 'rec')) return false;
-  if (ir.of.name !== ctx.ops.record && !(ctx.ops.also ?? []).includes(ir.of.name)) return false;
+  if (!(ir.k === 'arr' && ir.of.k === 'rec' && ir.of.name === ctx.ops.record)) return false;
   used.add(`operations.${ctx.name}`);
   ctx.usesOperations = true;
   return true;
@@ -696,8 +695,19 @@ function argument(ctx, ir, name, fn, where) {
     const field = ownBare ?? ctx.ops.bare;
     const bare = field && keys.length === 1 && keys[0] === field ? `, bare="${field}"` : '';
     ctx.usesOperations = true;
+    // The transformed operations of a change of coordinates can be passed back to it, and in the
+    // plane, where they have the fields of Operations, wherever operations are taken.
+    const transformed = api.transformed?.[ctx.name];
+    const sameFields =
+      transformed &&
+      keys.every((/** @type {string} */ k) => k in transformed.fields) &&
+      (fn === 'changeOfCoordinates' ||
+        Object.keys(ctx.ops.fields)
+          .filter((k) => k !== '//')
+          .every((k) => k in transformed.fields));
+    if (sameFields) ctx.usesTransformed = true;
     return {
-      py: `Operations | Sequence[Mapping[str, Any]]${bare ? ' | ArrayLike' : ''}`,
+      py: `Operations${sameFields ? ' | TransformedOperations' : ''} | Sequence[Mapping[str, Any]]${bare ? ' | ArrayLike' : ''}`,
       expr: `_shared.operation_list(${py}, ${tuple}${bare})`,
     };
   }

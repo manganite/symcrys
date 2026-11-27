@@ -111,15 +111,31 @@ _LITERAL = re.compile(r"\b(undefined|null|true|false)\b")
 _OPTION = re.compile(r"\{ (\w+): ([^{}]*?) \}")
 
 
+# A string in double quotes, as the library shows a value it was given; group 1 is set when it is the
+# key of a JSON object (followed by a colon).
+_STRING = re.compile(r'"(?:[^"\\]|\\.)*"(?=(:)?)')
+
+
+def _terms(text: str) -> str:
+    text = _OPTION.sub(lambda m: f"{m.group(1)}={m.group(2)}", text)
+    text = _CAMEL.sub(lambda m: re.sub(r"([A-Z])", lambda c: "_" + c.group(1).lower(), m.group(1)), text)
+    return _LITERAL.sub(lambda m: _LITERALS[m.group(1)], text)
+
+
 def python_terms(message: str) -> str:
     """A message of the library in Python's terms: names in snake_case (``fromCell`` →
     ``from_cell``), the literals of JavaScript as Python writes them (``undefined`` → ``None``,
     ``true`` → ``True``), and an option object ``{ factors: [1, 2] }`` as the keyword argument
-    ``factors=[1, 2]``.
+    ``factors=[1, 2]``. A string in double quotes is a value the caller passed and stays as it is,
+    unless it is the key of an object (``{"cellChoice": 9}``), which the caller passed in snake_case.
     """
-    message = _OPTION.sub(lambda m: f"{m.group(1)}={m.group(2)}", message)
-    message = _CAMEL.sub(lambda m: re.sub(r"([A-Z])", lambda c: "_" + c.group(1).lower(), m.group(1)), message)
-    return _LITERAL.sub(lambda m: _LITERALS[m.group(1)], message)
+    out, last = [], 0
+    for m in _STRING.finditer(message):
+        out.append(_terms(message[last : m.start()]))
+        out.append(_terms(m.group(0)) if m.group(1) else m.group(0))
+        last = m.end()
+    out.append(_terms(message[last:]))
+    return "".join(out)
 
 
 def value(name: str) -> Any:

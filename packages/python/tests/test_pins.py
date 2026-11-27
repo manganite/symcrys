@@ -148,7 +148,7 @@ def plain(value: Any, field: str, rules: Rules, where: str = "") -> Any:
     """A Python answer as plain data in the shape of the TypeScript answer, its rules checked."""
     if isinstance(
         value,
-        (symcrys.Operations, magnetic.Operations, plane.Operations, symcrys.TransformedOperations, magnetic.TransformedOperations),
+        (symcrys.Operations, magnetic.Operations, plane.Operations, symcrys.TransformedOperations, magnetic.TransformedOperations, plane.TransformedOperations),
     ):
         for name in value.__dataclass_fields__:
             rules.array(getattr(value, name), name, f"{where}.{name}")

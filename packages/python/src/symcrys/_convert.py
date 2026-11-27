@@ -28,11 +28,29 @@ def camel(name: str) -> str:
     return head + "".join(p[:1].upper() + p[1:] for p in rest)
 
 
+# The largest integer a double holds exactly, the safe integers of JavaScript.
+MAX_SAFE = 2**53 - 1
+
+
+class UnsafeInteger(TypeError):
+    """An integer that a double would round."""
+
+
+def _unsafe(x: Any) -> UnsafeInteger:
+    return UnsafeInteger(f"integers beyond 2**53 - 1 in magnitude cannot be passed to symcrys exactly, not {x}")
+
+
 def to_js(x: Any) -> Any:
+    """A Python value as JSON-compatible data for the library: arrays as lists, keys in camelCase.
+    Raises UnsafeInteger for an integer beyond 2**53 - 1 in magnitude, which a double would round."""
     if isinstance(x, np.ndarray):
-        return x.tolist()
+        if x.dtype.kind in "iu" and x.size and (x.max() > MAX_SAFE or x.min() < -MAX_SAFE):
+            raise _unsafe(x.tolist())
+        return to_js(x.tolist()) if x.dtype.kind == "O" else x.tolist()
     if isinstance(x, np.generic):
-        return x.item()
+        return to_js(x.item())
+    if isinstance(x, int) and not isinstance(x, bool) and abs(x) > MAX_SAFE:
+        raise _unsafe(x)
     if isinstance(x, dict):
         return {camel(str(k)): to_js(v) for k, v in x.items()}
     if isinstance(x, (list, tuple)):

@@ -11,13 +11,21 @@ import numpy as np
 from numpy.typing import NDArray
 
 from . import _engine
-from ._convert import convert as _convert_schema, to_js
+from ._convert import MAX_SAFE as _MAX_SAFE, UnsafeInteger, convert as _convert_schema, to_js as _to_js
 
 
 def options(**kwargs: Any) -> dict[str, Any]:
     """An options object: the keyword arguments that were given, keys in camelCase."""
     result: dict[str, Any] = to_js({k: v for k, v in kwargs.items() if v is not None})
     return result
+
+
+def to_js(x: Any) -> Any:
+    """``_convert.to_js``, an integer that a double would round refused as wrong input."""
+    try:
+        return _to_js(x)
+    except UnsafeInteger as e:
+        raise _engine.SymcrysError(str(e), "RangeError") from None
 
 
 def _is_operations(x: Any) -> bool:
@@ -149,11 +157,11 @@ def operation_at(operations: Any, index: Any) -> Any:
         raise IndexError(f"Operations[{index!r}]: {e}") from None
 
 
-def _checked(name: str, value: Any, dtype: Any, shape: tuple[int, ...]) -> NDArray[Any]:
-    """One field of ``Operations``: an array of shape (n, …) of the dtype, checked."""
+def _checked(owner: str, name: str, value: Any, dtype: Any, shape: tuple[int, ...]) -> NDArray[Any]:
+    """One field of ``Operations`` (``owner``, the class): an array of shape (n, …) of the dtype, checked."""
 
     def error(what: str) -> _engine.SymcrysError:
-        return _engine.SymcrysError(f"Operations.{name} {what}", "RangeError")
+        return _engine.SymcrysError(f"{owner}.{name} {what}", "RangeError")
 
     try:
         a = np.asarray(value)
@@ -193,9 +201,9 @@ def freeze(operations: Any, fields: Mapping[str, tuple[Any, tuple[int, ...]]]) -
     make writable again."""
     n = None
     for name, (dtype, shape) in fields.items():
-        base = _checked(name, getattr(operations, name), dtype, shape)
+        base = _checked(type(operations).__name__, name, getattr(operations, name), dtype, shape)
         if n is not None and len(base) != n:
-            raise _engine.SymcrysError(f"Operations: {name} has {len(base)} operations, the others {n}", "RangeError")
+            raise _engine.SymcrysError(f"{type(operations).__name__}: {name} has {len(base)} operations, the others {n}", "RangeError")
         n = len(base)
         base.flags.writeable = False
         view = base.view()
@@ -258,8 +266,7 @@ def spec(spec_or_name: Mapping[str, Any] | str) -> Any:
     return spec_or_name if isinstance(spec_or_name, str) else mapping(spec_or_name, "spec")
 
 
-# The largest integer a double holds exactly, the safe integers of JavaScript.
-_MAX_SAFE = 2**53 - 1
+
 
 
 def array(value: Any, what: str, dtype: Any = None) -> NDArray[Any]:
@@ -270,9 +277,12 @@ def array(value: Any, what: str, dtype: Any = None) -> NDArray[Any]:
         given = np.asarray(value)
     except (TypeError, ValueError) as e:
         raise _engine.SymcrysError(f"{what} must be an array of numbers ({e})") from None
-    if given.dtype.kind not in "biuf":
+    if given.dtype.kind == "O" and given.size and all(isinstance(v, int) and not isinstance(v, bool) for v in given.flat):
+        # Python integers too large for int64.
+        given = np.asarray(given, dtype=object)
+    elif given.dtype.kind not in "biuf":
         raise _engine.SymcrysError(f"{what} must be an array of real numbers, not of {given.dtype}")
-    if given.dtype.kind in "iu" and given.size and int(np.max(np.abs(given.astype(object)))) > _MAX_SAFE:
+    if given.dtype.kind in "iuO" and given.size and (given.max() > _MAX_SAFE or given.min() < -_MAX_SAFE):
         raise _engine.SymcrysError(
             f"{what}: integers beyond 2**53 - 1 in magnitude cannot be passed to symcrys exactly, not {given.tolist()}"
         )
