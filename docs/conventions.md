@@ -840,15 +840,45 @@ the eigensymmetry (`4/mmm`, `-62m`; `∞m` and `∞/mm` for pedion and pinacoid)
 languages, and the names an application derives from the generating group (sphenoid in 2, dome in
 m), are left to the applications, which look a form up by its key.
 
-`crystalForms(key, { setting })` lists the forms of a crystal class as ITA 6th ed. Table 3.2.3.2
-prints them in its fifth column (pp. 745–769): by Wyckoff position, general position first, and for
-each position first the **basic** form, the one of lowest eigensymmetry, then the **limiting**
+`crystalForms(key, { setting })` lists the forms of a crystal class, computed from its operations
+and equal to the fifth column of ITA 6th ed. Table 3.2.3.2 (pp. 745–769) for every printed setting:
+by Wyckoff position, general position first, and for each position first the **basic** form, the one of lowest eigensymmetry, then the **limiting**
 forms, which have the face symmetry of the position but a higher eigensymmetry (§ 3.2.1.2.2, p. 723;
 a basic form need not be characteristic, i.e. have the eigensymmetry of the class: the rhombic prism
 of 2/m has the eigensymmetry mmm). For instance the faces (hk0) of the general position of 4mm form
 a ditetragonal prism, eigensymmetry 4/mmm, a limiting form of the general form, the ditetragonal
 pyramid of eigensymmetry 4mm. A limiting form may occur more than once at one position (the two
 tetragonal dipyramids of 422, (h0l) and (hhl)).
+
+**How they are computed** (`pointGroups/formRows.ts`):
+
+- The faces of a Wyckoff position form the space F of the faces its site group fixes. Its basic
+  form is the form of a general face of F; a limiting form is the form of the faces of a subspace
+  S of F that lie on a symmetry element of the holohedry of the family (6/mmm also for rhombohedral
+  axes) and keep the site symmetry of the position, where its kind differs from that of the basic
+  form (ITA's definition, § 3.2.1.2.2, p. 723). A subspace of another limiting form of the same kind
+  adds no form (the faces (101̄0) of 3 belong to the trigonal prism (hki0)).
+- **Kind:** the number of faces and the eigensymmetry, the group of all orthogonal maps that
+  permute the face normals, taken in a cell of general lengths so that no face is special by the
+  metric alone. Where these do not decide (`FORM_DISTINCTIONS`, part of the definition of the
+  names, from their geometry; Table 3.2.1.3 gives the names): the order of the rotation of the eigensymmetry about the normal of the mirror that fixes
+  a face (a prism, faces parallel to the main axis: 6, 4 or 3; a dipyramid 2 or 1; the
+  tetrahexahedron 4, the trioctahedra 2), and for the cubic forms on (hhl), which no symmetry tells
+  apart, the condition: two components of the normal are equal, and |h| < |l| where the third is
+  larger.
+- **Order of the limiting forms:** larger subspaces first; outside the cubic family those whose
+  faces are parallel to the main axis first; then by the letter of the Wyckoff position of S in the
+  holohedry, descending; the cubic forms on (hhl) with |h| < |l| first. ITA states no rule; in 32
+  (`321` and rhombohedral axes) it prints the trigonal dipyramid before the rhombohedron, which is
+  convention data (`LIMITING_ORDER_EXCEPTIONS`).
+- **First face of a limiting form:** of the face spaces of its orbit, one with an integral reduced
+  echelon form (unit pivots), then one inside the face space of the position, then by the rule of
+  the first representatives (`pointRank`; with hexagonal or rhombohedral axes the rule of the first
+  faces; in the cubic family the latest pivots first: `0,k,l`, `h,h,l`, `0,1,1`). Four faces with
+  rhombohedral axes are convention data (`FIRST_LIMITING_FACE_EXCEPTIONS`: `h,k,2k-h` in 32, 3m
+  and -3m, `0,1,-1` in 3m). Sums are written with their positive terms first (`2k-h`).
+- A test removes each entry of the convention data in turn and checks that the result then departs
+  from print.
 
 | Field           | Meaning                                                                   |
 | --------------- | ------------------------------------------------------------------------- |
@@ -857,7 +887,7 @@ tetragonal dipyramids of 422, (h0l) and (hhl)).
 | `siteSymmetry`  | the oriented site-symmetry symbol of the position (the face symmetry)     |
 | `basic`         | true for the basic form of the position, false for a limiting form        |
 | `formType`      | the kind of the form, its key in `CRYSTAL_FORM_TYPES`                     |
-| `millerIndices` | ITA's first face of the form as printed, e.g. `h,0,l`, `1,1,-2,0`         |
+| `millerIndices` | ITA's first face of the form, e.g. `h,0,l`, `1,1,-2,0`                    |
 | `condition`     | the condition printed with the cubic forms (hhl), below; absent otherwise |
 
 - **Two forms on the faces (hhl).** In the cubic classes the faces (hhl) of one Wyckoff position

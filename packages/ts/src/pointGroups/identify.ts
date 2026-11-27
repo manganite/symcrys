@@ -136,6 +136,14 @@ export function pointGroupOf(
 }
 
 /**
+ * The key of a complete point group, given as all its Cartesian operations without time reversal
+ * (internal: the eigensymmetry of a crystal form), without the search for its setting.
+ */
+export function keyOfCompleteGroup(group: readonly CartesianOperation[]): MagneticPointGroupKey | undefined {
+  return keyOfSignature(signature(group, EPSILON));
+}
+
+/**
  * The axis signed so that its first non-zero component, in the order x, y, z, is positive; a
  * component smaller than the tolerance counts as zero.
  */
