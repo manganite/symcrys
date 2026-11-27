@@ -9,9 +9,9 @@ import { shown } from '../checks.js';
 import {
   closure,
   compose,
+  cosetsByGenerators,
   determinant,
   equalModLattice,
-  identity,
   parseOperation,
   reduceModLattice,
   trace,
@@ -60,15 +60,12 @@ export function planeGroupOperations(key: string | number): readonly ExactOperat
   if (cached) return cached;
   const has = (list: readonly ExactOperation[], op: ExactOperation): boolean =>
     list.some((x) => equalModLattice(x, op));
-  const general: ExactOperation[] = [identity(2)];
-  for (const g of entry.generators.map(parseOperation)) {
-    const h = general.slice();
-    for (let power = g; !has(h, power); power = compose(power, g)) {
-      // A plane point group has at most 12 operations; more means an error in the data (a generator
-      // of infinite order modulo the lattice would not end the loop).
-      if (general.length > 12) throw new Error(`The selected generators of ${entry.symbol} give no plane group`);
-      for (const x of h) general.push(reduceModLattice(compose(power, x)));
-    }
+  // A plane point group has at most 12 operations.
+  let general: ExactOperation[];
+  try {
+    general = cosetsByGenerators(entry.generators.map(parseOperation), 2, 12);
+  } catch (e) {
+    throw new Error(`The selected generators of ${entry.symbol}: ${(e as Error).message}`, { cause: e });
   }
   const ops = centringOperations(entry).flatMap((t) => general.map((op) => reduceModLattice(compose(t, op))));
   const generated = closure(planeGroupGenerators(entry.number), { dimension: 2 });

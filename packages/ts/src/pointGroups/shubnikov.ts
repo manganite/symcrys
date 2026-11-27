@@ -5,7 +5,7 @@
  * overbar (a rotoreflection axis), `.` the centred dot, `:` and `/` as printed.
  */
 
-import { det, trace, type Mat3, type Vec3 } from '../linalg.js';
+import { det, dot, trace, type Mat3, type Vec3 } from '../linalg.js';
 import { ANGLE_EPSILON, AXIS_EPSILON } from '../tolerances.js';
 
 /** A Cartesian operation and whether it carries time reversal. */
@@ -23,7 +23,6 @@ interface Element {
   readonly timeReversal: boolean;
 }
 
-const dot = (a: Vec3, b: Vec3): number => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 const unit = (v: Vec3): Vec3 => {
   const l = Math.hypot(v[0], v[1], v[2]);
   return [v[0] / l, v[1] / l, v[2] / l];

@@ -35,6 +35,11 @@ function build(f: (i: number, j: number) => number): Mat3 {
 }
 
 /** The product a·b. */
+/** The dot product of two vectors of three components. */
+export function dot(a: Vec3, b: Vec3): number {
+  return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+}
+
 export function multiply(a: Mat3, b: Mat3): Mat3 {
   return build((i, j) => a[i][0] * b[0][j] + a[i][1] * b[1][j] + a[i][2] * b[2][j]);
 }

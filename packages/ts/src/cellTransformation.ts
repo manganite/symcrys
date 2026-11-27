@@ -8,7 +8,8 @@
  */
 
 import { checkObject, shown } from './checks.js';
-import { inverse, product, type CoordinateTransformation, type RMatrix } from './coordinates.js';
+import type { CoordinateTransformation } from './coordinates.js';
+import { rationalInverse as inverse, rationalProduct as product, type RMatrix } from './spaceGroups/affine.js';
 import { deepFreeze } from './freeze.js';
 import type { Mat3 } from './linalg.js';
 import { negate, parseRational, rational, toNumber, ZERO } from './spaceGroups/rational.js';

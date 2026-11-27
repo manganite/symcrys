@@ -9,7 +9,7 @@
 
 import { deepFreeze } from '../freeze.js';
 import { crystalFamily } from '../lattice.js';
-import { inverse, transpose, apply as applyMatrix, type Mat3, type Vec3 } from '../linalg.js';
+import { dot, inverse, transpose, apply as applyMatrix, type Mat3, type Vec3 } from '../linalg.js';
 import { classData, classSettingData, settingBasis, settingLatticeOperations } from './classData.js';
 import type { PointGroupKey } from './keys.js';
 import { keyOfCompleteGroup } from './identify.js';
@@ -103,7 +103,6 @@ function holohedryOf(key: PointGroupKey, setting: number): { key: PointGroupKey;
 
 /** The eigensymmetry of a set of unit normals: all orthogonal maps that permute them, as Cartesian matrices. */
 function eigensymmetry(normals: readonly Vec3[]): Mat3[] {
-  const dot = (a: Vec3, b: Vec3): number => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
   const cross = (a: Vec3, b: Vec3): Vec3 => [
     a[1] * b[2] - a[2] * b[1],
     a[2] * b[0] - a[0] * b[2],

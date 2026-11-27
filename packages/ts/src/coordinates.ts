@@ -13,25 +13,28 @@
 import { checkObject, checkOptions, shown, TOLERANCE_KEYS } from './checks.js';
 import { EXACT_DENOMINATOR, ROUNDING_EPSILON, toleranceOf, type ToleranceOptions } from './tolerances.js';
 import { deepFreeze } from './freeze.js';
+import {
+  rationalApply,
+  rationalDeterminant,
+  rationalInverse,
+  rationalProduct,
+  type RMatrix,
+} from './spaceGroups/affine.js';
 import type { Mat3, Vec3 } from './linalg.js';
 import {
   ONE,
   add,
   isInteger,
-  multiply,
   simplestFraction,
   negate,
   rational,
   subtract,
   toNumber,
-  ZERO,
   type Rational,
 } from './spaceGroups/rational.js';
 
 /** A matrix as rows of numbers. */
 type Rows = readonly (readonly number[])[];
-/** A matrix of exact rationals, rows first. */
-export type RMatrix = readonly (readonly Rational[])[];
 
 /** The pair (P, p): the new basis (a′, b′, c′) = (a, b, c)·P and the new origin O′ = O + p. */
 export interface GenericTransformation {
@@ -86,50 +89,6 @@ function isRows(m: unknown, d: number): m is Rows {
 
 function isVector(v: unknown, d: number): v is readonly number[] {
   return Array.isArray(v) && v.length === d && v.every((x) => typeof x === 'number' && Number.isFinite(x));
-}
-
-/** The product of two rational matrices. */
-export function product(a: RMatrix, b: RMatrix): RMatrix {
-  return a.map((row) => b[0].map((_, j) => row.reduce((s, x, k) => add(s, multiply(x, b[k][j])), ZERO)));
-}
-
-function apply(a: RMatrix, v: readonly Rational[]): Rational[] {
-  return a.map((row) => row.reduce((s, x, k) => add(s, multiply(x, v[k])), ZERO));
-}
-
-/** The determinant of a 2 × 2 or 3 × 3 rational matrix. */
-function determinant(m: RMatrix): Rational {
-  const t = (i: number, j: number) => m[i][j];
-  if (m.length === 2) return subtract(multiply(t(0, 0), t(1, 1)), multiply(t(0, 1), t(1, 0)));
-  const minor = (i: number, j: number, k: number, l: number) =>
-    subtract(multiply(t(i, j), t(k, l)), multiply(t(i, l), t(k, j)));
-  return add(
-    subtract(multiply(t(0, 0), minor(1, 1, 2, 2)), multiply(t(0, 1), minor(1, 0, 2, 2))),
-    multiply(t(0, 2), minor(1, 0, 2, 1)),
-  );
-}
-
-/** The inverse of a regular 2 × 2 or 3 × 3 rational matrix, by the adjugate. */
-export function inverse(m: RMatrix): RMatrix {
-  const det = determinant(m);
-  const over = (x: Rational) => multiply(x, rational(det[1], det[0]));
-  if (m.length === 2) {
-    return [
-      [over(m[1][1]), over(negate(m[0][1]))],
-      [over(negate(m[1][0])), over(m[0][0])],
-    ];
-  }
-  const c = (i: number, j: number) => {
-    const rows = [0, 1, 2].filter((r) => r !== i);
-    const cols = [0, 1, 2].filter((k) => k !== j);
-    const minor = subtract(
-      multiply(m[rows[0]][cols[0]], m[rows[1]][cols[1]]),
-      multiply(m[rows[0]][cols[1]], m[rows[1]][cols[0]]),
-    );
-    return (i + j) % 2 === 0 ? minor : negate(minor);
-  };
-  // The inverse is the transposed matrix of cofactors over the determinant.
-  return [0, 1, 2].map((i) => [0, 1, 2].map((j) => over(c(j, i))));
 }
 
 const numbers = (v: readonly Rational[]): number[] => v.map((x) => toNumber(x) + 0);
@@ -213,15 +172,15 @@ function transform(
       return f;
     }),
   );
-  if (determinant(P)[0] === 0) throw new RangeError(`${who}: the linear part P is singular (det P = 0)`);
+  if (rationalDeterminant(P)[0] === 0) throw new RangeError(`${who}: the linear part P is singular (det P = 0)`);
   // Only a missing origin shift is zero; null is a wrong value, not a missing one.
   const shift0 =
     transformation.originShift === undefined ? Array.from({ length: d }, () => 0) : transformation.originShift;
   if (!isVector(shift0, d))
     throw new RangeError(`${who}: the origin shift p must be ${d} numbers, not ${shown(shift0)}`);
   const p = shift0.map((x) => fraction(x, 'coordinate of p'));
-  const Q = inverse(P);
-  const q = apply(Q, p).map(negate);
+  const Q = rationalInverse(P);
+  const q = rationalApply(Q, p).map(negate);
   const Pf = floats(P);
   const Qf = floats(Q);
   const pf = numbers(p);
@@ -276,7 +235,7 @@ function transform(
           return rational(Math.round(x));
         }),
       );
-      if (determinant(W)[1] !== 1 || Math.abs(determinant(W)[0]) !== 1) {
+      if (rationalDeterminant(W)[1] !== 1 || Math.abs(rationalDeterminant(W)[0]) !== 1) {
         throw new RangeError(`${who}: the matrix W of operation ${n + 1} has det W = ±1, not ${shown(matrix)}`);
       }
       const t0 = translation === undefined ? Array.from({ length: d }, () => 0) : translation;
@@ -284,7 +243,7 @@ function transform(
         throw new RangeError(`${who}: the translation of operation ${n + 1} must be ${d} numbers, not ${shown(t0)}`);
       }
       const w = t0.map((x) => fraction(x, 'translation'));
-      const W1 = product(product(Q, W), P);
+      const W1 = rationalProduct(rationalProduct(Q, W), P);
       if (!W1.every((row) => row.every(isInteger))) {
         throw new RangeError(
           `${who}: operation ${n + 1} has no integral matrix in the new basis (P⁻¹WP = ${shown(floats(W1))}): ` +
@@ -293,8 +252,8 @@ function transform(
       }
       // w′ = Q(w + (W − I)p)
       const WminusI = W.map((row, i) => row.map((x, j) => (i === j ? subtract(x, ONE) : x)));
-      const shifted = apply(WminusI, p).map((x, i) => add(w[i], x));
-      return { matrix: floats(W1), translation: numbers(apply(Q, shifted)) };
+      const shifted = rationalApply(WminusI, p).map((x, i) => add(w[i], x));
+      return { matrix: floats(W1), translation: numbers(rationalApply(Q, shifted)) };
     });
   }
   return result as unknown as GenericChange;

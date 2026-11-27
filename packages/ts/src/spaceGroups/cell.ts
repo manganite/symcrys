@@ -18,6 +18,7 @@ import {
   safeSum,
   ZERO,
   add,
+  mod1,
   multiply,
   parseRational,
   rational,
@@ -262,12 +263,6 @@ const inCell = (p: readonly Rational[]): boolean => p.every((v) => v[0] >= 0 && 
 const SHIFTS: Rational[][] = [];
 for (let i = -3; i <= 3; i++) for (let j = -3; j <= 3; j++) SHIFTS.push([r(i), r(j)]);
 
-/** s mod 1 in [0, 1). */
-function frac(s: Rational): Rational {
-  const n = Math.floor(s[0] / s[1]);
-  return subtract(s, r(n));
-}
-
 /** A line: {x : (−d_y, d_x)·x = c} with its glide s·d; for a class, c as `classOffset` chooses it. */
 interface LineClass {
   kind: 'mirror' | 'glide';
@@ -317,7 +312,7 @@ function centrings(entry: { readonly centring: readonly string[] }): Rational[][
 function lineStep(d: readonly [number, number], taus: readonly Rational[][]): Rational {
   let step = r(1);
   for (const tau of taus) {
-    const shift = frac(add(scale(-d[1], tau[0]), scale(d[0], tau[1])));
+    const shift = mod1(add(scale(-d[1], tau[0]), scale(d[0], tau[1])));
     if (shift[0] !== 0 && toNumber(shift) < toNumber(step)) step = shift;
   }
   return step;
@@ -327,7 +322,7 @@ function lineStep(d: readonly [number, number], taus: readonly Rational[][]): Ra
 function classPoint(p: readonly Rational[], taus: readonly Rational[][]): Rational[] {
   let best = [...p];
   for (const tau of taus) {
-    const q = [frac(add(p[0], tau[0])), frac(add(p[1], tau[1]))];
+    const q = [mod1(add(p[0], tau[0])), mod1(add(p[1], tau[1]))];
     const dy = toNumber(subtract(q[1], best[1]));
     if (dy < 0 || (dy === 0 && toNumber(subtract(q[0], best[0])) < 0)) best = q;
   }
@@ -354,7 +349,7 @@ function elementClasses(key: string | number) {
       if (d.kind === 'rotation') {
         const loc = d.location ?? [];
         if (!inCell(loc)) continue;
-        const p = classPoint(loc.map(frac), taus);
+        const p = classPoint(loc.map(mod1), taus);
         const known = rotations.find((x) => samePoint(x.point, p));
         if (!known) rotations.push({ n: d.n, point: p });
         else known.n = Math.max(known.n, d.n);
@@ -363,7 +358,7 @@ function elementClasses(key: string | number) {
         const p = d.location ?? [];
         // The glide vector is s·dir; s modulo 1, since a lattice translation along the line changes nothing.
         const g = d.glide ?? [ZERO, ZERO];
-        const s = frac(dir[0] !== 0 ? rational(g[0][0], g[0][1] * dir[0]) : rational(g[1][0], g[1][1] * dir[1]));
+        const s = mod1(dir[0] !== 0 ? rational(g[0][0], g[0][1] * dir[0]) : rational(g[1][0], g[1][1] * dir[1]));
         // The line is the set of x with (−dir_y, dir_x)·x = c; the lattice shifts c by multiples of step.
         const step = lineStep([dir[0], dir[1]], taus);
         const c = classOffset([dir[0], dir[1]], add(scale(-dir[1], p[0]), scale(dir[0], p[1])), step);
