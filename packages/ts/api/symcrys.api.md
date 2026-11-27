@@ -506,7 +506,7 @@ export type Uvw = readonly [number, number, number];
 export type Vec3 = readonly [number, number, number];
 
 // @public
-export const VERSION = "0.14.0";
+export const VERSION = "0.15.0";
 
 // @public
 export type VoigtFactor = 1 | 2;
