@@ -44,6 +44,25 @@ _V = ("v",)
 _I = ("i",)
 _F = ("f",)
 
+BravaisLattice = Literal[
+    "aP",
+    "mP",
+    "mS",
+    "oP",
+    "oS",
+    "oI",
+    "oF",
+    "tP",
+    "tI",
+    "hP",
+    "hR",
+    "cP",
+    "cI",
+    "cF",
+]
+"""A Bravais type of lattice in three dimensions, in ITA's notation: the crystal family (a, m, o, t,
+h, c) and the centring of the conventional cell (P, S, I, F, R).
+"""
 TensorKind = Literal["polar", "axial"]
 """How the tensor behaves under an improper operation: ``'polar'`` transforms with R, ``'axial'``
 with det(R)·R (a pseudotensor; the prefix e of its Jahn symbol, e.g. eV for an axial vector). ITC
@@ -221,6 +240,59 @@ class Operations:
 
 
 @final
+class TransformedOperation(TypedDict):
+    """One operation of ``TransformedOperations`` (``ops[i]``, ``for op in ops``)."""
+
+    matrix: NDArray[np.int64]
+    """W′ = P⁻¹WP, integer entries."""
+    translation: NDArray[np.float64]
+    """w′ = P⁻¹(w + (W − I)p), not reduced modulo the lattice."""
+
+
+@dataclass(frozen=True, eq=False)
+class TransformedOperations:
+    """The operations of ``change_of_coordinates`` in the new coordinate system as arrays, one row
+    per operation, in the order given: each a matrix W′ and a translation w′, not reduced modulo the
+    lattice. Frozen, its arrays read-only; ``len(ops)`` is the number of operations; they can be
+    passed back to ``change_of_coordinates``.
+    """
+
+    matrix: NDArray[np.int64]
+    """int64 array of shape (n, 3, 3), one row per operation. W′ = P⁻¹WP, integer entries."""
+    translation: NDArray[np.float64]
+    """float64 array of shape (n, 3), one row per operation. w′ = P⁻¹(w + (W − I)p), not reduced modulo
+    the lattice.
+    """
+
+    _symcrys_operations = True
+
+    def __post_init__(self) -> None:
+        _shared.freeze(self, _TRANSFORMED_FIELDS)
+
+    def __reduce__(self) -> tuple[Any, ...]:
+        # A copy or a pickle is built anew, so its arrays are checked and read-only too.
+        return (type(self), tuple(getattr(self, name) for name in _TRANSFORMED_FIELDS))
+
+    def __len__(self) -> int:
+        return len(self.matrix)
+
+    def __iter__(self) -> Iterator[TransformedOperation]:
+        return (self[i] for i in range(len(self)))
+
+    @overload
+    def __getitem__(self, index: int | np.integer[Any]) -> TransformedOperation: ...
+
+    @overload
+    def __getitem__(self, index: slice | Sequence[int] | NDArray[Any]) -> TransformedOperations: ...
+
+    def __getitem__(self, index: int | np.integer[Any] | slice | Sequence[int] | NDArray[Any]) -> TransformedOperation | TransformedOperations:
+        """One operation as a dict ``{"matrix", "translation"}`` for an integer, otherwise
+        the ``TransformedOperations`` of the selected rows (a slice, a list of indices, a boolean mask)."""
+        result: TransformedOperation | TransformedOperations = _shared.operation_at(self, index)
+        return result
+
+
+@final
 class LatticeParameters(TypedDict):
     """The lattice parameters of a cell: edge lengths and angles in degrees (α between b and c, β
     between a and c, γ between a and b).
@@ -238,6 +310,31 @@ class LatticeParameters(TypedDict):
     """Angle β between a and c, in degrees."""
     gamma: float
     """Angle γ between a and b, in degrees."""
+
+
+@final
+class Cell(TypedDict):
+    """A cell of a lattice, named by the fields that apply to its Bravais lattice (listed with
+    ``cell_transformation``); a field left out takes the value of the conventional cell in the
+    standard setting, so ``{}`` is that cell.
+    """
+
+    unique_axis: NotRequired[Literal["a", "b", "c"]]
+    """The unique axis of a monoclinic cell."""
+    cell_choice: NotRequired[int]
+    """The cell choice of a monoclinic cell, 1, 2 or 3."""
+    setting: NotRequired[Literal["reverse", "abc", "ba-c", "cab", "-cba", "bca", "a-cb", "obverse"]]
+    """An orthorhombic setting, or for hexagonal axes of an ``hR`` lattice the obverse or reverse
+    setting.
+    """
+    centring: NotRequired[Literal["P", "A", "C", "I", "F", "H", "D"]]
+    """The centring of the cell: ``'P'`` for a primitive cell, or the letter of a centred cell."""
+    axes: NotRequired[Literal["hexagonal", "rhombohedral"]]
+    """The axes of an ``hR`` lattice: ``'hexagonal'`` (the triple hexagonal cell, standard) or
+    ``'rhombohedral'``.
+    """
+    cell: NotRequired[int]
+    """The index of a cell where several cells have the same centring: 1 for C₁."""
 
 
 @final
@@ -265,16 +362,6 @@ class InverseTransformation(TypedDict):
 
 
 @final
-class TransformedOperation(TypedDict):
-    """An operation (W′, w′) in the new coordinate system."""
-
-    matrix: NDArray[np.int64]
-    """W′ = P⁻¹WP, integer entries."""
-    translation: NDArray[np.float64]
-    """w′ = P⁻¹(w + (W − I)p), not reduced modulo the lattice."""
-
-
-@final
 class CoordinateChange(TypedDict):
     """The result of ``change_of_coordinates``: the inverse pair and each given quantity in the new
     coordinate system.
@@ -290,7 +377,7 @@ class CoordinateChange(TypedDict):
     """The Miller indices, as given, in the new basis."""
     metric: NotRequired[NDArray[np.float64]]
     """The metric tensor in the new basis."""
-    operations: NotRequired[list[TransformedOperation]]
+    operations: NotRequired[TransformedOperations]
     """The operations, as given, in the new coordinate system."""
 
 
@@ -644,16 +731,29 @@ class TensorForm(TypedDict):
     basis tensor and in its order: each is the lowest component independent of those before it.
     """
     relations: NDArray[np.float64]
-    """The constraints: one row r per component that is not a parameter, in ascending flat index, with
-    r·t = 0 for every allowed tensor t, both by flat index. Row c reads t_c − Σₖ
-    b_{k,c}·t_{parameters[k]} = 0, with b_{k,c} the component c of basis[k]; a row with a single 1 says
-    that the component vanishes.
+    """The constraints: one per component c that is not a parameter, in ascending order of the
+    components, each a tensor r in the shape of the basis tensors with Σ r·t = 0, summed over all
+    components, for every allowed tensor t. The constraint of c reads t_c − Σₖ b_{k,c}·t_{parameters[k]}
+    = 0, with b_{k,c} the component c of basis[k]; one with a single 1 says that the component vanishes.
     """
 
 
 _OPERATION_FIELDS = {"matrix": (np.int64, (3, 3)), "cartesian": (np.float64, (3, 3))}
 _S_Operations = ("ops", Operations, {"matrix": (np.int64, (3, 3)), "cartesian": (np.float64, (3, 3))})
+_TRANSFORMED_FIELDS = {"matrix": (np.int64, (3, 3)), "translation": (np.float64, (3,))}
+_S_TransformedOperations = ("ops", TransformedOperations, {"matrix": (np.int64, (3, 3)), "translation": (np.float64, (3,))})
 _S_LatticeParameters = ("d", {"a": _F, "b": _F, "c": _F, "alpha": _F, "beta": _F, "gamma": _F})
+_S_Cell = (
+    "d",
+    {
+        "uniqueAxis": _V,
+        "cellChoice": _I,
+        "setting": _V,
+        "centring": _V,
+        "axes": _V,
+        "cell": _I,
+    },
+)
 _S_CoordinateTransformation = (
     "d",
     {
@@ -668,13 +768,6 @@ _S_InverseTransformation = (
         "originShift": ("a", np.float64, None),
     },
 )
-_S_TransformedOperation = (
-    "d",
-    {
-        "matrix": ("a", np.int64, None),
-        "translation": ("a", np.float64, None),
-    },
-)
 _S_CoordinateChange = (
     "d",
     {
@@ -683,7 +776,7 @@ _S_CoordinateChange = (
         "directions": ("a", np.float64, (-1, 3)),
         "planes": ("a", np.float64, (-1, 3)),
         "metric": ("a", np.float64, None),
-        "operations": ("l", _S_TransformedOperation),
+        "operations": _S_TransformedOperations,
     },
 )
 _S_TensorSpec = ("d", {"rank": _I, "kind": _V, "intrinsic": _V, "timeParity": _V})
@@ -799,8 +892,10 @@ __all__ = [
     "SymcrysError",
     "SymcrysInternalError",
     "Axis",
+    "BravaisLattice",
     "CartesianAxis",
     "CartesianOperationDescription",
+    "Cell",
     "CoordinateChange",
     "CoordinateTransformation",
     "CrystalFamily",
@@ -832,6 +927,7 @@ __all__ = [
     "TensorPropertyName",
     "TensorSpec",
     "TransformedOperation",
+    "TransformedOperations",
     "WyckoffPosition",
     "allowed_properties",
     "allowed_properties_of",
@@ -888,6 +984,10 @@ __all__ = [
     "magnetic",
     "plane",
 ]
+
+
+def __dir__() -> list[str]:
+    return sorted({*__all__, *(n for n in ("__doc__", "__name__", "__version__") if n in globals())})
 
 
 def _call(name: str, *args: Any) -> Any:
@@ -1107,9 +1207,9 @@ def face_normal(basis: ArrayLike, hkl: ArrayLike) -> NDArray[np.float64]:
 
 
 def cell_transformation(
-    bravais_lattice: str,
-    from_cell: Mapping[str, Any],
-    to_cell: Mapping[str, Any],
+    bravais_lattice: BravaisLattice,
+    from_cell: Cell | Mapping[str, Any],
+    to_cell: Cell | Mapping[str, Any],
 ) -> CoordinateTransformation:
     """The change of the coordinate system from one cell of a lattice to another: P with (a′, b′,
     c′) = (a, b, c)·P, where (a, b, c) is the basis of ``from_cell`` and (a′, b′, c′) that of
@@ -1168,7 +1268,7 @@ def change_of_coordinates(
     directions: Optional[ArrayLike] = None,
     planes: Optional[ArrayLike] = None,
     metric: Optional[ArrayLike] = None,
-    operations: Optional[Operations | Sequence[Mapping[str, Any]]] = None,
+    operations: Optional[Operations | TransformedOperations | Sequence[Mapping[str, Any]]] = None,
     tolerance: Optional[float] = None,
 ) -> CoordinateChange:
     """Changes the coordinate system by the pair (P, p): the new basis is (a′, b′, c′) = (a, b, c)·P
@@ -2217,8 +2317,8 @@ def tensor_form(
     dict
         ``basis`` float64 array of shape (p, 3, …, 3), each allowed tensor with its rank axes;
         ``parameters`` int64 array of shape (p, rank); ``relations`` float64 array of shape (3**rank
-        - p, 3**rank), rows r with r @ t.reshape(-1) == 0 for every allowed tensor t; ``rank``. p is
-        the number of free parameters.
+        - p, 3, …, 3), constraints r with (r * t).sum() == 0 for every allowed tensor t; ``rank``. p
+        is the number of free parameters.
     """
     result: TensorForm = _shared.convert(
         _call(
@@ -2262,8 +2362,8 @@ def tensor_form_of(
     dict
         ``basis`` float64 array of shape (p, 3, …, 3), each allowed tensor with its rank axes;
         ``parameters`` int64 array of shape (p, rank); ``relations`` float64 array of shape (3**rank
-        - p, 3**rank), rows r with r @ t.reshape(-1) == 0 for every allowed tensor t; ``rank``. p is
-        the number of free parameters.
+        - p, 3, …, 3), constraints r with (r * t).sum() == 0 for every allowed tensor t; ``rank``. p
+        is the number of free parameters.
     """
     result: TensorForm = _shared.convert(
         _call(
@@ -2583,7 +2683,7 @@ def miller_indices(
     return result
 
 
-def crystal_family(system: str) -> CrystalFamily:
+def crystal_family(system: CrystalSystem) -> CrystalFamily:
     """The crystal family of a crystal system: trigonal and hexagonal form the hexagonal family.
     Throws a SymcrysError for anything that is not one of the seven crystal systems.
     """
@@ -2591,7 +2691,7 @@ def crystal_family(system: str) -> CrystalFamily:
     return result
 
 
-def holohedry(lattice_system: str) -> str:
+def holohedry(lattice_system: LatticeSystem) -> str:
     """The holohedry of a lattice system, the point symmetry of its lattices, e.g. ``6/mmm`` for the
     hexagonal and ``-3m`` for the rhombohedral lattice system. A trigonal crystal belongs to either
     lattice system, so ``lattice_systems(key)`` gives two for a trigonal class. Raises SymcrysError

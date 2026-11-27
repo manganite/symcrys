@@ -122,6 +122,59 @@ class Operations:
 
 
 @final
+class TransformedOperation(TypedDict):
+    """One operation of ``TransformedOperations`` (``ops[i]``, ``for op in ops``)."""
+
+    matrix: NDArray[np.int64]
+    """W′ = P⁻¹WP, integer entries."""
+    translation: NDArray[np.float64]
+    """w′ = P⁻¹(w + (W − I)p), not reduced modulo the lattice."""
+
+
+@dataclass(frozen=True, eq=False)
+class TransformedOperations:
+    """The operations of ``change_of_coordinates`` in the new coordinate system as arrays, one row
+    per operation, in the order given: each a matrix W′ and a translation w′, not reduced modulo the
+    lattice. Frozen, its arrays read-only; ``len(ops)`` is the number of operations; they can be
+    passed back to ``change_of_coordinates``.
+    """
+
+    matrix: NDArray[np.int64]
+    """int64 array of shape (n, 2, 2), one row per operation. W′ = P⁻¹WP, integer entries."""
+    translation: NDArray[np.float64]
+    """float64 array of shape (n, 2), one row per operation. w′ = P⁻¹(w + (W − I)p), not reduced modulo
+    the lattice.
+    """
+
+    _symcrys_operations = True
+
+    def __post_init__(self) -> None:
+        _shared.freeze(self, _TRANSFORMED_FIELDS)
+
+    def __reduce__(self) -> tuple[Any, ...]:
+        # A copy or a pickle is built anew, so its arrays are checked and read-only too.
+        return (type(self), tuple(getattr(self, name) for name in _TRANSFORMED_FIELDS))
+
+    def __len__(self) -> int:
+        return len(self.matrix)
+
+    def __iter__(self) -> Iterator[TransformedOperation]:
+        return (self[i] for i in range(len(self)))
+
+    @overload
+    def __getitem__(self, index: int | np.integer[Any]) -> TransformedOperation: ...
+
+    @overload
+    def __getitem__(self, index: slice | Sequence[int] | NDArray[Any]) -> TransformedOperations: ...
+
+    def __getitem__(self, index: int | np.integer[Any] | slice | Sequence[int] | NDArray[Any]) -> TransformedOperation | TransformedOperations:
+        """One operation as a dict ``{"matrix", "translation"}`` for an integer, otherwise
+        the ``TransformedOperations`` of the selected rows (a slice, a list of indices, a boolean mask)."""
+        result: TransformedOperation | TransformedOperations = _shared.operation_at(self, index)
+        return result
+
+
+@final
 class PlaneGroup(TypedDict):
     """A plane group."""
 
@@ -470,16 +523,6 @@ class InverseTransformation(TypedDict):
 
 
 @final
-class TransformedOperation(TypedDict):
-    """An operation (W′, w′) in the new coordinate system."""
-
-    matrix: NDArray[np.int64]
-    """W′ = P⁻¹WP, integer entries."""
-    translation: NDArray[np.float64]
-    """w′ = P⁻¹(w + (W − I)p), not reduced modulo the lattice."""
-
-
-@final
 class CoordinateChange(TypedDict):
     """The result of ``change_of_coordinates``: the inverse pair and each given quantity in the new
     coordinate system.
@@ -495,7 +538,7 @@ class CoordinateChange(TypedDict):
     """The Miller indices, as given, in the new basis."""
     metric: NotRequired[NDArray[np.float64]]
     """The metric tensor in the new basis."""
-    operations: NotRequired[list[TransformedOperation]]
+    operations: NotRequired[TransformedOperations]
     """The operations, as given, in the new coordinate system."""
 
 
@@ -511,6 +554,8 @@ class CrystalFormType(TypedDict):
 
 _OPERATION_FIELDS = {"matrix": (np.int64, (2, 2)), "translation": (np.float64, (2,))}
 _S_Operations = ("ops", Operations, {"matrix": (np.int64, (2, 2)), "translation": (np.float64, (2,))})
+_TRANSFORMED_FIELDS = {"matrix": (np.int64, (2, 2)), "translation": (np.float64, (2,))}
+_S_TransformedOperations = ("ops", TransformedOperations, {"matrix": (np.int64, (2, 2)), "translation": (np.float64, (2,))})
 _S_PlaneGroup = (
     "d",
     {
@@ -631,13 +676,6 @@ _S_InverseTransformation = (
         "originShift": ("a", np.float64, None),
     },
 )
-_S_TransformedOperation = (
-    "d",
-    {
-        "matrix": ("a", np.int64, None),
-        "translation": ("a", np.float64, (2,)),
-    },
-)
 _S_CoordinateChange = (
     "d",
     {
@@ -646,7 +684,7 @@ _S_CoordinateChange = (
         "directions": ("a", np.float64, (-1, 2)),
         "planes": ("a", np.float64, (-1, 2)),
         "metric": ("a", np.float64, None),
-        "operations": ("l", _S_TransformedOperation),
+        "operations": _S_TransformedOperations,
     },
 )
 _S_CrystalFormType = ("d", {"name": _V, "edges": _I})
@@ -686,6 +724,7 @@ __all__ = [
     "SymmetryElements",
     "SymmetryLine",
     "TransformedOperation",
+    "TransformedOperations",
     "WyckoffDistance",
     "WyckoffPosition",
     "asymmetric_unit",
@@ -718,6 +757,10 @@ __all__ = [
     "wyckoff_position",
     "wyckoff_positions",
 ]
+
+
+def __dir__() -> list[str]:
+    return sorted({*__all__, *(n for n in ("__doc__", "__name__", "__version__") if n in globals())})
 
 
 def _call(name: str, *args: Any) -> Any:
@@ -947,7 +990,7 @@ def describe_operations(
 
 
 def describe_operations_of(
-    operations: Operations | Sequence[Mapping[str, Any]],
+    operations: Operations | TransformedOperations | Sequence[Mapping[str, Any]],
     *,
     tolerance: Optional[float] = None,
 ) -> list[OperationDescription]:
@@ -1237,7 +1280,7 @@ def symmetry_elements(key: str, *, box: Optional[ArrayLike] = None) -> SymmetryE
     return result
 
 
-def cell_restrictions(system: str) -> CellRestrictions:
+def cell_restrictions(system: PlaneSystem) -> CellRestrictions:
     """The restrictions on the cell parameters of a crystal system of the plane, as ITA gives them
     for the conventional cell: the parameters to be determined, the pairs of equal parameters, the
     fixed angles, and the angles conventionally taken non-acute. Raises SymcrysError for anything
@@ -1307,7 +1350,7 @@ def reciprocal_basis(basis: ArrayLike) -> NDArray[np.float64]:
 
 
 def residual_operations(
-    operations: Operations | Sequence[Mapping[str, Any]],
+    operations: Operations | TransformedOperations | Sequence[Mapping[str, Any]],
     basis: ArrayLike,
     *,
     tolerance: Optional[float] = None,
@@ -1354,7 +1397,7 @@ def change_of_coordinates(
     directions: Optional[ArrayLike] = None,
     planes: Optional[ArrayLike] = None,
     metric: Optional[ArrayLike] = None,
-    operations: Optional[Operations | Sequence[Mapping[str, Any]]] = None,
+    operations: Optional[Operations | TransformedOperations | Sequence[Mapping[str, Any]]] = None,
     tolerance: Optional[float] = None,
 ) -> CoordinateChange:
     """Changes the coordinate system of the plane by the pair (P, p), with 2 × 2 matrices: the new

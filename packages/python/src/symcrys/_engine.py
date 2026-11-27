@@ -8,6 +8,7 @@ module and nothing else.
 from __future__ import annotations
 
 import json
+import re
 import threading
 from importlib import resources
 from typing import Any
@@ -88,19 +89,53 @@ def invoke(name: str, *args: Any) -> Any:
                 json.dumps(arg, allow_nan=False)
             except ValueError:
                 raise SymcrysError(
-                    f"Argument {i + 1} of {name}: every number passed to symcrys must be finite, not NaN or infinite",
+                    python_terms(f"Argument {i + 1} of {name}: every number passed to symcrys must be finite, not NaN or infinite"),
                     "RangeError",
                 ) from None
             except TypeError as e:
-                raise SymcrysError(f"Argument {i + 1} of {name} cannot be passed to symcrys: {e}", "RangeError") from None
+                raise SymcrysError(python_terms(f"Argument {i + 1} of {name} cannot be passed to symcrys: {e}"), "RangeError") from None
         raise
     answer = json.loads(call(name, args_json))
     if "error" in answer:
         error = answer["error"]
         if error["name"] == "RangeError":
-            raise SymcrysError(error["message"], error["name"])
+            raise SymcrysError(python_terms(error["message"]), error["name"])
         raise SymcrysInternalError(error["message"], error["name"])
     return answer.get("result")
+
+
+# Two lower-case letters at least before the first capital, so that a Bravais lattice (hR, mP) stays.
+_CAMEL = re.compile(r"\b([a-z]{2,}(?:[A-Z][a-z0-9]*)+)\b")
+_LITERALS = {"undefined": "None", "null": "None", "true": "True", "false": "False"}
+_LITERAL = re.compile(r"\b(undefined|null|true|false)\b")
+_OPTION = re.compile(r"\{ (\w+): ([^{}]*?) \}")
+
+
+# A string in double quotes, as the library shows a value it was given; group 1 is set when it is the
+# key of a JSON object (followed by a colon).
+_STRING = re.compile(r'"(?:[^"\\]|\\.)*"(?=(:)?)')
+
+
+def _terms(text: str) -> str:
+    text = _OPTION.sub(lambda m: f"{m.group(1)}={m.group(2)}", text)
+    text = _CAMEL.sub(lambda m: re.sub(r"([A-Z])", lambda c: "_" + c.group(1).lower(), m.group(1)), text)
+    return _LITERAL.sub(lambda m: _LITERALS[m.group(1)], text)
+
+
+def python_terms(message: str) -> str:
+    """A message of the library in Python's terms: names in snake_case (``fromCell`` →
+    ``from_cell``), the literals of JavaScript as Python writes them (``undefined`` → ``None``,
+    ``true`` → ``True``), and an option object ``{ factors: [1, 2] }`` as the keyword argument
+    ``factors=[1, 2]``. A string in double quotes is a value the caller passed and stays as it is,
+    unless it is the key of an object (``{"cellChoice": 9}``), which the caller passed in snake_case.
+    """
+    out, last = [], 0
+    for m in _STRING.finditer(message):
+        out.append(_terms(message[last : m.start()]))
+        out.append(_terms(m.group(0)) if m.group(1) else m.group(0))
+        last = m.end()
+    out.append(_terms(message[last:]))
+    return "".join(out)
 
 
 def value(name: str) -> Any:

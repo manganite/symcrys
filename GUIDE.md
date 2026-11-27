@@ -167,9 +167,13 @@ Library code is everything in `packages/ts/src` except test-only code ("Correctn
   (`packages/python/api.json`): `int64` for indices, Miller indices, lattice directions and the
   matrices W, `float64` for every other array (Cartesian matrices and vectors, tensor bases and
   relations, translations and points of the plane); a
-  record becomes a dict typed by a TypedDict of the TypeScript interface's name; a list of
-  operations becomes one `Operations` record of arrays; a `RangeError` raises `SymcrysError` (a
-  `ValueError`), any other error `SymcrysInternalError` (a `RuntimeError`).
+  record becomes a dict typed by a TypedDict of the TypeScript interface's name, a named union of
+  strings a Literal type; a list of operations becomes one `Operations` record of arrays (the
+  operations of a change of coordinates `TransformedOperations`), and a tensor basis and its
+  relations arrays of shape (3, …, 3) per tensor; complex numbers and integers beyond 2⁵³ − 1 are
+  refused; a `RangeError` raises `SymcrysError` (a `ValueError`) with its message in Python's
+  terms (snake_case names, `None`, `True`, keyword arguments), any other error
+  `SymcrysInternalError` (a `RuntimeError`).
 - **The modules are generated** from the TypeScript entry points (`scripts/python-api.mjs`):
   signatures, bodies, docstrings, TypedDicts, Literal types and `__all__`. Hand-written are only
   `api.json`, `docstrings.json` and the modules `_shared.py`, `_convert.py`, `_engine.py`.

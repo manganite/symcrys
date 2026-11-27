@@ -33,9 +33,10 @@ def test_every_export_of_the_library_has_its_python_name() -> None:
         types = {n for n in module.__all__ if n[0].isupper() and not n.isupper()} - {"SymcrysError", "SymcrysInternalError"}
         for name in types:
             obj = getattr(module, name)
-            # A TypedDict of the generated module, or one of its Literal types.
-            # A TypedDict of the generated module, one of its Literal types, or its Operations.
-            ok = typing.is_typeddict(obj) or typing.get_origin(obj) is typing.Literal or name == "Operations"
+            # A TypedDict of the generated module, one of its Literal types, or a record of arrays
+            # (Operations, TransformedOperations).
+            ok = typing.is_typeddict(obj) or typing.get_origin(obj) is typing.Literal
+            ok = ok or name in ("Operations", "TransformedOperations")
             assert ok, f"{module.__name__}.{name}"
         assert TYPES - {"SymcrysError", "SymcrysInternalError"} <= types or module is plane, module.__name__
         extra = {"SymcrysError", "SymcrysInternalError"} | types | ({"magnetic", "plane"} if module is symcrys else set())
@@ -123,16 +124,16 @@ def test_the_magnetic_api_asks_every_operation_for_its_time_reversal() -> None:
         with pytest.raises(symcrys.SymcrysError, match="operation 0 has no key 'time_reversal'"):
             magnetic.allowed_properties_of(bad)
     for ops in (symcrys.generators("m-3m"), symcrys.operations("32")):
-        with pytest.raises(symcrys.SymcrysError, match="timeReversal must be true or false, not undefined"):
+        with pytest.raises(symcrys.SymcrysError, match="time_reversal must be True or False, not None"):
             magnetic.allowed_properties_of(ops)
-        with pytest.raises(symcrys.SymcrysError, match="timeReversal must be true or false"):
+        with pytest.raises(symcrys.SymcrysError, match="time_reversal must be True or False"):
             magnetic.tensor_form_of(ops, "pyroelectric")
         for call in (magnetic.is_centrosymmetric_of, magnetic.is_enantiomorphic_of):
-            with pytest.raises(symcrys.SymcrysError, match="timeReversal must be true or false, not undefined"):
+            with pytest.raises(symcrys.SymcrysError, match="time_reversal must be True or False, not None"):
                 call(ops)
     with pytest.raises(symcrys.SymcrysError, match="not an orthogonal"):
         symcrys.is_enantiomorphic_of([{"cartesian": np.diag([2.0, 1.0, 1.0])}])
-    with pytest.raises(symcrys.SymcrysError, match="timeReversal must be true or false, not 1"):
+    with pytest.raises(symcrys.SymcrysError, match="time_reversal must be True or False, not 1"):
         magnetic.tensor_form_of([{"cartesian": np.eye(3), "time_reversal": 1}], "ferromagnetic")
     inversion = [{"cartesian": -np.eye(3), "time_reversal": False}]
     assert magnetic.tensor_form_of(inversion, "pyroelectric")["basis"].shape == (0, 3)
@@ -155,7 +156,7 @@ def test_the_crystallographic_api_refuses_time_reversal() -> None:
         symcrys.tensor_form("3", {"rank": 1, "kind": "axial", "time_parity": "odd", "intrinsic": "none"})
     with pytest.raises(symcrys.SymcrysError, match="Operation 6 is combined with time reversal.*" + use_magnetic):
         symcrys.tensor_form_of(magnetic.operations("321'"), "piezoelectric")
-    with pytest.raises(symcrys.SymcrysError, match="timeReversal must be false or absent"):
+    with pytest.raises(symcrys.SymcrysError, match="time_reversal must be False or absent"):
         symcrys.tensor_form_of([{"cartesian": -np.eye(3), "time_reversal": 1}], "pyroelectric")
     white = symcrys.tensor_form_of(magnetic.operations("32"), "piezoelectric")
     assert np.array_equal(white["basis"], symcrys.tensor_form("32", "piezoelectric", setting=1)["basis"])
@@ -221,12 +222,12 @@ def test_point_group_of_a_list_of_operations() -> None:
 
 def test_tensor_form_arrays_have_fixed_shapes_also_when_empty() -> None:
     f = symcrys.tensor_form("mm2", SHG)
-    # Each basis tensor in its shape (3, 3, 3); the relations are rows over the flat
-    # components.
-    assert f["basis"].shape == (5, 3, 3, 3) and f["relations"].shape == (22, 27) and f["parameters"].shape == (5, 3)
-    assert np.allclose(f["relations"] @ f["basis"].reshape(5, -1).T, 0)
+    # Each basis tensor and each constraint in the shape (3, 3, 3).
+    assert f["basis"].shape == (5, 3, 3, 3) and f["relations"].shape == (22, 3, 3, 3) and f["parameters"].shape == (5, 3)
+    assert np.allclose(np.einsum("rijk,bijk->rb", f["relations"], f["basis"]), 0)
     zero = symcrys.tensor_form("m-3m", SHG)
-    assert zero["basis"].shape == (0, 3, 3, 3) and zero["parameters"].shape == (0, 3) and zero["relations"].shape == (27, 27)
+    assert zero["basis"].shape == (0, 3, 3, 3) and zero["parameters"].shape == (0, 3)
+    assert zero["relations"].shape == (27, 3, 3, 3)
     scalar = symcrys.tensor_form("1", {"rank": 0, "kind": "polar", "intrinsic": "none"})
     assert scalar["basis"].shape == (1,) and scalar["parameters"].shape == (1, 0)
 
@@ -434,7 +435,7 @@ def test_cell_metric_and_indices() -> None:
         symcrys.cell_transformation("hP", {}, {"centring": "H"})
     with pytest.raises(ValueError):
         symcrys.reduce_indices([0, 0, 0])
-    with pytest.raises(symcrys.SymcrysError, match="minVolumeRatio must be a number from 0 to 1"):
+    with pytest.raises(symcrys.SymcrysError, match="min_volume_ratio must be a number from 0 to 1"):
         symcrys.is_valid_cell(alpha=90, beta=90, gamma=90, min_volume_ratio=-1)
     # a cell in metres: the reciprocal basis is that of the cell in ångström, divided by 10⁻¹⁰
     metres = symcrys.lattice_from_parameters(a=3e-10, b=3e-10, c=5e-10, alpha=90, beta=90, gamma=120)
@@ -492,7 +493,7 @@ def test_find_point_group_reads_symbols_tolerantly() -> None:
     assert magnetic.find_point_group("2'", unique_axis="c") == {"key": "2'", "setting": 2}
     assert len(symcrys.operations("32", axes="rhombohedral")) == 6
     assert symcrys.symbol("2", unique_axis="a", form="full") == "2 1 1"
-    with pytest.raises(symcrys.SymcrysError, match="uniqueAxis applies to the monoclinic groups"):
+    with pytest.raises(symcrys.SymcrysError, match="unique_axis applies to the monoclinic groups"):
         symcrys.operations("mm2", unique_axis="c")
     assert symcrys.find_point_group("D4R") is None
 
@@ -547,7 +548,7 @@ def test_one_tolerance_contract() -> None:
 def test_wrong_input_is_a_symcrys_error_and_a_fault_of_symcrys_is_not_a_value_error() -> None:
     # #92: only a RangeError of the library is SymcrysError (a ValueError); anything else is
     # SymcrysInternalError (a RuntimeError), so that ``except ValueError`` does not hide a bug.
-    with pytest.raises(symcrys.SymcrysError, match="takes the options setting, axes, uniqueAxis") as e:
+    with pytest.raises(symcrys.SymcrysError, match="takes the options setting, axes, unique_axis") as e:
         _engine.invoke("operations", "32", {"uniqueaxis": "a"})
     assert e.value.js_name == "RangeError"
     with pytest.raises(symcrys.SymcrysError, match="A direction must be 3 finite numbers"):
@@ -581,7 +582,7 @@ def test_input_of_the_wrong_type_is_a_symcrys_error_that_names_the_argument() ->
         (lambda: symcrys.site_symmetry_of(ops, [1, 0, 1j]), "direction must be an array of real numbers"),
         (lambda: symcrys.site_symmetry_of(ops, "z"), "direction must be an array of real numbers"),
         (lambda: symcrys.operations("32", setting=object()), "Argument 2 of operations cannot be passed"),  # type: ignore[arg-type]
-        (lambda: symcrys.site_symmetry_of(ops, [0, np.nan, 1]), "Argument 2 of siteSymmetryOf: every number"),
+        (lambda: symcrys.site_symmetry_of(ops, [0, np.nan, 1]), "Argument 2 of site_symmetry_of: every number"),
         (lambda: plane.orbit("p4", [[0.1], [0.2, 0.3]]), "point must be an array of numbers"),
     ]
     for call, message in cases:
@@ -714,3 +715,67 @@ def test_voigt_takes_and_gives_tensors_in_their_shape() -> None:
     assert symcrys.from_voigt(symcrys.to_voigt(t, s, factors=[1, 2]), s, factors=[1, 2]).shape == (3, 3, 3, 3)
     with pytest.raises(symcrys.SymcrysError, match="give the factors"):
         symcrys.to_voigt(t, s)
+
+
+def test_messages_are_in_python_terms() -> None:
+    # Names in snake_case, the literals of Python, an option as a keyword argument; a Bravais
+    # lattice keeps its symbol.
+    with pytest.raises(symcrys.SymcrysError, match=r"cell_transformation: the cell from_cell: .* lattice hR"):
+        symcrys.cell_transformation("hR", {"cell": 9}, {})
+    with pytest.raises(symcrys.SymcrysError, match=r"to_voigt: .*\(factors=\[1 or 2\]\)"):
+        symcrys.to_voigt(np.zeros(27), "piezoelectric")
+    assert _engine.python_terms("timeReversal must be true or false, not undefined") == (
+        "time_reversal must be True or False, not None"
+    )
+
+
+def test_complex_numbers_and_integers_beyond_2_53_are_refused() -> None:
+    cartesian = symcrys.operations("4").cartesian
+    with pytest.raises(symcrys.SymcrysError, match="real"):
+        symcrys.tensor_form_of(cartesian + 0j, "pyroelectric")
+    with pytest.raises(symcrys.SymcrysError, match="real"):
+        symcrys.orbit_of(cartesian, np.array([1, 0, 0]) + 0j)
+    with pytest.raises(symcrys.SymcrysError, match="2\\*\\*53"):
+        symcrys.reduce_indices([2**60, 2**59, 0])
+
+
+def test_dir_shows_the_public_names() -> None:
+    for module in (symcrys, magnetic, plane):
+        names = dir(module)
+        assert not {"np", "sys", "Any", "dataclass"} & set(names), module.__name__
+        assert set(module.__all__) <= set(names)
+
+
+def test_change_of_coordinates_gives_its_operations_as_arrays_that_can_be_passed_back() -> None:
+    ops = symcrys.operations("m-3m")
+    there = symcrys.change_of_coordinates([[0, 1, 1], [1, 0, 1], [1, 1, 0]], operations=ops)
+    transformed = there["operations"]
+    assert isinstance(transformed, symcrys.TransformedOperations)
+    assert transformed.matrix.shape == (48, 3, 3) and transformed.translation.shape == (48, 3)
+    back = symcrys.change_of_coordinates(there["inverse"]["linear_part"], operations=transformed)
+    assert (back["operations"].matrix == ops.matrix).all()
+    planar = plane.change_of_coordinates([[1, 1], [-1, 1]], operations=plane.operations("p4mm"))
+    assert isinstance(planar["operations"], plane.TransformedOperations)
+    assert planar["operations"].matrix.shape == (8, 2, 2)
+
+
+def test_messages_keep_the_values_the_caller_passed() -> None:
+    with pytest.raises(symcrys.SymcrysError, match=r'"4/mmmFoo"'):
+        symcrys.point_group("4/mmmFoo")
+    with pytest.raises(symcrys.SymcrysError, match=r'"true"'):
+        symcrys.point_group("true")
+    assert _engine.python_terms('the cell {"cellChoice":9} of "xyZ"') == 'the cell {"cell_choice":9} of "xyZ"'
+
+
+def test_integers_beyond_2_53_are_refused_on_every_path() -> None:
+    with pytest.raises(symcrys.SymcrysError, match="2\\*\\*53"):
+        symcrys.cell_transformation("mP", {"cell_choice": 2**60}, {})
+    with pytest.raises(symcrys.SymcrysError, match="2\\*\\*53"):
+        symcrys.change_of_coordinates(np.eye(3), operations=[{"matrix": [[2**53 + 1, 0, 0], [0, 1, 0], [0, 0, 1]], "translation": [0, 0, 0]}])
+    with pytest.raises(symcrys.SymcrysError, match="2\\*\\*53"):
+        symcrys.reduce_indices([2**70, 1, 0])
+
+
+def test_a_field_of_transformed_operations_is_named_by_its_class() -> None:
+    with pytest.raises(symcrys.SymcrysError, match="TransformedOperations.matrix"):
+        symcrys.TransformedOperations(matrix=np.full((1, 3, 3), 0.5), translation=np.zeros((1, 3)))

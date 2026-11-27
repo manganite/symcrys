@@ -60,7 +60,9 @@ A form has
   Σ<sub>k</sub> p<sub>k</sub> · basis[k];
 - `parameters`: the free components as index lists, one per entry of `basis`, each the lowest
   component independent of those before it;
-- `relations`: rows r with r · t = 0 for every allowed tensor t, its components by flat index.
+- `relations`: the constraints, one per component that is not a parameter, each r with
+  Σ r · t = 0 over all components for every allowed tensor t; in TypeScript rows of length
+  3<sup>rank</sup>, in Python each an array of shape (3, …, 3) like the basis tensors.
 
 ```{code-cell} ipython3
 import symcrys
