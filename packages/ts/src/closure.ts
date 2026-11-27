@@ -12,6 +12,7 @@ import type { CartesianOperation } from './operations.js';
 import {
   IDEAL_PASSES,
   IDEAL_SETTLED,
+  IDEAL_EXACT,
   IDEAL_SNAP,
   IDEAL_UNSETTLED,
   MAX_GROUP_ORDER,
@@ -160,6 +161,30 @@ export function sameWithin(a: CartesianOperation, b: CartesianOperation, toleran
 const kindOf = (op: CartesianOperation): string =>
   `${Math.round(trace(op.cartesian))}${det(op.cartesian) > 0 ? '+' : '-'}${op.timeReversal ? "'" : ''}`;
 
+/** The inverse of a flat 3×3 matrix (rows first) into `out`, by the adjugate. */
+function flatInverse(m: Float64Array, out: Float64Array): void {
+  const c00 = m[4] * m[8] - m[5] * m[7];
+  const c01 = m[5] * m[6] - m[3] * m[8];
+  const c02 = m[3] * m[7] - m[4] * m[6];
+  const d = m[0] * c00 + m[1] * c01 + m[2] * c02;
+  out[0] = c00 / d;
+  out[1] = (m[2] * m[7] - m[1] * m[8]) / d;
+  out[2] = (m[1] * m[5] - m[2] * m[4]) / d;
+  out[3] = c01 / d;
+  out[4] = (m[0] * m[8] - m[2] * m[6]) / d;
+  out[5] = (m[2] * m[3] - m[0] * m[5]) / d;
+  out[6] = c02 / d;
+  out[7] = (m[1] * m[6] - m[0] * m[7]) / d;
+  out[8] = (m[0] * m[4] - m[1] * m[3]) / d;
+}
+
+/** `kindOf` of a flat matrix, rows first. */
+const flatKind = (m: Float64Array, timeReversal: boolean): string => {
+  const d =
+    m[0] * (m[4] * m[8] - m[5] * m[7]) - m[1] * (m[3] * m[8] - m[5] * m[6]) + m[2] * (m[3] * m[7] - m[4] * m[6]);
+  return `${Math.round(m[0] + m[4] + m[8])}${d > 0 ? '+' : '-'}${timeReversal ? "'" : ''}`;
+};
+
 /**
  * The group the operations generate within `tolerance` (two operations equal when they agree in
  * time reversal and in every matrix entry within it), the identity first, then the operations of
@@ -294,54 +319,86 @@ export function idealGroup(operations: readonly CartesianOperation[], tolerance:
     else byKind.set(kindOf(g), [k]);
   });
   const all = group.map((_, k) => k);
-  const nearest = (product: CartesianOperation, candidates: readonly number[]) => {
+  // Flat copies of the matrices, rows first, for the n² products of the table.
+  const flat = group.map((g) => Float64Array.from(g.cartesian.flat()));
+  const product = new Float64Array(9);
+  // The largest difference of a product from the element it is matched to.
+  let residual = 0;
+  const nearest = (timeReversal: boolean, candidates: readonly number[]): number => {
     let best = -1;
     let bestDistance = Infinity;
     for (const k of candidates) {
-      if (group[k].timeReversal !== product.timeReversal) continue;
-      const d = distance(group[k].cartesian, product.cartesian);
+      if (group[k].timeReversal !== timeReversal) continue;
+      const m = flat[k];
+      let d = 0;
+      for (let e = 0; e < 9 && d < bestDistance; e++) d = Math.max(d, Math.abs(m[e] - product[e]));
       if (d < bestDistance) {
         best = k;
         bestDistance = d;
       }
     }
+    if (bestDistance < PRODUCT_MATCH) residual = Math.max(residual, bestDistance);
     return bestDistance < PRODUCT_MATCH ? best : -1;
   };
-  const table = group.map((a) =>
-    group.map((b) => {
-      const product: CartesianOperation = {
-        cartesian: multiply(a.cartesian, b.cartesian),
-        timeReversal: a.timeReversal !== b.timeReversal,
-      };
-      let k = nearest(product, byKind.get(kindOf(product)) ?? []);
-      if (k < 0) k = nearest(product, all);
+  const table = group.map((a, x) =>
+    group.map((b, y) => {
+      const p = flat[x];
+      const q = flat[y];
+      for (let i = 0; i < 3; i++)
+        for (let j = 0; j < 3; j++)
+          product[3 * i + j] = p[3 * i] * q[j] + p[3 * i + 1] * q[3 + j] + p[3 * i + 2] * q[6 + j];
+      const timeReversal = a.timeReversal !== b.timeReversal;
+      const kind = flatKind(product, timeReversal);
+      let k = nearest(timeReversal, byKind.get(kind) ?? []);
+      if (k < 0) k = nearest(timeReversal, all);
       if (k < 0) throw new RangeError(`The operations do not form a group within the tolerance ${tolerance}`);
       return k;
     }),
   );
-  let f: Mat3[] = group.map((g) => g.cartesian);
+  // Exact already: the products match the table and the matrices are orthogonal, within IDEAL_EXACT.
+  const orthogonal = flat.every((m) =>
+    [0, 1, 2].every((i) =>
+      [0, 1, 2].every(
+        (j) => Math.abs(m[i] * m[j] + m[3 + i] * m[3 + j] + m[6 + i] * m[6 + j] - (i === j ? 1 : 0)) < IDEAL_EXACT,
+      ),
+    ),
+  );
+  if (residual < IDEAL_EXACT && orthogonal) {
+    const exact = group.map((g) => ({ cartesian: snap(g.cartesian, IDEAL_SNAP), timeReversal: g.timeReversal }));
+    return {
+      operations: exact,
+      deviation: Math.max(...exact.map((op, k) => distance(op.cartesian, group[k].cartesian))),
+    };
+  }
+  // The averaging, in flat arithmetic: f(x) ← (1/n) Σ_y f(xy)·f(y)⁻¹.
+  let g = flat.map((m) => Float64Array.from(m));
+  const inverses = group.map(() => new Float64Array(9));
   for (let pass = 0; ; pass++) {
-    const inverses = f.map(inverse);
-    const next = f.map((_, x) => {
-      const sum = [
-        [0, 0, 0],
-        [0, 0, 0],
-        [0, 0, 0],
-      ];
+    for (let y = 0; y < n; y++) flatInverse(g[y], inverses[y]);
+    const next = group.map(() => new Float64Array(9));
+    let change = 0;
+    for (let x = 0; x < n; x++) {
+      const sum = next[x];
       for (let y = 0; y < n; y++) {
-        const p = multiply(f[table[x][y]], inverses[y]);
-        for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) sum[i][j] += p[i][j] / n;
+        const p = g[table[x][y]];
+        const q = inverses[y];
+        for (let r = 0; r < 3; r++)
+          for (let c = 0; c < 3; c++)
+            sum[3 * r + c] += p[3 * r] * q[c] + p[3 * r + 1] * q[3 + c] + p[3 * r + 2] * q[6 + c];
       }
-      return sum as unknown as Mat3;
-    });
-    const change = Math.max(...next.map((m, k) => distance(m, f[k])));
-    f = next;
+      for (let e = 0; e < 9; e++) {
+        sum[e] /= n;
+        change = Math.max(change, Math.abs(sum[e] - g[x][e]));
+      }
+    }
+    g = next;
     if (change < IDEAL_SETTLED) break;
     if (pass >= IDEAL_PASSES) {
       if (change < IDEAL_UNSETTLED) break;
       throw new RangeError(`The operations do not settle into a group within the tolerance ${tolerance}`);
     }
   }
+  let f: Mat3[] = g.map((m) => [0, 1, 2].map((r) => [m[3 * r], m[3 * r + 1], m[3 * r + 2]]) as unknown as Mat3);
   // The representation is exact but need not be orthogonal: it may be an orthogonal one seen in a
   // slightly oblique frame. Its invariant metric M = (1/n) Σ fᵀf gives that frame, and M^½ f M^-½
   // is orthogonal.

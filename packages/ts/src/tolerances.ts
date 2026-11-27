@@ -62,13 +62,16 @@ export function toleranceOf(options: ToleranceOptions | undefined, kind: keyof t
  * if after `IDEAL_PASSES` passes an entry still changes by `IDEAL_UNSETTLED` (it settles in one to
  * six passes for every point group, exact or rounded); entries within `IDEAL_SNAP` of an exact value
  * are set to it, which catches the rounding of the last bits but not a group turned by a small
- * angle.
+ * angle. A group whose products match its table and whose matrices are orthogonal within
+ * `IDEAL_EXACT` per entry is exact already and is not averaged (the averaging would change it by
+ * no more than that).
  */
 export const PRODUCT_MATCH = 0.25;
 export const IDEAL_SETTLED = 1e-15;
 export const IDEAL_UNSETTLED = 1e-12;
 export const IDEAL_PASSES = 50;
 export const IDEAL_SNAP = 1e-12;
+export const IDEAL_EXACT = 1e-12;
 
 /**
  * The largest pivot threshold of a tensor form (tensorForm.ts, `reduce`): the threshold is raised
