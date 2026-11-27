@@ -63,9 +63,11 @@ function codeToPython(code) {
     code
       .replace(/symcrys\/(magnetic|plane)/g, 'symcrys.$1')
       .replace(/\)\.([A-Za-z_]\w*)/g, (_, /** @type {string} */ key) => `)["${snake(key)}"]`)
-      // camelCase names outside quoted strings: a string value goes to Python as it is.
+      // camelCase names outside quoted strings: a string value goes to Python as it is. Two
+      // lower-case letters at least before the first capital, so that a Bravais lattice (hR, mP)
+      // stays, as in the messages (_engine.python_terms).
       .replace(
-        /('[^']*'|"[^"]*")|\b([a-z][a-z0-9]*(?:[A-Z][a-z0-9]*)+)\b/g,
+        /('[^']*'|"[^"]*")|\b([a-z][a-z0-9]+(?:[A-Z][a-z0-9]*)+)\b/g,
         (/** @type {string} */ m, /** @type {string | undefined} */ quoted, /** @type {string} */ name) =>
           quoted ?? snake(name),
       )
@@ -117,7 +119,7 @@ function render(parts, where) {
   // literal is TypeScript too (shorthand `{ a, b }`, or an argument of a call): Python writes a dict
   // or passes keyword arguments.
   for (const m of out.matchAll(/``([^`]*)``/g)) {
-    if (/\b[a-z][a-z0-9]*[A-Z]\w*/.test(m[1]) || /\.ts\b/.test(m[1])) {
+    if (/\b[a-z][a-z0-9]+[A-Z]\w*/.test(m[1]) || /\.ts\b/.test(m[1])) {
       problems.push(`${where}: TypeScript name left in \`\`${m[1]}\`\``);
     } else if (/\w\(.*\{/.test(m[1]) || /\{\s*[a-z_]\w*\s*(,\s*[a-z_]\w*\s*)*\}/.test(m[1])) {
       problems.push(`${where}: TypeScript object literal left in \`\`${m[1]}\`\``);
@@ -413,7 +415,7 @@ function readReference(t, where) {
 /**
  * The context of a module: its tables, and the TypedDicts and Literal aliases it collects.
  * @typedef {{ name: string, ts: string, prefix: string, floats: Set<string>, ints: Set<string>,
- *   ops: any, usesOperations: boolean, arrays: string, shapes: Record<string, number[]>, records: Map<string, any>, exports: Map<string, Json>, notRequired: boolean, done: string[],
+ *   ops: any, usesOperations: boolean, usesTransformed: boolean, arrays: string, shapes: Record<string, number[]>, records: Map<string, any>, exports: Map<string, Json>, notRequired: boolean, done: string[],
  *   literals: Map<string, { lits: string[], doc: string }>,
  *   lib: Record<string, any> }} Ctx
  */
@@ -465,6 +467,20 @@ function isOperations(ctx, ir) {
 }
 
 /**
+ * True for a list of the transformed operations of the module (`changeOfCoordinates`), which
+ * Python gives as ``TransformedOperations``.
+ * @param {Ctx} ctx
+ * @param {any} ir
+ */
+function isTransformed(ctx, ir) {
+  const cfg = api.transformed?.[ctx.name];
+  if (!(cfg && ir.k === 'arr' && ir.of.k === 'rec' && ir.of.name === cfg.record)) return false;
+  used.add(`transformed.${ctx.name}`);
+  ctx.usesTransformed = true;
+  return true;
+}
+
+/**
  * The Python annotation of a result type.
  * @param {Ctx} ctx
  * @param {any} ir
@@ -489,6 +505,7 @@ function pyType(ctx, ir, field, where, dtype) {
       return 'bool';
     case 'arr':
       if (isOperations(ctx, ir)) return 'Operations';
+      if (isTransformed(ctx, ir)) return 'TransformedOperations';
       if (isNumArray(ir)) return `NDArray[np.${dtype ?? dtypeOf(ctx, field, where)}]`;
       return `list[${pyType(ctx, ir.of, field, where)}]`;
     case 'rec':
@@ -554,6 +571,7 @@ function schema(ctx, ir, field, where, dtype) {
       return (ir.int ? 'int' : numberType(ctx, field, where)) === 'int' ? '_I' : '_F';
     case 'arr':
       if (isOperations(ctx, ir)) return '_S_Operations';
+      if (isTransformed(ctx, ir)) return '_S_TransformedOperations';
       if (isNumArray(ir)) {
         const shape = ctx.shapes[field];
         if (shape) used.add(`shapes.${ctx.name}.${field}`);
@@ -677,8 +695,19 @@ function argument(ctx, ir, name, fn, where) {
     const field = ownBare ?? ctx.ops.bare;
     const bare = field && keys.length === 1 && keys[0] === field ? `, bare="${field}"` : '';
     ctx.usesOperations = true;
+    // The transformed operations of a change of coordinates can be passed back to it, and in the
+    // plane, where they have the fields of Operations, wherever operations are taken.
+    const transformed = api.transformed?.[ctx.name];
+    const sameFields =
+      transformed &&
+      keys.every((/** @type {string} */ k) => k in transformed.fields) &&
+      (fn === 'changeOfCoordinates' ||
+        Object.keys(ctx.ops.fields)
+          .filter((k) => k !== '//')
+          .every((k) => k in transformed.fields));
+    if (sameFields) ctx.usesTransformed = true;
     return {
-      py: `Operations | Sequence[Mapping[str, Any]]${bare ? ' | ArrayLike' : ''}`,
+      py: `Operations${sameFields ? ' | TransformedOperations' : ''} | Sequence[Mapping[str, Any]]${bare ? ' | ArrayLike' : ''}`,
       expr: `_shared.operation_list(${py}, ${tuple}${bare})`,
     };
   }
@@ -693,6 +722,8 @@ function argument(ctx, ir, name, fn, where) {
   }
   if (ir.k === 'str') {
     if (isTensorPropertyNames(ctx, ir)) return { py: tensorPropertyName(ctx), expr: py };
+    // A union of string literals: its named alias (BravaisLattice), or the literals.
+    if (ir.lits && ir.alias) return { py: pyType(ctx, ir, name, where), expr: py };
     return { py: 'str', expr: py };
   }
   if (ir.k === 'union' && ir.of.every((/** @type {any} */ u) => isNumArray(u))) {
@@ -711,6 +742,11 @@ function argument(ctx, ir, name, fn, where) {
       ),
     );
     const value = types.size === 1 ? [...types][0] : 'Any';
+    // A named record (Cell, CoordinateTransformation): its TypedDict, or any mapping of its fields.
+    if (ir.k === 'rec' && ir.name) {
+      collect(ctx, ir, where);
+      return { py: `${ir.name} | Mapping[str, ${value}]`, expr: `_shared.mapping(${py}, "${py}")` };
+    }
     return { py: `Mapping[str, ${value}]`, expr: `_shared.mapping(${py}, "${py}")` };
   }
   throw new Error(`${where}: no Python argument for ${ir.k}`);
@@ -818,6 +854,7 @@ async function generate(name, cfg) {
     exports: new Map(),
     ops: api.operations[name],
     usesOperations: false,
+    usesTransformed: false,
     notRequired: false,
     done: [],
     literals: new Map(),
@@ -1101,30 +1138,37 @@ async function generate(name, cfg) {
   });
   const typed = [];
   const schemas = [];
-  if (ctx.usesOperations) {
-    const record = readDeclaration(ctx.exports.get(ctx.ops.record), name, ctx.ops.record);
-    const entries = Object.entries(ctx.ops.fields).filter(([k]) => k !== '//');
+  /**
+   * A record of arrays for a list of records: the frozen dataclass, the TypedDict of one row, and
+   * the schema that converts a result.
+   * @param {any} cfg api.json's entry: record, fields, doc
+   * @param {string} cls the Python class (Operations, TransformedOperations)
+   * @param {string} fieldsName the constant of its fields
+   */
+  const recordsOfArrays = (cfg, cls, fieldsName) => {
+    const record = readDeclaration(ctx.exports.get(cfg.record), name, cfg.record);
+    const entries = Object.entries(cfg.fields).filter(([k]) => k !== '//');
     const pyDtype = (/** @type {string} */ d) => (d === 'bool' ? 'np.bool_' : `np.${d}`);
     const fieldLines = entries.flatMap(([k, [dtype, shape]]) => {
       const f = record.fields.find((/** @type {Field} */ x) => x.name === k);
-      if (!f) throw new Error(`${name}: the operation record ${ctx.ops.record} has no field ${k}`);
+      if (!f) throw new Error(`${name}: the record ${cfg.record} has no field ${k}`);
       const dims = ['n', ...shape].join(', ');
       const doc = `${dtype} array of shape (${dims}${shape.length ? '' : ','}), one row per operation. ${f.doc}`;
       return [`    ${snake(k)}: NDArray[${pyDtype(dtype)}]`, ...quote(wrapParagraphs(doc, '', 3), '    ')];
     });
     const missing = record.fields
-      .filter((/** @type {Field} */ f) => !ctx.ops.fields[f.name])
+      .filter((/** @type {Field} */ f) => !cfg.fields[f.name])
       .map((/** @type {Field} */ f) => f.name);
-    if (missing.length) throw new Error(`${name}: api.json "operations" lacks the fields ${missing.join(', ')}`);
+    if (missing.length) throw new Error(`${name}: api.json lacks the fields ${missing.join(', ')} of ${cfg.record}`);
     const first = snake(entries[0][0]);
-    const opRecord = ctx.ops.record;
+    const opRecord = cfg.record;
     if (done.includes(opRecord)) throw new Error(`${name}: ${opRecord} is a result record too`);
     typed.unshift(
       [
         '@dataclass(frozen=True, eq=False)',
-        'class Operations:',
+        `class ${cls}:`,
         ...quote(
-          wrapParagraphs(ctx.ops.doc, '    ', 3).map((l) => l.slice(4)),
+          wrapParagraphs(cfg.doc, '    ', 3).map((l) => l.slice(4)),
           '    ',
         ),
         '',
@@ -1133,11 +1177,11 @@ async function generate(name, cfg) {
         '    _symcrys_operations = True',
         '',
         '    def __post_init__(self) -> None:',
-        '        _shared.freeze(self, _OPERATION_FIELDS)',
+        `        _shared.freeze(self, ${fieldsName})`,
         '',
         '    def __reduce__(self) -> tuple[Any, ...]:',
         '        # A copy or a pickle is built anew, so its arrays are checked and read-only too.',
-        '        return (type(self), tuple(getattr(self, name) for name in _OPERATION_FIELDS))',
+        `        return (type(self), tuple(getattr(self, name) for name in ${fieldsName}))`,
         '',
         '    def __len__(self) -> int:',
         `        return len(self.${first})`,
@@ -1149,21 +1193,21 @@ async function generate(name, cfg) {
         `    def __getitem__(self, index: int | np.integer[Any]) -> ${opRecord}: ...`,
         '',
         '    @overload',
-        '    def __getitem__(self, index: slice | Sequence[int] | NDArray[Any]) -> Operations: ...',
+        `    def __getitem__(self, index: slice | Sequence[int] | NDArray[Any]) -> ${cls}: ...`,
         '',
-        `    def __getitem__(self, index: int | np.integer[Any] | slice | Sequence[int] | NDArray[Any]) -> ${opRecord} | Operations:`,
+        `    def __getitem__(self, index: int | np.integer[Any] | slice | Sequence[int] | NDArray[Any]) -> ${opRecord} | ${cls}:`,
         `        """One operation as a dict \`\`{${entries.map(([k]) => `"${snake(k)}"`).join(', ')}}\`\` for an integer, otherwise`,
-        '        the ``Operations`` of the selected rows (a slice, a list of indices, a boolean mask)."""',
-        `        result: ${opRecord} | Operations = _shared.operation_at(self, index)`,
+        `        the \`\`${cls}\`\` of the selected rows (a slice, a list of indices, a boolean mask)."""`,
+        `        result: ${opRecord} | ${cls} = _shared.operation_at(self, index)`,
         '        return result',
       ].join('\n'),
     );
-    // The TypedDict of one operation (ops[i], for op in ops), from the same fields.
+    // The TypedDict of one row (ops[i], for op in ops), from the same fields.
     typed.unshift(
       [
         '@final',
         `class ${opRecord}(TypedDict):`,
-        ...quote([`One operation of \`\`Operations\`\` (\`\`ops[i]\`\`, \`\`for op in ops\`\`).`], '    '),
+        ...quote([`One operation of \`\`${cls}\`\` (\`\`ops[i]\`\`, \`\`for op in ops\`\`).`], '    '),
         '',
         ...entries.flatMap(([k, [dtype, shape]]) => {
           const f = record.fields.find((/** @type {Field} */ x) => x.name === k);
@@ -1178,16 +1222,17 @@ async function generate(name, cfg) {
         }),
       ].join('\n'),
     );
-    const spec = entries.map(
-      ([k, [dtype, shape]]) => `"${k}": (${pyDtype(dtype)}, (${shape.join(', ')}${shape.length === 1 ? ',' : ''}))`,
-    );
+    const tuple = (/** @type {number[]} */ shape) => `(${shape.join(', ')}${shape.length === 1 ? ',' : ''})`;
+    const spec = entries.map(([k, [dtype, shape]]) => `"${k}": (${pyDtype(dtype)}, ${tuple(shape)})`);
     schemas.unshift(
       [
-        `_OPERATION_FIELDS = {${entries.map(([k, [dtype, shape]]) => `"${snake(k)}": (${pyDtype(dtype)}, (${shape.join(', ')}${shape.length === 1 ? ',' : ''}))`).join(', ')}}`,
-        `_S_Operations = ("ops", Operations, {${spec.join(', ')}})`,
+        `${fieldsName} = {${entries.map(([k, [dtype, shape]]) => `"${snake(k)}": (${pyDtype(dtype)}, ${tuple(shape)})`).join(', ')}}`,
+        `_S_${cls} = ("ops", ${cls}, {${spec.join(', ')}})`,
       ].join('\n'),
     );
-  }
+  };
+  if (ctx.usesTransformed) recordsOfArrays(api.transformed[ctx.name], 'TransformedOperations', '_TRANSFORMED_FIELDS');
+  if (ctx.usesOperations) recordsOfArrays(ctx.ops, 'Operations', '_OPERATION_FIELDS');
   for (const n of done) {
     const r = ctx.records.get(n);
     const optional = r.fields.filter((/** @type {any} */ f) => f.optional);
@@ -1228,6 +1273,7 @@ async function generate(name, cfg) {
     ...ctx.literals.keys(),
     ...done,
     ...(ctx.usesOperations ? ['Operations', ctx.ops.record] : []),
+    ...(ctx.usesTransformed ? ['TransformedOperations', api.transformed[ctx.name].record] : []),
   ].sort();
   const names = (/** @type {string[]} */ l) => l.map((s) => s.match(/^(\w+)/)?.[1] ?? s);
   const all = [
@@ -1259,6 +1305,8 @@ async function generate(name, cfg) {
     ].join('\n'),
     ...typed,
     [...schemas, '', `__all__ = [\n${all.map((s) => `    "${s}",`).join('\n')}\n]`].join('\n'),
+    // dir() lists the public names, not the modules and helpers the generated code imports.
+    'def __dir__() -> list[str]:\n    return sorted({*__all__, *(n for n in ("__doc__", "__name__", "__version__") if n in globals())})',
     'def _call(name: str, *args: Any) -> Any:\n    return _shared.call(_PREFIX + name, *args)',
     'def _value(name: str) -> Any:\n    return _shared.value(_PREFIX + name)',
     [...constants, ...(cfg.version ? ['__version__ = VERSION'] : [])].join('\n'),
@@ -1287,7 +1335,7 @@ async function generate(name, cfg) {
   const nptyping = ['ArrayLike', 'NDArray'].filter((w) => new RegExp(`\\b${w}\\b`).test(text));
   const imports = [
     ...(ctx.notRequired ? ['import sys'] : []),
-    ...(ctx.usesOperations ? ['from dataclasses import dataclass'] : []),
+    ...(ctx.usesOperations || ctx.usesTransformed ? ['from dataclasses import dataclass'] : []),
     `from typing import ${[...(ctx.notRequired ? ['TYPE_CHECKING'] : []), ...typing].join(', ')}`,
     '',
     ...(ctx.notRequired
@@ -1340,6 +1388,7 @@ const entries = [
     .flatMap(([m, t]) => Object.keys(t).map((k) => `shapes.${m}.${k}`)),
   ...own(api.constants).map((k) => `constants.${k}`),
   ...own(api.operations).map((k) => `operations.${k}`),
+  ...own(api.transformed ?? {}).map((k) => `transformed.${k}`),
   ...Object.entries(api.functions)
     .filter(([k]) => k !== '//')
     .flatMap(([f, o]) =>

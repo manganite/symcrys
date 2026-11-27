@@ -158,7 +158,10 @@ class Rules:
 
 def plain(value: Any, field: str, rules: Rules, where: str = "") -> Any:
     """A Python answer as plain data in the shape of the TypeScript answer, its rules checked."""
-    if isinstance(value, (symcrys.Operations, magnetic.Operations, plane.Operations)):
+    if isinstance(
+        value,
+        (symcrys.Operations, magnetic.Operations, plane.Operations, symcrys.TransformedOperations, magnetic.TransformedOperations, plane.TransformedOperations),
+    ):
         for name in value.__dataclass_fields__:
             rules.array(getattr(value, name), name, f"{where}.{name}")
         return [plain(dict(op), field, Rules("none"), where) for op in value]
@@ -192,7 +195,7 @@ def differences(got: Any, pinned: Any, where: str = "", tensor: bool = False) ->
     if isinstance(pinned, dict) and isinstance(got, dict):
         if set(got) != set(pinned):
             return [f"{where}: keys {sorted(got)} != {sorted(pinned)}"]
-        return [d for k in pinned for d in differences(got[k], pinned[k], f"{where}.{k}", k == "basis")]
+        return [d for k in pinned for d in differences(got[k], pinned[k], f"{where}.{k}", k in ("basis", "relations"))]
     if isinstance(pinned, list) and isinstance(got, list):
         if len(got) != len(pinned):
             return [f"{where}: length {len(got)} != {len(pinned)}"]

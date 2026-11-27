@@ -32,11 +32,11 @@
     },
     "tensor_form": {
       "type": "dict",
-      "doc": "``basis`` float64 array of shape (p, 3, …, 3), each allowed tensor with its rank axes; ``parameters`` int64 array of shape (p, rank); ``relations`` float64 array of shape (3**rank - p, 3**rank), rows r with r @ t.reshape(-1) == 0 for every allowed tensor t; ``rank``. p is the number of free parameters."
+      "doc": "``basis`` float64 array of shape (p, 3, …, 3), each allowed tensor with its rank axes; ``parameters`` int64 array of shape (p, rank); ``relations`` float64 array of shape (3**rank - p, 3, …, 3), constraints r with (r * t).sum() == 0 for every allowed tensor t; ``rank``. p is the number of free parameters."
     },
     "tensor_form_of": {
       "type": "dict",
-      "doc": "``basis`` float64 array of shape (p, 3, …, 3), each allowed tensor with its rank axes; ``parameters`` int64 array of shape (p, rank); ``relations`` float64 array of shape (3**rank - p, 3**rank), rows r with r @ t.reshape(-1) == 0 for every allowed tensor t; ``rank``. p is the number of free parameters."
+      "doc": "``basis`` float64 array of shape (p, 3, …, 3), each allowed tensor with its rank axes; ``parameters`` int64 array of shape (p, rank); ``relations`` float64 array of shape (3**rank - p, 3, …, 3), constraints r with (r * t).sum() == 0 for every allowed tensor t; ``rank``. p is the number of free parameters."
     },
     "rotate_tensor": {
       "type": "numpy.ndarray",
@@ -103,11 +103,11 @@
     },
     "tensor_form": {
       "type": "dict",
-      "doc": "``basis`` float64 array of shape (p, 3, …, 3), each allowed tensor with its rank axes; ``parameters`` int64 array of shape (p, rank); ``relations`` float64 array of shape (3**rank - p, 3**rank), rows r with r @ t.reshape(-1) == 0 for every allowed tensor t; ``rank``. p is the number of free parameters."
+      "doc": "``basis`` float64 array of shape (p, 3, …, 3), each allowed tensor with its rank axes; ``parameters`` int64 array of shape (p, rank); ``relations`` float64 array of shape (3**rank - p, 3, …, 3), constraints r with (r * t).sum() == 0 for every allowed tensor t; ``rank``. p is the number of free parameters."
     },
     "tensor_form_of": {
       "type": "dict",
-      "doc": "``basis`` float64 array of shape (p, 3, …, 3), each allowed tensor with its rank axes; ``parameters`` int64 array of shape (p, rank); ``relations`` float64 array of shape (3**rank - p, 3**rank), rows r with r @ t.reshape(-1) == 0 for every allowed tensor t; ``rank``. p is the number of free parameters."
+      "doc": "``basis`` float64 array of shape (p, 3, …, 3), each allowed tensor with its rank axes; ``parameters`` int64 array of shape (p, rank); ``relations`` float64 array of shape (3**rank - p, 3, …, 3), constraints r with (r * t).sum() == 0 for every allowed tensor t; ``rank``. p is the number of free parameters."
     },
     "rotate_tensor": {
       "type": "numpy.ndarray",
