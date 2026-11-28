@@ -466,36 +466,37 @@ describe('the conditioning of a basis: largestCoefficient (#241)', () => {
     );
   };
 
-  it('is the largest magnitude of a coefficient, 1 or 2 for every group, setting and kind of tensor, 0 for none', () => {
-    // Every specification the library takes: an intrinsic symmetry that does not apply at a rank is
-    // refused, and those are skipped. The bound 2 is a fact of the 122 groups, found by this
-    // enumeration (docs/conventions.md, "Numbers" of the tensor forms).
-    const intrinsics: IntrinsicSymmetry[] = [
-      'none',
-      'symmetric-first-pair',
-      'symmetric-last-pair',
-      'symmetric-pairs',
-      'symmetric-pairs-exchangeable',
-      'antisymmetric',
-      'totally-symmetric',
-    ];
-    const all: TensorSpec[] = [];
-    for (const rank of [0, 1, 2, 3, 4] as const)
-      for (const kind of ['polar', 'axial'] as const)
-        for (const timeParity of ['even', 'odd'] as const)
-          for (const intrinsic of intrinsics) {
-            const sp = { rank, kind, timeParity, intrinsic };
-            try {
-              tensorForm('1', sp);
-              all.push(sp);
-            } catch (e) {
-              if (!(e instanceof RangeError)) throw e;
-            }
+  // Every specification the library takes: an intrinsic symmetry that does not apply at a rank is
+  // refused, and those are skipped. The bound 2 is a fact of the 122 groups, found by this
+  // enumeration (docs/conventions.md, "Numbers" of the tensor forms). One test per group, so that
+  // none runs long under the instrumentation of the coverage report.
+  const intrinsics: IntrinsicSymmetry[] = [
+    'none',
+    'symmetric-first-pair',
+    'symmetric-last-pair',
+    'symmetric-pairs',
+    'symmetric-pairs-exchangeable',
+    'antisymmetric',
+    'totally-symmetric',
+  ];
+  const allSpecs: TensorSpec[] = [];
+  for (const rank of [0, 1, 2, 3, 4] as const)
+    for (const kind of ['polar', 'axial'] as const)
+      for (const timeParity of ['even', 'odd'] as const)
+        for (const intrinsic of intrinsics) {
+          const sp = { rank, kind, timeParity, intrinsic };
+          try {
+            tensorForm('1', sp);
+            allSpecs.push(sp);
+          } catch (e) {
+            if (!(e instanceof RangeError)) throw e;
           }
-    const counts = new Map<number, number>();
-    for (const key of MAGNETIC_POINT_GROUP_KEYS) {
+        }
+  const counts = new Map<number, number>();
+  for (const key of MAGNETIC_POINT_GROUP_KEYS) {
+    it(`${key}: the largest magnitude of a coefficient, 1 or 2 in every setting and for every kind of tensor, 0 for none`, () => {
       for (const s of settings(key)) {
-        for (const sp of all) {
+        for (const sp of allSpecs) {
           const form = tensorForm(key, sp, { setting: s.index });
           const largest = Math.max(0, ...form.basis.flat().map(Math.abs));
           expect(form.largestCoefficient, `${key} ${s.index}`).toBe(largest);
@@ -503,8 +504,11 @@ describe('the conditioning of a basis: largestCoefficient (#241)', () => {
           counts.set(form.largestCoefficient, (counts.get(form.largestCoefficient) ?? 0) + 1);
         }
       }
-    }
-    // Each of the three values occurs, so the test sees the bound.
+    });
+  }
+
+  it('each of 0, 1 and 2 occurs among the forms of the groups, so the tests above see the bound', () => {
+    // Runs after the tests of the groups (vitest runs the tests of a file in order).
     expect([...counts.keys()].sort()).toEqual([0, 1, 2]);
   });
 
