@@ -115,6 +115,7 @@ export {
 } from './pointGroups/directions.js';
 export {
   rotateTensor,
+  rotateTensors,
   tensorForm,
   tensorFormOf,
   type IntrinsicSymmetry,

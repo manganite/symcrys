@@ -387,6 +387,9 @@ export function residualOperations<T extends CellOperation>(operations: readonly
 export function rotateTensor(tensor: readonly number[], rotation: Mat3, spec: TensorSpec | TensorPropertyName, options?: ToleranceOptions): readonly number[];
 
 // @public
+export function rotateTensors(tensors: readonly (readonly number[])[], rotation: Mat3 | readonly Mat3[], spec: TensorSpec | TensorPropertyName, options?: ToleranceOptions): readonly (readonly number[])[];
+
+// @public
 export interface Setting {
     readonly axes?: 'hexagonal' | 'rhombohedral';
     readonly fullSymbol: string;

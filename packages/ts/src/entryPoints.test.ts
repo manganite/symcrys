@@ -262,6 +262,7 @@ describe('the crystallographic API refuses what involves time reversal', () => {
         () => classes.tensorForm('3', odd),
         () => classes.tensorFormOf(ops, odd),
         () => classes.rotateTensor([0, 0, 1], classes.operations('3')[1].cartesian, odd),
+        () => classes.rotateTensors([[0, 0, 1]], classes.operations('3')[1].cartesian, odd),
       ];
       for (const call of calls) {
         expect(call, name).toThrow(RangeError);
@@ -284,6 +285,7 @@ describe('the crystallographic API refuses what involves time reversal', () => {
     expect(() => classes.tensorForm('3', odd)).toThrow(MAGNETIC_API);
     expect(() => classes.tensorFormOf(classes.operations('3'), odd)).toThrow(MAGNETIC_API);
     expect(() => classes.rotateTensor([0, 0, 1], classes.operations('3')[1].cartesian, odd)).toThrow(MAGNETIC_API);
+    expect(() => classes.rotateTensors([], [], odd)).toThrow(MAGNETIC_API);
     expect(classes.tensorForm('3', even)).toBe(classes.tensorForm('3', vector));
     expect(() => classes.tensorForm('3', { ...vector, timeParity: 'x' } as unknown as classes.TensorSpec)).toThrow(
       /The time parity of a tensor is 'even' or 'odd', not "x"/,
@@ -692,6 +694,7 @@ describe('every result is frozen, nested values included', () => {
     describeOperationsOf: [ops],
     tensorForm: ['32', 'piezoelectric'],
     rotateTensor: [[1, 0, 0], ops[1].cartesian, 'pyroelectric'],
+    rotateTensors: [[[1, 0, 0]], ops[1].cartesian, 'pyroelectric'],
     allowedProperties: ['32'],
     latticeSystems: ['32'],
     millerIndices: ['h,h,-2h,l', { h: 3, l: 1 }],
@@ -887,6 +890,10 @@ describe('one tolerance contract (#93)', () => {
       (o) => classes.rotateTensor([1, 0, 0], cubic[1].cartesian, 'pyroelectric', o as never),
       0.1,
     ],
+    'symcrys rotateTensors': [
+      (o) => classes.rotateTensors([[1, 0, 0]], cubic[1].cartesian, 'pyroelectric', o as never),
+      0.1,
+    ],
     'symcrys siteSymmetryOf': [(o) => classes.siteSymmetryOf(cubic, [0, 0, 1], o as never), 1],
     'symcrys siteSymmetry': [(o) => classes.siteSymmetry('m-3m', { cartesian: [0, 0, 1] }, o as never), 1],
     'symcrys wyckoffPosition': [(o) => classes.wyckoffPosition('m-3m', { cartesian: [0, 0, 1] }, o as never), 1],
@@ -904,6 +911,10 @@ describe('one tolerance contract (#93)', () => {
     'symcrys/magnetic allowedPropertiesOf': [(o) => magnetic.allowedPropertiesOf(magneticOps, o as never), 0.1],
     'symcrys/magnetic rotateTensor': [
       (o) => magnetic.rotateTensor([1, 0, 0], cubic[1].cartesian, 'ferromagnetic', o as never),
+      0.1,
+    ],
+    'symcrys/magnetic rotateTensors': [
+      (o) => magnetic.rotateTensors([[1, 0, 0]], cubic[1].cartesian, 'ferromagnetic', o as never),
       0.1,
     ],
     'symcrys/magnetic siteSymmetryOf': [(o) => magnetic.siteSymmetryOf(magneticOps, [0, 0, 1], o as never), 1],
