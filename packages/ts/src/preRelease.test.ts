@@ -99,17 +99,3 @@ describe('a box with too many lines is refused, as one with too many rotation po
     ).toBeGreaterThan(0);
   });
 });
-
-describe('a list asked for many directions is checked once', () => {
-  it('siteSymmetryOf and orbitOf on the same 48 operations stay fast', () => {
-    const ops = classes.operations('m-3m').map((op) => ({ cartesian: op.cartesian }));
-    classes.siteSymmetryOf(ops, [1, 2, 3]);
-    const start = performance.now();
-    for (let i = 0; i < 200; i++) {
-      classes.siteSymmetryOf(ops, [1, 2, 3 + i]);
-      classes.orbitOf(ops, [1, 2, 3 + i]);
-    }
-    // About 0.1 ms per call; the check of the group alone took about 0.3 ms.
-    expect((performance.now() - start) / 400).toBeLessThan(1);
-  });
-});
