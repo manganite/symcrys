@@ -7,11 +7,13 @@ module and nothing else.
 
 from __future__ import annotations
 
+import contextlib
 import json
+import os
 import re
 import threading
 from importlib import resources
-from typing import Any
+from typing import Any, Iterator
 
 import quickjs  # type: ignore[import-untyped]
 
@@ -51,10 +53,60 @@ class SymcrysInternalError(RuntimeError):
 
 _lock = threading.Lock()
 _functions: dict[str, Any] = {}
+# The thread inside the engine (holding _lock), and whether a fork in progress holds _lock.
+_owner: int | None = None
+_fork_holds = False
+
+
+@contextlib.contextmanager
+def _held() -> Iterator[None]:
+    """The engine for one call: _lock held, the calling thread noted for a fork."""
+    global _owner
+    with _lock:
+        _owner = threading.get_ident()
+        try:
+            yield
+        finally:
+            _owner = None
+
+
+# A child made by fork inherits the engine and its lock in the state of the fork. The fork waits for
+# a call of another thread to end, so that the child gets the lock free and the engine between calls,
+# and the parent gets the lock back. A fork that does not get the lock (a signal handler that forks
+# during a call of its own thread, which must not wait for itself, or a wait that a signal ends)
+# leaves the parent's lock as it is and gives the child a new lock and a new engine.
+def _before_fork() -> None:
+    global _fork_holds
+    if _owner == threading.get_ident():
+        return
+    _lock.acquire()
+    _fork_holds = True
+
+
+def _after_fork_in_parent() -> None:
+    global _fork_holds
+    if _fork_holds:
+        _fork_holds = False
+        _lock.release()
+
+
+def _after_fork_in_child() -> None:
+    global _fork_holds, _lock, _owner
+    if _fork_holds:
+        _fork_holds = False
+        _lock.release()
+    else:
+        _lock = threading.Lock()
+        _owner = None
+        _functions.clear()
+
+
+if hasattr(os, "register_at_fork"):
+    os.register_at_fork(before=_before_fork, after_in_parent=_after_fork_in_parent, after_in_child=_after_fork_in_child)
 
 
 def _get(name: str) -> Any:
-    # A QuickJS context is not thread-safe; callers hold _lock.
+    # A QuickJS context is not thread-safe; callers hold the engine (_held).
     if not _functions:
         source = resources.files("symcrys").joinpath("_bundle.js").read_text(encoding="utf-8")
         context = quickjs.Context()
@@ -71,7 +123,7 @@ def call(name: str, args_json: str) -> str:
     The result is ``{"result": ...}`` (no ``result`` key when the function returned undefined) or
     ``{"error": {"name": ..., "message": ...}}``.
     """
-    with _lock:
+    with _held():
         return str(_get("call")(name, args_json))
 
 
@@ -143,11 +195,11 @@ def python_terms(message: str) -> str:
 
 def value(name: str) -> Any:
     """The exported constant ``name``, decoded from JSON."""
-    with _lock:
+    with _held():
         return json.loads(str(_get("value")(name)))
 
 
 def exports() -> list[tuple[str, str]]:
     """Names of the exports of the bundled library and their kinds (``function`` or ``value``)."""
-    with _lock:
+    with _held():
         return [(n, k) for n, k in json.loads(str(_get("exports")()))]

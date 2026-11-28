@@ -62,6 +62,12 @@ All notable changes to symcrys are recorded here. The format follows
 
 ### Fixed
 
+- Python: a process made by `fork` while another thread called the package could not call it: the
+  child inherited the lock of the engine as held, and its first call waited forever (#240). A fork
+  now waits for the call to end, so that the child gets the lock free; a fork that cannot wait (from
+  a signal handler during a call of its own thread, or interrupted while it waits) gives the child a
+  new engine and leaves the parent's lock alone. Affected since the Python package (0.5.0).
+
 - Python: a TypedDict with optional fields says at run time which keys are required (#239).
   Before, under the modules' `from __future__ import annotations`, `__required_keys__` listed every
   field (`IdentifiedPointGroup` had `{'key', 'setting'}`), and `typing.get_type_hints` raised a
