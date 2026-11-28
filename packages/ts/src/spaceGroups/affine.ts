@@ -176,8 +176,8 @@ export function inverseMatrix(m: IntMatrix): number[][] {
  * power of g lies in H (ITA 2016 § 1.4.3, p. 60, Table 1.4.3.2; 5th ed. § 2.2.11 (iv), p. 27, and
  * § 8.3.5, p. 737). This gives ITA's numbering of the general position, for the point groups (whose
  * translations are zero) and the plane groups alike. Translations are reduced into [0, 1). Throws
- * an Error (a fault of the data) if more than `maxOrder` operations arise or the result is not
- * closed modulo the lattice.
+ * an Error (a fault of the data) if more than `maxOrder` operations arise, if a coset arises twice,
+ * or if the result is not closed modulo the lattice.
  */
 export function cosetsByGenerators(
   generators: readonly ExactOperation[],
@@ -194,21 +194,27 @@ export function cosetsByGenerators(
     const before = new Set(met);
     const h = list.slice();
     for (let power = g; !before.has(coset(power)); power = compose(power, g)) {
-      // A generator of infinite order modulo the lattice would not end the loop.
-      if (list.length > maxOrder) throw new Error(`The generators give no group of at most ${maxOrder} operations`);
       for (const x of h) {
         const op = reduceModLattice(compose(power, x));
+        const key = coset(op);
+        // The cosets of a generator by a list that is no group can meet the list: each coset once.
+        if (met.has(key)) {
+          throw new Error(`The generators give no group coset by coset: ${formatOperation(op)} arises twice`);
+        }
         list.push(op);
-        met.add(coset(op));
+        met.add(key);
+        // The bound of the result, also in the last batch; and a generator of infinite order modulo
+        // the lattice would not end the loop.
+        if (list.length > maxOrder) throw new Error(`The generators give no group of at most ${maxOrder} operations`);
       }
     }
   }
   // The cosets form a group only if the powers of each generator, times the group built so far, are
   // the group they generate together; check closure, so that a mistake in the transcribed generators
-  // fails here rather than in a caller. A list that holds the identity and is closed under multiplication by each generator from the left
-  // holds the whole group they generate (a finite group: inverses are powers), and it holds nothing
-  // else, being made of their products: it is that group, with k·n products for k generators
-  // instead of n².
+  // fails here rather than in a caller. A list that holds the identity, each coset once, and is
+  // closed under multiplication by each generator from the left holds the whole group they generate
+  // (a finite group: inverses are powers), and nothing else, being made of their products: it is
+  // that group, with k·n products for k generators instead of n².
   for (const g of generators) {
     for (const x of list) {
       const gx = compose(g, x);
