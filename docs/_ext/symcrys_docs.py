@@ -11,6 +11,11 @@
   a page without one is a warning, so the gate ``docs`` fails) and Open Graph tags for link
   previews; the canonical link of the landing page is the site's address, not ``index.html``; the
   build writes ``sitemap.xml`` with every page.
+- The required fields of a TypedDict with optional fields: the Python modules declare them in a
+  private base class (``_NameRequired``), so that ``__required_keys__`` is right at run time; a
+  TypedDict keeps no base in its MRO, so autodoc would not show them. They are added to the class
+  as attributes, with the docstring and the type of their declaration; an optional field says that
+  it is optional, which its type no longer shows.
 """
 
 from __future__ import annotations
@@ -26,6 +31,8 @@ from typing import Any
 from docutils import nodes
 from docutils.parsers.rst import directives
 from sphinx.application import Sphinx
+from sphinx.pycode import ModuleAnalyzer
+from sphinx.util.typing import stringify_annotation
 from sphinx.util import logging
 from sphinx.util.docutils import SphinxDirective
 
@@ -173,6 +180,40 @@ def write_sitemap(app: Sphinx, exception: Exception | None) -> None:
     (Path(app.outdir) / "sitemap.xml").write_text(text, encoding="utf-8")
 
 
+def required_fields(app: Sphinx, what: str, name: str, obj: Any, options: Any, lines: list[str]) -> None:
+    """The fields of the private base ``_NameRequired`` of a TypedDict, as attributes of the class."""
+    if what != "class" or not isinstance(obj, type) or not hasattr(obj, "__required_keys__"):
+        return
+    module = __import__(obj.__module__, fromlist=["_"])
+    base = getattr(module, f"_{obj.__name__}Required", None)
+    if base is None:
+        return
+    docs = ModuleAnalyzer.for_module(obj.__module__).find_attr_docs()
+    for field, annotation in base.__annotations__.items():
+        doc = docs.get((base.__qualname__, field), [])
+        # Under `from __future__ import annotations` a string, which a TypedDict keeps as a
+        # ForwardRef; it is written as declared (np.float64, which resolves, where autodoc writes the
+        # evaluated float64 of the other fields).
+        kind = getattr(annotation, "__forward_arg__", None)
+        kind = kind if isinstance(kind, str) else stringify_annotation(annotation)
+        lines += ["", f".. py:attribute:: {field}", f"   :type: {kind}", ""]
+        lines += [f"   {line}" if line else "" for line in doc]
+
+
+def optional_fields(app: Sphinx, what: str, name: str, obj: Any, options: Any, lines: list[str]) -> None:
+    """An optional field of a TypedDict (a key that may be absent) says so first."""
+    if what != "attribute":
+        return
+    owner_name, _, field = name.rpartition(".")
+    module_name, _, cls_name = owner_name.rpartition(".")
+    try:
+        owner = getattr(__import__(module_name, fromlist=["_"]), cls_name)
+    except (ImportError, AttributeError, ValueError):
+        return
+    if field in getattr(owner, "__optional_keys__", ()):
+        lines[:0] = ["*Optional key*: it may be absent.", ""]
+
+
 def setup(app: Sphinx) -> dict[str, Any]:
     app.add_directive("ts-example", TsExample)
     app.add_directive("tensor-properties", TensorProperties)
@@ -180,4 +221,6 @@ def setup(app: Sphinx) -> dict[str, Any]:
     app.add_config_value("symcrys_page_descriptions", {}, "html", dict)
     app.connect("html-page-context", page_meta)
     app.connect("build-finished", write_sitemap)
+    app.connect("autodoc-process-docstring", required_fields)
+    app.connect("autodoc-process-docstring", optional_fields)
     return {"parallel_read_safe": True, "parallel_write_safe": True}

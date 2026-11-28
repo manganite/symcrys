@@ -68,8 +68,7 @@ def test_every_key_of_a_group_is_a_str() -> None:
     # The fixed reading of api.json, "types": a key is `str` in every module, in the fields of the
     # TypedDicts and in the parameters, never a Literal of the keys (which a TypeScript type derived
     # from a list would give, since the declarations expand it).
-    # The annotations as written (the modules use `from __future__ import annotations`, and
-    # NotRequired exists at run time only from Python 3.11), so they are read as text.
+    # The annotations as written (the modules use `from __future__ import annotations`), read as text.
     def written(a: object) -> str:
         return a.__forward_arg__ if isinstance(a, typing.ForwardRef) else str(a)
 
@@ -85,7 +84,7 @@ def test_every_key_of_a_group_is_a_str() -> None:
                 continue
             for field, hint in fields.items():
                 checked += 1
-                assert written(hint) in ("str", "NotRequired[str]"), f"{module.__name__}.{name}.{field}: {written(hint)}"
+                assert written(hint) == "str", f"{module.__name__}.{name}.{field}: {written(hint)}"
     assert checked > 50
 
 
@@ -403,6 +402,30 @@ def test_rotate_tensor_rotates_a_stack_in_one_call(monkeypatch: pytest.MonkeyPat
     got = symcrys.rotate_tensor(vectors, rotations, "pyroelectric")
     assert names == ["rotateTensors"]
     assert np.allclose(got, np.einsum("nia,na->ni", rotations, vectors))
+
+
+def test_typed_dicts_say_at_run_time_which_keys_are_required() -> None:
+    # The modules use `from __future__ import annotations`; the required and optional keys are right
+    # at run time, and get_type_hints reads every TypedDict, on Python 3.10 too.
+    assert symcrys.IdentifiedPointGroup.__required_keys__ == frozenset({"key"})
+    assert symcrys.IdentifiedPointGroup.__optional_keys__ == frozenset({"setting"})
+    assert magnetic.TransformedOperation.__optional_keys__ == frozenset({"time_reversal"})
+    assert symcrys.CoordinateChange.__required_keys__ == frozenset({"inverse"})
+    found = 0
+    for module in (symcrys, magnetic, plane):
+        for name in module.__all__:
+            cls = getattr(module, name)
+            if isinstance(cls, type) and typing.is_typeddict(cls):
+                found += 1
+                hints = typing.get_type_hints(cls, include_extras=True)
+                assert set(hints) == cls.__required_keys__ | cls.__optional_keys__, f"{module.__name__}.{name}"
+    assert found > 30
+    # A result has every required key, and only known keys.
+    for result, cls in [
+        (symcrys.point_group_of(symcrys.operations("4mm")), symcrys.IdentifiedPointGroup),
+        (magnetic.find_point_group("4'/mmm'"), magnetic.IdentifiedPointGroup),
+    ]:
+        assert result is not None and cls.__required_keys__ <= set(result) <= cls.__required_keys__ | cls.__optional_keys__
 
 
 def test_library_errors_are_value_errors_with_the_message() -> None:

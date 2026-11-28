@@ -23,14 +23,8 @@ second); fetch operations or forms once and compute with NumPy, rather than call
 
 from __future__ import annotations
 
-import sys
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Iterator, Literal, Mapping, Optional, Sequence, TypedDict, Union, final, overload
-
-if sys.version_info >= (3, 11):
-    from typing import NotRequired
-elif TYPE_CHECKING:  # Python 3.10: for type checkers; the annotations stay strings at run time
-    from typing_extensions import NotRequired
+from typing import Any, Iterator, Literal, Mapping, Optional, Sequence, TypedDict, Union, final, overload
 
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
@@ -313,47 +307,51 @@ class LatticeParameters(TypedDict):
 
 
 @final
-class Cell(TypedDict):
+class Cell(TypedDict, total=False):
     """A cell of a lattice, named by the fields that apply to its Bravais lattice (listed with
     ``cell_transformation``); a field left out takes the value of the conventional cell in the
     standard setting, so ``{}`` is that cell.
     """
 
-    unique_axis: NotRequired[Literal["a", "b", "c"]]
+    unique_axis: Literal["a", "b", "c"]
     """The unique axis of a monoclinic cell."""
-    cell_choice: NotRequired[int]
+    cell_choice: int
     """The cell choice of a monoclinic cell, 1, 2 or 3."""
-    setting: NotRequired[Literal["reverse", "abc", "ba-c", "cab", "-cba", "bca", "a-cb", "obverse"]]
+    setting: Literal["reverse", "abc", "ba-c", "cab", "-cba", "bca", "a-cb", "obverse"]
     """An orthorhombic setting, or for hexagonal axes of an ``hR`` lattice the obverse or reverse
     setting.
     """
-    centring: NotRequired[Literal["P", "A", "C", "I", "F", "H", "D"]]
+    centring: Literal["P", "A", "C", "I", "F", "H", "D"]
     """The centring of the cell: ``'P'`` for a primitive cell, or the letter of a centred cell."""
-    axes: NotRequired[Literal["hexagonal", "rhombohedral"]]
+    axes: Literal["hexagonal", "rhombohedral"]
     """The axes of an ``hR`` lattice: ``'hexagonal'`` (the triple hexagonal cell, standard) or
     ``'rhombohedral'``.
     """
-    cell: NotRequired[int]
+    cell: int
     """The index of a cell where several cells have the same centring: 1 for C₁."""
 
 
-@final
-class CoordinateTransformation(TypedDict):
-    """A change of the coordinate system (P, p): (a′, b′, c′) = (a, b, c)·P, origin O′ = O + p."""
+class _CoordinateTransformationRequired(TypedDict):
+    """The required fields of ``CoordinateTransformation``."""
 
     linear_part: NDArray[np.float64]
     """P, the linear part: its columns are the new basis vectors a′, b′, c′ in the old basis; det P ≠ 0,
     also negative.
     """
-    origin_shift: NotRequired[NDArray[np.float64]]
+
+
+@final
+class CoordinateTransformation(_CoordinateTransformationRequired, total=False):
+    """A change of the coordinate system (P, p): (a′, b′, c′) = (a, b, c)·P, origin O′ = O + p."""
+
+    origin_shift: NDArray[np.float64]
     """p, the origin shift: the coordinates of the new origin in the old coordinate system; default
     zero.
     """
 
 
-@final
-class TensorSpec(TypedDict):
-    """The kind of tensor."""
+class _TensorSpecRequired(TypedDict):
+    """The required fields of ``TensorSpec``."""
 
     rank: int
     """Number of indices, 0 to 4."""
@@ -361,7 +359,13 @@ class TensorSpec(TypedDict):
     """``'polar'`` or ``'axial'``: whether an improper operation changes the sign (factor det R)."""
     intrinsic: IntrinsicSymmetry
     """The index symmetry of the tensor."""
-    time_parity: NotRequired[Literal["even"]]
+
+
+@final
+class TensorSpec(_TensorSpecRequired, total=False):
+    """The kind of tensor."""
+
+    time_parity: Literal["even"]
     """Accepted in a specification a caller passes if ``'even'``, so that one of the magnetic API can be
     handed on; a time-odd tensor belongs to the magnetic API. Never set in a result.
     """
@@ -402,26 +406,28 @@ class PointGroup(TypedDict):
     """
 
 
+class _IdentifiedPointGroupRequired(TypedDict):
+    """The required fields of ``IdentifiedPointGroup``."""
+
+    key: str
+    """The key of the crystal class."""
+
+
 @final
-class IdentifiedPointGroup(TypedDict):
+class IdentifiedPointGroup(_IdentifiedPointGroupRequired, total=False):
     """A crystal class found by its symbol (``find_point_group``) or identified from operations
     (``point_group_of``): its key, and the setting if the operations are exactly those of one.
     """
 
-    key: str
-    """The key of the crystal class."""
-    setting: NotRequired[int]
+    setting: int
     """The 1-based index of the setting: always for ``find_point_group``; for ``point_group_of`` the
     setting whose operations the group equals, in the Cartesian frame of symcrys, absent if the group is
     the class in another orientation.
     """
 
 
-@final
-class Setting(TypedDict):
-    """A setting of a point group: an orientation of its symmetry directions in the Cartesian frame
-    (docs/conventions.md, "Settings").
-    """
+class _SettingRequired(TypedDict):
+    """The required fields of ``Setting``."""
 
     index: int
     """1-based."""
@@ -429,14 +435,22 @@ class Setting(TypedDict):
     """Short symbol of the setting."""
     full_symbol: str
     """Full symbol, symmetry directions separated by single spaces."""
-    unique_axis: NotRequired[Literal["a", "b", "c"]]
+    is_default: bool
+    """True for the ITC default setting."""
+
+
+@final
+class Setting(_SettingRequired, total=False):
+    """A setting of a point group: an orientation of its symmetry directions in the Cartesian frame
+    (docs/conventions.md, "Settings").
+    """
+
+    unique_axis: Literal["a", "b", "c"]
     """Monoclinic settings only: the unique axis."""
-    axes: NotRequired[Literal["hexagonal", "rhombohedral"]]
+    axes: Literal["hexagonal", "rhombohedral"]
     """Trigonal settings only: the axes of the conventional basis, ``'hexagonal'`` or
     ``'rhombohedral'``.
     """
-    is_default: bool
-    """True for the ITC default setting."""
 
 
 @final
@@ -447,9 +461,8 @@ class CartesianAxis(TypedDict):
     """Unit vector; its first non-zero component, in the order x, y, z, is positive."""
 
 
-@final
-class CartesianOperationDescription(TypedDict):
-    """One operation of any list described geometrically (``describe_operations_of``)."""
+class _CartesianOperationDescriptionRequired(TypedDict):
+    """The required fields of ``CartesianOperationDescription``."""
 
     kind: OperationKind
     """What the operation is."""
@@ -457,11 +470,17 @@ class CartesianOperationDescription(TypedDict):
     """The n of the symbol n or n̄ (n for an n-fold rotation): 1 for the identity and the inversion, 2
     for a reflection (m = 2̄), otherwise the order of the rotation part.
     """
-    axis: NotRequired[CartesianAxis]
+
+
+@final
+class CartesianOperationDescription(_CartesianOperationDescriptionRequired, total=False):
+    """One operation of any list described geometrically (``describe_operations_of``)."""
+
+    axis: CartesianAxis
     """Rotation axis, rotoinversion axis or the normal of the mirror plane; absent for the identity and
     the inversion.
     """
-    sense: NotRequired[Literal["-", "+"]]
+    sense: Literal["-", "+"]
     """For n ≥ 3: ``'+'`` if the rotation part turns by +360°/n about ``axis`` (counter-clockwise seen
     from the tip of ``axis`` looking towards the origin), ``'-'`` if by −360°/n.
     """
@@ -481,9 +500,8 @@ class Axis(TypedDict):
     """
 
 
-@final
-class OperationDescription(TypedDict):
-    """One point operation described geometrically."""
+class _OperationDescriptionRequired(TypedDict):
+    """The required fields of ``OperationDescription``."""
 
     kind: OperationKind
     """What the operation is."""
@@ -491,11 +509,17 @@ class OperationDescription(TypedDict):
     """The n of the symbol n or n̄ (n for an n-fold rotation): 1 for the identity and the inversion, 2
     for a reflection (m = 2̄), otherwise the order of the rotation part.
     """
-    axis: NotRequired[Axis]
+
+
+@final
+class OperationDescription(_OperationDescriptionRequired, total=False):
+    """One point operation described geometrically."""
+
+    axis: Axis
     """Rotation axis, rotoinversion axis or the normal of the mirror plane; absent for the identity and
     the inversion.
     """
-    sense: NotRequired[Literal["-", "+"]]
+    sense: Literal["-", "+"]
     """For n ≥ 3: ``'+'`` if the rotation part turns by +360°/n about ``axis`` (counter-clockwise seen
     from the tip of ``axis`` looking towards the origin), ``'-'`` if by −360°/n.
     """
@@ -524,20 +548,25 @@ class DirectionElements(TypedDict):
     """True if a mirror plane is perpendicular to this direction."""
 
 
-@final
-class SymmetryDirection(TypedDict):
-    """One position of the full Hermann–Mauguin symbol: its symbol and its symmetry directions."""
+class _SymmetryDirectionRequired(TypedDict):
+    """The required fields of ``SymmetryDirection``."""
 
     position: int
     """1-based position in the full symbol."""
-    symbol: NotRequired[str]
-    """The symbol at this position of the full symbol, if the full symbol has this position; for a
-    magnetic group with its primes (``4'/m``).
-    """
     directions: list[DirectionElements]
     """The symmetry directions of this position, each with the elements along it; for a monoclinic group
     the direction a, b or c of the position of the full symbol, of which only the unique axis is a
     lattice symmetry direction.
+    """
+
+
+@final
+class SymmetryDirection(_SymmetryDirectionRequired, total=False):
+    """One position of the full Hermann–Mauguin symbol: its symbol and its symmetry directions."""
+
+    symbol: str
+    """The symbol at this position of the full symbol, if the full symbol has this position; for a
+    magnetic group with its primes (``4'/m``).
     """
 
 
@@ -645,9 +674,8 @@ class CrystalFormType(TypedDict):
     """
 
 
-@final
-class CrystalForm(TypedDict):
-    """One crystal form of a crystal class: a set of faces equivalent under the class."""
+class _CrystalFormRequired(TypedDict):
+    """The required fields of ``CrystalForm``."""
 
     letter: str
     """ITA's letter of the Wyckoff position the faces belong to."""
@@ -666,7 +694,13 @@ class CrystalForm(TypedDict):
     """The first face of the form in the usual notation, components separated by commas, e.g. ``h,0,l``,
     or ``h,h,-2h,l`` (Bravais–Miller indices) for hexagonal axes; a leading ``-`` is an overbar.
     """
-    condition: NotRequired[str]
+
+
+@final
+class CrystalForm(_CrystalFormRequired, total=False):
+    """One crystal form of a crystal class: a set of faces equivalent under the class."""
+
+    condition: str
     """The condition on the indices that ITA gives with the form, ``|h|<|l|`` or ``|h|>|l|`` (cubic
     forms (hhl)); absent otherwise.
     """
@@ -718,23 +752,28 @@ class InverseTransformation(TypedDict):
     """q = −P⁻¹p."""
 
 
+class _CoordinateChangeRequired(TypedDict):
+    """The required fields of ``CoordinateChange``."""
+
+    inverse: InverseTransformation
+    """(Q, q) = (P⁻¹, −P⁻¹p), which takes the new coordinates back to the old."""
+
+
 @final
-class CoordinateChange(TypedDict):
+class CoordinateChange(_CoordinateChangeRequired, total=False):
     """The result of ``change_of_coordinates``: the inverse pair and each given quantity in the new
     coordinate system.
     """
 
-    inverse: InverseTransformation
-    """(Q, q) = (P⁻¹, −P⁻¹p), which takes the new coordinates back to the old."""
-    points: NotRequired[NDArray[np.float64]]
+    points: NDArray[np.float64]
     """The points, as given, in the new coordinates."""
-    directions: NotRequired[NDArray[np.float64]]
+    directions: NDArray[np.float64]
     """The vector coefficients, as given, in the new basis."""
-    planes: NotRequired[NDArray[np.float64]]
+    planes: NDArray[np.float64]
     """The Miller indices, as given, in the new basis."""
-    metric: NotRequired[NDArray[np.float64]]
+    metric: NDArray[np.float64]
     """The metric tensor in the new basis."""
-    operations: NotRequired[TransformedOperations]
+    operations: TransformedOperations
     """The operations, as given, in the new coordinate system."""
 
 
