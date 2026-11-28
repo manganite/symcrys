@@ -98,7 +98,7 @@ export const MAX_PIVOT_THRESHOLD = 1e-2;
 /**
  * A computed number within this of an integer is that integer: the entries of a matrix W in the
  * lattice basis computed from Cartesian matrices (pointGroups.ts, `integer`), or passed as the
- * integer `matrix` of an operation (cell.ts, `residualOperations`).
+ * integer `matrix` of an operation (cell.ts, `residualOperationsOf`).
  */
 export const INTEGER_EPSILON = 1e-9;
 

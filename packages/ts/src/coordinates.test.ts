@@ -235,7 +235,7 @@ describe('changeOfCoordinates', () => {
       given.map((op) => [op.matrix, op.timeReversal]),
     );
     // On hexagonal axes every operation keeps the hexagonal metric, each with its time reversal.
-    const kept = magnetic.residualOperations(there.operations!, magnetic.latticeBasis("-3'm"));
+    const kept = magnetic.residualOperationsOf(there.operations!, magnetic.latticeBasis("-3'm"));
     expect(kept.map((op) => op.timeReversal)).toEqual(given.map((op) => op.timeReversal));
   });
 

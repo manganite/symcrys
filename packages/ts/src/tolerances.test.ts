@@ -113,8 +113,8 @@ describe('the metric of a cell: per entry of WᵀGW − G, relative to the large
   for (const t of TOLERANCES) {
     it(`at the tolerance ${t}: a deviation of ${BELOW}t keeps the 48 operations of m-3m, ${ABOVE}t the 16 of 4/mmm`, () => {
       const ops = classes.operations('m-3m');
-      expect(classes.residualOperations(ops, stretched(BELOW * t), { tolerance: t })).toHaveLength(48);
-      expect(classes.residualOperations(ops, stretched(ABOVE * t), { tolerance: t })).toHaveLength(16);
+      expect(classes.residualOperationsOf(ops, stretched(BELOW * t), { tolerance: t })).toHaveLength(48);
+      expect(classes.residualOperationsOf(ops, stretched(ABOVE * t), { tolerance: t })).toHaveLength(16);
     });
   }
 });

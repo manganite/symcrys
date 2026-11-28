@@ -190,7 +190,7 @@ separate list of lattice operations.
 `{ cartesian }` (`{ cartesian, timeReversal }`) built by a caller, for instance for the operations
 of a distorted crystal. A record without `cartesian` is a RangeError, with a hint if it has
 `matrix`: W is not orthogonal in general, and reading it as Cartesian would give a wrong answer
-without notice. `residualOperations` reads `matrix` ("Cell, metric and indices"); `orbit` uses the
+without notice. `residualOperationsOf` reads `matrix` ("Cell, metric and indices"); `orbit` uses the
 W of the group itself. Inside the library the calculations work on the Cartesian matrix and the
 time reversal alone (`CartesianOperation`).
 
@@ -515,7 +515,7 @@ space group is not read as one of a plane group.
 
 Every result of the API is frozen, nested arrays and objects included, and typed `readonly`; a
 caller who wants to change one copies it (`entryPoints.test.ts` calls every function of the three
-entry points). `residualOperations` freezes its list, not the operations in it, which are
+entry points). `residualOperationsOf` freezes its list, not the operations in it, which are
 the caller's. "Not found" is `undefined`, never `null` (`findPointGroup`, `pointGroupOf`,
 `zoneAxis`; in Python `None`).
 
@@ -585,7 +585,7 @@ when they differ by less than the tolerance, in the metric of their kind:
 | operations                                | per matrix entry                                                                         | 0.1   | `pointGroupOf`, `describeOperationsOf` (also in `symcrys/plane`), `tensorFormOf`, `isCentrosymmetricOf`, `isEnantiomorphicOf`, `allowsPropertyOf`, `allowedPropertiesOf`, `rotateTensor`, `rotateTensors`; `changeOfCoordinates` (all three entry points) for the entries of P, p, W and w |
 | directions                                | Euclidean distance of the unit vector to the symmetry element                            | 1     | `siteSymmetryOf`, `siteSymmetry`, `wyckoffPosition`, `orbitOf`                                                                                                                                                                                                                             |
 | points of the plane                       | distance to the symmetry element per coordinate in the lattice basis, modulo the lattice | 1/2   | `siteSymmetry`, `wyckoffPosition`, `orbit`, `siteSymmetryOf`, `orbitOf` of `symcrys/plane`                                                                                                                                                                                                 |
-| the metric tensor G of a cell (W ᵀGW = G) | per entry, relative to the largest entry of G                                            | 1     | `residualOperations` (also in `symcrys/plane`); `wyckoffDistances` of `symcrys/plane` for the cell restrictions of its basis                                                                                                                                                               |
+| the metric tensor G of a cell (W ᵀGW = G) | per entry, relative to the largest entry of G                                            | 1     | `residualOperationsOf` (also in `symcrys/plane`); `wyckoffDistances` of `symcrys/plane` for the cell restrictions of its basis                                                                                                                                                             |
 | the index symmetry of a tensor            | per component, relative to its largest component                                         | 1     | `toVoigt`, `fromVoigt`                                                                                                                                                                                                                                                                     |
 
 - **The tolerance decides small deviations.** A deviation below the tolerance counts as none; one
@@ -1114,7 +1114,7 @@ exactly 0°.
 the optional `minVolumeRatio`, default 0: the library accepts what is mathematically a cell; an
 application that wants to avoid nearly flat cells passes its own limit (stereography 0.1).
 
-**Residual operations.** `residualOperations(operations, basis, { tolerance })` keeps the operations
+**Residual operations.** `residualOperationsOf(operations, basis, { tolerance })` keeps the operations
 whose matrix W in the lattice basis (`matrix`, as `operations` gives it) has WᵀGW = G; a matrix that
 is not integer is refused, so that a Cartesian matrix passed as `matrix` gives an error, not a wrong
 answer. The
@@ -1149,7 +1149,7 @@ operation is `{ matrix, translation }`, its translation w′ not reduced modulo 
 ITA writes it; `cartesian` is not carried over. In the magnetic API it keeps `timeReversal` of the
 operation given when every operation of the list gives it, and has none when no operation does; a
 list in which only some operations give it is refused. So the result goes on to the functions that
-read the matrices W (`residualOperations`, a further `changeOfCoordinates`), not to those that read
+read the matrices W (`residualOperationsOf`, a further `changeOfCoordinates`), not to those that read
 `cartesian`. The plane has the same function with 2 × 2 matrices (`symcrys/plane`).
 
 ### Cells of a lattice
@@ -1540,7 +1540,7 @@ nearest line of a line position among its family c + k·w + ℝv of lattice tran
 the direction v to a basis), the one with k next to the w-coordinate of the point; so a sheared
 basis of `p2` gives the distances of any other basis of its lattice, to rounding. A basis must satisfy the cell restrictions of
 the group (`cellRestrictions`): every operation of the group keeps its metric (WᵀGW = G, within
-`tolerance`, relative to the largest entry of G, as `residualOperations` measures); a basis of `p4`
+`tolerance`, relative to the largest entry of G, as `residualOperationsOf` measures); a basis of `p4`
 with γ ≠ 90° is refused. `wyckoffPosition` is the most special
 position within the tolerance (the smallest multiplicity), the nearest among positions of equal
 multiplicity; the general position always holds the point, so letter and oriented symbol are ITA's.
@@ -1632,7 +1632,7 @@ is taken non-acute by the footnote (convention data). The Bravais lattices are t
 functions have the names of the other entry points, for 2 × 2 matrices whose columns are a and b:
 `latticeFromParameters({ a, b, gamma })` (a along x, b at γ from a towards +y),
 `latticeParameters(basis)`, `metricTensor(basis)` and `reciprocalBasis(basis)` (a_i · a*_j = δ_ij),
-and, since 0.13, `residualOperations(operations, basis)`, the operations of a list whose integer
+and, since 0.13, `residualOperationsOf(operations, basis)`, the operations of a list whose integer
 `matrix` W keeps the metric, WᵀGW = G, relative to the largest entry of G (the metric tolerance, as
 in 3D).
 

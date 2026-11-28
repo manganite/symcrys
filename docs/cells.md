@@ -36,7 +36,7 @@ symcrys.angle_between_planes(basis, [1, 0, 0], [0, 1, 0]), symcrys.direction_to_
 ```{code-cell} ipython3
 ops = symcrys.operations("6/mmm")
 distorted = symcrys.lattice_from_parameters(a=3, b=3, c=5, alpha=90, beta=90, gamma=121)
-len(symcrys.residual_operations(ops, basis)), len(symcrys.residual_operations(ops, distorted))
+len(symcrys.residual_operations_of(ops, basis)), len(symcrys.residual_operations_of(ops, distorted))
 ```
 
 A small distortion is a question of the tolerance. A cubic cell strained by 10⁻⁴ along c deviates
@@ -49,7 +49,7 @@ to be reproduced passes the tolerance it relies on explicitly.
 ```{code-cell} ipython3
 strained = [[1, 0, 0], [0, 1, 0], [0, 0, 1.0001]]
 cubic = symcrys.operations("m-3m")
-len(symcrys.residual_operations(cubic, strained)), len(symcrys.residual_operations(cubic, strained, tolerance=1e-3))
+len(symcrys.residual_operations_of(cubic, strained)), len(symcrys.residual_operations_of(cubic, strained, tolerance=1e-3))
 ```
 
 ```{code-cell} ipython3

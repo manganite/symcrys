@@ -621,7 +621,7 @@ function generalPins(add: (id: string, f: () => unknown) => void): void {
       classes.angleBetweenPlanes(basis, [1, 0, 0], [1, 1, 1]),
     ]);
     add(`${id}: residualOperations of m-3m`, () =>
-      classes.residualOperations(classes.operations('m-3m'), basis).map((op) => ({ matrix: op.matrix })),
+      classes.residualOperationsOf(classes.operations('m-3m'), basis).map((op) => ({ matrix: op.matrix })),
     );
   }
   const P = [

@@ -371,12 +371,12 @@ export interface WyckoffDistanceOptions extends ToleranceOptions {
    * The Cartesian basis of the lattice, a 2 × 2 matrix whose columns are a and b; with it the
    * distances are Euclidean, without it they are measured per lattice coordinate. It must satisfy
    * the cell restrictions of the group (its metric kept by the operations of the group, within
-   * `tolerance`, relative to the largest entry of the metric, as `residualOperations` measures).
+   * `tolerance`, relative to the largest entry of the metric, as `residualOperationsOf` measures).
    */
   readonly basis?: readonly (readonly number[])[];
   /**
    * How closely the operations of the group must keep the metric G of `basis`: per entry of
-   * WᵀGW − G, relative to the largest entry of G, as `residualOperations` measures it; default
+   * WᵀGW − G, relative to the largest entry of G, as `residualOperationsOf` measures it; default
    * `EPSILON` (10⁻⁵), below 1. Without a basis it is not used.
    */
   readonly tolerance?: number;
@@ -1078,7 +1078,7 @@ export function wyckoffPosition(
  * (Lagrange–Gauss), and the nearest line among the family of its lattice translates, so an oblique
  * basis of `p2` gives the distances of any other basis of the same lattice, to rounding; it must
  * satisfy the cell restrictions of the group (`cellRestrictions`), checked by the metric within
- * `tolerance` (default `EPSILON`) as `residualOperations` checks it. How to snap a dragged point onto a position (which position wins, within
+ * `tolerance` (default `EPSILON`) as `residualOperationsOf` checks it. How to snap a dragged point onto a position (which position wins, within
  * which radius) is the application's choice; this gives the numbers for it. Throws a RangeError for
  * an unknown key, a point that is not two finite numbers or has a coordinate beyond 10⁶ in magnitude, a basis that is not a non-singular
  * 2 × 2 matrix (as `metricTensor` refuses it: singular, or with products that overflow or vanish), and a basis that contradicts the cell restrictions of the group (the error names an
@@ -1377,9 +1377,15 @@ export function orbitOf(
  * are, absent if they are the group in another basis (a mirror along a diagonal of the cell). The
  * linear parts are closed into a group first. Each matrix must have integer entries within the
  * tolerance; a translation is read as in `describeOperationsOf`. Throws a RangeError for such input,
- * a matrix of determinant other than ±1, and matrices that generate no finite group (a shear).
+ * a matrix of determinant other than ±1, and matrices that generate no finite group (a shear). The
+ * type allows `undefined`, "not found", as `pointGroupOf` of the point-group entry points does; in
+ * the lattice basis every finite group of the plane is one of the ten plane point groups, so it is
+ * not returned.
  */
-export function pointGroupOf(operations: readonly PlaneOperation[], options?: ToleranceOptions): IdentifiedPointGroup {
+export function pointGroupOf(
+  operations: readonly PlaneOperation[],
+  options?: ToleranceOptions,
+): IdentifiedPointGroup | undefined {
   checkOptions(options, TOLERANCE_KEYS, 'pointGroupOf');
   const ops = exactList(operations, 'pointGroupOf', toleranceOf(options, 'operations'));
   const found = identifyLinearGroup(linearClosure(ops.map((op) => op.matrix)));
@@ -1399,12 +1405,16 @@ export function pointGroupOf(operations: readonly PlaneOperation[], options?: To
  * conventional cell: a translation besides the lattice translations other than the centring
  * (1/2, 1/2) of a rectangular lattice, linear parts that no conventional cell gives (a mirror along
  * a diagonal of a rectangular cell, a square or hexagonal group in another basis), and operations
- * that generate no plane group.
+ * that generate no plane group. The type allows `undefined`, "not found", as `pointGroupOf` does; a
+ * list in a conventional cell is always one of the 17 plane groups, so it is not returned.
  *
  * @remarks The conventional cells: ITA (6th ed., 2016), Table 2.1.1.1, p. 143; the 17 plane groups
  * with their operations: Chapter 2.2, pp. 176–192.
  */
-export function planeGroupOf(operations: readonly PlaneOperation[], options?: ToleranceOptions): IdentifiedPlaneGroup {
+export function planeGroupOf(
+  operations: readonly PlaneOperation[],
+  options?: ToleranceOptions,
+): IdentifiedPlaneGroup | undefined {
   checkOptions(options, TOLERANCE_KEYS, 'planeGroupOf');
   const ops = exactList(operations, 'planeGroupOf', toleranceOf(options, 'operations'));
   const found = identifyPlaneGroup(ops);
@@ -1532,7 +1542,7 @@ export function reciprocalBasis(basis: Mat2): Mat2 {
   return deepFreeze(copy(planeReciprocalBasis(basis, 'reciprocalBasis')));
 }
 
-/** An operation of a list given to `residualOperations`: at least its matrix W; other fields are kept. */
+/** An operation of a list given to `residualOperationsOf`: at least its matrix W; other fields are kept. */
 export interface PlaneCellOperation {
   /** The integer 2 × 2 matrix W acting on lattice coordinates. */
   readonly matrix: readonly (readonly number[])[];
@@ -1548,15 +1558,15 @@ export interface PlaneCellOperation {
  * result does not depend on the unit of the edge lengths. Throws a RangeError for an operation
  * without a 2 × 2 integer matrix and for a basis that is not a non-singular 2 × 2 matrix.
  */
-export function residualOperations<T extends PlaneCellOperation>(
+export function residualOperationsOf<T extends PlaneCellOperation>(
   operations: readonly T[],
   basis: Mat2,
   options?: ToleranceOptions,
 ): readonly T[] {
-  checkOptions(options, TOLERANCE_KEYS, 'residualOperations');
+  checkOptions(options, TOLERANCE_KEYS, 'residualOperationsOf');
   const tolerance = toleranceOf(options, 'metric');
   // The list is frozen, not the operations in it, which are the caller's.
-  return Object.freeze(planeResidualOperations(operations, basis, tolerance, 'residualOperations'));
+  return Object.freeze(planeResidualOperations(operations, basis, tolerance, 'residualOperationsOf'));
 }
 
 // --- change of the coordinate system -------------------------------------------------------------

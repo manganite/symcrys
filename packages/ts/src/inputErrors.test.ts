@@ -75,7 +75,7 @@ const pointCalls = (o: readonly { readonly cartesian: unknown }[], key: string, 
   metricTensor: call([basis]),
   reciprocalBasis: call([basis]),
   isValidCell: call([{ alpha: 90, beta: 90, gamma: 120 }], ['minVolumeRatio']),
-  residualOperations: call([key === '32' ? classes.operations('6/mmm') : magneticOps, basis], TOLERANCE),
+  residualOperationsOf: call([key === '32' ? classes.operations('6/mmm') : magneticOps, basis], TOLERANCE),
   changeOfCoordinates: call([{ linearPart: unit, originShift: [0, 0, 0.5] }, { points: [[0.1, 0.2, 0.3]] }], TOLERANCE),
   cellTransformation: call(['hR', { axes: 'hexagonal', cell: 2 }, { centring: 'C', cell: 3 }]),
   directionFromFourIndices: call([[2, -1, -1, 0]]),
@@ -127,7 +127,7 @@ const CALLS: Record<string, [Record<string, unknown>, Record<string, Call>]> = {
           [0, 2],
         ],
       ]),
-      residualOperations: call(
+      residualOperationsOf: call(
         [
           plane.operations('p4mm'),
           [
@@ -245,7 +245,7 @@ const MAY_ANSWER: Readonly<Record<string, (position: number, value: unknown) => 
   isEnantiomorphicOf: (p, v) => p === 0 && Array.isArray(v) && v.length === 0,
   allowsPropertyOf: (p, v) => p === 0 && Array.isArray(v) && v.length === 0,
   allowedPropertiesOf: (p, v) => p === 0 && Array.isArray(v) && v.length === 0,
-  residualOperations: (p, v) => p === 0 && Array.isArray(v) && v.length === 0,
+  residualOperationsOf: (p, v) => p === 0 && Array.isArray(v) && v.length === 0,
   siteSymmetryOf: (p, v) => p === 0 && Array.isArray(v) && v.length === 0,
   orbitOf: (p, v) => p === 0 && Array.isArray(v) && v.length === 0,
   // An empty list of tensors rotates none.
@@ -332,7 +332,7 @@ describe('#236: an array with a hole is refused, not skipped', () => {
   // On 0.15.0 each of these answered without the hole or threw a TypeError (a fault of symcrys).
   it('a list of operations', () => {
     expect(() => classes.pointGroupOf(holey(ops))).toThrow(RangeError);
-    expect(() => classes.residualOperations(holey(ops), classes.latticeBasis('m'))).toThrow(RangeError);
+    expect(() => classes.residualOperationsOf(holey(ops), classes.latticeBasis('m'))).toThrow(RangeError);
     expect(() => classes.changeOfCoordinates({ linearPart: I3 }, { operations: holey(ops) })).toThrow(RangeError);
     expect(() => plane.describeOperationsOf(holey(plane.operations('pm')))).toThrow(RangeError);
   });

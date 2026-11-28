@@ -230,7 +230,7 @@ export interface CartesianOperation {
 }
 
 /**
- * An operation of a list given to `residualOperations`: at least its matrix W; other fields are
+ * An operation of a list given to `residualOperationsOf`: at least its matrix W; other fields are
  * kept. `timeReversal: false` is accepted, `true` belongs to the magnetic API.
  */
 export interface CellOperation {
@@ -746,13 +746,13 @@ export function latticeBasis(key: PointGroupKey, options?: SettingOptions): Mat3
  * order. The deviation counts relative to the largest entry of G (`tolerance`, default
  * `EPSILON`). An operation combined with time reversal belongs to the magnetic API.
  */
-export function residualOperations<T extends CellOperation>(
+export function residualOperationsOf<T extends CellOperation>(
   operations: readonly T[],
   basis: Mat3,
   options?: ToleranceOptions,
 ): readonly T[] {
   checkUnitary(operations);
-  return cell.residualOperations(operations, basis, options);
+  return cell.residualOperationsOf(operations, basis, options);
 }
 
 /**

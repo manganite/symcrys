@@ -548,35 +548,35 @@ def test_site_symmetry_refuses_a_matrix_that_is_not_orthogonal() -> None:
         magnetic.site_symmetry_of([{"cartesian": stretch, "time_reversal": False}], [1, 0, 0])
 
 
-def test_residual_operations_in_both_apis() -> None:
+def test_residual_operations_of_in_both_apis() -> None:
     ops = symcrys.operations("4/mmm")
     cell = symcrys.lattice_from_parameters(a=2, b=2.1, c=3, alpha=90, beta=90, gamma=90)
-    assert len(symcrys.residual_operations(ops, cell)) == 8
-    assert len(symcrys.residual_operations(ops, cell, tolerance=0.1)) == 16
+    assert len(symcrys.residual_operations_of(ops, cell)) == 8
+    assert len(symcrys.residual_operations_of(ops, cell, tolerance=0.1)) == 16
     mops = magnetic.operations("4/mmm")
-    assert len(magnetic.residual_operations(mops, cell)) == 8
-    assert all("time_reversal" in op for op in magnetic.residual_operations(mops, cell))
+    assert len(magnetic.residual_operations_of(mops, cell)) == 8
+    assert all("time_reversal" in op for op in magnetic.residual_operations_of(mops, cell))
     with pytest.raises(ValueError):
-        symcrys.residual_operations([{"matrix": np.eye(3), "time_reversal": True}], cell)
+        symcrys.residual_operations_of([{"matrix": np.eye(3), "time_reversal": True}], cell)
     with pytest.raises(ValueError):
-        magnetic.residual_operations([{"matrix": np.eye(3)}], cell)
+        magnetic.residual_operations_of([{"matrix": np.eye(3)}], cell)
 
 
 def test_residual_operations_of_the_plane() -> None:
     # The kept rows of the caller's Operations, as Operations of symcrys.plane (#119).
     ops = plane.operations("p4mm")
     cell = plane.lattice_from_parameters(3, 3.1, 90)
-    kept = plane.residual_operations(ops, cell)
+    kept = plane.residual_operations_of(ops, cell)
     assert isinstance(kept, plane.Operations)
     assert kept.matrix.shape == (4, 2, 2) and kept.translation.shape == (4, 2)
     rows = [i for i in range(len(ops)) if any((ops.matrix[i] == m).all() for m in kept.matrix)]
     assert kept.matrix.tolist() == ops.matrix[rows].tolist()
-    assert len(plane.residual_operations(list(ops), cell)) == 4
-    assert len(plane.residual_operations(ops, cell, tolerance=0.5)) == 8
+    assert len(plane.residual_operations_of(list(ops), cell)) == 4
+    assert len(plane.residual_operations_of(ops, cell, tolerance=0.5)) == 8
     with pytest.raises(ValueError):
-        plane.residual_operations(ops, cell, tolerance=1.5)
+        plane.residual_operations_of(ops, cell, tolerance=1.5)
     with pytest.raises(ValueError):
-        plane.residual_operations([{"matrix": [[0.5, -0.866], [0.866, 0.5]], "translation": [0, 0]}], cell)
+        plane.residual_operations_of([{"matrix": [[0.5, -0.866], [0.866, 0.5]], "translation": [0, 0]}], cell)
 
 
 def test_find_point_group_reads_symbols_tolerantly() -> None:
@@ -744,28 +744,28 @@ def test_operations_are_a_record_of_arrays() -> None:
     # Every function that takes operations takes the three forms alike.
     for form in (ops, ops.cartesian, [{"cartesian": c} for c in ops.cartesian]):
         assert symcrys.allowed_properties_of(form) == symcrys.allowed_properties("4mm")
-    # residual_operations keeps the caller's operations as Operations; it needs every field.
+    # residual_operations_of keeps the caller's operations as Operations; it needs every field.
     basis = symcrys.lattice_from_parameters(a=3, b=3.2, c=5, alpha=90, beta=90, gamma=120)
-    kept = symcrys.residual_operations(symcrys.operations("6/mmm"), basis)
+    kept = symcrys.residual_operations_of(symcrys.operations("6/mmm"), basis)
     # a ≠ b at γ = 120°: the lattice keeps 2/m of 6/mmm, 4 operations.
     assert isinstance(kept, symcrys.Operations) and len(kept) == 4
     hexagonal = symcrys.operations("6/mmm")
-    assert symcrys.residual_operations(list(hexagonal), basis).cartesian.tolist() == kept.cartesian.tolist()
+    assert symcrys.residual_operations_of(list(hexagonal), basis).cartesian.tolist() == kept.cartesian.tolist()
     with pytest.raises(symcrys.SymcrysError, match="each needs 'matrix', 'cartesian'"):
-        symcrys.residual_operations([{"matrix": m} for m in hexagonal.matrix], basis)
-    mkept = magnetic.residual_operations(magnetic.operations("6/mmm1'"), basis)
+        symcrys.residual_operations_of([{"matrix": m} for m in hexagonal.matrix], basis)
+    mkept = magnetic.residual_operations_of(magnetic.operations("6/mmm1'"), basis)
     assert len(mkept) == 8 and mkept.time_reversal.sum() == 4
 
 
 def test_operations_review_of_step_12b() -> None:
     # Cases from the review of #121 step 12b, each a fault before it was fixed.
     eye = np.eye(3)
-    # residual_operations passes the caller's operations to the library as they are, so the
+    # residual_operations_of passes the caller's operations to the library as they are, so the
     # crystallographic API still refuses time reversal.
     with pytest.raises(symcrys.SymcrysError, match="combined with time reversal"):
-        symcrys.residual_operations(magnetic.operations("4/m1'"), eye)
+        symcrys.residual_operations_of(magnetic.operations("4/m1'"), eye)
     with pytest.raises(symcrys.SymcrysError, match="not an integer matrix"):
-        symcrys.residual_operations([{"matrix": eye * 0.5, "cartesian": eye}], eye)
+        symcrys.residual_operations_of([{"matrix": eye * 0.5, "cartesian": eye}], eye)
     # The site symmetry and the orbit of a direction do not depend on time reversal: the magnetic
     # API takes operations without it there, also as an array (docs/conventions.md).
     cartesian = symcrys.operations("4mm").cartesian
@@ -880,16 +880,16 @@ def test_magnetic_change_of_coordinates_carries_the_time_reversal_through() -> N
     assert magnetic.change_of_coordinates(p, operations=[])["operations"].time_reversal is None
     with pytest.raises(symcrys.SymcrysError, match="give time_reversal for every operation or for none"):
         magnetic.change_of_coordinates(np.eye(3), operations=[{"matrix": np.eye(3), "time_reversal": True}, {"matrix": np.eye(3)}])
-    # The result goes on to residual_operations, which keeps it as TransformedOperations (review of #250).
-    kept = magnetic.residual_operations(there, magnetic.lattice_basis("-3'm"))
+    # The result goes on to residual_operations_of, which keeps it as TransformedOperations (review of #250).
+    kept = magnetic.residual_operations_of(there, magnetic.lattice_basis("-3'm"))
     assert isinstance(kept, magnetic.TransformedOperations) and len(kept) == 12
     assert (kept.time_reversal == ops.time_reversal).all()
     with pytest.raises(symcrys.SymcrysError, match="time_reversal"):
-        magnetic.residual_operations(spatial, magnetic.lattice_basis("-3'm"))
+        magnetic.residual_operations_of(spatial, magnetic.lattice_basis("-3'm"))
     hexagonal = symcrys.change_of_coordinates(p, operations=symcrys.operations("-3m", axes="rhombohedral"))["operations"]
-    assert isinstance(symcrys.residual_operations(hexagonal, symcrys.lattice_basis("-3m")), symcrys.TransformedOperations)
+    assert isinstance(symcrys.residual_operations_of(hexagonal, symcrys.lattice_basis("-3m")), symcrys.TransformedOperations)
     square = plane.change_of_coordinates(np.eye(2), operations=plane.operations("p4mm"))["operations"]
-    assert isinstance(plane.residual_operations(square, np.eye(2)), plane.TransformedOperations)
+    assert isinstance(plane.residual_operations_of(square, np.eye(2)), plane.TransformedOperations)
     # symcrys stays spatial.
     assert symcrys.change_of_coordinates(p, operations=symcrys.operations("-3m", axes="rhombohedral"))["operations"][0].keys() == {"matrix", "translation"}
 
