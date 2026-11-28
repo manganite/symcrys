@@ -518,7 +518,7 @@ def test_site_symmetry_refuses_a_matrix_that_is_not_orthogonal() -> None:
         magnetic.site_symmetry_of([{"cartesian": stretch, "time_reversal": False}], [1, 0, 0])
 
 
-def test_residual_operations_in_both_apis() -> None:
+def test_residual_operations_of_in_both_apis() -> None:
     ops = symcrys.operations("4/mmm")
     cell = symcrys.lattice_from_parameters(a=2, b=2.1, c=3, alpha=90, beta=90, gamma=90)
     assert len(symcrys.residual_operations_of(ops, cell)) == 8
