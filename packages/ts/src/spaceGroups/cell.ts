@@ -7,15 +7,13 @@
  */
 
 import { BOUNDARY_EPSILON } from '../tolerances.js';
-import { gcd } from '../integers.js';
+import { gcd, safeProduct, safeSum } from '../integers.js';
 import { shown } from '../checks.js';
 import { type ExactOperation } from './affine.js';
 import { describePlaneOperation } from './describe.js';
 import { planeGroupEntry, planeGroupOperations } from './planeGroups.js';
 import {
   ONE,
-  safeProduct,
-  safeSum,
   ZERO,
   add,
   mod1,

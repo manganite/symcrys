@@ -3,10 +3,10 @@
  * indices"); the change of the coordinate system is in coordinates.ts. Plain integers and matrices in and out.
  */
 
-import { shown } from './checks.js';
+import { shown, everyEntry } from './checks.js';
 import { type Vec3 } from './linalg.js';
 import { deepFreeze } from './freeze.js';
-import { gcd } from './integers.js';
+import { gcd, safeDot, safeProduct, safeSum } from './integers.js';
 
 /** A direction [UVTW] or a plane (hkil) in four indices (Bravais–Miller). */
 export type FourIndices = readonly [number, number, number, number];
@@ -16,9 +16,24 @@ function integers(v: readonly number[], who: string, length?: number): void {
     !Array.isArray(v) ||
     (length !== undefined && v.length !== length) ||
     v.length === 0 ||
-    !v.every((x) => Number.isSafeInteger(x))
+    !everyEntry(v, (x) => Number.isSafeInteger(x))
   ) {
     throw new RangeError(`${who}: ${length === undefined ? 'a list of' : length} integers expected, not ${shown(v)}`);
+  }
+}
+
+/**
+ * The value of `f`, computed with checked arithmetic; a value outside the safe integers is a RangeError
+ * that names the function and what it computed.
+ */
+function inSafeIntegers<T>(who: string, what: string, f: () => T): T {
+  try {
+    return f();
+  } catch (e) {
+    if (e instanceof RangeError) {
+      throw new RangeError(`${who}: computing ${what} needs a value beyond the safe integers (2⁵³ − 1)`, { cause: e });
+    }
+    throw e;
   }
 }
 
@@ -38,7 +53,8 @@ export function reduceIndices(indices: readonly number[]): readonly number[] {
 export function planeToFourIndices(hkl: Vec3): FourIndices {
   integers(hkl, 'planeToFourIndices', 3);
   if (hkl.every((x) => x === 0)) throw new RangeError('planeToFourIndices: zero vector');
-  return deepFreeze([hkl[0] + 0, hkl[1] + 0, -(hkl[0] + hkl[1]) + 0, hkl[2] + 0]);
+  const i = inSafeIntegers('planeToFourIndices', 'i = −(h + k)', () => -safeSum(hkl[0], hkl[1]));
+  return deepFreeze([hkl[0] + 0, hkl[1] + 0, i + 0, hkl[2] + 0]);
 }
 
 /**
@@ -48,7 +64,7 @@ export function planeToFourIndices(hkl: Vec3): FourIndices {
  */
 export function planeFromFourIndices(hkil: FourIndices): Vec3 {
   integers(hkil, 'planeFromFourIndices', 4);
-  if (hkil[2] !== -(hkil[0] + hkil[1]))
+  if (hkil[2] !== -inSafeIntegers('planeFromFourIndices', 'h + k', () => safeSum(hkil[0], hkil[1])))
     throw new RangeError(`planeFromFourIndices: i must be −(h + k) in ${shown(hkil)}`);
   return deepFreeze([hkil[0] + 0, hkil[1] + 0, hkil[3] + 0]);
 }
@@ -63,7 +79,13 @@ export function directionToFourIndices(uvw: Vec3): FourIndices {
   integers(uvw, 'directionToFourIndices', 3);
   const [u, v, w] = uvw;
   if (u === 0 && v === 0 && w === 0) throw new RangeError('directionToFourIndices: zero vector');
-  return deepFreeze(reduceIndices([2 * u - v, 2 * v - u, -(u + v), 3 * w]) as unknown as FourIndices);
+  const four = inSafeIntegers('directionToFourIndices', 'the four indices', () => [
+    safeDot([2, -1], [u, v]),
+    safeDot([-1, 2], [u, v]),
+    -safeSum(u, v),
+    safeProduct(3, w),
+  ]);
+  return deepFreeze(reduceIndices(four) as unknown as FourIndices);
 }
 
 /**
@@ -76,8 +98,13 @@ export function directionFromFourIndices(uvtw: FourIndices): Vec3 {
   integers(uvtw, 'directionFromFourIndices', 4);
   if (uvtw.every((x) => x === 0)) throw new RangeError('directionFromFourIndices: zero vector');
   const [U, V, T, W] = uvtw;
-  if (T !== -(U + V)) throw new RangeError(`directionFromFourIndices: T must be −(U + V) in ${shown(uvtw)}`);
-  return deepFreeze(reduceIndices([U - T, V - T, W]) as unknown as Vec3);
+  const [sum, u, v] = inSafeIntegers('directionFromFourIndices', 'U + V, U − T and V − T', () => [
+    safeSum(U, V),
+    safeSum(U, -T),
+    safeSum(V, -T),
+  ]);
+  if (T !== -sum) throw new RangeError(`directionFromFourIndices: T must be −(U + V) in ${shown(uvtw)}`);
+  return deepFreeze(reduceIndices([u, v, W]) as unknown as Vec3);
 }
 
 /**
@@ -88,9 +115,11 @@ export function zoneAxis(h1: Vec3, h2: Vec3): Vec3 | undefined {
   integers(h1, 'zoneAxis', 3);
   integers(h2, 'zoneAxis', 3);
   if (h1.every((x) => x === 0) || h2.every((x) => x === 0)) throw new RangeError('zoneAxis: zero vector');
-  const c = [h1[1] * h2[2] - h1[2] * h2[1], h1[2] * h2[0] - h1[0] * h2[2], h1[0] * h2[1] - h1[1] * h2[0]];
-  if (!c.every((x) => Number.isSafeInteger(x)))
-    throw new RangeError('zoneAxis: the cross product exceeds the safe integers');
+  const c = inSafeIntegers('zoneAxis', 'the cross product', () => [
+    safeDot([h1[1], -h1[2]], [h2[2], h2[1]]),
+    safeDot([h1[2], -h1[0]], [h2[0], h2[2]]),
+    safeDot([h1[0], -h1[1]], [h2[1], h2[0]]),
+  ]);
   if (c.every((x) => x === 0)) return undefined;
   return deepFreeze(reduceIndices(c) as unknown as Vec3);
 }
@@ -120,14 +149,26 @@ function indexValue(component: string, values: MillerValues, fail: (message: str
     if (v === undefined) throw fail(`The Miller index ${component} needs a value of ${letter}`);
     return v;
   };
+  // Checked: an intermediate value outside the safe integers throws instead of rounding.
+  const checked = (f: () => number): number => {
+    try {
+      return f();
+    } catch {
+      throw fail(`The Miller index ${component} needs a value beyond the safe integers (2⁵³ − 1)`);
+    }
+  };
   const result = terms.reduce((sum, term) => {
     const m = /^([+-]?)(\d*)([hkil]?)$/.exec(term)!;
     const sign = m[1] === '-' ? -1 : 1;
     const factor = m[2] === '' ? 1 : Number(m[2]);
     if (!Number.isSafeInteger(factor)) throw fail(`The factor in ${component} is not a safe integer`);
-    if (m[3] === '') return sum + sign * factor;
-    if (m[3] === 'i') return sum + sign * factor * -(value('h') + value('k'));
-    return sum + sign * factor * value(m[3] as 'h' | 'k' | 'l');
+    if (m[3] === '') return checked(() => safeSum(sum, sign * factor));
+    if (m[3] === 'i') {
+      const [h, k] = [value('h'), value('k')];
+      return checked(() => safeSum(sum, safeProduct(-sign * factor, safeSum(h, k))));
+    }
+    const x = value(m[3] as 'h' | 'k' | 'l');
+    return checked(() => safeSum(sum, safeProduct(sign * factor, x)));
   }, 0);
   if (!Number.isSafeInteger(result)) throw fail(`The Miller index ${component} is not a safe integer: ${result}`);
   return result;

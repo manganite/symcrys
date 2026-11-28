@@ -28,6 +28,18 @@ All notable changes to symcrys are recorded here. The format follows
   2·10⁻⁶ at the tolerance 10⁻⁶ none of the 8 operations fixing the fourfold axis was found. The list
   is made an exact group once and the direction tested against it, so the site symmetry is a
   subgroup and the images of `orbitOf` are unit vectors (they were off by up to 5·10⁻⁶). Affected since `orbitOf` was added (0.7.0) and `siteSymmetryOf` (0.11.0); in `symcrys/plane` since 0.15.0.
+- Integers are computed exactly or refused (#236): every product and sum of indices and of the
+  matrices W goes through checked arithmetic, and a value outside the safe integers is a RangeError
+  that names the function. Before, values were rounded without an error: `zoneAxis([1e8, 1e8 − 1,
+0], [1e8 + 1, 1e8, 0])` reported parallel planes (it now throws; the exact axis [0, 0, 1] needs
+  products beyond 2⁵³), `planeToFourIndices([2⁵³ − 1, 2, 0])` gave i off by one, `millerIndices`,
+  `directionToFourIndices` and `directionFromFourIndices` could round the same way, and `orbitOf`,
+  `siteSymmetryOf` and the other functions of a direction or an edge in `symcrys/plane` rounded the
+  image under a caller's matrix with large entries. Affected since these functions were added.
+- A list with a hole (a sparse array) is refused with a RangeError (#236): as indices or a vector
+  (`reduceIndices([1, , 3])` gave `[1, null, 3]`), as a matrix, and as a list of operations, where
+  0.15.0 threw a TypeError (`pointGroupOf`, `tensorFormOf`, `siteSymmetryOf`) or skipped the hole
+  (`residualOperations`, `changeOfCoordinates`, `describeOperationsOf` of `symcrys/plane`).
 
 ## [0.15.0] - 2026-11-27
 

@@ -563,7 +563,12 @@ Matrices hold floating-point numbers. During group closure every entry within 10
 value (0, ±1, ±1/2, ±√3/2, and ±√2/2 for the 45° setting frame) is set to that value, so products do not drift; two matrices are
 equal when all entries agree within `EPSILON` (10⁻⁵). Operations a caller passes in are compared within the
 tolerance of the call ("Tolerances"). The matrix W of an operation in the lattice basis
-(`matrix`, "Operations") is exact: integers.
+(`matrix`, "Operations") is exact: integers. Integers are computed exactly or not at all: every
+product and sum of indices, of the entries of W and of their images is checked, and a value outside
+the safe integers (beyond 2⁵³ − 1) is a RangeError that names the function, never a rounded number.
+So a call can be refused whose result would be representable, when a value on the way is not (a
+cross product of indices above about 9·10⁷); such indices do not occur in crystallography. A list
+with a hole (a sparse array such as `[1, , 3]`) is refused, where a check of its entries would skip it.
 
 ## Tolerances
 

@@ -4,7 +4,7 @@
  * of a set of generators into a group.
  */
 
-import { shown } from './checks.js';
+import { shown, everyEntry } from './checks.js';
 import { matricesEqual, multiply, snap, type Mat3 } from './linalg.js';
 import { EPSILON } from './tolerances.js';
 
@@ -103,7 +103,7 @@ function isMatrix3(m: unknown): m is Mat3 {
   return (
     Array.isArray(m) &&
     m.length === 3 &&
-    m.every((row) => Array.isArray(row) && row.length === 3 && row.every((v) => typeof v === 'number'))
+    everyEntry(m, (row) => Array.isArray(row) && row.length === 3 && everyEntry(row, (v) => typeof v === 'number'))
   );
 }
 
@@ -118,7 +118,8 @@ export function checkCartesianOperations(
   tolerance = EPSILON,
 ): void {
   if (!Array.isArray(operations)) throw new RangeError('The operations must be an array');
-  operations.forEach((op, i) => {
+  // Array.from: a hole of a sparse list is undefined, and refused, not skipped.
+  Array.from(operations).forEach((op, i) => {
     const cartesian = (op as { readonly cartesian?: unknown } | null)?.cartesian;
     if (!isMatrix3(cartesian)) {
       const hasMatrix = (op as { readonly matrix?: unknown } | null)?.matrix !== undefined;
@@ -140,7 +141,7 @@ export function checkCartesianOperations(
  */
 export function checkTimeReversal(operations: readonly CartesianOperation[]): void {
   if (!Array.isArray(operations)) throw new RangeError('The operations must be an array');
-  operations.forEach((op, i) => {
+  Array.from(operations).forEach((op, i) => {
     if (typeof (op as Partial<CartesianOperation> | null)?.timeReversal !== 'boolean') {
       throw new RangeError(
         `Operation ${i}: timeReversal must be true or false, not ${shown((op as Partial<CartesianOperation> | null)?.timeReversal)}; an operation of the magnetic API says whether it is combined with time reversal`,

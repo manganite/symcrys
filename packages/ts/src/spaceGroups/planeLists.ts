@@ -5,7 +5,8 @@
  * edges (hk) integer.
  */
 
-import { shown } from '../checks.js';
+import { safeDot } from '../integers.js';
+import { shown, everyEntry } from '../checks.js';
 import {
   closure,
   determinant,
@@ -51,7 +52,7 @@ export function checkVector(value: unknown, kind: VectorKind): number[] {
   if (
     !Array.isArray(value) ||
     value.length !== 2 ||
-    !value.every((x) => typeof x === 'number' && Number.isSafeInteger(x)) ||
+    !everyEntry(value, (x) => typeof x === 'number' && Number.isSafeInteger(x)) ||
     (value[0] === 0 && value[1] === 0)
   ) {
     throw new RangeError(`${what} is two integers, not both zero, not ${shown(value)}`);
@@ -70,14 +71,27 @@ export function checkVector(value: unknown, kind: VectorKind): number[] {
  * of its points.
  */
 export function imageOf(kind: VectorKind, w: IntMatrix, v: readonly number[]): number[] {
-  if (kind === 'uv') return [w[0][0] * v[0] + w[0][1] * v[1] + 0, w[1][0] * v[0] + w[1][1] * v[1] + 0];
+  try {
+    return checkedImageOf(kind, w, v);
+  } catch (e) {
+    if (!(e instanceof RangeError)) throw e;
+    throw new RangeError(
+      `The image of ${kind} ${shown(v)} under the matrix ${shown(w)} needs a value beyond the safe integers (2⁵³ − 1)`,
+      { cause: e },
+    );
+  }
+}
+
+/** `imageOf` in checked arithmetic: a value outside the safe integers throws instead of rounding. */
+function checkedImageOf(kind: VectorKind, w: IntMatrix, v: readonly number[]): number[] {
+  if (kind === 'uv') return [safeDot(w[0], v) + 0, safeDot(w[1], v) + 0];
   // W⁻¹ = adj(W)/det W, det W = ±1.
   const d = determinant(w);
   const inv = [
     [w[1][1] * d, -w[0][1] * d],
     [-w[1][0] * d, w[0][0] * d],
   ];
-  return [v[0] * inv[0][0] + v[1] * inv[1][0] + 0, v[0] * inv[0][1] + v[1] * inv[1][1] + 0];
+  return [safeDot(v, [inv[0][0], inv[1][0]]) + 0, safeDot(v, [inv[0][1], inv[1][1]]) + 0];
 }
 
 /**

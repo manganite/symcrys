@@ -5,7 +5,7 @@
  * per pair, as ITC defines the quantity.
  */
 
-import { checkOptions, shown } from '../checks.js';
+import { checkOptions, shown, everyEntry } from '../checks.js';
 import { deepFreeze } from '../freeze.js';
 import { toleranceOf, type ToleranceOptions } from '../tolerances.js';
 import { type TensorPropertyName } from './propertyTable.js';
@@ -110,7 +110,11 @@ function factorsOf(
         `({ factors: [${layout.pairs.map(() => '1 or 2').join(', ')}] })${piezoelectric}`,
     );
   }
-  if (!Array.isArray(factors) || factors.length !== layout.pairs.length || !factors.every((f) => f === 1 || f === 2)) {
+  if (
+    !Array.isArray(factors) ||
+    factors.length !== layout.pairs.length ||
+    !everyEntry(factors, (f) => f === 1 || f === 2)
+  ) {
     throw new RangeError(
       `${who}: factors must be ${layout.pairs.length} of 1 or 2, one per contracted index pair, not ${shown(factors)}`,
     );
@@ -201,7 +205,7 @@ export function toVoigt(
   if (
     !Array.isArray(tensor) ||
     tensor.length !== dim ||
-    !tensor.every((x) => typeof x === 'number' && Number.isFinite(x))
+    !everyEntry(tensor, (x) => typeof x === 'number' && Number.isFinite(x))
   ) {
     throw new RangeError(`${who}: a tensor of rank ${rank} is ${dim} finite numbers, not ${shown(tensor)}`);
   }
@@ -247,14 +251,17 @@ export function fromVoigt(
   const rank = resolved.spec.rank;
   const shapeOk =
     layout.shape.length === 1
-      ? Array.isArray(voigt) && voigt.length === 6 && voigt.every((x) => typeof x === 'number' && Number.isFinite(x))
+      ? Array.isArray(voigt) &&
+        voigt.length === 6 &&
+        everyEntry(voigt, (x) => typeof x === 'number' && Number.isFinite(x))
       : Array.isArray(voigt) &&
         voigt.length === layout.shape[0] &&
-        voigt.every(
+        everyEntry(
+          voigt,
           (row) =>
             Array.isArray(row) &&
             row.length === layout.shape[1] &&
-            row.every((x: unknown) => typeof x === 'number' && Number.isFinite(x)),
+            everyEntry(row, (x: unknown) => typeof x === 'number' && Number.isFinite(x)),
         );
   if (!shapeOk) {
     throw new RangeError(
