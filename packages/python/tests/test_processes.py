@@ -28,7 +28,6 @@ def test_children_made_by_spawn_have_their_own_engine() -> None:
 
 
 @pytest.mark.skipif(not FORK, reason="no fork on this platform")
-@pytest.mark.filterwarnings("ignore:This process .* is multi-threaded:DeprecationWarning")
 def test_children_made_by_fork_use_the_engine_they_inherit() -> None:
     symcrys.operations("m-3m")  # the parent's engine runs before the fork
     with multiprocessing.get_context("fork").Pool(2) as pool:
@@ -37,33 +36,41 @@ def test_children_made_by_fork_use_the_engine_they_inherit() -> None:
 
 @pytest.mark.skipif(not FORK, reason="no fork on this platform")
 @pytest.mark.filterwarnings("ignore:This process .* is multi-threaded:DeprecationWarning")
-@pytest.mark.xfail(strict=True, reason="#240: a fork while another thread calls the engine leaves the child its lock held")
+@pytest.mark.xfail(
+    strict=True,
+    raises=AssertionError,
+    reason="#240: a fork while another thread calls the engine leaves the child its lock held",
+)
 def test_a_fork_while_another_thread_calls_the_engine_gives_a_child_that_can_call_it() -> None:
     symcrys.operations("m-3m")
-    held, release = threading.Event(), threading.Event()
+    held = threading.Event()
 
     def call_in_progress() -> None:
-        # As a call does: the lock is held while the engine runs.
+        # As a call does: the lock is held while the engine runs, here for a second.
         with _engine._lock:
             held.set()
-            release.wait(10)
+            threading.Event().wait(1)
 
     thread = threading.Thread(target=call_in_progress)
     thread.start()
-    held.wait(10)
-    context = multiprocessing.get_context("fork")
-    results: Any = context.Queue()
-    child = context.Process(target=order_into, args=(results, "4mm"))
-    child.start()
-    release.set()
-    thread.join()
-    child.join(10)
-    finished = not child.is_alive()
-    if not finished:
-        child.kill()
-        child.join()
-    assert finished, "the child did not finish: it inherited the lock as held"
     try:
-        assert results.get(timeout=5) == 8
+        assert held.wait(10), "the thread did not take the lock"
+        context = multiprocessing.get_context("fork")
+        results: Any = context.Queue()
+        child = context.Process(target=order_into, args=(results, "4mm"))
+        child.start()
+        child.join(5)
+        finished = not child.is_alive()
+        if not finished:
+            child.kill()
+            child.join()
+    finally:
+        thread.join()
+    assert finished, "the child did not finish: it inherited the lock as held"
+    if child.exitcode != 0:
+        pytest.fail(f"the child ended with {child.exitcode}")
+    try:
+        answer = results.get(timeout=5)
     except queue.Empty:
         pytest.fail("the child gave no result")
+    assert answer == 8
