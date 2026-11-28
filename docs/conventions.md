@@ -1250,6 +1250,12 @@ order). For rank 3, xyz is 0·9 + 1·3 + 2 = 5.
 - `relations`: one row r per component that is not a parameter, with r·t = 0 for every allowed
   tensor t: t_c − Σₖ basis[k][c]·t_{parameters[k]} = 0. A row with a single 1 says the component
   vanishes.
+- `largestCoefficient`: the largest magnitude of an entry of `basis`, 0 if the tensor vanishes: how
+  much the basis amplifies an error of the parameters. It is 1 or 2 for every group in every
+  setting (a fact of the 122 groups, checked over all of them). For operations in a frame nearly
+  aligned with a symmetry element it grows with the misalignment and with the rank (about cot θ for
+  the polar axis of 4mm tilted by θ, about cot³θ for its piezoelectric tensor); the form of the
+  setting rotated into the frame keeps it small ([Tensors](tensors.md)).
 
 Relation strings (`\chi_{xxx} = -\chi_{xyy}`), Nye diagrams and LaTeX are presentation and stay
 in the applications; they follow from these numbers.

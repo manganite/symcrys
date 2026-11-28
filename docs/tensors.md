@@ -62,7 +62,9 @@ A form has
   component independent of those before it;
 - `relations`: the constraints, one per component that is not a parameter, each r with
   Σ r · t = 0 over all components for every allowed tensor t; in TypeScript rows of length
-  3<sup>rank</sup>, in Python each an array of shape (3, …, 3) like the basis tensors.
+  3<sup>rank</sup>, in Python each an array of shape (3, …, 3) like the basis tensors;
+- `largestCoefficient` (Python `largest_coefficient`): the largest magnitude of a coefficient of the
+  basis, 1 or 2 for a group in a setting, 0 if the tensor vanishes.
 
 ```{code-cell} ipython3
 import symcrys
@@ -81,6 +83,32 @@ SHG = {"rank": 3, "kind": "polar", "intrinsic": "symmetric-last-pair"}
 
 Settings and frames: [Conventions, "Settings"](conventions.md#settings) and
 [Conventions, "Cartesian frame"](conventions.md#cartesian-frame).
+
+**A crystal in another frame.** The form of a list of operations is the same reduced row echelon
+form, in the frame of the operations. For a frame that is nearly, but not exactly, aligned with a
+symmetry element, its coefficients grow, the more the higher the rank: the polar axis of 4mm tilted
+by 10⁻⁶ about y gives the basis tensor (1, 0, cot 10⁻⁶), its piezoelectric tensor tilted by 0.1
+coefficients of about cot³ 0.1 ≈ 10³, and `largest_coefficient` says so. Such a basis amplifies
+every error of a parameter by that factor.
+
+```{code-cell} ipython3
+import numpy as np
+
+theta = 1e-6
+tilt = np.array([[np.cos(theta), 0, np.sin(theta)], [0, 1, 0], [-np.sin(theta), 0, np.cos(theta)]])
+ops = symcrys.operations("4mm")
+tilted = [{"cartesian": tilt @ r @ tilt.T} for r in ops.cartesian]
+symcrys.tensor_form_of(tilted, "pyroelectric")["largest_coefficient"]
+```
+
+The form computed in the frame of the setting, with exact entries, and rotated into the other frame
+spans the same tensors with small coefficients. The rotated tensors are a basis, no longer in row
+echelon form: their parameters are not components of the tensor.
+
+```{code-cell} ipython3
+form = symcrys.tensor_form("4mm", "pyroelectric")
+symcrys.rotate_tensor(form["basis"], tilt, "pyroelectric")
+```
 
 ## Named properties
 
