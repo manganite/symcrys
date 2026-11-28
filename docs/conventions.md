@@ -1475,8 +1475,8 @@ group fixes the type of its lattice, not its parameters.
 translation in [0, 1): first the general position as ITA numbers it, then, for `cm` and `c2mm`, the
 same sequence with the centring (1/2, 1/2) added, as ITA prints the "(1/2,1/2)+ set". The data of
 a plane group are its number and symbol, ITA's selected generators, the centring and the asymmetric
-unit (convention data); the general position is built from the generators by ITA's rule, as for the
-point groups: from the identity, each generator g extends the group H built so far by the cosets
+unit (convention data, stored as its inequalities); the general position is built from the
+generators by ITA's rule, as for the point groups: from the identity, each generator g extends the group H built so far by the cosets
 gH, g²H, … until a power of g lies in H, all modulo the lattice (ITA 2016 § 1.4.3, p. 60, Table
 1.4.3.2; § 2.1.3.11 (iv), p. 162), which gives ITA's numbering for all 17 groups (tested). The crystal system
 follows from the point group, the full symbol from the elements along the symmetry directions
@@ -1613,9 +1613,11 @@ Chapter 2.2, pp. 176–192.
 
 **The cell.** `asymmetricUnit` gives ITA's printed block "Asymmetric unit" as data: the
 printed inequalities a·x + b·y ≤ c, all of them in printed order, also bounds that hold no edge
-(p3: x ≤ 2/3, y ≤ 2/3; a double inequality and a `min` give one each), and the convex polygon they
-bound, its vertices counter-clockwise from the lowest and per edge the index of the inequality that
-holds it. `symmetryElements` gives the symmetry elements as ITA describes them: each once
+(p3: x ≤ 2/3, y ≤ 2/3; a double inequality and a `min` give one each: 0 ≤ x ≤ 1/2 is −x ≤ 0, then
+2x ≤ 1), each with integer coefficients without a common factor, as symcrys stores them (the printed
+block is the anchor of the tests), and the convex polygon they bound, its vertices
+counter-clockwise from the lowest and per edge the index of the inequality that holds it.
+`symmetryElements` gives the symmetry elements as ITA describes them: each once
 modulo the lattice translations, the centring (1/2, 1/2) included (cm: the mirror line 0,y and the
 glide line 1/4,y, as ITA lists them), every rotation point in [0, 1)² with the highest n of a rotation
 about it (`rotationPoints`, ITA Table 2.1.2.1: the rotation point is the symmetry element of a

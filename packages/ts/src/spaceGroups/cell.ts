@@ -1,23 +1,22 @@
 /**
  * The asymmetric unit of a plane group and its symmetry elements, as numbers (docs/conventions.md,
- * "Plane groups"): the asymmetric unit as its printed inequalities with the
- * polygon they bound, the elements as rotation points with their n and as mirror and glide lines
- * by a point and a direction, once modulo the lattice or all translates in a box. Exact, in the
- * lattice basis; drawing them stays with the applications. Internal for now.
+ * "Plane groups"): the asymmetric unit as ITA's inequalities with the polygon they bound, the
+ * elements as rotation points with their n and as mirror and glide lines by a point and a
+ * direction, once modulo the lattice or all translates in a box. Exact, in the lattice basis;
+ * drawing them stays with the applications. Internal for now.
  */
 
 import { BOUNDARY_EPSILON } from '../tolerances.js';
-import { gcd, safeProduct, safeSum } from '../integers.js';
+import { safeProduct, safeSum } from '../integers.js';
 import { shown } from '../checks.js';
 import { type ExactOperation } from './affine.js';
 import { describePlaneOperation } from './describe.js';
+import { type Inequality } from './planeGroupData.js';
 import { planeGroupEntry, planeGroupOperations } from './planeGroups.js';
 import {
-  ONE,
   ZERO,
   add,
   mod1,
-  multiply,
   parseRational,
   rational,
   rationalsEqual,
@@ -27,12 +26,9 @@ import {
   type Rational,
 } from './rational.js';
 
-/** An inequality a·x + b·y ≤ c with integer coefficients without a common factor. */
-export type Inequality = readonly [a: number, b: number, c: number];
-
-/** The asymmetric unit of a plane group: the printed inequalities, and the convex polygon they bound. */
+/** The asymmetric unit of a plane group: ITA's inequalities, and the convex polygon they bound. */
 export interface AsymmetricUnit {
-  /** The inequalities as printed, in printed order, also those that hold no edge (p3: x ≤ 2/3). */
+  /** ITA's inequalities, in ITA's order, also those that hold no edge (p3: x ≤ 2/3). */
   readonly inequalities: readonly Inequality[];
   /** The vertices of the polygon, counter-clockwise in the lattice basis (a towards b), starting at the vertex with the smallest y, then x. */
   readonly vertices: readonly (readonly Rational[])[];
@@ -76,109 +72,6 @@ export type Box = readonly [readonly [number, number], readonly [number, number]
 // ---------------------------------------------------------------------------------------------
 // Asymmetric unit
 
-/** A linear expression c₀ + cx·x + cy·y. */
-type Linear = readonly [cx: Rational, cy: Rational, c0: Rational];
-
-const linAdd = (p: Linear, q: Linear): Linear => [add(p[0], q[0]), add(p[1], q[1]), add(p[2], q[2])];
-const linScale = (k: Rational, p: Linear): Linear => [multiply(k, p[0]), multiply(k, p[1]), multiply(k, p[2])];
-const isConstant = (p: Linear): boolean => p[0][0] === 0 && p[1][0] === 0;
-
-/**
- * Reads a linear expression as ITA prints the bounds of an asymmetric unit: `x`, `2/3`, `1/2 - x`,
- * `(1 + y)/2`, `x/2`, `2x`. Throws on anything else.
- */
-function parseLinear(text: string): Linear {
-  const s = text.replace(/\s+/g, '');
-  let i = 0;
-  const fail = (): never => {
-    throw new RangeError(`Cannot read the linear expression "${text}"`);
-  };
-  function number(): Rational | undefined {
-    const m = /^\d+(?:\/\d+)?/.exec(s.slice(i));
-    if (!m) return undefined;
-    i += m[0].length;
-    return parseRational(m[0]);
-  }
-  function factor(): Linear {
-    if (s[i] === '(') {
-      i++;
-      const e = sum();
-      if (s[i++] !== ')') fail();
-      return e;
-    }
-    const k = number();
-    if (s[i] === 'x' || s[i] === 'y') {
-      const v = s[i++];
-      const c = k ?? ONE;
-      return v === 'x' ? [c, ZERO, ZERO] : [ZERO, c, ZERO];
-    }
-    if (k === undefined) return fail();
-    return [ZERO, ZERO, k];
-  }
-  function term(): Linear {
-    let e = factor();
-    while (s[i] === '/') {
-      i++;
-      const d = number() ?? fail();
-      e = linScale(rational(d[1], d[0]), e);
-    }
-    return e;
-  }
-  function sum(): Linear {
-    let sign = 1;
-    if (s[i] === '-' || s[i] === '+') sign = s[i++] === '-' ? -1 : 1;
-    let e = linScale(rational(sign), term());
-    while (s[i] === '+' || s[i] === '-') {
-      const k = s[i++] === '-' ? -1 : 1;
-      e = linAdd(e, linScale(rational(k), term()));
-    }
-    return e;
-  }
-  const e = sum();
-  if (i !== s.length) fail();
-  return e;
-}
-
-/** p ≤ 0 as an inequality with integer coefficients without a common factor. */
-function toInequality(p: Linear): Inequality {
-  const lcm = p.reduce((l, r) => safeProduct(l, r[1]) / gcd(l, r[1]), 1);
-  const [a, b, c0] = p.map((r) => safeProduct(r[0], lcm / r[1]));
-  const g = gcd(gcd(a, b), c0) || 1;
-  return [a / g + 0, b / g + 0, -c0 / g + 0];
-}
-
-/** Reads the printed block "Asymmetric unit", e.g. `0 <= x <= 1/2; y <= min(1 - x, (1 + x)/2)`. */
-export function parseAsymmetricUnit(text: string): Inequality[] {
-  const out: Inequality[] = [];
-  for (const clause of text.split(';')) {
-    const sides = clause.split('<=').map((side) => {
-      const m = /^\s*min\((.*)\)\s*$/.exec(side);
-      if (!m) return [parseLinear(side)];
-      // min(A, B): split at the comma outside parentheses.
-      let depth = 0;
-      const inner = m[1];
-      for (let k = 0; k < inner.length; k++) {
-        if (inner[k] === '(') depth++;
-        else if (inner[k] === ')') depth--;
-        else if (inner[k] === ',' && depth === 0)
-          return [parseLinear(inner.slice(0, k)), parseLinear(inner.slice(k + 1))];
-      }
-      throw new RangeError(`Cannot read "${side}"`);
-    });
-    if (sides.length < 2) throw new RangeError(`Not an inequality: "${clause}"`);
-    for (let k = 0; k + 1 < sides.length; k++) {
-      for (const lhs of sides[k]) {
-        for (const rhs of sides[k + 1]) {
-          const p = linAdd(lhs, linScale(rational(-1), rhs));
-          if (isConstant(p)) throw new RangeError(`No variable in "${clause}"`);
-          out.push(toInequality(p));
-        }
-      }
-    }
-  }
-  return out;
-}
-
 const r = (n: number): Rational => rational(n);
 
 /** a·x + b·y − c for a point. */
@@ -218,16 +111,15 @@ const samePoint = (p: readonly Rational[], q: readonly Rational[]): boolean =>
 const unitCache = new Map<string, AsymmetricUnit>();
 
 /**
- * The asymmetric unit of a plane group as ITA prints it: the printed inequalities
- * a·x + b·y ≤ c, all of them in printed order (a double inequality and a `min` give one each), and
- * the convex polygon they bound: its vertices and, per edge, the index of the inequality that holds
- * it. Frozen.
+ * The asymmetric unit of a plane group as ITA gives it: ITA's inequalities a·x + b·y ≤ c, all of
+ * them in ITA's order (a double inequality and a `min` give one each), and the convex polygon
+ * they bound: its vertices and, per edge, the index of the inequality that holds it. Frozen.
  */
 export function planeAsymmetricUnit(key: string | number): AsymmetricUnit {
   const entry = planeGroupEntry(key);
   let unit = unitCache.get(entry.symbol);
   if (!unit) {
-    const inequalities = parseAsymmetricUnit(entry.asymmetricUnit);
+    const inequalities = entry.asymmetricUnit.map((q): Inequality => [q[0], q[1], q[2]]);
     const vertices = polygon(inequalities);
     const edges = vertices.map((p, i) => {
       const q = vertices[(i + 1) % vertices.length];

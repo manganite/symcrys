@@ -2,16 +2,17 @@
  * The 17 plane groups against print (fixture class (a)): ITA (6th ed., 2016) Chapter 2.2,
  * pp. 176–192, re-parsed from references/itc/vol-a-2016-plane-groups.md.
  *
- * The data file must equal the transcription, and the Wyckoff positions computed from the group
- * (planeWyckoff.ts) the printed ones. Independent of the data file, each printed page is
- * checked for consistency: its selected generators, with the integer translations and the
- * centring, generate exactly its general position; each Wyckoff position has as many points as its
- * multiplicity says, and they form one orbit of the group, with a stabilizer of the order that
- * the multiplicity implies.
+ * The data file must equal the transcription (the asymmetric unit as the printed block read into
+ * its inequalities), and the Wyckoff positions computed from the group (planeWyckoff.ts) the printed
+ * ones. Independent of the data file, each printed page is checked for consistency: its selected
+ * generators, with the integer translations and the centring, generate exactly its general
+ * position; each Wyckoff position has as many points as its multiplicity says, and they form one
+ * orbit of the group, with a stabilizer of the order that the multiplicity implies.
  */
 
 import * as plane from '../plane.js';
 import { describe, expect, it } from 'vitest';
+import { parseAsymmetricUnit } from '../testUtils/printedAsymmetricUnit.js';
 import { readReference } from '../testUtils/references.js';
 import {
   applyToPoint,
@@ -120,7 +121,7 @@ describe('plane groups: transcription', () => {
       return {
         number: g.number,
         symbol: g.symbol,
-        asymmetricUnit: g.fields['Asymmetric unit'],
+        asymmetricUnit: parseAsymmetricUnit(g.fields['Asymmetric unit']),
         centring: g.fields.Centring ? ['1/2,1/2'] : [],
         generators: gens === 'none' ? [] : [...gens.matchAll(/\((\d+)\)/g)].map((m) => general[Number(m[1]) - 1]),
       };

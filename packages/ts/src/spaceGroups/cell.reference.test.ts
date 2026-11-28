@@ -18,15 +18,10 @@
  */
 
 import { describe, expect, it } from 'vitest';
+import { parseAsymmetricUnit } from '../testUtils/printedAsymmetricUnit.js';
 import { readReference } from '../testUtils/references.js';
 import { applyToPoint, parseOperation, toPlain } from './affine.js';
-import {
-  parseAsymmetricUnit,
-  planeAsymmetricUnit,
-  planeElements,
-  planeElementsInBox,
-  type SymmetryLine,
-} from './cell.js';
+import { planeAsymmetricUnit, planeElements, planeElementsInBox, type SymmetryLine } from './cell.js';
 import { planeGroupOperations } from './planeGroups.js';
 import { toNumber, type Rational } from './rational.js';
 

@@ -22,6 +22,7 @@ import { formatOperation } from '../../packages/ts/src/spaceGroups/affine.js';
 import { planeGroupFullSymbol, planeGroupOperations } from '../../packages/ts/src/spaceGroups/planeGroups.js';
 import { planePointGroupOf } from '../../packages/ts/src/spaceGroups/planePointGroups.js';
 import { planeWyckoffRows } from '../../packages/ts/src/spaceGroups/planeWyckoff.js';
+import { parseAsymmetricUnit } from '../../packages/ts/src/testUtils/printedAsymmetricUnit.js';
 
 const here = fileURLToPath(new URL('.', import.meta.url));
 const app = new URL('../../../plane-groups/', import.meta.url);
@@ -76,7 +77,15 @@ it('compares symcrys with plane-groups', () => {
       g.generators.map((t) => general.indexOf(t) + 1),
       e.erzeugende,
     );
-    same('asymmetric unit', g.number, g.asymmetricUnit, e.ae.text.replace(/≤/g, '<=').replace(/−/g, '-'));
+    // The stored inequalities against the text of plane-groups, read as the printed block.
+    const unitText = e.ae.text.replace(/≤/g, '<=').replace(/−/g, '-');
+    let unit: unknown;
+    try {
+      unit = parseAsymmetricUnit(unitText);
+    } catch {
+      unit = unitText;
+    }
+    same('asymmetric unit', g.number, g.asymmetricUnit, unit);
     same(
       'Wyckoff positions',
       g.number,
