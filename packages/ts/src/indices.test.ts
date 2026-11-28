@@ -149,14 +149,14 @@ describe('millerIndices', () => {
 // --- the safety net of #234: tests that fail on 0.15.0 (it.fails); each fix removes its mark -------
 
 describe('#236: integer arithmetic beyond 2⁵³', () => {
-  it.fails('zoneAxis refuses planes whose cross product needs products beyond the safe integers', () => {
+  it('zoneAxis refuses planes whose cross product needs products beyond the safe integers', () => {
     // n² − (n − 1)(n + 1) = 1: the exact zone axis is [0, 0, 1], but n² = 10¹⁶ is no safe integer,
     // and checked arithmetic refuses an intermediate value outside them.
     const n = 1e8;
     expect(() => zoneAxis([n, n - 1, 0], [n + 1, n, 0])).toThrow(RangeError);
   });
 
-  it.fails('planeToFourIndices refuses an index i = −(h + k) beyond the safe integers', () => {
+  it('planeToFourIndices refuses an index i = −(h + k) beyond the safe integers', () => {
     expect(() => planeToFourIndices([Number.MAX_SAFE_INTEGER, 2, 0])).toThrow(RangeError);
   });
 
@@ -192,7 +192,7 @@ describe('#236: integer arithmetic beyond 2⁵³', () => {
     return got?.map((x) => BigInt(x).toString()).join() === want ? '' : `${got?.join()} ≠ ${want}`;
   };
 
-  it.fails('zoneAxis, planeToFourIndices and directionToFourIndices are exact or throw (BigInt in the test)', () => {
+  it('zoneAxis, planeToFourIndices and directionToFourIndices are exact or throw (BigInt in the test)', () => {
     const wrong: string[] = [];
     for (let k = 0; k + 1 < draws.length; k += 2) {
       const [a, b] = [draws[k], draws[k + 1]];
@@ -221,8 +221,20 @@ describe('#236: a sparse array is refused as indices', () => {
     v[2] = z;
     return v as unknown as Vec3;
   };
-  it.fails('reduceIndices', () => expect(() => reduceIndices(sparse(1, 3))).toThrow(RangeError));
-  it.fails('planeToFourIndices', () => expect(() => planeToFourIndices(sparse(1, 0))).toThrow(RangeError));
-  it.fails('orbit of a key', () => expect(() => orbit('4', { hkl: sparse(1, 0) })).toThrow(RangeError));
-  it.fails('faceNormal', () => expect(() => faceNormal(latticeBasis('m-3m'), sparse(1, 0))).toThrow(RangeError));
+  it('reduceIndices', () => expect(() => reduceIndices(sparse(1, 3))).toThrow(RangeError));
+  it('planeToFourIndices', () => expect(() => planeToFourIndices(sparse(1, 0))).toThrow(RangeError));
+  it('orbit of a key', () => expect(() => orbit('4', { hkl: sparse(1, 0) })).toThrow(RangeError));
+  it('faceNormal', () => expect(() => faceNormal(latticeBasis('m-3m'), sparse(1, 0))).toThrow(RangeError));
+});
+
+describe('#236: the messages name the function', () => {
+  it('zoneAxis', () =>
+    expect(() => zoneAxis([1e8, 1e8 - 1, 0], [1e8 + 1, 1e8, 0])).toThrow(/^zoneAxis: .*safe integers/));
+  it('an invalid i or T says so, also where h + k or U + V leaves the safe integers', () => {
+    const big = Number.MAX_SAFE_INTEGER;
+    expect(() => planeFromFourIndices([big, 2, 0, 0])).toThrow(/i must be −\(h \+ k\)/);
+    expect(() => directionFromFourIndices([big, 1, -big, 1])).toThrow(/T must be −\(U \+ V\)/);
+  });
+  it('millerIndices', () =>
+    expect(() => millerIndices('2h,k,l', { h: 2 ** 52, k: 0, l: 0 })).toThrow(/^millerIndices: .*2h.*safe integers/));
 });

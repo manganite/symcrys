@@ -7,7 +7,7 @@
  */
 
 import { FLAT_CELL_RATIO, INTEGER_EPSILON, SINGULAR_RATIO } from '../tolerances.js';
-import { checkObject, shown } from '../checks.js';
+import { checkObject, shown, everyEntry } from '../checks.js';
 import type { PlaneSystem } from './planeGroupData.js';
 import {
   PLANE_POINT_GROUP_KEYS,
@@ -259,8 +259,10 @@ export function planeBasisColumns(basis: unknown, who: string): [readonly number
   const ok =
     Array.isArray(basis) &&
     basis.length === 2 &&
-    basis.every(
-      (row) => Array.isArray(row) && row.length === 2 && row.every((x) => typeof x === 'number' && Number.isFinite(x)),
+    everyEntry(
+      basis,
+      (row) =>
+        Array.isArray(row) && row.length === 2 && everyEntry(row, (x) => typeof x === 'number' && Number.isFinite(x)),
     );
   if (!ok) throw new RangeError(`${who}: the basis must be a 2 × 2 matrix of finite numbers, not ${shown(basis)}`);
   const b = basis as unknown as Mat2;
@@ -308,12 +310,16 @@ export function planeResidualOperations<T extends { readonly matrix: readonly (r
 ): T[] {
   const g = planeMetricTensor(basis, who);
   if (!Array.isArray(operations)) throw new RangeError(`${who}: operations must be a list`);
-  operations.forEach((op, i) => {
+  // Array.from: a hole of a sparse list is undefined, and refused, not skipped.
+  Array.from(operations).forEach((op, i) => {
     const m = (op as { readonly matrix?: unknown } | null)?.matrix;
     const ok =
       Array.isArray(m) &&
       m.length === 2 &&
-      m.every((r) => Array.isArray(r) && r.length === 2 && r.every((x) => typeof x === 'number' && Number.isFinite(x)));
+      everyEntry(
+        m,
+        (r) => Array.isArray(r) && r.length === 2 && everyEntry(r, (x) => typeof x === 'number' && Number.isFinite(x)),
+      );
     if (!ok) throw new RangeError(`${who}: operation ${i} has no 2 × 2 matrix of finite numbers`);
     // W is an integer matrix in the lattice basis; anything else would give a wrong answer.
     if (!(m as number[][]).every((r) => r.every((x) => Math.abs(x - Math.round(x)) < INTEGER_EPSILON))) {

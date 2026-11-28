@@ -5,9 +5,9 @@
  * stay with the applications (docs/conventions.md, "Symmetry directions and elements").
  */
 
-import { gcd } from '../integers.js';
+import { gcd, safeProduct, safeSum } from '../integers.js';
 import { shown } from '../checks.js';
-import { determinant, dimensionOf, trace, type ExactOperation, type IntMatrix } from './affine.js';
+import { determinant, dimensionOf, multiplyMatrices, trace, type ExactOperation, type IntMatrix } from './affine.js';
 import { ZERO, add, multiply, rational, scale, type Rational } from './rational.js';
 
 /**
@@ -67,7 +67,8 @@ function power(m: IntMatrix, n: number): IntMatrix {
     [0, 1],
   ];
   for (let k = 0; k < n; k++) {
-    p = p.map((row) => [0, 1].map((j) => row[0] * m[0][j] + row[1] * m[1][j]));
+    // Checked: a value outside the safe integers throws instead of rounding.
+    p = multiplyMatrices(p, m);
   }
   return p;
 }
@@ -103,7 +104,7 @@ export function describePlaneOperation(op: ExactOperation): PlaneOperationDescri
       [1 - w[0][0], -w[0][1]],
       [-w[1][0], 1 - w[1][1]],
     ];
-    const d = a[0][0] * a[1][1] - a[0][1] * a[1][0];
+    const d = safeSum(safeProduct(a[0][0], a[1][1]), -safeProduct(a[0][1], a[1][0]));
     const inv = rational(1, d);
     const location = [
       multiply(add(scale(a[1][1], t[0]), scale(-a[0][1], t[1])), inv),
