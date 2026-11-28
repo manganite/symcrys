@@ -60,17 +60,24 @@ export interface WyckoffPosition {
   readonly siteSymmetryOperations: readonly number[];
 }
 
-/** The values substituted into ITA's Miller indices for the numeric representative. */
-export const REPRESENTATIVE_VALUES: Readonly<Record<'h' | 'k' | 'l', number>> = { h: 3, k: 2, l: 1 };
+/**
+ * Convention data: the values substituted into ITA's Miller indices for a face with numbers, with
+ * which symcrys finds the site symmetry of each printed face (`siteSymmetryOperations`). ITA prints
+ * the faces with letters; any values that keep every printed face in its position, on no further
+ * symmetry element, give the same results, so the values are a choice and cannot be derived from
+ * print. The tests check that they keep every face in its position.
+ */
+export const REPRESENTATIVE_VALUES: Readonly<Record<'h' | 'k' | 'l', number>> = Object.freeze({ h: 3, k: 2, l: 1 });
 
 /**
- * The values for rhombohedral axes: h = 5, k = 2, l = 1. With 3, 2, 1 the face (h,k,l) would lie on
- * the limiting form (h,k,2k-h) that ITA prints there (Table 3.2.3.2, 32, 3m and -3m with rhombohedral
- * axes, pp. 755–759): (321) is (116) in hexagonal axes. (521), (318) in hexagonal axes, lies on no
- * printed limiting form, and every printed face with these values is in lowest terms ((5,2,-7),
- * (5,2,-1), (5,5,1)); h = 4 would give (4,2,-6) and (4,2,0).
+ * Convention data, as `REPRESENTATIVE_VALUES`: the values for rhombohedral axes, h = 5, k = 2,
+ * l = 1. With 3, 2, 1 the face (h,k,l) would lie on the limiting form (h,k,2k-h) that ITA prints
+ * there (Table 3.2.3.2, 32, 3m and -3m with rhombohedral axes, pp. 755–759): (321) is (116) in
+ * hexagonal axes. (521), (318) in hexagonal axes, lies on no printed limiting form, and every printed
+ * face with these values is in lowest terms ((5,2,-7), (5,2,-1), (5,5,1)); h = 4 would give (4,2,-6)
+ * and (4,2,0).
  */
-export const RHOMBOHEDRAL_VALUES: Readonly<Record<'h' | 'k' | 'l', number>> = { h: 5, k: 2, l: 1 };
+export const RHOMBOHEDRAL_VALUES: Readonly<Record<'h' | 'k' | 'l', number>> = Object.freeze({ h: 5, k: 2, l: 1 });
 
 /** The values of h, k, l for the representative faces of a setting. */
 export function representativeValues(key: PointGroupKey, setting: number): Readonly<Record<'h' | 'k' | 'l', number>> {
@@ -99,7 +106,10 @@ export function faceBasis(key: PointGroupKey, setting: number): Mat3 {
   return settingBasis(key, setting);
 }
 
-/** h, k, l of a representative face under the printed condition |h| < |l| (cubic forms (hhl)). */
+/**
+ * Convention data, as `REPRESENTATIVE_VALUES`: h, k, l of a representative face under the printed
+ * condition |h| < |l| (cubic forms (hhl)), which 3, 2, 1 do not meet.
+ */
 export const SMALL_H: Readonly<Record<'h' | 'k' | 'l', number>> = Object.freeze({ h: 1, k: 2, l: 3 });
 
 /**

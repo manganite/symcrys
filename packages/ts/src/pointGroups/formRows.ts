@@ -24,7 +24,7 @@ import type { PointGroupKey } from './keys.js';
 import { keyOfCompleteGroup } from './identify.js';
 import { holohedry } from './properties.js';
 import { settings } from './pointGroups.js';
-import { FORM_TYPE_DATA, FORM_TYPE_KEYS, type CrystalFormTypeKey } from './formTypes.js';
+import { FORM_DISTINCTIONS, FORM_TYPE_DATA, FORM_TYPE_KEYS, type CrystalFormTypeKey } from './formTypes.js';
 import {
   applyToFace,
   compareRanks,
@@ -199,29 +199,6 @@ function formType(normals: readonly Vec3[]): { type: CrystalFormTypeKey; conditi
   if (byCondition.length !== 1) throw new Error(`No unique kind for a form of ${n} faces`);
   return { type: FORM_TYPE_KEYS[byCondition[0][0] - 1], condition };
 }
-
-/**
- * Part of the definition of the names: what tells apart kinds of forms with the same number of faces
- * and eigensymmetry, from their geometry (Table 3.2.1.3 gives the names, not these numbers): the
- * order of the rotation of the eigensymmetry about the normal of the mirror that fixes a face (6, 4
- * or 3 for a prism, whose faces are parallel to the main axis; 4 for the tetrahexahedron), and for
- * the cubic forms on (hhl) the condition on h and l (ITA's "for |h| < |l|").
- */
-export const FORM_DISTINCTIONS: Readonly<
-  Partial<Record<CrystalFormTypeKey, { readonly mirrorAxis?: number; readonly condition?: string }>>
-> = deepFreeze({
-  'ditetragonal-prism': { mirrorAxis: 4 },
-  'tetragonal-dipyramid': { mirrorAxis: 2 },
-  'ditrigonal-prism': { mirrorAxis: 3 },
-  'trigonal-dipyramid': { mirrorAxis: 1 },
-  'dihexagonal-prism': { mirrorAxis: 6 },
-  'hexagonal-dipyramid': { mirrorAxis: 2 },
-  tetrahexahedron: { mirrorAxis: 4 },
-  'trigon-trioctahedron': { mirrorAxis: 2, condition: '|h|>|l|' },
-  'tetragon-trioctahedron': { mirrorAxis: 2, condition: '|h|<|l|' },
-  'trigon-tritetrahedron': { condition: '|h|<|l|' },
-  'tetragon-tritetrahedron': { condition: '|h|>|l|' },
-});
 
 /**
  * The rule for the first face of a cubic form: as `pointRank`, but the latest pivots first

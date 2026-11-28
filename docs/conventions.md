@@ -871,7 +871,10 @@ printed settings:
   (a general face with h = k) give the face of that form. Inside, symcrys checks each printed
   position with the face h, k, l = 3, 2, 1 (rhombohedral axes 5, 2, 1, since (321) lies there on the
   limiting form (h,k,2k−h), pp. 755–759; 1, 2, 3 for the condition |h| < |l|) and its normal for
-  a, b, c along x, y, z where the angles are free, which gives the right site symmetry.
+  a, b, c along x, y, z where the angles are free, which gives the right site symmetry. These values
+  are convention data (`REPRESENTATIVE_VALUES`, `RHOMBOHEDRAL_VALUES`, `SMALL_H` in
+  `pointGroups/wyckoff.ts`): print gives the faces with letters, and any values that keep every
+  printed face in its position give the same results.
 - Where ITA prints a face with "or", e.g. (001) or (001̄) for the pedion of 4mm, the two faces
   belong to the same Wyckoff position (ITA 6th ed., § 3.2.1.2.4 (i), p. 729); `millerIndices` is the
   first.
@@ -963,8 +966,9 @@ tetragonal dipyramids of 422, (h0l) and (hhl)).
   adds no form (the faces (101̄0) of 3 belong to the trigonal prism (hki0)).
 - **Kind:** the number of faces and the eigensymmetry, the group of all orthogonal maps that
   permute the face normals, taken in a cell of general lengths so that no face is special by the
-  metric alone. Where these do not decide (`FORM_DISTINCTIONS`, part of the definition of the
-  names, from their geometry; Table 3.2.1.3 gives the names): the order of the rotation of the eigensymmetry about the normal of the mirror that fixes
+  metric alone. Where these do not decide (`FORM_DISTINCTIONS` in `pointGroups/formTypes.ts`,
+  vocabulary: part of the definition of the names, from the shape each states; Table 3.2.1.3 gives
+  the names): the order of the rotation of the eigensymmetry about the normal of the mirror that fixes
   a face (a prism, faces parallel to the main axis: 6, 4 or 3; a dipyramid 2 or 1; the
   tetrahexahedron 4, the trioctahedra 2), and for the cubic forms on (hhl), which no symmetry tells
   apart, the condition: two components of the normal are equal, and |h| < |l| where the third is
