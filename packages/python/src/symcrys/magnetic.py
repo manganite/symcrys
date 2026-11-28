@@ -153,9 +153,9 @@ class Operations:
     """The operations of a magnetic point group as arrays, one row per operation, in the order of
     ``operations``: what ``operations``, ``generators`` and ``residual_operations_of`` return, and
     what every function that takes operations accepts, beside a list of dicts ``{"cartesian",
-    "time_reversal"}``. An array of matrices alone is refused here, since it does not say which
-    operations carry time reversal. Frozen, its arrays read-only; ``len(ops)`` is the number of
-    operations.
+    "time_reversal"}``. An array of matrices alone is refused, since it does not say which
+    operations carry time reversal, except by ``site_symmetry_of`` and ``orbit_of``, which read time
+    reversal as false. Frozen, its arrays read-only; ``len(ops)`` is the number of operations.
     """
 
     matrix: NDArray[np.int64]

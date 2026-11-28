@@ -15,7 +15,10 @@ Before reading matrices: an operation has `matrix`, ITA's W in the lattice basis
 column vectors). Where the lattice basis sits in that frame depends on the family (x ∥ a and z ∥ c
 for hexagonal axes, the monoclinic unique axis along y by default): the table is in
 [Conventions](conventions.md), "Cartesian frame". A tensor form is in the same Cartesian frame, and
-its components are listed row-major (`xxx`, `xxy`, …).
+its components are listed row-major (`xxx`, `xxy`, …). In `symcrys/plane` an operation is
+`{ matrix, translation }`, ITA's W and w in the lattice basis, without a Cartesian matrix ([Plane
+groups](plane-groups.md)). Which fields each function of a list of operations reads:
+[Functions of a list of operations](lists.md).
 
 ## TypeScript
 

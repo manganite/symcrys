@@ -191,9 +191,10 @@ class Operation(TypedDict):
 class Operations:
     """The operations of a point group as arrays, one row per operation, in the order of
     ``operations``: what ``operations``, ``generators`` and ``residual_operations_of`` return, and
-    what every function that takes operations accepts, beside a list of dicts ``{"cartesian"}`` and
-    an array of Cartesian matrices of shape (n, 3, 3). Frozen, its arrays read-only; ``len(ops)`` is
-    the number of operations.
+    what every function that takes operations accepts, beside a list of dicts; where a function
+    reads ``cartesian`` (not ``residual_operations_of`` or ``change_of_coordinates``, which read
+    ``matrix``), also an array of Cartesian matrices of shape (n, 3, 3). Frozen, its arrays
+    read-only; ``len(ops)`` is the number of operations.
     """
 
     matrix: NDArray[np.int64]
