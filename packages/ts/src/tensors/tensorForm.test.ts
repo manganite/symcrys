@@ -838,15 +838,25 @@ describe('magnetic point groups', () => {
 describe('a name of Object.prototype in a specification (#233)', () => {
   // A name such as 'toString' is an unknown value, refused with the message for any other one;
   // it is not one of the names of symcrys up to 0.10.
+  const names = ['toString', '__proto__', 'constructor'];
+
   it('an unknown time parity (#233)', () => {
-    expect(() =>
-      tensorForm('m', { rank: 1, kind: 'polar', timeParity: 'toString' as never, intrinsic: 'none' }),
-    ).toThrow(/^The time parity of a tensor is 'even' or 'odd', not "toString"$/);
+    for (const name of names) {
+      expect(() => tensorForm('m', { rank: 1, kind: 'polar', timeParity: name as never, intrinsic: 'none' })).toThrow(
+        `The time parity of a tensor is 'even' or 'odd', not "${name}"`,
+      );
+      expect(() =>
+        tensorForm('m', { rank: 1, kind: 'polar', timeParity: name as never, intrinsic: 'none' }),
+      ).not.toThrow(/up to symcrys/);
+    }
   });
 
   it('an unknown intrinsic symmetry (#233)', () => {
-    expect(() => tensorForm('m', { ...spec(2), intrinsic: 'toString' as never })).toThrow(
-      /^Unknown intrinsic symmetry: "toString"$/,
-    );
+    for (const name of names) {
+      expect(() => tensorForm('m', { ...spec(2), intrinsic: name as never })).toThrow(
+        `Unknown intrinsic symmetry: "${name}"`,
+      );
+      expect(() => tensorForm('m', { ...spec(2), intrinsic: name as never })).not.toThrow(/up to symcrys/);
+    }
   });
 });
