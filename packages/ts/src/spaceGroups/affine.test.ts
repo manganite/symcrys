@@ -251,6 +251,12 @@ describe('cosetsByGenerators', () => {
     expect(() => cosetsByGenerators([op('x+y,y,z')], 3, 48)).toThrow(/at most 48/);
   });
 
+  it.fails('refuses more operations than the largest order, also in the last batch (#261)', () => {
+    // 4mm has 8 operations: the mirror adds 4 to the 4 of the fourfold rotation, past the largest
+    // order 6, in one batch after which the length is not checked.
+    expect(() => cosetsByGenerators([op('-y,x,z'), op('-x,y,z')], 3, 6)).toThrow(/at most 6/);
+  });
+
   it.fails('refuses a list that holds a coset twice (#261)', () => {
     // With three or more generators, the list built from the first ones need not be a group, and the
     // cosets of the next by it can overlap. These generators of the plane give 8 entries for the 6
