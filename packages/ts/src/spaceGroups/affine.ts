@@ -184,22 +184,35 @@ export function cosetsByGenerators(
   dimension: number,
   maxOrder: number,
 ): ExactOperation[] {
-  const has = (list: readonly ExactOperation[], op: ExactOperation): boolean =>
-    list.some((x) => equalModLattice(x, op));
+  // The cosets met so far, by a key of the coset (the matrix and the translation modulo 1), so that
+  // a test of membership is a lookup, not a comparison with every operation of the list.
+  const coset = (op: ExactOperation): string =>
+    `${op.matrix.map((row) => row.join(',')).join(';')}|${op.translation.map((t) => mod1(t).join('/')).join(',')}`;
   const list: ExactOperation[] = [identity(dimension)];
+  const met = new Set<string>([coset(list[0])]);
   for (const g of generators) {
+    const before = new Set(met);
     const h = list.slice();
-    for (let power = g; !has(h, power); power = compose(power, g)) {
+    for (let power = g; !before.has(coset(power)); power = compose(power, g)) {
       // A generator of infinite order modulo the lattice would not end the loop.
       if (list.length > maxOrder) throw new Error(`The generators give no group of at most ${maxOrder} operations`);
-      for (const x of h) list.push(reduceModLattice(compose(power, x)));
+      for (const x of h) {
+        const op = reduceModLattice(compose(power, x));
+        list.push(op);
+        met.add(coset(op));
+      }
     }
   }
-  // The cosets form a group only if each generator normalises the group built so far; check
-  // closure, so that a mistake in the transcribed generators fails here rather than in a caller.
-  for (const a of list) {
-    for (const b of list) {
-      if (!has(list, compose(a, b))) throw new Error(`The generators give no group: ${formatOperation(compose(a, b))}`);
+  // The cosets form a group only if the powers of each generator, times the group built so far, are
+  // the group they generate together; check closure, so that a mistake in the transcribed generators
+  // fails here rather than in a caller. A list that holds the identity and is closed under multiplication by each generator from the left
+  // holds the whole group they generate (a finite group: inverses are powers), and it holds nothing
+  // else, being made of their products: it is that group, with k·n products for k generators
+  // instead of n².
+  for (const g of generators) {
+    for (const x of list) {
+      const gx = compose(g, x);
+      if (!met.has(coset(gx))) throw new Error(`The generators give no group: ${formatOperation(gx)}`);
     }
   }
   return list;

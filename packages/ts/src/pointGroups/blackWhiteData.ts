@@ -322,6 +322,24 @@ export function blackWhiteGroup(key: BlackWhitePointGroupKey): BlackWhiteGroup {
   return g;
 }
 
+/**
+ * The frame of the default setting of a black-and-white group and the time reversal of each of the
+ * operations of its class in that frame, in ITA's order: what the counts of the operations of each
+ * kind need, without building the settings of the group.
+ */
+export function blackWhiteDefaultTimeReversal(key: BlackWhitePointGroupKey): {
+  readonly crystalClass: PointGroupKey;
+  readonly frame: number;
+  readonly timeReversal: readonly boolean[];
+} {
+  const data = DATA.find((d) => d[0] === key);
+  if (!data) throw new RangeError(`Unknown black-and-white point group key: ${shown(key)}`);
+  const [, crystalClass, frame, primed] = data;
+  const timeReversal = settingTimeReversal(crystalClass, frame, primed);
+  if (!timeReversal) throw new Error(`${crystalClass}: the generators ${String(primed)} give no group`);
+  return { crystalClass, frame, timeReversal };
+}
+
 /** The 58 black-and-white groups in the order of `BLACK_WHITE_POINT_GROUP_KEYS` (all built). */
 export function blackWhiteGroups(): readonly BlackWhiteGroup[] {
   return DATA.map(([key]) => blackWhiteGroup(key));
