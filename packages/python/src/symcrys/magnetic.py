@@ -213,14 +213,17 @@ class TransformedOperation(TypedDict):
     """W′ = P⁻¹WP, integer entries."""
     translation: NDArray[np.float64]
     """w′ = P⁻¹(w + (W − I)p), not reduced modulo the lattice."""
+    time_reversal: NotRequired[bool]
+    """The time reversal of the operation given; present when the operations given have it."""
 
 
 @dataclass(frozen=True, eq=False)
 class TransformedOperations:
     """The operations of ``change_of_coordinates`` in the new coordinate system as arrays, one row
     per operation, in the order given: each a matrix W′ and a translation w′, not reduced modulo the
-    lattice. Frozen, its arrays read-only; ``len(ops)`` is the number of operations; they can be
-    passed back to ``change_of_coordinates``.
+    lattice, and the time reversal of the operation given, if the operations given have it. Frozen,
+    its arrays read-only; ``len(ops)`` is the number of operations; they can be passed back to
+    ``change_of_coordinates``.
     """
 
     matrix: NDArray[np.int64]
@@ -228,6 +231,10 @@ class TransformedOperations:
     translation: NDArray[np.float64]
     """float64 array of shape (n, 3), one row per operation. w′ = P⁻¹(w + (W − I)p), not reduced modulo
     the lattice.
+    """
+    time_reversal: Optional[NDArray[np.bool_]] = None
+    """bool array of shape (n,), one row per operation. The time reversal of the operation given;
+    present when the operations given have it. None where the operations given have no such field.
     """
 
     _symcrys_operations = True
@@ -252,7 +259,7 @@ class TransformedOperations:
     def __getitem__(self, index: slice | Sequence[int] | NDArray[Any]) -> TransformedOperations: ...
 
     def __getitem__(self, index: int | np.integer[Any] | slice | Sequence[int] | NDArray[Any]) -> TransformedOperation | TransformedOperations:
-        """One operation as a dict ``{"matrix", "translation"}`` for an integer, otherwise
+        """One operation as a dict ``{"matrix", "translation", "time_reversal"}`` (an optional field only where present) for an integer, otherwise
         the ``TransformedOperations`` of the selected rows (a slice, a list of indices, a boolean mask)."""
         result: TransformedOperation | TransformedOperations = _shared.operation_at(self, index)
         return result
@@ -651,8 +658,8 @@ class TensorForm(TypedDict):
 
 _OPERATION_FIELDS = {"matrix": (np.int64, (3, 3)), "cartesian": (np.float64, (3, 3)), "time_reversal": (np.bool_, ())}
 _S_Operations = ("ops", Operations, {"matrix": (np.int64, (3, 3)), "cartesian": (np.float64, (3, 3)), "timeReversal": (np.bool_, ())})
-_TRANSFORMED_FIELDS = {"matrix": (np.int64, (3, 3)), "translation": (np.float64, (3,))}
-_S_TransformedOperations = ("ops", TransformedOperations, {"matrix": (np.int64, (3, 3)), "translation": (np.float64, (3,))})
+_TRANSFORMED_FIELDS = {"matrix": (np.int64, (3, 3)), "translation": (np.float64, (3,)), "time_reversal": (np.bool_, ())}
+_S_TransformedOperations = ("ops", TransformedOperations, {"matrix": (np.int64, (3, 3)), "translation": (np.float64, (3,)), "timeReversal": (np.bool_, ())})
 _S_InverseTransformation = (
     "d",
     {
@@ -867,6 +874,7 @@ __all__ = [
     "reduce_indices",
     "residual_operations",
     "rotate_tensor",
+    "rotate_tensors",
     "settings",
     "site_symmetry",
     "site_symmetry_of",
@@ -938,12 +946,30 @@ is. ``'gyrotropic'`` is optical activity.
 """
 
 
+@overload
+def residual_operations(
+    operations: TransformedOperations,
+    basis: ArrayLike,
+    *,
+    tolerance: Optional[float] = None,
+) -> TransformedOperations: ...
+
+
+@overload
 def residual_operations(
     operations: Operations | Sequence[Mapping[str, Any]],
     basis: ArrayLike,
     *,
     tolerance: Optional[float] = None,
-) -> Operations:
+) -> Operations: ...
+
+
+def residual_operations(
+    operations: Operations | TransformedOperations | Sequence[Mapping[str, Any]],
+    basis: ArrayLike,
+    *,
+    tolerance: Optional[float] = None,
+) -> Operations | TransformedOperations:
     """The operations of a list that keep the metric of a cell: W with WᵀGW = G, G the metric tensor
     of ``basis``. The operations are read by ``matrix``, the integer matrix W on lattice
     coordinates, as ``operations`` gives them; the list is taken as it is and the kept operations
@@ -971,8 +997,8 @@ def residual_operations(
         _shared.array(basis, "basis", np.float64),
         _shared.options(tolerance=tolerance),
     )
-    ops = operations if isinstance(operations, Operations) else _shared.operations_of(given, Operations)
-    result: Operations = _shared.select(ops, kept)
+    ops = operations if isinstance(operations, (Operations, TransformedOperations)) else _shared.operations_of(given, Operations)
+    result: Operations | TransformedOperations = _shared.select(ops, kept)
     return result
 
 
@@ -1001,10 +1027,13 @@ def change_of_coordinates(
     fraction to rounding (1/3 as 0.3333333333) is that fraction, another number is taken as it is
     (0.1234 stays 0.1234). P is rational in a change between lattice bases, as in ITA: an entry of P
     that needs a fraction with a denominator above tolerance^(−1/3) (46 at 10⁻⁵), such as cos 30° of
-    a rotation, is refused (docs/conventions.md, "Tolerances"). A transformed operation has a
-    ``matrix`` and a ``translation`` alone: other fields of the record (``cartesian``, in the
-    magnetic API ``time_reversal``) are not carried over, so they are matched by index. Raises
-    SymcrysError for a singular P, an entry of P that is not rational within the tolerance, a
+    a rotation, is refused (docs/conventions.md, "Tolerances"). A transformed operation keeps the
+    time reversal of the operation given (``time_reversal``), so that it can be passed on to the
+    functions that read the matrices W (``residual_operations``, a further
+    ``change_of_coordinates``); when no operation has ``time_reversal``, none of the results has it.
+    Other fields of the record (``cartesian``) are not carried over. Raises SymcrysError for a
+    ``time_reversal`` that is not a boolean, a list in which some operations have ``time_reversal``
+    and others do not, a singular P, an entry of P that is not rational within the tolerance, a
     quantity of the wrong shape, an unknown quantity, an operation with det W ≠ ±1, and one whose W′
     is not integral (the new basis does not span a lattice that the operation maps onto itself).
 
@@ -2264,7 +2293,8 @@ def rotate_tensor(
     tensor in the frame of a surface, pass the matrix whose rows are the new axes in the old frame.
     Time parity plays no part. The kind of tensor is given by its specification or by the name of a
     property in ``TENSOR_PROPERTIES``. Raises SymcrysError for a rotation that is not orthogonal
-    within the tolerance (per matrix entry of RᵀR).
+    within the tolerance (per matrix entry of RᵀR). For many tensors, ``rotate_tensors`` checks the
+    rotation and the specification once.
 
     Parameters
     ----------
@@ -2286,6 +2316,46 @@ def rotate_tensor(
         _call,
         _value,
         tensor,
+        rotation,
+        spec,
+        _shared.options(tolerance=tolerance),
+    )
+    return result
+
+
+def rotate_tensors(
+    tensors: ArrayLike,
+    rotation: ArrayLike,
+    spec: TensorSpec | Mapping[str, Any] | TensorPropertyName,
+    *,
+    tolerance: Optional[float] = None,
+) -> NDArray[np.float64]:
+    """A list of tensors, each in a frame rotated by ``rotation``, one orthogonal matrix for all or
+    a list of them, one per tensor: entry i is ``rotate_tensor(tensors[i], R, spec)`` with R the
+    rotation or the i-th rotation. The specification and the rotations are checked once, not per
+    tensor. Raises SymcrysError for a list of rotations of another length than the list of tensors,
+    and as ``rotate_tensor`` does.
+
+    Parameters
+    ----------
+    tolerance : keyword-only, optional
+        Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁵). It is measured per
+        matrix entry for operations, as the distance of unit vectors for directions and per
+        coordinate modulo the lattice for points (docs/conventions.md, "Tolerances").
+
+    Returns
+    -------
+    numpy.ndarray
+        A float64 array of the shape of ``tensors``: a stack of n tensors, each of the shape (3, …,
+        3) or the flat (3**rank,), where the structured shape is read first (at rank 1 an (n, 3)
+        array is n vectors). ``rotation`` is one rotation (3, 3) for all tensors or one per tensor
+        (n, 3, 3). For stacks that broadcast against each other, ``rotate_tensor`` takes any leading
+        axes.
+    """
+    result: NDArray[np.float64] = _shared.rotate_tensors(
+        _call,
+        _value,
+        tensors,
         rotation,
         spec,
         _shared.options(tolerance=tolerance),

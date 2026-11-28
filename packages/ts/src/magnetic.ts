@@ -41,7 +41,7 @@ export {
   type MillerValues,
 } from './indices.js';
 export {
-  changeOfCoordinates,
+  changeOfCoordinatesWithTimeReversal as changeOfCoordinates,
   type AffineOperation,
   type CoordinateChange,
   type CoordinateQuantities,
@@ -115,6 +115,7 @@ export {
 } from './pointGroups/directions.js';
 export {
   rotateTensor,
+  rotateTensors,
   tensorForm,
   tensorFormOf,
   type IntrinsicSymmetry,

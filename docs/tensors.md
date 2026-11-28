@@ -113,10 +113,10 @@ symcrys.rotate_tensor(form["basis"], tilt, "pyroelectric")
 ## Named properties
 
 A property that is the question whether a tensor is allowed has a name, an entry of
-`TENSOR_PROPERTIES`. The name stands in for the specification in `tensorForm`, `tensorFormOf` and
-`rotateTensor`, and `allowsProperty`, `allowedProperties` (and their `…Of` forms for a list of
-operations) answer whether symmetry allows it. Symmetry only allows a property; whether a crystal
-shows it is a question of the material.
+`TENSOR_PROPERTIES`. The name stands in for the specification in `tensorForm`, `tensorFormOf`,
+`rotateTensor` and `rotateTensors`, and `allowsProperty`, `allowedProperties` (and their `…Of`
+forms for a list of operations) answer whether symmetry allows it. Symmetry only allows a
+property; whether a crystal shows it is a question of the material.
 
 The table is made from `TENSOR_PROPERTIES` of this version; the source of each definition is in
 [Conventions, "Named properties"](conventions.md#tensors):

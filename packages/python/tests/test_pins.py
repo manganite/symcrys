@@ -90,7 +90,7 @@ INT_FIELDS = {
 }
 
 # Results that are tensors: shape (3, …, 3) per tensor in Python, flat components in TypeScript.
-TENSOR_RESULTS = {"fromVoigt", "rotateTensor"}
+TENSOR_RESULTS = {"fromVoigt", "rotateTensor", "rotateTensors"}
 
 
 def snake(name: str) -> str:
@@ -163,7 +163,9 @@ def plain(value: Any, field: str, rules: Rules, where: str = "") -> Any:
         (symcrys.Operations, magnetic.Operations, plane.Operations, symcrys.TransformedOperations, magnetic.TransformedOperations, plane.TransformedOperations),
     ):
         for name in value.__dataclass_fields__:
-            rules.array(getattr(value, name), name, f"{where}.{name}")
+            # An optional field (time reversal of transformed operations) is None where no operation has it.
+            if getattr(value, name) is not None:
+                rules.array(getattr(value, name), name, f"{where}.{name}")
         return [plain(dict(op), field, Rules("none"), where) for op in value]
     if isinstance(value, np.ndarray):
         rules.array(value, field, where)
