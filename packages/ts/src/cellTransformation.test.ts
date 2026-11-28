@@ -9,7 +9,7 @@ import * as classes from './index.js';
 describe('a name of Object.prototype as a centring (#233)', () => {
   // A name such as 'toString' is an unknown centring, refused with the message for any other one
   // ('Q'): the centrings the lattice has.
-  it.fails('is an unknown centring of the lattice (#233)', () => {
+  it('is an unknown centring of the lattice (#233)', () => {
     for (const name of ['toString', '__proto__', 'constructor']) {
       expect(() => classes.cellTransformation('tP', { centring: name as never }, {})).toThrow(
         /its centring is one of P, C/,

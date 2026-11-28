@@ -620,7 +620,7 @@ const OLD_SHORT_SYMBOLS: Readonly<Record<string, PlaneGroupKey>> = Object.freeze
 export function findPlaneGroup(symbol: string): IdentifiedPlaneGroup | undefined {
   if (typeof symbol !== 'string') throw new RangeError(`A symbol is a string, not ${shown(symbol)}`);
   const compact = compactSymbol(symbol);
-  const wanted = OLD_SHORT_SYMBOLS[compact] ?? compact;
+  const wanted = Object.hasOwn(OLD_SHORT_SYMBOLS, compact) ? OLD_SHORT_SYMBOLS[compact] : compact;
   const key = PLANE_GROUP_KEYS.find((k) => k === wanted || planeGroupFullSymbol(k) === wanted);
   return key === undefined ? undefined : Object.freeze({ key, setting: 1 });
 }
