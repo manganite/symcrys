@@ -122,3 +122,13 @@ describe('a point of the plane: { point }', () => {
     expect(plane.wyckoffPosition('p4', { point: [0.5, 0.5] }).letter).toBe('b');
   });
 });
+
+describe('edge cases found while removing duplicated tables (#233)', () => {
+  it.fails('a name of Object.prototype is an unknown key, not a family (#233)', () => {
+    for (const api of [classes, magnetic]) {
+      for (const name of ['toString', '__proto__', 'constructor']) {
+        expect(() => api.latticeBasis(name as never)).toThrow(`Unknown point group key: "${name}"`);
+      }
+    }
+  });
+});
