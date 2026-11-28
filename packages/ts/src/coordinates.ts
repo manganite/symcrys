@@ -410,7 +410,7 @@ export function spatialChangeOfCoordinates(
  * tolerance^(−1/3) (46 at 10⁻⁵), such as cos 30° of a rotation, is refused
  * (docs/conventions.md, "Tolerances").
  * A transformed operation keeps the time reversal of the operation given (`timeReversal`), so that
- * it can be passed on to the functions that read the matrices W (`residualOperations`, a further
+ * it can be passed on to the functions that read the matrices W (`residualOperationsOf`, a further
  * `changeOfCoordinates`); when no operation has `timeReversal`, none of the results has it. Other
  * fields of the record (`cartesian`) are not carried over. Throws a RangeError for a `timeReversal`
  * that is not a boolean, a list in which some operations have `timeReversal` and others do not, a singular P, an entry of P that is not

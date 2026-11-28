@@ -257,7 +257,7 @@ export function planeGroup(key: PlaneGroupKey): PlaneGroup;
 export type PlaneGroupKey = 'p1' | 'p2' | 'pm' | 'pg' | 'cm' | 'p2mm' | 'p2mg' | 'p2gg' | 'c2mm' | 'p4' | 'p4mm' | 'p4gm' | 'p3' | 'p3m1' | 'p31m' | 'p6' | 'p6mm';
 
 // @public
-export function planeGroupOf(operations: readonly PlaneOperation[], options?: ToleranceOptions): IdentifiedPlaneGroup;
+export function planeGroupOf(operations: readonly PlaneOperation[], options?: ToleranceOptions): IdentifiedPlaneGroup | undefined;
 
 // @public
 export function planeGroups(): readonly PlaneGroup[];
@@ -300,7 +300,7 @@ export function pointGroup(key: PointGroupKey): PointGroup;
 export type PointGroupKey = PlanePointGroupKey;
 
 // @public
-export function pointGroupOf(operations: readonly PlaneOperation[], options?: ToleranceOptions): IdentifiedPointGroup;
+export function pointGroupOf(operations: readonly PlaneOperation[], options?: ToleranceOptions): IdentifiedPointGroup | undefined;
 
 // @public
 export function pointGroups(): readonly PointGroup[];
@@ -315,7 +315,7 @@ export interface PointOrbitEntry {
 export function reciprocalBasis(basis: Mat2): Mat2;
 
 // @public
-export function residualOperations<T extends PlaneCellOperation>(operations: readonly T[], basis: Mat2, options?: ToleranceOptions): readonly T[];
+export function residualOperationsOf<T extends PlaneCellOperation>(operations: readonly T[], basis: Mat2, options?: ToleranceOptions): readonly T[];
 
 // @public
 export interface RotationPoint {

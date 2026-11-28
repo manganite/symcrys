@@ -22,9 +22,16 @@ All notable changes to symcrys are recorded here. The format follows
 
 ### Changed
 
+- **Breaking:** `residualOperations` is `residualOperationsOf`, in all three entry points (Python
+  `residual_operations_of`): the suffix `…Of` marks the functions of a list of operations, and it
+  takes one (#239).
+- **Breaking (types):** `pointGroupOf` and `planeGroupOf` of `symcrys/plane` are typed
+  `… | undefined` (Python `Optional`), as `pointGroupOf` of the point-group entry points (#239).
+  They return as before: every finite group of integer matrices is a plane point group, and every
+  list in a conventional cell is a plane group.
 - **Breaking:** `changeOfCoordinates` of `symcrys/magnetic` carries the time reversal of each
   operation through (#239): when every operation gives `timeReversal`, each transformed operation
-  keeps it, so that the result goes on to `residualOperations` or a further `changeOfCoordinates`;
+  keeps it, so that the result goes on to `residualOperationsOf` or a further `changeOfCoordinates`;
   when none does, the result is spatial, as before; a list in which only some operations give it is
   a RangeError. Before, `timeReversal` was dropped and had to be matched by index, and a mixed list
   was accepted. `AffineOperation` and `TransformedOperation` of `symcrys/magnetic` have the optional
@@ -32,14 +39,14 @@ All notable changes to symcrys are recorded here. The format follows
   in its type (an operation without it is still a RangeError). In Python,
   `magnetic.TransformedOperations` has the field `time_reversal`, None where the operations given
   have no time reversal. `symcrys` and `symcrys/plane` are unchanged.
-- Python: `residual_operations` of every module returns the operations it keeps in the class it is
+- Python: `residual_operations_of` of every module returns the operations it keeps in the class it is
   given: `TransformedOperations` of `change_of_coordinates` stay `TransformedOperations` (#239).
   Before, it built `Operations` from them, which failed for want of `cartesian` (and in
   `symcrys.plane` gave `Operations`).
 - **Breaking:** `wyckoffDistances` of `symcrys/plane` refuses a basis that contradicts the cell
   restrictions of the group, a RangeError that names an operation of the group not keeping its
   metric (#238). A new option `tolerance` (default `EPSILON`) sets how closely the metric is kept,
-  relative to its largest entry, as in `residualOperations`. Before, `wyckoffDistances('p4', …,
+  relative to its largest entry, as in `residualOperationsOf`. Before, `wyckoffDistances('p4', …,
 { basis: [[2, 0], [0, 3]] })` measured in a cell that no square lattice has. A basis whose
   products overflow or vanish (entries of 10²⁰⁰ or 10⁻²⁰⁰) is refused, as `metricTensor` refuses
   it: the two compute the metric in one place now.

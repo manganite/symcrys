@@ -7,7 +7,7 @@ import {
   latticeFromParameters,
   metricTensor,
   operations,
-  residualOperations,
+  residualOperationsOf,
 } from 'symcrys';
 
 const hexagonal = { a: 3, b: 3, c: 5, alpha: 90, beta: 90, gamma: 120 };
@@ -19,11 +19,11 @@ console.log(
 console.log('(100) to (010):', angleBetweenPlanes(basis, [1, 0, 0], [0, 1, 0]).toFixed(4), 'degrees');
 console.log('[110] in four indices:', directionToFourIndices([1, 1, 0]));
 
-// residualOperations reads the matrix W in the lattice basis (`matrix`) of each operation.
+// residualOperationsOf reads the matrix W in the lattice basis (`matrix`) of each operation.
 const ops = operations('6/mmm');
 const distorted = latticeFromParameters({ ...hexagonal, gamma: 121 });
-console.log('operations kept at gamma = 120:', residualOperations(ops, basis).length);
-console.log('operations kept at gamma = 121:', residualOperations(ops, distorted).length);
+console.log('operations kept at gamma = 120:', residualOperationsOf(ops, basis).length);
+console.log('operations kept at gamma = 121:', residualOperationsOf(ops, distorted).length);
 
 // The triple hexagonal cell H₁ of ITA 2016 Table 1.5.1.1: a′ = a − b, b′ = a + 2b, c′ = c.
 const toH1 = changeOfCoordinates(

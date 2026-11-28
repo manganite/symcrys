@@ -190,9 +190,9 @@ class Operation(TypedDict):
 @dataclass(frozen=True, eq=False)
 class Operations:
     """The operations of a point group as arrays, one row per operation, in the order of
-    ``operations``: what ``operations``, ``generators`` and ``residual_operations`` return, and what
-    every function that takes operations accepts, beside a list of dicts ``{"cartesian"}`` and an
-    array of Cartesian matrices of shape (n, 3, 3). Frozen, its arrays read-only; ``len(ops)`` is
+    ``operations``: what ``operations``, ``generators`` and ``residual_operations_of`` return, and
+    what every function that takes operations accepts, beside a list of dicts ``{"cartesian"}`` and
+    an array of Cartesian matrices of shape (n, 3, 3). Frozen, its arrays read-only; ``len(ops)`` is
     the number of operations.
     """
 
@@ -1006,7 +1006,7 @@ __all__ = [
     "point_groups",
     "reciprocal_basis",
     "reduce_indices",
-    "residual_operations",
+    "residual_operations_of",
     "rotate_tensor",
     "rotate_tensors",
     "settings",
@@ -2067,7 +2067,7 @@ def lattice_basis(
 
 
 @overload
-def residual_operations(
+def residual_operations_of(
     operations: TransformedOperations,
     basis: ArrayLike,
     *,
@@ -2076,7 +2076,7 @@ def residual_operations(
 
 
 @overload
-def residual_operations(
+def residual_operations_of(
     operations: Operations | Sequence[Mapping[str, Any]],
     basis: ArrayLike,
     *,
@@ -2084,7 +2084,7 @@ def residual_operations(
 ) -> Operations: ...
 
 
-def residual_operations(
+def residual_operations_of(
     operations: Operations | TransformedOperations | Sequence[Mapping[str, Any]],
     basis: ArrayLike,
     *,
@@ -2111,7 +2111,7 @@ def residual_operations(
     """
     given = _shared.operation_list(operations, ("matrix",))
     kept = _call(
-        "residualOperations",
+        "residualOperationsOf",
         [{**op, "index": i} for i, op in enumerate(given)],
         _shared.array(basis, "basis", np.float64),
         _shared.options(tolerance=tolerance),

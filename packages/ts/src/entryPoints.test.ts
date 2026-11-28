@@ -8,7 +8,7 @@
  */
 
 import { representativeFace } from './pointGroups/wyckoff.js';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, expectTypeOf, it } from 'vitest';
 import pkg from '../package.json' with { type: 'json' };
 import * as classes from './index.js';
 import * as magnetic from './magnetic.js';
@@ -704,7 +704,7 @@ describe('every result is frozen, nested values included', () => {
     latticeParameters: [basis],
     metricTensor: [basis],
     reciprocalBasis: [basis],
-    residualOperations: [classes.operations('6/mmm'), basis],
+    residualOperationsOf: [classes.operations('6/mmm'), basis],
     toVoigt: [classes.tensorForm('1', 'piezoelectric').basis[0], 'piezoelectric', { factors: [2] }],
     fromVoigt: [
       classes.toVoigt(classes.tensorForm('1', 'piezoelectric').basis[0], 'piezoelectric', { factors: [2] }),
@@ -780,7 +780,7 @@ describe('every result is frozen, nested values included', () => {
         [0, 2],
       ],
     ],
-    residualOperations: [
+    residualOperationsOf: [
       plane.operations('p4mm'),
       [
         [1, 0],
@@ -816,7 +816,7 @@ describe('every result is frozen, nested values included', () => {
     const magneticOps = magnetic.operations('32');
     for (const [name, args] of Object.entries(point)) {
       const a =
-        name === 'residualOperations'
+        name === 'residualOperationsOf'
           ? [magnetic.operations('6/mmm'), basis]
           : args.map((x) => (x === ops ? magneticOps : x));
       expect(unfrozen(call(magnetic, name, a)), name).toEqual([]);
@@ -860,9 +860,9 @@ describe('every result is frozen, nested values included', () => {
     expect(unfrozen(magnetic.allowedPropertiesOf(magneticOps))).toEqual([]);
   });
 
-  it('residualOperations freezes the list, not the operations of the caller', () => {
+  it('residualOperationsOf freezes the list, not the operations of the caller', () => {
     const mine = classes.operations('6/mmm').map((op) => ({ matrix: op.matrix }));
-    const kept = classes.residualOperations(mine, basis);
+    const kept = classes.residualOperationsOf(mine, basis);
     expect(Object.isFrozen(kept)).toBe(true);
     expect(Object.isFrozen(mine[0])).toBe(false);
   });
@@ -898,7 +898,7 @@ describe('one tolerance contract (#93)', () => {
     'symcrys siteSymmetry': [(o) => classes.siteSymmetry('m-3m', { cartesian: [0, 0, 1] }, o as never), 1],
     'symcrys wyckoffPosition': [(o) => classes.wyckoffPosition('m-3m', { cartesian: [0, 0, 1] }, o as never), 1],
     'symcrys orbitOf': [(o) => classes.orbitOf(cubic, [0, 0, 1], o as never), 1],
-    'symcrys residualOperations': [(o) => classes.residualOperations(cubic, basis, o as never), 1],
+    'symcrys residualOperationsOf': [(o) => classes.residualOperationsOf(cubic, basis, o as never), 1],
     'symcrys/magnetic pointGroupOf': [(o) => magnetic.pointGroupOf(magneticOps, o as never), 0.1],
     'symcrys/magnetic describeOperationsOf': [(o) => magnetic.describeOperationsOf(magneticOps, o as never), 0.1],
     'symcrys/magnetic tensorFormOf': [(o) => magnetic.tensorFormOf(magneticOps, 'ferromagnetic', o as never), 0.1],
@@ -920,8 +920,8 @@ describe('one tolerance contract (#93)', () => {
     'symcrys/magnetic siteSymmetryOf': [(o) => magnetic.siteSymmetryOf(magneticOps, [0, 0, 1], o as never), 1],
     'symcrys/magnetic siteSymmetry': [(o) => magnetic.siteSymmetry("4/m'mm", { cartesian: [0, 0, 1] }, o as never), 1],
     'symcrys/magnetic orbitOf': [(o) => magnetic.orbitOf(magneticOps, [0, 0, 1], o as never), 1],
-    'symcrys/magnetic residualOperations': [
-      (o) => magnetic.residualOperations(magneticOps, classes.latticeBasis('4/mmm'), o as never),
+    'symcrys/magnetic residualOperationsOf': [
+      (o) => magnetic.residualOperationsOf(magneticOps, classes.latticeBasis('4/mmm'), o as never),
       1,
     ],
     'symcrys/plane describeOperationsOf': [(o) => plane.describeOperationsOf(p4, o as never), 0.1],
@@ -972,5 +972,16 @@ describe('the description types of the two point-group entry points agree', () =
       Omit<magnetic.CartesianOperationDescription, 'timeReversal'>
     > = true;
     expect([operation, cartesian]).toEqual([true, true]);
+  });
+});
+
+describe('identification may find nothing, in every entry point', () => {
+  it('pointGroupOf and planeGroupOf are typed with undefined, as in the point-group entry points', () => {
+    expectTypeOf(classes.pointGroupOf).returns.toEqualTypeOf<classes.IdentifiedPointGroup | undefined>();
+    expectTypeOf(magnetic.pointGroupOf).returns.toEqualTypeOf<magnetic.IdentifiedPointGroup | undefined>();
+    expectTypeOf(plane.pointGroupOf).returns.toEqualTypeOf<plane.IdentifiedPointGroup | undefined>();
+    expectTypeOf(plane.planeGroupOf).returns.toEqualTypeOf<plane.IdentifiedPlaneGroup | undefined>();
+    // In the plane it is not returned: every finite group of integer matrices is a plane point group.
+    expect(plane.pointGroupOf(plane.operations('p4mm'))).toEqual({ key: '4mm', setting: 1 });
   });
 });

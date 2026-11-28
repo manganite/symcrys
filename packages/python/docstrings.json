@@ -66,7 +66,7 @@
       "type": "dict",
       "doc": "``operations`` int64 array of shape (n,), ``direction`` float64 array of shape (3,), ``multiplicity``, ``general``."
     },
-    "residual_operations": {
+    "residual_operations_of": {
       "type": "Operations",
       "doc": "The kept operations of the caller, in their order."
     },
@@ -137,7 +137,7 @@
       "type": "dict",
       "doc": "``operations`` int64 array of shape (n,), ``direction`` float64 array of shape (3,), ``multiplicity``, ``general``."
     },
-    "residual_operations": {
+    "residual_operations_of": {
       "type": "Operations",
       "doc": "The kept operations of the caller, in their order."
     },
@@ -151,7 +151,7 @@
     }
   },
   "symcrys.plane": {
-    "residual_operations": {
+    "residual_operations_of": {
       "type": "Operations",
       "doc": "The kept operations of the caller, in their order."
     },

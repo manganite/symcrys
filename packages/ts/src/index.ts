@@ -72,7 +72,7 @@ export {
   isPointGroupKey,
   latticeBasis,
   latticeSystems,
-  residualOperations,
+  residualOperationsOf,
   operations,
   orbit,
   orbitOf,
