@@ -25,6 +25,8 @@ All notable changes to symcrys are recorded here. The format follows
 - The short and full symbols of the settings of the crystal classes are computed from their
   symmetry elements along the symmetry directions of ITA Table 2.1.3.1, no longer stored; every
   result is unchanged (#233). The Schoenflies symbols of the classes stay stored, as vocabulary.
+- The asymmetric units of the plane groups are stored as their inequalities, in ITA's order, no
+  longer as the printed text read at run time; the results are unchanged (#233).
 - The Wyckoff positions and crystal forms of the five settings ITA does not print (unique axis a of
   `2`, `m` and `2/m`; `2mm` and `m2m` of `mm2`) are computed from their operations like those of
   the printed settings, no longer by rewriting the strings of setting 1; a position takes the letter

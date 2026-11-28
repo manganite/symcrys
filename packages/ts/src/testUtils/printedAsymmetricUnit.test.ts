@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseAsymmetricUnit } from './cell.js';
+import { parseAsymmetricUnit } from './printedAsymmetricUnit.js';
 
 describe('parseAsymmetricUnit', () => {
   it('reads chains, min() and fractions of sums', () => {
