@@ -11,6 +11,7 @@ import { det, IDENTITY as LINEAR_IDENTITY, inverse, multiply, snap, trace, trans
 import type { CartesianOperation } from './operations.js';
 import {
   IDEAL_PASSES,
+  IDEAL_RESIDUAL,
   IDEAL_SETTLED,
   IDEAL_SNAP,
   IDEAL_UNSETTLED,
@@ -303,7 +304,29 @@ export interface IdealGroup {
  * elements or do not settle into a group (a tolerance too large or too small for their errors).
  */
 export function idealGroup(operations: readonly CartesianOperation[], tolerance: number): IdealGroup {
-  return idealOfGroup(closedGroup(operations, tolerance), tolerance);
+  return idealOfClosure(operations, closedGroup(operations, tolerance), tolerance);
+}
+
+/** `idealGroup` of operations whose closure `closed` (`closedGroup`) is at hand. */
+export function idealOfClosure(
+  operations: readonly CartesianOperation[],
+  closed: readonly CartesianOperation[],
+  tolerance: number,
+): IdealGroup {
+  const ideal = idealOfGroup(closed, tolerance);
+  // Near the input: every operation of the caller within the tolerance of an element of its time
+  // reversal, measured from the caller's matrices (the closure drops one within the tolerance of
+  // an earlier element, so its own deviation does not see them all).
+  operations.forEach((op) => {
+    const timeReversal = op.timeReversal === true;
+    const d = Math.min(
+      ...ideal.operations
+        .filter((e) => e.timeReversal === timeReversal)
+        .map((e) => distance(e.cartesian, op.cartesian)),
+    );
+    if (!(d < tolerance)) throw notNear(tolerance, d);
+  });
+  return ideal;
 }
 
 /**
@@ -312,11 +335,21 @@ export function idealGroup(operations: readonly CartesianOperation[], tolerance:
  * do not count against the tolerance.
  */
 export function idealOfList(operations: readonly CartesianOperation[], tolerance: number): IdealGroup {
-  return idealOfGroup(
+  const ideal = idealOfGroup(
     operations.map((op) => ({ cartesian: op.cartesian, timeReversal: op.timeReversal === true })),
     tolerance,
   );
+  // Near the input: the list is the caller's, index for index.
+  if (!(ideal.deviation < tolerance)) throw notNear(tolerance, ideal.deviation);
+  return ideal;
 }
+
+/** The RangeError of an exact group farther than the tolerance from the caller's operations. */
+const notNear = (tolerance: number, d: number): RangeError =>
+  new RangeError(
+    `The operations do not settle into a group within the tolerance ${tolerance}: an operation lies ` +
+      `${d.toPrecision(2)} from the nearest element of the exact group; pass a larger tolerance, or more accurate matrices`,
+  );
 
 /** The averaging of `idealGroup` on a list that is a group within `tolerance`, index for index. */
 function idealOfGroup(group: readonly CartesianOperation[], tolerance: number): IdealGroup {
@@ -401,8 +434,68 @@ function idealOfGroup(group: readonly CartesianOperation[], tolerance: number): 
   // Only rounding of the last bits is snapped: a group turned by a small angle has entries near the
   // exact values that are not equal to them.
   const exact = f.map((m, k) => ({ cartesian: snap(m, IDEAL_SNAP), timeReversal: group[k].timeReversal }));
+  // The postconditions: a small last step does not prove a group, so the result is checked.
+  checkExactGroup(exact, table, tolerance);
+  const deviation = Math.max(...exact.map((op, k) => distance(op.cartesian, group[k].cartesian)));
   return {
     operations: exact,
-    deviation: Math.max(...exact.map((op, k) => distance(op.cartesian, group[k].cartesian))),
+    deviation,
   };
+}
+
+/**
+ * Checks that matrices are a group of orthogonal matrices with the product table `table`, each
+ * residual below `IDEAL_RESIDUAL` per entry, and that its elements are distinct: the closure keeps
+ * its elements at least `tolerance` apart, so two of the same time reversal closer than that are one
+ * operation averaged twice, from a closure that kept near copies of it. A RangeError that names what
+ * is wrong otherwise.
+ */
+function checkExactGroup(
+  group: readonly CartesianOperation[],
+  table: readonly (readonly number[])[],
+  tolerance: number,
+): void {
+  // Flat arithmetic, as in the averaging: n² products of 3 × 3 matrices.
+  const flat = group.map((g) => Float64Array.from(g.cartesian.flat()));
+  let orthogonality = 0;
+  for (const m of flat) {
+    for (let i = 0; i < 3; i++)
+      for (let j = 0; j < 3; j++) {
+        const v = m[i] * m[j] + m[3 + i] * m[3 + j] + m[6 + i] * m[6 + j] - (i === j ? 1 : 0);
+        orthogonality = Math.max(orthogonality, Math.abs(v));
+      }
+  }
+  let closure = 0;
+  for (let x = 0; x < flat.length; x++) {
+    const p = flat[x];
+    for (let y = 0; y < flat.length; y++) {
+      const q = flat[y];
+      const r = flat[table[x][y]];
+      for (let i = 0; i < 3; i++)
+        for (let j = 0; j < 3; j++) {
+          const v = p[3 * i] * q[j] + p[3 * i + 1] * q[3 + j] + p[3 * i + 2] * q[6 + j] - r[3 * i + j];
+          closure = Math.max(closure, Math.abs(v));
+        }
+    }
+  }
+  const remedy = 'pass a smaller tolerance, or more accurate matrices';
+  if (!(orthogonality < IDEAL_RESIDUAL && closure < IDEAL_RESIDUAL)) {
+    throw new RangeError(
+      `The operations do not settle into a group within the tolerance ${tolerance}: the result is ` +
+        `orthogonal to ${orthogonality.toPrecision(2)} and closed under products to ` +
+        `${closure.toPrecision(2)}, not to ${IDEAL_RESIDUAL}; ${remedy}`,
+    );
+  }
+  for (let x = 0; x < flat.length; x++)
+    for (let y = x + 1; y < flat.length; y++) {
+      if (group[x].timeReversal !== group[y].timeReversal) continue;
+      let d = 0;
+      for (let e = 0; e < 9; e++) d = Math.max(d, Math.abs(flat[x][e] - flat[y][e]));
+      if (d < tolerance) {
+        throw new RangeError(
+          `The operations do not settle into a group within the tolerance ${tolerance}: elements ${x} ` +
+            `and ${y} of their closure settle onto one operation, so the closure kept near copies of it; ${remedy}`,
+        );
+      }
+    }
 }

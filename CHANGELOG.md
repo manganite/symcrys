@@ -39,6 +39,21 @@ All notable changes to symcrys are recorded here. The format follows
     or (3, …, 3).
   - a list nested deeper than an array has, or containing itself, now gives a SymcrysError.
 
+- A group made exact from a caller's operations is checked before it is used (#241): its products
+  and RᵀR within 10⁻⁹ per entry of its elements and of the identity, its elements distinct, and
+  every operation of the caller within the tolerance of an element; otherwise a RangeError. Before,
+  a list with large errors at a large tolerance could give a result that was no group of orthogonal
+  matrices, or one with an operation twice:
+  - of `23` with entries moved by up to 0.03 at the tolerance 0.09, `tensorFormOf` threw a plain
+    Error (a fault of symcrys) and `pointGroupOf` returned `undefined`, as for a group that is not
+    crystallographic;
+  - of `-6m2` with entries moved by up to 0.02 at the tolerance 0.09, `tensorFormOf` gave no
+    piezoelectric component (`-6m2` has one) while `allowsPropertyOf` said it was allowed.
+
+  `pointGroupOf` and `isCentrosymmetricOf` now compute with the exact group, as `tensorFormOf`
+  does; `pointGroupOf` of a new list costs about three to five times as much as before. Affected
+  since `tensorFormOf` of a list was added (0.4.0).
+
 - `siteSymmetryOf` and `orbitOf` (both point-group entry points, and `symcrys/plane` for a point)
   refuse a tolerance below the deviation of the given operations from the exact group they
   approximate, with a RangeError that names both numbers (#235). Before, such a tolerance gave a
