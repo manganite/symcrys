@@ -11,9 +11,10 @@ import { deepFreeze } from '../freeze.js';
 import { crystalFamily } from '../lattice.js';
 import { dot, inverse, transpose, apply as applyMatrix, type Mat3, type Vec3 } from '../linalg.js';
 import { classData, classSettingData, settingBasis, settingLatticeOperations } from './classData.js';
+import { classSettingSymbols } from './classSymbols.js';
 import type { PointGroupKey } from './keys.js';
 import { keyOfCompleteGroup } from './identify.js';
-import { POINT_GROUP_KEYS, settings } from './pointGroups.js';
+import { settings } from './pointGroups.js';
 import { FORM_TYPE_DATA, FORM_TYPE_KEYS, type CrystalFormTypeKey } from './formTypes.js';
 import {
   applyToFace,
@@ -149,14 +150,6 @@ const multiplyReal = (a: Mat3, b: Mat3): Mat3 =>
 const sameMatrix = (a: Mat3, b: Mat3): boolean =>
   a.every((row, i) => row.every((x, j) => Math.abs(x - b[i][j]) < 1e-9));
 
-/** The class of a printed eigensymmetry (`-62m` is a setting of the class `-6m2`). */
-function classOfSymbol(symbol: string): string | undefined {
-  for (const key of POINT_GROUP_KEYS) {
-    if (settings(key).some((s) => s.symbol === symbol)) return key;
-  }
-  return undefined;
-}
-
 /**
  * The kind of the form of a face: its number of faces and eigensymmetry, and where these do not
  * decide, the order of the rotation of the eigensymmetry about the normal of the face's mirror
@@ -175,7 +168,10 @@ function formType(normals: readonly Vec3[]): { type: CrystalFormTypeKey; conditi
   const group = eigensymmetry(normals);
   const identified = keyOfCompleteGroup(group.map((m) => ({ cartesian: m, timeReversal: false })));
   if (!identified) throw new Error('An eigensymmetry that is not a crystallographic point group');
-  const byGroup = candidates.filter(([, , , e]) => classOfSymbol(e) === identified);
+  // A printed eigensymmetry is a short symbol of a setting of the class (`-62m` of `-6m2`); only the
+  // settings of the class found are read, so that the symbols of no other class are computed.
+  const ofClass = settings(identified as PointGroupKey).map((s) => s.symbol);
+  const byGroup = candidates.filter(([, , , e]) => ofClass.includes(e));
   if (byGroup.length === 1) return { type: FORM_TYPE_KEYS[byGroup[0][0] - 1] };
   // The order of the rotation about the normal of the mirror that fixes the first face.
   const f = normals[0];
@@ -273,6 +269,7 @@ export function computedFormRows(key: PointGroupKey, setting: number): readonly 
 /** `computedFormRows` with the given convention data, uncached: the tests check that each entry is needed. */
 export function formRowsWith(key: PointGroupKey, setting: number, conventions: FormConventions): readonly FormRow[] {
   const data = classSettingData(key, setting);
+  const symbol = classSettingSymbols(key, setting).short;
   const rhombohedral = data.axes === 'rhombohedral';
   const hexagonalFamily = crystalFamily(classData(key).crystalSystem) === 'hexagonal';
   const cubic = crystalFamily(classData(key).crystalSystem) === 'cubic';
@@ -379,7 +376,7 @@ export function formRowsWith(key: PointGroupKey, setting: number, conventions: F
     // orthorhombic, tetragonal and hexagonal positions have more than one limiting form.
     return space.every((h) => h[2] === 0);
   };
-  const faceExceptions = (conventions.firstFaces[data.short] ?? []).map((p) => keyOf(patternSpanOfFace(p)));
+  const faceExceptions = (conventions.firstFaces[symbol] ?? []).map((p) => keyOf(patternSpanOfFace(p)));
   const used = new Set<string>();
   const out: FormRow[] = [];
   for (const [letter, , , , miller] of computedWyckoffRows(key, setting)) {
@@ -424,7 +421,7 @@ export function formRowsWith(key: PointGroupKey, setting: number, conventions: F
       if (limiting.some((m) => m !== l && m.kind.type === l.kind.type && contained(l.space, m.space)))
         limiting.splice(i, 1);
     }
-    const order = conventions.limitingOrder[data.short] ?? [];
+    const order = conventions.limitingOrder[symbol] ?? [];
     const rank = (l: (typeof limiting)[number]): (number | string)[] => [
       -l.space.length,
       parallelToAxis(l.space) ? 0 : 1,
@@ -442,7 +439,7 @@ export function formRowsWith(key: PointGroupKey, setting: number, conventions: F
     });
     for (const l of limiting) out.push(row(letter, false, l.kind, face(l.space)));
   }
-  if (used.size !== faceExceptions.length) throw new Error(`A first face listed for ${data.short} is in no form`);
+  if (used.size !== faceExceptions.length) throw new Error(`A first face listed for ${symbol} is in no form`);
   return deepFreeze(out);
 }
 

@@ -22,6 +22,9 @@ All notable changes to symcrys are recorded here. The format follows
 
 ### Changed
 
+- The short and full symbols of the settings of the crystal classes are computed from their
+  symmetry elements along the symmetry directions of ITA Table 2.1.3.1, no longer stored; every
+  result is unchanged (#233). The Schoenflies symbols of the classes stay stored, as vocabulary.
 - The first calls are faster, with the same results (#240): in Python the first `point_group_of`
   takes about a quarter of its time before (114 ms, was 476), the first `crystal_forms('m-3m')`
   under half (252 ms, was 609) and the first `operations('m-3m')` 17 ms (was 125), measured on one

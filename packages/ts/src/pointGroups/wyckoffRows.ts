@@ -12,6 +12,7 @@ import { gcd } from '../integers.js';
 import { crystalFamily } from '../lattice.js';
 import { formatOperation } from '../spaceGroups/affine.js';
 import { classData, classSettingData, settingLatticeOperations, settingSymmetryDirections } from './classData.js';
+import { classSettingSymbols } from './classSymbols.js';
 import type { PointGroupKey } from './keys.js';
 
 /** [letter, multiplicity, oriented site symmetry, coordinate triplets, Miller indices of the first face]. */
@@ -369,7 +370,7 @@ export function wyckoffRowsWith(
   conventions: WyckoffConventions,
 ): readonly WyckoffRow[] {
   const data = classSettingData(key, setting);
-  const symbol = data.short;
+  const symbol = classSettingSymbols(key, setting).short;
   const ops = settingLatticeOperations(key, setting) as unknown as Mat[];
   const hexagonalFamily = crystalFamily(classData(key).crystalSystem) === 'hexagonal';
   const bravaisMiller = hexagonalFamily && data.axes !== 'rhombohedral';

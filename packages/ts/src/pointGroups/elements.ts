@@ -5,13 +5,13 @@
  * left to the applications (docs/conventions.md, "Symmetry directions and elements").
  */
 
-import { ANGLE_EPSILON, AXIS_EPSILON } from '../tolerances.js';
 import { SETTING_KEYS, checkOptions } from '../checks.js';
-import { det, dot, trace, type Mat3, type Vec3 } from '../linalg.js';
+import { dot, type Mat3, type Vec3 } from '../linalg.js';
 import { crystalFamily } from '../lattice.js';
 import type { Operation } from '../operations.js';
 import type { Uvw } from '../symmetryDirections.js';
 import { settingBasis, settingSymmetryDirections } from './classData.js';
+import { axialVector, elementOf, elementsAlong, normalize, parallel } from './rotations.js';
 import {
   classSettingOf,
   operations,
@@ -97,11 +97,6 @@ export interface SymmetryDirection {
   readonly directions: readonly DirectionElements[];
 }
 
-function normalize(v: Vec3): Vec3 {
-  const n = Math.hypot(v[0], v[1], v[2]);
-  return [v[0] / n, v[1] / n, v[2] / n];
-}
-
 /** [uvw] in the basis `b` (columns a, b, c) as a Cartesian unit vector, with the direction itself. */
 function axisOf(b: Mat3, uvw: Uvw): Axis {
   const v: Vec3 = [
@@ -112,49 +107,11 @@ function axisOf(b: Mat3, uvw: Uvw): Axis {
   return Object.freeze({ lattice: uvw, cartesian: Object.freeze(normalize(v)) as unknown as Vec3 });
 }
 
-/** The proper rotation part of a matrix and its order n (1 for the identity). */
-function rotationPart(m: Mat3): { r: Mat3; n: number } {
-  const r = det(m) > 0 ? m : (m.map((row) => row.map((v) => -v)) as unknown as Mat3);
-  const cos = Math.max(-1, Math.min(1, (trace(r) - 1) / 2));
-  const angle = Math.acos(cos);
-  const n = angle < ANGLE_EPSILON ? 1 : Math.round((2 * Math.PI) / angle);
-  if (![1, 2, 3, 4, 6].includes(n)) throw new Error(`Not a crystallographic operation (rotation order ${n})`);
-  return { r, n };
-}
-
-/** The axis of a proper rotation of order n ≥ 2 (sign arbitrary for n = 2). */
-export function rotationAxis(r: Mat3, n: number): Vec3 {
-  if (n === 2) {
-    // r + 1 has rank 1; its columns are parallel to the axis.
-    let best: Vec3 = [0, 0, 0];
-    let size = 0;
-    for (let j = 0; j < 3; j++) {
-      const col: Vec3 = [r[0][j] + (j === 0 ? 1 : 0), r[1][j] + (j === 1 ? 1 : 0), r[2][j] + (j === 2 ? 1 : 0)];
-      const l = Math.hypot(col[0], col[1], col[2]);
-      if (l > size) {
-        size = l;
-        best = col;
-      }
-    }
-    return normalize(best);
-  }
-  return normalize(axialVector(r));
-}
-
-/** (r − rᵀ)/2 as a vector: sin θ times the unit axis for a rotation by θ. */
-export const axialVector = (r: Mat3): Vec3 => [
-  (r[2][1] - r[1][2]) / 2,
-  (r[0][2] - r[2][0]) / 2,
-  (r[1][0] - r[0][1]) / 2,
-];
-
 function findAxis(axes: readonly Axis[], u: Vec3, what: string): Axis {
-  const a = axes.find((x) => Math.abs(Math.abs(dot(x.cartesian, u)) - 1) < AXIS_EPSILON);
+  const a = axes.find((x) => parallel(x.cartesian, u));
   if (!a) throw new Error(`${what}: axis [${u.map((v) => v.toFixed(4)).join(', ')}] is not a symmetry direction`);
   return a;
 }
-
-const parallel = (a: Vec3, b: Vec3): boolean => Math.abs(Math.abs(dot(a, b)) - 1) < AXIS_EPSILON;
 
 /**
  * The direction of a Seitz symbol: the lattice symmetry direction of ITA Table 2.1.3.1, reversed
@@ -171,17 +128,15 @@ const seitzDirection = (uvw: Uvw): Uvw =>
  * the sense refers to; the sense is computed from the matrix.
  */
 function describe(op: Operation, axes: readonly Axis[], basis: Mat3, what: string): OperationDescription {
-  const proper = det(op.cartesian) > 0;
-  const { r, n } = rotationPart(op.cartesian);
+  const { kind, n, rotation, axis: found } = elementOf(op.cartesian);
   const timeReversal = op.timeReversal;
-  if (n === 1) return Object.freeze({ kind: proper ? 'identity' : 'inversion', n: 1, timeReversal });
-  const direction = findAxis(axes, rotationAxis(r, n), what);
+  if (found === undefined) return Object.freeze({ kind, n: 1, timeReversal });
+  const direction = findAxis(axes, found, what);
   const seitz = seitzDirection(direction.lattice);
   // The object of the symmetry direction where the signs agree, so that the two match by identity there.
   const axis = seitz === direction.lattice ? direction : axisOf(basis, seitz);
-  const kind: OperationKind = proper ? 'rotation' : n === 2 ? 'reflection' : 'rotoinversion';
   if (n === 2) return Object.freeze({ kind, n: 2, axis, timeReversal });
-  const sense = dot(axialVector(r), axis.cartesian) > 0 ? '+' : '-';
+  const sense = dot(axialVector(rotation), axis.cartesian) > 0 ? '+' : '-';
   return Object.freeze({ kind, n, axis, sense, timeReversal });
 }
 
@@ -209,6 +164,7 @@ function analysis(key: MagneticPointGroupKey, options?: SettingOptions): Analysi
   const all = positions.flat();
   const what = `Point group ${key}`;
   const descriptions = Object.freeze(ops.map((op) => describe(op, all, basis, what)));
+  const geometric = descriptions.map((d) => ({ kind: d.kind, n: d.n, axis: d.axis?.cartesian }));
 
   // The full symbol of a grey group ends in 1', which is no position of the symbol.
   const tokens =
@@ -219,17 +175,7 @@ function analysis(key: MagneticPointGroupKey, options?: SettingOptions): Analysi
           .filter((t) => t !== "1'");
   const directions = Object.freeze(
     positions.map((axes, i) => {
-      const elements = axes.map((a) => {
-        const on = descriptions.filter((d) => d.axis !== undefined && parallel(d.axis.cartesian, a.cartesian));
-        const max = (kind: OperationKind, none: number) =>
-          on.filter((d) => d.kind === kind).reduce((m, d) => Math.max(m, d.n), none);
-        return Object.freeze({
-          ...a,
-          rotation: max('rotation', 1),
-          rotoinversion: max('rotoinversion', 0),
-          mirror: on.some((d) => d.kind === 'reflection'),
-        });
-      });
+      const elements = axes.map((a) => Object.freeze({ ...a, ...elementsAlong(geometric, a.cartesian) }));
       const position: SymmetryDirection =
         tokens[i] === undefined
           ? { position: i + 1, directions: Object.freeze(elements) }

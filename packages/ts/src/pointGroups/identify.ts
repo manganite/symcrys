@@ -9,7 +9,8 @@ import { det, dot, trace, type Mat3, type Vec3 } from '../linalg.js';
 import { closedGroup, idealOfClosure, sameWithin } from '../closure.js';
 import { checkCartesianOperations, checkTimeReversal, type CartesianOperation } from '../operations.js';
 import { EPSILON, MAX_POINT_GROUP_ORDER, toleranceOf, type ToleranceOptions } from '../tolerances.js';
-import { axialVector, rotationAxis, type OperationKind } from './elements.js';
+import type { OperationKind } from './elements.js';
+import { axialVector, rotationAxis } from './rotations.js';
 import {
   MAGNETIC_POINT_GROUP_KEYS,
   operationInvariants,

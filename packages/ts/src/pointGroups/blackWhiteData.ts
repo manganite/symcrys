@@ -23,6 +23,7 @@ import { det, matricesEqual, multiply, rotationZ, trace, transpose, type Mat3 } 
 import type { CartesianOperation } from '../operations.js';
 import type { BlackWhitePointGroupKey, PointGroupKey } from './keys.js';
 import { CLASSES, classData, settingCartesianOperations, settingTimeReversal } from './classData.js';
+import { classSettingSymbols } from './classSymbols.js';
 import { primedSymbols } from './magneticSymbols.js';
 
 /** One ITC setting of a black-and-white group. */
@@ -287,7 +288,8 @@ function group(data: GroupData): BlackWhiteGroup {
     schoenflies: `${volumeD(cls.schoenflies)}(${volumeD(classData(classOfOperations(subgroup)).schoenflies)})`,
     settings: frames.map((f, i) => {
       const classSetting = cls.settings.find((s) => s.index === f.classIndex)!;
-      const full = primedSymbols(classSetting, cls.crystalSystem, operationsOf(crystalClass, f)).full;
+      const classSymbols = classSettingSymbols(crystalClass, f.classIndex);
+      const full = primedSymbols(classSymbols, cls.crystalSystem, operationsOf(crystalClass, f)).full;
       return {
         index: i + 1,
         full,

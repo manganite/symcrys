@@ -1,13 +1,18 @@
 /**
  * The exact ITC class data (classData.ts) against print (fixture class (a)): ITA (6th ed.) Table
  * 3.2.3.2, pp. 745–769, re-parsed from references/itc/. For each of the 45 entries, the operations built from ITA's selected generators are the printed general
- * position, as integer matrices in the conventional basis and in the printed order; the symbols and
- * the crystal system and Schoenflies symbol are those of the headline.
+ * position, as integer matrices in the conventional basis and in the printed order; the symbols
+ * computed from them (classSymbols.ts) and the crystal system and Schoenflies symbol are those of
+ * the headline. The computed symbols of all 50 settings, the five that ITA does not list
+ * included, are those of itcSettings.fixtures.ts (fixture classes (a) and (b)).
  */
 
 import { describe, expect, it } from 'vitest';
+import { hmTokens } from '../testUtils/hermannMauguin.js';
 import { expectHeader, readReference, tableRows, sameAxes } from '../testUtils/references.js';
 import { CLASSES, settingLatticeOperations } from './classData.js';
+import { classSettingSymbols } from './classSymbols.js';
+import { ITC_SETTINGS } from './itcSettings.fixtures.js';
 
 const headlineRows = tableRows(readReference('itc/vol-a-table-3.2.3.2-headlines.md'));
 expectHeader(headlineRows, ['System', 'Short', 'Full', 'Schoenflies', 'Axes', 'Page']);
@@ -31,7 +36,12 @@ function settingOf(short: string, axes: string) {
   const axis = /^unique axis (b|c)$/.exec(axes)?.[1];
   return CLASSES.flatMap((c) =>
     c.settings
-      .filter((s) => s.short === short && (axis === undefined || s.uniqueAxis === axis) && sameAxes(axes, s))
+      .filter(
+        (s) =>
+          classSettingSymbols(c.key, s.index).short === short &&
+          (axis === undefined || s.uniqueAxis === axis) &&
+          sameAxes(axes, s),
+      )
       .map((s) => ({ c, s })),
   );
 }
@@ -64,8 +74,34 @@ describe('ITA Table 3.2.3.2 against the exact class data', () => {
       expect(c.crystalSystem).toBe(h[0].toLowerCase());
       expect(c.schoenflies).toBe(h[3]);
       // The table prints a full symbol only where it differs from the short one, and none for the monoclinic classes.
-      if (h[2]) expect(s.full).toBe(h[2]);
-      else if (c.crystalSystem !== 'monoclinic') expect(s.full.replace(/ /g, '')).toBe(s.short);
+      const { short, full } = classSettingSymbols(c.key, s.index);
+      if (h[2]) expect(full).toBe(h[2]);
+      else if (c.crystalSystem !== 'monoclinic') expect(full.replace(/ /g, '')).toBe(short);
     },
   );
+});
+
+describe('the computed symbols of the 50 settings against itcSettings.fixtures.ts', () => {
+  it('has the classes of the class data', () => {
+    expect(Object.keys(ITC_SETTINGS).sort()).toEqual(CLASSES.map((c) => c.key).sort());
+  });
+
+  // The fixture lists the settings of a class in the order of their index (docs/conventions.md, "Settings").
+  const entries = CLASSES.flatMap((c) =>
+    c.settings.map((s, i) => [`${c.key} #${s.index}`, c, s, ITC_SETTINGS[c.key][i]] as const),
+  );
+
+  it.each(CLASSES.map((c) => [c.key, c] as const))('%s: one fixture entry per setting', (key, c) => {
+    expect(ITC_SETTINGS[key]).toHaveLength(c.settings.length);
+  });
+
+  it.each(entries)('%s: the setting of the fixture entry, its short and its full symbol', (_, c, s, f) => {
+    expect(s.uniqueAxis).toBe(f.uniqueAxis);
+    expect(s.axes === 'rhombohedral').toBe(f.rhombohedral === true);
+    expect(s.isDefault).toBe(f.standard);
+    const { short, full } = classSettingSymbols(c.key, s.index);
+    expect(short).toBe(f.short);
+    // Positions separated by single spaces, however the source writes them (`321`, `3 2 1`).
+    expect(full).toBe(hmTokens(f.full).join(' '));
+  });
 });

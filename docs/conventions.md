@@ -213,8 +213,9 @@ a list of group types counts in the orientation its positions name (`6'/mm'm`, I
 
 The operations, generators and lattice operations of the classes come from ITA's selected
 generators, exact integer matrices in the conventional basis (`pointGroups/classData.ts`), which
-also holds the short, full and Schoenflies symbol of each setting as data; a setting
-ITA does not print is a printed one in another basis. A black-and-white group is given by its
+also holds the Schoenflies symbol of each class as vocabulary; a setting ITA does not print is a
+printed one in another basis. The short and full symbols of the settings are computed from their
+operations ("Symbols"). A black-and-white group is given by its
 crystal class, the setting of the class that is the frame of its default, and which of ITA's
 selected generators of that frame carry time reversal (`pointGroups/blackWhiteData.ts`); its
 further settings follow by the rule below, and its symbols, in every setting, are written from its
@@ -419,7 +420,19 @@ writes; ITC Vol. D and the magnetic API write `S6`).
   directions [1-10], [01-1], [-101] of ITA Table 2.1.3.1).
 - **Full symbol** (`form: 'full'`): one entry per symmetry direction, separated by single spaces,
   `1` for a direction without symmetry: `-3 2/m 1`, `1 2 1`, `4/m -3 2/m`.
-- **Schoenflies** (`form: 'schoenflies'`): subscripts written inline (`C3v`, `D2d`, `Oh`). A
+- **Symbols of the classes are computed** from the symmetry elements of the operations of the
+  setting along its symmetry directions (ITA Table 2.1.3.1; for rhombohedral axes [111] and [1-10],
+  [01-1], [-101]). The full symbol has one entry per position: `n/m` for an even axis n with a
+  mirror normal to it, `-6` for a threefold axis with a mirror normal to it, otherwise `m`, `-3`,
+  `-4`, `n` or `1`. A triclinic class is `1` or `-1`; a symbol whose further positions are all `1`
+  is its first position (`4`, `-3`, `6/m`), except in the monoclinic classes, whose full symbol
+  names the unique axis by its position (`1 2 1`); a cubic symbol leaves out a last `1` (`2 3`). The
+  short symbol is the full one without spaces, with `2/m` written `m` (in the cubic classes also
+  `4/m`); the monoclinic classes keep `2/m` and leave out the `1`s instead (`2/m`, `m`): in the
+  short symbols "symmetry axes are suppressed as much as possible" (ITA 2016 § 2.1.3.4, p. 152). The
+  symbols of the 45 settings ITA Table 3.2.3.2 lists are those of its headlines (tested).
+- **Schoenflies** (`form: 'schoenflies'`): subscripts written inline (`C3v`, `D2d`, `Oh`). The
+  Schoenflies symbol of a class is vocabulary, one name per class, as ITA Table 3.2.3.2 prints it. A
   black-and-white group is `G(H)`, G the crystal class and H the subgroup of the operations without
   time reversal (`D4h(D2d)`), as in ITC Vol. D Table 1.5.2.3; a grey group is `GR` (`D4R`; ITC
   Vol. D Table 1.5.2.1). Each entry point follows the volume it is anchored in: the
