@@ -22,6 +22,12 @@ All notable changes to symcrys are recorded here. The format follows
 
 ### Changed
 
+- The first calls are faster, with the same results (#240): in Python the first `point_group_of`
+  takes about a quarter of its time before (114 ms, was 476), the first `crystal_forms('m-3m')`
+  under half (252 ms, was 609) and the first `operations('m-3m')` 17 ms (was 125), measured on one
+  machine. The table that identifies a group is made from det, trace and time reversal of the
+  integer matrices of each group, without building its settings, and the closure of the operations
+  of a group from its generators is checked with each generator, not with every pair.
 - **Breaking:** `residualOperations` is `residualOperationsOf`, in all three entry points (Python
   `residual_operations_of`): the suffix `…Of` marks the functions of a list of operations, and it
   takes one (#239).

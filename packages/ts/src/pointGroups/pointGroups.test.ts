@@ -6,11 +6,14 @@
 import { describe, expect, it } from 'vitest';
 import { operationsEqual, type Operation } from '../operations.js';
 import { closeWithin } from '../closure.js';
+import { det, trace } from '../linalg.js';
 import {
+  MAGNETIC_POINT_GROUP_KEYS,
   POINT_GROUP_KEYS,
   findPointGroup,
   generators,
   isPointGroupKey,
+  operationInvariants,
   operations,
   pointGroup,
   pointGroups,
@@ -220,5 +223,23 @@ describe('findPointGroup', () => {
     expect(findPointGroup('P4mm')).toBeUndefined();
     // Not a symbol at all: wrong input, not "not found".
     expect(() => findPointGroup(42 as unknown as string)).toThrow(RangeError);
+  });
+});
+
+describe('operationInvariants', () => {
+  it('are det, trace and time reversal of the operations of every setting, as a multiset', () => {
+    const counts = (list: readonly string[]): string => [...list].sort().join(' ');
+    for (const key of MAGNETIC_POINT_GROUP_KEYS) {
+      const invariants = counts(operationInvariants(key).map((k) => `${k.det}:${k.trace}${k.timeReversal ? "'" : ''}`));
+      for (const s of settings(key)) {
+        const ops = operations(key, { setting: s.index });
+        const own = counts(
+          ops.map(
+            (op) => `${Math.round(det(op.cartesian))}:${Math.round(trace(op.cartesian))}${op.timeReversal ? "'" : ''}`,
+          ),
+        );
+        expect(invariants, `${key} setting ${s.index}`).toBe(own);
+      }
+    }
   });
 });

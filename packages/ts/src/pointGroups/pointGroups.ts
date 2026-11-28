@@ -7,7 +7,7 @@
 import type { IdentifiedPointGroup } from './identify.js';
 import { shubnikovSymbol } from './shubnikov.js';
 import { checkOptions, SETTING_KEYS, shown } from '../checks.js';
-import { INVERSION, det, inverse, matricesEqual, multiply, type Mat3 } from '../linalg.js';
+import { INVERSION, det, inverse, matricesEqual, multiply, trace, type Mat3 } from '../linalg.js';
 import { EPSILON, INTEGER_EPSILON } from '../tolerances.js';
 import { compactSymbol } from '../notation.js';
 import { compose, operation, operationsEqual, type CartesianOperation, type Operation } from '../operations.js';
@@ -24,6 +24,7 @@ import {
 import type { IntMat3 } from './generatorData.js';
 import {
   BLACK_WHITE_CLASSES,
+  blackWhiteDefaultTimeReversal,
   blackWhiteGroup,
   blackWhiteClassSetting,
   blackWhiteOperations,
@@ -733,6 +734,46 @@ function records(
 }
 
 const recordCache = new Map<string, readonly Operation[]>();
+
+/** Internal. What the counts of a group are made of, for one operation: det W, tr W and time reversal, invariant under a change of basis. */
+export interface OperationInvariants {
+  readonly det: number;
+  readonly trace: number;
+  readonly timeReversal: boolean;
+}
+
+const invariantCache = new Map<string, readonly OperationInvariants[]>();
+
+/**
+ * Internal. The invariants of the operations of a group (det W, tr W, time reversal), from the integer matrices W
+ * of its default setting: they do not depend on the basis, so they are those of the Cartesian
+ * matrices of every setting. Cheaper than `operations`, which builds the settings of a group and
+ * its Cartesian matrices; for the identification of a list of operations, which needs the kinds of
+ * all 122 groups.
+ */
+export function operationInvariants(key: MagneticPointGroupKey): readonly OperationInvariants[] {
+  let kinds = invariantCache.get(key);
+  if (!kinds) {
+    const d = data(key);
+    const of = (w: IntMat3, timeReversal: boolean): OperationInvariants => ({
+      det: Math.round(det(w as unknown as Mat3)),
+      trace: Math.round(trace(w as unknown as Mat3)),
+      timeReversal,
+    });
+    if (d.type === 'I') {
+      kinds = settingLatticeOperations(key as PointGroupKey, d.defaultSetting).map((w) => of(w, false));
+    } else if (d.type === 'II') {
+      const own = operationInvariants(d.crystalClass.key);
+      kinds = [...own, ...own.map((k) => ({ ...k, timeReversal: true }))];
+    } else {
+      const { crystalClass, frame, timeReversal } = blackWhiteDefaultTimeReversal(key as BlackWhitePointGroupKey);
+      kinds = settingLatticeOperations(crystalClass, frame).map((w, i) => of(w, timeReversal[i]));
+    }
+    kinds = Object.freeze(kinds.map((k) => Object.freeze(k)));
+    invariantCache.set(key, kinds);
+  }
+  return kinds;
+}
 
 /**
  * All operations of the point group in the requested setting (default: the ITC default setting),

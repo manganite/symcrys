@@ -234,11 +234,27 @@ describe('closure', () => {
   });
 });
 
-describe('cosetsByGenerators, each coset once', () => {
-  // With three generators, the list built from the first two need not be a group, and the cosets of
-  // the third by it can overlap: the list then holds a coset twice. These generators of the plane
-  // give the 6 operations of 3m, listed 8 times.
+describe('cosetsByGenerators', () => {
+  it('builds the group coset by coset, in the order of its generators', () => {
+    // 4mm from the fourfold rotation and a mirror: 1, 4, 2, 4³, then the mirror times each.
+    const list = cosetsByGenerators([op('-y,x,z'), op('-x,y,z')], 3, 48).map(formatOperation);
+    expect(list).toEqual(['x,y,z', '-y,x,z', '-x,-y,z', 'y,-x,z', '-x,y,z', 'y,x,z', 'x,-y,z', '-y,-x,z']);
+    // A centring: p2 in a centred cell, with the translation 1/2,1/2, has 4 cosets modulo the lattice.
+    expect(cosetsByGenerators([op('-x,-y'), op('x+1/2,y+1/2')], 2, 12)).toHaveLength(4);
+  });
+
+  it('refuses generators that do not give a group coset by coset', () => {
+    // A threefold rotation about [111] does not normalise the group of a fourfold rotation about z:
+    // its cosets of that group are 12 operations, and they are not closed (the group is 432, of order 24).
+    expect(() => cosetsByGenerators([op('-y,x,z'), op('z,x,y')], 3, 48)).toThrow(/give no group/);
+    // A generator of infinite order modulo the lattice (a shear) is stopped at the largest order.
+    expect(() => cosetsByGenerators([op('x+y,y,z')], 3, 48)).toThrow(/at most 48/);
+  });
+
   it.fails('refuses a list that holds a coset twice (#261)', () => {
+    // With three or more generators, the list built from the first ones need not be a group, and the
+    // cosets of the next by it can overlap. These generators of the plane give 8 entries for the 6
+    // operations of 3m: two cosets occur twice.
     expect(() => cosetsByGenerators(['-y,-x', 'x,x-y', '-x+y,y'].map(op), 2, 24)).toThrow(/twice|give no group/);
   });
 });
