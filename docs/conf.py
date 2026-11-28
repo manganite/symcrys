@@ -116,6 +116,8 @@ symcrys_page_descriptions = {
     "piezoelectric, pyroelectric, gyrotropic, ferroaxial and magnetoelectric.",
     "cells": "Cells in symcrys: lattice from cell parameters, reciprocal basis, angles between planes, "
     "residual symmetry, Miller and Bravais–Miller indices, zone axes.",
+    "lists": "The functions of a list of operations in symcrys: the fields they read, whether generators "
+    "suffice, what the tolerance measures, the reference basis and the cell of a material.",
     "forms": "Crystal forms of the 32 point groups after ITA, orbits of faces, and the point group and "
     "symmetry elements of the operations of a distorted crystal.",
     "examples": "Example notebooks of the symcrys Python package, executed when the site is built; "

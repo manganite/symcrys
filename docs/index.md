@@ -28,6 +28,9 @@ Where to start:
 - [Crystal forms, orbits and distorted crystals](forms.md): the basic and limiting forms of each
   crystal class, as ITA lists them, the orbits of faces and directions, and the point group of a
   list of operations.
+- [Functions of a list of operations](lists.md): what each function of a list reads, whether
+  generators suffice, what its tolerance measures and what its result refers to; and the reference
+  basis of a setting against the cell of a material.
 - [Cells, metric, angles and indices](cells.md): the cell from lattice parameters, metric tensor,
   angles between directions and faces, the operations a distortion leaves, Bravais–Miller indices,
   the zone law and the change of the coordinate system.
@@ -54,6 +57,7 @@ getting-started
 readings
 conventions
 forms
+lists
 cells
 plane-groups
 browser
