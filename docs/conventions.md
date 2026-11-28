@@ -575,8 +575,9 @@ with a hole (a sparse array such as `[1, , 3]`) is refused, where a check of its
 Every function that compares numbers a caller passes in (operations, directions, points) takes one
 option, `tolerance` (`ToleranceOptions`; in Python the keyword `tolerance`), with the default
 `EPSILON` = 10⁻⁵, which all three entry points export: operations rounded to 6 decimals, the
-usual output of files and other programs, pass with it in any orientation, and it is the default
-symmetry tolerance of spglib (`symprec`), which users of such a library know. Two numbers count as equal
+usual output of files and other programs, pass with it in any orientation, and it is the number
+of the default symmetry tolerance of spglib (`symprec`), which users of such a library know,
+though `symprec` is a length in Cartesian coordinates. Two numbers count as equal
 when they differ by less than the tolerance, in the metric of their kind:
 
 | Kind of object                            | Metric                                                                                   | Bound | Functions                                                                                                                                                                                                                                                                                  |
@@ -587,6 +588,16 @@ when they differ by less than the tolerance, in the metric of their kind:
 | the metric tensor G of a cell (W ᵀGW = G) | per entry, relative to the largest entry of G                                            | 1     | `residualOperations` (also in `symcrys/plane`); `wyckoffDistances` of `symcrys/plane` for the cell restrictions of its basis                                                                                                                                                               |
 | the index symmetry of a tensor            | per component, relative to its largest component                                         | 1     | `toVoigt`, `fromVoigt`                                                                                                                                                                                                                                                                     |
 
+- **The tolerance decides small deviations.** A deviation below the tolerance counts as none; one
+  of the tolerance or above counts, as a lower symmetry, or as a RangeError where the function
+  checks the input (the orthogonality of operations, at a tolerance of at least `EPSILON`; the index
+  symmetry of a tensor). The tests take each kind at 0.9 and 1.1 times the tolerance
+  (`tolerances.test.ts`). The metrics differ (an entry of a matrix, the distance of a unit vector,
+  a coordinate, a relative entry of G or of a tensor), so a number that suits one kind is not by that
+  a choice for another, nor for the `symprec` of another library. A script whose results are to be
+  reproduced passes the tolerance it relies on, rather than the default of the version it runs with
+  ([Cells, metric, angles and indices](cells.md) shows a strained cell and a tilted direction at two
+  tolerances).
 - **One check.** A tolerance is a finite number above 0 and below the bound of its kind, beyond
   which it says nothing: two distinct operations of a crystallographic point group differ in some
   matrix entry by at least √2/3 ≈ 0.47 in any orthonormal frame (‖A − B‖ = ‖1 − A⁻¹B‖ ≥ √2, the

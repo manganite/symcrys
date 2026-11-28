@@ -139,7 +139,10 @@ function checkSymmetry(
     const d = digitsOf(o, rank);
     for (const { perm, sign } of perms) {
       const other = flatOf(perm.map((k) => d[k]));
-      if (Math.abs(t[o] - sign * t[other]) > tolerance * scale) {
+      // Equal when they differ by less than the tolerance (a difference of exactly it is refused),
+      // or not at all (the zero tensor).
+      const difference = Math.abs(t[o] - sign * t[other]);
+      if (difference !== 0 && !(difference < tolerance * scale)) {
         throw new RangeError(
           `${who}: the tensor lacks the index symmetry of its specification (component ${o} is ${t[o]}, ` +
             `its partner ${other} ${t[other]})`,

@@ -39,6 +39,25 @@ distorted = symcrys.lattice_from_parameters(a=3, b=3, c=5, alpha=90, beta=90, ga
 len(symcrys.residual_operations(ops, basis)), len(symcrys.residual_operations(ops, distorted))
 ```
 
+A small distortion is a question of the tolerance. A cubic cell strained by 10⁻⁴ along c deviates
+from cubic metric by about 2·10⁻⁴ (relative to the largest entry of G): at the default tolerance
+(`EPSILON`, 10⁻⁵) it keeps the 16 operations of 4/mmm, at 10⁻³ all 48 of m-3m. A direction 10⁻⁴
+off the fourfold axis of 4mm lies on a mirror at the default and on the axis at 10⁻³. What each
+tolerance measures is in [Conventions](conventions.md), "Tolerances"; a script whose results are
+to be reproduced passes the tolerance it relies on explicitly.
+
+```{code-cell} ipython3
+strained = [[1, 0, 0], [0, 1, 0], [0, 0, 1.0001]]
+cubic = symcrys.operations("m-3m")
+len(symcrys.residual_operations(cubic, strained)), len(symcrys.residual_operations(cubic, strained, tolerance=1e-3))
+```
+
+```{code-cell} ipython3
+tilted = [1e-4, 0, 1]
+ops = symcrys.operations("4mm")
+len(symcrys.site_symmetry_of(ops, tilted)["operations"]), len(symcrys.site_symmetry_of(ops, tilted, tolerance=1e-3)["operations"])
+```
+
 ```{code-cell} ipython3
 # The operations of -3m with rhombohedral axes, from the hexagonal cell of the hR lattice (its standard cell, {}).
 P = symcrys.cell_transformation("hR", {}, {"axes": "rhombohedral"})["linear_part"]
