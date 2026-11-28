@@ -735,7 +735,7 @@ function records(
 
 const recordCache = new Map<string, readonly Operation[]>();
 
-/** What the counts of a group are made of, for one operation: det W, tr W and time reversal, invariant under a change of basis. */
+/** Internal. What the counts of a group are made of, for one operation: det W, tr W and time reversal, invariant under a change of basis. */
 export interface OperationInvariants {
   readonly det: number;
   readonly trace: number;
@@ -745,7 +745,7 @@ export interface OperationInvariants {
 const invariantCache = new Map<string, readonly OperationInvariants[]>();
 
 /**
- * The invariants of the operations of a group (det W, tr W, time reversal), from the integer matrices W
+ * Internal. The invariants of the operations of a group (det W, tr W, time reversal), from the integer matrices W
  * of its default setting: they do not depend on the basis, so they are those of the Cartesian
  * matrices of every setting. Cheaper than `operations`, which builds the settings of a group and
  * its Cartesian matrices; for the identification of a list of operations, which needs the kinds of

@@ -203,9 +203,9 @@ export function cosetsByGenerators(
       }
     }
   }
-  // The cosets form a group only if each generator normalises the group built so far; check
-  // closure, so that a mistake in the transcribed generators fails here rather than in a caller. A
-  // list that holds the identity and is closed under multiplication by each generator from the left
+  // The cosets form a group only if the powers of each generator, times the group built so far, are
+  // the group they generate together; check closure, so that a mistake in the transcribed generators
+  // fails here rather than in a caller. A list that holds the identity and is closed under multiplication by each generator from the left
   // holds the whole group they generate (a finite group: inverses are powers), and it holds nothing
   // else, being made of their products: it is that group, with k·n products for k generators
   // instead of n².

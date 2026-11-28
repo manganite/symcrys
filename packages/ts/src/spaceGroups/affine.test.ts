@@ -239,7 +239,7 @@ describe('cosetsByGenerators', () => {
     // 4mm from the fourfold rotation and a mirror: 1, 4, 2, 4³, then the mirror times each.
     const list = cosetsByGenerators([op('-y,x,z'), op('-x,y,z')], 3, 48).map(formatOperation);
     expect(list).toEqual(['x,y,z', '-y,x,z', '-x,-y,z', 'y,-x,z', '-x,y,z', 'y,x,z', 'x,-y,z', '-y,-x,z']);
-    // A centring: p2 with the translation 1/2,1/2 gives the cosets of c2 modulo the lattice.
+    // A centring: p2 in a centred cell, with the translation 1/2,1/2, has 4 cosets modulo the lattice.
     expect(cosetsByGenerators([op('-x,-y'), op('x+1/2,y+1/2')], 2, 12)).toHaveLength(4);
   });
 
