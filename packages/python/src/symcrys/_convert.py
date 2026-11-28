@@ -46,29 +46,65 @@ def _unsafe(x: Any) -> UnsafeInteger:
     return UnsafeInteger(f"integers beyond 2**53 - 1 in magnitude cannot be passed to symcrys exactly, not {x}")
 
 
+# Deeper nesting than an array of numbers has (NumPy's limit on dimensions).
+MAX_DEPTH = 64
+
+# The types of a row whose entries need no search one by one: values a double or JSON holds exactly
+# (Python and NumPy floats of at most 64 bits, small NumPy integers, strings, None), and the integer
+# types whose values are compared with the safe integers at once.
+_EXACT = frozenset({float, bool, str, type(None), np.float64, np.float32, np.float16, np.bool_,
+                    np.int8, np.int16, np.int32, np.uint8, np.uint16, np.uint32})  # fmt: skip
+_LARGE_INTEGERS = frozenset({int, np.int64, np.uint64})
+_PLAIN = _EXACT | _LARGE_INTEGERS
+
+
+def check_array(a: np.ndarray[Any, Any]) -> None:
+    """Refuses an array of floats that a double would round (``np.longdouble``)."""
+    if a.dtype.kind == "f" and a.dtype.itemsize > 8 and a.size and not np.array_equal(a.astype(np.float64), a):
+        raise InvalidInput(f"floats of {a.dtype} that a double would round cannot be passed to symcrys, not {a}")
+
+
 def check_raw(x: Any) -> None:
     """Refuses what a conversion to a NumPy array or to JSON would lose, on the raw input: a masked
     value, an integer beyond 2**53 - 1 in magnitude in a list (``np.asarray`` would round it to a
-    float), and a NumPy scalar or array of floats that a double would round. Lists and tuples are
-    searched; the contents of an array are checked by their dtype."""
-    if np.ma.isMaskedArray(x):
-        if np.ma.getmaskarray(x).any():
-            raise InvalidInput(f"a masked array with masked values cannot be passed to symcrys, not {x}")
-        check_raw(np.ma.getdata(x))
-    elif isinstance(x, np.ndarray):
-        if x.dtype.kind == "f" and x.dtype.itemsize > 8 and x.size and not np.array_equal(x.astype(np.float64), x):
-            raise InvalidInput(f"floats of {x.dtype} that a double would round cannot be passed to symcrys, not {x}")
-        if x.dtype.kind == "O":
-            for e in x.flat:
-                check_raw(e)
-    elif isinstance(x, np.generic):
-        scalar(x)
-    elif isinstance(x, int) and not isinstance(x, bool):
-        if abs(x) > MAX_SAFE:
-            raise _unsafe(x)
-    elif isinstance(x, (list, tuple)):
-        for e in x:
-            check_raw(e)
+    float), a NumPy scalar or array of floats that a double would round, and nesting deeper than an
+    array has. Lists and tuples are searched without recursion; the contents of an array are checked
+    by their dtype."""
+    stack: list[tuple[Any, int]] = [(x, 0)]
+    while stack:
+        e, depth = stack.pop()
+        t = type(e)
+        if t is float or t is str or t is bool or e is None:
+            continue
+        if t is int:
+            if abs(e) > MAX_SAFE:
+                raise _unsafe(e)
+        elif t is list or t is tuple or isinstance(e, (list, tuple)):
+            if depth >= MAX_DEPTH:
+                raise InvalidInput(f"lists nested more than {MAX_DEPTH} deep cannot be passed to symcrys")
+            # A row of plain numbers is checked at once; only other entries are searched one by one.
+            kinds = set(map(type, e))
+            if kinds <= _PLAIN:
+                if not kinds.isdisjoint(_LARGE_INTEGERS):
+                    for v in e:
+                        if type(v) in _LARGE_INTEGERS and abs(int(v)) > MAX_SAFE:
+                            raise _unsafe(int(v))
+                continue
+            stack.extend((v, depth + 1) for v in e)
+        elif np.ma.isMaskedArray(e):
+            if np.ma.getmaskarray(e).any():
+                raise InvalidInput(f"a masked array with masked values cannot be passed to symcrys, not {e}")
+            stack.append((np.ma.getdata(e), depth))
+        elif isinstance(e, np.ndarray):
+            check_array(e)
+            if e.dtype.kind == "O":
+                if depth >= MAX_DEPTH:
+                    raise InvalidInput(f"arrays nested more than {MAX_DEPTH} deep cannot be passed to symcrys")
+                stack.extend((v, depth + 1) for v in e.flat)
+        elif isinstance(e, np.generic):
+            scalar(e)
+        elif isinstance(e, int) and abs(e) > MAX_SAFE:
+            raise _unsafe(e)
 
 
 def scalar(x: np.generic) -> Any:
@@ -77,6 +113,9 @@ def scalar(x: np.generic) -> Any:
     integers. Not by ``.item()``, which for some types returns a NumPy scalar again."""
     if isinstance(x, np.bool_):
         return bool(x)
+    if isinstance(x, (np.timedelta64, np.datetime64)):
+        # np.timedelta64 is an np.integer, but a duration, not a number.
+        raise InvalidInput(f"a NumPy {type(x).__name__} is not a number and cannot be passed to symcrys, not {x!r}")
     if isinstance(x, np.integer):
         i = int(x)
         if abs(i) > MAX_SAFE:
@@ -102,6 +141,8 @@ def to_js(x: Any) -> Any:
         return to_js(np.ma.getdata(x))
     if isinstance(x, np.ndarray):
         check_raw(x)
+        if x.dtype.kind in "mM":
+            raise InvalidInput(f"an array of {x.dtype} is not of numbers and cannot be passed to symcrys")
         if x.dtype.kind in "iu" and x.size and (x.max() > MAX_SAFE or x.min() < -MAX_SAFE):
             raise _unsafe(x.tolist())
         if x.dtype.kind == "f" and x.dtype.itemsize > 8:
@@ -119,7 +160,9 @@ def to_js(x: Any) -> Any:
                 raise InvalidInput(f"the keys of a mapping are strings, not {k!r}")
             name = camel(k)
             if name in given:
-                raise InvalidInput(f"the keys {given[name]!r} and {k!r} name one field, {name!r}: pass one of them")
+                raise InvalidInput(
+                    f"the keys {given[name]!r} and {k!r} name one field, {snake(name)!r}: pass one of them"
+                )
             given[name] = k
             out[name] = to_js(v)
         return out

@@ -12,7 +12,14 @@ import numpy as np
 from numpy.typing import NDArray
 
 from . import _engine
-from ._convert import MAX_SAFE as _MAX_SAFE, InvalidInput, check_raw as _check_raw, convert as _convert_schema, to_js as _to_js
+from ._convert import (
+    MAX_SAFE as _MAX_SAFE,
+    InvalidInput,
+    check_array as _check_array,
+    check_raw as _check_raw,
+    convert as _convert_schema,
+    to_js as _to_js,
+)
 
 
 def options(**kwargs: Any) -> dict[str, Any]:
@@ -22,11 +29,13 @@ def options(**kwargs: Any) -> dict[str, Any]:
 
 
 def to_js(x: Any) -> Any:
-    """``_convert.to_js``, an integer that a double would round refused as wrong input."""
+    """``_convert.to_js``, what the conversion would lose (``InvalidInput``) refused as wrong input."""
     try:
         return _to_js(x)
     except InvalidInput as e:
         raise _engine.SymcrysError(str(e), "RangeError") from None
+    except RecursionError:
+        raise _engine.SymcrysError("lists nested too deep (or containing themselves) cannot be passed to symcrys", "RangeError") from None
 
 
 def check_raw(x: Any, what: str) -> None:
@@ -96,7 +105,7 @@ def operation_list(operations: Any, keys: tuple[str, ...] = ("cartesian",), bare
                 raise _engine.SymcrysError(
                     f"the matrices of the operations must hold real numbers, not {given.dtype}", "RangeError"
                 )
-            check_raw(operations, "the matrices of the operations")
+            check_raw(ops, "the matrices of the operations")
             try:
                 matrices = np.asarray(ops, dtype=np.float64)
             except (TypeError, ValueError):
@@ -206,8 +215,10 @@ def _checked(owner: str, name: str, value: Any, dtype: Any, shape: tuple[int, ..
     try:
         _check_raw(value)
         a = np.asarray(value)
+        # An array-like converts itself: its result is checked as well.
+        _check_array(a)
     except InvalidInput as e:
-        raise error(str(e)) from None
+        raise _engine.SymcrysError(f"{owner}.{name}: {e}", "RangeError") from None
     except (TypeError, ValueError) as e:
         raise error(f"must be an array ({e})") from None
     if a.size == 0 and a.ndim == 1:
@@ -232,6 +243,9 @@ def _checked(owner: str, name: str, value: Any, dtype: Any, shape: tuple[int, ..
             raise error(f"must hold integers, not {a.dtype}")
     elif kind not in "iuf":
         raise error(f"must hold real numbers, not {a.dtype}")
+    elif kind in "iu" and a.size and (int(a.max()) > _MAX_SAFE or int(a.min()) < -_MAX_SAFE):
+        # A field of floats: an integer beyond the safe integers would be rounded.
+        raise error("must hold numbers a double holds exactly, not integers beyond 2**53 - 1 in magnitude")
     a = np.array(a, dtype=dtype)
     if a.ndim != len(shape) + 1 or a.shape[1:] != shape:
         dims = ", ".join(["n", *map(str, shape)]) + ("," if not shape else "")
@@ -322,6 +336,8 @@ def array(value: Any, what: str, dtype: Any = None) -> NDArray[Any]:
         given = np.asarray(value)
     except (TypeError, ValueError) as e:
         raise _engine.SymcrysError(f"{what} must be an array of numbers ({e})") from None
+    # An array-like converts itself: its result is checked as well.
+    check_raw(given, what)
     if given.dtype.kind == "O" and given.size and all(isinstance(v, int) and not isinstance(v, bool) for v in given.flat):
         # Python integers too large for int64.
         given = np.asarray(given, dtype=object)

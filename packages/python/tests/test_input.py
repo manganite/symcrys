@@ -187,14 +187,76 @@ def test_an_array_of_long_doubles_that_a_double_would_round_is_refused() -> None
 
 
 @pytest.mark.parametrize(
-    "x", [np.float32(0.5), np.float16(2), np.int8(-3), np.uint64(7), np.longdouble(1.5)], ids=lambda x: type(x).__name__
+    "x", [np.float32(0.5), np.float16(2), np.int8(3), np.uint64(7), np.longdouble(1.5)], ids=lambda x: type(x).__name__
 )
 def test_numpy_scalars_that_are_exact_are_taken(x: Any) -> None:
-    want = symcrys.lattice_from_parameters(float(x) if float(x) > 0 else 1.0, 1, 1, 90, 90, 90)
-    got = symcrys.lattice_from_parameters(x if float(x) > 0 else 1.0, 1, 1, 90, 90, 90)
+    want = symcrys.lattice_from_parameters(float(x), 1, 1, 90, 90, 90)
+    got = symcrys.lattice_from_parameters(x, 1, 1, 90, 90, 90)
     assert got.tolist() == want.tolist()
 
 
 def test_a_complex_numpy_scalar_is_refused() -> None:
     with pytest.raises(symcrys.SymcrysError, match="complex"):
         symcrys.lattice_from_parameters(np.complex128(1), 1, 1, 90, 90, 90)  # type: ignore[arg-type]
+
+
+# --- what the review of #246 found ------------------------------------------------------------------
+
+
+def _masked_cartesian() -> Any:
+    ops = symcrys.operations("4mm")
+    mk = np.ma.array(ops.cartesian, mask=np.zeros(ops.cartesian.shape, dtype=bool))
+    mk[0, 0, 1] = np.ma.masked
+    return mk
+
+
+@pytest.mark.parametrize("wrap", [lambda m: (x for x in m), lambda m: __import__("collections").deque(m)], ids=["generator", "deque"])
+def test_a_masked_stack_is_refused_through_any_iterable(wrap: Any) -> None:
+    # On the first commit of #246 the check ran on the iterable, not on its entries: 4mm was answered.
+    with pytest.raises(symcrys.SymcrysError, match="mask"):
+        symcrys.point_group_of(wrap(_masked_cartesian()))
+
+
+class _ArrayLike:
+    def __init__(self, a: Any) -> None:
+        self.a = a
+
+    def __array__(self, dtype: Any = None, copy: Any = None) -> Any:
+        return self.a
+
+
+def test_an_array_like_of_long_doubles_that_a_double_would_round_is_refused() -> None:
+    if np.finfo(np.longdouble).eps == np.finfo(np.float64).eps:
+        pytest.skip("long double is a double here")
+    t = np.array([1, 2, 3], dtype=np.longdouble) * (1 + np.longdouble(2) ** -60)
+    with pytest.raises(symcrys.SymcrysError, match="double"):
+        symcrys.rotate_tensor(_ArrayLike(t), np.eye(3), "pyroelectric")
+
+
+@pytest.mark.parametrize("x", [np.timedelta64(5, "ns"), np.datetime64("2026-01-01")], ids=["timedelta64", "datetime64"])
+def test_a_time_is_not_a_number(x: Any) -> None:
+    with pytest.raises(symcrys.SymcrysError, match="not a number"):
+        symcrys.lattice_from_parameters(x, 1, 1, 90, 90, 90)
+
+
+def test_a_list_nested_too_deep_or_containing_itself_is_refused() -> None:
+    deep: Any = 1.0
+    for _ in range(3000):
+        deep = [deep]
+    looped: list[Any] = [1.0]
+    looped.append(looped)
+    for x in (deep, looped):
+        with pytest.raises(symcrys.SymcrysError):
+            symcrys.rotate_tensor(x, np.eye(3), "pyroelectric")
+
+
+def test_an_integer_beyond_2_53_in_a_field_of_floats_is_refused() -> None:
+    eye = np.eye(2, dtype=np.int64)[None]
+    with pytest.raises(symcrys.SymcrysError, match="translation"):
+        plane.Operations(eye, np.array([[2**53 + 1, 0]]))
+
+
+def test_the_collision_names_the_field_in_python_terms() -> None:
+    spec = {**AXIAL, "time_parity": "odd", "timeParity": "even"}
+    with pytest.raises(symcrys.SymcrysError, match="name one field, 'time_parity'"):
+        magnetic.tensor_form("11'", spec)
