@@ -18,6 +18,7 @@
  */
 
 import { shown } from '../checks.js';
+import { ORTHORHOMBIC_SETTINGS, orthorhombicSettingBasis } from '../cellTransformation.js';
 import { crystalFamily } from '../lattice.js';
 import { det, matricesEqual, multiply, rotationZ, trace, transpose, type Mat3 } from '../linalg.js';
 import type { CartesianOperation } from '../operations.js';
@@ -130,41 +131,12 @@ const DATA: readonly GroupData[] = [
 /**
  * The orthorhombic orientations of ITA 2016 Table 1.5.4.4 in its column order (abc, ba-c, cab,
  * -cba, bca, a-cb), as the matrices P whose columns are the new basis vectors in the old
- * (eq. (1.5.1.4), p. 76); in the orthonormal frame of the orthorhombic family an operation W of the
- * old frame is P⁻¹WP = PᵀWP in the new one.
+ * (eq. (1.5.1.4), p. 76; `orthorhombicSettingBasis`); in the orthonormal frame of the orthorhombic
+ * family an operation W of the old frame is P⁻¹WP = PᵀWP in the new one.
  */
-const ORTHORHOMBIC_ORIENTATIONS: readonly Mat3[] = [
-  [
-    [1, 0, 0],
-    [0, 1, 0],
-    [0, 0, 1],
-  ],
-  [
-    [0, 1, 0],
-    [1, 0, 0],
-    [0, 0, -1],
-  ],
-  [
-    [0, 1, 0],
-    [0, 0, 1],
-    [1, 0, 0],
-  ],
-  [
-    [0, 0, 1],
-    [0, 1, 0],
-    [-1, 0, 0],
-  ],
-  [
-    [0, 0, 1],
-    [1, 0, 0],
-    [0, 1, 0],
-  ],
-  [
-    [1, 0, 0],
-    [0, 0, 1],
-    [0, -1, 0],
-  ],
-] as unknown as Mat3[];
+const ORTHORHOMBIC_ORIENTATIONS: readonly Mat3[] = ORTHORHOMBIC_SETTINGS.map(
+  (setting) => orthorhombicSettingBasis(setting) as unknown as Mat3,
+);
 
 /** A frame of a group: the setting of its class and the time reversal of each of its operations, in ITA's order. */
 interface Frame {

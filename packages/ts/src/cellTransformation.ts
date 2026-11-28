@@ -66,7 +66,15 @@ const LATTICES: readonly BravaisLattice[] = [
   'cI',
   'cF',
 ];
-const SETTINGS: readonly OrthorhombicSetting[] = ['abc', 'ba-c', 'cab', '-cba', 'bca', 'a-cb'];
+/** The six orthorhombic settings in the column order of ITA 2016 Table 1.5.4.4. */
+export const ORTHORHOMBIC_SETTINGS: readonly OrthorhombicSetting[] = Object.freeze([
+  'abc',
+  'ba-c',
+  'cab',
+  '-cba',
+  'bca',
+  'a-cb',
+]);
 
 const parse = (s: string): RMatrix => s.split(';').map((row) => row.trim().split(/\s+/).map(parseRational));
 const power = (m: RMatrix, k: number): RMatrix =>
@@ -94,19 +102,25 @@ const CELL_DEFINITIONS = {
 };
 
 /**
- * The basis of an orthorhombic setting from its symbol: `ba-c` is a′ = b, b′ = a, c′ = −c
- * (ITA 2016 Table 1.5.4.4, p. 98).
+ * The basis of an orthorhombic setting from its symbol, the integer matrix P whose columns are the
+ * new basis vectors in the old: `ba-c` is a′ = b, b′ = a, c′ = −c (ITA 2016 Table 1.5.4.4, p. 98;
+ * eq. (1.5.1.4), p. 76). The one definition of the orthorhombic settings; the point groups take it
+ * for their settings `2mm`, `m2m` and unique axis a, and the magnetic groups for their orientations.
  */
-function settingBasis(setting: string): RMatrix {
+export function orthorhombicSettingBasis(setting: string): number[][] {
   const columns = (setting.match(/-?[abc]/g) ?? []).map((t) => {
-    const v = [ZERO, ZERO, ZERO].slice();
+    const v = [0, 0, 0];
     // A regular expression, not the string '-': a lone '-' literal here changes the order in which
     // TypeScript prints the union '+' | '-' in the declarations, and so the generated Python types.
-    v['abc'.indexOf(t.replace(/^-/, ''))] = rational(/^-/.test(t) ? -1 : 1);
+    v['abc'.indexOf(t.replace(/^-/, ''))] = /^-/.test(t) ? -1 : 1;
     return v;
   });
   return [0, 1, 2].map((i) => columns.map((col) => col[i]));
 }
+
+/** `orthorhombicSettingBasis` in rationals. */
+const settingBasis = (setting: string): RMatrix =>
+  orthorhombicSettingBasis(setting).map((row) => row.map((x) => rational(x)));
 
 /** Rotations about c of a hexagonal basis: a → a + b (sixfold), a → b (threefold), a → −a (twofold); and the fourfold of a tetragonal one. */
 const SIXFOLD = parse('1 -1 0; 1 0 0; 0 0 1');
@@ -262,9 +276,9 @@ function cellKey(lattice: BravaisLattice, cell: unknown, what: string): string {
     case 'oI':
     case 'oF': {
       const setting = c.setting ?? 'abc';
-      return (SETTINGS as readonly string[]).includes(setting)
+      return (ORTHORHOMBIC_SETTINGS as readonly string[]).includes(setting)
         ? setting
-        : fail(`setting must be one of ${SETTINGS.join(', ')}`);
+        : fail(`setting must be one of ${ORTHORHOMBIC_SETTINGS.join(', ')}`);
     }
     case 'hR': {
       if (c.axes === 'rhombohedral') {

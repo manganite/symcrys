@@ -18,6 +18,7 @@ import {
   type PointGroupKey,
 } from './index.js';
 import * as magnetic from './magnetic.js';
+import { ORTHORHOMBIC_SETTINGS, orthorhombicSettingBasis } from './cellTransformation.js';
 import { readReference, section, tableRows } from './testUtils/references.js';
 
 const printed = tableRows(readReference('itc/vol-a-2016-table-1.5.1.1.md')).slice(1);
@@ -178,6 +179,22 @@ describe('the changes of cell against print (ITA 2016 Table 1.5.1.1)', () => {
       );
       expect(cellTransformation('oP', { setting }, {}).linearPart).toEqual(expected);
     }
+  });
+
+  it('the six orthorhombic settings, in the column order of Table 1.5.4.4, as the matrices P of their symbols', () => {
+    // The columns of P are a′, b′, c′ in a, b, c (eq. (1.5.1.4), p. 76), written out from the symbols
+    // of Table 1.5.4.4 (p. 98): ba-c is a′ = b, b′ = a, c′ = −c.
+    const expected: Record<string, number[][]> = {
+      abc: [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+      'ba-c': [[0, 1, 0], [1, 0, 0], [0, 0, -1]],
+      cab: [[0, 1, 0], [0, 0, 1], [1, 0, 0]],
+      '-cba': [[0, 0, 1], [0, 1, 0], [-1, 0, 0]],
+      bca: [[0, 0, 1], [1, 0, 0], [0, 1, 0]],
+      'a-cb': [[1, 0, 0], [0, 0, 1], [0, -1, 0]],
+    }; // prettier-ignore
+    expect(ORTHORHOMBIC_SETTINGS).toEqual(Object.keys(expected));
+    for (const setting of ORTHORHOMBIC_SETTINGS)
+      expect(orthorhombicSettingBasis(setting), setting).toEqual(expected[setting]);
   });
 });
 

@@ -16,7 +16,7 @@
  */
 
 import { MAX_CLASS_ORDER } from '../tolerances.js';
-import { OBVERSE_RHOMBOHEDRAL_BASIS } from '../cellTransformation.js';
+import { OBVERSE_RHOMBOHEDRAL_BASIS, orthorhombicSettingBasis } from '../cellTransformation.js';
 import { deepFreeze } from '../freeze.js';
 import { shown } from '../checks.js';
 import { crystalFamily, familyBasis, type CrystalSystem } from '../lattice.js';
@@ -72,20 +72,12 @@ export interface ClassData {
 }
 
 /**
- * Setting cab of ITA 2016 Table 1.5.4.4 (the table prints the setting symbols, not P): a′ = c,
- * b′ = a, c′ = b, the columns of P (eq. (1.5.1.4), p. 76; § 1.5.4.3, p. 96).
+ * The settings cab (a′ = c, b′ = a, c′ = b) and bca (a′ = b, b′ = c, c′ = a) of ITA 2016 Table
+ * 1.5.4.4 (the table prints the setting symbols, not P), the columns of P (eq. (1.5.1.4), p. 76;
+ * § 1.5.4.3, p. 96), from `orthorhombicSettingBasis`.
  */
-const SETTING_CAB: IntMat3 = [
-  [0, 1, 0],
-  [0, 0, 1],
-  [1, 0, 0],
-];
-/** Setting bca of ITA 2016 Table 1.5.4.4: a′ = b, b′ = c, c′ = a, the columns of P (as for cab). */
-const SETTING_BCA: IntMat3 = [
-  [0, 0, 1],
-  [1, 0, 0],
-  [0, 1, 0],
-];
+const SETTING_CAB = orthorhombicSettingBasis('cab') as unknown as IntMat3;
+const SETTING_BCA = orthorhombicSettingBasis('bca') as unknown as IntMat3;
 
 /**
  * The setting of a trigonal class with rhombohedral axes (ITA Table 3.2.3.2, pp. 753–759), the
