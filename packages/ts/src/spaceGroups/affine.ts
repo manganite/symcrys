@@ -203,7 +203,8 @@ export function cosetsByGenerators(
         }
         list.push(op);
         met.add(key);
-        // A generator of infinite order modulo the lattice would not end the loop.
+        // The bound of the result, also in the last batch; and a generator of infinite order modulo
+        // the lattice would not end the loop.
         if (list.length > maxOrder) throw new Error(`The generators give no group of at most ${maxOrder} operations`);
       }
     }

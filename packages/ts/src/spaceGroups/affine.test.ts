@@ -259,8 +259,8 @@ describe('cosetsByGenerators', () => {
 
   it('refuses a list that holds a coset twice', () => {
     // With three or more generators, the list built from the first ones need not be a group, and the
-    // cosets of the next by it can overlap. These generators of the plane give 8 entries for the 6
-    // operations of 3m: two cosets occur twice.
+    // cosets of the next by it can overlap. Coset by coset, these generators of the plane would make
+    // 8 entries for the 6 operations of 3m: two cosets twice.
     expect(() => cosetsByGenerators(['-y,-x', 'x,x-y', '-x+y,y'].map(op), 2, 24)).toThrow(/-y,x-y arises twice/);
   });
 });
