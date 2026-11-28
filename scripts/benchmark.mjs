@@ -92,4 +92,15 @@ for (const rank of [1, 2, 3, 4]) {
   time(`rotateTensors, rank ${rank}, 1000 tensors, 1000 rotations`, () => classes.rotateTensors(list, turns, spec), 5);
 }
 time('rotateTensors, an empty list', () => classes.rotateTensors([], turn, 'pyroelectric'), 2000);
+// The first call checks the list and makes it exact; later calls with other directions reuse it.
+let shiftDirection = 0;
+time(
+  'siteSymmetryOf + orbitOf of m-3m, new direction',
+  () => {
+    shiftDirection += 1;
+    classes.siteSymmetryOf(cubic, [1, 2, 3 + shiftDirection]);
+    classes.orbitOf(cubic, [1, 2, 3 + shiftDirection]);
+  },
+  200,
+);
 time('siteSymmetry m-3m, [111]', () => classes.siteSymmetry('m-3m', { uvw: [1, 1, 1] }));
