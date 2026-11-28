@@ -428,7 +428,8 @@ writes; ITC Vol. D and the magnetic API write `S6`).
   is its first position (`4`, `-3`, `6/m`), except in the monoclinic classes, whose full symbol
   names the unique axis by its position (`1 2 1`); a cubic symbol leaves out a last `1` (`2 3`). The
   short symbol is the full one without spaces, with `2/m` written `m` (in the cubic classes also
-  `4/m`); the monoclinic classes keep `2/m` and leave out the `1`s instead (`2/m`, `m`). The
+  `4/m`); the monoclinic classes keep `2/m` and leave out the `1`s instead (`2/m`, `m`): in the
+  short symbols "symmetry axes are suppressed as much as possible" (ITA 2016 § 2.1.3.4, p. 152). The
   symbols of the 45 settings ITA Table 3.2.3.2 lists are those of its headlines (tested).
 - **Schoenflies** (`form: 'schoenflies'`): subscripts written inline (`C3v`, `D2d`, `Oh`). The
   Schoenflies symbol of a class is vocabulary, one name per class, as ITA Table 3.2.3.2 prints it. A

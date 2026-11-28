@@ -1,10 +1,10 @@
 /**
  * The 32 crystal classes in the ITC frame, exactly: per class its crystal system, its Schoenflies
- * symbol and its ITC settings, and per setting the operations as ITA prints them, integer matrices W in the conventional basis
- * (x̃ = W·x), in ITA's order, built from ITA's selected generators. The Cartesian matrices are
- * derived, B·W·B⁻¹. Nothing here is derived from the Birss frame: the source is ITA's selected
- * generators (5th ed., Part 7; `generatorData.ts`); the general position of ITA 6th ed. Table 3.2.3.2 is
- * the print check (`classData.reference.test.ts`).
+ * symbol and its ITC settings, and per setting the operations as ITA prints them, integer matrices
+ * W in the conventional basis (x̃ = W·x), in ITA's order, built from ITA's selected generators. The
+ * Cartesian matrices are derived, B·W·B⁻¹. Nothing here is derived from the Birss frame: the
+ * source is ITA's selected generators (5th ed., Part 7; `generatorData.ts`); the general position
+ * of ITA 6th ed. Table 3.2.3.2 is the print check (`classData.reference.test.ts`).
  *
  * A setting that ITA does not print with generators is the printed one in another basis: with
  * (a′, b′, c′) = (a, b, c)·P, W′ = P⁻¹·W·P (ITA 2016 eqs. (1.5.1.4), (1.5.1.5), p. 76). `2mm` and

@@ -2,8 +2,8 @@
  * The geometry of a point operation: its proper rotation part, its order and axis, what it is
  * (rotation, mirror, …), and which elements a list of operations has along a direction. Shared by
  * the description of the operations (elements.ts, identify.ts) and the symbols of the settings
- * (classSymbols.ts). Internal; it imports no module of the point groups, so that every one of them
- * can use it.
+ * (classSymbols.ts). Internal; at run time it imports no module of the point groups (only a type),
+ * so that every one of them can use it.
  */
 
 import { ANGLE_EPSILON, AXIS_EPSILON } from '../tolerances.js';

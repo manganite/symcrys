@@ -58,7 +58,7 @@ results. It is not a digital interface to printed tables.
   - explicitly named convention data that cannot be derived (each one marked as such in the code
     and in `docs/conventions.md`).
 - **Everything else is computed** from these: operations and their order, Wyckoff positions,
-  crystal forms, symbols, signs of axes, cell changes, tensor forms.
+  crystal forms, Hermann–Mauguin symbols, signs of axes, cell changes, tensor forms.
 - **No library module holds a table in printed form or printed order**, except vocabulary: the
   established names of the field are standard vocabulary, not inventions of a print source, and
   stay as they are (the 47 crystal forms with the numbers of faces and eigensymmetries that define
