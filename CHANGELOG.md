@@ -27,6 +27,11 @@ All notable changes to symcrys are recorded here. The format follows
 
 ### Fixed
 
+- `toVoigt` and `fromVoigt` refuse a tensor whose components differ from their partners by exactly
+  the tolerance (relative to the largest component), as every other comparison does: two numbers
+  are equal when they differ by less than the tolerance. Before, such a tensor was taken. Affected
+  since `toVoigt` and `fromVoigt` were added (0.12.0).
+
 - Python: input whose conversion would change its meaning is refused with a SymcrysError, checked
   on the raw input before it is converted (#237). Before, it gave an answer:
   - two keys that name one field (`{"time_parity": "odd", "timeParity": "even"}`): the later key
