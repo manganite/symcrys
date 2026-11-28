@@ -13,12 +13,15 @@ All notable changes to symcrys are recorded here. The format follows
   keeps it, so that the result goes on to `residualOperations` or a further `changeOfCoordinates`;
   when none does, the result is spatial, as before; a list in which only some operations give it is
   a RangeError. Before, `timeReversal` was dropped and had to be matched by index, and a mixed list
-  was accepted. Its types are `MagneticCoordinateQuantities`, `MagneticCoordinateChange`,
-  `MagneticAffineOperation` and `MagneticTransformedOperation`. In Python,
+  was accepted. `AffineOperation` and `TransformedOperation` of `symcrys/magnetic` have the optional
+  field `timeReversal`, those of `symcrys` do not; `MagneticCellOperation.timeReversal` is optional
+  in its type (an operation without it is still a RangeError). In Python,
   `magnetic.TransformedOperations` has the field `time_reversal`, None where the operations given
-  have no time reversal, and `magnetic.CoordinateChange` and `magnetic.TransformedOperation` are
-  `magnetic.MagneticCoordinateChange` and `magnetic.MagneticTransformedOperation`. `symcrys` and
-  `symcrys/plane` are unchanged.
+  have no time reversal. `symcrys` and `symcrys/plane` are unchanged.
+- Python: `residual_operations` of every module returns the operations it keeps in the class it is
+  given: `TransformedOperations` of `change_of_coordinates` stay `TransformedOperations` (#239).
+  Before, it built `Operations` from them, which failed for want of `cartesian` (and in
+  `symcrys.plane` gave `Operations`).
 - **Breaking:** `wyckoffDistances` of `symcrys/plane` refuses a basis that contradicts the cell
   restrictions of the group, a RangeError that names an operation of the group not keeping its
   metric (#238). A new option `tolerance` (default `EPSILON`) sets how closely the metric is kept,

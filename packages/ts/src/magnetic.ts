@@ -41,16 +41,12 @@ export {
   type MillerValues,
 } from './indices.js';
 export {
-  changeOfMagneticCoordinates as changeOfCoordinates,
+  changeOfCoordinatesWithTimeReversal as changeOfCoordinates,
   type AffineOperation,
   type CoordinateChange,
   type CoordinateQuantities,
   type CoordinateTransformation,
   type InverseTransformation,
-  type MagneticAffineOperation,
-  type MagneticCoordinateChange,
-  type MagneticCoordinateQuantities,
-  type MagneticTransformedOperation,
   type TransformedOperation,
 } from './coordinates.js';
 export { cellTransformation, type BravaisLattice, type Cell, type OrthorhombicSetting } from './cellTransformation.js';

@@ -7,6 +7,7 @@
 // @public
 export interface AffineOperation {
     readonly matrix: Mat3;
+    readonly timeReversal?: boolean;
     readonly translation?: Vec3;
 }
 
@@ -100,7 +101,7 @@ export interface CellOperation {
 export function cellTransformation(bravaisLattice: BravaisLattice, fromCell: Cell, toCell: Cell): CoordinateTransformation;
 
 // @public
-export function changeOfCoordinates(transformation: CoordinateTransformation, quantities: MagneticCoordinateQuantities, options?: ToleranceOptions): MagneticCoordinateChange;
+export function changeOfCoordinates(transformation: CoordinateTransformation, quantities: CoordinateQuantities, options?: ToleranceOptions): CoordinateChange;
 
 // @public
 export interface CoordinateChange {
@@ -283,32 +284,12 @@ export type LatticeSystem = 'triclinic' | 'monoclinic' | 'orthorhombic' | 'tetra
 export function latticeSystems(key: MagneticPointGroupKey): readonly LatticeSystem[];
 
 // @public
-export interface MagneticAffineOperation extends AffineOperation {
-    readonly timeReversal?: boolean;
-}
-
-// @public
 export interface MagneticCellOperation extends CellOperation {
-    readonly timeReversal: boolean;
-}
-
-// @public
-export interface MagneticCoordinateChange extends CoordinateChange {
-    readonly operations?: readonly MagneticTransformedOperation[];
-}
-
-// @public
-export interface MagneticCoordinateQuantities extends CoordinateQuantities {
-    readonly operations?: readonly MagneticAffineOperation[];
+    readonly timeReversal?: boolean;
 }
 
 // @public
 export type MagneticPointGroupKey = CrystalClassKey | GreyPointGroupKey | BlackWhitePointGroupKey;
-
-// @public
-export interface MagneticTransformedOperation extends TransformedOperation {
-    readonly timeReversal?: boolean;
-}
 
 // @public
 export type Mat3 = readonly [Vec3, Vec3, Vec3];
@@ -538,6 +519,7 @@ export function toVoigt(tensor: readonly number[], spec: TensorSpec | TensorProp
 // @public
 export interface TransformedOperation {
     readonly matrix: Mat3;
+    readonly timeReversal?: boolean;
     readonly translation: Vec3;
 }
 

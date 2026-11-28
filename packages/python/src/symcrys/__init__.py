@@ -2016,12 +2016,30 @@ def lattice_basis(
     return result
 
 
+@overload
+def residual_operations(
+    operations: TransformedOperations,
+    basis: ArrayLike,
+    *,
+    tolerance: Optional[float] = None,
+) -> TransformedOperations: ...
+
+
+@overload
 def residual_operations(
     operations: Operations | Sequence[Mapping[str, Any]],
     basis: ArrayLike,
     *,
     tolerance: Optional[float] = None,
-) -> Operations:
+) -> Operations: ...
+
+
+def residual_operations(
+    operations: Operations | TransformedOperations | Sequence[Mapping[str, Any]],
+    basis: ArrayLike,
+    *,
+    tolerance: Optional[float] = None,
+) -> Operations | TransformedOperations:
     """The operations of a list that keep the metric of a cell: W with WᵀGW = G, G the metric tensor
     of ``basis``. The operations are read by ``matrix``, the integer matrix W on lattice
     coordinates, as ``operations`` gives them; the list is taken as it is and the kept operations
@@ -2048,8 +2066,8 @@ def residual_operations(
         _shared.array(basis, "basis", np.float64),
         _shared.options(tolerance=tolerance),
     )
-    ops = operations if isinstance(operations, Operations) else _shared.operations_of(given, Operations)
-    result: Operations = _shared.select(ops, kept)
+    ops = operations if isinstance(operations, (Operations, TransformedOperations)) else _shared.operations_of(given, Operations)
+    result: Operations | TransformedOperations = _shared.select(ops, kept)
     return result
 
 

@@ -265,7 +265,7 @@
     }
   },
   "transformed": {
-    "//": "The record of arrays for the operations of a change of coordinates in Python, as for \"operations\".",
+    "//": "The record of arrays for the operations of a change of coordinates in Python, as for \"operations\"; a third entry \"optional\" marks a field that the TypeScript record has optionally (timeReversal in symcrys.magnetic): it comes last, and is None where the result has it for no operation.",
     "symcrys": {
       "record": "TransformedOperation",
       "fields": {
@@ -275,7 +275,7 @@
       "doc": "The operations of ``change_of_coordinates`` in the new coordinate system as arrays, one row per operation, in the order given: each a matrix W′ and a translation w′, not reduced modulo the lattice. Frozen, its arrays read-only; ``len(ops)`` is the number of operations; they can be passed back to ``change_of_coordinates``."
     },
     "symcrys.magnetic": {
-      "record": "MagneticTransformedOperation",
+      "record": "TransformedOperation",
       "fields": {
         "matrix": ["int64", [3, 3]],
         "translation": ["float64", [3]],

@@ -702,6 +702,7 @@ function argument(ctx, ir, name, fn, where) {
       transformed &&
       keys.every((/** @type {string} */ k) => k in transformed.fields) &&
       (fn === 'changeOfCoordinates' ||
+        api.functions[fn]?.selects ||
         Object.keys(ctx.ops.fields)
           .filter((k) => k !== '//')
           .every((k) => k in transformed.fields));
@@ -1113,23 +1114,50 @@ async function generate(name, cfg) {
       if (own.selects) {
         // A function that keeps some of the caller's operations (residualOperations): the library is
         // given the caller's operations as they are, each with its index (so that it refuses what it
-        // refuses), and the result takes the kept ones from them, as Operations.
+        // refuses), and the result takes the kept ones from them, in the class given (Operations or
+        // TransformedOperations), a list of mappings as Operations.
         used.add(`functions.${d.name}.selects`);
         const rest = args.slice(1).map((a) => `        ${a},`);
+        const transformedToo = params[0].includes('TransformedOperations');
+        const classes = transformedToo ? '(Operations, TransformedOperations)' : 'Operations';
+        const selectOverloads = [];
+        if (transformedToo) {
+          const kws = keywords.length ? ['*', ...keywords.map((k) => `${k.py}: ${k.ann} = None`)] : [];
+          for (const [given, result] of [
+            ['TransformedOperations', 'TransformedOperations'],
+            ['Operations | Sequence[Mapping[str, Any]]', 'Operations'],
+          ]) {
+            const sigLines = [`operations: ${given}`, ...params.slice(1), ...kws];
+            const one = `def ${py}(${sigLines.join(', ')}) -> ${result}: ...`;
+            selectOverloads.push(
+              [
+                '@overload',
+                ...(one.length <= WIDTH
+                  ? [one]
+                  : [`def ${py}(`, ...sigLines.map((x) => `    ${x},`), `) -> ${result}: ...`]),
+              ].join('\n'),
+            );
+          }
+        }
+        const resultAnn = transformedToo ? 'Operations | TransformedOperations' : ann;
+        const lines = defLines.map((l) => (transformedToo ? l.replace(`-> ${ann}:`, `-> ${resultAnn}:`) : l));
         functions.push(
           [
-            ...defLines,
-            ...doc,
-            `    given = ${args[0]}`,
-            `    kept = _call(`,
-            `        "${d.name}",`,
-            '        [{**op, "index": i} for i, op in enumerate(given)],',
-            ...rest,
-            '    )',
-            '    ops = operations if isinstance(operations, Operations) else _shared.operations_of(given, Operations)',
-            `    result: ${ann} = _shared.select(ops, kept)`,
-            '    return result',
-          ].join('\n'),
+            ...selectOverloads,
+            [
+              ...lines,
+              ...doc,
+              `    given = ${args[0]}`,
+              `    kept = _call(`,
+              `        "${d.name}",`,
+              '        [{**op, "index": i} for i, op in enumerate(given)],',
+              ...rest,
+              '    )',
+              `    ops = operations if isinstance(operations, ${classes}) else _shared.operations_of(given, Operations)`,
+              `    result: ${resultAnn} = _shared.select(ops, kept)`,
+              '    return result',
+            ].join('\n'),
+          ].join('\n\n\n'),
         );
         continue;
       }
@@ -1224,7 +1252,7 @@ async function generate(name, cfg) {
         `    def __getitem__(self, index: slice | Sequence[int] | NDArray[Any]) -> ${cls}: ...`,
         '',
         `    def __getitem__(self, index: int | np.integer[Any] | slice | Sequence[int] | NDArray[Any]) -> ${opRecord} | ${cls}:`,
-        `        """One operation as a dict \`\`{${entries.map(([k]) => `"${snake(k)}"`).join(', ')}}\`\` for an integer, otherwise`,
+        `        """One operation as a dict \`\`{${entries.map(([k]) => `"${snake(k)}"`).join(', ')}}\`\`${firstOptional >= 0 ? ' (an optional field only where present)' : ''} for an integer, otherwise`,
         `        the \`\`${cls}\`\` of the selected rows (a slice, a list of indices, a boolean mask)."""`,
         `        result: ${opRecord} | ${cls} = _shared.operation_at(self, index)`,
         '        return result',

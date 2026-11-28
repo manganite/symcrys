@@ -167,7 +167,9 @@ Library code is everything in `packages/ts/src` except test-only code ("Correctn
   relations, translations and points of the plane); a
   record becomes a dict typed by a TypedDict of the TypeScript interface's name, a named union of
   strings a Literal type; a list of operations becomes one `Operations` record of arrays (the
-  operations of a change of coordinates `TransformedOperations`), and a tensor basis and its
+  operations of a change of coordinates `TransformedOperations`), an optional field of it `None`
+  where no operation has it, and a function that keeps some of the operations it is given returns
+  them in the class given, and a tensor basis and its
   relations arrays of shape (3, …, 3) per tensor; input whose conversion would change its meaning
   is refused, on the raw input before it is converted (`_convert.py`, `_shared.py`): complex
   numbers, integers beyond 2⁵³ − 1, masked values, strings or objects where numbers are expected, a

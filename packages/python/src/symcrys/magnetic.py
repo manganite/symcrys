@@ -206,7 +206,7 @@ class Operations:
 
 
 @final
-class MagneticTransformedOperation(TypedDict):
+class TransformedOperation(TypedDict):
     """One operation of ``TransformedOperations`` (``ops[i]``, ``for op in ops``)."""
 
     matrix: NDArray[np.int64]
@@ -249,19 +249,19 @@ class TransformedOperations:
     def __len__(self) -> int:
         return len(self.matrix)
 
-    def __iter__(self) -> Iterator[MagneticTransformedOperation]:
+    def __iter__(self) -> Iterator[TransformedOperation]:
         return (self[i] for i in range(len(self)))
 
     @overload
-    def __getitem__(self, index: int | np.integer[Any]) -> MagneticTransformedOperation: ...
+    def __getitem__(self, index: int | np.integer[Any]) -> TransformedOperation: ...
 
     @overload
     def __getitem__(self, index: slice | Sequence[int] | NDArray[Any]) -> TransformedOperations: ...
 
-    def __getitem__(self, index: int | np.integer[Any] | slice | Sequence[int] | NDArray[Any]) -> MagneticTransformedOperation | TransformedOperations:
-        """One operation as a dict ``{"matrix", "translation", "time_reversal"}`` for an integer, otherwise
+    def __getitem__(self, index: int | np.integer[Any] | slice | Sequence[int] | NDArray[Any]) -> TransformedOperation | TransformedOperations:
+        """One operation as a dict ``{"matrix", "translation", "time_reversal"}`` (an optional field only where present) for an integer, otherwise
         the ``TransformedOperations`` of the selected rows (a slice, a list of indices, a boolean mask)."""
-        result: MagneticTransformedOperation | TransformedOperations = _shared.operation_at(self, index)
+        result: TransformedOperation | TransformedOperations = _shared.operation_at(self, index)
         return result
 
 
@@ -276,8 +276,10 @@ class InverseTransformation(TypedDict):
 
 
 @final
-class MagneticCoordinateChange(TypedDict):
-    """The result of ``change_of_coordinates`` of the magnetic API."""
+class CoordinateChange(TypedDict):
+    """The result of ``change_of_coordinates``: the inverse pair and each given quantity in the new
+    coordinate system.
+    """
 
     inverse: InverseTransformation
     """(Q, q) = (P⁻¹, −P⁻¹p), which takes the new coordinates back to the old."""
@@ -290,8 +292,7 @@ class MagneticCoordinateChange(TypedDict):
     metric: NotRequired[NDArray[np.float64]]
     """The metric tensor in the new basis."""
     operations: NotRequired[TransformedOperations]
-    """The operations, as given, in the new coordinate system, each with its time reversal if given.
-    """
+    """The operations, as given, in the new coordinate system."""
 
 
 @final
@@ -657,7 +658,7 @@ _S_InverseTransformation = (
         "originShift": ("a", np.float64, None),
     },
 )
-_S_MagneticCoordinateChange = (
+_S_CoordinateChange = (
     "d",
     {
         "inverse": _S_InverseTransformation,
@@ -793,6 +794,7 @@ __all__ = [
     "CartesianAxis",
     "CartesianOperationDescription",
     "Cell",
+    "CoordinateChange",
     "CoordinateTransformation",
     "CrystalFamily",
     "CrystalSystem",
@@ -804,8 +806,6 @@ __all__ = [
     "InverseTransformation",
     "LatticeParameters",
     "LatticeSystem",
-    "MagneticCoordinateChange",
-    "MagneticTransformedOperation",
     "Operation",
     "OperationDescription",
     "OperationKind",
@@ -822,6 +822,7 @@ __all__ = [
     "TensorPropertyName",
     "TensorSpec",
     "TimeParity",
+    "TransformedOperation",
     "TransformedOperations",
     "allowed_properties",
     "allowed_properties_of",
@@ -934,12 +935,30 @@ is. ``'gyrotropic'`` is optical activity.
 """
 
 
+@overload
+def residual_operations(
+    operations: TransformedOperations,
+    basis: ArrayLike,
+    *,
+    tolerance: Optional[float] = None,
+) -> TransformedOperations: ...
+
+
+@overload
 def residual_operations(
     operations: Operations | Sequence[Mapping[str, Any]],
     basis: ArrayLike,
     *,
     tolerance: Optional[float] = None,
-) -> Operations:
+) -> Operations: ...
+
+
+def residual_operations(
+    operations: Operations | TransformedOperations | Sequence[Mapping[str, Any]],
+    basis: ArrayLike,
+    *,
+    tolerance: Optional[float] = None,
+) -> Operations | TransformedOperations:
     """The operations of a list that keep the metric of a cell: W with WᵀGW = G, G the metric tensor
     of ``basis``. The operations are read by ``matrix``, the integer matrix W on lattice
     coordinates, as ``operations`` gives them; the list is taken as it is and the kept operations
@@ -967,8 +986,8 @@ def residual_operations(
         _shared.array(basis, "basis", np.float64),
         _shared.options(tolerance=tolerance),
     )
-    ops = operations if isinstance(operations, Operations) else _shared.operations_of(given, Operations)
-    result: Operations = _shared.select(ops, kept)
+    ops = operations if isinstance(operations, (Operations, TransformedOperations)) else _shared.operations_of(given, Operations)
+    result: Operations | TransformedOperations = _shared.select(ops, kept)
     return result
 
 
@@ -982,7 +1001,7 @@ def change_of_coordinates(
     metric: Optional[ArrayLike] = None,
     operations: Optional[Operations | TransformedOperations | Sequence[Mapping[str, Any]]] = None,
     tolerance: Optional[float] = None,
-) -> MagneticCoordinateChange:
+) -> CoordinateChange:
     """Changes the coordinate system by the pair (P, p): the new basis is (a′, b′, c′) = (a, b, c)·P
     and the new origin lies at p. Transforms the given quantities by ITA's equations: point
     coordinates x′ = P⁻¹(x − p), vector coefficients [uvw]′ = P⁻¹[uvw], Miller indices (hkl)′ =
@@ -1001,11 +1020,11 @@ def change_of_coordinates(
     time reversal of the operation given (``time_reversal``), so that it can be passed on to the
     functions that read the matrices W (``residual_operations``, a further
     ``change_of_coordinates``); when no operation has ``time_reversal``, none of the results has it.
-    Other fields of the record (``cartesian``) are not carried over. Raises SymcrysError for a list
-    in which some operations have ``time_reversal`` and others do not, a singular P, an entry of P
-    that is not rational within the tolerance, a quantity of the wrong shape, an unknown quantity,
-    an operation with det W ≠ ±1, and one whose W′ is not integral (the new basis does not span a
-    lattice that the operation maps onto itself).
+    Other fields of the record (``cartesian``) are not carried over. Raises SymcrysError for a
+    ``time_reversal`` that is not a boolean, a list in which some operations have ``time_reversal``
+    and others do not, a singular P, an entry of P that is not rational within the tolerance, a
+    quantity of the wrong shape, an unknown quantity, an operation with det W ≠ ±1, and one whose W′
+    is not integral (the new basis does not span a lattice that the operation maps onto itself).
 
     Parameters
     ----------
@@ -1025,13 +1044,13 @@ def change_of_coordinates(
     metric : keyword-only, optional
         The metric tensor G: G′ = PᵀGP.
     operations : keyword-only, optional
-        Operations (W, w): W′ = P⁻¹WP, w′ = P⁻¹(w + (W − I)p); each keeps its time reversal.
+        Operations (W, w): W′ = P⁻¹WP, w′ = P⁻¹(w + (W − I)p).
     tolerance : keyword-only, optional
         Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁵). It is measured per
         matrix entry for operations, as the distance of unit vectors for directions and per
         coordinate modulo the lattice for points (docs/conventions.md, "Tolerances").
     """
-    result: MagneticCoordinateChange = _shared.convert(
+    result: CoordinateChange = _shared.convert(
         _call(
             "changeOfCoordinates",
             _shared.options(linear_part=linear_part, origin_shift=origin_shift),
@@ -1044,7 +1063,7 @@ def change_of_coordinates(
             ),
             _shared.options(tolerance=tolerance),
         ),
-        _S_MagneticCoordinateChange,
+        _S_CoordinateChange,
     )
     return result
 

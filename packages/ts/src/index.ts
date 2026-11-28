@@ -34,14 +34,7 @@ export {
   type FourIndices,
   type MillerValues,
 } from './indices.js';
-export {
-  type AffineOperation,
-  type CoordinateChange,
-  type CoordinateQuantities,
-  type CoordinateTransformation,
-  type InverseTransformation,
-  type TransformedOperation,
-} from './coordinates.js';
+export { type CoordinateTransformation, type InverseTransformation } from './coordinates.js';
 export { cellTransformation, type BravaisLattice, type Cell, type OrthorhombicSetting } from './cellTransformation.js';
 
 export type { PointGroupKey, Setting, AxesOptions, SettingOptions, SymbolOptions } from './pointGroups/pointGroups.js';
@@ -56,6 +49,10 @@ export type { CartesianAxis } from './pointGroups/identify.js';
 export type { IntrinsicSymmetry, TensorForm, TensorKind, TensorRank } from './tensors/tensorForm.js';
 
 export {
+  type AffineOperation,
+  type CoordinateChange,
+  type CoordinateQuantities,
+  type TransformedOperation,
   CRYSTAL_FORM_TYPES,
   POINT_GROUP_KEYS,
   TENSOR_PROPERTIES,

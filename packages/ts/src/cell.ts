@@ -291,10 +291,15 @@ export function residualOperations<T extends CellOperation>(
   );
 }
 
-/** An operation of the magnetic API passed to `residualOperations`: its matrix and whether it is combined with time reversal. */
+/**
+ * An operation of the magnetic API passed to `residualOperations`: its matrix and whether it is
+ * combined with time reversal. The field is optional in the type, so that the operations of
+ * `changeOfCoordinates` pass, whose type cannot say that they have it; an operation without it is
+ * a RangeError.
+ */
 export interface MagneticCellOperation extends CellOperation {
-  /** Whether the operation is combined with time reversal. */
-  readonly timeReversal: boolean;
+  /** Whether the operation is combined with time reversal; required. */
+  readonly timeReversal?: boolean;
 }
 
 /**

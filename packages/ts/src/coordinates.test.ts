@@ -235,10 +235,7 @@ describe('changeOfCoordinates', () => {
       given.map((op) => [op.matrix, op.timeReversal]),
     );
     // On hexagonal axes every operation keeps the hexagonal metric, each with its time reversal.
-    const kept = magnetic.residualOperations(
-      there.operations! as readonly { matrix: Mat3; timeReversal: boolean }[],
-      magnetic.latticeBasis("-3'm"),
-    );
+    const kept = magnetic.residualOperations(there.operations!, magnetic.latticeBasis("-3'm"));
     expect(kept.map((op) => op.timeReversal)).toEqual(given.map((op) => op.timeReversal));
   });
 
@@ -253,6 +250,10 @@ describe('changeOfCoordinates', () => {
     expect(() =>
       magnetic.changeOfCoordinates({ linearPart: I }, { operations: [op, { ...op, timeReversal: false }] }),
     ).toThrow(/operation 1 has timeReversal and operation 0 has not/);
+    // The records are checked first: an entry that is no record is named as such (review of #250).
+    expect(() =>
+      magnetic.changeOfCoordinates({ linearPart: I }, { operations: [5, { ...op, timeReversal: true }] as never }),
+    ).toThrow(/operation 1 is a record \{ matrix, translation \}, not 5/);
     // A value that is no boolean is named as such first.
     expect(() =>
       magnetic.changeOfCoordinates({ linearPart: I }, { operations: [op, { ...op, timeReversal: 'yes' } as never] }),
