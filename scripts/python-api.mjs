@@ -361,6 +361,36 @@ function mergeFields(fields) {
 }
 
 /**
+ * A TypedDict as Python source: with optional fields, a private base class of the required ones and
+ * the class itself with `total=False` for the optional ones (without required fields, the class
+ * alone), so that `__required_keys__` and `__optional_keys__` are right at run time. The modules use
+ * `from __future__ import annotations`, under which a `NotRequired[...]` field is a string that the
+ * class cannot read, on every version of Python. `@final` lets a type checker narrow a union of
+ * TypedDicts by a key (`if "hkl" in entry`).
+ * @param {string} name
+ * @param {string[]} doc the docstring lines of the class, indented
+ * @param {{ line: string, doc: string[], optional: boolean }[]} fields
+ * @returns {string}
+ */
+function typedDict(name, doc, fields) {
+  const head = [...doc, ...(doc.length ? [''] : [])];
+  const lines = (/** @type {typeof fields} */ fs) => fs.flatMap((f) => [f.line, ...f.doc]);
+  const required = fields.filter((f) => !f.optional);
+  const optional = fields.filter((f) => f.optional);
+  if (!optional.length) return ['@final', `class ${name}(TypedDict):`, ...head, ...lines(fields)].join('\n');
+  if (!required.length) {
+    return ['@final', `class ${name}(TypedDict, total=False):`, ...head, ...lines(fields)].join('\n');
+  }
+  const base = `_${name}Required`;
+  return [
+    [`class ${base}(TypedDict):`, `    """The required fields of \`\`${name}\`\`."""`, '', ...lines(required)].join(
+      '\n',
+    ),
+    ['@final', `class ${name}(${base}, total=False):`, ...head, ...lines(optional)].join('\n'),
+  ].join('\n\n\n');
+}
+
+/**
  * @param {Json} d
  * @param {string} where
  * @param {string} [name]
@@ -415,7 +445,7 @@ function readReference(t, where) {
 /**
  * The context of a module: its tables, and the TypedDicts and Literal aliases it collects.
  * @typedef {{ name: string, ts: string, prefix: string, floats: Set<string>, ints: Set<string>,
- *   ops: any, usesOperations: boolean, usesTransformed: boolean, arrays: string, shapes: Record<string, number[]>, records: Map<string, any>, exports: Map<string, Json>, notRequired: boolean, done: string[],
+ *   ops: any, usesOperations: boolean, usesTransformed: boolean, arrays: string, shapes: Record<string, number[]>, records: Map<string, any>, exports: Map<string, Json>, done: string[],
  *   literals: Map<string, { lits: string[], doc: string }>,
  *   lib: Record<string, any> }} Ctx
  */
@@ -856,7 +886,6 @@ async function generate(name, cfg) {
     ops: api.operations[name],
     usesOperations: false,
     usesTransformed: false,
-    notRequired: false,
     done: [],
     literals: new Map(),
     lib,
@@ -1260,12 +1289,10 @@ async function generate(name, cfg) {
     );
     // The TypedDict of one row (ops[i], for op in ops), from the same fields.
     typed.unshift(
-      [
-        '@final',
-        `class ${opRecord}(TypedDict):`,
-        ...quote([`One operation of \`\`${cls}\`\` (\`\`ops[i]\`\`, \`\`for op in ops\`\`).`], '    '),
-        '',
-        ...entries.flatMap(([k, entry]) => {
+      typedDict(
+        opRecord,
+        quote([`One operation of \`\`${cls}\`\` (\`\`ops[i]\`\`, \`\`for op in ops\`\`).`], '    '),
+        entries.map(([k, entry]) => {
           const [dtype, shape] = entry;
           const f = record.fields.find((/** @type {Field} */ x) => x.name === k);
           const py = shape.length
@@ -1275,13 +1302,13 @@ async function generate(name, cfg) {
               : dtype === 'int64'
                 ? 'int'
                 : 'float';
-          if (optional(entry)) ctx.notRequired = true;
-          return [
-            `    ${snake(k)}: ${optional(entry) ? `NotRequired[${py}]` : py}`,
-            ...quote(wrapParagraphs(f.doc, '', 3), '    '),
-          ];
+          return {
+            line: `    ${snake(k)}: ${py}`,
+            doc: quote(wrapParagraphs(f.doc, '', 3), '    '),
+            optional: optional(entry),
+          };
         }),
-      ].join('\n'),
+      ),
     );
     const tuple = (/** @type {number[]} */ shape) => `(${shape.join(', ')}${shape.length === 1 ? ',' : ''})`;
     const spec = entries.map(([k, [dtype, shape]]) => `"${k}": (${pyDtype(dtype)}, ${tuple(shape)})`);
@@ -1296,24 +1323,23 @@ async function generate(name, cfg) {
   if (ctx.usesOperations) recordsOfArrays(ctx.ops, 'Operations', '_OPERATION_FIELDS');
   for (const n of done) {
     const r = ctx.records.get(n);
-    const optional = r.fields.filter((/** @type {any} */ f) => f.optional);
-    const body = (/** @type {any[]} */ fs) =>
-      fs.flatMap((f) => [
-        `    ${snake(f.name)}: ${f.py}`,
-        ...(f.doc ? quote(wrapParagraphs(f.doc, '', 3), '    ') : []),
-      ]);
     const doc = r.doc
       ? quote(
           wrapParagraphs(r.doc, '    ', 3).map((l) => l.slice(4)),
           '    ',
         )
       : [];
-    // One class: an optional field is NotRequired (Python 3.11, typing_extensions for type checkers
-    // on 3.10), so that Sphinx documents every field; @final lets a type checker narrow a union of
-    // TypedDicts by a key (`if "hkl" in entry`).
-    const fields = r.fields.map((/** @type {any} */ f) => (f.optional ? { ...f, py: `NotRequired[${f.py}]` } : f));
-    if (optional.length) ctx.notRequired = true;
-    typed.push(['@final', `class ${n}(TypedDict):`, ...doc, ...(doc.length ? [''] : []), ...body(fields)].join('\n'));
+    typed.push(
+      typedDict(
+        n,
+        doc,
+        r.fields.map((/** @type {any} */ f) => ({
+          line: `    ${snake(f.name)}: ${f.py}`,
+          doc: f.doc ? quote(wrapParagraphs(f.doc, '', 3), '    ') : [],
+          optional: !!f.optional,
+        })),
+      ),
+    );
     const entries = r.fields.map((/** @type {any} */ f) => `"${f.name}": ${f.schema}`);
     const line = `_S_${n} = ("d", {${entries.join(', ')}})`;
     schemas.push(
@@ -1395,19 +1421,9 @@ async function generate(name, cfg) {
   ].filter((w) => new RegExp(`\\b${w}\\b`).test(text.replace('IMPORTS', '')));
   const nptyping = ['ArrayLike', 'NDArray'].filter((w) => new RegExp(`\\b${w}\\b`).test(text));
   const imports = [
-    ...(ctx.notRequired ? ['import sys'] : []),
     ...(ctx.usesOperations || ctx.usesTransformed ? ['from dataclasses import dataclass'] : []),
-    `from typing import ${[...(ctx.notRequired ? ['TYPE_CHECKING'] : []), ...typing].join(', ')}`,
+    `from typing import ${typing.join(', ')}`,
     '',
-    ...(ctx.notRequired
-      ? [
-          'if sys.version_info >= (3, 11):',
-          '    from typing import NotRequired',
-          'elif TYPE_CHECKING:  # Python 3.10: for type checkers; the annotations stay strings at run time',
-          '    from typing_extensions import NotRequired',
-          '',
-        ]
-      : []),
     'import numpy as np',
     ...(nptyping.length ? [`from numpy.typing import ${nptyping.join(', ')}`] : []),
     '',

@@ -13,14 +13,8 @@ time-odd property. Operations carry ``time_reversal``, a tensor specification ``
 
 from __future__ import annotations
 
-import sys
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Iterator, Literal, Mapping, Optional, Sequence, TypedDict, Union, final, overload
-
-if sys.version_info >= (3, 11):
-    from typing import NotRequired
-elif TYPE_CHECKING:  # Python 3.10: for type checkers; the annotations stay strings at run time
-    from typing_extensions import NotRequired
+from typing import Any, Iterator, Literal, Mapping, Optional, Sequence, TypedDict, Union, final, overload
 
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
@@ -205,15 +199,20 @@ class Operations:
         return result
 
 
-@final
-class TransformedOperation(TypedDict):
-    """One operation of ``TransformedOperations`` (``ops[i]``, ``for op in ops``)."""
+class _TransformedOperationRequired(TypedDict):
+    """The required fields of ``TransformedOperation``."""
 
     matrix: NDArray[np.int64]
     """W′ = P⁻¹WP, integer entries."""
     translation: NDArray[np.float64]
     """w′ = P⁻¹(w + (W − I)p), not reduced modulo the lattice."""
-    time_reversal: NotRequired[bool]
+
+
+@final
+class TransformedOperation(_TransformedOperationRequired, total=False):
+    """One operation of ``TransformedOperations`` (``ops[i]``, ``for op in ops``)."""
+
+    time_reversal: bool
     """The time reversal of the operation given; present when the operations given have it."""
 
 
@@ -275,23 +274,28 @@ class InverseTransformation(TypedDict):
     """q = −P⁻¹p."""
 
 
+class _CoordinateChangeRequired(TypedDict):
+    """The required fields of ``CoordinateChange``."""
+
+    inverse: InverseTransformation
+    """(Q, q) = (P⁻¹, −P⁻¹p), which takes the new coordinates back to the old."""
+
+
 @final
-class CoordinateChange(TypedDict):
+class CoordinateChange(_CoordinateChangeRequired, total=False):
     """The result of ``change_of_coordinates``: the inverse pair and each given quantity in the new
     coordinate system.
     """
 
-    inverse: InverseTransformation
-    """(Q, q) = (P⁻¹, −P⁻¹p), which takes the new coordinates back to the old."""
-    points: NotRequired[NDArray[np.float64]]
+    points: NDArray[np.float64]
     """The points, as given, in the new coordinates."""
-    directions: NotRequired[NDArray[np.float64]]
+    directions: NDArray[np.float64]
     """The vector coefficients, as given, in the new basis."""
-    planes: NotRequired[NDArray[np.float64]]
+    planes: NDArray[np.float64]
     """The Miller indices, as given, in the new basis."""
-    metric: NotRequired[NDArray[np.float64]]
+    metric: NDArray[np.float64]
     """The metric tensor in the new basis."""
-    operations: NotRequired[TransformedOperations]
+    operations: TransformedOperations
     """The operations, as given, in the new coordinate system."""
 
 
@@ -316,39 +320,44 @@ class LatticeParameters(TypedDict):
 
 
 @final
-class Cell(TypedDict):
+class Cell(TypedDict, total=False):
     """A cell of a lattice, named by the fields that apply to its Bravais lattice (listed with
     ``cell_transformation``); a field left out takes the value of the conventional cell in the
     standard setting, so ``{}`` is that cell.
     """
 
-    unique_axis: NotRequired[Literal["a", "b", "c"]]
+    unique_axis: Literal["a", "b", "c"]
     """The unique axis of a monoclinic cell."""
-    cell_choice: NotRequired[int]
+    cell_choice: int
     """The cell choice of a monoclinic cell, 1, 2 or 3."""
-    setting: NotRequired[Literal["reverse", "abc", "ba-c", "cab", "-cba", "bca", "a-cb", "obverse"]]
+    setting: Literal["reverse", "abc", "ba-c", "cab", "-cba", "bca", "a-cb", "obverse"]
     """An orthorhombic setting, or for hexagonal axes of an ``hR`` lattice the obverse or reverse
     setting.
     """
-    centring: NotRequired[Literal["P", "A", "C", "I", "F", "H", "D"]]
+    centring: Literal["P", "A", "C", "I", "F", "H", "D"]
     """The centring of the cell: ``'P'`` for a primitive cell, or the letter of a centred cell."""
-    axes: NotRequired[Literal["hexagonal", "rhombohedral"]]
+    axes: Literal["hexagonal", "rhombohedral"]
     """The axes of an ``hR`` lattice: ``'hexagonal'`` (the triple hexagonal cell, standard) or
     ``'rhombohedral'``.
     """
-    cell: NotRequired[int]
+    cell: int
     """The index of a cell where several cells have the same centring: 1 for C₁."""
 
 
-@final
-class CoordinateTransformation(TypedDict):
-    """A change of the coordinate system (P, p): (a′, b′, c′) = (a, b, c)·P, origin O′ = O + p."""
+class _CoordinateTransformationRequired(TypedDict):
+    """The required fields of ``CoordinateTransformation``."""
 
     linear_part: NDArray[np.float64]
     """P, the linear part: its columns are the new basis vectors a′, b′, c′ in the old basis; det P ≠ 0,
     also negative.
     """
-    origin_shift: NotRequired[NDArray[np.float64]]
+
+
+@final
+class CoordinateTransformation(_CoordinateTransformationRequired, total=False):
+    """A change of the coordinate system (P, p): (a′, b′, c′) = (a, b, c)·P, origin O′ = O + p."""
+
+    origin_shift: NDArray[np.float64]
     """p, the origin shift: the coordinates of the new origin in the old coordinate system; default
     zero.
     """
@@ -368,9 +377,8 @@ class Axis(TypedDict):
     """
 
 
-@final
-class OperationDescription(TypedDict):
-    """One point operation described geometrically."""
+class _OperationDescriptionRequired(TypedDict):
+    """The required fields of ``OperationDescription``."""
 
     kind: OperationKind
     """What the operation is, without time reversal."""
@@ -378,16 +386,22 @@ class OperationDescription(TypedDict):
     """The n of the symbol n or n̄ (n for an n-fold rotation): 1 for the identity and the inversion, 2
     for a reflection (m = 2̄), otherwise the order of the rotation part.
     """
-    axis: NotRequired[Axis]
+    time_reversal: bool
+    """True if the operation is combined with time reversal (a primed operation)."""
+
+
+@final
+class OperationDescription(_OperationDescriptionRequired, total=False):
+    """One point operation described geometrically."""
+
+    axis: Axis
     """Rotation axis, rotoinversion axis or the normal of the mirror plane; absent for the identity and
     the inversion.
     """
-    sense: NotRequired[Literal["-", "+"]]
+    sense: Literal["-", "+"]
     """For n ≥ 3: ``'+'`` if the rotation part turns by +360°/n about ``axis`` (counter-clockwise seen
     from the tip of ``axis`` looking towards the origin), ``'-'`` if by −360°/n.
     """
-    time_reversal: bool
-    """True if the operation is combined with time reversal (a primed operation)."""
 
 
 @final
@@ -413,16 +427,11 @@ class DirectionElements(TypedDict):
     """True if a mirror plane is perpendicular to this direction."""
 
 
-@final
-class SymmetryDirection(TypedDict):
-    """One position of the full Hermann–Mauguin symbol: its symbol and its symmetry directions."""
+class _SymmetryDirectionRequired(TypedDict):
+    """The required fields of ``SymmetryDirection``."""
 
     position: int
     """1-based position in the full symbol."""
-    symbol: NotRequired[str]
-    """The symbol at this position of the full symbol, if the full symbol has this position; for a
-    magnetic group with its primes (``4'/m``).
-    """
     directions: list[DirectionElements]
     """The symmetry directions of this position, each with the elements along it; for a monoclinic group
     the direction a, b or c of the position of the full symbol, of which only the unique axis is a
@@ -431,14 +440,29 @@ class SymmetryDirection(TypedDict):
 
 
 @final
-class IdentifiedPointGroup(TypedDict):
+class SymmetryDirection(_SymmetryDirectionRequired, total=False):
+    """One position of the full Hermann–Mauguin symbol: its symbol and its symmetry directions."""
+
+    symbol: str
+    """The symbol at this position of the full symbol, if the full symbol has this position; for a
+    magnetic group with its primes (``4'/m``).
+    """
+
+
+class _IdentifiedPointGroupRequired(TypedDict):
+    """The required fields of ``IdentifiedPointGroup``."""
+
+    key: str
+    """The key of the point group."""
+
+
+@final
+class IdentifiedPointGroup(_IdentifiedPointGroupRequired, total=False):
     """A point group found by its symbol (``find_point_group``) or identified from operations
     (``point_group_of``): its key, and the setting if the operations are exactly those of one.
     """
 
-    key: str
-    """The key of the point group."""
-    setting: NotRequired[int]
+    setting: int
     """The 1-based index of the setting: always for ``find_point_group``; for ``point_group_of`` the
     setting whose operations the group equals, in the Cartesian frame of symcrys, absent if the group is
     the point group in another orientation.
@@ -453,9 +477,8 @@ class CartesianAxis(TypedDict):
     """Unit vector; its first non-zero component, in the order x, y, z, is positive."""
 
 
-@final
-class CartesianOperationDescription(TypedDict):
-    """One operation of any list described geometrically (``describe_operations_of``)."""
+class _CartesianOperationDescriptionRequired(TypedDict):
+    """The required fields of ``CartesianOperationDescription``."""
 
     kind: OperationKind
     """What the operation is, without time reversal."""
@@ -463,16 +486,22 @@ class CartesianOperationDescription(TypedDict):
     """The n of the symbol n or n̄ (n for an n-fold rotation): 1 for the identity and the inversion, 2
     for a reflection (m = 2̄), otherwise the order of the rotation part.
     """
-    axis: NotRequired[CartesianAxis]
+    time_reversal: bool
+    """True if the operation is combined with time reversal (a primed operation)."""
+
+
+@final
+class CartesianOperationDescription(_CartesianOperationDescriptionRequired, total=False):
+    """One operation of any list described geometrically (``describe_operations_of``)."""
+
+    axis: CartesianAxis
     """Rotation axis, rotoinversion axis or the normal of the mirror plane; absent for the identity and
     the inversion.
     """
-    sense: NotRequired[Literal["-", "+"]]
+    sense: Literal["-", "+"]
     """For n ≥ 3: ``'+'`` if the rotation part turns by +360°/n about ``axis`` (counter-clockwise seen
     from the tip of ``axis`` looking towards the origin), ``'-'`` if by −360°/n.
     """
-    time_reversal: bool
-    """True if the operation is combined with time reversal (a primed operation)."""
 
 
 @final
@@ -552,11 +581,8 @@ class PointGroup(TypedDict):
     """
 
 
-@final
-class Setting(TypedDict):
-    """A setting of a point group: an orientation of its symmetry directions in the Cartesian frame
-    (docs/conventions.md, "Settings").
-    """
+class _SettingRequired(TypedDict):
+    """The required fields of ``Setting``."""
 
     index: int
     """1-based."""
@@ -564,14 +590,22 @@ class Setting(TypedDict):
     """Short symbol of the setting."""
     full_symbol: str
     """Full symbol, symmetry directions separated by single spaces."""
-    unique_axis: NotRequired[Literal["a", "b", "c"]]
+    is_default: bool
+    """True for the ITC default setting."""
+
+
+@final
+class Setting(_SettingRequired, total=False):
+    """A setting of a point group: an orientation of its symmetry directions in the Cartesian frame
+    (docs/conventions.md, "Settings").
+    """
+
+    unique_axis: Literal["a", "b", "c"]
     """Monoclinic settings only: the unique axis."""
-    axes: NotRequired[Literal["hexagonal", "rhombohedral"]]
+    axes: Literal["hexagonal", "rhombohedral"]
     """Trigonal settings only: the axes of the conventional basis, ``'hexagonal'`` or
     ``'rhombohedral'``.
     """
-    is_default: bool
-    """True for the ITC default setting."""
 
 
 @final
@@ -644,6 +678,15 @@ class TensorForm(TypedDict):
     components, each a tensor r in the shape of the basis tensors with Σ r·t = 0, summed over all
     components, for every allowed tensor t. The constraint of c reads t_c − Σₖ b_{k,c}·t_{parameters[k]}
     = 0, with b_{k,c} the component c of basis[k]; one with a single 1 says that the component vanishes.
+    """
+    largest_coefficient: float
+    """The largest magnitude of a coefficient of the basis, 0 if the tensor vanishes: how much the basis
+    amplifies an error of the parameters. It is 1 or 2 for the form of a point group in a setting, and
+    large for operations in a frame that is nearly, but not exactly, aligned with a symmetry element,
+    the more the higher the rank (the polar axis of 4mm tilted by 10⁻⁶ gives about 10⁶, its
+    piezoelectric tensor tilted by 0.1 about cot³ 0.1 ≈ 10³). For a crystal in another frame, the form
+    computed in the frame of its setting (``tensor_form``) and rotated into the other frame
+    (``rotate_tensor``) keeps the coefficients small.
     """
 
 
@@ -775,6 +818,7 @@ _S_TensorForm = (
         "basis": ("a", np.float64, None),
         "parameters": ("a", np.int64, None),
         "relations": ("a", np.float64, None),
+        "largestCoefficient": _F,
     },
 )
 

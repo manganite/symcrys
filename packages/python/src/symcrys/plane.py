@@ -12,14 +12,8 @@ line is an int64 array of shape (2,) (docs/conventions.md, "Plane groups").
 
 from __future__ import annotations
 
-import sys
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Iterator, Literal, Mapping, Optional, Sequence, TypedDict, Union, final, overload
-
-if sys.version_info >= (3, 11):
-    from typing import NotRequired
-elif TYPE_CHECKING:  # Python 3.10: for type checkers; the annotations stay strings at run time
-    from typing_extensions import NotRequired
+from typing import Any, Iterator, Literal, Mapping, Optional, Sequence, TypedDict, Union, final, overload
 
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
@@ -221,30 +215,40 @@ class PointGroup(TypedDict):
     """
 
 
+class _IdentifiedPlaneGroupRequired(TypedDict):
+    """The required fields of ``IdentifiedPlaneGroup``."""
+
+    key: str
+    """The key of the plane group."""
+
+
 @final
-class IdentifiedPlaneGroup(TypedDict):
+class IdentifiedPlaneGroup(_IdentifiedPlaneGroupRequired, total=False):
     """A plane group found by its symbol (``find_plane_group``) or identified from operations
     (``plane_group_of``): its key, and the setting if the operations are exactly those of it.
     """
 
-    key: str
-    """The key of the plane group."""
-    setting: NotRequired[int]
+    setting: int
     """1, the one setting of a plane group: always for ``find_plane_group``; for ``plane_group_of`` if
     the operations are those of ``operations(key)`` modulo the lattice, absent if they are the group
     with another origin or orientation.
     """
 
 
+class _IdentifiedPointGroupRequired(TypedDict):
+    """The required fields of ``IdentifiedPointGroup``."""
+
+    key: str
+    """The key of the plane point group."""
+
+
 @final
-class IdentifiedPointGroup(TypedDict):
+class IdentifiedPointGroup(_IdentifiedPointGroupRequired, total=False):
     """A plane point group found by its symbol (``find_point_group``) or identified from operations
     (``point_group_of``): its key, and the setting if the operations are exactly those of one.
     """
 
-    key: str
-    """The key of the plane point group."""
-    setting: NotRequired[int]
+    setting: int
     """The 1-based index of the setting: always for ``find_point_group``; for ``point_group_of`` the
     setting whose operations the linear parts are, absent if they are the group in another orientation.
     """
@@ -274,9 +278,8 @@ class LatticeAxis(TypedDict):
     """The shortest integer vector, first non-zero component positive."""
 
 
-@final
-class OperationDescription(TypedDict):
-    """What an operation is, geometrically, as ITA describes it under "Symmetry operations"."""
+class _OperationDescriptionRequired(TypedDict):
+    """The required fields of ``OperationDescription``."""
 
     kind: PlaneOperationKind
     """``'identity'``, ``'translation'``, ``'rotation'``, ``'reflection'`` (in a line) or
@@ -286,19 +289,25 @@ class OperationDescription(TypedDict):
     """The n of the linear part (an n-fold rotation): 1 for the identity and a translation, 2 for a
     reflection or glide reflection.
     """
-    sense: NotRequired[Literal["-", "+"]]
+
+
+@final
+class OperationDescription(_OperationDescriptionRequired, total=False):
+    """What an operation is, geometrically, as ITA describes it under "Symmetry operations"."""
+
+    sense: Literal["-", "+"]
     """For a rotation of order 3 or more: ``'+'`` if it turns a towards b, ``'-'`` otherwise."""
-    translation: NotRequired[NDArray[np.float64]]
+    translation: NDArray[np.float64]
     """For a translation: the translation vector."""
-    point: NotRequired[NDArray[np.float64]]
+    point: NDArray[np.float64]
     """For a rotation: its centre. For a mirror or glide: a point of its line, on y = 0 unless the line
     is parallel to it, then on x = 0. Not reduced modulo the lattice.
     """
-    direction: NotRequired[NDArray[np.int64]]
+    direction: NDArray[np.int64]
     """For a mirror or glide: the direction of its line, the shortest integer vector, first non-zero
     component positive.
     """
-    axis: NotRequired[LatticeAxis]
+    axis: LatticeAxis
     """For a reflection or glide reflection: its axis, the normal of its line in the lattice basis (as
     the ``axis`` of a reflection of the point groups is the normal of its plane), its symmetry direction
     with the sign of its Seitz symbol (``m₁₀``, ``m₁₂``): the shortest integer vector along the columns
@@ -306,15 +315,12 @@ class OperationDescription(TypedDict):
     (tested). Without a metric it is not the perpendicular of ``direction``: in a hexagonal basis the
     normal of a line along [1,0] is [1,2].
     """
-    glide: NotRequired[NDArray[np.float64]]
+    glide: NDArray[np.float64]
     """For a glide: the glide vector (w + W·w)/2, not reduced modulo the lattice."""
 
 
-@final
-class WyckoffPosition(TypedDict):
-    """A Wyckoff position of a plane group (points of the plane) or of a plane point group
-    (directions of the plane, with the edges normal to them).
-    """
+class _WyckoffPositionRequired(TypedDict):
+    """The required fields of ``WyckoffPosition``."""
 
     letter: str
     """The Wyckoff letter."""
@@ -328,18 +334,26 @@ class WyckoffPosition(TypedDict):
     """All coordinate doublets of the position, for a plane group those of the (0,0)+ set, e.g.
     ``['x,0', '-x,0']``; a leading ``-`` is an overbar.
     """
-    miller_indices: NotRequired[str]
-    """For a plane point group only (a plane group has no edges): the first edge of the position's basic
-    form, its Miller indices in the usual notation, e.g. ``h,k``, ``1,0``, or ``h,k,i`` and ``1,1,-2``
-    (Bravais–Miller indices) for the hexagonal groups; a leading ``-`` is an overbar. In the hexagonal
-    groups the first doublet and the first edge of a special position may lie on different, conjugate
-    mirror lines; both belong to the position.
-    """
     site_symmetry_operations: NDArray[np.int64]
     """The indices into the operations of the group in the same setting (``operations``) of those that
     fix the position's first element, ascending: for a plane group its first coordinate doublet, for
     every value of x and y, modulo the lattice; for a plane point group its first edge
     (``miller_indices``), as for the faces of a crystal class.
+    """
+
+
+@final
+class WyckoffPosition(_WyckoffPositionRequired, total=False):
+    """A Wyckoff position of a plane group (points of the plane) or of a plane point group
+    (directions of the plane, with the edges normal to them).
+    """
+
+    miller_indices: str
+    """For a plane point group only (a plane group has no edges): the first edge of the position's basic
+    form, its Miller indices in the usual notation, e.g. ``h,k``, ``1,0``, or ``h,k,i`` and ``1,1,-2``
+    (Bravais–Miller indices) for the hexagonal groups; a leading ``-`` is an overbar. In the hexagonal
+    groups the first doublet and the first edge of a special position may lie on different, conjugate
+    mirror lines; both belong to the position.
     """
 
 
@@ -401,11 +415,8 @@ class DirectionSiteSymmetry(TypedDict):
     """True if no operation other than the identity leaves it fixed (general position)."""
 
 
-@final
-class WyckoffDistance(TypedDict):
-    """The distance of a point to a Wyckoff position: the position, as ``wyckoff_positions`` gives
-    it, the nearest point of it, and the distance.
-    """
+class _WyckoffDistanceRequired(TypedDict):
+    """The required fields of ``WyckoffDistance``."""
 
     letter: str
     """The Wyckoff letter."""
@@ -418,13 +429,6 @@ class WyckoffDistance(TypedDict):
     coordinates: list[str]
     """All coordinate doublets of the position, for a plane group those of the (0,0)+ set, e.g.
     ``['x,0', '-x,0']``; a leading ``-`` is an overbar.
-    """
-    miller_indices: NotRequired[str]
-    """For a plane point group only (a plane group has no edges): the first edge of the position's basic
-    form, its Miller indices in the usual notation, e.g. ``h,k``, ``1,0``, or ``h,k,i`` and ``1,1,-2``
-    (Bravais–Miller indices) for the hexagonal groups; a leading ``-`` is an overbar. In the hexagonal
-    groups the first doublet and the first edge of a special position may lie on different, conjugate
-    mirror lines; both belong to the position.
     """
     site_symmetry_operations: NDArray[np.int64]
     """The indices into the operations of the group in the same setting (``operations``) of those that
@@ -439,6 +443,21 @@ class WyckoffDistance(TypedDict):
     distance: float
     """The distance of the given point to the position: without a basis the larger of the two coordinate
     differences modulo the lattice, with a basis Euclidean in its unit.
+    """
+
+
+@final
+class WyckoffDistance(_WyckoffDistanceRequired, total=False):
+    """The distance of a point to a Wyckoff position: the position, as ``wyckoff_positions`` gives
+    it, the nearest point of it, and the distance.
+    """
+
+    miller_indices: str
+    """For a plane point group only (a plane group has no edges): the first edge of the position's basic
+    form, its Miller indices in the usual notation, e.g. ``h,k``, ``1,0``, or ``h,k,i`` and ``1,1,-2``
+    (Bravais–Miller indices) for the hexagonal groups; a leading ``-`` is an overbar. In the hexagonal
+    groups the first doublet and the first edge of a special position may lie on different, conjugate
+    mirror lines; both belong to the position.
     """
 
 
@@ -542,10 +561,10 @@ class SymmetryElements(TypedDict):
 
 
 @final
-class PlaneFixedAngles(TypedDict):
+class PlaneFixedAngles(TypedDict, total=False):
     """The angles of a plane cell fixed by its crystal system, in degrees."""
 
-    gamma: NotRequired[float]
+    gamma: float
     """The angle γ between a and b, where the system fixes it."""
 
 
@@ -589,23 +608,28 @@ class InverseTransformation(TypedDict):
     """q = −P⁻¹p."""
 
 
+class _CoordinateChangeRequired(TypedDict):
+    """The required fields of ``CoordinateChange``."""
+
+    inverse: InverseTransformation
+    """(Q, q) = (P⁻¹, −P⁻¹p), which takes the new coordinates back to the old."""
+
+
 @final
-class CoordinateChange(TypedDict):
+class CoordinateChange(_CoordinateChangeRequired, total=False):
     """The result of ``change_of_coordinates``: the inverse pair and each given quantity in the new
     coordinate system.
     """
 
-    inverse: InverseTransformation
-    """(Q, q) = (P⁻¹, −P⁻¹p), which takes the new coordinates back to the old."""
-    points: NotRequired[NDArray[np.float64]]
+    points: NDArray[np.float64]
     """The points, as given, in the new coordinates."""
-    directions: NotRequired[NDArray[np.float64]]
+    directions: NDArray[np.float64]
     """The vector coefficients, as given, in the new basis."""
-    planes: NotRequired[NDArray[np.float64]]
+    planes: NDArray[np.float64]
     """The Miller indices, as given, in the new basis."""
-    metric: NotRequired[NDArray[np.float64]]
+    metric: NDArray[np.float64]
     """The metric tensor in the new basis."""
-    operations: NotRequired[TransformedOperations]
+    operations: TransformedOperations
     """The operations, as given, in the new coordinate system."""
 
 

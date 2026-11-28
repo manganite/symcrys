@@ -8,6 +8,12 @@ All notable changes to symcrys are recorded here. The format follows
 
 ### Added
 
+- `TensorForm.largestCoefficient` (Python `largest_coefficient`): the largest magnitude of a
+  coefficient of the basis (#241). It is 1 or 2 for the form of a point group in a setting, and
+  large for operations in a frame nearly aligned with a symmetry element, the more the higher the
+  rank (the polar axis of 4mm tilted by 10⁻⁶: about 10⁶; its piezoelectric tensor tilted by 0.1:
+  about 10³), where the basis amplifies the errors of its parameters; the form of the setting
+  rotated into the frame keeps the coefficients small.
 - `rotateTensors(tensors, rotation, spec)` in `symcrys` and `symcrys/magnetic` (Python
   `rotate_tensors`): a list of tensors rotated by one rotation or by one rotation per tensor, the
   specification and the rotations checked once. `rotate_tensor` of the Python package rotates a stack
@@ -55,6 +61,13 @@ All notable changes to symcrys are recorded here. The format follows
 [1, 1.00004, 3])` lies on the mirror y, x, z at the default tolerance, was the general position.
 
 ### Fixed
+
+- Python: a TypedDict with optional fields says at run time which keys are required (#239).
+  Before, under the modules' `from __future__ import annotations`, `__required_keys__` listed every
+  field (`IdentifiedPointGroup` had `{'key', 'setting'}`), and `typing.get_type_hints` raised a
+  NameError for `NotRequired` on Python 3.10. Such a TypedDict is now a private base class of its
+  required fields and the class itself with `total=False` for the optional ones, so its required
+  fields come first in `__annotations__`. Affected since the TypedDicts were generated (0.11.0).
 
 - `toVoigt` and `fromVoigt` refuse a tensor whose components differ from their partners by exactly
   the tolerance (relative to the largest component), as every other comparison does: two numbers

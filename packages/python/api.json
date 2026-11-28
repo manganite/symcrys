@@ -130,7 +130,8 @@
       "minVolumeRatio",
       "EPSILON",
       "angleBetweenDirections",
-      "angleBetweenPlanes"
+      "angleBetweenPlanes",
+      "largestCoefficient"
     ]
   },
   "functions": {

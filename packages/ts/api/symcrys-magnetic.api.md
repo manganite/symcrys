@@ -474,6 +474,7 @@ export const TENSOR_PROPERTIES: Readonly<{
 // @public
 export interface TensorForm {
     readonly basis: readonly (readonly number[])[];
+    readonly largestCoefficient: number;
     readonly parameters: readonly (readonly number[])[];
     readonly rank: TensorRank;
     readonly relations: readonly (readonly number[])[];
