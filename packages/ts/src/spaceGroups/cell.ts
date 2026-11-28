@@ -92,7 +92,8 @@ function polygon(inequalities: readonly Inequality[]): Rational[][] {
       if (inequalities.every((q) => excess(q, p)[0] <= 0) && !points.some((v) => samePoint(v, p))) points.push(p);
     }
   }
-  if (points.length < 3) throw new RangeError('The asymmetric unit is not a polygon');
+  // The inequalities are data of symcrys: a unit that bounds no polygon is a fault of the data.
+  if (points.length < 3) throw new Error('The asymmetric unit is not a polygon');
   const cx = points.reduce((s, p) => s + toNumber(p[0]), 0) / points.length;
   const cy = points.reduce((s, p) => s + toNumber(p[1]), 0) / points.length;
   const angle = (p: readonly Rational[]) => Math.atan2(toNumber(p[1]) - cy, toNumber(p[0]) - cx);
