@@ -8,6 +8,7 @@
 import { planeWyckoffRows } from './planeWyckoff.js';
 import { deepFreeze } from '../freeze.js';
 import { shown, everyEntry } from '../checks.js';
+import { gcd } from '../integers.js';
 import {
   compose,
   equalModLattice,
@@ -19,7 +20,7 @@ import {
   type PlainOperation,
 } from './affine.js';
 import { planeGroupEntry, planeGroupOperations } from './planeGroups.js';
-import { ROUNDING_EPSILON, SINGULAR_RATIO, toleranceOf, type ToleranceOptions } from '../tolerances.js';
+import { ROUNDING_EPSILON, toleranceOf, type ToleranceOptions } from '../tolerances.js';
 
 /** The site symmetry of a point under a plane group. */
 export interface PlaneSiteSymmetry {
@@ -365,16 +366,35 @@ function freeDirections(op: PlainOperation): number[][] {
   return cols;
 }
 
+type Mat2 = readonly (readonly number[])[];
+
+/** The relative slack of the condition |a·b| ≤ a·a/2 of a reduced basis, for rounding. */
+const REDUCED_SLACK = 1e-9;
+
+/** A vector of lattice coordinates in Cartesian coordinates: B·r (B with the columns a, b). */
+const cartesian = (b: Mat2, r: readonly number[]): number[] => [
+  b[0][0] * r[0] + b[0][1] * r[1],
+  b[1][0] * r[0] + b[1][1] * r[1],
+];
+
+/** The length of a vector of lattice coordinates: per coordinate (the larger component), or Euclidean in the basis B. */
+function norm(r: readonly number[], b: Mat2 | undefined): number {
+  if (!b) return Math.max(Math.abs(r[0]), Math.abs(r[1]));
+  const x = cartesian(b, r);
+  return Math.hypot(x[0], x[1]);
+}
+
 /**
- * The smallest distance of r to a multiple of v, and the multiple: in the metric G (Euclidean with
- * a basis, by projection) or per coordinate (the largest of the two components; the minimum over t
- * of max(|r₁ − t v₁|, |r₂ − t v₂|) lies where a component vanishes or the two are equal).
+ * The smallest distance of r to a multiple of v, and the multiple: Euclidean in the basis B (by
+ * projection) or per coordinate (the largest of the two components; the minimum over t of
+ * max(|r₁ − t v₁|, |r₂ − t v₂|) lies where a component vanishes or the two are equal).
  */
-function nearestOnLine(r: readonly number[], v: readonly number[], g: Mat2 | undefined): { t: number; d: number } {
-  if (g) {
-    const gv = [g[0][0] * v[0] + g[0][1] * v[1], g[1][0] * v[0] + g[1][1] * v[1]];
-    const t = (r[0] * gv[0] + r[1] * gv[1]) / (v[0] * gv[0] + v[1] * gv[1]);
-    return { t, d: norm([r[0] - t * v[0], r[1] - t * v[1]], g) };
+function nearestOnLine(r: readonly number[], v: readonly number[], b: Mat2 | undefined): { t: number; d: number } {
+  if (b) {
+    const x = cartesian(b, r);
+    const y = cartesian(b, v);
+    const t = (x[0] * y[0] + x[1] * y[1]) / (y[0] * y[0] + y[1] * y[1]);
+    return { t, d: Math.hypot(x[0] - t * y[0], x[1] - t * y[1]) };
   }
   const candidates: number[] = [];
   if (v[0] !== 0) candidates.push(r[0] / v[0]);
@@ -389,58 +409,79 @@ function nearestOnLine(r: readonly number[], v: readonly number[], g: Mat2 | und
   return best;
 }
 
-type Mat2 = readonly (readonly number[])[];
-
-/** The length of a vector of lattice coordinates: per coordinate (the larger component) or in the metric G. */
-function norm(r: readonly number[], g: Mat2 | undefined): number {
-  if (!g) return Math.max(Math.abs(r[0]), Math.abs(r[1]));
-  return Math.sqrt(Math.max(0, r[0] * (g[0][0] * r[0] + g[0][1] * r[1]) + r[1] * (g[1][0] * r[0] + g[1][1] * r[1])));
+/** A reduced basis of a lattice: the integer columns u (lattice coordinates) and the Cartesian columns a, b they give. */
+export interface ReducedBasis {
+  readonly u: readonly (readonly number[])[];
+  readonly a: readonly number[];
+  readonly b: readonly number[];
 }
 
-/** The metric tensor G = BᵀB of a basis (columns a, b), checked: two rows of two finite numbers, not singular. */
-export function planeMetric(basis: unknown): Mat2 {
-  const ok =
-    Array.isArray(basis) &&
-    basis.length === 2 &&
-    everyEntry(
-      basis,
-      (row) =>
-        Array.isArray(row) && row.length === 2 && everyEntry(row, (x) => typeof x === 'number' && Number.isFinite(x)),
-    );
-  const b = basis as Mat2;
-  // Singular if V/(ab) is below 10⁻⁹, computed with the columns scaled to unit length so that no
-  // product overflows or underflows (review of step 10a).
-  const na = ok ? Math.hypot(b[0][0], b[1][0]) : 0;
-  const nb = ok ? Math.hypot(b[0][1], b[1][1]) : 0;
-  const ratio = na > 0 && nb > 0 ? (b[0][0] / na) * (b[1][1] / nb) - (b[0][1] / nb) * (b[1][0] / na) : 0;
-  if (!ok || !(Math.abs(ratio) > SINGULAR_RATIO)) {
-    throw new RangeError(
-      `The basis of a plane lattice is a non-singular 2 × 2 matrix (columns a, b), not ${shown(basis)}`,
-    );
+/**
+ * A reduced basis of the lattice of the basis B (columns a, b), by Lagrange and Gauss: |a′·b′| ≤
+ * a′·a′/2 and a′·a′ ≤ b′·b′. Each step subtracts the nearest multiple of the shorter Cartesian
+ * vector from the longer, as Euclid's algorithm does, so the number of steps grows with the
+ * logarithm of the shear; the Cartesian vectors are reduced themselves, not through their metric,
+ * which would lose the short ones to rounding. In a reduced basis both triangles of the cell are
+ * non-obtuse, so the lattice vector nearest to a vector is a corner of the cell that holds it,
+ * within ±1 of its rounded coordinates.
+ */
+export function reducedBasis(basis: Mat2): ReducedBasis {
+  let a = [basis[0][0], basis[1][0]];
+  let b = [basis[0][1], basis[1][1]];
+  let ua = [1, 0];
+  let ub = [0, 1];
+  const dot = (x: readonly number[], y: readonly number[]) => x[0] * y[0] + x[1] * y[1];
+  for (let step = 0; step < 200; step++) {
+    if (dot(a, a) > dot(b, b)) [a, b, ua, ub] = [b, a, ub, ua];
+    const mu = dot(a, b) / dot(a, a);
+    // Reduced up to rounding: a hexagonal cell has |a·b| = a·a/2 exactly, where rounding the ratio
+    // either way would step back and forth between two reduced bases.
+    if (Math.abs(mu) <= 0.5 * (1 + REDUCED_SLACK)) return { u: [ua, ub], a, b };
+    const m = Math.round(mu);
+    b = [b[0] - m * a[0], b[1] - m * a[1]];
+    ub = [ub[0] - m * ua[0], ub[1] - m * ua[1]];
   }
-  const col = (k: number) => [b[0][k], b[1][k]];
-  const dot = (u: number[], w: number[]) => u[0] * w[0] + u[1] * w[1];
-  return [
-    [dot(col(0), col(0)), dot(col(0), col(1))],
-    [dot(col(1), col(0)), dot(col(1), col(1))],
-  ];
+  throw new Error(`reducedBasis: no reduced basis of ${shown(basis)} after 200 steps`);
+}
+
+/** An integer vector w with det[v w] = 1, for a primitive integer vector v (extended Euclid). */
+function complement(v: readonly number[]): number[] {
+  // x·v₀ + y·v₁ = 1, then w = (−y, x).
+  let [r0, r1, x0, x1, y0, y1] = [v[0], v[1], 1, 0, 0, 1];
+  while (r1 !== 0) {
+    const q = Math.floor(r0 / r1);
+    [r0, r1, x0, x1, y0, y1] = [r1, r0 - q * r1, x1, x0 - q * x1, y1, y0 - q * y1];
+  }
+  // r0 = ±1 for a primitive v.
+  return [-y0 * r0, x0 * r0];
 }
 
 /**
  * The distance of a point (lattice basis) to every Wyckoff position of a plane group, in
  * ITA's order, with the nearest point of each: the point set of a position is the union of its
  * coordinate expressions with every centring and lattice translation, a point, a line or
- * the plane. Without a metric the distance is the larger of the two coordinate differences, with
- * one (G = BᵀB) Euclidean.
+ * the plane. Without a basis the distance is the larger of the two coordinate differences, with
+ * one (the Cartesian columns a, b) Euclidean. A point position is sought within ±1 of the rounded
+ * coordinates in a reduced basis; the lines along a primitive direction v are the family
+ * c + k·w + ℝv (w with det[v w] = 1), and the nearest is k = round(s) for the w-coordinate s of the
+ * point, in any basis.
  */
-export function planeWyckoffDistances(key: string, given: readonly number[], g?: Mat2): PositionDistance[] {
+export function planeWyckoffDistances(key: string, given: readonly number[], basis?: Mat2): PositionDistance[] {
   checkPlanePoint(given);
+  const reduced = basis ? reducedBasis(basis) : undefined;
   // Modulo the lattice first, so that large coordinates keep their digits (review of step 10a).
   const point = given.map(mod1);
   const entry = planeGroupEntry(key);
   const centrings = [[0, 0], ...entry.centring.map((t) => parsed(t).translation)];
   return planeWyckoffRows(key).map(([, , , coordinates], row) => {
     let best = { point: [...point], distance: Infinity };
+    const consider = (origin: readonly number[], v: readonly number[] | undefined) => {
+      const r = [point[0] - origin[0], point[1] - origin[1]];
+      const { t, d } = v ? nearestOnLine(r, v, basis) : { t: 0, d: norm(r, basis) };
+      if (d < best.distance) {
+        best = { point: v ? [origin[0] + t * v[0], origin[1] + t * v[1]] : [...origin], distance: d };
+      }
+    };
     for (const expression of coordinates) {
       const op = parsed(expression);
       const free = freeDirections(op);
@@ -450,18 +491,42 @@ export function planeWyckoffDistances(key: string, given: readonly number[], g?:
           best = { point: [...point], distance: 0 };
           continue;
         }
+        if (free.length === 1) {
+          // The family of lines c + k·w + ℝv: every lattice translate lies on one of them.
+          const g = gcd(free[0][0], free[0][1]);
+          const v = [free[0][0] / g, free[0][1] / g];
+          const w = complement(v);
+          const q = [point[0] - c[0], point[1] - c[1]];
+          const k0 = Math.round(v[0] * q[1] - v[1] * q[0]);
+          for (let k = k0 - 1; k <= k0 + 1; k++) consider([c[0] + k * w[0], c[1] + k * w[1]], v);
+          continue;
+        }
         const base = [Math.round(point[0] - c[0]), Math.round(point[1] - c[1])];
-        for (let i = -2; i <= 2; i++) {
-          for (let j = -2; j <= 2; j++) {
-            const origin = [c[0] + base[0] + i, c[1] + base[1] + j];
-            const r = [point[0] - origin[0], point[1] - origin[1]];
-            const { t, d } = free.length === 1 ? nearestOnLine(r, free[0], g) : { t: 0, d: norm(r, g) };
+        if (!reduced) {
+          for (let i = -1; i <= 1; i++)
+            for (let j = -1; j <= 1; j++) consider([c[0] + base[0] + i, c[1] + base[1] + j], undefined);
+          continue;
+        }
+        // The point in the reduced basis: R = B·q = x·a′ + y·b′; the translates within ±1 of (x, y).
+        const { u, a, b } = reduced;
+        const R = cartesian(basis!, [point[0] - c[0] - base[0], point[1] - c[1] - base[1]]);
+        const det = a[0] * b[1] - a[1] * b[0];
+        const m0 = [Math.round((R[0] * b[1] - R[1] * b[0]) / det), Math.round((a[0] * R[1] - a[1] * R[0]) / det)];
+        for (let i = -1; i <= 1; i++)
+          for (let j = -1; j <= 1; j++) {
+            const m = [m0[0] + i, m0[1] + j];
+            // Measured in the reduced Cartesian vectors, not through B·(q − U·m), which would cancel.
+            const d = Math.hypot(R[0] - m[0] * a[0] - m[1] * b[0], R[1] - m[0] * a[1] - m[1] * b[1]);
             if (d < best.distance) {
-              const v = free.length === 1 ? free[0] : [0, 0];
-              best = { point: [origin[0] + t * v[0], origin[1] + t * v[1]], distance: d };
+              best = {
+                point: [
+                  c[0] + base[0] + u[0][0] * m[0] + u[1][0] * m[1],
+                  c[1] + base[1] + u[0][1] * m[0] + u[1][1] * m[1],
+                ],
+                distance: d,
+              };
             }
           }
-        }
       }
     }
     return { row, point: best.point.map(mod1), distance: best.distance };

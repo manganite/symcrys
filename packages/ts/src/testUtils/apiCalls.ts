@@ -216,7 +216,15 @@ function planeCalls(): ApiCall[] {
       c('orbit', key, { point });
       c('wyckoffDistances', key, { point });
     }
-    c('wyckoffDistances', key, { point: [0.1, 0.23] }, { basis: [[2, 0], [0, 3]] }); // prettier-ignore
+    // A basis of the cell of the group (its cell restrictions), and for p2 one sheared by 10.
+    const cellBasis = {
+      oblique: [[2, 0.5], [0, 3]],
+      rectangular: [[2, 0], [0, 3]],
+      square: [[2, 0], [0, 2]],
+      hexagonal: [[2, -1], [0, Math.sqrt(3)]],
+    }[plane.planeGroup(key).crystalSystem]; // prettier-ignore
+    c('wyckoffDistances', key, { point: [0.1, 0.23] }, { basis: cellBasis });
+    if (key === 'p2') c('wyckoffDistances', key, { point: [0, 0.49] }, { basis: [[1, 10], [0, 1]] }); // prettier-ignore
     c('residualOperations', plane.operations(key), [[1, 0], [0, 1.5]]); // prettier-ignore
     c('settings', key);
     // A symmorphic plane group has the operations of its point group, which is called below.

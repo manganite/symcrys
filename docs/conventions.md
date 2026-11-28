@@ -584,7 +584,7 @@ when they differ by less than the tolerance, in the metric of their kind:
 | operations                                | per matrix entry                                                                         | 0.1   | `pointGroupOf`, `describeOperationsOf` (also in `symcrys/plane`), `tensorFormOf`, `isCentrosymmetricOf`, `isEnantiomorphicOf`, `allowsPropertyOf`, `allowedPropertiesOf`, `rotateTensor`; `changeOfCoordinates` (all three entry points) for the entries of P, p, W and w |
 | directions                                | Euclidean distance of the unit vector to the symmetry element                            | 1     | `siteSymmetryOf`, `siteSymmetry`, `wyckoffPosition`, `orbitOf`                                                                                                                                                                                                            |
 | points of the plane                       | distance to the symmetry element per coordinate in the lattice basis, modulo the lattice | 1/2   | `siteSymmetry`, `wyckoffPosition`, `orbit`, `siteSymmetryOf`, `orbitOf` of `symcrys/plane`                                                                                                                                                                                |
-| the metric tensor G of a cell (W ᵀGW = G) | per entry, relative to the largest entry of G                                            | 1     | `residualOperations` (also in `symcrys/plane`)                                                                                                                                                                                                                            |
+| the metric tensor G of a cell (W ᵀGW = G) | per entry, relative to the largest entry of G                                            | 1     | `residualOperations` (also in `symcrys/plane`); `wyckoffDistances` of `symcrys/plane` for the cell restrictions of its basis                                                                                                                                              |
 | the index symmetry of a tensor            | per component, relative to its largest component                                         | 1     | `toVoigt`, `fromVoigt`                                                                                                                                                                                                                                                    |
 
 - **One check.** A tolerance is a finite number above 0 and below the bound of its kind, beyond
@@ -1511,7 +1511,15 @@ position does the point lie? `wyckoffDistances(key, { point }, { basis })` gives
 Wyckoff position, in ITA's order, the nearest point of its point set (its coordinates with
 every centring and lattice translation: a point, a line or the plane) and the distance to it, per
 lattice coordinate (the larger of |Δx| and |Δy| modulo the lattice, the metric of the tolerance)
-without a basis, Euclidean with a basis (columns a, b). `wyckoffPosition` is the most special
+without a basis, Euclidean with a basis (columns a, b). The basis may be any basis of the lattice of
+the group: the nearest translate of a point position is sought within ±1 of the rounded coordinates
+in a reduced basis of it (Lagrange–Gauss: |a′·b′| ≤ a′·a′/2 ≤ b′·b′/2), where it lies, and the
+nearest line of a line position among its family c + k·w + ℝv of lattice translates (w completing
+the direction v to a basis), the one with k next to the w-coordinate of the point; so a sheared
+basis of `p2` gives the distances of any other basis of its lattice, to rounding. A basis must satisfy the cell restrictions of
+the group (`cellRestrictions`): every operation of the group keeps its metric (WᵀGW = G, within
+`tolerance`, relative to the largest entry of G, as `residualOperations` measures); a basis of `p4`
+with γ ≠ 90° is refused. `wyckoffPosition` is the most special
 position within the tolerance (the smallest multiplicity), the nearest among positions of equal
 multiplicity; the general position always holds the point, so letter and oriented symbol are ITA's.
 `siteSymmetry` sets the point onto that position and gives its site symmetry there, and `orbit` the

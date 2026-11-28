@@ -383,9 +383,17 @@ describe('wyckoffDistances', () => {
     expect(() => plane.wyckoffDistances('4mm' as plane.PlaneGroupKey, { point: [0, 0] })).toThrow(RangeError);
     expect(() => plane.wyckoffDistances('p2', { point: 'x' as unknown as number[] })).toThrow(RangeError);
     expect(() => plane.wyckoffDistances('p2', { point: [0, 0] }, { basis: [[1, 2], [2, 4]] })).toThrow(RangeError); // prettier-ignore
-    // Bases of extreme scale are not singular (the test scales the columns first).
-    expect(plane.wyckoffDistances('p2', { point: [0, 0] }, { basis: [[1e200, 0], [0, 1e200]] })).toHaveLength(5); // prettier-ignore
-    expect(plane.wyckoffDistances('p2', { point: [0, 0] }, { basis: [[1e-200, 0], [0, 1e-200]] })).toHaveLength(5); // prettier-ignore
+    // Bases whose products overflow or vanish are refused, as metricTensor refuses them: the
+    // metric of the distances is computed by the same function.
+    for (const s of [1e200, 1e-200]) {
+      expect(() => plane.wyckoffDistances('p2', { point: [0.1, 0.2] }, { basis: [[s, 0], [0, s]] })).toThrow(RangeError); // prettier-ignore
+      expect(() => plane.metricTensor([[s, 0], [0, s]])).toThrow(RangeError); // prettier-ignore
+    }
+    // Large and small bases that do not overflow are taken, the distances scaled with them.
+    for (const s of [1e100, 1e-100]) {
+      const d = plane.wyckoffDistances('p2', { point: [0.1, 0.2] }, { basis: [[s, 0], [0, s]] }); // prettier-ignore
+      expect(d.find((p) => p.letter === 'a')!.distance / s).toBeCloseTo(Math.hypot(0.1, 0.2), 12);
+    }
   });
 });
 
@@ -1176,7 +1184,7 @@ describe('#238: wyckoffDistances in a skew basis', () => {
     expect(printed.map((p) => p.letter)).toEqual(['e', 'd', 'c', 'b', 'a']);
   });
 
-  it.fails('the basis [[1, 10], [0, 1]] of the issue: the distances of a full search', () => {
+  it('the basis [[1, 10], [0, 1]] of the issue: the distances of a full search', () => {
     const B = [
       [1, 10],
       [0, 1],
@@ -1191,7 +1199,7 @@ describe('#238: wyckoffDistances in a skew basis', () => {
     for (const letter of ['a', 'b', 'c', 'd']) expect(got[letter], letter).toBeCloseTo(want[letter], 12);
   });
 
-  it.fails('a sheared basis of the same lattice gives the same distances (shears up to ±100)', () => {
+  it('a sheared basis of the same lattice gives the same distances (shears up to ±100)', () => {
     const B0 = [
       [1, 0.3],
       [0, 1.2],
@@ -1221,14 +1229,11 @@ describe('#238: wyckoffDistances in a skew basis', () => {
     expect(wrong).toEqual([]);
   });
 
-  it.fails(
-    'a basis that contradicts the cell of p4 (ITA 2016 Table 2.1.1.1, p. 143: a = b, γ = 90°) is refused',
-    () => {
-      expect(() => plane.wyckoffDistances('p4', { point: [0.1, 0.2] }, { basis: [[1, 0.3], [0, 1.1]] })).toThrow(RangeError); // prettier-ignore
-    },
-  );
+  it('a basis that contradicts the cell of p4 (ITA 2016 Table 2.1.1.1, p. 143: a = b, γ = 90°) is refused', () => {
+    expect(() => plane.wyckoffDistances('p4', { point: [0.1, 0.2] }, { basis: [[1, 0.3], [0, 1.1]] })).toThrow(RangeError); // prettier-ignore
+  });
 
-  it.fails('a basis that contradicts the cell of pm (γ = 90°) is refused', () => {
+  it('a basis that contradicts the cell of pm (γ = 90°) is refused', () => {
     expect(() => plane.wyckoffDistances('pm', { point: [0.1, 0.2] }, { basis: [[1, 0.3], [0, 1.1]] })).toThrow(RangeError); // prettier-ignore
   });
 
@@ -1245,5 +1250,45 @@ describe('#235: what the review of #244 found', () => {
       { matrix: [[-1, 0], [0, 1]], translation: [0, 3] },
     ]; // prettier-ignore
     expect(plane.siteSymmetryOf(ops, { point: [1e-6, 0.3] }).operations).toEqual([0, 1]);
+  });
+});
+
+describe('#238: what the review of #247 found', () => {
+  it('lines in a long, slightly skew cell that the cell check takes: the distance between the lines', () => {
+    // pm with a = 1, b = 10⁴, γ = 88°: |a·b| > a²/2, so the reduction shears b by −349 a. The
+    // lines x = k (positions a: 0,y and b: 1/2,y, ITA 2016 p. 179) lie |a|·sin γ apart, so the
+    // point [0.3, 0.49] lies 0.3·sin γ from a and 0.2·sin γ from b.
+    const gamma = (88 * Math.PI) / 180;
+    const basis = [[1, 1e4 * Math.cos(gamma)], [0, 1e4 * Math.sin(gamma)]]; // prettier-ignore
+    const d = plane.wyckoffDistances('pm', { point: [0.3, 0.49] }, { basis });
+    expect(d.find((p) => p.letter === 'a')!.distance).toBeCloseTo(0.3 * Math.sin(gamma), 9);
+    expect(d.find((p) => p.letter === 'b')!.distance).toBeCloseTo(0.2 * Math.sin(gamma), 9);
+    // The same with a tolerance that takes a cell of γ = 75°.
+    const g75 = (75 * Math.PI) / 180;
+    const wide = [[1, 100 * Math.cos(g75)], [0, 100 * Math.sin(g75)]]; // prettier-ignore
+    const e = plane.wyckoffDistances('pm', { point: [0.3, 0.49] }, { basis: wide, tolerance: 0.01 });
+    expect(e.find((p) => p.letter === 'a')!.distance).toBeCloseTo(0.3 * Math.sin(g75), 9);
+  });
+
+  it('a nearly singular basis that the basis check takes gives finite distances, met by the points given', () => {
+    const basis = [[1, 1], [0, 1e-8]]; // prettier-ignore
+    for (const d of plane.wyckoffDistances('p2', { point: [0.3, 0.4] }, { basis })) {
+      expect(Number.isFinite(d.distance)).toBe(true);
+      // The returned point lies at the returned distance, modulo the lattice: for a point position
+      // the residual is a lattice vector plus the Cartesian difference.
+      expect(d.distance).toBeLessThan(1);
+    }
+  });
+
+  it('a shear of 10⁶ gives the distances of the unsheared basis', () => {
+    const B0 = [[1, 0.3], [0, 1.2]]; // prettier-ignore
+    const k = 1e6;
+    // B = B0·[[1, k], [0, 1]]; the point in the new basis is U⁻¹·x0.
+    const B = [[B0[0][0], B0[0][0] * k + B0[0][1]], [B0[1][0], B0[1][0] * k + B0[1][1]]]; // prettier-ignore
+    const x0 = [0.37, 0.21];
+    const x = [x0[0] - k * x0[1], x0[1]].map((v) => v - Math.floor(v));
+    const want = plane.wyckoffDistances('p2', { point: x0 }, { basis: B0 }).map((d) => d.distance);
+    const got = plane.wyckoffDistances('p2', { point: x }, { basis: B }).map((d) => d.distance);
+    got.forEach((d, i) => expect(Math.abs(d - want[i])).toBeLessThan(1e-6));
   });
 });

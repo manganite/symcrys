@@ -1332,6 +1332,7 @@ def wyckoff_distances(
     point: ArrayLike,
     *,
     basis: Optional[ArrayLike] = None,
+    tolerance: Optional[float] = None,
 ) -> list[WyckoffDistance]:
     """The distance of a point (lattice basis) to every Wyckoff position of a plane group, in the
     order of ``wyckoff_positions``, each with the nearest point of the position. The point set of a
@@ -1340,12 +1341,18 @@ def wyckoff_distances(
     coordinate differences modulo the lattice, the metric of the tolerance of ``wyckoff_position``;
     with a basis (columns a, b) it is Euclidean, and the nearest point is the Euclidean nearest one;
     per coordinate the nearest point of a line need not be unique (on x,0 every x within the
-    distance is as near), and then it is one of them. The basis should be a reduced cell, such as
-    the conventional one: the nearest lattice translate is sought near the rounded coordinates. How
-    to snap a dragged point onto a position (which position wins, within which radius) is the
-    application's choice; this gives the numbers for it. Raises SymcrysError for an unknown key, a
-    point that is not two finite numbers or has a coordinate beyond 10⁶ in magnitude, and a basis
-    that is not a non-singular 2 × 2 matrix.
+    distance is as near), and then it is one of them. The basis may be any basis of the lattice of
+    the group: the nearest point position is sought in a reduced basis of it (Lagrange–Gauss), and
+    the nearest line among the family of its lattice translates, so an oblique basis of ``p2`` gives
+    the distances of any other basis of the same lattice, to rounding; it must satisfy the cell
+    restrictions of the group (``cell_restrictions``), checked by the metric within ``tolerance``
+    (default ``EPSILON``) as ``residual_operations`` checks it. How to snap a dragged point onto a
+    position (which position wins, within which radius) is the application's choice; this gives the
+    numbers for it. Raises SymcrysError for an unknown key, a point that is not two finite numbers
+    or has a coordinate beyond 10⁶ in magnitude, a basis that is not a non-singular 2 × 2 matrix (as
+    ``metric_tensor`` refuses it: singular, or with products that overflow or vanish), and a basis
+    that contradicts the cell restrictions of the group (the error names an operation of the group
+    that does not keep its metric).
 
     Parameters
     ----------
@@ -1353,7 +1360,14 @@ def wyckoff_distances(
         The coordinates x, y of the point in the lattice basis a, b (fractions of the cell).
     basis : keyword-only, optional
         The Cartesian basis of the lattice, a 2 × 2 matrix whose columns are a and b; with it the
-        distances are Euclidean, without it they are measured per lattice coordinate.
+        distances are Euclidean, without it they are measured per lattice coordinate. It must
+        satisfy the cell restrictions of the group (its metric kept by the operations of the group,
+        within ``tolerance``, relative to the largest entry of the metric, as
+        ``residual_operations`` measures).
+    tolerance : keyword-only, optional
+        How closely the operations of the group must keep the metric G of ``basis``: per entry of
+        WᵀGW − G, relative to the largest entry of G, as ``residual_operations`` measures it;
+        default ``EPSILON`` (10⁻⁵), below 1. Without a basis it is not used.
 
     Returns
     -------
@@ -1367,7 +1381,7 @@ def wyckoff_distances(
             "wyckoffDistances",
             key,
             _shared.options(point=_shared.plane_point(point)),
-            _shared.options(basis=None if basis is None else _shared.array(basis, "basis", np.float64)),
+            _shared.options(basis=None if basis is None else _shared.array(basis, "basis", np.float64), tolerance=tolerance),
         ),
         ("l", _S_WyckoffDistance),
     )

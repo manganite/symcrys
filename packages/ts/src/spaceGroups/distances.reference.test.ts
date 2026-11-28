@@ -11,15 +11,12 @@
 import { describe, expect, it } from 'vitest';
 import { readReference } from '../testUtils/references.js';
 import { applyToPoint, parseOperation } from './affine.js';
-import {
-  planeMetric,
-  planePosition,
-  planeSiteOfPosition,
-  planeWyckoffDistances,
-  planeWyckoffPositionOf,
-} from './positions.js';
+import { planePosition, planeSiteOfPosition, planeWyckoffDistances, planeWyckoffPositionOf } from './positions.js';
 import { rational, toNumber } from './rational.js';
+import { planeMetricTensor } from './planeLattice.js';
 import { planeWyckoffRows } from './planeWyckoff.js';
+import { seededRandom } from '../testUtils/noise.js';
+import * as plane from '../plane.js';
 
 /** General parameter values x = 13/97, y = 29/101, so that no point falls on a more special position by chance. */
 const PARAMETERS = [rational(13, 97), rational(29, 101)];
@@ -135,7 +132,7 @@ describe('the position of a point within the tolerance: order, metric and errors
     const e = planeWyckoffDistances('p6mm', [0.2, 0.35]).find((d) => planeWyckoffRows('p6mm')[d.row][1] === 'e')!;
     expect(e.distance).toBeCloseTo(1 / 60, 12);
     expect(e.point[0]).toBeCloseTo(0.55 / 3, 12);
-    const euclid = planeWyckoffDistances('p6mm', [0.2, 0.35], planeMetric(hexagonal)).find(
+    const euclid = planeWyckoffDistances('p6mm', [0.2, 0.35], hexagonal).find(
       (d) => planeWyckoffRows('p6mm')[d.row][1] === 'e',
     )!;
     expect(euclid.point[0]).toBeCloseTo(0.175, 12);
@@ -143,10 +140,13 @@ describe('the position of a point within the tolerance: order, metric and errors
     // The residual (0.025, 0) has the length 0.025 in G (G₁₁ = 1).
     expect(euclid.distance).toBeCloseTo(0.025, 12);
     expect(() =>
-      planeMetric([
-        [1, 0],
-        [2, 0],
-      ]),
+      planeMetricTensor(
+        [
+          [1, 0],
+          [2, 0],
+        ],
+        'test',
+      ),
     ).toThrow(RangeError);
   });
 
@@ -192,3 +192,120 @@ describe('the position of a point within the tolerance: order, metric and errors
 function wyckoffLetter(symbol: string, row: number): string {
   return planeWyckoffRows(symbol)[row][1];
 }
+
+describe('the distances of a full search, in every group and in bases of its cell (#238)', () => {
+  /** The printed coordinates of every row as affine maps (W, w), with the centrings added. */
+  const affineRows = (symbol: string) => {
+    const md = readReference('itc/vol-a-2016-plane-groups.md');
+    const section = md.split('\n## ').find((s) => /^\d+ — (\S+),/.exec(s)?.[1] === symbol)!;
+    const centrings = section.includes('Centring:') ? [[0, 0], [0.5, 0.5]] : [[0, 0]]; // prettier-ignore
+    return section
+      .split('\n')
+      .filter((l) => /^\| \d/.test(l))
+      .map((l) => {
+        const [, letter, , coordinates] = l
+          .split('|')
+          .slice(1, -1)
+          .map((c) => c.trim());
+        const maps = coordinates.split('; ').flatMap((e) => {
+          const op = parseOperation(e);
+          const w = op.matrix.map((row) => row.map(Number));
+          const t = op.translation.map(toNumber);
+          return centrings.map((c) => ({ w, t: [t[0] + c[0], t[1] + c[1]] }));
+        });
+        return { letter, maps };
+      });
+  };
+  /** The length of r: per coordinate without a metric, in G with one. */
+  const length = (r: number[], g?: number[][]) =>
+    g
+      ? Math.sqrt(Math.max(0, r[0] * (g[0][0] * r[0] + g[0][1] * r[1]) + r[1] * (g[1][0] * r[0] + g[1][1] * r[1])))
+      : Math.max(Math.abs(r[0]), Math.abs(r[1]));
+  /** min over t of length(r − t·v): by golden-section search, the function being convex in t. */
+  const toLine = (r: number[], v: number[], g?: number[][]) => {
+    const f = (t: number) => length([r[0] - t * v[0], r[1] - t * v[1]], g);
+    let [lo, hi] = [-60, 60];
+    for (let k = 0; k < 200; k++) {
+      const m1 = lo + (hi - lo) * 0.381966;
+      const m2 = lo + (hi - lo) * 0.618034;
+      if (f(m1) < f(m2)) hi = m2;
+      else lo = m1;
+    }
+    return f((lo + hi) / 2);
+  };
+  /** The distance of x to the point set of a row: every map and translate within ±window cells. */
+  const fullSearch = (
+    x: number[],
+    maps: { w: number[][]; t: number[] }[],
+    g: number[][] | undefined,
+    window: number,
+  ) => {
+    let best = Infinity;
+    for (const { w, t } of maps) {
+      const cols = [0, 1].map((k) => [w[0][k], w[1][k]]).filter((v) => v[0] !== 0 || v[1] !== 0);
+      const rank = cols.length === 0 ? 0 : cols.length === 2 && cols[0][0] * cols[1][1] - cols[0][1] * cols[1][0] !== 0 ? 2 : 1; // prettier-ignore
+      if (rank === 2) return 0;
+      for (let i = -window; i <= window; i++)
+        for (let j = -window; j <= window; j++) {
+          const r = [x[0] - t[0] - i, x[1] - t[1] - j];
+          best = Math.min(best, rank === 0 ? length(r, g) : toLine(r, cols[0], g));
+        }
+    }
+    return best;
+  };
+  const metric = (B: number[][]) => [
+    [B[0][0] ** 2 + B[1][0] ** 2, B[0][0] * B[0][1] + B[1][0] * B[1][1]],
+    [B[0][0] * B[0][1] + B[1][0] * B[1][1], B[0][1] ** 2 + B[1][1] ** 2],
+  ];
+  const random = seededRandom(238);
+  const uniform = (lo: number, hi: number) => lo + (hi - lo) * random();
+  /** A basis of the cell of the system (ITA 2016 Table 2.1.1.1, p. 143), oblique ones sheared. */
+  const basisOf = (system: string): { basis: number[][]; window: number } => {
+    const a = uniform(0.3, 3);
+    const b = uniform(0.3, 3);
+    if (system === 'rectangular') return { basis: [[a, 0], [0, b]], window: 3 }; // prettier-ignore
+    if (system === 'square') return { basis: [[a, 0], [0, a]], window: 3 }; // prettier-ignore
+    if (system === 'hexagonal') return { basis: [[a, -a / 2], [0, (a * Math.sqrt(3)) / 2]], window: 3 }; // prettier-ignore
+    const gamma = (uniform(95, 140) * Math.PI) / 180;
+    const B0 = [[a, b * Math.cos(gamma)], [0, b * Math.sin(gamma)]]; // prettier-ignore
+    // A unimodular shear of up to ±8 in either direction: the same lattice in another basis.
+    const k = Math.round(uniform(-8, 8));
+    const U = random() < 0.5 ? [[1, k], [0, 1]] : [[1, 0], [k, 1]]; // prettier-ignore
+    const basis = B0.map((row) => [row[0] * U[0][0] + row[1] * U[1][0], row[0] * U[0][1] + row[1] * U[1][1]]);
+    return { basis, window: 4 + 3 * Math.abs(k) };
+  };
+
+  for (const key of plane.PLANE_GROUP_KEYS) {
+    it(key, () => {
+      const rows = affineRows(key);
+      const system = plane.planeGroup(key).crystalSystem;
+      const wrong: string[] = [];
+      for (let n = 0; n < 12; n++) {
+        const { basis, window } = basisOf(system);
+        // A random point, and one near a printed point of a position.
+        const near = rows[Math.floor(random() * rows.length)].maps[0];
+        const base = [
+          near.w[0][0] * 0.3 + near.w[0][1] * 0.6 + near.t[0],
+          near.w[1][0] * 0.3 + near.w[1][1] * 0.6 + near.t[1],
+        ];
+        for (const x of [
+          [random(), random()],
+          [base[0] + uniform(-0.05, 0.05), base[1] + uniform(-0.05, 0.05)],
+        ]) {
+          // prettier-ignore
+          const point = x.map((v) => v - Math.floor(v));
+          for (const g of [undefined, metric(basis)]) {
+            const got = plane.wyckoffDistances(key, { point }, g ? { basis } : undefined);
+            rows.forEach((row) => {
+              const want = fullSearch(point, row.maps, g, g ? window : 3);
+              const d = got.find((p) => p.letter === row.letter)!.distance;
+              if (!(Math.abs(d - want) < 1e-9))
+                wrong.push(`${row.letter} ${JSON.stringify({ point, basis: g && basis })}: ${d} ≠ ${want}`);
+            });
+          }
+        }
+      }
+      expect(wrong.slice(0, 3)).toEqual([]);
+    });
+  }
+});
