@@ -316,3 +316,49 @@ describe('wrong input is a RangeError', () => {
     }
   }
 });
+
+describe('#236: an array with a hole is refused, not skipped', () => {
+  /** The list with a hole after its first entry: `every`, `forEach` and `map` skip it. */
+  const holey = <T>(list: readonly T[]): T[] => {
+    const a = new Array<T>(list.length + 1);
+    list.forEach((x, i) => (a[i === 0 ? 0 : i + 1] = x));
+    return a;
+  };
+  const ops = classes.operations('m');
+  const I3 = [[1, 0, 0], [0, 1, 0], [0, 0, 1]] as unknown as classes.Mat3; // prettier-ignore
+  // On 0.15.0 each of these answered without the hole or threw a TypeError (a fault of symcrys).
+  it('a list of operations', () => {
+    expect(() => classes.pointGroupOf(holey(ops))).toThrow(RangeError);
+    expect(() => classes.residualOperations(holey(ops), classes.latticeBasis('m'))).toThrow(RangeError);
+    expect(() => classes.changeOfCoordinates({ linearPart: I3 }, { operations: holey(ops) })).toThrow(RangeError);
+    expect(() => plane.describeOperationsOf(holey(plane.operations('pm')))).toThrow(RangeError);
+  });
+  it('the translation of an operation of the plane', () => {
+    const t = holey([0]) as unknown as number[];
+    const op = { matrix: [[1, 0], [0, 1]], translation: t }; // prettier-ignore
+    expect(() => plane.describeOperationsOf([op])).toThrow(RangeError);
+    expect(() => plane.pointGroupOf([op])).toThrow(RangeError);
+    expect(() => plane.siteSymmetryOf([op], { point: [0.1, 0.2] })).toThrow(RangeError);
+  });
+  it('a row of a basis or of a rotation', () => {
+    const basis3 = holey([I3[0], I3[2]]) as unknown as classes.Mat3;
+    expect(() => classes.metricTensor(basis3)).toThrow(RangeError);
+    expect(() => classes.faceNormal(basis3, [1, 0, 0])).toThrow(RangeError);
+    expect(() => classes.rotateTensor([1, 0, 0], basis3, 'pyroelectric')).toThrow(RangeError);
+    const basis2 = holey([[1, 0]]) as unknown as plane.Mat2;
+    expect(() => plane.metricTensor(basis2)).toThrow(RangeError);
+    expect(() => plane.wyckoffDistances('p2', { point: [0.1, 0.2] }, { basis: basis2 })).toThrow(RangeError);
+  });
+});
+
+describe('#236: products of a caller’s matrices of the plane are checked', () => {
+  // A sixfold rotation conjugated by a shear of n = 309227: det 1, safe entries, exact order 6; its
+  // square needs products beyond 2⁵³. On 0.15.0 pointGroupOf threw a plain Error ("No plane point
+  // group of order 8"), from products rounded in the closure.
+  const M = [[309228, -95621646757], [1, -309227]]; // prettier-ignore
+  const op = { matrix: M, translation: [0, 0] };
+  it('pointGroupOf, describeOperationsOf: a RangeError', () => {
+    expect(() => plane.pointGroupOf([op])).toThrow(RangeError);
+    expect(() => plane.describeOperationsOf([op])).toThrow(RangeError);
+  });
+});

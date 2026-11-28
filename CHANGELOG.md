@@ -20,6 +20,25 @@ All notable changes to symcrys are recorded here. The format follows
 
 ### Fixed
 
+- Python: input whose conversion would change its meaning is refused with a SymcrysError, checked
+  on the raw input before it is converted (#237). Before, it gave an answer:
+  - two keys that name one field (`{"time_parity": "odd", "timeParity": "even"}`): the later key
+    won, so the order of insertion decided whether a tensor was allowed; now an error that names
+    both keys; a key that is not a string is refused by name;
+  - a masked array: the masked values were used; an array without masked values is taken;
+  - an integer beyond 2⁵³ − 1 in a list of floats was rounded;
+  - `np.longdouble(1)` raised a RecursionError; a numeric NumPy scalar is now taken if it is
+    exactly a double or an integer, and refused otherwise, as is an array of long doubles that a
+    double would round, also from an object with `__array__`; `np.timedelta64` and
+    `np.datetime64` are refused;
+  - an empty array of the wrong shape, such as `Operations` of shape (3, 0, 4), was the group 1;
+  - a stack of matrices of digit strings was read as numbers; a stack of matrices of dtype object
+    is refused too, as every other array of numbers of dtype object;
+  - an empty boolean mask passed the length check of `Operations`;
+  - `to_voigt` flattened a tensor of the shape (1, 9) or (1, 3, 3); it takes the flat (3**rank,)
+    or (3, …, 3).
+  - a list nested deeper than an array has, or containing itself, now gives a SymcrysError.
+
 - A group made exact from a caller's operations is checked before it is used (#241): its products
   and RᵀR within 10⁻⁹ per entry of its elements and of the identity, its elements distinct, and
   every operation of the caller within the tolerance of an element; otherwise a RangeError. Before,
@@ -43,6 +62,25 @@ All notable changes to symcrys are recorded here. The format follows
   2·10⁻⁶ at the tolerance 10⁻⁶ none of the 8 operations fixing the fourfold axis was found. The list
   is made an exact group once and the direction tested against it, so the site symmetry is a
   subgroup and the images of `orbitOf` are unit vectors (they were off by up to 5·10⁻⁶). Affected since `orbitOf` was added (0.7.0) and `siteSymmetryOf` (0.11.0); in `symcrys/plane` since 0.15.0.
+- Integers are computed exactly or refused (#236): every product and sum of indices and of the
+  matrices W of a caller goes through checked arithmetic, and a value outside the safe integers is
+  a RangeError, never a rounded number; the index functions name themselves in it. Before, values
+  were rounded without an error:
+  - `zoneAxis([1e8, 1e8 − 1, 0], [1e8 + 1, 1e8, 0])` reported parallel planes (it now throws; the
+    exact axis [0, 0, 1] needs products beyond 2⁵³);
+  - `planeToFourIndices([2⁵³ − 1, 2, 0])` gave i off by one;
+  - `millerIndices('h+k-l,k,l', { h: 2⁵³ − 1, k: 2, l: 2 })` gave 9007199254740990, not …991;
+  - in `symcrys/plane`, `orbitOf` and `siteSymmetryOf` rounded the image of a direction or an edge
+    under a caller's matrix with large entries, and `pointGroupOf`, `orbitOf`, `siteSymmetryOf`
+    and `describeOperationsOf` rounded products of such matrices (`pointGroupOf` threw a plain
+    Error, a fault of symcrys, for a shear-conjugated sixfold rotation).
+    Affected since these functions were added.
+- An array with a hole (a sparse array) is refused with a RangeError (#236): as indices or a
+  vector (`reduceIndices([1, , 3])` gave `[1, null, 3]`), as a row of a basis or a rotation, as the
+  translation of an operation of the plane, and as a list of operations. On 0.15.0 such input threw
+  a TypeError (`pointGroupOf`, `tensorFormOf`, `siteSymmetryOf`, `metricTensor`, `rotateTensor`) or
+  was answered without the hole (`residualOperations`, `changeOfCoordinates`, and in
+  `symcrys/plane` `describeOperationsOf` and `pointGroupOf`).
 
 ## [0.15.0] - 2026-11-27
 

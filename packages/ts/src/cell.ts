@@ -4,7 +4,7 @@
  * coordinates, as `latticeBasis` gives it; lengths in any unit, angles in degrees.
  */
 
-import { checkObject, checkOptions, shown, TOLERANCE_KEYS } from './checks.js';
+import { checkObject, checkOptions, shown, TOLERANCE_KEYS, everyEntry } from './checks.js';
 import { apply, dot, inverse, isSingular, multiply, transpose, type Mat3, type Vec3 } from './linalg.js';
 import { checkTimeReversal, type CartesianOperation as MagneticOperation } from './operations.js';
 import { FLAT_CELL_RADICAND, INTEGER_EPSILON, toleranceOf, type ToleranceOptions } from './tolerances.js';
@@ -164,8 +164,9 @@ function checkBasis(basis: Mat3, who: string): void {
   const ok =
     Array.isArray(basis) &&
     basis.length === 3 &&
-    basis.every(
-      (r) => Array.isArray(r) && r.length === 3 && r.every((x) => typeof x === 'number' && Number.isFinite(x)),
+    everyEntry(
+      basis,
+      (r) => Array.isArray(r) && r.length === 3 && everyEntry(r, (x) => typeof x === 'number' && Number.isFinite(x)),
     );
   if (!ok) throw new RangeError(`${who}: the basis must be a 3×3 matrix of finite numbers`);
   if (isSingular(basis)) throw new RangeError(`${who}: singular basis`);
@@ -202,7 +203,7 @@ export function reciprocalBasis(basis: Mat3): Mat3 {
 }
 
 function vector(v: Vec3, name: string): Vec3 {
-  if (!Array.isArray(v) || v.length !== 3 || !v.every((x) => typeof x === 'number' && Number.isFinite(x))) {
+  if (!Array.isArray(v) || v.length !== 3 || !everyEntry(v, (x) => typeof x === 'number' && Number.isFinite(x))) {
     throw new RangeError(`${name} must be three finite numbers`);
   }
   if (v.every((x) => x === 0)) throw new RangeError(`${name} must not be the zero vector`);
@@ -262,12 +263,16 @@ export function residualOperations<T extends CellOperation>(
   const g = metricTensor(basis);
   const tolerance = toleranceOf(options, 'metric');
   if (!Array.isArray(operations)) throw new RangeError('residualOperations: operations must be a list');
-  operations.forEach((op, i) => {
+  // Array.from: a hole of a sparse list is undefined, and refused, not skipped.
+  Array.from(operations).forEach((op, i) => {
     const m = (op as { readonly matrix?: unknown } | null)?.matrix;
     const ok =
       Array.isArray(m) &&
       m.length === 3 &&
-      m.every((r) => Array.isArray(r) && r.length === 3 && r.every((x) => typeof x === 'number' && Number.isFinite(x)));
+      everyEntry(
+        m,
+        (r) => Array.isArray(r) && r.length === 3 && everyEntry(r, (x) => typeof x === 'number' && Number.isFinite(x)),
+      );
     if (!ok) throw new RangeError(`residualOperations: operation ${i} has no 3×3 matrix of finite numbers`);
     // W is an integer matrix; a Cartesian matrix (±√3/2) passed as `matrix` would give a wrong answer.
     if (!(m as number[][]).every((r) => r.every((x) => Math.abs(x - Math.round(x)) < INTEGER_EPSILON))) {

@@ -10,7 +10,7 @@
  * floating point otherwise, as are points, direction and plane coefficients and the metric.
  */
 
-import { checkObject, checkOptions, shown, TOLERANCE_KEYS } from './checks.js';
+import { checkObject, checkOptions, shown, TOLERANCE_KEYS, everyEntry } from './checks.js';
 import { EXACT_DENOMINATOR, ROUNDING_EPSILON, toleranceOf, type ToleranceOptions } from './tolerances.js';
 import { deepFreeze } from './freeze.js';
 import { checkOptionalTimeReversal } from './operations.js';
@@ -84,12 +84,15 @@ function isRows(m: unknown, d: number): m is Rows {
   return (
     Array.isArray(m) &&
     m.length === d &&
-    m.every((r) => Array.isArray(r) && r.length === d && r.every((x) => typeof x === 'number' && Number.isFinite(x)))
+    everyEntry(
+      m,
+      (r) => Array.isArray(r) && r.length === d && everyEntry(r, (x) => typeof x === 'number' && Number.isFinite(x)),
+    )
   );
 }
 
 function isVector(v: unknown, d: number): v is readonly number[] {
-  return Array.isArray(v) && v.length === d && v.every((x) => typeof x === 'number' && Number.isFinite(x));
+  return Array.isArray(v) && v.length === d && everyEntry(v, (x) => typeof x === 'number' && Number.isFinite(x));
 }
 
 const numbers = (v: readonly Rational[]): number[] => v.map((x) => toNumber(x) + 0);
@@ -192,7 +195,7 @@ function transform(
   const q = pAll ? numbers(rationalApply(Q, pAll).map(negate)) : floatApply(Qf, pf).map((x) => -x + 0);
 
   const vectors = (name: string, list: unknown): readonly (readonly number[])[] => {
-    if (!Array.isArray(list) || !list.every((v) => isVector(v, d))) {
+    if (!Array.isArray(list) || !everyEntry(list, (v) => isVector(v, d))) {
       throw new RangeError(`${who}: ${name} must be a list of vectors of ${d} numbers, not ${shown(list)}`);
     }
     return list as readonly (readonly number[])[];
@@ -225,7 +228,8 @@ function transform(
   if (quantities.operations !== undefined) {
     const ops: unknown = quantities.operations;
     if (!Array.isArray(ops)) throw new RangeError(`${who}: operations must be a list, not ${shown(ops)}`);
-    result.operations = ops.map((op: unknown, n) => {
+    // Array.from: a hole of a sparse list is undefined, and refused, not skipped.
+    result.operations = Array.from(ops as unknown[]).map((op: unknown, n) => {
       checkObject(op, `${who}: operation ${n + 1} is a record { matrix, translation }`);
       const { matrix, translation } = op as GenericOperation;
       if (!isRows(matrix, d)) {

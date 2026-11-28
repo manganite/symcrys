@@ -9,7 +9,6 @@ import { shown } from '../checks.js';
 import {
   ZERO,
   add,
-  checkSafeInteger,
   multiply,
   rational,
   formatRational,
@@ -18,13 +17,12 @@ import {
   negate,
   parseRational,
   rationalsEqual,
-  safeProduct,
-  safeSum,
   scale,
   subtract,
   toNumber,
   type Rational,
 } from './rational.js';
+import { checkSafeInteger, safeProduct, safeSum } from '../integers.js';
 
 /** An integer matrix of size d × d, rows first. */
 export type IntMatrix = readonly (readonly number[])[];

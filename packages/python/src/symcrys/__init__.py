@@ -2382,7 +2382,7 @@ def to_voigt(
     result: NDArray[np.float64] = _shared.convert(
         _call(
             "toVoigt",
-            _shared.array(tensor, "tensor", np.float64).reshape(-1),
+            _shared.tensor(tensor, "tensor"),
             _shared.spec(spec),
             _shared.options(factors=None if factors is None else _shared.array(factors, "factors", np.float64), tolerance=tolerance),
         ),

@@ -1124,7 +1124,7 @@ describe('#235: one measure for a key and a list, and the accuracy of the operat
 });
 
 describe('#236: integer arithmetic of the plane beyond 2⁵³', () => {
-  it.fails('orbitOf with a lattice operation of large entries refuses an image beyond the safe integers', () => {
+  it('orbitOf with a lattice operation of large entries refuses an image beyond the safe integers', () => {
     // [[-1, 3], [0, 1]] is an involution of determinant −1; the image of [0, 2⁵² − 1] has the first
     // component 3·(2⁵² − 1) > 2⁵³.
     const ops = [
