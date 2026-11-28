@@ -78,6 +78,12 @@ All notable changes to symcrys are recorded here. The format follows
 
 ### Fixed
 
+- A name of `Object.prototype` (`'toString'`, `'constructor'`, `'__proto__'`) is refused as an
+  unknown value with the message for any other one (#233): as the time parity or the intrinsic
+  symmetry of a tensor (before, the message gave a spelling of symcrys 0.10 for it; affected since
+  0.11.0), and as the centring of a cell in `cellTransformation` (before, the message asked for an
+  index of the cell; affected since 0.14.0).
+
 - Python: a process made by `fork` while another thread called the package could not call it: the
   child inherited the lock of the engine as held, and its first call waited forever (#240). A fork
   now waits for the call to end, so that the child gets the lock free; a fork that cannot wait (from

@@ -225,7 +225,7 @@ function cellKey(lattice: BravaisLattice, cell: unknown, what: string): string {
   // A centring: the conventional cell's own, 'P' for the primitive cell of a centred lattice, or a
   // cell with an index.
   if (c.centring !== undefined && c.centring !== own) {
-    const n = indexed[c.centring];
+    const n = Object.hasOwn(indexed, c.centring) ? indexed[c.centring] : undefined;
     if (n !== undefined) {
       if (c.axes !== undefined || c.setting !== undefined) fail(`centring ${c.centring} takes cell alone`);
       return `${c.centring}${index(c.cell, n, 'cell')}`;

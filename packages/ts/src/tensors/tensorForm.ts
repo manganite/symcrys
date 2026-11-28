@@ -176,7 +176,10 @@ function checkSpec(spec: TensorSpec): SignedPermutation[] {
     throw new RangeError(`The kind of a tensor is 'polar' or 'axial', not ${shown(kind)}`);
   }
   if (timeParity !== 'even' && timeParity !== 'odd') {
-    const renamed = typeof timeParity === 'string' ? RENAMED_TIME_PARITY[timeParity] : undefined;
+    const renamed =
+      typeof timeParity === 'string' && Object.hasOwn(RENAMED_TIME_PARITY, timeParity)
+        ? RENAMED_TIME_PARITY[timeParity]
+        : undefined;
     throw new RangeError(
       `The time parity of a tensor is 'even' or 'odd', not ${shown(timeParity)}` +
         (renamed ? ` ('${timeParity}' up to symcrys 0.10 is '${renamed}')` : ''),
@@ -212,7 +215,10 @@ function checkSpec(spec: TensorSpec): SignedPermutation[] {
       needs(rank >= 2, 'rank 2 or more');
       return Array.from({ length: rank - 1 }, (_, k) => swap(k, k + 1));
     default: {
-      const renamed = typeof intrinsic === 'string' ? RENAMED_INTRINSIC[intrinsic] : undefined;
+      const renamed =
+        typeof intrinsic === 'string' && Object.hasOwn(RENAMED_INTRINSIC, intrinsic)
+          ? RENAMED_INTRINSIC[intrinsic]
+          : undefined;
       throw new RangeError(
         `Unknown intrinsic symmetry: ${shown(intrinsic)}` +
           (renamed ? ` ('${intrinsic as string}' up to symcrys 0.10 is '${renamed}')` : ''),
