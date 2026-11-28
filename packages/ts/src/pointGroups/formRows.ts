@@ -14,6 +14,7 @@ import { classData, classSettingData, settingBasis, settingLatticeOperations } f
 import { classSettingSymbols } from './classSymbols.js';
 import type { PointGroupKey } from './keys.js';
 import { keyOfCompleteGroup } from './identify.js';
+import { holohedry } from './properties.js';
 import { settings } from './pointGroups.js';
 import { FORM_TYPE_DATA, FORM_TYPE_KEYS, type CrystalFormTypeKey } from './formTypes.js';
 import {
@@ -82,24 +83,15 @@ const HEXAGONAL_IN_RHOMBOHEDRAL: Mat = [
 const multiply = (a: Mat, b: Mat): number[][] =>
   a.map((row) => [0, 1, 2].map((j) => row[0] * b[0][j] + row[1] * b[1][j] + row[2] * b[2][j]));
 
-/** The holohedry of the family of a class, as the key and setting whose lattice operations give it. */
+/**
+ * The holohedry of the family of a class, as the key and setting whose lattice operations give it:
+ * that of the lattice system named as the family (`6/mmm` also for rhombohedral axes), with the
+ * unique axis of the class.
+ */
 function holohedryOf(key: PointGroupKey, setting: number): { key: PointGroupKey; setting: number } {
-  const family = crystalFamily(classData(key).crystalSystem);
-  const s = classSettingData(key, setting);
-  switch (family) {
-    case 'triclinic':
-      return { key: '-1', setting: 1 };
-    case 'monoclinic':
-      return { key: '2/m', setting: settings('2/m').findIndex((x) => x.uniqueAxis === s.uniqueAxis) + 1 };
-    case 'orthorhombic':
-      return { key: 'mmm', setting: 1 };
-    case 'tetragonal':
-      return { key: '4/mmm', setting: 1 };
-    case 'hexagonal':
-      return { key: '6/mmm', setting: 1 };
-    case 'cubic':
-      return { key: 'm-3m', setting: 1 };
-  }
+  const holo = holohedry(crystalFamily(classData(key).crystalSystem));
+  const axis = classSettingData(key, setting).uniqueAxis;
+  return { key: holo, setting: axis ? settings(holo).findIndex((x) => x.uniqueAxis === axis) + 1 : 1 };
 }
 
 /** The eigensymmetry of a set of unit normals: all orthogonal maps that permute them, as Cartesian matrices. */

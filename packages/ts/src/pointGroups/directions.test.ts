@@ -100,6 +100,16 @@ describe('latticeBasis(key, { setting })', () => {
   it('names the key to take for the name of a crystal family', () => {
     expect(() => classes.latticeBasis('hexagonal' as never)).toThrow(/for "hexagonal" use "6\/mmm"/);
     expect(() => magnetic.latticeBasis('cubic' as never)).toThrow(/use "m-3m"/);
+    // The holohedries of the six families, as the keys this message named when they were stored
+    // (ITA 2016 Table 1.3.4.1, p. 39: the lattice system of the same name).
+    const expected = { triclinic: '-1', monoclinic: '2/m', orthorhombic: 'mmm', tetragonal: '4/mmm', hexagonal: '6/mmm', cubic: 'm-3m' }; // prettier-ignore
+    for (const [family, key] of Object.entries(expected)) {
+      expect(() => classes.latticeBasis(family as never)).toThrow(`for "${family}" use "${key}"`);
+    }
+    // A name of Object.prototype is no family: it is an unknown key.
+    for (const name of ['toString', '__proto__', 'constructor']) {
+      expect(() => classes.latticeBasis(name as never)).toThrow(`Unknown point group key: "${name}"`);
+    }
   });
 
   it('puts a along x and c along z for hexagonal axes, the obverse a_R, b_R, c_R for rhombohedral axes', () => {

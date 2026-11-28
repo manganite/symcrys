@@ -75,7 +75,7 @@ export const PLANE_SYSTEMS = Object.freeze(Object.keys(PLANE_FAMILY_SYMBOLS) as 
  * The holohedry of a crystal system of the plane: of its point groups the Laue class of the highest
  * order, the point symmetry of its lattice (2, 2mm, 4mm, 6mm).
  */
-function holohedry(system: PlaneSystem): PlanePointGroupKey {
+export function planeHolohedry(system: PlaneSystem): PlanePointGroupKey {
   const own = PLANE_POINT_GROUP_KEYS.filter((k) => planePointGroupSystem(k) === system);
   const order = (k: PlanePointGroupKey) => planePointGroupOperations(k).length;
   return own.map(planeLaueClass).reduce((a, b) => (order(b) > order(a) ? b : a));
@@ -93,7 +93,7 @@ function holohedry(system: PlaneSystem): PlanePointGroupKey {
 export function planeCellRestrictions(system: PlaneSystem): CellRestrictions {
   // The conditions on (g11, g12, g22), one row per entry of WᵀGW − G, solved exactly over the integers.
   const rows: number[][] = [];
-  for (const op of planePointGroupOperations(holohedry(system))) {
+  for (const op of planePointGroupOperations(planeHolohedry(system))) {
     const [[p, q], [r, s]] = op.matrix;
     // (WᵀGW)_ij = Σ W_ki G_kl W_lj, with G = [[g11, g12], [g12, g22]].
     const entry = (i: number, j: number): number[] => {

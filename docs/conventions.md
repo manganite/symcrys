@@ -687,7 +687,8 @@ Polar is there the named property: `allowsPropertyOf(operations, 'pyroelectric')
 **Holohedry and lattice systems.** The holohedry belongs to the lattice system (ITA 2016
 § 1.3.4.4.2 and Table 1.3.4.1, p. 39): `holohedry(latticeSystem)` gives the point symmetry
 of the lattices of one of the seven lattice systems, `-1`, `2/m`, `mmm`, `4/mmm`, `6/mmm`
-(`'hexagonal'`, hP), `-3m` (`'rhombohedral'`, hR) and `m-3m`. Lattice systems classify lattices,
+(`'hexagonal'`, hP), `-3m` (`'rhombohedral'`, hR) and `m-3m`, computed: of the classes that act
+on the lattices of the system, the one of the highest order. Lattice systems classify lattices,
 not point groups: a trigonal class acts on a primitive hexagonal (hP) or on a rhombohedrally centred
 (hR) lattice, so `latticeSystems(key)` gives `['hexagonal', 'rhombohedral']` for a trigonal
 class and the one lattice system of its name for every other class. A crystal system is not a
