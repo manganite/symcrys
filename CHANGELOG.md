@@ -87,9 +87,9 @@ All notable changes to symcrys are recorded here. The format follows
   `'__proto__'`) as unknown keys (#233). Before, they were taken for the name of a crystal family,
   and the message named a function or `{}` as the key to use. Affected since 0.15.0.
 
-- `siteSymmetryOf` of `symcrys/plane` with the empty list gives a coordinate just below 0 (such as
-  −10⁻¹⁷) as 0, in [0, 1) as documented and as with any group (#233). Before, it gave 1. Affected
-  since 0.15.0.
+- `siteSymmetryOf` and `orbitOf` of `symcrys/plane` with the empty list give a coordinate just
+  below 0 (such as −10⁻¹⁷) as 0, in [0, 1) as documented and as with any group (#233). Before, they
+  gave 1. Affected since 0.15.0.
 
 - Python: a process made by `fork` while another thread called the package could not call it: the
   child inherited the lock of the engine as held, and its first call waited forever (#240). A fork
