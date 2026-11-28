@@ -895,8 +895,9 @@ printed settings:
   equal, print states no rule (the letter "is merely a coding scheme", § 2.1.3.11 (ii), p. 162, to
   which § 3.2.1.2.3, p. 727, refers for the point groups); this order is convention data,
   `LETTER_ORDER`, the oriented symbols in letter order for 222, mm2, mmm, 422, 4mm, 4/mmm, 622,
-  6mm, -6m2, -62m, 6/mmm and m-3m (15 sets of positions). In a setting ITA does not print, the
-  order is that of the letters of setting 1, which needs no entry of its own.
+  6mm, -6m2, -62m, 6/mmm and m-3m (15 sets of positions). In a setting ITA does not print, a
+  position keeps the letter of the position of setting 1 that the change of basis carries onto it,
+  a convention of symcrys (print does not letter these settings), which needs no entry of its own.
 - **First representative:** the element of the orbit whose reduced row echelon form, made integer
   and primitive, has the smallest greatest coefficient, then the fewest negative coefficients, then
   the fewest nonzero ones, then the earliest pivots, then the greatest coefficients in reading

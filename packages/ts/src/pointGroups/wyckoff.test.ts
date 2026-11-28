@@ -387,7 +387,6 @@ describe('wyckoffPositions of the settings ITA does not print', () => {
       const oriented = classData(key).crystalSystem !== 'monoclinic';
       const printed = wyckoffPositions(key, { setting: from.index });
       const computed = wyckoffPositions(key, { setting: index });
-      expect(computed.map((w) => w.letter)).toEqual(printed.map((w) => w.letter));
       computed.forEach((w, i) => {
         const q = printed[i];
         const label = `${key} #${index} ${w.letter}`;

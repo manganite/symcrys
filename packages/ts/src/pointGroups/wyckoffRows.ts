@@ -333,8 +333,9 @@ const cache = new Map<string, readonly WyckoffRow[]>();
  * then by descending letter (the order of print); the origin is left out.
  *
  * - Letters: multiplicity ascending, then fewer free parameters, then `LETTER_ORDER`; in a setting
- *   that comes from a printed one by a change of basis (`from`, classData.ts), then the letter of
- *   the position of the printed setting that the change of basis carries onto it.
+ *   that comes from a printed one by a change of basis (`from`, classData.ts), instead of
+ *   `LETTER_ORDER` the letter of the position of the printed setting that the change of basis
+ *   carries onto it.
  * - First representative: the element of the orbit first by `pointRank`, or the one listed in
  *   `FIRST_POINT_EXCEPTIONS`; its coordinates are the images under the operations in their order,
  *   each once.
