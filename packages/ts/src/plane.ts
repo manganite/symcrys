@@ -54,7 +54,6 @@ import {
   planeGroupPatterson,
 } from './spaceGroups/planePointGroups.js';
 import {
-  planeMetric,
   planeOrbit,
   planeSiteOfPosition,
   planeWyckoffDistances,
@@ -367,10 +366,12 @@ export interface WyckoffDistance extends WyckoffPosition {
 }
 
 /** Options of `wyckoffDistances`. */
-export interface WyckoffDistanceOptions {
+export interface WyckoffDistanceOptions extends ToleranceOptions {
   /**
    * The Cartesian basis of the lattice, a 2 × 2 matrix whose columns are a and b; with it the
-   * distances are Euclidean, without it they are measured per lattice coordinate.
+   * distances are Euclidean, without it they are measured per lattice coordinate. It must satisfy
+   * the cell restrictions of the group (its metric kept by the operations of the group, within
+   * `tolerance`, relative to the largest entry of the metric, as `residualOperations` measures).
    */
   readonly basis?: readonly (readonly number[])[];
 }
@@ -1064,21 +1065,38 @@ export function wyckoffPosition(
  * the two coordinate differences modulo the lattice, the metric of the tolerance of
  * `wyckoffPosition`; with a basis (columns a, b) it is Euclidean, and the nearest point is the
  * Euclidean nearest one; per coordinate the nearest point of a line need not be unique (on x,0 every x
- * within the distance is as near), and then it is one of them. The basis should be a reduced cell,
- * such as the conventional one: the nearest lattice translate is sought near the rounded
- * coordinates. How to snap a dragged point onto a position (which position wins, within
+ * within the distance is as near), and then it is one of them. The basis may be any basis of the
+ * lattice of the group: the nearest translate is sought in a reduced basis of it (Lagrange–Gauss),
+ * and an oblique basis of `p2` gives the same distances as any other of the same lattice; it must
+ * satisfy the cell restrictions of the group (`cellRestrictions`), checked by the metric within
+ * `tolerance` (default `EPSILON`) as `residualOperations` checks it. How to snap a dragged point onto a position (which position wins, within
  * which radius) is the application's choice; this gives the numbers for it. Throws a RangeError for
- * an unknown key, a point that is not two finite numbers or has a coordinate beyond 10⁶ in magnitude, and a basis that is not a non-singular
- * 2 × 2 matrix.
+ * an unknown key, a point that is not two finite numbers or has a coordinate beyond 10⁶ in magnitude, a basis that is not a non-singular
+ * 2 × 2 matrix (as `metricTensor` refuses it), and a basis that contradicts the cell restrictions of the group (the error names an
+ * operation of the group that does not keep its metric).
  */
 export function wyckoffDistances(
   key: PlaneGroupKey,
   point: PlanePoint,
   options?: WyckoffDistanceOptions,
 ): readonly WyckoffDistance[] {
-  checkOptions(options, ['basis'], 'wyckoffDistances');
+  checkOptions(options, ['basis', ...TOLERANCE_KEYS], 'wyckoffDistances');
   const k = groupKey(key, 'wyckoffDistances');
-  const g = options?.basis === undefined ? undefined : planeMetric(options.basis);
+  const tolerance = toleranceOf(options, 'metric');
+  let g: Mat2 | undefined;
+  if (options?.basis !== undefined) {
+    g = planeMetricTensor(options.basis, 'wyckoffDistances');
+    const ops = operations(k);
+    const kept = planeResidualOperations(ops, options.basis, tolerance, 'wyckoffDistances');
+    if (kept.length !== ops.length) {
+      const lost = ops.find((op) => !kept.includes(op))!;
+      const system = planeGroupSystem(k);
+      throw new RangeError(
+        `wyckoffDistances: the basis ${shown(options.basis)} contradicts the cell restrictions of ${k} (${system}; cellRestrictions('${system}')): ` +
+          `the operation ${shown(lost.matrix)} of the group does not keep its metric within the tolerance ${tolerance}; pass a basis of the conventional cell`,
+      );
+    }
+  }
   const positions = wyckoffPositions(k);
   return Object.freeze(
     planeWyckoffDistances(k, pointOf(point, 'wyckoffDistances'), g).map((d) =>

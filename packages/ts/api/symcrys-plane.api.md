@@ -425,7 +425,7 @@ export interface WyckoffDistance extends WyckoffPosition {
 }
 
 // @public
-export interface WyckoffDistanceOptions {
+export interface WyckoffDistanceOptions extends ToleranceOptions {
     readonly basis?: readonly (readonly number[])[];
 }
 

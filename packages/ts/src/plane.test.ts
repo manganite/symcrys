@@ -383,9 +383,17 @@ describe('wyckoffDistances', () => {
     expect(() => plane.wyckoffDistances('4mm' as plane.PlaneGroupKey, { point: [0, 0] })).toThrow(RangeError);
     expect(() => plane.wyckoffDistances('p2', { point: 'x' as unknown as number[] })).toThrow(RangeError);
     expect(() => plane.wyckoffDistances('p2', { point: [0, 0] }, { basis: [[1, 2], [2, 4]] })).toThrow(RangeError); // prettier-ignore
-    // Bases of extreme scale are not singular (the test scales the columns first).
-    expect(plane.wyckoffDistances('p2', { point: [0, 0] }, { basis: [[1e200, 0], [0, 1e200]] })).toHaveLength(5); // prettier-ignore
-    expect(plane.wyckoffDistances('p2', { point: [0, 0] }, { basis: [[1e-200, 0], [0, 1e-200]] })).toHaveLength(5); // prettier-ignore
+    // Bases whose products overflow or vanish are refused, as metricTensor refuses them: the
+    // metric of the distances is computed by the same function.
+    for (const s of [1e200, 1e-200]) {
+      expect(() => plane.wyckoffDistances('p2', { point: [0.1, 0.2] }, { basis: [[s, 0], [0, s]] })).toThrow(RangeError); // prettier-ignore
+      expect(() => plane.metricTensor([[s, 0], [0, s]])).toThrow(RangeError); // prettier-ignore
+    }
+    // Large and small bases that do not overflow are taken, the distances scaled with them.
+    for (const s of [1e100, 1e-100]) {
+      const d = plane.wyckoffDistances('p2', { point: [0.1, 0.2] }, { basis: [[s, 0], [0, s]] }); // prettier-ignore
+      expect(d.find((p) => p.letter === 'a')!.distance / s).toBeCloseTo(Math.hypot(0.1, 0.2), 12);
+    }
   });
 });
 
@@ -1176,7 +1184,7 @@ describe('#238: wyckoffDistances in a skew basis', () => {
     expect(printed.map((p) => p.letter)).toEqual(['e', 'd', 'c', 'b', 'a']);
   });
 
-  it.fails('the basis [[1, 10], [0, 1]] of the issue: the distances of a full search', () => {
+  it('the basis [[1, 10], [0, 1]] of the issue: the distances of a full search', () => {
     const B = [
       [1, 10],
       [0, 1],
@@ -1191,7 +1199,7 @@ describe('#238: wyckoffDistances in a skew basis', () => {
     for (const letter of ['a', 'b', 'c', 'd']) expect(got[letter], letter).toBeCloseTo(want[letter], 12);
   });
 
-  it.fails('a sheared basis of the same lattice gives the same distances (shears up to ±100)', () => {
+  it('a sheared basis of the same lattice gives the same distances (shears up to ±100)', () => {
     const B0 = [
       [1, 0.3],
       [0, 1.2],
@@ -1221,14 +1229,11 @@ describe('#238: wyckoffDistances in a skew basis', () => {
     expect(wrong).toEqual([]);
   });
 
-  it.fails(
-    'a basis that contradicts the cell of p4 (ITA 2016 Table 2.1.1.1, p. 143: a = b, γ = 90°) is refused',
-    () => {
-      expect(() => plane.wyckoffDistances('p4', { point: [0.1, 0.2] }, { basis: [[1, 0.3], [0, 1.1]] })).toThrow(RangeError); // prettier-ignore
-    },
-  );
+  it('a basis that contradicts the cell of p4 (ITA 2016 Table 2.1.1.1, p. 143: a = b, γ = 90°) is refused', () => {
+    expect(() => plane.wyckoffDistances('p4', { point: [0.1, 0.2] }, { basis: [[1, 0.3], [0, 1.1]] })).toThrow(RangeError); // prettier-ignore
+  });
 
-  it.fails('a basis that contradicts the cell of pm (γ = 90°) is refused', () => {
+  it('a basis that contradicts the cell of pm (γ = 90°) is refused', () => {
     expect(() => plane.wyckoffDistances('pm', { point: [0.1, 0.2] }, { basis: [[1, 0.3], [0, 1.1]] })).toThrow(RangeError); // prettier-ignore
   });
 

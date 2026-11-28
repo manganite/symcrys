@@ -19,7 +19,7 @@ import {
   type PlainOperation,
 } from './affine.js';
 import { planeGroupEntry, planeGroupOperations } from './planeGroups.js';
-import { ROUNDING_EPSILON, SINGULAR_RATIO, toleranceOf, type ToleranceOptions } from '../tolerances.js';
+import { ROUNDING_EPSILON, toleranceOf, type ToleranceOptions } from '../tolerances.js';
 
 /** The site symmetry of a point under a plane group. */
 export interface PlaneSiteSymmetry {
@@ -393,30 +393,31 @@ function norm(r: readonly number[], g: Mat2 | undefined): number {
   return Math.sqrt(Math.max(0, r[0] * (g[0][0] * r[0] + g[0][1] * r[1]) + r[1] * (g[1][0] * r[0] + g[1][1] * r[1])));
 }
 
-/** The metric tensor G = BᵀB of a basis (columns a, b), checked: two rows of two finite numbers, not singular. */
-export function planeMetric(basis: unknown): Mat2 {
-  const ok =
-    Array.isArray(basis) &&
-    basis.length === 2 &&
-    basis.every(
-      (row) => Array.isArray(row) && row.length === 2 && row.every((x) => typeof x === 'number' && Number.isFinite(x)),
-    );
-  const b = basis as Mat2;
-  // Singular if V/(ab) is below 10⁻⁹, computed with the columns scaled to unit length so that no
-  // product overflows or underflows (review of step 10a).
-  const na = ok ? Math.hypot(b[0][0], b[1][0]) : 0;
-  const nb = ok ? Math.hypot(b[0][1], b[1][1]) : 0;
-  const ratio = na > 0 && nb > 0 ? (b[0][0] / na) * (b[1][1] / nb) - (b[0][1] / nb) * (b[1][0] / na) : 0;
-  if (!ok || !(Math.abs(ratio) > SINGULAR_RATIO)) {
-    throw new RangeError(
-      `The basis of a plane lattice is a non-singular 2 × 2 matrix (columns a, b), not ${shown(basis)}`,
-    );
+/**
+ * The reduced basis of a lattice with the metric G (Lagrange–Gauss): the unimodular integer matrix U
+ * whose columns are the lattice vectors of a reduced basis, |a′·b′| ≤ a′·a′/2 and a′·a′ ≤ b′·b′
+ * (a′, b′ the columns of B·U). In such a basis the lattice vector nearest to a vector lies within ±1
+ * of its rounded coordinates. Each step subtracts the nearest multiple of the shorter vector from the
+ * longer, as Euclid's algorithm does, so the number of steps grows with the logarithm of the shear.
+ */
+export function reducedBasis(g: Mat2): Mat2 {
+  // The columns of U, and the metric of the basis they give, kept exact by computing it from U.
+  let u = [
+    [1, 0],
+    [0, 1],
+  ];
+  const metric = (x: readonly number[], y: readonly number[]) =>
+    x[0] * (g[0][0] * y[0] + g[0][1] * y[1]) + x[1] * (g[1][0] * y[0] + g[1][1] * y[1]);
+  for (let step = 0; step < 200; step++) {
+    if (metric(u[0], u[0]) > metric(u[1], u[1])) u = [u[1], u[0]];
+    const m = Math.round(metric(u[0], u[1]) / metric(u[0], u[0]));
+    if (m === 0) break;
+    u = [u[0], [u[1][0] - m * u[0][0], u[1][1] - m * u[0][1]]];
   }
-  const col = (k: number) => [b[0][k], b[1][k]];
-  const dot = (u: number[], w: number[]) => u[0] * w[0] + u[1] * w[1];
+  // As a matrix: the columns of U are the reduced basis vectors in lattice coordinates.
   return [
-    [dot(col(0), col(0)), dot(col(0), col(1))],
-    [dot(col(1), col(0)), dot(col(1), col(1))],
+    [u[0][0], u[1][0]],
+    [u[0][1], u[1][1]],
   ];
 }
 
@@ -429,6 +430,19 @@ export function planeMetric(basis: unknown): Mat2 {
  */
 export function planeWyckoffDistances(key: string, given: readonly number[], g?: Mat2): PositionDistance[] {
   checkPlanePoint(given);
+  // The translates are sought within ±1 of the rounded coordinates in a reduced basis U, where the
+  // nearest one lies; per coordinate (no metric) the lattice basis is that basis.
+  const u = g
+    ? reducedBasis(g)
+    : [
+        [1, 0],
+        [0, 1],
+      ];
+  const det = u[0][0] * u[1][1] - u[0][1] * u[1][0];
+  const inU = (r: readonly number[]) => [
+    det * (u[1][1] * r[0] - u[0][1] * r[1]),
+    det * (-u[1][0] * r[0] + u[0][0] * r[1]),
+  ];
   // Modulo the lattice first, so that large coordinates keep their digits (review of step 10a).
   const point = given.map(mod1);
   const entry = planeGroupEntry(key);
@@ -445,9 +459,14 @@ export function planeWyckoffDistances(key: string, given: readonly number[], g?:
           continue;
         }
         const base = [Math.round(point[0] - c[0]), Math.round(point[1] - c[1])];
-        for (let i = -2; i <= 2; i++) {
-          for (let j = -2; j <= 2; j++) {
-            const origin = [c[0] + base[0] + i, c[1] + base[1] + j];
+        const m0 = inU([point[0] - c[0] - base[0], point[1] - c[1] - base[1]]).map(Math.round);
+        for (let i = -1; i <= 1; i++) {
+          for (let j = -1; j <= 1; j++) {
+            const m = [m0[0] + i, m0[1] + j];
+            const origin = [
+              c[0] + base[0] + u[0][0] * m[0] + u[0][1] * m[1],
+              c[1] + base[1] + u[1][0] * m[0] + u[1][1] * m[1],
+            ];
             const r = [point[0] - origin[0], point[1] - origin[1]];
             const { t, d } = free.length === 1 ? nearestOnLine(r, free[0], g) : { t: 0, d: norm(r, g) };
             if (d < best.distance) {
