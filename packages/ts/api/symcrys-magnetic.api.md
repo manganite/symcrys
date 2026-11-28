@@ -7,6 +7,7 @@
 // @public
 export interface AffineOperation {
     readonly matrix: Mat3;
+    readonly timeReversal?: boolean;
     readonly translation?: Vec3;
 }
 
@@ -284,7 +285,7 @@ export function latticeSystems(key: MagneticPointGroupKey): readonly LatticeSyst
 
 // @public
 export interface MagneticCellOperation extends CellOperation {
-    readonly timeReversal: boolean;
+    readonly timeReversal?: boolean;
 }
 
 // @public
@@ -395,6 +396,9 @@ export function residualOperations<T extends MagneticCellOperation>(operations: 
 
 // @public
 export function rotateTensor(tensor: readonly number[], rotation: Mat3, spec: TensorSpec | TensorPropertyName, options?: ToleranceOptions): readonly number[];
+
+// @public
+export function rotateTensors(tensors: readonly (readonly number[])[], rotation: Mat3 | readonly Mat3[], spec: TensorSpec | TensorPropertyName, options?: ToleranceOptions): readonly (readonly number[])[];
 
 // @public
 export interface Setting {
@@ -518,6 +522,7 @@ export function toVoigt(tensor: readonly number[], spec: TensorSpec | TensorProp
 // @public
 export interface TransformedOperation {
     readonly matrix: Mat3;
+    readonly timeReversal?: boolean;
     readonly translation: Vec3;
 }
 

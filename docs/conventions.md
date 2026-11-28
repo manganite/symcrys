@@ -580,13 +580,13 @@ of the default symmetry tolerance of spglib (`symprec`), which users of such a l
 though `symprec` is a length in Cartesian coordinates. Two numbers count as equal
 when they differ by less than the tolerance, in the metric of their kind:
 
-| Kind of object                            | Metric                                                                                   | Bound | Functions                                                                                                                                                                                                                                                                 |
-| ----------------------------------------- | ---------------------------------------------------------------------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| operations                                | per matrix entry                                                                         | 0.1   | `pointGroupOf`, `describeOperationsOf` (also in `symcrys/plane`), `tensorFormOf`, `isCentrosymmetricOf`, `isEnantiomorphicOf`, `allowsPropertyOf`, `allowedPropertiesOf`, `rotateTensor`; `changeOfCoordinates` (all three entry points) for the entries of P, p, W and w |
-| directions                                | Euclidean distance of the unit vector to the symmetry element                            | 1     | `siteSymmetryOf`, `siteSymmetry`, `wyckoffPosition`, `orbitOf`                                                                                                                                                                                                            |
-| points of the plane                       | distance to the symmetry element per coordinate in the lattice basis, modulo the lattice | 1/2   | `siteSymmetry`, `wyckoffPosition`, `orbit`, `siteSymmetryOf`, `orbitOf` of `symcrys/plane`                                                                                                                                                                                |
-| the metric tensor G of a cell (W ᵀGW = G) | per entry, relative to the largest entry of G                                            | 1     | `residualOperations` (also in `symcrys/plane`); `wyckoffDistances` of `symcrys/plane` for the cell restrictions of its basis                                                                                                                                              |
-| the index symmetry of a tensor            | per component, relative to its largest component                                         | 1     | `toVoigt`, `fromVoigt`                                                                                                                                                                                                                                                    |
+| Kind of object                            | Metric                                                                                   | Bound | Functions                                                                                                                                                                                                                                                                                  |
+| ----------------------------------------- | ---------------------------------------------------------------------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| operations                                | per matrix entry                                                                         | 0.1   | `pointGroupOf`, `describeOperationsOf` (also in `symcrys/plane`), `tensorFormOf`, `isCentrosymmetricOf`, `isEnantiomorphicOf`, `allowsPropertyOf`, `allowedPropertiesOf`, `rotateTensor`, `rotateTensors`; `changeOfCoordinates` (all three entry points) for the entries of P, p, W and w |
+| directions                                | Euclidean distance of the unit vector to the symmetry element                            | 1     | `siteSymmetryOf`, `siteSymmetry`, `wyckoffPosition`, `orbitOf`                                                                                                                                                                                                                             |
+| points of the plane                       | distance to the symmetry element per coordinate in the lattice basis, modulo the lattice | 1/2   | `siteSymmetry`, `wyckoffPosition`, `orbit`, `siteSymmetryOf`, `orbitOf` of `symcrys/plane`                                                                                                                                                                                                 |
+| the metric tensor G of a cell (W ᵀGW = G) | per entry, relative to the largest entry of G                                            | 1     | `residualOperations` (also in `symcrys/plane`); `wyckoffDistances` of `symcrys/plane` for the cell restrictions of its basis                                                                                                                                                               |
+| the index symmetry of a tensor            | per component, relative to its largest component                                         | 1     | `toVoigt`, `fromVoigt`                                                                                                                                                                                                                                                                     |
 
 - **The tolerance decides small deviations.** A deviation below the tolerance counts as none; one
   of the tolerance or above counts, as a lower symmetry, or as a RangeError where the function
@@ -1145,9 +1145,12 @@ and transformed exactly, so that W′ is exactly integral and every result, the 
 can be passed back; p and w are exact when every number of them is a fraction to rounding, and
 otherwise taken as given (0.1234 stays 0.1234); an operation with det W ≠ ±1, or whose W′ is not integral
 (the new basis spans no lattice that the operation maps onto itself), is refused. A transformed
-operation is `{ matrix, translation }` alone, its translation w′ not reduced modulo the lattice, as
-ITA writes it; other fields of an operation record (`cartesian`, `timeReversal`) are not carried
-over. The plane has the same function with 2 × 2 matrices (`symcrys/plane`).
+operation is `{ matrix, translation }`, its translation w′ not reduced modulo the lattice, as
+ITA writes it; `cartesian` is not carried over. In the magnetic API it keeps `timeReversal` of the
+operation given when every operation of the list gives it, and has none when no operation does; a
+list in which only some operations give it is refused. So the result goes on to the functions that
+read the matrices W (`residualOperations`, a further `changeOfCoordinates`), not to those that read
+`cartesian`. The plane has the same function with 2 × 2 matrices (`symcrys/plane`).
 
 ### Cells of a lattice
 
@@ -1319,7 +1322,7 @@ points"). In the magnetic API a key of type `'I'` is the white group, the symmet
 magnetically ordered crystal ("Types"): `'432'` is magnetoelectric. **A crystal without magnetic
 order has the grey group of its class** (`"4321'"`; quartz `"321'"`), which allows none of the four time-odd
 properties; for the four time-even ones a class, its grey group and the black-and-white groups of
-the class agree. `rotateTensor` takes a name as well.
+the class agree. `rotateTensor` and `rotateTensors` take a name as well.
 Each kind of tensor has one name: second-harmonic generation has the tensor of
 `'piezoelectric'` and is asked for by that name or by its specification. Symmetry only allows a
 property: `'ferromagnetic'` says that a spontaneous magnetization is compatible with the group, not
@@ -1360,8 +1363,10 @@ eight properties have an axial tensor.
 
 **Rotation.** `rotateTensor(tensor, R, spec)` gives the components in a frame rotated by the
 orthogonal matrix R (rows: the new axes in the old frame), with the factor det(R) for an axial
-tensor. For the form at a surface: the site symmetry of the normal (`siteSymmetry`), its form
-(`tensorFormOf`), and the basis rotated into a frame with z along the normal. Both functions take
+tensor; `rotateTensors(tensors, R, spec)` does so for a list of tensors, with one rotation for all
+or one per tensor, and checks the specification and the rotations once. For the form at a surface:
+the site symmetry of the normal (`siteSymmetry`), its form (`tensorFormOf`), and the basis rotated
+into a frame with z along the normal. `rotateTensor`, `rotateTensors` and `tensorFormOf` take
 Cartesian matrices only and throw for a matrix that is not orthogonal within the tolerance (e.g. one
 in the lattice basis).
 

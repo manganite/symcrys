@@ -299,6 +299,8 @@ export interface AffineOperation {
   readonly matrix: Mat3;
   /** The translation part w; default zero, as for the operations of a point group. */
   readonly translation?: Vec3;
+  /** Whether the operation is combined with time reversal; given for every operation of the list or for none. */
+  readonly timeReversal?: boolean;
 }
 
 /** An operation (W′, w′) in the new coordinate system. */
@@ -307,6 +309,8 @@ export interface TransformedOperation {
   readonly matrix: Mat3;
   /** w′ = P⁻¹(w + (W − I)p), not reduced modulo the lattice. */
   readonly translation: Vec3;
+  /** The time reversal of the operation given; present when the operations given have it. */
+  readonly timeReversal?: boolean;
 }
 
 /** The quantities that `changeOfCoordinates` transforms; each is optional. */
@@ -373,6 +377,24 @@ export interface CoordinateChange {
 }
 
 /**
+ * The change of coordinates in 3D without time reversal: each transformed operation is
+ * `{ matrix, translation }`. The crystallographic entry point wraps it (`crystalClasses.ts`), the
+ * magnetic one carries the time reversal through (`changeOfCoordinatesWithTimeReversal`).
+ */
+export function spatialChangeOfCoordinates(
+  transformation: CoordinateTransformation,
+  quantities: CoordinateQuantities,
+  options?: ToleranceOptions,
+): CoordinateChange {
+  // Not a boolean is a mistake of the caller in either entry point.
+  const ops = (quantities as { readonly operations?: unknown } | null)?.operations;
+  if (Array.isArray(ops)) checkOptionalTimeReversal(ops, 'changeOfCoordinates');
+  return deepFreeze(
+    changeCoordinates(3, transformation, quantities, options, 'changeOfCoordinates') as unknown as CoordinateChange,
+  );
+}
+
+/**
  * Changes the coordinate system by the pair (P, p): the new basis is (a′, b′, c′) = (a, b, c)·P and
  * the new origin lies at p. Transforms the given quantities by ITA's equations: point coordinates
  * x′ = P⁻¹(x − p), vector coefficients [uvw]′ = P⁻¹[uvw], Miller indices (hkl)′ = (hkl)P, the
@@ -387,26 +409,39 @@ export interface CoordinateChange {
  * lattice bases, as in ITA: an entry of P that needs a fraction with a denominator above
  * tolerance^(−1/3) (46 at 10⁻⁵), such as cos 30° of a rotation, is refused
  * (docs/conventions.md, "Tolerances").
- * A transformed
- * operation has a `matrix` and a `translation` alone: other fields of the record (`cartesian`, in the
- * magnetic API `timeReversal`) are not carried over, so they are matched by index. Throws a
- * RangeError for a singular P, an entry of P that is not rational within the tolerance, a quantity
- * of the wrong shape, an unknown quantity, an operation with
- * det W ≠ ±1, and one whose W′ is not integral (the new basis does not span a lattice that the
+ * A transformed operation keeps the time reversal of the operation given (`timeReversal`), so that
+ * it can be passed on to the functions that read the matrices W (`residualOperations`, a further
+ * `changeOfCoordinates`); when no operation has `timeReversal`, none of the results has it. Other
+ * fields of the record (`cartesian`) are not carried over. Throws a RangeError for a `timeReversal`
+ * that is not a boolean, a list in which some operations have `timeReversal` and others do not, a singular P, an entry of P that is not
+ * rational within the tolerance, a quantity of the wrong shape, an unknown quantity, an operation
+ * with det W ≠ ±1, and one whose W′ is not integral (the new basis does not span a lattice that the
  * operation maps onto itself).
  *
  * @remarks Source: ITA (6th ed., 2016), § 1.5.1.3, p. 83 (the pair (P, p)); § 1.5.2, pp. 83–85 (the
  * equations); § 1.5.1.2, p. 76 (a negative det P).
  */
-export function changeOfCoordinates(
+export function changeOfCoordinatesWithTimeReversal(
   transformation: CoordinateTransformation,
   quantities: CoordinateQuantities,
   options?: ToleranceOptions,
 ): CoordinateChange {
-  // Not a boolean is a mistake of the caller in either entry point.
+  // The checks of the records, of P and of the options come first: then every operation is a record.
+  const change = spatialChangeOfCoordinates(transformation, quantities, options);
   const ops = (quantities as { readonly operations?: unknown } | null)?.operations;
-  if (Array.isArray(ops)) checkOptionalTimeReversal(ops, 'changeOfCoordinates');
-  return deepFreeze(
-    changeCoordinates(3, transformation, quantities, options, 'changeOfCoordinates') as unknown as CoordinateChange,
-  );
+  if (!Array.isArray(ops)) return change;
+  const reversal = (ops as readonly { readonly timeReversal?: boolean }[]).map((op) => op.timeReversal);
+  const without = reversal.findIndex((x) => x === undefined);
+  const withIt = reversal.findIndex((x) => x !== undefined);
+  if (withIt < 0) return change;
+  if (without >= 0) {
+    throw new RangeError(
+      `changeOfCoordinates: operation ${withIt} has timeReversal and operation ${without} has not: ` +
+        'give timeReversal for every operation or for none',
+    );
+  }
+  return deepFreeze({
+    ...change,
+    operations: (change.operations ?? []).map((op, n) => ({ ...op, timeReversal: reversal[n] })),
+  });
 }

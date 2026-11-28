@@ -1807,12 +1807,30 @@ def reciprocal_basis(basis: ArrayLike) -> NDArray[np.float64]:
     return result
 
 
+@overload
+def residual_operations(
+    operations: TransformedOperations,
+    basis: ArrayLike,
+    *,
+    tolerance: Optional[float] = None,
+) -> TransformedOperations: ...
+
+
+@overload
+def residual_operations(
+    operations: Operations | Sequence[Mapping[str, Any]],
+    basis: ArrayLike,
+    *,
+    tolerance: Optional[float] = None,
+) -> Operations: ...
+
+
 def residual_operations(
     operations: Operations | TransformedOperations | Sequence[Mapping[str, Any]],
     basis: ArrayLike,
     *,
     tolerance: Optional[float] = None,
-) -> Operations:
+) -> Operations | TransformedOperations:
     """The operations of a list that keep the metric of a cell: W with WᵀGW = G, G the metric tensor
     of ``basis`` (columns a, b). It is the point symmetry of a distorted lattice among the
     operations of a group, e.g. those of p4mm that a rectangular cell keeps. The operations are read
@@ -1842,8 +1860,8 @@ def residual_operations(
         _shared.array(basis, "basis", np.float64),
         _shared.options(tolerance=tolerance),
     )
-    ops = operations if isinstance(operations, Operations) else _shared.operations_of(given, Operations)
-    result: Operations = _shared.select(ops, kept)
+    ops = operations if isinstance(operations, (Operations, TransformedOperations)) else _shared.operations_of(given, Operations)
+    result: Operations | TransformedOperations = _shared.select(ops, kept)
     return result
 
 

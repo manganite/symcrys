@@ -97,9 +97,10 @@ Library code is everything in `packages/ts/src` except test-only code ("Correctn
   time-odd property, an operation with `timeReversal: true`) is an error that names the magnetic
   API. `timeParity: 'even'` and `timeReversal: false` are accepted, so that data of the magnetic API
   without time reversal can be passed on. The magnetic API refuses an operation that does not say
-  whether it carries time reversal, except in `siteSymmetryOf`, `orbitOf` and
-  `changeOfCoordinates`, which read it as false when it is left out (a direction and a change of
-  coordinates do not depend on it).
+  whether it carries time reversal, except in `siteSymmetryOf` and `orbitOf`, which read it as
+  false when it is left out (a direction does not depend on it), and `changeOfCoordinates`, which
+  carries it through when every operation gives it and leaves it out when none does (a change of
+  coordinates does not depend on it); a list in which only some operations give it is refused.
 - **One implementation serves both point-group entry points**: the shared modules compute for all
   122 groups, and `crystalClasses.ts` checks what comes in and leaves time reversal out of what goes
   back. A new point-group function goes into the shared modules and is exported by both, unless it
@@ -166,7 +167,9 @@ Library code is everything in `packages/ts/src` except test-only code ("Correctn
   relations, translations and points of the plane); a
   record becomes a dict typed by a TypedDict of the TypeScript interface's name, a named union of
   strings a Literal type; a list of operations becomes one `Operations` record of arrays (the
-  operations of a change of coordinates `TransformedOperations`), and a tensor basis and its
+  operations of a change of coordinates `TransformedOperations`), an optional field of it `None`
+  where no operation has it, and a function that keeps some of the operations it is given returns
+  them in the class given, and a tensor basis and its
   relations arrays of shape (3, …, 3) per tensor; input whose conversion would change its meaning
   is refused, on the raw input before it is converted (`_convert.py`, `_shared.py`): complex
   numbers, integers beyond 2⁵³ − 1, masked values, strings or objects where numbers are expected, a

@@ -38,6 +38,10 @@
       "type": "dict",
       "doc": "``basis`` float64 array of shape (p, 3, …, 3), each allowed tensor with its rank axes; ``parameters`` int64 array of shape (p, rank); ``relations`` float64 array of shape (3**rank - p, 3, …, 3), constraints r with (r * t).sum() == 0 for every allowed tensor t; ``rank``. p is the number of free parameters."
     },
+    "rotate_tensors": {
+      "type": "numpy.ndarray",
+      "doc": "A float64 array of the shape of ``tensors``: a stack of n tensors, each of the shape (3, …, 3) or the flat (3**rank,), where the structured shape is read first (at rank 1 an (n, 3) array is n vectors). ``rotation`` is one rotation (3, 3) for all tensors or one per tensor (n, 3, 3). For stacks that broadcast against each other, ``rotate_tensor`` takes any leading axes."
+    },
     "rotate_tensor": {
       "type": "numpy.ndarray",
       "doc": "A float64 array of the shape of ``tensor``: a tensor has the shape (3, …, 3) or the flat (3**rank,), where the structured shape is read first (at rank 1 a (3, 3) array is three vectors). Leading axes of ``tensor`` and of ``rotation`` (…, 3, 3) are stacks, broadcast as in NumPy: a rotation of shape (k, 3, 3) gives the tensor rotated by each of the k rotations, a stack of tensors (m, 3, …, 3) each tensor rotated."
@@ -108,6 +112,10 @@
     "tensor_form_of": {
       "type": "dict",
       "doc": "``basis`` float64 array of shape (p, 3, …, 3), each allowed tensor with its rank axes; ``parameters`` int64 array of shape (p, rank); ``relations`` float64 array of shape (3**rank - p, 3, …, 3), constraints r with (r * t).sum() == 0 for every allowed tensor t; ``rank``. p is the number of free parameters."
+    },
+    "rotate_tensors": {
+      "type": "numpy.ndarray",
+      "doc": "A float64 array of the shape of ``tensors``: a stack of n tensors, each of the shape (3, …, 3) or the flat (3**rank,), where the structured shape is read first (at rank 1 an (n, 3) array is n vectors). ``rotation`` is one rotation (3, 3) for all tensors or one per tensor (n, 3, 3). For stacks that broadcast against each other, ``rotate_tensor`` takes any leading axes."
     },
     "rotate_tensor": {
       "type": "numpy.ndarray",

@@ -8,6 +8,7 @@ import threading
 from types import MappingProxyType
 
 import typing
+from typing import Any
 
 import numpy as np
 import pytest
@@ -328,6 +329,73 @@ def test_rotate_tensor_takes_arrays_of_any_shape() -> None:
         assert symcrys.rotate_tensor(np.eye(3), rotations, spec).shape == (4, 3, 3)  # type: ignore[arg-type]
     with pytest.raises(symcrys.SymcrysError, match="orthogonal"):
         symcrys.rotate_tensor(np.zeros((0, 3, 3, 3)), 2 * np.eye(3), SHG)
+
+
+def test_rotate_tensors_takes_a_stack_and_one_rotation_or_one_per_tensor() -> None:
+    rz = np.array([[0.0, -1.0, 0.0], [1.0, 0.0, 0.0], [0.0, 0.0, 1.0]])
+    tensors = np.arange(54, dtype=float).reshape(2, 3, 3, 3)
+    expected = np.einsum("ia,jb,kc,nabc->nijk", rz, rz, rz, tensors)
+    got = symcrys.rotate_tensors(tensors, rz, SHG)
+    assert got.shape == (2, 3, 3, 3) and got.dtype == np.float64
+    assert np.allclose(got, expected)
+    assert symcrys.rotate_tensors(tensors.reshape(2, 27), rz, SHG).shape == (2, 27)
+    rotations = symcrys.operations("4").cartesian[:2]
+    each = symcrys.rotate_tensors(tensors, rotations, SHG)
+    assert all(np.array_equal(each[i], symcrys.rotate_tensor(tensors[i], rotations[i], SHG)) for i in range(2))
+    # Rank 1: (n, 3) is n vectors; an axial vector changes sign under an improper rotation.
+    assert np.allclose(magnetic.rotate_tensors(np.eye(3), -np.eye(3), "ferromagnetic"), np.eye(3))
+    assert np.allclose(symcrys.rotate_tensors(np.eye(3), -np.eye(3), "pyroelectric"), -np.eye(3))
+    assert symcrys.rotate_tensors(np.zeros((0, 3)), rz, "pyroelectric").shape == (0, 3)
+    with pytest.raises(symcrys.SymcrysError, match="2 tensors and 4 rotations"):
+        symcrys.rotate_tensors(tensors, symcrys.operations("4").cartesian, SHG)
+    with pytest.raises(symcrys.SymcrysError, match=r"a stack of tensors of rank 3 has the shape \(n, 3, 3, 3\) or \(n, 27\)"):
+        symcrys.rotate_tensors(tensors[0], rz, SHG)
+    with pytest.raises(symcrys.SymcrysError, match=r"the rotation has the shape \(3, 3\), or \(n, 3, 3\)"):
+        symcrys.rotate_tensors(tensors, rz[:2], SHG)
+    with pytest.raises(symcrys.SymcrysError, match="orthogonal"):
+        symcrys.rotate_tensors(np.zeros((0, 3)), 2 * np.eye(3), "pyroelectric")
+
+
+def test_rotate_tensor_names_itself_and_the_rotation_as_given() -> None:
+    # Review of #249: rotate_tensor calls rotateTensors, but its messages name rotate_tensor, and a
+    # rotation is counted as given (flattened), not as repeated by broadcasting.
+    with pytest.raises(symcrys.SymcrysError, match=r"^rotate_tensor: every number"):
+        symcrys.rotate_tensor(np.array([np.nan, 0, 0]), np.eye(3), "pyroelectric")
+    with pytest.raises(symcrys.SymcrysError, match=r"^magnetic\.rotate_tensor: every number"):
+        magnetic.rotate_tensor(np.array([np.nan, 0, 0]), np.eye(3), "ferromagnetic")
+    with pytest.raises(symcrys.SymcrysError, match=r"^Rotation 1 is not an orthogonal"):
+        symcrys.rotate_tensor(np.zeros((3, 3)), np.stack([np.eye(3), 2 * np.eye(3)])[:, None], "pyroelectric")
+
+
+def test_rotate_tensor_sends_one_rotation_once(monkeypatch: pytest.MonkeyPatch) -> None:
+    # Review of #249: a stack of one rotation, (1, 3, 3), goes to the library as one rotation.
+    sent: list[Any] = []
+    call = symcrys._shared.call
+
+    def recorded(name: str, *args: Any) -> Any:
+        sent.append(np.asarray(args[1]).shape)
+        return call(name, *args)
+
+    monkeypatch.setattr(symcrys._shared, "call", recorded)
+    vectors = np.arange(30, dtype=float).reshape(10, 3)
+    got = symcrys.rotate_tensor(vectors, np.eye(3)[None], "pyroelectric")
+    assert sent == [(3, 3)] and got.shape == (10, 3)
+
+
+def test_rotate_tensor_rotates_a_stack_in_one_call(monkeypatch: pytest.MonkeyPatch) -> None:
+    names: list[str] = []
+    call = symcrys._shared.call
+
+    def counted(name: str, *args: Any) -> Any:
+        names.append(name)
+        return call(name, *args)
+
+    rotations = symcrys.operations("m-3m").cartesian
+    monkeypatch.setattr(symcrys._shared, "call", counted)
+    vectors = np.arange(3 * 48, dtype=float).reshape(48, 3)
+    got = symcrys.rotate_tensor(vectors, rotations, "pyroelectric")
+    assert names == ["rotateTensors"]
+    assert np.allclose(got, np.einsum("nia,na->ni", rotations, vectors))
 
 
 def test_library_errors_are_value_errors_with_the_message() -> None:
@@ -757,6 +825,43 @@ def test_change_of_coordinates_gives_its_operations_as_arrays_that_can_be_passed
     planar = plane.change_of_coordinates([[1, 1], [-1, 1]], operations=plane.operations("p4mm"))
     assert isinstance(planar["operations"], plane.TransformedOperations)
     assert planar["operations"].matrix.shape == (8, 2, 2)
+
+
+def test_magnetic_change_of_coordinates_carries_the_time_reversal_through() -> None:
+    # -3'm on rhombohedral axes, to hexagonal axes and back (ITA 2016 Table 1.5.1.1, R to R1, obverse, p. 78).
+    p = [[1, 0, 1], [-1, 1, 1], [0, -1, 1]]
+    ops = magnetic.operations("-3'm", axes="rhombohedral")
+    there = magnetic.change_of_coordinates(p, operations=ops)["operations"]
+    assert isinstance(there, magnetic.TransformedOperations)
+    assert there.time_reversal is not None and there.time_reversal.dtype == np.bool_
+    assert (there.time_reversal == ops.time_reversal).all() and there.time_reversal.any()
+    assert there[1]["time_reversal"] is bool(ops.time_reversal[1])
+    assert set(there[0]) == {"matrix", "translation", "time_reversal"}
+    assert (there[[0, 1]].time_reversal == ops.time_reversal[:2]).all()
+    with pytest.raises(ValueError):
+        there.time_reversal[0] = True
+    back = magnetic.change_of_coordinates(np.linalg.inv(p), operations=there)["operations"]
+    assert (back.matrix == ops.matrix).all() and (back.time_reversal == ops.time_reversal).all()
+    assert copy.deepcopy(there).time_reversal is not None and pickle.loads(pickle.dumps(there)).time_reversal is not None
+    # Without time reversal in the list: no field, as before.
+    spatial = magnetic.change_of_coordinates(p, operations=[{"matrix": m} for m in ops.matrix])["operations"]
+    assert spatial.time_reversal is None and set(spatial[0]) == {"matrix", "translation"}
+    assert (spatial.matrix == there.matrix).all()
+    assert magnetic.change_of_coordinates(p, operations=[])["operations"].time_reversal is None
+    with pytest.raises(symcrys.SymcrysError, match="give time_reversal for every operation or for none"):
+        magnetic.change_of_coordinates(np.eye(3), operations=[{"matrix": np.eye(3), "time_reversal": True}, {"matrix": np.eye(3)}])
+    # The result goes on to residual_operations, which keeps it as TransformedOperations (review of #250).
+    kept = magnetic.residual_operations(there, magnetic.lattice_basis("-3'm"))
+    assert isinstance(kept, magnetic.TransformedOperations) and len(kept) == 12
+    assert (kept.time_reversal == ops.time_reversal).all()
+    with pytest.raises(symcrys.SymcrysError, match="time_reversal"):
+        magnetic.residual_operations(spatial, magnetic.lattice_basis("-3'm"))
+    hexagonal = symcrys.change_of_coordinates(p, operations=symcrys.operations("-3m", axes="rhombohedral"))["operations"]
+    assert isinstance(symcrys.residual_operations(hexagonal, symcrys.lattice_basis("-3m")), symcrys.TransformedOperations)
+    square = plane.change_of_coordinates(np.eye(2), operations=plane.operations("p4mm"))["operations"]
+    assert isinstance(plane.residual_operations(square, np.eye(2)), plane.TransformedOperations)
+    # symcrys stays spatial.
+    assert symcrys.change_of_coordinates(p, operations=symcrys.operations("-3m", axes="rhombohedral"))["operations"][0].keys() == {"matrix", "translation"}
 
 
 def test_messages_keep_the_values_the_caller_passed() -> None:

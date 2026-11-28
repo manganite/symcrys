@@ -27,11 +27,12 @@ import * as directions from './pointGroups/directions.js';
 import type { CartesianDirection, DirectionInput } from './pointGroups/directions.js';
 import * as cell from './cell.js';
 import * as coordinates from './coordinates.js';
-import type { CoordinateChange, CoordinateQuantities, CoordinateTransformation } from './coordinates.js';
+import type { CoordinateTransformation, InverseTransformation } from './coordinates.js';
 import * as site from './siteSymmetry.js';
 import { TENSOR_PROPERTIES as ALL_TENSOR_PROPERTIES } from './tensors/propertyTable.js';
 import type { TensorPropertyName as MagneticTensorPropertyName } from './tensors/propertyTable.js';
 import * as tensors from './tensors/tensorForm.js';
+import { rotateTensors as rotateEachTensor } from './tensors/tensorForm.js';
 import * as voigtNotation from './tensors/voigt.js';
 import type {
   IntrinsicSymmetry,
@@ -62,6 +63,77 @@ import type { VoigtOptions } from './tensors/voigt.js';
 
 const USE_MAGNETIC =
   "the crystallographic API has no time reversal; use the magnetic API ('symcrys/magnetic', in Python symcrys.magnetic)";
+
+/** An operation (W, w) in the lattice basis, x ↦ W·x + w; a record of `operations` passes as it is. */
+export interface AffineOperation {
+  /** The linear part W, integer entries. */
+  readonly matrix: Mat3;
+  /** The translation part w; default zero, as for the operations of a point group. */
+  readonly translation?: Vec3;
+}
+
+/** An operation (W′, w′) in the new coordinate system. */
+export interface TransformedOperation {
+  /** W′ = P⁻¹WP, integer entries. */
+  readonly matrix: Mat3;
+  /** w′ = P⁻¹(w + (W − I)p), not reduced modulo the lattice. */
+  readonly translation: Vec3;
+}
+
+/** The quantities that `changeOfCoordinates` transforms; each is optional. */
+export interface CoordinateQuantities {
+  /**
+   * Point coordinates x: x′ = P⁻¹(x − p).
+   *
+   * @remarks Source: ITA (2016), eq. (1.5.1.7).
+   */
+  readonly points?: readonly Vec3[];
+  /**
+   * Coefficients [uvw] of vectors, e.g. directions: [uvw]′ = P⁻¹[uvw]; not changed by the origin
+   * shift.
+   *
+   * @remarks Source: ITA (2016), eq. (1.5.2.3).
+   */
+  readonly directions?: readonly Vec3[];
+  /**
+   * Miller indices (hkl) of planes: (hkl)′ = (hkl)P; not changed by the origin shift.
+   *
+   * @remarks Source: ITA (2016), eq. (1.5.2.2).
+   */
+  readonly planes?: readonly Vec3[];
+  /**
+   * The metric tensor G: G′ = PᵀGP.
+   *
+   * @remarks Source: ITA (2016), eq. (1.5.2.4).
+   */
+  readonly metric?: Mat3;
+  /**
+   * Operations (W, w): W′ = P⁻¹WP, w′ = P⁻¹(w + (W − I)p).
+   *
+   * @remarks Source: ITA (2016), eqs. (1.5.2.12), (1.5.2.13).
+   */
+  readonly operations?: readonly AffineOperation[];
+}
+
+/** The result of `changeOfCoordinates`: the inverse pair and each given quantity in the new coordinate system. */
+export interface CoordinateChange {
+  /**
+   * (Q, q) = (P⁻¹, −P⁻¹p), which takes the new coordinates back to the old.
+   *
+   * @remarks Source: ITA (2016), eq. (1.5.1.7).
+   */
+  readonly inverse: InverseTransformation;
+  /** The points, as given, in the new coordinates. */
+  readonly points?: readonly Vec3[];
+  /** The vector coefficients, as given, in the new basis. */
+  readonly directions?: readonly Vec3[];
+  /** The Miller indices, as given, in the new basis. */
+  readonly planes?: readonly Vec3[];
+  /** The metric tensor in the new basis. */
+  readonly metric?: Mat3;
+  /** The operations, as given, in the new coordinate system. */
+  readonly operations?: readonly TransformedOperation[];
+}
 
 /**
  * A point operation of a crystal class in a setting: ITA's matrix W in the lattice basis of the
@@ -797,7 +869,8 @@ export function tensorFormOf(
  * for a polar one. To express a tensor in the frame of a surface, pass the matrix whose rows are
  * the new axes in the old frame. The kind of tensor is given by its specification or by the name
  * of a property in `TENSOR_PROPERTIES`. Throws a RangeError for a rotation that is not orthogonal
- * within the tolerance (per matrix entry of RᵀR).
+ * within the tolerance (per matrix entry of RᵀR). For many tensors, `rotateTensors` checks the
+ * rotation and the specification once.
  */
 export function rotateTensor(
   tensor: readonly number[],
@@ -806,6 +879,25 @@ export function rotateTensor(
   options?: ToleranceOptions,
 ): readonly number[] {
   return tensors.rotateTensor(tensor, rotation, timeEven(spec), options);
+}
+
+/**
+ * A list of tensors, each in a frame rotated by `rotation`, one orthogonal matrix for all or a list
+ * of them, one per tensor: entry i is `rotateTensor(tensors[i], R, spec)` with R the rotation or
+ * the i-th rotation. The specification and the rotations are checked once, not per tensor. Throws a
+ * RangeError for a list of rotations of another length than the list of tensors, and as
+ * `rotateTensor` does.
+ *
+ * @remarks A list of rotations is told from one rotation by its entries: a rotation has rows of
+ * numbers, a list of rotations has matrices. An empty list is a list of rotations.
+ */
+export function rotateTensors(
+  tensors: readonly (readonly number[])[],
+  rotation: Mat3 | readonly Mat3[],
+  spec: TensorSpec | TensorPropertyName,
+  options?: ToleranceOptions,
+): readonly (readonly number[])[] {
+  return rotateEachTensor(tensors, rotation, timeEven(spec), options);
 }
 
 /**
@@ -913,8 +1005,8 @@ export function allowedPropertiesOf(
  * tolerance^(−1/3) (46 at 10⁻⁵), such as cos 30° of a rotation, is refused
  * (docs/conventions.md, "Tolerances").
  * A transformed
- * operation has a `matrix` and a `translation` alone: other fields of the record (`cartesian`, in the
- * magnetic API `timeReversal`) are not carried over, so they are matched by index. Throws a
+ * operation has a `matrix` and a `translation` alone: other fields of the record (`cartesian`,
+ * `timeReversal: false`) are not carried over, so they are matched by index. Throws a
  * RangeError for an operation combined with time reversal (`timeReversal` set and not `false`;
  * time reversal belongs to the magnetic API), a singular P, an entry of P that is not rational within the tolerance, a quantity
  * of the wrong shape, an unknown quantity, an operation with
@@ -937,5 +1029,5 @@ export function changeOfCoordinates(
       throw new RangeError(`changeOfCoordinates: ${(e as Error).message}`, { cause: e });
     }
   }
-  return coordinates.changeOfCoordinates(transformation, quantities, options);
+  return coordinates.spatialChangeOfCoordinates(transformation, quantities, options) as CoordinateChange;
 }

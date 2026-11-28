@@ -57,6 +57,7 @@ const pointCalls = (o: readonly { readonly cartesian: unknown }[], key: string, 
   tensorForm: call([key, property], SETTING),
   tensorFormOf: call([o, property], TOLERANCE),
   rotateTensor: call([[1, 0, 0], unit, 'pyroelectric'], TOLERANCE),
+  rotateTensors: call([[[1, 0, 0]], unit, 'pyroelectric'], TOLERANCE),
   toVoigt: { ...call([piezo, 'piezoelectric'], ['factors', ...TOLERANCE]), required: { factors: [2] } },
   fromVoigt: { ...call([piezoVoigt, 'piezoelectric'], ['factors', ...TOLERANCE]), required: { factors: [2] } },
   allowsProperty: call([key, property]),
@@ -247,6 +248,8 @@ const MAY_ANSWER: Readonly<Record<string, (position: number, value: unknown) => 
   residualOperations: (p, v) => p === 0 && Array.isArray(v) && v.length === 0,
   siteSymmetryOf: (p, v) => p === 0 && Array.isArray(v) && v.length === 0,
   orbitOf: (p, v) => p === 0 && Array.isArray(v) && v.length === 0,
+  // An empty list of tensors rotates none.
+  rotateTensors: (p, v) => p === 0 && Array.isArray(v) && v.length === 0,
 };
 
 /** The outcome of a call: 'ok', 'RangeError', or the name and message of another error. */

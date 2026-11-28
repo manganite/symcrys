@@ -702,6 +702,7 @@ function argument(ctx, ir, name, fn, where) {
       transformed &&
       keys.every((/** @type {string} */ k) => k in transformed.fields) &&
       (fn === 'changeOfCoordinates' ||
+        api.functions[fn]?.selects ||
         Object.keys(ctx.ops.fields)
           .filter((k) => k !== '//')
           .every((k) => k in transformed.fields));
@@ -1113,23 +1114,50 @@ async function generate(name, cfg) {
       if (own.selects) {
         // A function that keeps some of the caller's operations (residualOperations): the library is
         // given the caller's operations as they are, each with its index (so that it refuses what it
-        // refuses), and the result takes the kept ones from them, as Operations.
+        // refuses), and the result takes the kept ones from them, in the class given (Operations or
+        // TransformedOperations), a list of mappings as Operations.
         used.add(`functions.${d.name}.selects`);
         const rest = args.slice(1).map((a) => `        ${a},`);
+        const transformedToo = params[0].includes('TransformedOperations');
+        const classes = transformedToo ? '(Operations, TransformedOperations)' : 'Operations';
+        const selectOverloads = [];
+        if (transformedToo) {
+          const kws = keywords.length ? ['*', ...keywords.map((k) => `${k.py}: ${k.ann} = None`)] : [];
+          for (const [given, result] of [
+            ['TransformedOperations', 'TransformedOperations'],
+            ['Operations | Sequence[Mapping[str, Any]]', 'Operations'],
+          ]) {
+            const sigLines = [`operations: ${given}`, ...params.slice(1), ...kws];
+            const one = `def ${py}(${sigLines.join(', ')}) -> ${result}: ...`;
+            selectOverloads.push(
+              [
+                '@overload',
+                ...(one.length <= WIDTH
+                  ? [one]
+                  : [`def ${py}(`, ...sigLines.map((x) => `    ${x},`), `) -> ${result}: ...`]),
+              ].join('\n'),
+            );
+          }
+        }
+        const resultAnn = transformedToo ? 'Operations | TransformedOperations' : ann;
+        const lines = defLines.map((l) => (transformedToo ? l.replace(`-> ${ann}:`, `-> ${resultAnn}:`) : l));
         functions.push(
           [
-            ...defLines,
-            ...doc,
-            `    given = ${args[0]}`,
-            `    kept = _call(`,
-            `        "${d.name}",`,
-            '        [{**op, "index": i} for i, op in enumerate(given)],',
-            ...rest,
-            '    )',
-            '    ops = operations if isinstance(operations, Operations) else _shared.operations_of(given, Operations)',
-            `    result: ${ann} = _shared.select(ops, kept)`,
-            '    return result',
-          ].join('\n'),
+            ...selectOverloads,
+            [
+              ...lines,
+              ...doc,
+              `    given = ${args[0]}`,
+              `    kept = _call(`,
+              `        "${d.name}",`,
+              '        [{**op, "index": i} for i, op in enumerate(given)],',
+              ...rest,
+              '    )',
+              `    ops = operations if isinstance(operations, ${classes}) else _shared.operations_of(given, Operations)`,
+              `    result: ${resultAnn} = _shared.select(ops, kept)`,
+              '    return result',
+            ].join('\n'),
+          ].join('\n\n\n'),
         );
         continue;
       }
@@ -1164,12 +1192,25 @@ async function generate(name, cfg) {
     const record = readDeclaration(ctx.exports.get(cfg.record), name, cfg.record);
     const entries = Object.entries(cfg.fields).filter(([k]) => k !== '//');
     const pyDtype = (/** @type {string} */ d) => (d === 'bool' ? 'np.bool_' : `np.${d}`);
-    const fieldLines = entries.flatMap(([k, [dtype, shape]]) => {
+    // A field marked "optional" (api.json) is None where the result has it for no operation; it
+    // comes after the others, since a dataclass field with a default must.
+    const optional = (/** @type {any[]} */ entry) => entry[2] === 'optional';
+    const firstOptional = entries.findIndex(([, e]) => optional(e));
+    if (firstOptional >= 0 && entries.slice(firstOptional).some(([, e]) => !optional(e))) {
+      throw new Error(`${name}: the optional fields of ${cfg.record} come last in api.json`);
+    }
+    const fieldLines = entries.flatMap(([k, entry]) => {
+      const [dtype, shape] = entry;
       const f = record.fields.find((/** @type {Field} */ x) => x.name === k);
       if (!f) throw new Error(`${name}: the record ${cfg.record} has no field ${k}`);
+      if (optional(entry) !== f.optional) {
+        throw new Error(`${name}: ${cfg.record}.${k} is ${f.optional ? '' : 'not '}optional, api.json says otherwise`);
+      }
       const dims = ['n', ...shape].join(', ');
-      const doc = `${dtype} array of shape (${dims}${shape.length ? '' : ','}), one row per operation. ${f.doc}`;
-      return [`    ${snake(k)}: NDArray[${pyDtype(dtype)}]`, ...quote(wrapParagraphs(doc, '', 3), '    ')];
+      const none = optional(entry) ? ' None where the operations given have no such field.' : '';
+      const doc = `${dtype} array of shape (${dims}${shape.length ? '' : ','}), one row per operation. ${f.doc}${none}`;
+      const ann = optional(entry) ? `Optional[NDArray[${pyDtype(dtype)}]] = None` : `NDArray[${pyDtype(dtype)}]`;
+      return [`    ${snake(k)}: ${ann}`, ...quote(wrapParagraphs(doc, '', 3), '    ')];
     });
     const missing = record.fields
       .filter((/** @type {Field} */ f) => !cfg.fields[f.name])
@@ -1211,7 +1252,7 @@ async function generate(name, cfg) {
         `    def __getitem__(self, index: slice | Sequence[int] | NDArray[Any]) -> ${cls}: ...`,
         '',
         `    def __getitem__(self, index: int | np.integer[Any] | slice | Sequence[int] | NDArray[Any]) -> ${opRecord} | ${cls}:`,
-        `        """One operation as a dict \`\`{${entries.map(([k]) => `"${snake(k)}"`).join(', ')}}\`\` for an integer, otherwise`,
+        `        """One operation as a dict \`\`{${entries.map(([k]) => `"${snake(k)}"`).join(', ')}}\`\`${firstOptional >= 0 ? ' (an optional field only where present)' : ''} for an integer, otherwise`,
         `        the \`\`${cls}\`\` of the selected rows (a slice, a list of indices, a boolean mask)."""`,
         `        result: ${opRecord} | ${cls} = _shared.operation_at(self, index)`,
         '        return result',
@@ -1224,7 +1265,8 @@ async function generate(name, cfg) {
         `class ${opRecord}(TypedDict):`,
         ...quote([`One operation of \`\`${cls}\`\` (\`\`ops[i]\`\`, \`\`for op in ops\`\`).`], '    '),
         '',
-        ...entries.flatMap(([k, [dtype, shape]]) => {
+        ...entries.flatMap(([k, entry]) => {
+          const [dtype, shape] = entry;
           const f = record.fields.find((/** @type {Field} */ x) => x.name === k);
           const py = shape.length
             ? `NDArray[${pyDtype(dtype)}]`
@@ -1233,7 +1275,11 @@ async function generate(name, cfg) {
               : dtype === 'int64'
                 ? 'int'
                 : 'float';
-          return [`    ${snake(k)}: ${py}`, ...quote(wrapParagraphs(f.doc, '', 3), '    ')];
+          if (optional(entry)) ctx.notRequired = true;
+          return [
+            `    ${snake(k)}: ${optional(entry) ? `NotRequired[${py}]` : py}`,
+            ...quote(wrapParagraphs(f.doc, '', 3), '    '),
+          ];
         }),
       ].join('\n'),
     );
