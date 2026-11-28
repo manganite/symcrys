@@ -118,8 +118,8 @@ The rules are in `GUIDE.md`; here the commands and the places in the code.
 ## Git and pull requests
 
 - Never commit to `main`. Short-lived branch (`feature/`, `fix/`, `refactor/`, `docs/`, `chore/`,
-  `audit/`, `test/`), Conventional Commits (`type(scope): summary`), pull request to `main`,
-  merged with a merge commit (no squash).
+  `audit/`, `test/`, `perf/`), Conventional Commits (`type(scope): summary`), pull request to
+  `main`, merged with a merge commit (no squash).
 - **Gates**, run by CI on every pull request: on Node 22 and 24 `typecheck`, `typecheck:ts7`,
   `lint`, `format:check`, `test`, `build`, `check:dist`, `api:check`; `python` on Python 3.10 and
   the newest (bundle, sdist and wheel, install into a fresh environment, `mypy --strict`, `pytest`);
