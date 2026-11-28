@@ -833,7 +833,7 @@ __all__ = [
     "point_group_of",
     "point_groups",
     "reciprocal_basis",
-    "residual_operations",
+    "residual_operations_of",
     "settings",
     "site_symmetry",
     "site_symmetry_of",
@@ -1346,13 +1346,13 @@ def wyckoff_distances(
     the nearest line among the family of its lattice translates, so an oblique basis of ``p2`` gives
     the distances of any other basis of the same lattice, to rounding; it must satisfy the cell
     restrictions of the group (``cell_restrictions``), checked by the metric within ``tolerance``
-    (default ``EPSILON``) as ``residual_operations`` checks it. How to snap a dragged point onto a
-    position (which position wins, within which radius) is the application's choice; this gives the
-    numbers for it. Raises SymcrysError for an unknown key, a point that is not two finite numbers
-    or has a coordinate beyond 10⁶ in magnitude, a basis that is not a non-singular 2 × 2 matrix (as
-    ``metric_tensor`` refuses it: singular, or with products that overflow or vanish), and a basis
-    that contradicts the cell restrictions of the group (the error names an operation of the group
-    that does not keep its metric).
+    (default ``EPSILON``) as ``residual_operations_of`` checks it. How to snap a dragged point onto
+    a position (which position wins, within which radius) is the application's choice; this gives
+    the numbers for it. Raises SymcrysError for an unknown key, a point that is not two finite
+    numbers or has a coordinate beyond 10⁶ in magnitude, a basis that is not a non-singular 2 × 2
+    matrix (as ``metric_tensor`` refuses it: singular, or with products that overflow or vanish),
+    and a basis that contradicts the cell restrictions of the group (the error names an operation of
+    the group that does not keep its metric).
 
     Parameters
     ----------
@@ -1363,10 +1363,10 @@ def wyckoff_distances(
         distances are Euclidean, without it they are measured per lattice coordinate. It must
         satisfy the cell restrictions of the group (its metric kept by the operations of the group,
         within ``tolerance``, relative to the largest entry of the metric, as
-        ``residual_operations`` measures).
+        ``residual_operations_of`` measures).
     tolerance : keyword-only, optional
         How closely the operations of the group must keep the metric G of ``basis``: per entry of
-        WᵀGW − G, relative to the largest entry of G, as ``residual_operations`` measures it;
+        WᵀGW − G, relative to the largest entry of G, as ``residual_operations_of`` measures it;
         default ``EPSILON`` (10⁻⁵), below 1. Without a basis it is not used.
 
     Returns
@@ -1622,14 +1622,16 @@ def point_group_of(
     operations: Operations | TransformedOperations | Sequence[Mapping[str, Any]],
     *,
     tolerance: Optional[float] = None,
-) -> IdentifiedPointGroup:
+) -> Optional[IdentifiedPointGroup]:
     """The plane point group of a list of operations of the plane (lattice basis): the group their
     linear parts generate (the translations do not matter), its key, and the setting whose
     operations they are, absent if they are the group in another basis (a mirror along a diagonal of
     the cell). The linear parts are closed into a group first. Each matrix must have integer entries
     within the tolerance; a translation is read as in ``describe_operations_of``. Raises
     SymcrysError for such input, a matrix of determinant other than ±1, and matrices that generate
-    no finite group (a shear).
+    no finite group (a shear). The type allows ``None``, "not found", as ``point_group_of`` of the
+    point-group entry points does; in the lattice basis every finite group of the plane is one of
+    the ten plane point groups, so it is not returned.
 
     Parameters
     ----------
@@ -1638,13 +1640,13 @@ def point_group_of(
         matrix entry for operations, as the distance of unit vectors for directions and per
         coordinate modulo the lattice for points (docs/conventions.md, "Tolerances").
     """
-    result: IdentifiedPointGroup = _shared.convert(
+    result: Optional[IdentifiedPointGroup] = _shared.convert(
         _call(
             "pointGroupOf",
             _shared.operation_list(operations, ("matrix", "translation")),
             _shared.options(tolerance=tolerance),
         ),
-        _S_IdentifiedPointGroup,
+        ("o", _S_IdentifiedPointGroup),
     )
     return result
 
@@ -1653,7 +1655,7 @@ def plane_group_of(
     operations: Operations | TransformedOperations | Sequence[Mapping[str, Any]],
     *,
     tolerance: Optional[float] = None,
-) -> IdentifiedPlaneGroup:
+) -> Optional[IdentifiedPlaneGroup]:
     """The plane group of a list of operations of the plane, given in a conventional cell of their
     lattice (lattice basis), for instance those of a pattern: its key, and setting 1 if the
     operations are exactly those of ``operations(key)`` modulo the lattice, absent if they are the
@@ -1666,7 +1668,9 @@ def plane_group_of(
     that are not in a conventional cell: a translation besides the lattice translations other than
     the centring (1/2, 1/2) of a rectangular lattice, linear parts that no conventional cell gives
     (a mirror along a diagonal of a rectangular cell, a square or hexagonal group in another basis),
-    and operations that generate no plane group.
+    and operations that generate no plane group. The type allows ``None``, "not found", as
+    ``point_group_of`` does; a list in a conventional cell is always one of the 17 plane groups, so
+    it is not returned.
 
     Parameters
     ----------
@@ -1675,13 +1679,13 @@ def plane_group_of(
         matrix entry for operations, as the distance of unit vectors for directions and per
         coordinate modulo the lattice for points (docs/conventions.md, "Tolerances").
     """
-    result: IdentifiedPlaneGroup = _shared.convert(
+    result: Optional[IdentifiedPlaneGroup] = _shared.convert(
         _call(
             "planeGroupOf",
             _shared.operation_list(operations, ("matrix", "translation")),
             _shared.options(tolerance=tolerance),
         ),
-        _S_IdentifiedPlaneGroup,
+        ("o", _S_IdentifiedPlaneGroup),
     )
     return result
 
@@ -1808,7 +1812,7 @@ def reciprocal_basis(basis: ArrayLike) -> NDArray[np.float64]:
 
 
 @overload
-def residual_operations(
+def residual_operations_of(
     operations: TransformedOperations,
     basis: ArrayLike,
     *,
@@ -1817,7 +1821,7 @@ def residual_operations(
 
 
 @overload
-def residual_operations(
+def residual_operations_of(
     operations: Operations | Sequence[Mapping[str, Any]],
     basis: ArrayLike,
     *,
@@ -1825,7 +1829,7 @@ def residual_operations(
 ) -> Operations: ...
 
 
-def residual_operations(
+def residual_operations_of(
     operations: Operations | TransformedOperations | Sequence[Mapping[str, Any]],
     basis: ArrayLike,
     *,
@@ -1855,7 +1859,7 @@ def residual_operations(
     """
     given = _shared.operation_list(operations, ("matrix",))
     kept = _call(
-        "residualOperations",
+        "residualOperationsOf",
         [{**op, "index": i} for i, op in enumerate(given)],
         _shared.array(basis, "basis", np.float64),
         _shared.options(tolerance=tolerance),

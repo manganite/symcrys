@@ -381,7 +381,7 @@ export function reciprocalBasis(basis: Mat3): Mat3;
 export function reduceIndices(indices: readonly number[]): readonly number[];
 
 // @public
-export function residualOperations<T extends CellOperation>(operations: readonly T[], basis: Mat3, options?: ToleranceOptions): readonly T[];
+export function residualOperationsOf<T extends CellOperation>(operations: readonly T[], basis: Mat3, options?: ToleranceOptions): readonly T[];
 
 // @public
 export function rotateTensor(tensor: readonly number[], rotation: Mat3, spec: TensorSpec | TensorPropertyName, options?: ToleranceOptions): readonly number[];

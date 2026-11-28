@@ -125,7 +125,7 @@ function pointGroupCalls(entry: 'symcrys' | 'symcrys/magnetic'): ApiCall[] {
     c('siteSymmetryOf', ops, [1, 2, 3]);
     c('orbitOf', ops, [1, 2, 3]);
     c('tensorFormOf', ops, properties[properties.length - 1]);
-    c('residualOperations', ops, api.latticeBasis(key as never));
+    c('residualOperationsOf', ops, api.latticeBasis(key as never));
   }
   const hexagonal = api.latticeBasis('6/mmm');
   const piezo = api.tensorForm('1', 'piezoelectric').basis[0];
@@ -237,7 +237,7 @@ function planeCalls(): ApiCall[] {
     }[plane.planeGroup(key).crystalSystem]; // prettier-ignore
     c('wyckoffDistances', key, { point: [0.1, 0.23] }, { basis: cellBasis });
     if (key === 'p2') c('wyckoffDistances', key, { point: [0, 0.49] }, { basis: [[1, 10], [0, 1]] }); // prettier-ignore
-    c('residualOperations', plane.operations(key), [[1, 0], [0, 1.5]]); // prettier-ignore
+    c('residualOperationsOf', plane.operations(key), [[1, 0], [0, 1.5]]); // prettier-ignore
     c('settings', key);
     // A symmorphic plane group has the operations of its point group, which is called below.
     if (plane.operations(key).some((op) => op.translation.some((t) => t !== 0)))

@@ -157,8 +157,8 @@ class Operation(TypedDict):
 @dataclass(frozen=True, eq=False)
 class Operations:
     """The operations of a magnetic point group as arrays, one row per operation, in the order of
-    ``operations``: what ``operations``, ``generators`` and ``residual_operations`` return, and what
-    every function that takes operations accepts, beside a list of dicts ``{"cartesian",
+    ``operations``: what ``operations``, ``generators`` and ``residual_operations_of`` return, and
+    what every function that takes operations accepts, beside a list of dicts ``{"cartesian",
     "time_reversal"}``. An array of matrices alone is refused here, since it does not say which
     operations carry time reversal. Frozen, its arrays read-only; ``len(ops)`` is the number of
     operations.
@@ -862,7 +862,7 @@ __all__ = [
     "point_groups",
     "reciprocal_basis",
     "reduce_indices",
-    "residual_operations",
+    "residual_operations_of",
     "rotate_tensor",
     "rotate_tensors",
     "settings",
@@ -937,7 +937,7 @@ is. ``'gyrotropic'`` is optical activity.
 
 
 @overload
-def residual_operations(
+def residual_operations_of(
     operations: TransformedOperations,
     basis: ArrayLike,
     *,
@@ -946,7 +946,7 @@ def residual_operations(
 
 
 @overload
-def residual_operations(
+def residual_operations_of(
     operations: Operations | Sequence[Mapping[str, Any]],
     basis: ArrayLike,
     *,
@@ -954,7 +954,7 @@ def residual_operations(
 ) -> Operations: ...
 
 
-def residual_operations(
+def residual_operations_of(
     operations: Operations | TransformedOperations | Sequence[Mapping[str, Any]],
     basis: ArrayLike,
     *,
@@ -982,7 +982,7 @@ def residual_operations(
     """
     given = _shared.operation_list(operations, ("matrix",))
     kept = _call(
-        "residualOperations",
+        "residualOperationsOf",
         [{**op, "index": i} for i, op in enumerate(given)],
         _shared.array(basis, "basis", np.float64),
         _shared.options(tolerance=tolerance),
@@ -1019,7 +1019,7 @@ def change_of_coordinates(
     that needs a fraction with a denominator above tolerance^(−1/3) (46 at 10⁻⁵), such as cos 30° of
     a rotation, is refused (docs/conventions.md, "Tolerances"). A transformed operation keeps the
     time reversal of the operation given (``time_reversal``), so that it can be passed on to the
-    functions that read the matrices W (``residual_operations``, a further
+    functions that read the matrices W (``residual_operations_of``, a further
     ``change_of_coordinates``); when no operation has ``time_reversal``, none of the results has it.
     Other fields of the record (``cartesian``) are not carried over. Raises SymcrysError for a
     ``time_reversal`` that is not a boolean, a list in which some operations have ``time_reversal``

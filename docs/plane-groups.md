@@ -157,12 +157,12 @@ basis = plane.lattice_from_parameters(4.0, 5.0, 100.0)
 plane.metric_tensor(basis), plane.cell_restrictions("hexagonal")
 ```
 
-`residualOperations` keeps the operations of a list whose matrix W leaves the metric of a cell
+`residualOperationsOf` keeps the operations of a list whose matrix W leaves the metric of a cell
 unchanged, WᵀGW = G: the point symmetry that a distorted lattice keeps, e.g. of p4mm in a cell with
 a ≠ b:
 
 ```{code-cell} ipython3
-kept = plane.residual_operations(plane.operations("p4mm"), plane.lattice_from_parameters(3.0, 3.1, 90.0))
+kept = plane.residual_operations_of(plane.operations("p4mm"), plane.lattice_from_parameters(3.0, 3.1, 90.0))
 plane.describe_operations_of(kept)
 ```
 

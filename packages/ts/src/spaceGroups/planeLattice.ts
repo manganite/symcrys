@@ -298,7 +298,7 @@ export function planeMetricTensor(basis: unknown, who: string): Mat2 {
 /**
  * The operations of a list whose integer matrix W keeps the metric of a cell, WᵀGW = G, compared
  * relative to the largest entry of G within `tolerance`; the list is taken as it is and the kept
- * operations are the ones of the list, in its order (the plane form of `residualOperations` of
+ * operations are the ones of the list, in its order (the plane form of `residualOperationsOf` of
  * cell.ts). Throws a RangeError for a list that is not one, an operation without a 2 × 2
  * matrix of integers (`matrix`, not a Cartesian matrix) and a basis as `planeBasisColumns`.
  */

@@ -16,6 +16,12 @@ All notable changes to symcrys are recorded here. The format follows
 
 ### Changed
 
+- **Breaking:** `residualOperations` is `residualOperationsOf`, in all three entry points (Python
+  `residual_operations_of`): the suffix `…Of` marks the functions of a list of operations, and it
+  takes one (#239).
+- **Breaking (types):** `pointGroupOf` and `planeGroupOf` of `symcrys/plane` are typed
+  `… | undefined` (Python `Optional`), as `pointGroupOf` of the point-group entry points (#239).
+  They return as before: in the lattice basis of the plane every finite group is found.
 - **Breaking:** `changeOfCoordinates` of `symcrys/magnetic` carries the time reversal of each
   operation through (#239): when every operation gives `timeReversal`, each transformed operation
   keeps it, so that the result goes on to `residualOperations` or a further `changeOfCoordinates`;

@@ -884,7 +884,7 @@ describe('the point group and the plane group of a list of operations (#208)', (
     };
     for (const key of plane.PLANE_GROUP_KEYS) {
       const moved = plane.changeOfCoordinates(shift, { operations: plane.operations(key) }).operations!;
-      expect(plane.planeGroupOf(moved).key, key).toBe(key);
+      expect(plane.planeGroupOf(moved)?.key, key).toBe(key);
     }
     const p2 = plane.changeOfCoordinates(shift, { operations: plane.operations('p2') }).operations!;
     expect(plane.planeGroupOf(p2)).toEqual({ key: 'p2' });

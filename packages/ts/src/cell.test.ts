@@ -15,8 +15,8 @@ import {
   latticeParameters,
   metricTensor,
   reciprocalBasis,
-  residualMagneticOperations,
-  residualOperations,
+  residualMagneticOperationsOf,
+  residualOperationsOf,
 } from './cell.js';
 import { familyBasis } from './lattice.js';
 import { operations } from './pointGroups/pointGroups.js';
@@ -301,46 +301,46 @@ describe('angles', () => {
   });
 });
 
-describe('residualOperations: the operations that keep the metric', () => {
+describe('residualOperationsOf: the operations that keep the metric', () => {
   const cell = (p: { a: number; b: number; c: number; alpha?: number; beta?: number; gamma?: number }) =>
     latticeFromParameters({ alpha: 90, beta: 90, gamma: 90, ...p });
 
   it('keeps all 16 operations of 4/mmm for a = b, and the 8 of mmm for a ≠ b', () => {
     const ops = operations('4/mmm');
     expect(ops).toHaveLength(16);
-    expect(residualOperations(ops, cell({ a: 2, b: 2, c: 3 }))).toHaveLength(16);
-    expect(residualOperations(ops, cell({ a: 2, b: 2.1, c: 3 }))).toHaveLength(8);
+    expect(residualOperationsOf(ops, cell({ a: 2, b: 2, c: 3 }))).toHaveLength(16);
+    expect(residualOperationsOf(ops, cell({ a: 2, b: 2.1, c: 3 }))).toHaveLength(8);
   });
 
   it('m-3m: 48 for a cube, 16 (4/mmm) for a = b ≠ c, 2 (-1) for a general triclinic cell', () => {
     const ops = operations('m-3m');
     expect(ops).toHaveLength(48);
-    expect(residualOperations(ops, cell({ a: 1, b: 1, c: 1 }))).toHaveLength(48);
-    expect(residualOperations(ops, cell({ a: 1, b: 1, c: 1.3 }))).toHaveLength(16);
+    expect(residualOperationsOf(ops, cell({ a: 1, b: 1, c: 1 }))).toHaveLength(48);
+    expect(residualOperationsOf(ops, cell({ a: 1, b: 1, c: 1.3 }))).toHaveLength(16);
     expect(
-      residualOperations(ops, latticeFromParameters({ a: 1, b: 1.2, c: 1.5, alpha: 80, beta: 95, gamma: 105 })),
+      residualOperationsOf(ops, latticeFromParameters({ a: 1, b: 1.2, c: 1.5, alpha: 80, beta: 95, gamma: 105 })),
     ).toHaveLength(2);
   });
 
   it('hexagonal axes: 6/mmm keeps 24 operations for γ = 120°; for a = b and γ = 121° the swap a ↔ b remains, so 8 (mmm)', () => {
     const ops = operations('6/mmm');
-    expect(residualOperations(ops, cell({ a: 1, b: 1, c: 1.6, gamma: 120 }))).toHaveLength(24);
-    expect(residualOperations(ops, cell({ a: 1, b: 1, c: 1.6, gamma: 121 }))).toHaveLength(8);
+    expect(residualOperationsOf(ops, cell({ a: 1, b: 1, c: 1.6, gamma: 120 }))).toHaveLength(24);
+    expect(residualOperationsOf(ops, cell({ a: 1, b: 1, c: 1.6, gamma: 121 }))).toHaveLength(8);
   });
 
   it('takes the tolerance relative to the largest entry of G, so that units do not matter', () => {
     const ops = operations('4/mmm');
-    const small = residualOperations(ops, cell({ a: 1, b: 1 + 1e-9, c: 2 }));
-    const big = residualOperations(ops, cell({ a: 1e3, b: 1e3 * (1 + 1e-9), c: 2e3 }));
+    const small = residualOperationsOf(ops, cell({ a: 1, b: 1 + 1e-9, c: 2 }));
+    const big = residualOperationsOf(ops, cell({ a: 1e3, b: 1e3 * (1 + 1e-9), c: 2e3 }));
     expect(small).toHaveLength(16);
     expect(big).toHaveLength(16);
-    expect(residualOperations(ops, cell({ a: 1, b: 1.001, c: 2 }), { tolerance: 1e-2 })).toHaveLength(16);
-    expect(residualOperations(ops, cell({ a: 1, b: 1.001, c: 2 }))).toHaveLength(8);
+    expect(residualOperationsOf(ops, cell({ a: 1, b: 1.001, c: 2 }), { tolerance: 1e-2 })).toHaveLength(16);
+    expect(residualOperationsOf(ops, cell({ a: 1, b: 1.001, c: 2 }))).toHaveLength(8);
   });
 
   it('keeps the order of the operations and returns them as they came', () => {
     const ops = operations('4/mmm');
-    const kept = residualOperations(ops, cell({ a: 2, b: 2.1, c: 3 }));
+    const kept = residualOperationsOf(ops, cell({ a: 2, b: 2.1, c: 3 }));
     expect(kept.every((op) => ops.includes(op))).toBe(true);
     expect(kept.map((op) => ops.indexOf(op))).toEqual([...kept.map((op) => ops.indexOf(op))].sort((x, y) => x - y));
   });
@@ -348,9 +348,9 @@ describe('residualOperations: the operations that keep the metric', () => {
 
 describe('input checks and edge cases', () => {
   const basis = latticeFromParameters({ a: 1, b: 1, c: 1, alpha: 90, beta: 90, gamma: 90 });
-  it('residualOperations refuses malformed operations and tolerances with a RangeError', () => {
+  it('residualOperationsOf refuses malformed operations and tolerances with a RangeError', () => {
     expect(() =>
-      residualOperations(
+      residualOperationsOf(
         [
           {
             matrix: [
@@ -362,12 +362,12 @@ describe('input checks and edge cases', () => {
         basis,
       ),
     ).toThrow(RangeError);
-    expect(() => residualOperations([{} as never], basis)).toThrow(RangeError);
+    expect(() => residualOperationsOf([{} as never], basis)).toThrow(RangeError);
     // The Cartesian matrices of 6/mmm (±√3/2) passed as `matrix` are refused, not filtered (#94).
     const cartesianAsMatrix = operations('6/mmm').map((op) => ({ matrix: op.cartesian }));
-    expect(() => residualOperations(cartesianAsMatrix, basis)).toThrow(/not an integer matrix in the lattice basis/);
-    expect(() => residualOperations(operations('4/mmm'), basis, { tolerance: Number.NaN })).toThrow(RangeError);
-    expect(() => residualOperations(operations('4/mmm'), basis, { tolerance: -1 })).toThrow(RangeError);
+    expect(() => residualOperationsOf(cartesianAsMatrix, basis)).toThrow(/not an integer matrix in the lattice basis/);
+    expect(() => residualOperationsOf(operations('4/mmm'), basis, { tolerance: Number.NaN })).toThrow(RangeError);
+    expect(() => residualOperationsOf(operations('4/mmm'), basis, { tolerance: -1 })).toThrow(RangeError);
   });
   it('isValidCell refuses a minVolumeRatio that is not a number from 0 to 1 with a RangeError', () => {
     const cube = { alpha: 90, beta: 90, gamma: 90 };
@@ -390,12 +390,14 @@ describe('input checks and edge cases', () => {
   });
 });
 
-describe('residualMagneticOperations', () => {
+describe('residualMagneticOperationsOf', () => {
   const cell = latticeFromParameters({ a: 2, b: 2.1, c: 3, alpha: 90, beta: 90, gamma: 90 });
   it('keeps timeReversal and refuses an operation that does not say whether it has it', () => {
     const ops = operations('4/mmm');
-    expect(residualMagneticOperations(ops, cell)).toHaveLength(8);
-    expect(() => residualMagneticOperations(ops.map((o) => ({ matrix: o.matrix })) as never, cell)).toThrow(RangeError);
+    expect(residualMagneticOperationsOf(ops, cell)).toHaveLength(8);
+    expect(() => residualMagneticOperationsOf(ops.map((o) => ({ matrix: o.matrix })) as never, cell)).toThrow(
+      RangeError,
+    );
   });
 });
 

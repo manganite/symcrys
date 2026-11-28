@@ -71,7 +71,7 @@ describe('the unit of length', () => {
           ),
         ).toBe(true);
         const ops = classes.operations('m-3m');
-        expect(classes.residualOperations(ops, scaled)).toEqual(classes.residualOperations(ops, basis));
+        expect(classes.residualOperationsOf(ops, scaled)).toEqual(classes.residualOperationsOf(ops, basis));
       }
     });
   }
@@ -88,7 +88,7 @@ describe('the unit of length', () => {
       const basis = plane.latticeFromParameters({ a, b, gamma });
       for (const k of [1e-3, 1e3]) {
         const scaled = plane.latticeFromParameters({ a: a * k, b: b * k, gamma });
-        expect(plane.residualOperations(ops, scaled)).toEqual(plane.residualOperations(ops, basis));
+        expect(plane.residualOperationsOf(ops, scaled)).toEqual(plane.residualOperationsOf(ops, basis));
         expect(plane.latticeParameters(scaled).gamma).toBeCloseTo(gamma, 9);
       }
     }
@@ -165,8 +165,8 @@ describe('the basis', () => {
         // The operations a cell keeps: the same ones, by index, in either basis.
         const old = classes.operations('6/mmm');
         const transformed = change.operations!;
-        const keptOld = classes.residualOperations(old, basis).map((op) => old.indexOf(op));
-        const keptNew = classes.residualOperations(transformed, newBasis).map((op) => transformed.indexOf(op));
+        const keptOld = classes.residualOperationsOf(old, basis).map((op) => old.indexOf(op));
+        const keptNew = classes.residualOperationsOf(transformed, newBasis).map((op) => transformed.indexOf(op));
         expect(keptNew).toEqual(keptOld);
       }
     });

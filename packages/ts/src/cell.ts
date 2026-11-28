@@ -36,7 +36,7 @@ export interface CellAngles {
   readonly gamma: number;
 }
 
-/** An operation of a list given to `residualOperations`: at least its matrix W; other fields are kept. */
+/** An operation of a list given to `residualOperationsOf`: at least its matrix W; other fields are kept. */
 export interface CellOperation {
   /** The integer 3×3 matrix W acting on lattice coordinates (the `matrix` of an operation). */
   readonly matrix: Mat3;
@@ -253,16 +253,16 @@ export function faceNormal(basis: Mat3, hkl: Vec3): Vec3 {
  * list, in its order. The deviation counts relative to the largest entry of G (`tolerance`, default
  * `EPSILON`), so the result does not depend on the unit of the edge lengths.
  */
-export function residualOperations<T extends CellOperation>(
+export function residualOperationsOf<T extends CellOperation>(
   operations: readonly T[],
   basis: Mat3,
   options?: ToleranceOptions,
 ): readonly T[] {
-  checkOptions(options, TOLERANCE_KEYS, 'residualOperations');
-  checkBasis(basis, 'residualOperations');
+  checkOptions(options, TOLERANCE_KEYS, 'residualOperationsOf');
+  checkBasis(basis, 'residualOperationsOf');
   const g = metricTensor(basis);
   const tolerance = toleranceOf(options, 'metric');
-  if (!Array.isArray(operations)) throw new RangeError('residualOperations: operations must be a list');
+  if (!Array.isArray(operations)) throw new RangeError('residualOperationsOf: operations must be a list');
   // Array.from: a hole of a sparse list is undefined, and refused, not skipped.
   Array.from(operations).forEach((op, i) => {
     const m = (op as { readonly matrix?: unknown } | null)?.matrix;
@@ -273,11 +273,11 @@ export function residualOperations<T extends CellOperation>(
         m,
         (r) => Array.isArray(r) && r.length === 3 && everyEntry(r, (x) => typeof x === 'number' && Number.isFinite(x)),
       );
-    if (!ok) throw new RangeError(`residualOperations: operation ${i} has no 3×3 matrix of finite numbers`);
+    if (!ok) throw new RangeError(`residualOperationsOf: operation ${i} has no 3×3 matrix of finite numbers`);
     // W is an integer matrix; a Cartesian matrix (±√3/2) passed as `matrix` would give a wrong answer.
     if (!(m as number[][]).every((r) => r.every((x) => Math.abs(x - Math.round(x)) < INTEGER_EPSILON))) {
       throw new RangeError(
-        `residualOperations: the matrix of operation ${i} is not an integer matrix in the lattice basis (the field matrix of an operation, not cartesian): ${shown(m)}`,
+        `residualOperationsOf: the matrix of operation ${i} is not an integer matrix in the lattice basis (the field matrix of an operation, not cartesian): ${shown(m)}`,
       );
     }
   });
@@ -292,7 +292,7 @@ export function residualOperations<T extends CellOperation>(
 }
 
 /**
- * An operation of the magnetic API passed to `residualOperations`: its matrix and whether it is
+ * An operation of the magnetic API passed to `residualOperationsOf`: its matrix and whether it is
  * combined with time reversal. The field is optional in the type, so that the operations of
  * `changeOfCoordinates` pass, whose type cannot say that they have it; an operation without it is
  * a RangeError.
@@ -310,11 +310,11 @@ export interface MagneticCellOperation extends CellOperation {
  * Every operation must say whether it is combined with time reversal (`timeReversal`), which is
  * kept; one that does not (an operation of the crystallographic API) is a RangeError.
  */
-export function residualMagneticOperations<T extends MagneticCellOperation>(
+export function residualMagneticOperationsOf<T extends MagneticCellOperation>(
   operations: readonly T[],
   basis: Mat3,
   options?: ToleranceOptions,
 ): readonly T[] {
   if (Array.isArray(operations)) checkTimeReversal(operations as unknown as readonly MagneticOperation[]);
-  return residualOperations(operations, basis, options);
+  return residualOperationsOf(operations, basis, options);
 }

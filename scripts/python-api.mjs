@@ -984,7 +984,7 @@ async function generate(name, cfg) {
         params.push(`${snake(p.name)}: ${a.py}`);
         args.push(a.expr);
       }
-      // A generic result (residualOperations gives back the caller's operations): the list of a
+      // A generic result (residualOperationsOf gives back the caller's operations): the list of a
       // record of the entry point named in api.json.
       // The name of that record: one for every module, or per module an object.
       const listOfName = perModule(own.listOf, ctx.name);
@@ -1112,7 +1112,7 @@ async function generate(name, cfg) {
         continue;
       }
       if (own.selects) {
-        // A function that keeps some of the caller's operations (residualOperations): the library is
+        // A function that keeps some of the caller's operations (residualOperationsOf): the library is
         // given the caller's operations as they are, each with its index (so that it refuses what it
         // refuses), and the result takes the kept ones from them, in the class given (Operations or
         // TransformedOperations), a list of mappings as Operations.

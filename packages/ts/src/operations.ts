@@ -12,7 +12,7 @@ import { EPSILON } from './tolerances.js';
  * A point operation as the calculations use it: its orthogonal Cartesian matrix (rotation,
  * rotoinversion, mirror, inversion), combined with time reversal if `timeReversal` is `true` (a primed
  * operation). Every function that takes operations from a caller and computes with Cartesian
- * matrices reads these two fields (`residualOperations` reads `matrix` instead), so an `Operation`
+ * matrices reads these two fields (`residualOperationsOf` reads `matrix` instead), so an `Operation`
  * of the API can be passed as it is.
  */
 export interface CartesianOperation {

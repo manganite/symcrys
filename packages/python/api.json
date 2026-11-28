@@ -195,7 +195,7 @@
     "changeOfCoordinates": {
       "operationKeys": ["matrix"]
     },
-    "residualOperations": {
+    "residualOperationsOf": {
       "operationKeys": ["matrix"],
       "listOf": {
         "symcrys": "Operation",
@@ -245,7 +245,7 @@
         "matrix": ["int64", [3, 3]],
         "cartesian": ["float64", [3, 3]]
       },
-      "doc": "The operations of a point group as arrays, one row per operation, in the order of ``operations``: what ``operations``, ``generators`` and ``residual_operations`` return, and what every function that takes operations accepts, beside a list of dicts ``{\"cartesian\"}`` and an array of Cartesian matrices of shape (n, 3, 3). Frozen, its arrays read-only; ``len(ops)`` is the number of operations.",
+      "doc": "The operations of a point group as arrays, one row per operation, in the order of ``operations``: what ``operations``, ``generators`` and ``residual_operations_of`` return, and what every function that takes operations accepts, beside a list of dicts ``{\"cartesian\"}`` and an array of Cartesian matrices of shape (n, 3, 3). Frozen, its arrays read-only; ``len(ops)`` is the number of operations.",
       "keys": ["cartesian"]
     },
     "symcrys.magnetic": {
@@ -255,7 +255,7 @@
         "cartesian": ["float64", [3, 3]],
         "timeReversal": ["bool", []]
       },
-      "doc": "The operations of a magnetic point group as arrays, one row per operation, in the order of ``operations``: what ``operations``, ``generators`` and ``residual_operations`` return, and what every function that takes operations accepts, beside a list of dicts ``{\"cartesian\", \"time_reversal\"}``. An array of matrices alone is refused here, since it does not say which operations carry time reversal. Frozen, its arrays read-only; ``len(ops)`` is the number of operations.",
+      "doc": "The operations of a magnetic point group as arrays, one row per operation, in the order of ``operations``: what ``operations``, ``generators`` and ``residual_operations_of`` return, and what every function that takes operations accepts, beside a list of dicts ``{\"cartesian\", \"time_reversal\"}``. An array of matrices alone is refused here, since it does not say which operations carry time reversal. Frozen, its arrays read-only; ``len(ops)`` is the number of operations.",
       "keys": ["cartesian", "time_reversal"]
     },
     "symcrys.plane": {
