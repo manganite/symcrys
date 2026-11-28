@@ -1530,15 +1530,16 @@ def point_group_of(
     distorting a crystal: its key, and the setting whose operations it equals in the frame of
     symcrys (absent if the group is the class in another orientation, e.g. a threefold axis along
     [111]). The list is closed into a group first, two matrices being equal when no entry differs by
-    ``tolerance`` (default ``EPSILON``) or more. Returns None if the operations generate a finite
-    group that is not a crystal class (an operation of order 5, a group larger than 48). Raises
-    SymcrysError for an operation without an orthogonal Cartesian matrix (``cartesian``; within
-    ``tolerance``, at least ``EPSILON``), and if the operations do not close into a finite group
-    within the tolerance, the error of ``tensor_form_of`` for the same input (matrices with errors
-    too large for it, or a rotation by an angle that is not 360°/n). The classes ``1`` and ``-1``
-    have no orientation, so they always have setting 1. The first call builds a table of the groups
-    (about 0.1 s in Node, 0.3 s in the Python package; docs/conventions.md, "Point group of a list
-    of operations").
+    ``tolerance`` (default ``EPSILON``) or more, and made exact, as ``tensor_form_of`` makes it, so
+    that the group identified is exact. Returns None if the operations generate a finite group that
+    is not a crystal class (an operation of order 5, a group larger than 48). Raises SymcrysError
+    for an operation without an orthogonal Cartesian matrix (``cartesian``; within ``tolerance``, at
+    least ``EPSILON``), and if the operations do not close into a finite group within the tolerance
+    or not into an exact group near them, the error of ``tensor_form_of`` for the same input
+    (matrices with errors too large for it, or a rotation by an angle that is not 360°/n). The
+    classes ``1`` and ``-1`` have no orientation, so they always have setting 1. The first call
+    builds a table of the groups (about 0.1 s in Node, 0.3 s in the Python package;
+    docs/conventions.md, "Point group of a list of operations").
 
     Parameters
     ----------
@@ -2381,7 +2382,7 @@ def to_voigt(
     result: NDArray[np.float64] = _shared.convert(
         _call(
             "toVoigt",
-            _shared.array(tensor, "tensor", np.float64).reshape(-1),
+            _shared.tensor(tensor, "tensor"),
             _shared.spec(spec),
             _shared.options(factors=None if factors is None else _shared.array(factors, "factors", np.float64), tolerance=tolerance),
         ),

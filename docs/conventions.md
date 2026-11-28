@@ -563,7 +563,12 @@ Matrices hold floating-point numbers. During group closure every entry within 10
 value (0, ±1, ±1/2, ±√3/2, and ±√2/2 for the 45° setting frame) is set to that value, so products do not drift; two matrices are
 equal when all entries agree within `EPSILON` (10⁻⁵). Operations a caller passes in are compared within the
 tolerance of the call ("Tolerances"). The matrix W of an operation in the lattice basis
-(`matrix`, "Operations") is exact: integers.
+(`matrix`, "Operations") is exact: integers. Integers are computed exactly or not at all: every
+product and sum of indices, of the entries of W and of their images is checked, and a value outside
+the safe integers (beyond 2⁵³ − 1) is a RangeError, never a rounded number.
+So a call can be refused whose result would be representable, when a value on the way is not (a
+cross product of indices above about 9·10⁷); such indices do not occur in crystallography. A list
+with a hole (a sparse array such as `[1, , 3]`) is refused, where a check of its entries would skip it.
 
 ## Tolerances
 
@@ -603,26 +608,32 @@ when they differ by less than the tolerance, in the metric of their kind:
   passes this bound with a chance of about tolerance^(1/3)). A point of the plane may have
   coordinates of at most 10⁶ in magnitude (`MAX_COORDINATE`): beyond about 2⁵² a double has no
   fractional part.
-- **Operations of a caller are made exact.** `tensorFormOf`, `isCentrosymmetricOf`,
+- **Operations of a caller are made exact.** `pointGroupOf`, `tensorFormOf`, `isCentrosymmetricOf`,
   `allowsPropertyOf` and `allowedPropertiesOf` close the list into a group within the tolerance and
-  replace it by the exact group nearest to it before they compute anything: each matrix f(x) by
-  the mean of f(xy)·f(y)⁻¹ over the group, repeated until it settles, which turns matrices that are
-  a group within a small error into an exact representation nearby, then made orthogonal by its
-  invariant metric. The rank of a tensor form is the trace of the group average of the exact
+  replace it by an exact group near it before they compute anything: each matrix f(x) by the mean
+  of f(xy)·f(y)⁻¹ over the group, repeated until it settles, which turns matrices that are a group
+  within a small error into an exact representation nearby, then made orthogonal by its invariant
+  metric. The result is checked, since a small last step does not prove a group: its products and
+  RᵀR lie within 10⁻⁹ per entry of the elements and of the identity (`IDEAL_RESIDUAL`), its
+  elements are distinct (a closure that kept near copies of an operation settles onto duplicates),
+  and every operation of the caller lies within the tolerance of an element; otherwise the call is a
+  RangeError.
+  `pointGroupOf` identifies the exact group, whose traces are exact. The rank of a tensor form is the trace of the group average of the exact
   group, exact in any frame, and its free parameters are sought first among components larger
   than ten times the distance between the caller's matrices and the exact group, so that a component of the order of that error is not
   taken for an independent one. Operations rounded to 4, 5 or 6 decimals give the form of
   the exact group for every class in every setting, and its number of free parameters in a general
-  orientation, for all 122 groups (`tensors/tolerance.test.ts`). `isCentrosymmetricOf` only closes
-  the list within the tolerance and seeks the inversion in it.
+  orientation, for all 122 groups (`tensors/tolerance.test.ts`). `isCentrosymmetricOf` seeks the
+  inversion in the exact group.
 - **The tolerance must exceed the errors of the products.** Closing a list multiplies its
   matrices, and their errors add up: matrices rounded to n decimals need a tolerance of about
   10^(1−n), not 10^(−n). With the default, matrices rounded to 6 decimals pass in any orientation;
   rounded to fewer decimals they need a larger tolerance. Where the tolerance is too small, every
   function of a list says so in a RangeError: the orthogonality check names the deviation it
   measured, and a list that closes into no finite group, or into near copies of one operation,
-  is refused, by `pointGroupOf` too. `pointGroupOf` returns `undefined` only for a finite group
-  that is not a crystallographic point group (a fivefold rotation).
+  is refused, by `pointGroupOf` too, and so is one whose exact group fails its checks.
+  `pointGroupOf` returns `undefined` only for a finite group that is not a crystallographic point
+  group (a fivefold rotation).
 - **The exact group is near the caller's, not necessarily the textbook one.** Matrices rounded to 4
   decimals give an exact group within their errors (√3/2 written as 0.866 fixes the orientation of
   a hexagonal group about z only to a few 10⁻⁵), so a form computed from them has entries within

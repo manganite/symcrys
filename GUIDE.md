@@ -167,9 +167,14 @@ Library code is everything in `packages/ts/src` except test-only code ("Correctn
   record becomes a dict typed by a TypedDict of the TypeScript interface's name, a named union of
   strings a Literal type; a list of operations becomes one `Operations` record of arrays (the
   operations of a change of coordinates `TransformedOperations`), and a tensor basis and its
-  relations arrays of shape (3, …, 3) per tensor; complex numbers and integers beyond 2⁵³ − 1 are
-  refused; a `RangeError` raises `SymcrysError` (a `ValueError`) with its message in Python's
-  terms (snake_case names, `None`, `True`, keyword arguments), any other error
+  relations arrays of shape (3, …, 3) per tensor; input whose conversion would change its meaning
+  is refused, on the raw input before it is converted (`_convert.py`, `_shared.py`): complex
+  numbers, integers beyond 2⁵³ − 1, masked values, strings or objects where numbers are expected, a
+  numeric NumPy scalar that is not exactly a double or an integer, times (`datetime64`,
+  `timedelta64`), a key that is not a string, two keys that name one field (`time_parity` and
+  `timeParity`), an empty array of the wrong shape; a `RangeError` raises `SymcrysError` (a
+  `ValueError`) with its message in Python's terms (snake_case names, `None`, `True`, keyword
+  arguments), any other error
   `SymcrysInternalError` (a `RuntimeError`).
 - **The modules are generated** from the TypeScript entry points (`scripts/python-api.mjs`):
   signatures, bodies, docstrings, TypedDicts, Literal types and `__all__`. Hand-written are only

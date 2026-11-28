@@ -11,7 +11,7 @@
  */
 
 import { planeWyckoffRows } from './spaceGroups/planeWyckoff.js';
-import { TOLERANCE_KEYS, checkOptions, shown } from './checks.js';
+import { TOLERANCE_KEYS, checkOptions, shown, everyEntry } from './checks.js';
 import { describePlaneOperation, type PlaneOperationKind } from './spaceGroups/describe.js';
 import { planeAsymmetricUnit, planeElements, planeElementsInBox } from './spaceGroups/cell.js';
 import { checkUnimodular, toPlain, type ExactOperation, type IntMatrix } from './spaceGroups/affine.js';
@@ -552,19 +552,21 @@ function exactOf(op: unknown, tolerance: number): ExactOperation {
   const o = op as Partial<PlaneOperation> | null;
   const m = o?.matrix;
   const t = o?.translation;
-  const isRow = (row: unknown): row is readonly number[] => Array.isArray(row) && row.length === 2;
-  if (!Array.isArray(m) || m.length !== 2 || !m.every(isRow) || !Array.isArray(t) || t.length !== 2) {
+  const isRow = (row: unknown): row is readonly number[] =>
+    Array.isArray(row) && row.length === 2 && everyEntry(row, (x) => typeof x === 'number');
+  if (!Array.isArray(m) || m.length !== 2 || !everyEntry(m, isRow) || !Array.isArray(t) || t.length !== 2) {
     throw new RangeError(`Not an operation of the plane { matrix (2 × 2), translation (2) }: ${shown(op)}`);
   }
   const matrix = m.map((row) =>
-    row.map((v) => {
+    row.map((v: unknown) => {
       if (!(typeof v === 'number' && Math.abs(v - Math.round(v)) < tolerance)) {
         throw new RangeError(`The matrix of a plane operation has integer entries, not ${shown(m)}`);
       }
       return Math.round(v) + 0;
     }),
   );
-  return { matrix, translation: t.map((v) => nearestFraction(v, tolerance, 'translation')) };
+  // Array.from: a hole is undefined, and refused by nearestFraction, not skipped.
+  return { matrix, translation: Array.from(t as unknown[]).map((v) => nearestFraction(v, tolerance, 'translation')) };
 }
 
 /** True if `key` is the key of one of the 17 plane groups (its short symbol in ITA's notation). */
@@ -773,7 +775,7 @@ export function describeOperationsOf(
   if (!Array.isArray(operations)) {
     throw new RangeError('describeOperationsOf takes a list of operations { matrix, translation }');
   }
-  return Object.freeze(operations.map((op) => describe(exactOf(op, tolerance))));
+  return Object.freeze(Array.from(operations as unknown[]).map((op) => describe(exactOf(op, tolerance))));
 }
 
 /**
@@ -1239,7 +1241,8 @@ function exactList(operations: unknown, name: string, tolerance: number): ExactO
   if (!Array.isArray(operations)) {
     throw new RangeError(`${name} takes a list of operations { matrix, translation }, not ${shown(operations)}`);
   }
-  return operations.map((op) => {
+  // Array.from: a hole of a sparse list is undefined, and refused, not skipped.
+  return Array.from(operations as unknown[]).map((op) => {
     const exactOp = exactOf(op, tolerance);
     // A singular matrix (a projection) would pass the group checks, which only test products.
     checkUnimodular(exactOp);
@@ -1444,8 +1447,9 @@ export function symmetryElements(key: PlaneGroupKey, options?: SymmetryElementsO
     const ok =
       Array.isArray(box) &&
       box.length === 2 &&
-      box.every(
-        (c) => Array.isArray(c) && c.length === 2 && c.every((v) => typeof v === 'number' && Number.isFinite(v)),
+      everyEntry(
+        box,
+        (c) => Array.isArray(c) && c.length === 2 && everyEntry(c, (v) => typeof v === 'number' && Number.isFinite(v)),
       );
     if (!ok || !(box[0][0] <= box[1][0] && box[0][1] <= box[1][1])) {
       throw new RangeError(`A box is two corners [[x0, y0], [x1, y1]] with x0 <= x1 and y0 <= y1, not ${shown(box)}`);

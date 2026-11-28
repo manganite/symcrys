@@ -7,7 +7,7 @@
 
 import { MAX_FRACTION_DEPTH } from '../tolerances.js';
 import { shown } from '../checks.js';
-import { gcd } from '../integers.js';
+import { checkSafeInteger, gcd, safeProduct, safeSum } from '../integers.js';
 
 /** A rational number n/d: d > 0, gcd(n, d) = 1, both safe integers. */
 export type Rational = readonly [numerator: number, denominator: number];
@@ -17,24 +17,6 @@ export const ZERO: Rational = [0, 1];
 
 /** The rational 1. */
 export const ONE: Rational = [1, 1];
-
-/** Throws unless `value` is a safe integer. */
-export function checkSafeInteger(value: number, what: string): number {
-  if (!Number.isSafeInteger(value)) {
-    throw new RangeError(`${what} must be a safe integer, not ${String(value)}`);
-  }
-  return value;
-}
-
-/** The product a·b of two safe integers; throws if it leaves the safe integers. */
-export function safeProduct(a: number, b: number): number {
-  return checkSafeInteger(a * b, 'An intermediate product');
-}
-
-/** The sum a + b of two safe integers; throws if it leaves the safe integers. */
-export function safeSum(a: number, b: number): number {
-  return checkSafeInteger(a + b, 'An intermediate sum');
-}
 
 /** The rational n/d in lowest terms; throws if d is 0 or a part is not a safe integer. */
 export function rational(numerator: number, denominator = 1): Rational {

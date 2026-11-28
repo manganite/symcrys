@@ -7,7 +7,7 @@
 
 import { planeWyckoffRows } from './planeWyckoff.js';
 import { deepFreeze } from '../freeze.js';
-import { shown } from '../checks.js';
+import { shown, everyEntry } from '../checks.js';
 import { gcd } from '../integers.js';
 import {
   compose,
@@ -66,7 +66,11 @@ export const MAX_COORDINATE = 1e6;
 
 /** Checks a point of the plane: two finite coordinates of at most `MAX_COORDINATE` in magnitude. */
 export function checkPlanePoint(point: readonly number[]): void {
-  if (!Array.isArray(point) || point.length !== 2 || !point.every((x) => typeof x === 'number' && Number.isFinite(x))) {
+  if (
+    !Array.isArray(point) ||
+    point.length !== 2 ||
+    !everyEntry(point, (x) => typeof x === 'number' && Number.isFinite(x))
+  ) {
     throw new RangeError(`A point of the plane has two finite coordinates, not ${shown(point)}`);
   }
   if (point.some((x) => Math.abs(x) > MAX_COORDINATE)) {
