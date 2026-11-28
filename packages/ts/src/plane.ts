@@ -558,7 +558,8 @@ function exactOf(op: unknown, tolerance: number): ExactOperation {
       return Math.round(v) + 0;
     }),
   );
-  return { matrix, translation: t.map((v) => nearestFraction(v, tolerance, 'translation')) };
+  // Array.from: a hole is undefined, and refused by nearestFraction, not skipped.
+  return { matrix, translation: Array.from(t as unknown[]).map((v) => nearestFraction(v, tolerance, 'translation')) };
 }
 
 /** True if `key` is the key of one of the 17 plane groups (its short symbol in ITA's notation). */

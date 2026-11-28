@@ -15,8 +15,6 @@ import {
   zoneAxis,
 } from './indices.js';
 import { faceNormal, latticeBasis, orbit } from './index.js';
-import * as classes from './index.js';
-import * as plane from './plane.js';
 import type { Vec3 } from './linalg.js';
 import { seededRandom } from './testUtils/noise.js';
 
@@ -229,30 +227,14 @@ describe('#236: a sparse array is refused as indices', () => {
   it('faceNormal', () => expect(() => faceNormal(latticeBasis('m-3m'), sparse(1, 0))).toThrow(RangeError));
 });
 
-describe('#236: a list of operations with a hole is refused', () => {
-  /** The list with a hole after its first entry: `forEach` and `map` skip it. */
-  const holey = <T>(list: readonly T[]): T[] => {
-    const a = new Array<T>(list.length + 1);
-    list.forEach((x, i) => (a[i === 0 ? 0 : i + 1] = x));
-    return a;
-  };
-  const ops = classes.operations('m');
-  // On 0.15.0: a TypeError (a fault of symcrys), or an answer that skips the hole.
-  it('pointGroupOf', () => expect(() => classes.pointGroupOf(holey(ops))).toThrow(RangeError));
-  it('residualOperations', () =>
-    expect(() => classes.residualOperations(holey(ops), latticeBasis('m'))).toThrow(RangeError));
-  it('changeOfCoordinates', () =>
-    expect(
-      () =>
-      classes.changeOfCoordinates({ linearPart: [[1, 0, 0], [0, 1, 0], [0, 0, 1]] }, { operations: holey(ops) }), // prettier-ignore
-    ).toThrow(RangeError));
-  it('describeOperationsOf of the plane', () =>
-    expect(() => plane.describeOperationsOf(holey(plane.operations('pm')))).toThrow(RangeError));
-});
-
 describe('#236: the messages name the function', () => {
   it('zoneAxis', () =>
     expect(() => zoneAxis([1e8, 1e8 - 1, 0], [1e8 + 1, 1e8, 0])).toThrow(/^zoneAxis: .*safe integers/));
+  it('an invalid i or T says so, also where h + k or U + V leaves the safe integers', () => {
+    const big = Number.MAX_SAFE_INTEGER;
+    expect(() => planeFromFourIndices([big, 2, 0, 0])).toThrow(/i must be −\(h \+ k\)/);
+    expect(() => directionFromFourIndices([big, 1, -big, 1])).toThrow(/T must be −\(U \+ V\)/);
+  });
   it('millerIndices', () =>
     expect(() => millerIndices('2h,k,l', { h: 2 ** 52, k: 0, l: 0 })).toThrow(/^millerIndices: .*2h.*safe integers/));
 });

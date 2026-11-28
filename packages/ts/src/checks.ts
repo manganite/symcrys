@@ -64,7 +64,6 @@ export function pick<T extends object>(options: T | undefined, keys: readonly st
   return Object.fromEntries(Object.entries(options).filter(([k]) => keys.includes(k))) as Partial<T>;
 }
 
-/** Throws unless `v` is an array of `length` finite numbers. */
 /**
  * True if `test` holds for every entry of the array, a hole of a sparse array included as
  * `undefined` (`.every` skips holes, so `[1, , 3]` would pass a check of its entries).
@@ -76,6 +75,7 @@ export function everyEntry<T>(v: readonly T[], test: (x: T) => boolean): boolean
   return true;
 }
 
+/** Throws unless `v` is an array of `length` finite numbers. */
 export function checkNumbers(v: unknown, length: number, what: string): asserts v is readonly number[] {
   if (!Array.isArray(v) || v.length !== length || !everyEntry(v, (x) => typeof x === 'number' && Number.isFinite(x))) {
     throw new RangeError(`${what} must be ${length} finite numbers, not ${shown(v)}`);

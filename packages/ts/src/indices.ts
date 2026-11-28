@@ -64,7 +64,9 @@ export function planeToFourIndices(hkl: Vec3): FourIndices {
  */
 export function planeFromFourIndices(hkil: FourIndices): Vec3 {
   integers(hkil, 'planeFromFourIndices', 4);
-  if (hkil[2] !== -inSafeIntegers('planeFromFourIndices', 'h + k', () => safeSum(hkil[0], hkil[1])))
+  // h + k beyond the safe integers cannot be −i, which is safe: the indices are not of one plane.
+  const sum = hkil[0] + hkil[1];
+  if (!Number.isSafeInteger(sum) || hkil[2] !== -sum)
     throw new RangeError(`planeFromFourIndices: i must be −(h + k) in ${shown(hkil)}`);
   return deepFreeze([hkil[0] + 0, hkil[1] + 0, hkil[3] + 0]);
 }
@@ -98,12 +100,11 @@ export function directionFromFourIndices(uvtw: FourIndices): Vec3 {
   integers(uvtw, 'directionFromFourIndices', 4);
   if (uvtw.every((x) => x === 0)) throw new RangeError('directionFromFourIndices: zero vector');
   const [U, V, T, W] = uvtw;
-  const [sum, u, v] = inSafeIntegers('directionFromFourIndices', 'U + V, U − T and V − T', () => [
-    safeSum(U, V),
-    safeSum(U, -T),
-    safeSum(V, -T),
-  ]);
-  if (T !== -sum) throw new RangeError(`directionFromFourIndices: T must be −(U + V) in ${shown(uvtw)}`);
+  // U + V beyond the safe integers cannot be −T, which is safe: the indices are not of one direction.
+  const sum = U + V;
+  if (!Number.isSafeInteger(sum) || T !== -sum)
+    throw new RangeError(`directionFromFourIndices: T must be −(U + V) in ${shown(uvtw)}`);
+  const [u, v] = inSafeIntegers('directionFromFourIndices', 'U − T and V − T', () => [safeSum(U, -T), safeSum(V, -T)]);
   return deepFreeze(reduceIndices([u, v, W]) as unknown as Vec3);
 }
 

@@ -11,6 +11,7 @@ import {
   closure,
   determinant,
   formatOperation,
+  multiplyMatrices,
   reduceModLattice,
   type ExactOperation,
   type IntMatrix,
@@ -26,8 +27,8 @@ export type VectorKind = 'uv' | 'hk';
 /** Two integer matrices equal entry by entry. */
 const sameMatrix = (a: IntMatrix, b: IntMatrix): boolean => a.every((row, i) => row.every((v, j) => v === b[i][j]));
 
-const product = (a: IntMatrix, b: IntMatrix): number[][] =>
-  [0, 1].map((i) => [0, 1].map((j) => a[i][0] * b[0][j] + a[i][1] * b[1][j] + 0));
+/** The product of two integer matrices, checked: a value outside the safe integers throws. */
+const product = (a: IntMatrix, b: IntMatrix): number[][] => multiplyMatrices(a, b);
 
 const sameVector = (a: readonly number[], b: readonly number[]): boolean => a[0] === b[0] && a[1] === b[1];
 

@@ -259,7 +259,8 @@ export function planeBasisColumns(basis: unknown, who: string): [readonly number
   const ok =
     Array.isArray(basis) &&
     basis.length === 2 &&
-    basis.every(
+    everyEntry(
+      basis,
       (row) =>
         Array.isArray(row) && row.length === 2 && everyEntry(row, (x) => typeof x === 'number' && Number.isFinite(x)),
     );

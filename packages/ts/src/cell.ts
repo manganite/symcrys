@@ -164,7 +164,8 @@ function checkBasis(basis: Mat3, who: string): void {
   const ok =
     Array.isArray(basis) &&
     basis.length === 3 &&
-    basis.every(
+    everyEntry(
+      basis,
       (r) => Array.isArray(r) && r.length === 3 && everyEntry(r, (x) => typeof x === 'number' && Number.isFinite(x)),
     );
   if (!ok) throw new RangeError(`${who}: the basis must be a 3×3 matrix of finite numbers`);

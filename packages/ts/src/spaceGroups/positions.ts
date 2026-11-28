@@ -402,7 +402,8 @@ export function planeMetric(basis: unknown): Mat2 {
   const ok =
     Array.isArray(basis) &&
     basis.length === 2 &&
-    basis.every(
+    everyEntry(
+      basis,
       (row) =>
         Array.isArray(row) && row.length === 2 && everyEntry(row, (x) => typeof x === 'number' && Number.isFinite(x)),
     );
