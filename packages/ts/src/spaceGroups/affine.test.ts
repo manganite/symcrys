@@ -250,4 +250,11 @@ describe('cosetsByGenerators', () => {
     // A generator of infinite order modulo the lattice (a shear) is stopped at the largest order.
     expect(() => cosetsByGenerators([op('x+y,y,z')], 3, 48)).toThrow(/at most 48/);
   });
+
+  it.fails('refuses a list that holds a coset twice (#261)', () => {
+    // With three or more generators, the list built from the first ones need not be a group, and the
+    // cosets of the next by it can overlap. These generators of the plane give 8 entries for the 6
+    // operations of 3m: two cosets occur twice.
+    expect(() => cosetsByGenerators(['-y,-x', 'x,x-y', '-x+y,y'].map(op), 2, 24)).toThrow(/twice|give no group/);
+  });
 });
