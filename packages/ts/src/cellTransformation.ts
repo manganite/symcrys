@@ -118,6 +118,20 @@ const FOURFOLD = parse('0 -1 0; 1 0 0; 0 0 1');
 const OBVERSE_CENTRING = parse('2/3; 1/3; 1/3');
 
 /**
+ * The primitive rhombohedral cell of the obverse setting in the triple hexagonal cell R₁, the
+ * columns a_R, b_R, c_R of P: the obverse centring vector t = (2/3, 1/3, 1/3) and its turns by the
+ * threefold rotation about c, a_R = (2a + b + c)/3, b_R = (−a + b + c)/3, c_R = (−a − 2b + c)/3
+ * (ITA 2016 Table 1.5.1.1, p. 78, the matrix of R₁ obverse). The one definition of the rhombohedral
+ * axes; the point groups take it as the basis of their settings with rhombohedral axes.
+ */
+export const OBVERSE_RHOMBOHEDRAL_BASIS: RMatrix = deepFreeze(
+  (() => {
+    const columns = [0, 1, 2].map((k) => product(power(THREEFOLD, k), OBVERSE_CENTRING));
+    return [0, 1, 2].map((i) => columns.map((col) => col[i][0]));
+  })(),
+);
+
+/**
  * The basis of a named cell in the conventional cell of the standard setting, P with
  * (a′, b′, c′) = (a, b, c)·P:
  *
@@ -163,11 +177,7 @@ function basisOf(lattice: BravaisLattice, key: string): RMatrix {
     return product(power(TWOFOLD, k), CELL_DEFINITIONS.tripleRhombohedral1);
   }
   if (lattice === 'hR') {
-    if (key === 'rhombohedral') {
-      // The centring vector and its turns by the threefold rotation.
-      const columns = [0, 1, 2].map((k) => product(power(THREEFOLD, k), OBVERSE_CENTRING));
-      return [0, 1, 2].map((i) => columns.map((col) => col[i][0]));
-    }
+    if (key === 'rhombohedral') return OBVERSE_RHOMBOHEDRAL_BASIS;
     const k = Number(key[1]) - 1;
     if (key[0] === 'R') {
       const obverse = power(THREEFOLD, k);

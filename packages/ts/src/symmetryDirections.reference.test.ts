@@ -6,6 +6,7 @@
 import { describe, expect, it } from 'vitest';
 import { expectHeader, readReference, tableRows } from './testUtils/references.js';
 import { LATTICE_SYMMETRY_DIRECTIONS } from './symmetryDirections.js';
+import { classData, settingSymmetryDirections } from './pointGroups/classData.js';
 
 const rows = tableRows(readReference('itc/vol-a-table-2.1.3.1.md'));
 expectHeader(rows, ['Lattice', 'Primary', 'Secondary', 'Tertiary']);
@@ -46,6 +47,16 @@ describe('LATTICE_SYMMETRY_DIRECTIONS (ITA Table 2.1.3.1)', () => {
       [0, 0, 1],
     ]);
     for (const d of unique) expect(LATTICE_SYMMETRY_DIRECTIONS.monoclinic.flat()).toContainEqual(d);
+  });
+
+  it('rhombohedral axes: the row Rhombohedral (rhombohedral axes), computed from the hexagonal directions', () => {
+    for (const key of ['3', '-3', '32', '3m', '-3m'] as const) {
+      for (const s of classData(key).settings.filter((x) => x.axes === 'rhombohedral')) {
+        expect(plain(settingSymmetryDirections(key, s.index)), key).toEqual(row('Rhombohedral (rhombohedral axes)'));
+      }
+    }
+    // With hexagonal axes the rhombohedral lattice has the first two positions of the hexagonal one.
+    expect(plain(LATTICE_SYMMETRY_DIRECTIONS.hexagonal).slice(0, 2)).toEqual(row('Rhombohedral (hexagonal axes)'));
   });
 
   it('triclinic: none', () => {

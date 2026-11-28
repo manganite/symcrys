@@ -10,7 +10,15 @@
 import { deepFreeze } from '../freeze.js';
 import { crystalFamily } from '../lattice.js';
 import { dot, inverse, transpose, apply as applyMatrix, type Mat3, type Vec3 } from '../linalg.js';
-import { classData, classSettingData, settingBasis, settingLatticeOperations } from './classData.js';
+import { OBVERSE_RHOMBOHEDRAL_BASIS } from '../cellTransformation.js';
+import { scale, toNumber } from '../spaceGroups/rational.js';
+import {
+  classData,
+  classSettingData,
+  HEXAGONAL_IN_RHOMBOHEDRAL,
+  settingBasis,
+  settingLatticeOperations,
+} from './classData.js';
 import { classSettingSymbols } from './classSymbols.js';
 import type { PointGroupKey } from './keys.js';
 import { keyOfCompleteGroup } from './identify.js';
@@ -68,17 +76,11 @@ const CONVENTIONS: FormConventions = {
   firstFaces: FIRST_LIMITING_FACE_EXCEPTIONS,
 };
 
-/** The rhombohedral basis in the hexagonal one, times 3 (columns: the obverse a, b, c), and its inverse. */
-const RHOMBOHEDRAL_3: Mat = [
-  [2, -1, -1],
-  [1, 1, -2],
-  [1, 1, 1],
-];
-const HEXAGONAL_IN_RHOMBOHEDRAL: Mat = [
-  [1, 0, 1],
-  [-1, 1, 1],
-  [0, -1, 1],
-];
+/**
+ * 3P, the rhombohedral basis P in the hexagonal one (`OBVERSE_RHOMBOHEDRAL_BASIS`, columns the
+ * obverse a, b, c) times 3, an integer matrix like P⁻¹ (`HEXAGONAL_IN_RHOMBOHEDRAL`).
+ */
+const RHOMBOHEDRAL_3: Mat = OBVERSE_RHOMBOHEDRAL_BASIS.map((row) => row.map((x) => toNumber(scale(3, x))));
 
 const multiply = (a: Mat, b: Mat): number[][] =>
   a.map((row) => [0, 1, 2].map((j) => row[0] * b[0][j] + row[1] * b[1][j] + row[2] * b[2][j]));

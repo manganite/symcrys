@@ -159,7 +159,8 @@ their operations, a, b, c along x, y, z, so that W and R are equal; the basis of
 
 **Rhombohedral axes** are those of the obverse setting in the hexagonal cell (ITA 2016 Table
 1.5.1.1, p. 78, the matrix Q of the row R₁ obverse): a_R = (2a + b + c)/3, b_R = (−a + b + c)/3, c_R = (−a − 2b + c)/3, with the hexagonal a, b,
-c above, so that [111] lies along z and the twofold axes of `32` along the a directions of the
+c above, the obverse centring vector (2/3, 1/3, 1/3) and its turns by the threefold rotation, the
+same primitive cell as `cellTransformation` gives ("Cells of a lattice"), so that [111] lies along z and the twofold axes of `32` along the a directions of the
 hexagonal cell, as in `321`. A setting with rhombohedral axes therefore has the Cartesian operations
 of the default setting with hexagonal axes; it differs in its lattice basis, and so in the lattice
 operations, the Miller indices and the symmetry directions. As for hexagonal axes, the cell is the one of unit edge lengths a = c = 1; a
@@ -746,7 +747,8 @@ unique axis a, which the table does not list), and the full symbol has `1` at th
 (`1 2/m 1`; in a space group `P 1 2/m 1`), as `symmetryDirections` gives them: the positions of
 the full symbol, not only the unique axis. The triclinic
 family has none. A setting with rhombohedral axes has the
-two positions of the row "Rhombohedral (rhombohedral axes)": [111], and [1-10], [01-1], [-101].
+two positions of the row "Rhombohedral (rhombohedral axes)": [111], and [1-10], [01-1], [-101],
+computed from the first two positions of the hexagonal family in the rhombohedral basis.
 
 `symmetryDirections(key, options)` lists, for a setting, every position of the family with the
 symbol at that position (if the full symbol has it) and, for each direction, the elements along
