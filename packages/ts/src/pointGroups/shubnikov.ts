@@ -5,7 +5,7 @@
  * overbar (a rotoreflection axis), `.` the centred dot, `:` and `/` as printed.
  */
 
-import { det, dot, trace, type Mat3, type Vec3 } from '../linalg.js';
+import { det, dot, normalize, trace, type Mat3, type Vec3 } from '../linalg.js';
 import { ANGLE_EPSILON, AXIS_EPSILON } from '../tolerances.js';
 
 /** A Cartesian operation and whether it carries time reversal. */
@@ -23,10 +23,6 @@ interface Element {
   readonly timeReversal: boolean;
 }
 
-const unit = (v: Vec3): Vec3 => {
-  const l = Math.hypot(v[0], v[1], v[2]);
-  return [v[0] / l, v[1] / l, v[2] / l];
-};
 const parallel = (a: Vec3, b: Vec3): boolean => Math.abs(Math.abs(dot(a, b)) - 1) < AXIS_EPSILON;
 const perpendicular = (a: Vec3, b: Vec3): boolean => Math.abs(dot(a, b)) < AXIS_EPSILON;
 
@@ -41,9 +37,9 @@ function element(op: ShubnikovOperation): Element {
   let axis: Vec3;
   if (n === 2) {
     const columns = [0, 1, 2].map((j) => [0, 1, 2].map((i) => r[i][j] + (i === j ? 1 : 0)) as unknown as Vec3);
-    axis = unit(columns.reduce((a, b) => (Math.hypot(...b) > Math.hypot(...a) ? b : a)));
+    axis = normalize(columns.reduce((a, b) => (Math.hypot(...b) > Math.hypot(...a) ? b : a)));
   } else {
-    axis = unit([r[2][1] - r[1][2], r[0][2] - r[2][0], r[1][0] - r[0][1]]);
+    axis = normalize([r[2][1] - r[1][2], r[0][2] - r[2][0], r[1][0] - r[0][1]]);
   }
   return { proper, n, axis, timeReversal: op.timeReversal };
 }

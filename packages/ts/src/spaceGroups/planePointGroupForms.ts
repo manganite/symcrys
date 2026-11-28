@@ -12,12 +12,12 @@ import { deepFreeze } from '../freeze.js';
 import { gcd } from '../integers.js';
 import { parseOperation } from './affine.js';
 import {
-  PLANE_POINT_GROUP_KEYS,
   planePointGroupOperations,
   planePointGroupSystem,
   symmorphicPlaneGroup,
   type PlanePointGroupKey,
 } from './planePointGroups.js';
+import { planeHolohedry } from './planeLattice.js';
 import { planeWyckoffRows } from './planeWyckoff.js';
 
 /**
@@ -155,15 +155,9 @@ const CANDIDATE_EDGES: readonly Edge[] = [-2, -1, 0, 1, 2]
   .flatMap((h) => [-2, -1, 0, 1, 2].map((k) => [h, k] as Edge))
   .filter(([h, k]) => (h !== 0 || k !== 0) && gcd(Math.abs(h), Math.abs(k)) === 1);
 
-/** The point group of the lattice of a crystal system: the plane point group of that system with the most operations. */
-function holohedryOperations(key: PlanePointGroupKey): Matrix[] {
-  const system = planePointGroupSystem(key);
-  const keys = PLANE_POINT_GROUP_KEYS.filter((k) => planePointGroupSystem(k) === system);
-  const top = keys.reduce((a, b) =>
-    planePointGroupOperations(b).length > planePointGroupOperations(a).length ? b : a,
-  );
-  return planePointGroupOperations(top).map((op) => op.matrix);
-}
+/** The operations of the holohedry of the system of a plane point group (`planeHolohedry`). */
+const holohedryOperations = (key: PlanePointGroupKey): Matrix[] =>
+  planePointGroupOperations(planeHolohedry(planePointGroupSystem(key))).map((op) => op.matrix);
 
 const positionsCache = new Map<string, readonly PositionRow[]>();
 

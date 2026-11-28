@@ -159,7 +159,8 @@ their operations, a, b, c along x, y, z, so that W and R are equal; the basis of
 
 **Rhombohedral axes** are those of the obverse setting in the hexagonal cell (ITA 2016 Table
 1.5.1.1, p. 78, the matrix Q of the row R₁ obverse): a_R = (2a + b + c)/3, b_R = (−a + b + c)/3, c_R = (−a − 2b + c)/3, with the hexagonal a, b,
-c above, so that [111] lies along z and the twofold axes of `32` along the a directions of the
+c above, the obverse centring vector (2/3, 1/3, 1/3) and its turns by the threefold rotation, the
+same primitive cell as `cellTransformation` gives ("Cells of a lattice"), so that [111] lies along z and the twofold axes of `32` along the a directions of the
 hexagonal cell, as in `321`. A setting with rhombohedral axes therefore has the Cartesian operations
 of the default setting with hexagonal axes; it differs in its lattice basis, and so in the lattice
 operations, the Miller indices and the symmetry directions. As for hexagonal axes, the cell is the one of unit edge lengths a = c = 1; a
@@ -687,7 +688,8 @@ Polar is there the named property: `allowsPropertyOf(operations, 'pyroelectric')
 **Holohedry and lattice systems.** The holohedry belongs to the lattice system (ITA 2016
 § 1.3.4.4.2 and Table 1.3.4.1, p. 39): `holohedry(latticeSystem)` gives the point symmetry
 of the lattices of one of the seven lattice systems, `-1`, `2/m`, `mmm`, `4/mmm`, `6/mmm`
-(`'hexagonal'`, hP), `-3m` (`'rhombohedral'`, hR) and `m-3m`. Lattice systems classify lattices,
+(`'hexagonal'`, hP), `-3m` (`'rhombohedral'`, hR) and `m-3m`, computed: of the classes that act
+on the lattices of the system, the one of the highest order. Lattice systems classify lattices,
 not point groups: a trigonal class acts on a primitive hexagonal (hP) or on a rhombohedrally centred
 (hR) lattice, so `latticeSystems(key)` gives `['hexagonal', 'rhombohedral']` for a trigonal
 class and the one lattice system of its name for every other class. A crystal system is not a
@@ -745,7 +747,8 @@ unique axis a, which the table does not list), and the full symbol has `1` at th
 (`1 2/m 1`; in a space group `P 1 2/m 1`), as `symmetryDirections` gives them: the positions of
 the full symbol, not only the unique axis. The triclinic
 family has none. A setting with rhombohedral axes has the
-two positions of the row "Rhombohedral (rhombohedral axes)": [111], and [1-10], [01-1], [-101].
+two positions of the row "Rhombohedral (rhombohedral axes)": [111], and [1-10], [01-1], [-101],
+computed from the first two positions of the hexagonal family in the rhombohedral basis.
 
 `symmetryDirections(key, options)` lists, for a setting, every position of the family with the
 symbol at that position (if the full symbol has it) and, for each direction, the elements along
@@ -868,7 +871,10 @@ printed settings:
   (a general face with h = k) give the face of that form. Inside, symcrys checks each printed
   position with the face h, k, l = 3, 2, 1 (rhombohedral axes 5, 2, 1, since (321) lies there on the
   limiting form (h,k,2k−h), pp. 755–759; 1, 2, 3 for the condition |h| < |l|) and its normal for
-  a, b, c along x, y, z where the angles are free, which gives the right site symmetry.
+  a, b, c along x, y, z where the angles are free, which gives the right site symmetry. These values
+  are convention data (`REPRESENTATIVE_VALUES`, `RHOMBOHEDRAL_VALUES`, `SMALL_H` in
+  `pointGroups/wyckoff.ts`): print gives the faces with letters, and any values that keep every
+  printed face in its position give the same results.
 - Where ITA prints a face with "or", e.g. (001) or (001̄) for the pedion of 4mm, the two faces
   belong to the same Wyckoff position (ITA 6th ed., § 3.2.1.2.4 (i), p. 729); `millerIndices` is the
   first.
@@ -960,8 +966,9 @@ tetragonal dipyramids of 422, (h0l) and (hhl)).
   adds no form (the faces (101̄0) of 3 belong to the trigonal prism (hki0)).
 - **Kind:** the number of faces and the eigensymmetry, the group of all orthogonal maps that
   permute the face normals, taken in a cell of general lengths so that no face is special by the
-  metric alone. Where these do not decide (`FORM_DISTINCTIONS`, part of the definition of the
-  names, from their geometry; Table 3.2.1.3 gives the names): the order of the rotation of the eigensymmetry about the normal of the mirror that fixes
+  metric alone. Where these do not decide (`FORM_DISTINCTIONS` in `pointGroups/formTypes.ts`,
+  vocabulary: part of the definition of the names, from the shape each states; Table 3.2.1.3 gives
+  the names): the order of the rotation of the eigensymmetry about the normal of the mirror that fixes
   a face (a prism, faces parallel to the main axis: 6, 4 or 3; a dipyramid 2 or 1; the
   tetrahexahedron 4, the trioctahedra 2), and for the cubic forms on (hhl), which no symmetry tells
   apart, the condition: two components of the normal are equal, and |h| < |l| where the third is

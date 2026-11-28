@@ -8,7 +8,9 @@
 import { checkNumbers, checkOptions, SETTING_KEYS, shown, everyEntry } from '../checks.js';
 import { apply, inverse, transpose, type Mat3, type Vec3 } from '../linalg.js';
 import { deepFreeze } from '../freeze.js';
-import { settingBasis } from './classData.js';
+import { crystalFamily, type CrystalFamily } from '../lattice.js';
+import { CLASSES, settingBasis } from './classData.js';
+import { holohedry } from './properties.js';
 import { classSettingOf, type MagneticPointGroupKey, type SettingOptions } from './pointGroups.js';
 import type { Uvw } from '../symmetryDirections.js';
 import type { Hkl } from './wyckoff.js';
@@ -92,20 +94,16 @@ export function directionField<F extends DirectionField>(
   return given[0];
 }
 
-const FAMILY_KEYS: Readonly<Record<string, string>> = {
-  triclinic: '-1',
-  monoclinic: '2/m',
-  orthorhombic: 'mmm',
-  tetragonal: '4/mmm',
-  hexagonal: '6/mmm',
-  cubic: 'm-3m',
-};
+/** The six crystal families, the names `latticeBasis` took before it took a key. */
+const FAMILIES: readonly string[] = [...new Set(CLASSES.map((c) => crystalFamily(c.crystalSystem)))];
 
 /** A RangeError for the name of a crystal family, which `latticeBasis` took before it took a key. */
 export function checkFamilyName(key: unknown): void {
-  if (typeof key === 'string' && key in FAMILY_KEYS) {
+  if (typeof key === 'string' && FAMILIES.includes(key)) {
+    // The holohedry of the family: that of the lattice system of the same name.
+    const holo = holohedry(key as CrystalFamily);
     throw new RangeError(
-      `latticeBasis takes the key of a point group, not a crystal family: for ${shown(key)} use ${shown(FAMILY_KEYS[key])}`,
+      `latticeBasis takes the key of a point group, not a crystal family: for ${shown(key)} use ${shown(holo)}`,
     );
   }
 }

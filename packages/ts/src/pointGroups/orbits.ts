@@ -4,7 +4,7 @@
  */
 
 import { checkNumbers, checkOptions, SETTING_KEYS, shown, TOLERANCE_KEYS } from '../checks.js';
-import { apply, inverse, type Mat3, type Vec3 } from '../linalg.js';
+import { apply, inverse, normalize, type Mat3, type Vec3 } from '../linalg.js';
 import { checkCartesianOperations, checkOptionalTimeReversal, type DirectionOperation } from '../operations.js';
 import { orbitOfList, siteTolerance } from '../siteSymmetry.js';
 import { TOLERANCE_BOUND } from '../tolerances.js';
@@ -150,7 +150,7 @@ export function orbitOf(
   checkNumbers(direction, 3, 'A direction');
   const n = Math.hypot(direction[0], direction[1], direction[2]);
   if (!(n > 0) || !Number.isFinite(n)) throw new RangeError(`Not a direction: ${shown(direction)}`);
-  const u: Vec3 = [direction[0] / n, direction[1] / n, direction[2] / n];
+  const u = normalize(direction);
   if (operations.length === 0) {
     return Object.freeze([
       Object.freeze({ direction: Object.freeze(u) as unknown as Vec3, operations: Object.freeze([]) }),

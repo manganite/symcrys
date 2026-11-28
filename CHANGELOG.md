@@ -32,6 +32,11 @@ All notable changes to symcrys are recorded here. The format follows
   the printed settings, no longer by rewriting the strings of setting 1; a position takes the letter
   of the position of setting 1 that the change of basis carries onto it. The results are unchanged
   (#233).
+- Internal tables are computed or kept once (#233): the holohedries (the class of the highest order
+  on each lattice system), the symmetry directions with rhombohedral axes (those of the hexagonal
+  family in the rhombohedral basis), the order of a rotation from its trace, the rhombohedral basis
+  and the orthorhombic settings (one definition each), and the helpers and literal tolerances that
+  were copied between modules. The results are unchanged, apart from two corrections (Fixed).
 - The first calls are faster, with the same results (#240): in Python the first `point_group_of`
   takes about a quarter of its time before (114 ms, was 476), the first `crystal_forms('m-3m')`
   under half (252 ms, was 609) and the first `operations('m-3m')` 17 ms (was 125), measured on one
@@ -77,6 +82,14 @@ All notable changes to symcrys are recorded here. The format follows
 [1, 1.00004, 3])` lies on the mirror y, x, z at the default tolerance, was the general position.
 
 ### Fixed
+
+- `latticeBasis` refuses the names of `Object.prototype` (`'toString'`, `'constructor'`,
+  `'__proto__'`) as unknown keys (#233). Before, they were taken for the name of a crystal family,
+  and the message named a function or `{}` as the key to use. Affected since 0.15.0.
+
+- `siteSymmetryOf` and `orbitOf` of `symcrys/plane` with the empty list give a coordinate just
+  below 0 (such as −10⁻¹⁷) as 0, in [0, 1) as documented and as with any group (#233). Before, they
+  gave 1. Affected since 0.15.0.
 
 - Python: a process made by `fork` while another thread called the package could not call it: the
   child inherited the lock of the engine as held, and its first call waited forever (#240). A fork

@@ -115,6 +115,18 @@ export function trace(m: IntMatrix): number {
   return m.reduce((sum, row, i) => safeSum(sum, row[i]), 0);
 }
 
+/** The orders of the rotations of a lattice (the crystallographic restriction). */
+const ROTATION_ORDERS: readonly number[] = [1, 2, 3, 4, 6];
+
+/**
+ * The order n of a rotation of a lattice from 2 cos(360°/n), which is an integer: the trace of a
+ * rotation of the plane, and the trace of a proper rotation in space less 1, in any basis.
+ * Undefined for a number that is no such value.
+ */
+export function rotationOrder(twiceCosine: number): number | undefined {
+  return ROTATION_ORDERS.find((n) => Math.round(2 * Math.cos((2 * Math.PI) / n)) === twiceCosine);
+}
+
 /** Throws unless det W = ±1, as for every operation of a crystallographic group. */
 export function checkUnimodular(op: ExactOperation): void {
   dimensionOf(op);

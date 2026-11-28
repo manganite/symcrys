@@ -8,7 +8,7 @@
  */
 
 import { deepFreeze } from '../freeze.js';
-import { gcd } from '../integers.js';
+import { echelon, nullspace } from '../integers.js';
 import { crystalFamily } from '../lattice.js';
 import { formatOperation } from '../spaceGroups/affine.js';
 import { classData, classSettingData, settingLatticeOperations, settingSymmetryDirections } from './classData.js';
@@ -67,55 +67,7 @@ const apply = (w: Mat, v: Vec): number[] => w.map((row) => row[0] * v[0] + row[1
 export const applyToFace = (w: Mat, h: Vec): number[] =>
   [0, 1, 2].map((j) => h[0] * w[0][j] + h[1] * w[1][j] + h[2] * w[2][j]);
 
-/** A primitive integer vector: divided by the gcd of its components. */
-export function primitive(v: Vec): number[] {
-  const g = v.reduce((a, x) => gcd(a, x), 0);
-  return g === 0 ? [...v] : v.map((x) => x / g + 0);
-}
-
-/**
- * The reduced row echelon form of the span of integer vectors, each row scaled to a primitive
- * integer vector with a positive pivot: the canonical form of a subspace, and the notation of ITA's
- * first representatives (`x,-x,z` is the span of (1,−1,0) and (0,0,1)).
- */
-export function echelon(vectors: readonly Vec[]): { rows: number[][]; pivots: number[] } {
-  // Fraction-free elimination on integers, then each row made primitive.
-  const m = vectors.map((v) => [...v]).filter((v) => v.some((x) => x !== 0));
-  const pivots: number[] = [];
-  let r = 0;
-  for (let c = 0; c < 3 && r < m.length; c++) {
-    const p = m.findIndex((row, i) => i >= r && row[c] !== 0);
-    if (p < 0) continue;
-    [m[r], m[p]] = [m[p], m[r]];
-    if (m[r][c] < 0) m[r] = m[r].map((x) => -x);
-    for (let i = 0; i < m.length; i++) {
-      if (i === r || m[i][c] === 0) continue;
-      const a = m[r][c];
-      const b = m[i][c];
-      m[i] = primitive(m[i].map((x, j) => a * x - b * m[r][j]));
-    }
-    m[r] = primitive(m[r]);
-    pivots.push(c);
-    r++;
-  }
-  return { rows: m.slice(0, r), pivots };
-}
-
 export const keyOf = (vectors: readonly Vec[]): string => JSON.stringify(echelon(vectors).rows);
-
-/** A basis of the integer vectors v with A·v = 0 for the given rows A. */
-export function nullspace(rows: readonly Vec[]): number[][] {
-  const { rows: e, pivots } = echelon(rows);
-  const free = [0, 1, 2].filter((c) => !pivots.includes(c));
-  return free.map((f) => {
-    // v[f] = L, v[pivot p] = −e[i][f]·L / e[i][p] with L the lcm of the pivots.
-    const l = e.reduce((acc, row, i) => (acc * row[pivots[i]]) / gcd(acc, row[pivots[i]]), 1);
-    const v = [0, 0, 0];
-    v[f] = l;
-    e.forEach((row, i) => (v[pivots[i]] = (-row[f] * l) / row[pivots[i]]));
-    return primitive(v);
-  });
-}
 
 const minusIdentity = (w: Mat): number[][] => w.map((row, i) => row.map((x, j) => x - (i === j ? 1 : 0)));
 const transposeMinusIdentity = (w: Mat): number[][] =>

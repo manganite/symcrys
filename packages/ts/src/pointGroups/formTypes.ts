@@ -1,9 +1,12 @@
 /**
  * Vocabulary of the crystal forms: the 47 kinds of ITA (6th ed., 2016) Table 3.2.1.3, pp. 724–726,
- * with their names, numbers of faces and eigensymmetries, which define the names. The same rows are
- * in references/itc/vol-a-table-3.2.1.3-crystal-forms.md, which the reference test compares with
- * this file.
+ * with their names, numbers of faces and eigensymmetries, which define the names, and where two
+ * kinds share both, the geometry that tells them apart (`FORM_DISTINCTIONS`). The same rows are in
+ * references/itc/vol-a-table-3.2.1.3-crystal-forms.md, which the reference test compares with this
+ * file.
  */
+
+import { deepFreeze } from '../freeze.js';
 
 /**
  * A kind of crystal form, one of the 47: the first of its usual English names in lower case, words
@@ -162,3 +165,29 @@ export const FORM_TYPE_DATA: readonly FormTypeRow[] = [
   [46, 'Tetrahexahedron or tetrakishexahedron', 24, 'm-3m'],
   [47, 'Hexaoctahedron or hexakisoctahedron', 48, 'm-3m'],
 ];
+
+/**
+ * Vocabulary, part of the definition of the names: what tells apart kinds of forms with the same
+ * number of faces and eigensymmetry, from the shape each name states (a prism, whose faces are
+ * parallel to the main axis, or a dipyramid; the polygon of a face). It cannot be computed from
+ * the faces alone, since it says which name belongs to which shape; Table 3.2.1.3 gives the names,
+ * not these numbers. The order of the rotation of the eigensymmetry about the normal of the mirror
+ * that fixes a face (6, 4 or 3 for a prism; 2 or 1 for a dipyramid; 4 for the tetrahexahedron, 2
+ * for the trioctahedra), and for the cubic forms on (hhl), which no symmetry tells apart, the
+ * condition on h and l (ITA's "for |h| < |l|").
+ */
+export const FORM_DISTINCTIONS: Readonly<
+  Partial<Record<CrystalFormTypeKey, { readonly mirrorAxis?: number; readonly condition?: string }>>
+> = deepFreeze({
+  'ditetragonal-prism': { mirrorAxis: 4 },
+  'tetragonal-dipyramid': { mirrorAxis: 2 },
+  'ditrigonal-prism': { mirrorAxis: 3 },
+  'trigonal-dipyramid': { mirrorAxis: 1 },
+  'dihexagonal-prism': { mirrorAxis: 6 },
+  'hexagonal-dipyramid': { mirrorAxis: 2 },
+  tetrahexahedron: { mirrorAxis: 4 },
+  'trigon-trioctahedron': { mirrorAxis: 2, condition: '|h|>|l|' },
+  'tetragon-trioctahedron': { mirrorAxis: 2, condition: '|h|<|l|' },
+  'trigon-tritetrahedron': { condition: '|h|<|l|' },
+  'tetragon-tritetrahedron': { condition: '|h|>|l|' },
+});

@@ -7,11 +7,12 @@
  */
 
 import { checkOptions, shown, TOLERANCE_KEYS } from '../checks.js';
-import type { LatticeSystem } from '../lattice.js';
+import { latticeSystemsOfSystem, type LatticeSystem } from '../lattice.js';
 import { INVERSION, det } from '../linalg.js';
 import { checkCartesianOperations, checkTimeReversal, type CartesianOperation } from '../operations.js';
 import { idealGroup, sameWithin } from '../closure.js';
 import { toleranceOf, type ToleranceOptions } from '../tolerances.js';
+import { CLASSES, settingLatticeOperations } from './classData.js';
 import type { PointGroupKey } from './keys.js';
 
 /**
@@ -46,15 +47,12 @@ export function isEnantiomorphicOf(operations: readonly CartesianOperation[], op
   return operations.every((op) => det(op.cartesian) > 0);
 }
 
-const HOLOHEDRY: Readonly<Record<LatticeSystem, PointGroupKey>> = Object.freeze({
-  triclinic: '-1',
-  monoclinic: '2/m',
-  orthorhombic: 'mmm',
-  tetragonal: '4/mmm',
-  hexagonal: '6/mmm',
-  rhombohedral: '-3m',
-  cubic: 'm-3m',
-});
+/** The seven lattice systems, those on which the crystal classes act (`latticeSystemsOfSystem`). */
+const LATTICE_SYSTEMS: readonly LatticeSystem[] = [
+  ...new Set(CLASSES.flatMap((c) => latticeSystemsOfSystem(c.crystalSystem))),
+];
+
+const holohedryCache = new Map<LatticeSystem, PointGroupKey>();
 
 /**
  * The holohedry of a lattice system, the point symmetry of its lattices, e.g. `6/mmm` for the
@@ -62,15 +60,26 @@ const HOLOHEDRY: Readonly<Record<LatticeSystem, PointGroupKey>> = Object.freeze(
  * lattice system, so `latticeSystems(key)` gives two for a trigonal class. Throws a RangeError for
  * anything that is not one of the seven lattice systems, a crystal system `'trigonal'` included.
  *
- * @remarks Source: ITA (2016), Table 1.3.4.1, p. 39.
+ * @remarks Computed: of the crystal classes that act on the lattices of the system (those of
+ * their crystal system, `latticeSystems`), the one of the highest order. Equal to ITA (2016),
+ * Table 1.3.4.1, p. 39.
  */
 export function holohedry(latticeSystem: LatticeSystem): PointGroupKey {
-  if (!Object.hasOwn(HOLOHEDRY, latticeSystem)) {
+  if (!LATTICE_SYSTEMS.includes(latticeSystem)) {
     const hint =
       latticeSystem === ('trigonal' as unknown)
         ? "; a trigonal crystal has the lattice system 'hexagonal' or 'rhombohedral' (latticeSystems)"
         : '';
     throw new RangeError(`Unknown lattice system: ${shown(latticeSystem)}${hint}`);
   }
-  return HOLOHEDRY[latticeSystem];
+  let key = holohedryCache.get(latticeSystem);
+  if (key === undefined) {
+    // The one of the highest order is unique in each lattice system.
+    const order = (k: PointGroupKey): number => settingLatticeOperations(k, 1).length;
+    key = CLASSES.filter((c) => latticeSystemsOfSystem(c.crystalSystem).includes(latticeSystem))
+      .map((c) => c.key)
+      .reduce((a, b) => (order(b) > order(a) ? b : a));
+    holohedryCache.set(latticeSystem, key);
+  }
+  return key;
 }

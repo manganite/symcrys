@@ -41,7 +41,7 @@ import {
   type MagneticPointGroupKey,
   type PointGroupKey,
 } from './keys.js';
-import { primedSymbols } from './magneticSymbols.js';
+import { magneticSchoenflies, primedSymbols } from './magneticSymbols.js';
 import { deepFreeze } from '../freeze.js';
 
 export { MAGNETIC_POINT_GROUP_KEYS, POINT_GROUP_KEYS, type MagneticPointGroupKey, type PointGroupKey } from './keys.js';
@@ -817,14 +817,6 @@ export function generators(key: MagneticPointGroupKey, options?: SettingOptions)
   return result;
 }
 
-/**
- * A Schoenflies symbol as ITC Vol. D writes it: `S6` for the class -3, where ITA writes
- * `C3i` (Table 3.2.1.2), as the crystallographic API does, and so `S6R` for its grey group. The
- * black-and-white groups store their symbols as Vol. D prints them (`S6(C3)`, `D3d(S6)`,
- * `C6h(S6)`; blackWhiteData.ts).
- */
-const magneticSchoenflies = (s: string): string => s.replace(/C3i/g, 'S6');
-
 /** The Schoenflies symbol of a crystal class as ITA writes it (`C3i`). Internal: for the crystallographic API. */
 export function classSchoenflies(key: PointGroupKey): string {
   return data(key).schoenflies;
@@ -964,9 +956,9 @@ function findIn(
   // orientation. A symbol of several groups is an error.
   let found = candidates.map((d) => ({ d, named: settingsNamed(d, symbol) })).filter((m) => m.named.length > 0);
   if (found.length === 0) {
-    const inVolD = magneticSchoenflies(target);
+    const magneticSpelling = magneticSchoenflies(target);
     found = candidates
-      .filter((d) => magneticSchoenflies(d.schoenflies) === inVolD)
+      .filter((d) => magneticSchoenflies(d.schoenflies) === magneticSpelling)
       .map((d) => ({ d, named: allSettings(d) }));
   }
   if (found.length > 1) {

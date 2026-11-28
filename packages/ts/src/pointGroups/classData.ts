@@ -16,6 +16,8 @@
  */
 
 import { MAX_CLASS_ORDER } from '../tolerances.js';
+import { OBVERSE_RHOMBOHEDRAL_BASIS, orthorhombicSettingBasis } from '../cellTransformation.js';
+import { deepFreeze } from '../freeze.js';
 import { shown } from '../checks.js';
 import { crystalFamily, familyBasis, type CrystalSystem } from '../lattice.js';
 import { IDENTITY as LINEAR_IDENTITY, inverse, multiply, snap, type Mat3 } from '../linalg.js';
@@ -27,9 +29,10 @@ import {
   inverseMatrix,
   matricesEqual,
   multiplyMatrices,
+  rationalInverse,
   type ExactOperation,
 } from '../spaceGroups/affine.js';
-import { ZERO } from '../spaceGroups/rational.js';
+import { isInteger, toNumber, ZERO } from '../spaceGroups/rational.js';
 
 /**
  * One ITC setting of a class: what identifies it. Its symbols are computed from its operations
@@ -69,20 +72,12 @@ export interface ClassData {
 }
 
 /**
- * Setting cab of ITA 2016 Table 1.5.4.4 (the table prints the setting symbols, not P): a′ = c,
- * b′ = a, c′ = b, the columns of P (eq. (1.5.1.4), p. 76; § 1.5.4.3, p. 96).
+ * The settings cab (a′ = c, b′ = a, c′ = b) and bca (a′ = b, b′ = c, c′ = a) of ITA 2016 Table
+ * 1.5.4.4 (the table prints the setting symbols, not P), the columns of P (eq. (1.5.1.4), p. 76;
+ * § 1.5.4.3, p. 96), from `orthorhombicSettingBasis`.
  */
-const SETTING_CAB: IntMat3 = [
-  [0, 1, 0],
-  [0, 0, 1],
-  [1, 0, 0],
-];
-/** Setting bca of ITA 2016 Table 1.5.4.4: a′ = b, b′ = c, c′ = a, the columns of P (as for cab). */
-const SETTING_BCA: IntMat3 = [
-  [0, 0, 1],
-  [1, 0, 0],
-  [0, 1, 0],
-];
+const SETTING_CAB = orthorhombicSettingBasis('cab') as unknown as IntMat3;
+const SETTING_BCA = orthorhombicSettingBasis('bca') as unknown as IntMat3;
 
 /**
  * The setting of a trigonal class with rhombohedral axes (ITA Table 3.2.3.2, pp. 753–759), the
@@ -261,15 +256,26 @@ export function settingLatticeOperations(key: PointGroupKey, index: number): rea
 }
 
 /**
- * The rhombohedral basis in the hexagonal one, the columns a_R = (2a + b + c)/3, b_R = (−a + b + c)/3,
- * c_R = (−a − 2b + c)/3: the obverse setting of ITA 2016 Table 1.5.1.1, p. 78, the matrix Q of R₁ obverse. In it the twofold axes of
- * 32 lie along the a directions of the hexagonal cell, as in 321, the ITC default.
+ * The rhombohedral basis in the hexagonal one, the columns a_R, b_R, c_R of the obverse setting
+ * (`OBVERSE_RHOMBOHEDRAL_BASIS`, cellTransformation.ts), as numbers. In it the twofold axes of 32
+ * lie along the a directions of the hexagonal cell, as in 321, the ITC default.
  */
-const RHOMBOHEDRAL_IN_HEXAGONAL: Mat3 = [
-  [2 / 3, -1 / 3, -1 / 3],
-  [1 / 3, 1 / 3, -2 / 3],
-  [1 / 3, 1 / 3, 1 / 3],
-];
+const RHOMBOHEDRAL_IN_HEXAGONAL: Mat3 = deepFreeze(
+  OBVERSE_RHOMBOHEDRAL_BASIS.map((row) => row.map((x) => toNumber(x))) as unknown as Mat3,
+);
+
+/**
+ * The hexagonal basis in the rhombohedral one, the inverse of `OBVERSE_RHOMBOHEDRAL_BASIS`: an
+ * integer matrix, as the hexagonal cell is a triple cell of the rhombohedral lattice.
+ */
+export const HEXAGONAL_IN_RHOMBOHEDRAL: IntMat3 = deepFreeze(
+  rationalInverse(OBVERSE_RHOMBOHEDRAL_BASIS).map((row) =>
+    row.map((x) => {
+      if (!isInteger(x)) throw new Error('The hexagonal basis in the rhombohedral one is not integer');
+      return x[0];
+    }),
+  ) as unknown as IntMat3,
+);
 
 /**
  * The conventional basis a, b, c (columns) of a setting in the Cartesian frame: that of
@@ -287,22 +293,26 @@ export function settingBasis(key: PointGroupKey, index: number): Mat3 {
 
 /**
  * The symmetry directions of a setting, per position of its full symbol (ITA Table 2.1.3.1): those
- * of its family, and for rhombohedral axes [111]; [1-10], [01-1], [-101].
+ * of its family, and for rhombohedral axes those of the first two positions of the hexagonal
+ * family in the rhombohedral basis, u_R = P⁻¹·u: [111]; [1-10], [01-1], [-101].
  */
 export function settingSymmetryDirections(key: PointGroupKey, index: number): readonly (readonly Uvw[])[] {
   if (classSettingData(key, index).axes === 'rhombohedral') return RHOMBOHEDRAL_DIRECTIONS;
   return LATTICE_SYMMETRY_DIRECTIONS[crystalFamily(classData(key).crystalSystem)];
 }
 
-const RHOMBOHEDRAL_DIRECTIONS: readonly (readonly Uvw[])[] = Object.freeze(
-  [
-    [[1, 1, 1]],
-    [
-      [1, -1, 0],
-      [0, 1, -1],
-      [-1, 0, 1],
-    ],
-  ].map((dirs) => Object.freeze(dirs.map((d) => Object.freeze(d) as unknown as Uvw))),
+// The symbol of a setting with rhombohedral axes has two positions, the main axis and the secondary
+// directions; their images under the integer matrix P⁻¹ are primitive (a test compares them with
+// the row "Rhombohedral (rhombohedral axes)" of Table 2.1.3.1).
+const RHOMBOHEDRAL_DIRECTIONS: readonly (readonly Uvw[])[] = deepFreeze(
+  LATTICE_SYMMETRY_DIRECTIONS.hexagonal
+    .slice(0, 2)
+    .map((dirs) =>
+      dirs.map(
+        (u) =>
+          HEXAGONAL_IN_RHOMBOHEDRAL.map((row) => row[0] * u[0] + row[1] * u[1] + row[2] * u[2] + 0) as unknown as Uvw,
+      ),
+    ),
 );
 
 /** W of a setting as a Cartesian matrix B·W·B⁻¹ in the basis `settingBasis`, snapped to the exact values. */

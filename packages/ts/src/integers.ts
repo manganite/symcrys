@@ -36,3 +36,63 @@ export function safeSum(a: number, b: number): number {
 export function safeDot(a: readonly number[], b: readonly number[]): number {
   return a.reduce((sum, x, i) => safeSum(sum, safeProduct(x, b[i])), 0);
 }
+
+// --- integer vectors of three components ---------------------------------------------------------
+//
+// Exact, on safe integers: the canonical forms of the subspaces of faces and directions of the
+// point groups and the metric conditions of the plane. Row reduction in floating point, with
+// tolerances for float noise, is a different routine (tensors/rowEchelon.ts) and stays apart.
+
+/** A primitive integer vector: divided by the gcd of its components. */
+export function primitive(v: readonly number[]): number[] {
+  const g = v.reduce((a, x) => gcd(a, x), 0);
+  return g === 0 ? [...v] : v.map((x) => x / g + 0);
+}
+
+/** The primitive integer vector along `v` with its first non-zero component positive, for a non-zero `v`. */
+export function signedPrimitive(v: readonly number[]): number[] {
+  const p = primitive(v);
+  return (p.find((x) => x !== 0) ?? 0) < 0 ? p.map((x) => -x + 0) : p;
+}
+
+/**
+ * The reduced row echelon form of the span of integer vectors, each row scaled to a primitive
+ * integer vector with a positive pivot: the canonical form of a subspace, and the notation of ITA's
+ * first representatives (`x,-x,z` is the span of (1,−1,0) and (0,0,1)).
+ */
+export function echelon(vectors: readonly (readonly number[])[]): { rows: number[][]; pivots: number[] } {
+  // Fraction-free elimination on integers, then each row made primitive.
+  const m = vectors.map((v) => [...v]).filter((v) => v.some((x) => x !== 0));
+  const pivots: number[] = [];
+  let r = 0;
+  for (let c = 0; c < 3 && r < m.length; c++) {
+    const p = m.findIndex((row, i) => i >= r && row[c] !== 0);
+    if (p < 0) continue;
+    [m[r], m[p]] = [m[p], m[r]];
+    if (m[r][c] < 0) m[r] = m[r].map((x) => -x);
+    for (let i = 0; i < m.length; i++) {
+      if (i === r || m[i][c] === 0) continue;
+      const a = m[r][c];
+      const b = m[i][c];
+      m[i] = primitive(m[i].map((x, j) => a * x - b * m[r][j]));
+    }
+    m[r] = primitive(m[r]);
+    pivots.push(c);
+    r++;
+  }
+  return { rows: m.slice(0, r), pivots };
+}
+
+/** A basis of the integer vectors v with A·v = 0 for the given rows A. */
+export function nullspace(rows: readonly (readonly number[])[]): number[][] {
+  const { rows: e, pivots } = echelon(rows);
+  const free = [0, 1, 2].filter((c) => !pivots.includes(c));
+  return free.map((f) => {
+    // v[f] = L, v[pivot p] = −e[i][f]·L / e[i][p] with L the lcm of the pivots.
+    const l = e.reduce((acc, row, i) => (acc * row[pivots[i]]) / gcd(acc, row[pivots[i]]), 1);
+    const v = [0, 0, 0];
+    v[f] = l;
+    e.forEach((row, i) => (v[pivots[i]] = (-row[f] * l) / row[pivots[i]]));
+    return primitive(v);
+  });
+}

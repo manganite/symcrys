@@ -5,9 +5,17 @@
  * stay with the applications (docs/conventions.md, "Symmetry directions and elements").
  */
 
-import { gcd, safeProduct, safeSum } from '../integers.js';
+import { safeProduct, safeSum, signedPrimitive } from '../integers.js';
 import { shown } from '../checks.js';
-import { determinant, dimensionOf, multiplyMatrices, trace, type ExactOperation, type IntMatrix } from './affine.js';
+import {
+  determinant,
+  dimensionOf,
+  multiplyMatrices,
+  rotationOrder,
+  trace,
+  type ExactOperation,
+  type IntMatrix,
+} from './affine.js';
 import { ZERO, add, multiply, rational, scale, type Rational } from './rational.js';
 
 /**
@@ -56,9 +64,7 @@ export interface PlaneOperationDescription {
 /** The shortest integer vector along the non-zero column of a 2 × 2 matrix of rank 1, first non-zero component positive. */
 function primitiveColumn(m: IntMatrix): [number, number] {
   const col = m[0][0] !== 0 || m[1][0] !== 0 ? [m[0][0], m[1][0]] : [m[0][1], m[1][1]];
-  const g = gcd(col[0], col[1]);
-  const sign = col[0] < 0 || (col[0] === 0 && col[1] < 0) ? -1 : 1;
-  return [(sign * col[0]) / g + 0, (sign * col[1]) / g + 0];
+  return signedPrimitive(col) as [number, number];
 }
 
 function power(m: IntMatrix, n: number): IntMatrix {
@@ -75,9 +81,6 @@ function power(m: IntMatrix, n: number): IntMatrix {
 
 const isIdentity = (m: IntMatrix): boolean => m[0][0] === 1 && m[0][1] === 0 && m[1][0] === 0 && m[1][1] === 1;
 
-/** The order of the rotation part of a proper plane operation, from its trace (also in a hexagonal basis). */
-const ORDER_BY_TRACE: Record<number, number> = { 2: 1, [-2]: 2, [-1]: 3, 0: 4, 1: 6 };
-
 /**
  * Describes an operation of a plane group; the result is frozen. Throws unless the operation is two-dimensional with the
  * linear part of a crystallographic plane point group (determinant ±1, order 1, 2, 3, 4 or 6).
@@ -90,7 +93,7 @@ export function describePlaneOperation(op: ExactOperation): PlaneOperationDescri
   const t = op.translation;
   const det = determinant(w);
   if (det === 1) {
-    const n = ORDER_BY_TRACE[trace(w)];
+    const n = rotationOrder(trace(w));
     if (n === undefined || !isIdentity(power(w, n))) {
       throw new RangeError(`Not a crystallographic rotation: ${shown(w)}`);
     }

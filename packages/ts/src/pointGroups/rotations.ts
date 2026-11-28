@@ -7,14 +7,8 @@
  */
 
 import { ANGLE_EPSILON, AXIS_EPSILON } from '../tolerances.js';
-import { det, dot, trace, type Mat3, type Vec3 } from '../linalg.js';
+import { det, dot, normalize, trace, type Mat3, type Vec3 } from '../linalg.js';
 import type { OperationKind } from './elements.js';
-
-/** A vector of length 1 in the direction of `v`. */
-export function normalize(v: Vec3): Vec3 {
-  const n = Math.hypot(v[0], v[1], v[2]);
-  return [v[0] / n, v[1] / n, v[2] / n];
-}
 
 /** True if two unit vectors are parallel or antiparallel. */
 export const parallel = (a: Vec3, b: Vec3): boolean => Math.abs(Math.abs(dot(a, b)) - 1) < AXIS_EPSILON;

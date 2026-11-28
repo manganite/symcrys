@@ -4,7 +4,7 @@
  */
 
 import { deepFreeze } from './freeze.js';
-import { EPSILON, SINGULAR_RATIO, SNAP_EPSILON } from './tolerances.js';
+import { EPSILON, JACOBI_SETTLED, SINGULAR_RATIO, SNAP_EPSILON } from './tolerances.js';
 
 /** A Cartesian vector. */
 export type Vec3 = readonly [number, number, number];
@@ -37,6 +37,12 @@ function build(f: (i: number, j: number) => number): Mat3 {
 /** The dot product of two vectors of three components. */
 export function dot(a: Vec3, b: Vec3): number {
   return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+}
+
+/** The vector of length 1 in the direction of `v` (NaN components for the zero vector). */
+export function normalize(v: Vec3): Vec3 {
+  const n = Math.hypot(v[0], v[1], v[2]);
+  return [v[0] / n, v[1] / n, v[2] / n];
 }
 
 /** The product a·b. */
@@ -163,7 +169,7 @@ export function operatorNorm(m: Mat3): number {
   const a = multiply(transpose(m), m).map((row) => [...row]);
   for (let sweep = 0; sweep < 50; sweep++) {
     const off = Math.abs(a[0][1]) + Math.abs(a[0][2]) + Math.abs(a[1][2]);
-    if (off <= 1e-30 * (Math.abs(a[0][0]) + Math.abs(a[1][1]) + Math.abs(a[2][2])) || off === 0) break;
+    if (off <= JACOBI_SETTLED * (Math.abs(a[0][0]) + Math.abs(a[1][1]) + Math.abs(a[2][2])) || off === 0) break;
     for (const [p, q] of [
       [0, 1],
       [0, 2],

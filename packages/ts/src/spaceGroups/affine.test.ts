@@ -15,6 +15,7 @@ import {
   parseOperation,
   operationsEqual,
   reduceModLattice,
+  rotationOrder,
   toPlain,
   trace,
   translationOperation,
@@ -262,5 +263,34 @@ describe('cosetsByGenerators', () => {
     // cosets of the next by it can overlap. Coset by coset, these generators of the plane would make
     // 8 entries for the 6 operations of 3m: two cosets twice.
     expect(() => cosetsByGenerators(['-y,-x', 'x,x-y', '-x+y,y'].map(op), 2, 24)).toThrow(/-y,x-y arises twice/);
+  });
+});
+
+describe('rotationOrder', () => {
+  it('gives the order of a rotation of a lattice from 2 cos(360°/n), the values it replaces', () => {
+    // The trace of a rotation by 360°/n of the plane is 2 cos(360°/n): 2, −2, −1, 0, 1 for
+    // n = 1, 2, 3, 4, 6, as the tables of the plane groups held it (in space the trace less 1).
+    expect([2, -2, -1, 0, 1].map(rotationOrder)).toEqual([1, 2, 3, 4, 6]);
+    for (const other of [3, -3, 4, 0.5, NaN]) expect(rotationOrder(other), String(other)).toBeUndefined();
+  });
+
+  it('is the order of the rotation part of every plane operation and of every point operation in space', () => {
+    // A rotation of order n has Wⁿ = I and no smaller power that is I.
+    const power = (w: readonly (readonly number[])[], k: number): number[][] => {
+      let p: number[][] = w.map((row, i) => row.map((_, j) => (i === j ? 1 : 0)));
+      for (let i = 0; i < k; i++) p = p.map((row) => w[0].map((_, j) => row.reduce((s, x, l) => s + x * w[l][j], 0)));
+      return p;
+    };
+    const isIdentity = (m: number[][]): boolean => m.every((row, i) => row.every((x, j) => x === (i === j ? 1 : 0)));
+    const order = (w: readonly (readonly number[])[]): number =>
+      [1, 2, 3, 4, 5, 6].find((k) => isIdentity(power(w, k)))!;
+    for (const text of ['x,y', '-x,-y', '-y,x-y', '-y,x', 'x-y,x', '-x+y,-x', 'y,-x']) {
+      const w = op(text).matrix;
+      expect(rotationOrder(trace(w)), text).toBe(order(w));
+    }
+    for (const text of ['x,y,z', '-x,-y,z', '-y,x-y,z', '-y,x,z', 'x-y,x,z', 'z,x,y', '-x,z,y']) {
+      const w = op(text).matrix;
+      expect(rotationOrder(trace(w) - 1), text).toBe(order(w));
+    }
   });
 });

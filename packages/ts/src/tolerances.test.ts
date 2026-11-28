@@ -148,3 +148,23 @@ describe('the index symmetry of a tensor: per component, relative to its largest
     );
   });
 });
+
+describe('the internal tolerances', () => {
+  it('are named in tolerances.ts: library code has no other literal in exponent notation', async () => {
+    const { readdirSync, readFileSync } = await import('node:fs');
+    const { join } = await import('node:path');
+    const root = import.meta.dirname;
+    const library = (readdirSync(root, { recursive: true }) as string[]).filter(
+      (f) =>
+        f.endsWith('.ts') &&
+        !/\.test\.ts$|\.fixtures\.ts$/.test(f) &&
+        !f.startsWith('testUtils') &&
+        f !== 'tolerances.ts',
+    );
+    expect(library.length).toBeGreaterThan(50);
+    const found = library.flatMap((f) =>
+      [...readFileSync(join(root, f), 'utf8').matchAll(/\b\d+(?:\.\d+)?e-\d+\b/g)].map((m) => `${f}: ${m[0]}`),
+    );
+    expect(found).toEqual([]);
+  });
+});

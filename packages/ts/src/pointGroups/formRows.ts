@@ -8,27 +8,35 @@
  */
 
 import { deepFreeze } from '../freeze.js';
+import { echelon, nullspace, primitive } from '../integers.js';
+import { ROUNDING_EPSILON } from '../tolerances.js';
 import { crystalFamily } from '../lattice.js';
-import { dot, inverse, transpose, apply as applyMatrix, type Mat3, type Vec3 } from '../linalg.js';
-import { classData, classSettingData, settingBasis, settingLatticeOperations } from './classData.js';
+import { dot, inverse, normalize, transpose, apply as applyMatrix, type Mat3, type Vec3 } from '../linalg.js';
+import { OBVERSE_RHOMBOHEDRAL_BASIS } from '../cellTransformation.js';
+import { scale, toNumber } from '../spaceGroups/rational.js';
+import {
+  classData,
+  classSettingData,
+  HEXAGONAL_IN_RHOMBOHEDRAL,
+  settingBasis,
+  settingLatticeOperations,
+} from './classData.js';
 import { classSettingSymbols } from './classSymbols.js';
 import type { PointGroupKey } from './keys.js';
 import { keyOfCompleteGroup } from './identify.js';
+import { holohedry } from './properties.js';
 import { settings } from './pointGroups.js';
-import { FORM_TYPE_DATA, FORM_TYPE_KEYS, type CrystalFormTypeKey } from './formTypes.js';
+import { FORM_DISTINCTIONS, FORM_TYPE_DATA, FORM_TYPE_KEYS, type CrystalFormTypeKey } from './formTypes.js';
 import {
   applyToFace,
   compareRanks,
   computedWyckoffRows,
-  echelon,
   faceRank,
   formatFace,
   keyOf,
-  nullspace,
   orbit,
   patternSpan,
   pointRank,
-  primitive,
   type Mat,
   type Vec,
 } from './wyckoffRows.js';
@@ -67,39 +75,24 @@ const CONVENTIONS: FormConventions = {
   firstFaces: FIRST_LIMITING_FACE_EXCEPTIONS,
 };
 
-/** The rhombohedral basis in the hexagonal one, times 3 (columns: the obverse a, b, c), and its inverse. */
-const RHOMBOHEDRAL_3: Mat = [
-  [2, -1, -1],
-  [1, 1, -2],
-  [1, 1, 1],
-];
-const HEXAGONAL_IN_RHOMBOHEDRAL: Mat = [
-  [1, 0, 1],
-  [-1, 1, 1],
-  [0, -1, 1],
-];
+/**
+ * 3P, the rhombohedral basis P in the hexagonal one (`OBVERSE_RHOMBOHEDRAL_BASIS`, columns the
+ * obverse a, b, c) times 3, an integer matrix like P⁻¹ (`HEXAGONAL_IN_RHOMBOHEDRAL`).
+ */
+const RHOMBOHEDRAL_3: Mat = OBVERSE_RHOMBOHEDRAL_BASIS.map((row) => row.map((x) => toNumber(scale(3, x))));
 
 const multiply = (a: Mat, b: Mat): number[][] =>
   a.map((row) => [0, 1, 2].map((j) => row[0] * b[0][j] + row[1] * b[1][j] + row[2] * b[2][j]));
 
-/** The holohedry of the family of a class, as the key and setting whose lattice operations give it. */
+/**
+ * The holohedry of the family of a class, as the key and setting whose lattice operations give it:
+ * that of the lattice system named as the family (`6/mmm` also for rhombohedral axes), with the
+ * unique axis of the class.
+ */
 function holohedryOf(key: PointGroupKey, setting: number): { key: PointGroupKey; setting: number } {
-  const family = crystalFamily(classData(key).crystalSystem);
-  const s = classSettingData(key, setting);
-  switch (family) {
-    case 'triclinic':
-      return { key: '-1', setting: 1 };
-    case 'monoclinic':
-      return { key: '2/m', setting: settings('2/m').findIndex((x) => x.uniqueAxis === s.uniqueAxis) + 1 };
-    case 'orthorhombic':
-      return { key: 'mmm', setting: 1 };
-    case 'tetragonal':
-      return { key: '4/mmm', setting: 1 };
-    case 'hexagonal':
-      return { key: '6/mmm', setting: 1 };
-    case 'cubic':
-      return { key: 'm-3m', setting: 1 };
-  }
+  const holo = holohedry(crystalFamily(classData(key).crystalSystem));
+  const axis = classSettingData(key, setting).uniqueAxis;
+  return { key: holo, setting: axis ? settings(holo).findIndex((x) => x.uniqueAxis === axis) + 1 : 1 };
 }
 
 /** The eigensymmetry of a set of unit normals: all orthogonal maps that permute them, as Cartesian matrices. */
@@ -110,27 +103,31 @@ function eigensymmetry(normals: readonly Vec3[]): Mat3[] {
     a[0] * b[1] - a[1] * b[0],
   ];
   const near = (a: Vec3, b: Vec3): boolean =>
-    Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]) + Math.abs(a[2] - b[2]) < 1e-9;
+    Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]) + Math.abs(a[2] - b[2]) < ROUNDING_EPSILON;
   // Coplanar normals: the normal of their plane, both ways, makes the set span the space.
   let points = [...normals];
   const n0 = normals[0];
-  const other = normals.find((n) => Math.hypot(...cross(n0, n)) > 1e-9);
+  const other = normals.find((n) => Math.hypot(...cross(n0, n)) > ROUNDING_EPSILON);
   if (!other) throw new Error('The eigensymmetry of a pedion or pinacoid is not finite');
   const c = cross(n0, other);
-  const z: Vec3 = c.map((x) => x / Math.hypot(...c)) as unknown as Vec3;
-  const spans = normals.some((n) => Math.abs(dot(n, z)) > 1e-9);
+  const z = normalize(c);
+  const spans = normals.some((n) => Math.abs(dot(n, z)) > ROUNDING_EPSILON);
   if (!spans) points = [...points, z, [-z[0], -z[1], -z[2]]];
   const a = points[0];
-  const b = points.find((p) => Math.hypot(...cross(a, p)) > 1e-9)!;
-  const third = points.find((p) => Math.abs(dot(cross(a, b), p)) > 1e-9)!;
+  const b = points.find((p) => Math.hypot(...cross(a, p)) > ROUNDING_EPSILON)!;
+  const third = points.find((p) => Math.abs(dot(cross(a, b), p)) > ROUNDING_EPSILON)!;
   const basis = [a, b, third];
   const inv = inverse(transpose(basis as unknown as Mat3));
   const out: Mat3[] = [];
   for (const p of points) {
     for (const q of points) {
-      if (Math.abs(dot(p, q) - dot(a, b)) > 1e-9) continue;
+      if (Math.abs(dot(p, q) - dot(a, b)) > ROUNDING_EPSILON) continue;
       for (const r of points) {
-        if (Math.abs(dot(p, r) - dot(a, third)) > 1e-9 || Math.abs(dot(q, r) - dot(b, third)) > 1e-9) continue;
+        if (
+          Math.abs(dot(p, r) - dot(a, third)) > ROUNDING_EPSILON ||
+          Math.abs(dot(q, r) - dot(b, third)) > ROUNDING_EPSILON
+        )
+          continue;
         // T maps a, b, third onto p, q, r: T = [p q r]·[a b third]⁻¹.
         const t = multiplyReal(transpose([p, q, r] as unknown as Mat3), inv);
         // T must permute the normals themselves (and, for coplanar ones, keep the normal of their plane up to sign).
@@ -148,7 +145,7 @@ function eigensymmetry(normals: readonly Vec3[]): Mat3[] {
 const multiplyReal = (a: Mat3, b: Mat3): Mat3 =>
   a.map((row) => [0, 1, 2].map((j) => row[0] * b[0][j] + row[1] * b[1][j] + row[2] * b[2][j])) as unknown as Mat3;
 const sameMatrix = (a: Mat3, b: Mat3): boolean =>
-  a.every((row, i) => row.every((x, j) => Math.abs(x - b[i][j]) < 1e-9));
+  a.every((row, i) => row.every((x, j) => Math.abs(x - b[i][j]) < ROUNDING_EPSILON));
 
 /**
  * The kind of the form of a face: its number of faces and eigensymmetry, and where these do not
@@ -158,7 +155,7 @@ const sameMatrix = (a: Mat3, b: Mat3): boolean =>
 function formType(normals: readonly Vec3[]): { type: CrystalFormTypeKey; condition?: string } {
   const n = normals.length;
   const near = (a: Vec3, b: Vec3): boolean =>
-    Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]) + Math.abs(a[2] - b[2]) < 1e-9;
+    Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]) + Math.abs(a[2] - b[2]) < ROUNDING_EPSILON;
   const candidates = FORM_TYPE_DATA.filter(([, , faces]) => faces === n);
   if (n === 1) return { type: 'pedion' };
   if (n === 2) {
@@ -183,11 +180,11 @@ function formType(normals: readonly Vec3[]): { type: CrystalFormTypeKey; conditi
   for (const m of group) {
     if (det(m) > 0 || !near(applyMatrix(m, f), f)) continue;
     const trace = m[0][0] + m[1][1] + m[2][2];
-    if (Math.abs(trace - 1) > 1e-9) continue; // a reflection has trace 1
+    if (Math.abs(trace - 1) > ROUNDING_EPSILON) continue; // a reflection has trace 1
     // Its normal: a column of I − M that is not zero.
     const columns = [0, 1, 2].map((j) => [0, 1, 2].map((i) => (i === j ? 1 : 0) - m[i][j]) as unknown as Vec3);
-    const d = columns.find((v) => Math.hypot(...v) > 1e-9)!;
-    const u = d.map((x) => x / Math.hypot(...d)) as unknown as Vec3;
+    const d = columns.find((v) => Math.hypot(...v) > ROUNDING_EPSILON)!;
+    const u = normalize(d);
     const order = group.filter((r) => det(r) > 0 && near(applyMatrix(r, u), u)).length;
     axis = Math.max(axis, order);
   }
@@ -198,36 +195,13 @@ function formType(normals: readonly Vec3[]): { type: CrystalFormTypeKey; conditi
   if (byAxis.length === 1) return { type: FORM_TYPE_KEYS[byAxis[0][0] - 1] };
   // The cubic forms on (hhl): two components of the normal are equal; |h| < |l| if the third is larger.
   const abs = f.map(Math.abs).sort((x, y) => x - y);
-  const condition = Math.abs(abs[0] - abs[1]) < 1e-9 ? '|h|<|l|' : '|h|>|l|';
+  const condition = Math.abs(abs[0] - abs[1]) < ROUNDING_EPSILON ? '|h|<|l|' : '|h|>|l|';
   const byCondition = byAxis.filter(
     ([number]) => FORM_DISTINCTIONS[FORM_TYPE_KEYS[number - 1]]?.condition === condition,
   );
   if (byCondition.length !== 1) throw new Error(`No unique kind for a form of ${n} faces`);
   return { type: FORM_TYPE_KEYS[byCondition[0][0] - 1], condition };
 }
-
-/**
- * Part of the definition of the names: what tells apart kinds of forms with the same number of faces
- * and eigensymmetry, from their geometry (Table 3.2.1.3 gives the names, not these numbers): the
- * order of the rotation of the eigensymmetry about the normal of the mirror that fixes a face (6, 4
- * or 3 for a prism, whose faces are parallel to the main axis; 4 for the tetrahexahedron), and for
- * the cubic forms on (hhl) the condition on h and l (ITA's "for |h| < |l|").
- */
-export const FORM_DISTINCTIONS: Readonly<
-  Partial<Record<CrystalFormTypeKey, { readonly mirrorAxis?: number; readonly condition?: string }>>
-> = deepFreeze({
-  'ditetragonal-prism': { mirrorAxis: 4 },
-  'tetragonal-dipyramid': { mirrorAxis: 2 },
-  'ditrigonal-prism': { mirrorAxis: 3 },
-  'trigonal-dipyramid': { mirrorAxis: 1 },
-  'dihexagonal-prism': { mirrorAxis: 6 },
-  'hexagonal-dipyramid': { mirrorAxis: 2 },
-  tetrahexahedron: { mirrorAxis: 4 },
-  'trigon-trioctahedron': { mirrorAxis: 2, condition: '|h|>|l|' },
-  'tetragon-trioctahedron': { mirrorAxis: 2, condition: '|h|<|l|' },
-  'trigon-tritetrahedron': { condition: '|h|<|l|' },
-  'tetragon-tritetrahedron': { condition: '|h|>|l|' },
-});
 
 /**
  * The rule for the first face of a cubic form: as `pointRank`, but the latest pivots first
@@ -297,11 +271,7 @@ export function formRowsWith(key: PointGroupKey, setting: number, conventions: F
         : [1, 1.2071, 1.5556];
   const basis = settingBasis(holo.key, holo.setting).map((row) => row.map((x, j) => x * lengths[j])) as unknown as Mat3;
   const reciprocal = transpose(inverse(basis));
-  const unit = (h: Vec): Vec3 => {
-    const v = applyMatrix(reciprocal, h as unknown as Vec3);
-    const n = Math.hypot(v[0], v[1], v[2]);
-    return [v[0] / n, v[1] / n, v[2] / n];
-  };
+  const unit = (h: Vec): Vec3 => normalize(applyMatrix(reciprocal, h as unknown as Vec3));
   const faceStabiliser = (group: readonly Mat[], h: Vec): number =>
     group.filter((w) => applyToFace(w, h).every((x, i) => x === h[i])).length;
   const faceOrbit = (h: Vec): number[][] => {

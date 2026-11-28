@@ -104,9 +104,10 @@ export const INTEGER_EPSILON = 1e-9;
 
 /**
  * Two numbers computed from exact data in floating point are equal within this: a point of a plane
- * group that its fixing operations map onto itself modulo the lattice (spaceGroups/positions.ts),
- * and, per vector averaged, the length below which a mean of unit vectors counts as zero
- * (siteSymmetry.ts).
+ * group that its fixing operations map onto itself modulo the lattice (spaceGroups/positions.ts);
+ * per vector averaged, the length below which a mean of unit vectors counts as zero
+ * (siteSymmetry.ts); and the unit normals of the faces of a form, computed from integer indices,
+ * and the matrices and traces of their eigensymmetry (pointGroups/formRows.ts).
  */
 export const ROUNDING_EPSILON = 1e-9;
 
@@ -124,6 +125,25 @@ export const EXACT_DENOMINATOR = 1000;
  * and the class of a line (spaceGroups/cell.ts), so that a boundary value counts as inside.
  */
 export const BOUNDARY_EPSILON = 1e-12;
+
+/**
+ * The products of an exact group (`idealGroup`, orthogonal to about 10⁻¹²) are found in it per
+ * entry within this (siteSymmetry.ts, the orbit of a list of a caller); distinct operations of a
+ * point group differ by at least √2/3 ≈ 0.47 in some entry.
+ */
+export const EXACT_PRODUCT_EPSILON = 1e-6;
+
+/**
+ * The relative slack of the condition |a·b| ≤ a·a/2 of a reduced basis of the plane, for rounding
+ * (spaceGroups/positions.ts, `reducedBasis`): a hexagonal cell has |a·b| = a·a/2 exactly.
+ */
+export const REDUCED_SLACK = 1e-9;
+
+/**
+ * The Jacobi rotations of the operator norm (linalg.ts, `operatorNorm`) stop when the off-diagonal
+ * entries of MᵀM sum to at most this times its diagonal, which is diagonal to the last bit then.
+ */
+export const JACOBI_SETTLED = 1e-30;
 
 /**
  * The ratio |det| / (product of the column lengths) below which a matrix counts as singular; for a
