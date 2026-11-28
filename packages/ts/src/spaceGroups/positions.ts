@@ -21,7 +21,7 @@ import {
 } from './affine.js';
 import { planeGroupEntry, planeGroupOperations } from './planeGroups.js';
 import { dot2 } from './planeLattice.js';
-import { ROUNDING_EPSILON, toleranceOf, type ToleranceOptions } from '../tolerances.js';
+import { REDUCED_SLACK, ROUNDING_EPSILON, toleranceOf, type ToleranceOptions } from '../tolerances.js';
 
 /** The site symmetry of a point under a plane group. */
 export interface PlaneSiteSymmetry {
@@ -373,9 +373,6 @@ function freeDirections(op: PlainOperation): number[][] {
 }
 
 type Mat2 = readonly (readonly number[])[];
-
-/** The relative slack of the condition |a·b| ≤ a·a/2 of a reduced basis, for rounding. */
-const REDUCED_SLACK = 1e-9;
 
 /** A vector of lattice coordinates in Cartesian coordinates: B·r (B with the columns a, b). */
 const cartesian = (b: Mat2, r: readonly number[]): number[] => [

@@ -12,7 +12,14 @@ import {
   type CartesianOperation,
   type DirectionOperation,
 } from './operations.js';
-import { EPSILON, ROUNDING_EPSILON, TOLERANCE_BOUND, toleranceOf, type ToleranceOptions } from './tolerances.js';
+import {
+  EPSILON,
+  EXACT_PRODUCT_EPSILON,
+  ROUNDING_EPSILON,
+  TOLERANCE_BOUND,
+  toleranceOf,
+  type ToleranceOptions,
+} from './tolerances.js';
 
 /** The site symmetry of a direction. */
 export interface SiteSymmetry {
@@ -287,7 +294,7 @@ export function orbitOfList(
   const exact = checkedExactList(operations, tolerance, 'orbitOf');
   const site = siteInExactGroup(exact, unit(direction), tolerance);
   // The exact operations are a group to rounding: their products are found within it.
-  const product = productLookup(exact, 1e-6);
+  const product = productLookup(exact, EXACT_PRODUCT_EPSILON);
   const done = new Set<number>();
   const poles: { direction: Vec3; operations: number[] }[] = [];
   exact.forEach((op, i) => {
