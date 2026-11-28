@@ -197,7 +197,7 @@ describe('the distances of a full search, in every group and in bases of its cel
   /** The printed coordinates of every row as affine maps (W, w), with the centrings added. */
   const affineRows = (symbol: string) => {
     const md = readReference('itc/vol-a-2016-plane-groups.md');
-    const section = md.split('\n## ').find((s) => new RegExp(`^\\d+ — ${symbol.replace(/[()]/g, '\\$&')},`).test(s))!;
+    const section = md.split('\n## ').find((s) => /^\d+ — (\S+),/.exec(s)?.[1] === symbol)!;
     const centrings = section.includes('Centring:') ? [[0, 0], [0.5, 0.5]] : [[0, 0]]; // prettier-ignore
     return section
       .split('\n')
