@@ -6,6 +6,24 @@ All notable changes to symcrys are recorded here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- Python: input whose conversion would change its meaning is refused with a SymcrysError, checked
+  once before any conversion (#237). Before, it gave an answer:
+  - two keys that name one field (`{"time_parity": "odd", "timeParity": "even"}`): the later key
+    won, so the order of insertion decided whether a tensor was allowed; now an error that names
+    both keys; a key that is not a string is refused by name;
+  - a masked array: the masked values were used; an array without masked values is taken;
+  - an integer beyond 2⁵³ − 1 in a list of floats was rounded;
+  - `np.longdouble(1)` raised a RecursionError; a NumPy scalar is now taken if it is exactly a
+    double or an integer, and refused otherwise, as is an array of long doubles that a double
+    would round;
+  - an empty array of the wrong shape, such as `Operations` of shape (3, 0, 4), was the group 1;
+  - a stack of matrices of digit strings was read as numbers;
+  - an empty boolean mask passed the length check of `Operations`;
+  - `to_voigt` flattened a tensor of the shape (1, 9) or (1, 3, 3); it takes the flat (3**rank,)
+    or (3, …, 3).
+
 ### Changed
 
 - **Breaking:** the tolerance of a direction or a point measures the distance to the symmetry

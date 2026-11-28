@@ -12,7 +12,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 from . import _engine
-from ._convert import MAX_SAFE as _MAX_SAFE, UnsafeInteger, convert as _convert_schema, to_js as _to_js
+from ._convert import MAX_SAFE as _MAX_SAFE, InvalidInput, check_raw as _check_raw, convert as _convert_schema, to_js as _to_js
 
 
 def options(**kwargs: Any) -> dict[str, Any]:
@@ -25,8 +25,16 @@ def to_js(x: Any) -> Any:
     """``_convert.to_js``, an integer that a double would round refused as wrong input."""
     try:
         return _to_js(x)
-    except UnsafeInteger as e:
+    except InvalidInput as e:
         raise _engine.SymcrysError(str(e), "RangeError") from None
+
+
+def check_raw(x: Any, what: str) -> None:
+    """``_convert.check_raw``, naming the argument: what a conversion would lose is wrong input."""
+    try:
+        _check_raw(x)
+    except InvalidInput as e:
+        raise _engine.SymcrysError(f"{what}: {e}", "RangeError") from None
 
 
 _F = TypeVar("_F", bound=Callable[..., Any])
@@ -83,6 +91,12 @@ def operation_list(operations: Any, keys: tuple[str, ...] = ("cartesian",), bare
                 given = None
             if given is not None and given.dtype.kind == "c":
                 raise _engine.SymcrysError(f"the matrices of the operations must be real, not {given.dtype}")
+            if given is not None and given.size and given.dtype.kind not in "biuf":
+                # Strings of digits would be read as numbers by the conversion below.
+                raise _engine.SymcrysError(
+                    f"the matrices of the operations must hold real numbers, not {given.dtype}", "RangeError"
+                )
+            check_raw(operations, "the matrices of the operations")
             try:
                 matrices = np.asarray(ops, dtype=np.float64)
             except (TypeError, ValueError):
@@ -169,7 +183,8 @@ def operation_at(operations: Any, index: Any) -> Any:
         return {name: (v.item() if v.ndim == 0 else v) for name, v in row.items()}
     if not isinstance(index, slice):
         selection = np.asarray(index)
-        if selection.size == 0:
+        if selection.size == 0 and selection.dtype.kind != "b":
+            # An empty list ([] is read as floats); an empty mask stays a mask, checked for its length.
             selection = selection.astype(np.int64)
         if selection.ndim != 1 or selection.dtype.kind not in "biu":
             raise IndexError(f"Operations are indexed by an integer, a slice, a list of integers or a mask, not {index!r}")
@@ -189,10 +204,14 @@ def _checked(owner: str, name: str, value: Any, dtype: Any, shape: tuple[int, ..
         return _engine.SymcrysError(f"{owner}.{name} {what}", "RangeError")
 
     try:
+        _check_raw(value)
         a = np.asarray(value)
+    except InvalidInput as e:
+        raise error(str(e)) from None
     except (TypeError, ValueError) as e:
         raise error(f"must be an array ({e})") from None
-    if a.size == 0:
+    if a.size == 0 and a.ndim == 1:
+        # [], no operation; an empty array of another shape is checked below.
         a = np.zeros((0, *shape), dtype=dtype)
     kind = a.dtype.kind
     if dtype is np.bool_:
@@ -297,6 +316,7 @@ def spec(spec_or_name: Mapping[str, Any] | str) -> Any:
 def array(value: Any, what: str, dtype: Any = None) -> NDArray[Any]:
     """An argument as a NumPy array of real numbers, or SymcrysError naming it (a ragged list, a
     string, complex numbers): the library checks the shape and the values."""
+    check_raw(value, what)
     try:
         # Read first as it is, so that complex numbers are refused rather than cut to their real part.
         given = np.asarray(value)
@@ -315,6 +335,17 @@ def array(value: Any, what: str, dtype: Any = None) -> NDArray[Any]:
         return np.asarray(given, dtype=dtype)
     except (TypeError, ValueError) as e:
         raise _engine.SymcrysError(f"{what} must be an array of numbers ({e})") from None
+
+
+def tensor(value: Any, what: str) -> NDArray[np.float64]:
+    """A tensor as the library takes it, flat: given flat (3**rank,) or in its shape (3, …, 3); the
+    library checks the number of components against the rank."""
+    t = array(value, what, np.float64)
+    if t.ndim > 1 and set(t.shape) != {3}:
+        raise _engine.SymcrysError(
+            f"{what} has the shape (3, …, 3) or the flat (3**rank,), not {t.shape}", "RangeError"
+        )
+    return t.reshape(-1)
 
 
 def mapping(value: Any, what: str) -> dict[str, Any]:

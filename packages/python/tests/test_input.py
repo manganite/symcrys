@@ -1,7 +1,7 @@
 """The conversion of Python input must not change its meaning (#237).
 
-The tests marked ``xfail(strict=True)`` fail on 0.15.0 and are the safety net of #234: they pass
-while they fail, and the fix that makes one pass turns it red until the mark is removed.
+Expected values are the contract of the layer (``GUIDE.md``, "The Python layer"): input whose
+conversion would change its meaning is refused.
 """
 
 from __future__ import annotations
@@ -14,15 +14,12 @@ import pytest
 import symcrys
 from symcrys import magnetic, plane
 
-FAILS_ON_0_15 = pytest.mark.xfail(strict=True, reason="#237, fails on 0.15.0")
-
 AXIAL = {"rank": 1, "kind": "axial", "intrinsic": "none"}
 
 
 # --- keys that name the same field ----------------------------------------------------------------
 
 
-@FAILS_ON_0_15
 @pytest.mark.parametrize(
     "spec",
     [
@@ -37,20 +34,17 @@ def test_two_keys_for_one_field_are_refused_in_either_order(spec: dict[str, Any]
         magnetic.tensor_form("11'", spec)
 
 
-@FAILS_ON_0_15
 def test_two_keys_for_one_field_are_refused_in_the_crystallographic_module() -> None:
     spec = {"rank": 1, "kind": "polar", "intrinsic": "none", "time_parity": "even", "timeParity": "even"}
     with pytest.raises(symcrys.SymcrysError, match=r"time_parity.*timeParity|timeParity.*time_parity"):
         symcrys.tensor_form("4", spec)
 
 
-@FAILS_ON_0_15
 def test_two_keys_for_one_field_are_refused_in_a_cell() -> None:
     with pytest.raises(symcrys.SymcrysError, match=r"cell_choice.*cellChoice|cellChoice.*cell_choice"):
         symcrys.cell_transformation("mP", {"cell_choice": 1, "cellChoice": 2}, {})
 
 
-@FAILS_ON_0_15
 def test_two_keys_for_one_field_are_refused_in_an_operation() -> None:
     # On 0.15.0 the later key wins: the identity with time reversal, the group 11'.
     op = {"cartesian": np.eye(3), "time_reversal": False, "timeReversal": True}
@@ -61,7 +55,6 @@ def test_two_keys_for_one_field_are_refused_in_an_operation() -> None:
 # --- arrays ---------------------------------------------------------------------------------------
 
 
-@FAILS_ON_0_15
 def test_a_masked_array_with_masked_values_is_refused() -> None:
     # On 0.15.0 the masked value 2 is used as if it were not masked.
     with pytest.raises(symcrys.SymcrysError, match="mask"):
@@ -78,7 +71,6 @@ def test_a_masked_array_without_masked_values_is_taken() -> None:
     assert got.tolist() == [1.0, 2.0, 3.0]
 
 
-@FAILS_ON_0_15
 def test_an_integer_that_a_double_would_round_is_refused_in_a_list_of_floats() -> None:
     # 2**53 + 1 has no double; on 0.15.0 it becomes 9007199254740992.0 without an error.
     with pytest.raises(symcrys.SymcrysError):
@@ -108,7 +100,6 @@ def test_a_key_that_is_not_a_string_is_refused() -> None:
         symcrys.tensor_form("4", {1: "x", "rank": 1, "kind": "polar", "intrinsic": "none"})  # type: ignore[dict-item]
 
 
-@FAILS_ON_0_15
 def test_an_empty_record_of_the_wrong_shape_is_refused() -> None:
     a = np.empty((3, 0, 4))
     with pytest.raises(symcrys.SymcrysError, match="shape"):
@@ -120,7 +111,6 @@ def test_an_empty_record_of_the_right_shape_is_the_group_1() -> None:
     assert symcrys.point_group_of(symcrys.Operations(empty.astype(np.int64), empty)) == {"key": "1", "setting": 1}
 
 
-@FAILS_ON_0_15
 def test_strings_are_refused_as_a_stack_of_matrices() -> None:
     # The same data in the field cartesian is refused already.
     digits = np.array([[["1", "0", "0"], ["0", "1", "0"], ["0", "0", "1"]]])
@@ -128,14 +118,12 @@ def test_strings_are_refused_as_a_stack_of_matrices() -> None:
         symcrys.point_group_of(digits)
 
 
-@FAILS_ON_0_15
 def test_an_empty_mask_is_refused_as_any_mask_of_the_wrong_length() -> None:
     ops = symcrys.operations("4mm")
     with pytest.raises(IndexError, match="a mask of 0 values for 8 operations"):
         ops[np.zeros(0, dtype=bool)]
 
 
-@FAILS_ON_0_15
 @pytest.mark.parametrize("shape", [(1, 9), (1, 3, 3)])
 def test_to_voigt_refuses_a_rank_2_tensor_in_another_shape(shape: tuple[int, ...]) -> None:
     # The docstring names (9,) and (3, 3); (2, 9) is refused, (1, 9) and (1, 3, 3) are flattened on 0.15.0.
@@ -154,7 +142,6 @@ def test_to_voigt_takes_a_rank_2_tensor_in_its_shapes(shape: tuple[int, ...]) ->
 # --- NumPy scalars --------------------------------------------------------------------------------
 
 
-@FAILS_ON_0_15
 def test_a_numpy_scalar_that_is_exactly_a_double_is_taken() -> None:
     # np.longdouble(1) is exactly 1.0; on 0.15.0 it raises a RecursionError.
     want = symcrys.lattice_from_parameters(1.0, 1, 1, 90, 90, 90)
@@ -162,8 +149,52 @@ def test_a_numpy_scalar_that_is_exactly_a_double_is_taken() -> None:
     assert got.tolist() == want.tolist()
 
 
-@FAILS_ON_0_15
 @pytest.mark.skipif(np.finfo(np.longdouble).eps == np.finfo(np.float64).eps, reason="long double is a double here")
 def test_a_numpy_scalar_that_a_double_would_round_is_refused() -> None:
     with pytest.raises(symcrys.SymcrysError):
         symcrys.lattice_from_parameters(np.longdouble(1) + np.longdouble(2) ** -60, 1, 1, 90, 90, 90)  # type: ignore[arg-type]
+
+
+# --- the same contract in every module and for every kind of input -------------------------------
+
+
+def test_two_keys_for_one_field_are_refused_in_the_plane() -> None:
+    # camel("translation_") is "translation": the same collision without a snake_case name.
+    op = {"matrix": np.eye(2, dtype=np.int64), "translation": [0, 0], "translation_": [0.5, 0]}
+    with pytest.raises(symcrys.SymcrysError, match=r"'translation'.*'translation_'"):
+        plane.describe_operations_of([op])
+
+
+def test_a_key_that_is_not_a_string_is_named() -> None:
+    with pytest.raises(symcrys.SymcrysError, match="keys of a mapping are strings, not 1"):
+        symcrys.tensor_form("4", {1: "x", "rank": 1, "kind": "polar", "intrinsic": "none"})  # type: ignore[dict-item]
+
+
+def test_a_masked_field_of_operations_is_refused() -> None:
+    ops = symcrys.operations("4mm")
+    masked = np.ma.array(ops.cartesian, mask=np.zeros(ops.cartesian.shape, dtype=bool))
+    masked[1, 0, 0] = np.ma.masked
+    with pytest.raises(symcrys.SymcrysError, match="mask"):
+        symcrys.Operations(ops.matrix, masked)
+
+
+def test_an_array_of_long_doubles_that_a_double_would_round_is_refused() -> None:
+    if np.finfo(np.longdouble).eps == np.finfo(np.float64).eps:
+        pytest.skip("long double is a double here")
+    t = np.array([1, 2, 3], dtype=np.longdouble) + np.longdouble(2) ** -60
+    with pytest.raises(symcrys.SymcrysError, match="double"):
+        symcrys.rotate_tensor(t, np.eye(3), "pyroelectric")
+
+
+@pytest.mark.parametrize(
+    "x", [np.float32(0.5), np.float16(2), np.int8(-3), np.uint64(7), np.longdouble(1.5)], ids=lambda x: type(x).__name__
+)
+def test_numpy_scalars_that_are_exact_are_taken(x: Any) -> None:
+    want = symcrys.lattice_from_parameters(float(x) if float(x) > 0 else 1.0, 1, 1, 90, 90, 90)
+    got = symcrys.lattice_from_parameters(x if float(x) > 0 else 1.0, 1, 1, 90, 90, 90)
+    assert got.tolist() == want.tolist()
+
+
+def test_a_complex_numpy_scalar_is_refused() -> None:
+    with pytest.raises(symcrys.SymcrysError, match="complex"):
+        symcrys.lattice_from_parameters(np.complex128(1), 1, 1, 90, 90, 90)  # type: ignore[arg-type]
