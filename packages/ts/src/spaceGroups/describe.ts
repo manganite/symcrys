@@ -7,7 +7,15 @@
 
 import { gcd, safeProduct, safeSum } from '../integers.js';
 import { shown } from '../checks.js';
-import { determinant, dimensionOf, multiplyMatrices, trace, type ExactOperation, type IntMatrix } from './affine.js';
+import {
+  determinant,
+  dimensionOf,
+  multiplyMatrices,
+  rotationOrder,
+  trace,
+  type ExactOperation,
+  type IntMatrix,
+} from './affine.js';
 import { ZERO, add, multiply, rational, scale, type Rational } from './rational.js';
 
 /**
@@ -75,9 +83,6 @@ function power(m: IntMatrix, n: number): IntMatrix {
 
 const isIdentity = (m: IntMatrix): boolean => m[0][0] === 1 && m[0][1] === 0 && m[1][0] === 0 && m[1][1] === 1;
 
-/** The order of the rotation part of a proper plane operation, from its trace (also in a hexagonal basis). */
-const ORDER_BY_TRACE: Record<number, number> = { 2: 1, [-2]: 2, [-1]: 3, 0: 4, 1: 6 };
-
 /**
  * Describes an operation of a plane group; the result is frozen. Throws unless the operation is two-dimensional with the
  * linear part of a crystallographic plane point group (determinant ±1, order 1, 2, 3, 4 or 6).
@@ -90,7 +95,7 @@ export function describePlaneOperation(op: ExactOperation): PlaneOperationDescri
   const t = op.translation;
   const det = determinant(w);
   if (det === 1) {
-    const n = ORDER_BY_TRACE[trace(w)];
+    const n = rotationOrder(trace(w));
     if (n === undefined || !isIdentity(power(w, n))) {
       throw new RangeError(`Not a crystallographic rotation: ${shown(w)}`);
     }

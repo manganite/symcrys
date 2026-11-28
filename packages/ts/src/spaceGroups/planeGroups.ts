@@ -14,6 +14,7 @@ import {
   equalModLattice,
   parseOperation,
   reduceModLattice,
+  rotationOrder,
   trace,
   translationOperation,
   type ExactOperation,
@@ -95,13 +96,10 @@ export function planeGroupGenerators(key: string | number): ExactOperation[] {
 /** The lattice letter of a plane group: c for a centred lattice, p otherwise. */
 export const latticeLetter = (entry: PlaneGroupEntry): 'p' | 'c' => (entry.centring.length > 0 ? 'c' : 'p');
 
-/** The order of a proper rotation of the plane from its trace (also in a hexagonal basis): 1, 2, 3, 4, 6. */
-const ROTATION_ORDER: Readonly<Record<number, number>> = { 2: 1, [-2]: 2, [-1]: 3, 0: 4, 1: 6 };
-
 /** The highest order of a rotation in the group, and whether it has a reflection (or glide reflection). */
 function rotationsAndReflections(key: string | number): { n: number; reflections: boolean } {
   const ops = planeGroupOperations(key);
-  const n = Math.max(...ops.filter((op) => determinant(op.matrix) === 1).map((op) => ROTATION_ORDER[trace(op.matrix)]));
+  const n = Math.max(...ops.filter((op) => determinant(op.matrix) === 1).map((op) => rotationOrder(trace(op.matrix))!));
   return { n, reflections: ops.some((op) => determinant(op.matrix) === -1) };
 }
 

@@ -11,6 +11,7 @@ import { checkCartesianOperations, checkTimeReversal, type CartesianOperation } 
 import { EPSILON, MAX_POINT_GROUP_ORDER, toleranceOf, type ToleranceOptions } from '../tolerances.js';
 import type { OperationKind } from './elements.js';
 import { axialVector, rotationAxis } from './rotations.js';
+import { rotationOrder } from '../spaceGroups/affine.js';
 import {
   MAGNETIC_POINT_GROUP_KEYS,
   operationInvariants,
@@ -179,7 +180,7 @@ function describe(op: CartesianOperation, i: number, tolerance: number): Cartesi
   const t = det(op.cartesian) > 0 ? trace(op.cartesian) : -trace(op.cartesian);
   if (Math.abs(t - Math.round(t)) > traceTolerance(tolerance)) throw new RangeError(notCrystallographic);
   // The order from the trace of the rotation part, 1 + 2 cos(360°/n): 3, −1, 0, 1, 2 for n = 1, 2, 3, 4, 6.
-  const n = ({ 3: 1, [-1]: 2, 0: 3, 1: 4, 2: 6 } as Record<number, number>)[Math.round(t)];
+  const n = rotationOrder(Math.round(t) - 1);
   if (n === undefined) throw new RangeError(notCrystallographic);
   const r = (det(op.cartesian) > 0 ? op.cartesian : op.cartesian.map((row) => row.map((v) => -v))) as Mat3;
   const proper = det(op.cartesian) > 0;
