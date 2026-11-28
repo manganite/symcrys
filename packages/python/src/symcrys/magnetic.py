@@ -638,6 +638,14 @@ class TensorForm(TypedDict):
     components, for every allowed tensor t. The constraint of c reads t_c − Σₖ b_{k,c}·t_{parameters[k]}
     = 0, with b_{k,c} the component c of basis[k]; one with a single 1 says that the component vanishes.
     """
+    largest_coefficient: float
+    """The largest magnitude of a coefficient of the basis, 0 if the tensor vanishes: how much the basis
+    amplifies an error of the parameters. It is 1 or 2 for the form of a point group in a setting, and
+    large for operations in a frame that is nearly, but not exactly, aligned with a symmetry element
+    (the polar axis of 4mm tilted by 10⁻⁶ gives about 10⁶). For a crystal in another frame, the form
+    computed in the frame of its setting (``tensor_form``) and rotated into the other frame
+    (``rotate_tensor``) keeps the coefficients small.
+    """
 
 
 _OPERATION_FIELDS = {"matrix": (np.int64, (3, 3)), "cartesian": (np.float64, (3, 3)), "time_reversal": (np.bool_, ())}
@@ -768,6 +776,7 @@ _S_TensorForm = (
         "basis": ("a", np.float64, None),
         "parameters": ("a", np.int64, None),
         "relations": ("a", np.float64, None),
+        "largestCoefficient": _F,
     },
 )
 

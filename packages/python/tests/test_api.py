@@ -330,6 +330,13 @@ def test_rotate_tensor_takes_arrays_of_any_shape() -> None:
         symcrys.rotate_tensor(np.zeros((0, 3, 3, 3)), 2 * np.eye(3), SHG)
 
 
+def test_tensor_form_gives_its_largest_coefficient_as_a_float() -> None:
+    form = symcrys.tensor_form("6mm", "piezoelectric")
+    assert type(form["largest_coefficient"]) is float
+    assert form["largest_coefficient"] == np.abs(form["basis"]).max()
+    assert magnetic.tensor_form("m-3m", "pyroelectric")["largest_coefficient"] == 0.0
+
+
 def test_library_errors_are_value_errors_with_the_message() -> None:
     with pytest.raises(symcrys.SymcrysError, match="Unknown point group key") as e:
         symcrys.operations("7")

@@ -8,7 +8,14 @@
 import { describe, expect, it } from 'vitest';
 import { det, type Mat3, type Vec3 } from '../linalg.js';
 import { operation, type CartesianOperation } from '../operations.js';
-import { POINT_GROUP_KEYS, generators, operations, settings, type PointGroupKey } from '../pointGroups/pointGroups.js';
+import {
+  POINT_GROUP_KEYS,
+  generators,
+  operations,
+  settings,
+  type MagneticPointGroupKey,
+  type PointGroupKey,
+} from '../pointGroups/pointGroups.js';
 import { siteSymmetryOf } from '../siteSymmetry.js';
 import { matrixRank, satisfies } from '../testUtils/rank.js';
 import { YARIV_PANELS, basisScheme, printedScheme } from '../testUtils/yariv.js';
@@ -417,6 +424,98 @@ describe('rotateTensor', () => {
         const dim = 3 ** sp.rank;
         const rotated = tensorForm(key, sp).basis.map((b) => rotateTensor(b, R1, sp));
         expect(sameSpan(rotated, tensorFormOf(rotatedOps, sp).basis, dim), `${key} rank ${sp.rank}`).toBe(true);
+      }
+    }
+  });
+});
+
+describe('the conditioning of a basis: largestCoefficient (#241)', () => {
+  const rotY = (theta: number): Mat3 => [
+    [Math.cos(theta), 0, Math.sin(theta)],
+    [0, 1, 0],
+    [-Math.sin(theta), 0, Math.cos(theta)],
+  ];
+  const conj = (r: Mat3, m: Mat3): Mat3 =>
+    [0, 1, 2].map((i) =>
+      [0, 1, 2].map((j) => {
+        let s = 0;
+        for (let a = 0; a < 3; a++) for (let b = 0; b < 3; b++) s += r[i][a] * m[a][b] * r[j][b];
+        return s;
+      }),
+    ) as unknown as Mat3;
+  const tiltedOps = (key: MagneticPointGroupKey, theta: number): CartesianOperation[] =>
+    operations(key).map((op) => ({ cartesian: conj(rotY(theta), op.cartesian), timeReversal: op.timeReversal }));
+  /** The orthogonal projector onto the span of the rows, by Gram–Schmidt twice (independent of the library). */
+  const projector = (rows: readonly (readonly number[])[], dim: number): number[][] => {
+    const q: number[][] = [];
+    for (const row of rows) {
+      let v = [...row];
+      for (let pass = 0; pass < 2; pass++) {
+        for (const u of q) {
+          const d = u.reduce((s, x, i) => s + x * v[i], 0);
+          v = v.map((x, i) => x - d * u[i]);
+        }
+      }
+      const n = Math.hypot(...v);
+      if (n > 1e-9) q.push(v.map((x) => x / n));
+    }
+    return Array.from({ length: dim }, (_, i) =>
+      Array.from({ length: dim }, (_, j) => q.reduce((s, u) => s + u[i] * u[j], 0)),
+    );
+  };
+
+  it('is the largest magnitude of a coefficient, 1 or 2 for every group, setting and kind of tensor, 0 for none', () => {
+    for (const key of POINT_GROUP_KEYS) {
+      for (const s of settings(key)) {
+        for (const sp of SPECS) {
+          const form = tensorForm(key, sp, { setting: s.index });
+          const largest = Math.max(0, ...form.basis.flat().map(Math.abs));
+          expect(form.largestCoefficient, `${key} ${s.index}`).toBe(largest);
+          expect(form.basis.length === 0 ? [0] : [1, 2]).toContain(form.largestCoefficient);
+        }
+      }
+    }
+  });
+
+  it('is about cot θ for the polar axis of 4mm tilted by θ about y', () => {
+    // The axis (sin θ, 0, cos θ): the basis [1, 0, cot θ] with the parameter x, an amplification of cot θ.
+    for (const theta of [1e-3, 1e-6]) {
+      const form = tensorFormOf(tiltedOps('4mm', theta), spec(1));
+      expect(form.basis).toHaveLength(1);
+      expect(form.largestCoefficient / (1 / Math.tan(theta))).toBeCloseTo(1, 6);
+    }
+    expect(tensorFormOf(tiltedOps('4mm', 0.3), spec(1)).largestCoefficient).toBeLessThan(4);
+  });
+
+  it('a basis in a tilted frame is invariant and spans the rotated form of the setting', () => {
+    for (const key of ['4mm', '3m', '6/mmm', '-43m', "4'mm'"] as const) {
+      for (const theta of [1e-6, 1e-3, 0.3]) {
+        const r = rotY(theta);
+        const ops = tiltedOps(key, theta);
+        for (const sp of SPECS) {
+          const dim = 3 ** sp.rank;
+          const form = tensorFormOf(ops, sp);
+          // Every basis tensor is invariant, relative to its size: ‖D(g)·b − b‖ / ‖b‖.
+          for (const b of form.basis) {
+            const size = Math.hypot(...b);
+            for (const op of ops) {
+              const f =
+                (sp.kind === 'axial' ? Math.sign(det(op.cartesian)) : 1) *
+                (sp.timeParity === 'odd' && op.timeReversal ? -1 : 1);
+              const moved = transform(b, op.cartesian, sp.rank, f);
+              const residual = Math.hypot(...moved.map((x, i) => x - b[i])) / size;
+              expect(residual, `${key} θ=${theta} rank ${sp.rank}`).toBeLessThan(1e-8);
+            }
+          }
+          // The span is that of the form of the setting rotated into the frame, by projectors.
+          const exact = tensorForm(key, sp).basis.map((b) =>
+            transform(b, r, sp.rank, sp.kind === 'axial' ? Math.sign(det(r)) : 1),
+          );
+          const p1 = projector(form.basis, dim);
+          const p2 = projector(exact, dim);
+          const gap = Math.max(...p1.flatMap((row, i) => row.map((x, j) => Math.abs(x - p2[i][j]))));
+          expect(gap, `${key} θ=${theta} rank ${sp.rank}`).toBeLessThan(1e-8);
+        }
       }
     }
   });
