@@ -132,7 +132,7 @@ describe('the position of a point within the tolerance: order, metric and errors
     const e = planeWyckoffDistances('p6mm', [0.2, 0.35]).find((d) => planeWyckoffRows('p6mm')[d.row][1] === 'e')!;
     expect(e.distance).toBeCloseTo(1 / 60, 12);
     expect(e.point[0]).toBeCloseTo(0.55 / 3, 12);
-    const euclid = planeWyckoffDistances('p6mm', [0.2, 0.35], planeMetricTensor(hexagonal, 'test')).find(
+    const euclid = planeWyckoffDistances('p6mm', [0.2, 0.35], hexagonal).find(
       (d) => planeWyckoffRows('p6mm')[d.row][1] === 'e',
     )!;
     expect(euclid.point[0]).toBeCloseTo(0.175, 12);

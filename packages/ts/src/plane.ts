@@ -374,6 +374,12 @@ export interface WyckoffDistanceOptions extends ToleranceOptions {
    * `tolerance`, relative to the largest entry of the metric, as `residualOperations` measures).
    */
   readonly basis?: readonly (readonly number[])[];
+  /**
+   * How closely the operations of the group must keep the metric G of `basis`: per entry of
+   * WᵀGW − G, relative to the largest entry of G, as `residualOperations` measures it; default
+   * `EPSILON` (10⁻⁵), below 1. Without a basis it is not used.
+   */
+  readonly tolerance?: number;
 }
 
 /** The site symmetry of a point under a plane group. */
@@ -1066,13 +1072,14 @@ export function wyckoffPosition(
  * `wyckoffPosition`; with a basis (columns a, b) it is Euclidean, and the nearest point is the
  * Euclidean nearest one; per coordinate the nearest point of a line need not be unique (on x,0 every x
  * within the distance is as near), and then it is one of them. The basis may be any basis of the
- * lattice of the group: the nearest translate is sought in a reduced basis of it (Lagrange–Gauss),
- * and an oblique basis of `p2` gives the same distances as any other of the same lattice; it must
+ * lattice of the group: the nearest point position is sought in a reduced basis of it
+ * (Lagrange–Gauss), and the nearest line among the family of its lattice translates, so an oblique
+ * basis of `p2` gives the distances of any other basis of the same lattice, to rounding; it must
  * satisfy the cell restrictions of the group (`cellRestrictions`), checked by the metric within
  * `tolerance` (default `EPSILON`) as `residualOperations` checks it. How to snap a dragged point onto a position (which position wins, within
  * which radius) is the application's choice; this gives the numbers for it. Throws a RangeError for
  * an unknown key, a point that is not two finite numbers or has a coordinate beyond 10⁶ in magnitude, a basis that is not a non-singular
- * 2 × 2 matrix (as `metricTensor` refuses it), and a basis that contradicts the cell restrictions of the group (the error names an
+ * 2 × 2 matrix (as `metricTensor` refuses it: singular, or with products that overflow or vanish), and a basis that contradicts the cell restrictions of the group (the error names an
  * operation of the group that does not keep its metric).
  */
 export function wyckoffDistances(
@@ -1083,9 +1090,11 @@ export function wyckoffDistances(
   checkOptions(options, ['basis', ...TOLERANCE_KEYS], 'wyckoffDistances');
   const k = groupKey(key, 'wyckoffDistances');
   const tolerance = toleranceOf(options, 'metric');
-  let g: Mat2 | undefined;
+  let basis: readonly (readonly number[])[] | undefined;
   if (options?.basis !== undefined) {
-    g = planeMetricTensor(options.basis, 'wyckoffDistances');
+    // Checked as metricTensor checks it: a non-singular 2 × 2 matrix whose products do not overflow.
+    planeMetricTensor(options.basis, 'wyckoffDistances');
+    basis = options.basis;
     const ops = operations(k);
     const kept = planeResidualOperations(ops, options.basis, tolerance, 'wyckoffDistances');
     if (kept.length !== ops.length) {
@@ -1099,7 +1108,7 @@ export function wyckoffDistances(
   }
   const positions = wyckoffPositions(k);
   return Object.freeze(
-    planeWyckoffDistances(k, pointOf(point, 'wyckoffDistances'), g).map((d) =>
+    planeWyckoffDistances(k, pointOf(point, 'wyckoffDistances'), basis).map((d) =>
       Object.freeze({ ...positions[d.row], point: Object.freeze([...d.point]), distance: d.distance }),
     ),
   );

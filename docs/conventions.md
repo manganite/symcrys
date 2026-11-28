@@ -1501,9 +1501,11 @@ Wyckoff position, in ITA's order, the nearest point of its point set (its coordi
 every centring and lattice translation: a point, a line or the plane) and the distance to it, per
 lattice coordinate (the larger of |Δx| and |Δy| modulo the lattice, the metric of the tolerance)
 without a basis, Euclidean with a basis (columns a, b). The basis may be any basis of the lattice of
-the group: the nearest lattice translate is sought within ±1 of the rounded coordinates in a reduced
-basis of it (Lagrange–Gauss: |a′·b′| ≤ a′·a′/2 ≤ b′·b′/2), where it lies, so a sheared basis of `p2`
-gives the distances of any other basis of its lattice. A basis must satisfy the cell restrictions of
+the group: the nearest translate of a point position is sought within ±1 of the rounded coordinates
+in a reduced basis of it (Lagrange–Gauss: |a′·b′| ≤ a′·a′/2 ≤ b′·b′/2), where it lies, and the
+nearest line of a line position among its family c + k·w + ℝv of lattice translates (w completing
+the direction v to a basis), the one with k next to the w-coordinate of the point; so a sheared
+basis of `p2` gives the distances of any other basis of its lattice, to rounding. A basis must satisfy the cell restrictions of
 the group (`cellRestrictions`): every operation of the group keeps its metric (WᵀGW = G, within
 `tolerance`, relative to the largest entry of G, as `residualOperations` measures); a basis of `p4`
 with γ ≠ 90° is refused. `wyckoffPosition` is the most special

@@ -15,18 +15,6 @@ All notable changes to symcrys are recorded here. The format follows
 { basis: [[2, 0], [0, 3]] })` measured in a cell that no square lattice has. A basis whose
   products overflow or vanish (entries of 10²⁰⁰ or 10⁻²⁰⁰) is refused, as `metricTensor` refuses
   it: the two compute the metric in one place now.
-
-### Fixed
-
-- `wyckoffDistances` of `symcrys/plane` with an oblique basis of `p2` gave too large distances
-  where the nearest lattice translate lay beyond the window searched (#238):
-  `wyckoffDistances('p2', { point: [0, 0.49] }, { basis: [[1, 10], [0, 1]] })` gave 2.9411 for the
-  position a (0.5001 is right) and 2.4495 for c (0.6325 is right). The basis is now reduced
-  (Lagrange–Gauss) before the search. Affected since the option `basis` was added (0.11.0); the
-  other plane groups were right for every basis that satisfies their cell restrictions.
-
-### Changed
-
 - **Breaking:** the tolerance of a direction or a point measures the distance to the symmetry
   element, the same for every kind of element (#235). `siteSymmetry`, `siteSymmetryOf`,
   `wyckoffPosition` and `orbitOf` (both point-group entry points) and `siteSymmetryOf`, `orbitOf` of
@@ -39,6 +27,12 @@ All notable changes to symcrys are recorded here. The format follows
 
 ### Fixed
 
+- `wyckoffDistances` of `symcrys/plane` with an oblique basis of `p2` gave too large distances
+  where the nearest lattice translate lay beyond the window searched (#238):
+  `wyckoffDistances('p2', { point: [0, 0.49] }, { basis: [[1, 10], [0, 1]] })` gave 2.9411 for the
+  position a (0.5001 is right) and 2.4495 for c (0.6325 is right). A point position is now sought
+  in a reduced basis (Lagrange–Gauss), a line position among the family of its lattice translates. Affected since the option `basis` was added (0.11.0); the
+  other plane groups were right for every basis that satisfies their cell restrictions.
 - `siteSymmetryOf` and `orbitOf` (both point-group entry points, and `symcrys/plane` for a point)
   refuse a tolerance below the deviation of the given operations from the exact group they
   approximate, with a RangeError that names both numbers (#235). Before, such a tolerance gave a

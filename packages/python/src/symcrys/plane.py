@@ -1342,15 +1342,17 @@ def wyckoff_distances(
     with a basis (columns a, b) it is Euclidean, and the nearest point is the Euclidean nearest one;
     per coordinate the nearest point of a line need not be unique (on x,0 every x within the
     distance is as near), and then it is one of them. The basis may be any basis of the lattice of
-    the group: the nearest translate is sought in a reduced basis of it (Lagrange–Gauss), and an
-    oblique basis of ``p2`` gives the same distances as any other of the same lattice; it must
-    satisfy the cell restrictions of the group (``cell_restrictions``), checked by the metric within
-    ``tolerance`` (default ``EPSILON``) as ``residual_operations`` checks it. How to snap a dragged
-    point onto a position (which position wins, within which radius) is the application's choice;
-    this gives the numbers for it. Raises SymcrysError for an unknown key, a point that is not two
-    finite numbers or has a coordinate beyond 10⁶ in magnitude, a basis that is not a non-singular 2
-    × 2 matrix (as ``metric_tensor`` refuses it), and a basis that contradicts the cell restrictions
-    of the group (the error names an operation of the group that does not keep its metric).
+    the group: the nearest point position is sought in a reduced basis of it (Lagrange–Gauss), and
+    the nearest line among the family of its lattice translates, so an oblique basis of ``p2`` gives
+    the distances of any other basis of the same lattice, to rounding; it must satisfy the cell
+    restrictions of the group (``cell_restrictions``), checked by the metric within ``tolerance``
+    (default ``EPSILON``) as ``residual_operations`` checks it. How to snap a dragged point onto a
+    position (which position wins, within which radius) is the application's choice; this gives the
+    numbers for it. Raises SymcrysError for an unknown key, a point that is not two finite numbers
+    or has a coordinate beyond 10⁶ in magnitude, a basis that is not a non-singular 2 × 2 matrix (as
+    ``metric_tensor`` refuses it: singular, or with products that overflow or vanish), and a basis
+    that contradicts the cell restrictions of the group (the error names an operation of the group
+    that does not keep its metric).
 
     Parameters
     ----------
@@ -1363,9 +1365,9 @@ def wyckoff_distances(
         within ``tolerance``, relative to the largest entry of the metric, as
         ``residual_operations`` measures).
     tolerance : keyword-only, optional
-        Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁵). It is measured per
-        matrix entry for operations, as the distance of unit vectors for directions and per
-        coordinate modulo the lattice for points (docs/conventions.md, "Tolerances").
+        How closely the operations of the group must keep the metric G of ``basis``: per entry of
+        WᵀGW − G, relative to the largest entry of G, as ``residual_operations`` measures it;
+        default ``EPSILON`` (10⁻⁵), below 1. Without a basis it is not used.
 
     Returns
     -------
