@@ -8,6 +8,7 @@ module and nothing else.
 from __future__ import annotations
 
 import json
+import os
 import re
 import threading
 from importlib import resources
@@ -50,6 +51,11 @@ class SymcrysInternalError(RuntimeError):
 
 
 _lock = threading.Lock()
+# A child made by fork inherits the engine and its lock in the state of the fork. The fork waits for
+# a call of another thread to end, so that the child gets the lock free (and the engine between
+# calls), and the parent gets it back.
+if hasattr(os, "register_at_fork"):
+    os.register_at_fork(before=_lock.acquire, after_in_parent=_lock.release, after_in_child=_lock.release)
 _functions: dict[str, Any] = {}
 
 

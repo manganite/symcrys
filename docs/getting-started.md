@@ -117,7 +117,10 @@ list of operations"). A list of operations passed again
 (`tensor_form_of` in a loop) is answered from a cache. Fetch operations and forms once, then compute
 with NumPy. These timings are indicative (measured on one machine): the package runs the library in
 an embedded JavaScript engine, and all calls go through that one engine behind one lock, so threads
-do not run them in parallel.
+do not run them in parallel. Threads may call the package at any time. A process made by
+`multiprocessing` with `spawn` (or `forkserver`) starts its own engine; one made by `fork` inherits
+the engine of its parent, and a fork waits for a call of another thread to end, so that the child can
+call it. For parallel work, separate processes each have their own engine.
 
 ## What to read next
 

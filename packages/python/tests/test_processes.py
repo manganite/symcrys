@@ -36,11 +36,6 @@ def test_children_made_by_fork_use_the_engine_they_inherit() -> None:
 
 @pytest.mark.skipif(not FORK, reason="no fork on this platform")
 @pytest.mark.filterwarnings("ignore:This process .* is multi-threaded:DeprecationWarning")
-@pytest.mark.xfail(
-    strict=True,
-    raises=AssertionError,
-    reason="#240: a fork while another thread calls the engine leaves the child its lock held",
-)
 def test_a_fork_while_another_thread_calls_the_engine_gives_a_child_that_can_call_it() -> None:
     symcrys.operations("m-3m")
     held = threading.Event()
