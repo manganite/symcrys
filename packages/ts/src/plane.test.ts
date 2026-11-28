@@ -831,6 +831,9 @@ describe('lists of operations of the plane: siteSymmetryOf, orbitOf (#208)', () 
       general: true,
     });
     expect(plane.orbitOf([], { uv: [1, 2] })).toEqual([{ uv: [1, 2], operations: [] }]);
+    // A coordinate just below 0 lies in [0, 1) too, as with any group: x − floor(x) rounds to 1 there.
+    expect(plane.siteSymmetryOf([], { point: [-1e-17, 0.4] }).point).toEqual([0, 0.4]);
+    expect(plane.siteSymmetryOf(plane.operations('p1'), { point: [-1e-17, 0.4] }).point).toEqual([0, 0.4]);
   });
 
   it('refuse a list that is not a group', () => {

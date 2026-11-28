@@ -63,6 +63,7 @@ import {
   orbitIn,
   siteSymmetryIn,
   checkPlanePoint,
+  mod1,
 } from './spaceGroups/positions.js';
 import {
   checkLinearGroup,
@@ -1315,7 +1316,7 @@ export function siteSymmetryOf(
 /** The site of a point under the empty list, the group 1 given without its identity. */
 function emptySite(point: readonly number[]): { operations: number[]; point: number[]; multiplicity: number } {
   checkPlanePoint(point);
-  return { operations: [], point: point.map((x) => x - Math.floor(x) + 0), multiplicity: 1 };
+  return { operations: [], point: point.map(mod1), multiplicity: 1 };
 }
 
 /**

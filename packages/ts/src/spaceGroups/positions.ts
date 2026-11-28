@@ -81,7 +81,12 @@ export function checkPlanePoint(point: readonly number[]): void {
   }
 }
 
-const mod1 = (v: number): number => {
+/**
+ * A coordinate modulo the lattice, in [0, 1): a number just below 0, whose difference from its
+ * floor rounds to 1, gives 0; −0 gives 0. The one reduction of the coordinates of a point of the
+ * plane (`mod1` of rational.ts is that of a rational).
+ */
+export const mod1 = (v: number): number => {
   const r = v - Math.floor(v);
   return r >= 1 ? 0 : r + 0;
 };
@@ -261,7 +266,7 @@ export function siteSymmetryIn(
     const [[a, b], [c, d]] = op.matrix;
     // The translation modulo the lattice, so that the windows below find the nearest elements also for
     // a translation given with whole cells added.
-    const w = op.translation.map((x) => x - Math.floor(x));
+    const w = op.translation.map(mod1);
     const det = a * d - b * c;
     if (a === 1 && b === 0 && c === 0 && d === 1) {
       // The identity fixes the plane; a translation, nothing.
