@@ -92,15 +92,14 @@ for (const rank of [1, 2, 3, 4]) {
   time(`rotateTensors, rank ${rank}, 1000 tensors, 1000 rotations`, () => classes.rotateTensors(list, turns, spec), 5);
 }
 time('rotateTensors, an empty list', () => classes.rotateTensors([], turn, 'pyroelectric'), 2000);
-const listed = rounded(classes.operations('m-3m'));
-classes.siteSymmetryOf(listed, [1, 2, 3]);
+// The first call checks the list and makes it exact; later calls with other directions reuse it.
 let shiftDirection = 0;
 time(
-  'siteSymmetryOf and orbitOf, the same 48 operations, a new direction',
+  'siteSymmetryOf + orbitOf of m-3m, new direction',
   () => {
     shiftDirection += 1;
-    classes.siteSymmetryOf(listed, [1, 2, 3 + shiftDirection]);
-    classes.orbitOf(listed, [1, 2, 3 + shiftDirection]);
+    classes.siteSymmetryOf(cubic, [1, 2, 3 + shiftDirection]);
+    classes.orbitOf(cubic, [1, 2, 3 + shiftDirection]);
   },
   200,
 );
