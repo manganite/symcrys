@@ -10,9 +10,10 @@ All notable changes to symcrys are recorded here. The format follows
 
 - `TensorForm.largestCoefficient` (Python `largest_coefficient`): the largest magnitude of a
   coefficient of the basis (#241). It is 1 or 2 for the form of a point group in a setting, and
-  large for operations in a frame nearly aligned with a symmetry element (the polar axis of 4mm
-  tilted by 10⁻⁶: about 10⁶), where the basis amplifies the errors of its parameters; the form of
-  the setting rotated into the frame keeps the coefficients small.
+  large for operations in a frame nearly aligned with a symmetry element, the more the higher the
+  rank (the polar axis of 4mm tilted by 10⁻⁶: about 10⁶; its piezoelectric tensor tilted by 0.1:
+  about 10³), where the basis amplifies the errors of its parameters; the form of the setting
+  rotated into the frame keeps the coefficients small.
 
 ### Changed
 

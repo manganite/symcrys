@@ -9,6 +9,7 @@ import { describe, expect, it } from 'vitest';
 import { det, type Mat3, type Vec3 } from '../linalg.js';
 import { operation, type CartesianOperation } from '../operations.js';
 import {
+  MAGNETIC_POINT_GROUP_KEYS,
   POINT_GROUP_KEYS,
   generators,
   operations,
@@ -465,16 +466,45 @@ describe('the conditioning of a basis: largestCoefficient (#241)', () => {
   };
 
   it('is the largest magnitude of a coefficient, 1 or 2 for every group, setting and kind of tensor, 0 for none', () => {
-    for (const key of POINT_GROUP_KEYS) {
+    // Every specification the library takes: an intrinsic symmetry that does not apply at a rank is
+    // refused, and those are skipped. The bound 2 is a fact of the 122 groups, found by this
+    // enumeration (docs/conventions.md, "Numbers" of the tensor forms).
+    const intrinsics: IntrinsicSymmetry[] = [
+      'none',
+      'symmetric-first-pair',
+      'symmetric-last-pair',
+      'symmetric-pairs',
+      'symmetric-pairs-exchangeable',
+      'antisymmetric',
+      'totally-symmetric',
+    ];
+    const all: TensorSpec[] = [];
+    for (const rank of [0, 1, 2, 3, 4] as const)
+      for (const kind of ['polar', 'axial'] as const)
+        for (const timeParity of ['even', 'odd'] as const)
+          for (const intrinsic of intrinsics) {
+            const sp = { rank, kind, timeParity, intrinsic };
+            try {
+              tensorForm('1', sp);
+              all.push(sp);
+            } catch (e) {
+              if (!(e instanceof RangeError)) throw e;
+            }
+          }
+    const counts = new Map<number, number>();
+    for (const key of MAGNETIC_POINT_GROUP_KEYS) {
       for (const s of settings(key)) {
-        for (const sp of SPECS) {
+        for (const sp of all) {
           const form = tensorForm(key, sp, { setting: s.index });
           const largest = Math.max(0, ...form.basis.flat().map(Math.abs));
           expect(form.largestCoefficient, `${key} ${s.index}`).toBe(largest);
           expect(form.basis.length === 0 ? [0] : [1, 2]).toContain(form.largestCoefficient);
+          counts.set(form.largestCoefficient, (counts.get(form.largestCoefficient) ?? 0) + 1);
         }
       }
     }
+    // Each of the three values occurs, so the test sees the bound.
+    expect([...counts.keys()].sort()).toEqual([0, 1, 2]);
   });
 
   it('is about cot θ for the polar axis of 4mm tilted by θ about y', () => {
@@ -492,7 +522,7 @@ describe('the conditioning of a basis: largestCoefficient (#241)', () => {
       for (const theta of [1e-6, 1e-3, 0.3]) {
         const r = rotY(theta);
         const ops = tiltedOps(key, theta);
-        for (const sp of SPECS) {
+        for (const sp of [...SPECS, spec(1, 'axial', 'none', 'odd'), spec(2, 'polar', 'none', 'odd')]) {
           const dim = 3 ** sp.rank;
           const form = tensorFormOf(ops, sp);
           // Every basis tensor is invariant, relative to its size: ‖D(g)·b − b‖ / ‖b‖.
@@ -511,6 +541,7 @@ describe('the conditioning of a basis: largestCoefficient (#241)', () => {
           const exact = tensorForm(key, sp).basis.map((b) =>
             transform(b, r, sp.rank, sp.kind === 'axial' ? Math.sign(det(r)) : 1),
           );
+          expect(form.basis).toHaveLength(exact.length);
           const p1 = projector(form.basis, dim);
           const p2 = projector(exact, dim);
           const gap = Math.max(...p1.flatMap((row, i) => row.map((x, j) => Math.abs(x - p2[i][j]))));

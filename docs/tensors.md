@@ -86,10 +86,10 @@ Settings and frames: [Conventions, "Settings"](conventions.md#settings) and
 
 **A crystal in another frame.** The form of a list of operations is the same reduced row echelon
 form, in the frame of the operations. For a frame that is nearly, but not exactly, aligned with a
-symmetry element, its coefficients grow: the polar axis of 4mm tilted by 10⁻⁶ about y gives the
-basis tensor (1, 0, cot 10⁻⁶), and `largest_coefficient` says so. Such a basis amplifies every error
-of a parameter by that factor. The form computed in the frame of the setting, with exact entries,
-and rotated into the other frame keeps the coefficients small and spans the same tensors:
+symmetry element, its coefficients grow, the more the higher the rank: the polar axis of 4mm tilted
+by 10⁻⁶ about y gives the basis tensor (1, 0, cot 10⁻⁶), its piezoelectric tensor tilted by 0.1
+coefficients of about cot³ 0.1 ≈ 10³, and `largest_coefficient` says so. Such a basis amplifies
+every error of a parameter by that factor.
 
 ```{code-cell} ipython3
 import numpy as np
@@ -101,9 +101,13 @@ tilted = [{"cartesian": tilt @ r @ tilt.T} for r in ops.cartesian]
 symcrys.tensor_form_of(tilted, "pyroelectric")["largest_coefficient"]
 ```
 
+The form computed in the frame of the setting, with exact entries, and rotated into the other frame
+spans the same tensors with small coefficients. The rotated tensors are a basis, no longer in row
+echelon form: their parameters are not components of the tensor.
+
 ```{code-cell} ipython3
 form = symcrys.tensor_form("4mm", "pyroelectric")
-symcrys.rotate_tensor(form["basis"], tilt, "pyroelectric"), form["largest_coefficient"]
+symcrys.rotate_tensor(form["basis"], tilt, "pyroelectric")
 ```
 
 ## Named properties

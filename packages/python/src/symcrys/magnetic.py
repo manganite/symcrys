@@ -641,8 +641,9 @@ class TensorForm(TypedDict):
     largest_coefficient: float
     """The largest magnitude of a coefficient of the basis, 0 if the tensor vanishes: how much the basis
     amplifies an error of the parameters. It is 1 or 2 for the form of a point group in a setting, and
-    large for operations in a frame that is nearly, but not exactly, aligned with a symmetry element
-    (the polar axis of 4mm tilted by 10⁻⁶ gives about 10⁶). For a crystal in another frame, the form
+    large for operations in a frame that is nearly, but not exactly, aligned with a symmetry element,
+    the more the higher the rank (the polar axis of 4mm tilted by 10⁻⁶ gives about 10⁶, its
+    piezoelectric tensor tilted by 0.1 about cot³ 0.1 ≈ 10³). For a crystal in another frame, the form
     computed in the frame of its setting (``tensor_form``) and rotated into the other frame
     (``rotate_tensor``) keeps the coefficients small.
     """
