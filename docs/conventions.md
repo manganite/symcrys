@@ -587,6 +587,14 @@ when they differ by less than the tolerance, in the metric of their kind:
 | the metric tensor G of a cell (W ᵀGW = G) | per entry, relative to the largest entry of G                                            | 1     | `residualOperations` (also in `symcrys/plane`); `wyckoffDistances` of `symcrys/plane` for the cell restrictions of its basis                                                                                                                                              |
 | the index symmetry of a tensor            | per component, relative to its largest component                                         | 1     | `toVoigt`, `fromVoigt`                                                                                                                                                                                                                                                    |
 
+- **The tolerance decides small deviations.** A deviation below the tolerance counts as none, one
+  above it as real, in the metric of its kind; the tests take each kind at 0.9 and 1.1 times the
+  tolerance (`tolerances.test.ts`). The metrics differ (an entry of a matrix, the distance of a unit
+  vector, a coordinate, a relative entry of G or of a tensor), so a number that suits one kind is
+  not by that a choice for another, nor the `symprec` of another library, which measures in its own
+  metric. A script whose results are to be reproduced passes the tolerance it relies on, rather
+  than the default of the version it runs with ([Cells](cells.md) shows a strained cell at two
+  tolerances).
 - **One check.** A tolerance is a finite number above 0 and below the bound of its kind, beyond
   which it says nothing: two distinct operations of a crystallographic point group differ in some
   matrix entry by at least √2/3 ≈ 0.47 in any orthonormal frame (‖A − B‖ = ‖1 − A⁻¹B‖ ≥ √2, the
