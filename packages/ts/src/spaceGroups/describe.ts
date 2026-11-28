@@ -5,7 +5,7 @@
  * stay with the applications (docs/conventions.md, "Symmetry directions and elements").
  */
 
-import { gcd, safeProduct, safeSum } from '../integers.js';
+import { safeProduct, safeSum, signedPrimitive } from '../integers.js';
 import { shown } from '../checks.js';
 import {
   determinant,
@@ -64,9 +64,7 @@ export interface PlaneOperationDescription {
 /** The shortest integer vector along the non-zero column of a 2 × 2 matrix of rank 1, first non-zero component positive. */
 function primitiveColumn(m: IntMatrix): [number, number] {
   const col = m[0][0] !== 0 || m[1][0] !== 0 ? [m[0][0], m[1][0]] : [m[0][1], m[1][1]];
-  const g = gcd(col[0], col[1]);
-  const sign = col[0] < 0 || (col[0] === 0 && col[1] < 0) ? -1 : 1;
-  return [(sign * col[0]) / g + 0, (sign * col[1]) / g + 0];
+  return signedPrimitive(col) as [number, number];
 }
 
 function power(m: IntMatrix, n: number): IntMatrix {

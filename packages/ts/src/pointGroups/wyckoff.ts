@@ -6,7 +6,7 @@
  */
 
 import { checkOptions, pick, SETTING_KEYS, shown, TOLERANCE_KEYS } from '../checks.js';
-import { apply, inverse, multiply, transpose, type Mat3, type Vec3 } from '../linalg.js';
+import { apply, inverse, multiply, normalize, transpose, type Mat3, type Vec3 } from '../linalg.js';
 import { substituteMillerIndices } from '../indices.js';
 import { settingBasis, classSettingData } from './classData.js';
 import {
@@ -91,9 +91,7 @@ export function numericHkl(miller: string, values = REPRESENTATIVE_VALUES): Hkl 
 
 /** The face normal of (hkl) as a Cartesian unit vector: h a* + k b* + l c* with the reciprocal basis B⁻ᵀ. */
 export function normal(basis: Mat3, hkl: Hkl): Vec3 {
-  const v = apply(transpose(inverse(basis)), hkl);
-  const n = Math.hypot(v[0], v[1], v[2]);
-  return [v[0] / n, v[1] / n, v[2] / n];
+  return normalize(apply(transpose(inverse(basis)), hkl));
 }
 
 /**

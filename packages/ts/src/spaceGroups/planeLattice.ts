@@ -8,6 +8,7 @@
 
 import { FLAT_CELL_RATIO, INTEGER_EPSILON, SINGULAR_RATIO } from '../tolerances.js';
 import { checkObject, shown, everyEntry } from '../checks.js';
+import { nullspace } from '../integers.js';
 import type { PlaneSystem } from './planeGroupData.js';
 import {
   PLANE_POINT_GROUP_KEYS,
@@ -112,7 +113,9 @@ export function planeCellRestrictions(system: PlaneSystem): CellRestrictions {
     };
     rows.push(entry(0, 0), entry(0, 1), entry(1, 1));
   }
-  const basis = nullSpace(rows);
+  // What is read below is a property of the space, not of its basis: g₁₁ = g₂₂ and g₁₂ = 0 throughout,
+  // and g₁₂/g₁₁ of a space of dimension 1.
+  const basis = nullspace(rows);
   const equalAB = basis.every((g) => g[0] === g[2]);
   // cos γ = g12/√(g11 g22) is the same for every G of the space when g12 = k·g11 with a = b, or g12 = 0.
   const fixedCos = basis.every((g) => g[1] === 0)
@@ -132,38 +135,6 @@ export function planeCellRestrictions(system: PlaneSystem): CellRestrictions {
     angles: gamma === undefined ? {} : { gamma },
     nonAcute: gamma === undefined ? ['gamma'] : [],
   };
-}
-
-/** A basis of the integer null space of a matrix with three columns, by exact elimination. */
-function nullSpace(rows: readonly (readonly number[])[]): number[][] {
-  const m = rows.map((r) => [...r]);
-  const pivots: number[] = [];
-  let row = 0;
-  for (let col = 0; col < 3 && row < m.length; col++) {
-    const p = m.findIndex((r, i) => i >= row && r[col] !== 0);
-    if (p < 0) continue;
-    [m[row], m[p]] = [m[p], m[row]];
-    for (let i = 0; i < m.length; i++) {
-      if (i === row || m[i][col] === 0) continue;
-      const f = m[i][col];
-      const g = m[row][col];
-      m[i] = m[i].map((x, j) => x * g - m[row][j] * f);
-    }
-    pivots.push(col);
-    row++;
-  }
-  const free = [0, 1, 2].filter((c) => !pivots.includes(c));
-  return free.map((f) => {
-    // One solution per free column: x_f = the product of the pivots, the pivot variables solved.
-    const scale = pivots.reduce((s, c, i) => s * m[i][c], 1);
-    const x = [0, 0, 0];
-    x[f] = scale;
-    pivots.forEach((c, i) => {
-      x[c] = (-m[i][f] * scale) / m[i][c];
-    });
-    const sign = x.find((v) => v !== 0)! < 0 ? -1 : 1;
-    return x.map((v) => v * sign + 0);
-  });
 }
 
 /**
@@ -277,21 +248,26 @@ export function planeBasisColumns(basis: unknown, who: string): [readonly number
   ];
 }
 
+/** The dot product of two vectors of the plane (−0 written as 0). */
+export const dot2 = (u: readonly number[], v: readonly number[]): number => u[0] * v[0] + u[1] * v[1] + 0;
+
 /** The parameters a, b, γ of a basis (columns a, b), independent of its orientation and handedness. */
 export function planeLatticeParameters(basis: unknown, who: string): LatticeParameters {
   const [a, b] = planeBasisColumns(basis, who);
   const cross = a[0] * b[1] - a[1] * b[0];
-  const dot = a[0] * b[0] + a[1] * b[1];
-  return { a: Math.hypot(a[0], a[1]), b: Math.hypot(b[0], b[1]), gamma: Math.atan2(Math.abs(cross), dot) / DEG + 0 };
+  return {
+    a: Math.hypot(a[0], a[1]),
+    b: Math.hypot(b[0], b[1]),
+    gamma: Math.atan2(Math.abs(cross), dot2(a, b)) / DEG + 0,
+  };
 }
 
 /** The metric tensor G = AᵀA of a basis A (columns a, b). */
 export function planeMetricTensor(basis: unknown, who: string): Mat2 {
   const [a, b] = planeBasisColumns(basis, who);
-  const dot = (u: readonly number[], v: readonly number[]) => u[0] * v[0] + u[1] * v[1] + 0;
   return [
-    [dot(a, a), dot(a, b)],
-    [dot(b, a), dot(b, b)],
+    [dot2(a, a), dot2(a, b)],
+    [dot2(b, a), dot2(b, b)],
   ];
 }
 

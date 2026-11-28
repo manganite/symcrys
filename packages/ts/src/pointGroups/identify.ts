@@ -5,7 +5,7 @@
  */
 
 import { TOLERANCE_KEYS, checkOptions } from '../checks.js';
-import { det, dot, trace, type Mat3, type Vec3 } from '../linalg.js';
+import { det, dot, normalize, trace, type Mat3, type Vec3 } from '../linalg.js';
 import { closedGroup, idealOfClosure, sameWithin } from '../closure.js';
 import { checkCartesianOperations, checkTimeReversal, type CartesianOperation } from '../operations.js';
 import { EPSILON, MAX_POINT_GROUP_ORDER, toleranceOf, type ToleranceOptions } from '../tolerances.js';
@@ -206,8 +206,7 @@ const IDENTITY_MATRIX: Mat3 = [
 
 /** The rotation by `angle` (radians, right-handed) about the axis `a` (Rodrigues' formula). */
 function rotation(a: Vec3, angle: number): Mat3 {
-  const norm = Math.hypot(a[0], a[1], a[2]);
-  const [x, y, z] = [a[0] / norm, a[1] / norm, a[2] / norm];
+  const [x, y, z] = normalize(a);
   const c = Math.cos(angle);
   const s = Math.sin(angle);
   const k = 1 - c;

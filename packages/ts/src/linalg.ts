@@ -39,6 +39,12 @@ export function dot(a: Vec3, b: Vec3): number {
   return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 }
 
+/** The vector of length 1 in the direction of `v` (NaN components for the zero vector). */
+export function normalize(v: Vec3): Vec3 {
+  const n = Math.hypot(v[0], v[1], v[2]);
+  return [v[0] / n, v[1] / n, v[2] / n];
+}
+
 /** The product a·b. */
 export function multiply(a: Mat3, b: Mat3): Mat3 {
   return build((i, j) => a[i][0] * b[0][j] + a[i][1] * b[1][j] + a[i][2] * b[2][j]);

@@ -13,7 +13,7 @@
  */
 
 import { deepFreeze } from '../freeze.js';
-import { gcd } from '../integers.js';
+import { signedPrimitive } from '../integers.js';
 import {
   applyToPoint,
   compose,
@@ -77,11 +77,7 @@ const centred = (a: Rational): Rational => {
 };
 
 /** The shortest integer vector along `v` with its first non-zero component positive. */
-function primitive(v: readonly number[]): Direction {
-  const g = gcd(v[0], v[1]);
-  const sign = v[0] < 0 || (v[0] === 0 && v[1] < 0) ? -1 : 1;
-  return [(sign * v[0]) / g + 0, (sign * v[1]) / g + 0];
-}
+const primitive = (v: readonly number[]): Direction => signedPrimitive(v) as unknown as Direction;
 
 const applyLinear = (m: IntMatrix, d: Direction): Direction => [
   m[0][0] * d[0] + m[0][1] * d[1],

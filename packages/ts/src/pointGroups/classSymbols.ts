@@ -7,11 +7,11 @@
  * Internal; read by pointGroups.ts, blackWhiteData.ts, formRows.ts and wyckoffRows.ts.
  */
 
-import { apply, type Vec3 } from '../linalg.js';
+import { apply, normalize, type Vec3 } from '../linalg.js';
 import { crystalFamily } from '../lattice.js';
 import type { PointGroupKey } from './keys.js';
 import { classData, settingBasis, settingCartesianOperations, settingSymmetryDirections } from './classData.js';
-import { elementOf, elementsAlong, normalize, type ElementsAlong } from './rotations.js';
+import { elementOf, elementsAlong, type ElementsAlong } from './rotations.js';
 
 /** The short and the full symbol of a setting. */
 export interface ClassSymbols {

@@ -7,7 +7,7 @@
  */
 
 import { shown } from '../checks.js';
-import { IDENTITY, type Mat3, matricesEqual, type Vec3 } from '../linalg.js';
+import { IDENTITY, type Mat3, matricesEqual, normalize, type Vec3 } from '../linalg.js';
 import { crystalFamily, familyBasis, type CrystalFamily, type CrystalSystem } from '../lattice.js';
 import type { CartesianOperation } from '../operations.js';
 import { LATTICE_SYMMETRY_DIRECTIONS } from '../symmetryDirections.js';
@@ -34,8 +34,7 @@ function positionDirections(family: CrystalFamily): readonly Vec3[] {
 
 /** Proper rotation by 360°/n about the direction u (Rodrigues' formula), times `sign`. */
 function rotation(u: Vec3, n: number, sign: 1 | -1): Mat3 {
-  const length = Math.hypot(u[0], u[1], u[2]);
-  const [x, y, z] = [u[0] / length, u[1] / length, u[2] / length];
+  const [x, y, z] = normalize(u);
   const a = (2 * Math.PI) / n;
   const c = Math.cos(a);
   const s = Math.sin(a);

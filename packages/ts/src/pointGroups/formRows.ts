@@ -8,8 +8,9 @@
  */
 
 import { deepFreeze } from '../freeze.js';
+import { echelon, nullspace, primitive } from '../integers.js';
 import { crystalFamily } from '../lattice.js';
-import { dot, inverse, transpose, apply as applyMatrix, type Mat3, type Vec3 } from '../linalg.js';
+import { dot, inverse, normalize, transpose, apply as applyMatrix, type Mat3, type Vec3 } from '../linalg.js';
 import { OBVERSE_RHOMBOHEDRAL_BASIS } from '../cellTransformation.js';
 import { scale, toNumber } from '../spaceGroups/rational.js';
 import {
@@ -29,15 +30,12 @@ import {
   applyToFace,
   compareRanks,
   computedWyckoffRows,
-  echelon,
   faceRank,
   formatFace,
   keyOf,
-  nullspace,
   orbit,
   patternSpan,
   pointRank,
-  primitive,
   type Mat,
   type Vec,
 } from './wyckoffRows.js';
@@ -111,7 +109,7 @@ function eigensymmetry(normals: readonly Vec3[]): Mat3[] {
   const other = normals.find((n) => Math.hypot(...cross(n0, n)) > 1e-9);
   if (!other) throw new Error('The eigensymmetry of a pedion or pinacoid is not finite');
   const c = cross(n0, other);
-  const z: Vec3 = c.map((x) => x / Math.hypot(...c)) as unknown as Vec3;
+  const z = normalize(c);
   const spans = normals.some((n) => Math.abs(dot(n, z)) > 1e-9);
   if (!spans) points = [...points, z, [-z[0], -z[1], -z[2]]];
   const a = points[0];
@@ -181,7 +179,7 @@ function formType(normals: readonly Vec3[]): { type: CrystalFormTypeKey; conditi
     // Its normal: a column of I − M that is not zero.
     const columns = [0, 1, 2].map((j) => [0, 1, 2].map((i) => (i === j ? 1 : 0) - m[i][j]) as unknown as Vec3);
     const d = columns.find((v) => Math.hypot(...v) > 1e-9)!;
-    const u = d.map((x) => x / Math.hypot(...d)) as unknown as Vec3;
+    const u = normalize(d);
     const order = group.filter((r) => det(r) > 0 && near(applyMatrix(r, u), u)).length;
     axis = Math.max(axis, order);
   }
@@ -268,11 +266,7 @@ export function formRowsWith(key: PointGroupKey, setting: number, conventions: F
         : [1, 1.2071, 1.5556];
   const basis = settingBasis(holo.key, holo.setting).map((row) => row.map((x, j) => x * lengths[j])) as unknown as Mat3;
   const reciprocal = transpose(inverse(basis));
-  const unit = (h: Vec): Vec3 => {
-    const v = applyMatrix(reciprocal, h as unknown as Vec3);
-    const n = Math.hypot(v[0], v[1], v[2]);
-    return [v[0] / n, v[1] / n, v[2] / n];
-  };
+  const unit = (h: Vec): Vec3 => normalize(applyMatrix(reciprocal, h as unknown as Vec3));
   const faceStabiliser = (group: readonly Mat[], h: Vec): number =>
     group.filter((w) => applyToFace(w, h).every((x, i) => x === h[i])).length;
   const faceOrbit = (h: Vec): number[][] => {

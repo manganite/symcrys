@@ -6,12 +6,12 @@
  */
 
 import { SETTING_KEYS, checkOptions } from '../checks.js';
-import { dot, type Mat3, type Vec3 } from '../linalg.js';
+import { dot, normalize, type Mat3, type Vec3 } from '../linalg.js';
 import { crystalFamily } from '../lattice.js';
 import type { Operation } from '../operations.js';
 import type { Uvw } from '../symmetryDirections.js';
 import { settingBasis, settingSymmetryDirections } from './classData.js';
-import { axialVector, elementOf, elementsAlong, normalize, parallel } from './rotations.js';
+import { axialVector, elementOf, elementsAlong, parallel } from './rotations.js';
 import {
   classSettingOf,
   operations,

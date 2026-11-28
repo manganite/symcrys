@@ -20,6 +20,7 @@ import {
   type PlainOperation,
 } from './affine.js';
 import { planeGroupEntry, planeGroupOperations } from './planeGroups.js';
+import { dot2 } from './planeLattice.js';
 import { ROUNDING_EPSILON, toleranceOf, type ToleranceOptions } from '../tolerances.js';
 
 /** The site symmetry of a point under a plane group. */
@@ -393,7 +394,7 @@ function nearestOnLine(r: readonly number[], v: readonly number[], b: Mat2 | und
   if (b) {
     const x = cartesian(b, r);
     const y = cartesian(b, v);
-    const t = (x[0] * y[0] + x[1] * y[1]) / (y[0] * y[0] + y[1] * y[1]);
+    const t = dot2(x, y) / dot2(y, y);
     return { t, d: Math.hypot(x[0] - t * y[0], x[1] - t * y[1]) };
   }
   const candidates: number[] = [];
@@ -430,10 +431,9 @@ export function reducedBasis(basis: Mat2): ReducedBasis {
   let b = [basis[0][1], basis[1][1]];
   let ua = [1, 0];
   let ub = [0, 1];
-  const dot = (x: readonly number[], y: readonly number[]) => x[0] * y[0] + x[1] * y[1];
   for (let step = 0; step < 200; step++) {
-    if (dot(a, a) > dot(b, b)) [a, b, ua, ub] = [b, a, ub, ua];
-    const mu = dot(a, b) / dot(a, a);
+    if (dot2(a, a) > dot2(b, b)) [a, b, ua, ub] = [b, a, ub, ua];
+    const mu = dot2(a, b) / dot2(a, a);
     // Reduced up to rounding: a hexagonal cell has |a·b| = a·a/2 exactly, where rounding the ratio
     // either way would step back and forth between two reduced bases.
     if (Math.abs(mu) <= 0.5 * (1 + REDUCED_SLACK)) return { u: [ua, ub], a, b };

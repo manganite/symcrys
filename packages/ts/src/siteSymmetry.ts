@@ -4,7 +4,7 @@
  */
 
 import { checkNumbers, checkOptions, shown, TOLERANCE_KEYS } from './checks.js';
-import { apply, IDENTITY, multiply, operatorNorm, type Mat3, type Vec3 } from './linalg.js';
+import { apply, IDENTITY, multiply, normalize, operatorNorm, type Mat3, type Vec3 } from './linalg.js';
 import { checkGroup, idealOfList } from './closure.js';
 import {
   checkCartesianOperations,
@@ -37,7 +37,7 @@ function unit(v: Vec3): Vec3 {
   checkNumbers(v, 3, 'A direction');
   const n = Math.hypot(v[0], v[1], v[2]);
   if (!(n > 0) || !Number.isFinite(n)) throw new RangeError(`Not a direction: ${shown(v)}`);
-  return [v[0] / n, v[1] / n, v[2] / n];
+  return normalize(v);
 }
 
 /** True if the Cartesian matrix is the identity within `EPSILON` (time reversal aside). */
@@ -222,10 +222,9 @@ function siteInExactGroup(operations: readonly CartesianOperation[], v: Vec3, to
   }
   // The whole space is always a candidate, at distance 0.
   const { indices, projected } = best!;
-  const n = Math.hypot(projected[0], projected[1], projected[2]);
   return Object.freeze({
     operations: Object.freeze([...indices]),
-    direction: Object.freeze([projected[0] / n, projected[1] / n, projected[2] / n]) as unknown as Vec3,
+    direction: Object.freeze(normalize(projected)) as unknown as Vec3,
     multiplicity: indices.length > 0 ? operations.length / indices.length : operations.length,
     general: indices.every((i) => isIdentity(operations[i])),
   });
@@ -297,9 +296,7 @@ export function orbitOfList(
     if (coset.some((k) => k < 0)) throw new Error('orbitOf: a product of the exact group is not in it');
     for (const k of coset) done.add(k);
     // A unit vector to rounding: the exact group is orthogonal to about 10⁻¹².
-    const image = apply(op.cartesian, site.direction);
-    const n = Math.hypot(image[0], image[1], image[2]);
-    poles.push({ direction: [image[0] / n, image[1] / n, image[2] / n], operations: coset });
+    poles.push({ direction: normalize(apply(op.cartesian, site.direction)), operations: coset });
   });
   return poles;
 }
