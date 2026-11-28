@@ -71,6 +71,14 @@ export const IDEAL_PASSES = 50;
 export const IDEAL_SNAP = 1e-12;
 
 /**
+ * The postconditions of an exact group (`idealGroup`): every product of two of its matrices lies
+ * within this, per entry, of the element of the product table, and RᵀR of every matrix within it of
+ * the identity. An exact group settles to about 10⁻¹²; a result beyond 10⁻⁹ did not settle into a
+ * group of orthogonal matrices, however small the last step of the iteration was.
+ */
+export const IDEAL_RESIDUAL = 1e-9;
+
+/**
  * The largest pivot threshold of a tensor form (tensorForm.ts, `reduce`): the threshold is raised
  * up to this only in a general orientation, when components of the order of 10⁻⁷ would otherwise be
  * taken for independent ones; a genuine pivot of a form of a point group is far larger.

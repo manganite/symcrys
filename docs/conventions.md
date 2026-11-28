@@ -603,12 +603,15 @@ when they differ by less than the tolerance, in the metric of their kind:
   passes this bound with a chance of about tolerance^(1/3)). A point of the plane may have
   coordinates of at most 10⁶ in magnitude (`MAX_COORDINATE`): beyond about 2⁵² a double has no
   fractional part.
-- **Operations of a caller are made exact.** `tensorFormOf`, `isCentrosymmetricOf`,
+- **Operations of a caller are made exact.** `pointGroupOf`, `tensorFormOf`, `isCentrosymmetricOf`,
   `allowsPropertyOf` and `allowedPropertiesOf` close the list into a group within the tolerance and
-  replace it by the exact group nearest to it before they compute anything: each matrix f(x) by
-  the mean of f(xy)·f(y)⁻¹ over the group, repeated until it settles, which turns matrices that are
-  a group within a small error into an exact representation nearby, then made orthogonal by its
-  invariant metric. The rank of a tensor form is the trace of the group average of the exact
+  replace it by an exact group near it before they compute anything: each matrix f(x) by the mean
+  of f(xy)·f(y)⁻¹ over the group, repeated until it settles, which turns matrices that are a group
+  within a small error into an exact representation nearby, then made orthogonal by its invariant
+  metric. The result is checked, since a small last step does not prove a group: its products and
+  RᵀR lie within 10⁻⁹ per entry of the elements and of the identity (`IDEAL_RESIDUAL`), and every
+  operation of the caller within the tolerance of an element; otherwise the call is a RangeError.
+  `pointGroupOf` identifies the exact group, whose traces are exact. The rank of a tensor form is the trace of the group average of the exact
   group, exact in any frame, and its free parameters are sought first among components larger
   than ten times the distance between the caller's matrices and the exact group, so that a component of the order of that error is not
   taken for an independent one. Operations rounded to 4, 5 or 6 decimals give the form of
@@ -621,8 +624,9 @@ when they differ by less than the tolerance, in the metric of their kind:
   rounded to fewer decimals they need a larger tolerance. Where the tolerance is too small, every
   function of a list says so in a RangeError: the orthogonality check names the deviation it
   measured, and a list that closes into no finite group, or into near copies of one operation,
-  is refused, by `pointGroupOf` too. `pointGroupOf` returns `undefined` only for a finite group
-  that is not a crystallographic point group (a fivefold rotation).
+  is refused, by `pointGroupOf` too, and so is one whose exact group fails its checks.
+  `pointGroupOf` returns `undefined` only for a finite group that is not a crystallographic point
+  group (a fivefold rotation).
 - **The exact group is near the caller's, not necessarily the textbook one.** Matrices rounded to 4
   decimals give an exact group within their errors (√3/2 written as 0.866 fixes the orientation of
   a hexagonal group about z only to a few 10⁻⁵), so a form computed from them has entries within

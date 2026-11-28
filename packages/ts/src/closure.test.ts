@@ -144,7 +144,7 @@ describe('#241: the postconditions of idealGroup', () => {
       m.every((_, j) => Math.abs(m[0][i] * m[0][j] + m[1][i] * m[1][j] + m[2][i] * m[2][j] - (i === j ? 1 : 0)) < 1e-9),
     );
 
-  it.fails('idealGroup gives the 12 orthogonal operations of 23, or refuses', () => {
+  it('idealGroup gives the 12 orthogonal operations of 23, or refuses', () => {
     const got = rangeErrorOr(() => idealGroup(input, tolerance));
     if (got !== 'RangeError') {
       expect(got.operations).toHaveLength(12);
@@ -152,17 +152,17 @@ describe('#241: the postconditions of idealGroup', () => {
     }
   });
 
-  it.fails('pointGroupOf gives the class 23, or refuses', () => {
+  it('pointGroupOf gives the class 23, or refuses', () => {
     const got = rangeErrorOr(() => classes.pointGroupOf(spatial, { tolerance }));
     if (got !== 'RangeError') expect(got?.key).toBe('23');
   });
 
-  it.fails('tensorFormOf gives one piezoelectric component, or refuses with a RangeError', () => {
+  it('tensorFormOf gives one piezoelectric component, or refuses with a RangeError', () => {
     const got = rangeErrorOr(() => classes.tensorFormOf(spatial, 'piezoelectric', { tolerance }));
     if (got !== 'RangeError') expect(got.basis).toHaveLength(1);
   });
 
-  it.fails('an accepted result is a group of orthogonal matrices within the tolerance of the input', () => {
+  it('an accepted result is a group of orthogonal matrices within the tolerance of the input', () => {
     // Products within 10⁻⁹ of an element, RᵀR within 10⁻⁹ of the identity, every operation of the
     // caller within the tolerance of an element.
     const mul = (a: Mat3, b: Mat3) =>

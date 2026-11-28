@@ -1523,16 +1523,17 @@ def point_group_of(
     distorting a crystal: its key, and the setting whose operations it equals in the frame of
     symcrys (absent if the group is the point group in another orientation). The list is closed into
     a group first, two matrices being equal when no entry differs by ``tolerance`` (default
-    ``EPSILON``) or more. Time reversal counts: a list with time reversal gives a magnetic point
+    ``EPSILON``) or more, and made exact, as ``tensor_form_of`` makes it, so that the group
+    identified is exact. Time reversal counts: a list with time reversal gives a magnetic point
     group. Returns None if the operations generate a finite group that is not a crystallographic
     point group (an operation of order 5, a group larger than 96). Raises SymcrysError for an
     operation without an orthogonal Cartesian matrix (``cartesian``; within ``tolerance``, at least
     ``EPSILON``), for an operation that does not say whether it is combined with time reversal, and
-    if the operations do not close into a finite group within the tolerance, the error of
-    ``tensor_form_of`` for the same input (matrices with errors too large for it, which give more
-    than 200 elements or near copies of one operation, or a rotation by an angle that is not
-    360°/n). The classes ``1`` and ``-1`` have one setting and no orientation, so they always have
-    setting 1.
+    if the operations do not close into a finite group within the tolerance or not into an exact
+    group near them, the error of ``tensor_form_of`` for the same input (matrices with errors too
+    large for it, which give more than 200 elements or near copies of one operation, or a rotation
+    by an angle that is not 360°/n). The classes ``1`` and ``-1`` have one setting and no
+    orientation, so they always have setting 1.
 
     Parameters
     ----------
