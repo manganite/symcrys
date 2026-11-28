@@ -398,6 +398,30 @@ def test_rotate_tensor_rotates_a_stack_in_one_call(monkeypatch: pytest.MonkeyPat
     assert np.allclose(got, np.einsum("nia,na->ni", rotations, vectors))
 
 
+def test_typed_dicts_say_at_run_time_which_keys_are_required() -> None:
+    # Before, under `from __future__ import annotations`, every field counted as required at run time
+    # (NotRequired was a string), and get_type_hints raised a NameError on Python 3.10.
+    assert symcrys.IdentifiedPointGroup.__required_keys__ == frozenset({"key"})
+    assert symcrys.IdentifiedPointGroup.__optional_keys__ == frozenset({"setting"})
+    assert magnetic.TransformedOperation.__optional_keys__ == frozenset({"time_reversal"})
+    assert symcrys.CoordinateChange.__required_keys__ == frozenset({"inverse"})
+    found = 0
+    for module in (symcrys, magnetic, plane):
+        for name in module.__all__:
+            cls = getattr(module, name)
+            if isinstance(cls, type) and typing.is_typeddict(cls):
+                found += 1
+                hints = typing.get_type_hints(cls, include_extras=True)
+                assert set(hints) == cls.__required_keys__ | cls.__optional_keys__, f"{module.__name__}.{name}"
+    assert found > 30
+    # A result has every required key, and only known keys.
+    for result, cls in [
+        (symcrys.point_group_of(symcrys.operations("4mm")), symcrys.IdentifiedPointGroup),
+        (magnetic.find_point_group("4'/mmm'"), magnetic.IdentifiedPointGroup),
+    ]:
+        assert result is not None and cls.__required_keys__ <= set(result) <= cls.__required_keys__ | cls.__optional_keys__
+
+
 def test_library_errors_are_value_errors_with_the_message() -> None:
     with pytest.raises(symcrys.SymcrysError, match="Unknown point group key") as e:
         symcrys.operations("7")
