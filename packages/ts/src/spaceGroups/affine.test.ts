@@ -4,6 +4,7 @@ import {
   applyToPoint,
   closure,
   compose,
+  cosetsByGenerators,
   determinant,
   dimensionOf,
   equalModLattice,
@@ -230,5 +231,14 @@ describe('closure', () => {
     expect(() => closure([], { dimension: 5 })).toThrow(RangeError);
     expect(() => closure([], { dimension: 2.5 })).toThrow(RangeError);
     expect(closure([], { dimension: 2 }).map(formatOperation)).toEqual(['x,y']);
+  });
+});
+
+describe('cosetsByGenerators, each coset once', () => {
+  // With three generators, the list built from the first two need not be a group, and the cosets of
+  // the third by it can overlap: the list then holds a coset twice. These generators of the plane
+  // give the 6 operations of 3m, listed 8 times.
+  it.fails('refuses a list that holds a coset twice (#261)', () => {
+    expect(() => cosetsByGenerators(['-y,-x', 'x,x-y', '-x+y,y'].map(op), 2, 24)).toThrow(/twice|give no group/);
   });
 });
