@@ -53,8 +53,8 @@ All notable changes to symcrys are recorded here. The format follows
   Before, under the modules' `from __future__ import annotations`, `__required_keys__` listed every
   field (`IdentifiedPointGroup` had `{'key', 'setting'}`), and `typing.get_type_hints` raised a
   NameError for `NotRequired` on Python 3.10. Such a TypedDict is now a private base class of its
-  required fields and the class itself with `total=False` for the optional ones. Affected since the
-  TypedDicts were generated (0.11.0).
+  required fields and the class itself with `total=False` for the optional ones, so its required
+  fields come first in `__annotations__`. Affected since the TypedDicts were generated (0.11.0).
 
 - `toVoigt` and `fromVoigt` refuse a tensor whose components differ from their partners by exactly
   the tolerance (relative to the largest component), as every other comparison does: two numbers

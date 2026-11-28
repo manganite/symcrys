@@ -362,10 +362,11 @@ function mergeFields(fields) {
 
 /**
  * A TypedDict as Python source: with optional fields, a private base class of the required ones and
- * the class itself with `total=False` for the optional ones, so that `__required_keys__` and
- * `__optional_keys__` are right at run time, also under `from __future__ import annotations` and on
- * Python 3.10, where `NotRequired` would be a string that the class cannot read. `@final` lets a
- * type checker narrow a union of TypedDicts by a key (`if "hkl" in entry`).
+ * the class itself with `total=False` for the optional ones (without required fields, the class
+ * alone), so that `__required_keys__` and `__optional_keys__` are right at run time. The modules use
+ * `from __future__ import annotations`, under which a `NotRequired[...]` field is a string that the
+ * class cannot read, on every version of Python. `@final` lets a type checker narrow a union of
+ * TypedDicts by a key (`if "hkl" in entry`).
  * @param {string} name
  * @param {string[]} doc the docstring lines of the class, indented
  * @param {{ line: string, doc: string[], optional: boolean }[]} fields
@@ -377,13 +378,14 @@ function typedDict(name, doc, fields) {
   const required = fields.filter((f) => !f.optional);
   const optional = fields.filter((f) => f.optional);
   if (!optional.length) return ['@final', `class ${name}(TypedDict):`, ...head, ...lines(fields)].join('\n');
+  if (!required.length) {
+    return ['@final', `class ${name}(TypedDict, total=False):`, ...head, ...lines(fields)].join('\n');
+  }
   const base = `_${name}Required`;
   return [
-    [
-      `class ${base}(TypedDict):`,
-      `    """The required fields of \`\`${name}\`\`."""`,
-      ...(required.length ? ['', ...lines(required)] : []),
-    ].join('\n'),
+    [`class ${base}(TypedDict):`, `    """The required fields of \`\`${name}\`\`."""`, '', ...lines(required)].join(
+      '\n',
+    ),
     ['@final', `class ${name}(${base}, total=False):`, ...head, ...lines(optional)].join('\n'),
   ].join('\n\n\n');
 }

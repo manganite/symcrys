@@ -68,8 +68,7 @@ def test_every_key_of_a_group_is_a_str() -> None:
     # The fixed reading of api.json, "types": a key is `str` in every module, in the fields of the
     # TypedDicts and in the parameters, never a Literal of the keys (which a TypeScript type derived
     # from a list would give, since the declarations expand it).
-    # The annotations as written (the modules use `from __future__ import annotations`, and
-    # NotRequired exists at run time only from Python 3.11), so they are read as text.
+    # The annotations as written (the modules use `from __future__ import annotations`), read as text.
     def written(a: object) -> str:
         return a.__forward_arg__ if isinstance(a, typing.ForwardRef) else str(a)
 
@@ -85,7 +84,7 @@ def test_every_key_of_a_group_is_a_str() -> None:
                 continue
             for field, hint in fields.items():
                 checked += 1
-                assert written(hint) in ("str", "NotRequired[str]"), f"{module.__name__}.{name}.{field}: {written(hint)}"
+                assert written(hint) == "str", f"{module.__name__}.{name}.{field}: {written(hint)}"
     assert checked > 50
 
 
@@ -399,8 +398,8 @@ def test_rotate_tensor_rotates_a_stack_in_one_call(monkeypatch: pytest.MonkeyPat
 
 
 def test_typed_dicts_say_at_run_time_which_keys_are_required() -> None:
-    # Before, under `from __future__ import annotations`, every field counted as required at run time
-    # (NotRequired was a string), and get_type_hints raised a NameError on Python 3.10.
+    # The modules use `from __future__ import annotations`; the required and optional keys are right
+    # at run time, and get_type_hints reads every TypedDict, on Python 3.10 too.
     assert symcrys.IdentifiedPointGroup.__required_keys__ == frozenset({"key"})
     assert symcrys.IdentifiedPointGroup.__optional_keys__ == frozenset({"setting"})
     assert magnetic.TransformedOperation.__optional_keys__ == frozenset({"time_reversal"})

@@ -560,12 +560,8 @@ class SymmetryElements(TypedDict):
     """
 
 
-class _PlaneFixedAnglesRequired(TypedDict):
-    """The required fields of ``PlaneFixedAngles``."""
-
-
 @final
-class PlaneFixedAngles(_PlaneFixedAnglesRequired, total=False):
+class PlaneFixedAngles(TypedDict, total=False):
     """The angles of a plane cell fixed by its crystal system, in degrees."""
 
     gamma: float

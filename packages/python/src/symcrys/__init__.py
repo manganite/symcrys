@@ -306,12 +306,8 @@ class LatticeParameters(TypedDict):
     """Angle γ between a and b, in degrees."""
 
 
-class _CellRequired(TypedDict):
-    """The required fields of ``Cell``."""
-
-
 @final
-class Cell(_CellRequired, total=False):
+class Cell(TypedDict, total=False):
     """A cell of a lattice, named by the fields that apply to its Bravais lattice (listed with
     ``cell_transformation``); a field left out takes the value of the conventional cell in the
     standard setting, so ``{}`` is that cell.

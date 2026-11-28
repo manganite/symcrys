@@ -14,7 +14,8 @@
 - The required fields of a TypedDict with optional fields: the Python modules declare them in a
   private base class (``_NameRequired``), so that ``__required_keys__`` is right at run time; a
   TypedDict keeps no base in its MRO, so autodoc would not show them. They are added to the class
-  as attributes, with the docstring and the type of their declaration.
+  as attributes, with the docstring and the type of their declaration; an optional field says that
+  it is optional, which its type no longer shows.
 """
 
 from __future__ import annotations
@@ -31,6 +32,7 @@ from docutils import nodes
 from docutils.parsers.rst import directives
 from sphinx.application import Sphinx
 from sphinx.pycode import ModuleAnalyzer
+from sphinx.util.typing import stringify_annotation
 from sphinx.util import logging
 from sphinx.util.docutils import SphinxDirective
 
@@ -189,11 +191,27 @@ def required_fields(app: Sphinx, what: str, name: str, obj: Any, options: Any, l
     docs = ModuleAnalyzer.for_module(obj.__module__).find_attr_docs()
     for field, annotation in base.__annotations__.items():
         doc = docs.get((base.__qualname__, field), [])
-        # Under `from __future__ import annotations` a string, which a TypedDict keeps as a ForwardRef.
-        kind = getattr(annotation, "__forward_arg__", annotation)
-        kind = kind if isinstance(kind, str) else getattr(kind, "__name__", repr(kind))
+        # Under `from __future__ import annotations` a string, which a TypedDict keeps as a
+        # ForwardRef; it is written as declared (np.float64, which resolves, where autodoc writes the
+        # evaluated float64 of the other fields).
+        kind = getattr(annotation, "__forward_arg__", None)
+        kind = kind if isinstance(kind, str) else stringify_annotation(annotation)
         lines += ["", f".. py:attribute:: {field}", f"   :type: {kind}", ""]
         lines += [f"   {line}" if line else "" for line in doc]
+
+
+def optional_fields(app: Sphinx, what: str, name: str, obj: Any, options: Any, lines: list[str]) -> None:
+    """An optional field of a TypedDict (a key that may be absent) says so first."""
+    if what != "attribute":
+        return
+    owner_name, _, field = name.rpartition(".")
+    module_name, _, cls_name = owner_name.rpartition(".")
+    try:
+        owner = getattr(__import__(module_name, fromlist=["_"]), cls_name)
+    except (ImportError, AttributeError, ValueError):
+        return
+    if field in getattr(owner, "__optional_keys__", ()):
+        lines[:0] = ["*Optional key*: it may be absent.", ""]
 
 
 def setup(app: Sphinx) -> dict[str, Any]:
@@ -204,4 +222,5 @@ def setup(app: Sphinx) -> dict[str, Any]:
     app.connect("html-page-context", page_meta)
     app.connect("build-finished", write_sitemap)
     app.connect("autodoc-process-docstring", required_fields)
+    app.connect("autodoc-process-docstring", optional_fields)
     return {"parallel_read_safe": True, "parallel_write_safe": True}
