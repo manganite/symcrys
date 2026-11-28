@@ -372,6 +372,34 @@ export interface CoordinateChange {
   readonly operations?: readonly TransformedOperation[];
 }
 
+/** An operation (W, w) of the magnetic API passed to `changeOfCoordinates`: an `AffineOperation` that may say whether it carries time reversal. */
+export interface MagneticAffineOperation extends AffineOperation {
+  /** Whether the operation is combined with time reversal; given for every operation of the list or for none. */
+  readonly timeReversal?: boolean;
+}
+
+/** An operation (W′, w′) of the magnetic API in the new coordinate system. */
+export interface MagneticTransformedOperation extends TransformedOperation {
+  /** The time reversal of the operation given; present when the operations given have it. */
+  readonly timeReversal?: boolean;
+}
+
+/** The quantities that `changeOfCoordinates` of the magnetic API transforms; each is optional. */
+export interface MagneticCoordinateQuantities extends CoordinateQuantities {
+  /**
+   * Operations (W, w): W′ = P⁻¹WP, w′ = P⁻¹(w + (W − I)p); each keeps its time reversal.
+   *
+   * @remarks Source: ITA (2016), eqs. (1.5.2.12), (1.5.2.13).
+   */
+  readonly operations?: readonly MagneticAffineOperation[];
+}
+
+/** The result of `changeOfCoordinates` of the magnetic API. */
+export interface MagneticCoordinateChange extends CoordinateChange {
+  /** The operations, as given, in the new coordinate system, each with its time reversal if given. */
+  readonly operations?: readonly MagneticTransformedOperation[];
+}
+
 /**
  * Changes the coordinate system by the pair (P, p): the new basis is (a′, b′, c′) = (a, b, c)·P and
  * the new origin lies at p. Transforms the given quantities by ITA's equations: point coordinates
@@ -388,9 +416,8 @@ export interface CoordinateChange {
  * tolerance^(−1/3) (46 at 10⁻⁵), such as cos 30° of a rotation, is refused
  * (docs/conventions.md, "Tolerances").
  * A transformed
- * operation has a `matrix` and a `translation` alone: other fields of the record (`cartesian`, in the
- * magnetic API `timeReversal`) are not carried over, so they are matched by index. Throws a
- * RangeError for a singular P, an entry of P that is not rational within the tolerance, a quantity
+ * operation has a `matrix` and a `translation` alone: other fields of the record (`cartesian`) are
+ * not carried over, so they are matched by index. Throws a RangeError for a singular P, an entry of P that is not rational within the tolerance, a quantity
  * of the wrong shape, an unknown quantity, an operation with
  * det W ≠ ±1, and one whose W′ is not integral (the new basis does not span a lattice that the
  * operation maps onto itself).
@@ -409,4 +436,59 @@ export function changeOfCoordinates(
   return deepFreeze(
     changeCoordinates(3, transformation, quantities, options, 'changeOfCoordinates') as unknown as CoordinateChange,
   );
+}
+
+/**
+ * Changes the coordinate system by the pair (P, p): the new basis is (a′, b′, c′) = (a, b, c)·P and
+ * the new origin lies at p. Transforms the given quantities by ITA's equations: point coordinates
+ * x′ = P⁻¹(x − p), vector coefficients [uvw]′ = P⁻¹[uvw], Miller indices (hkl)′ = (hkl)P, the
+ * metric tensor G′ = PᵀGP, and operations W′ = P⁻¹WP, w′ = P⁻¹(w + (W − I)p); and gives the inverse
+ * pair (Q, q) = (P⁻¹, −P⁻¹p). det P may be negative (a change of handedness, which ITA allows).
+ *
+ * P and the matrices W are read each number as a fraction and transformed exactly, so that every
+ * result, the inverse pair included, can be passed back: a number that is a fraction to rounding is
+ * that fraction, another is read as the simplest fraction within the tolerance (default `EPSILON`;
+ * 0.3333333 is 1/3). The origin shift p and the translations w are positions: a fraction to rounding
+ * (1/3 as 0.3333333333) is that fraction, another number is taken as it is (0.1234 stays 0.1234). P is rational in a change between
+ * lattice bases, as in ITA: an entry of P that needs a fraction with a denominator above
+ * tolerance^(−1/3) (46 at 10⁻⁵), such as cos 30° of a rotation, is refused
+ * (docs/conventions.md, "Tolerances").
+ * A transformed operation keeps the time reversal of the operation given (`timeReversal`), so that
+ * it can be passed on to the functions that read the matrices W (`residualOperations`, a further
+ * `changeOfCoordinates`); when no operation has `timeReversal`, none of the results has it. Other
+ * fields of the record (`cartesian`) are not carried over. Throws a RangeError for a list in which
+ * some operations have `timeReversal` and others do not, a singular P, an entry of P that is not
+ * rational within the tolerance, a quantity of the wrong shape, an unknown quantity, an operation
+ * with det W ≠ ±1, and one whose W′ is not integral (the new basis does not span a lattice that the
+ * operation maps onto itself).
+ *
+ * @remarks Source: ITA (6th ed., 2016), § 1.5.1.3, p. 83 (the pair (P, p)); § 1.5.2, pp. 83–85 (the
+ * equations); § 1.5.1.2, p. 76 (a negative det P).
+ */
+export function changeOfMagneticCoordinates(
+  transformation: CoordinateTransformation,
+  quantities: MagneticCoordinateQuantities,
+  options?: ToleranceOptions,
+): MagneticCoordinateChange {
+  const ops = (quantities as { readonly operations?: unknown } | null)?.operations;
+  // Array.from: a hole is undefined, refused by the transformation below.
+  const given = Array.isArray(ops) ? Array.from(ops as unknown[]) : undefined;
+  const reversal = given?.map((op) => (op as { readonly timeReversal?: unknown } | null)?.timeReversal);
+  if (given !== undefined && reversal !== undefined) {
+    checkOptionalTimeReversal(given, 'changeOfCoordinates');
+    const without = reversal.findIndex((x) => x === undefined);
+    const withIt = reversal.findIndex((x) => x !== undefined);
+    if (without >= 0 && withIt >= 0) {
+      throw new RangeError(
+        `changeOfCoordinates: operation ${withIt} has timeReversal and operation ${without} has not: ` +
+          'give timeReversal for every operation or for none',
+      );
+    }
+  }
+  const change = changeOfCoordinates(transformation, quantities, options);
+  if (reversal === undefined || reversal.every((x) => x === undefined)) return change;
+  return deepFreeze({
+    ...change,
+    operations: (change.operations ?? []).map((op, n) => ({ ...op, timeReversal: reversal[n] as boolean })),
+  });
 }

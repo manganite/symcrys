@@ -275,12 +275,13 @@
       "doc": "The operations of ``change_of_coordinates`` in the new coordinate system as arrays, one row per operation, in the order given: each a matrix W′ and a translation w′, not reduced modulo the lattice. Frozen, its arrays read-only; ``len(ops)`` is the number of operations; they can be passed back to ``change_of_coordinates``."
     },
     "symcrys.magnetic": {
-      "record": "TransformedOperation",
+      "record": "MagneticTransformedOperation",
       "fields": {
         "matrix": ["int64", [3, 3]],
-        "translation": ["float64", [3]]
+        "translation": ["float64", [3]],
+        "timeReversal": ["bool", [], "optional"]
       },
-      "doc": "The operations of ``change_of_coordinates`` in the new coordinate system as arrays, one row per operation, in the order given: each a matrix W′ and a translation w′, not reduced modulo the lattice. Frozen, its arrays read-only; ``len(ops)`` is the number of operations; they can be passed back to ``change_of_coordinates``."
+      "doc": "The operations of ``change_of_coordinates`` in the new coordinate system as arrays, one row per operation, in the order given: each a matrix W′ and a translation w′, not reduced modulo the lattice, and the time reversal of the operation given, if the operations given have it. Frozen, its arrays read-only; ``len(ops)`` is the number of operations; they can be passed back to ``change_of_coordinates``."
     },
     "symcrys.plane": {
       "record": "TransformedOperation",

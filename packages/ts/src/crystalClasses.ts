@@ -913,8 +913,8 @@ export function allowedPropertiesOf(
  * tolerance^(−1/3) (46 at 10⁻⁵), such as cos 30° of a rotation, is refused
  * (docs/conventions.md, "Tolerances").
  * A transformed
- * operation has a `matrix` and a `translation` alone: other fields of the record (`cartesian`, in the
- * magnetic API `timeReversal`) are not carried over, so they are matched by index. Throws a
+ * operation has a `matrix` and a `translation` alone: other fields of the record (`cartesian`,
+ * `timeReversal: false`) are not carried over, so they are matched by index. Throws a
  * RangeError for an operation combined with time reversal (`timeReversal` set and not `false`;
  * time reversal belongs to the magnetic API), a singular P, an entry of P that is not rational within the tolerance, a quantity
  * of the wrong shape, an unknown quantity, an operation with

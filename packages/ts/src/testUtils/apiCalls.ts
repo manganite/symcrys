@@ -177,6 +177,16 @@ function pointGroupCalls(entry: 'symcrys' | 'symcrys/magnetic'): ApiCall[] {
   if (entry === 'symcrys/magnetic') {
     for (const name of ['CRYSTAL_CLASS_KEYS', 'GREY_POINT_GROUP_KEYS', 'BLACK_WHITE_POINT_GROUP_KEYS'])
       out.push({ entry, name });
+    // Operations with time reversal keep it.
+    c(
+      'changeOfCoordinates',
+      { linearPart: [[1, 0, 1], [-1, 1, 1], [0, -1, 1]] }, // prettier-ignore
+      {
+        operations: magnetic
+          .operations("-3'm", { axes: 'rhombohedral' })
+          .map((op) => ({ matrix: op.matrix, timeReversal: op.timeReversal })),
+      },
+    );
   }
   return out;
 }

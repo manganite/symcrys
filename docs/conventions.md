@@ -1134,9 +1134,12 @@ and transformed exactly, so that W′ is exactly integral and every result, the 
 can be passed back; p and w are exact when every number of them is a fraction to rounding, and
 otherwise taken as given (0.1234 stays 0.1234); an operation with det W ≠ ±1, or whose W′ is not integral
 (the new basis spans no lattice that the operation maps onto itself), is refused. A transformed
-operation is `{ matrix, translation }` alone, its translation w′ not reduced modulo the lattice, as
-ITA writes it; other fields of an operation record (`cartesian`, `timeReversal`) are not carried
-over. The plane has the same function with 2 × 2 matrices (`symcrys/plane`).
+operation is `{ matrix, translation }`, its translation w′ not reduced modulo the lattice, as
+ITA writes it; `cartesian` is not carried over. In the magnetic API it keeps `timeReversal` of the
+operation given when every operation of the list gives it, and has none when no operation does; a
+list in which only some operations give it is refused. So the result goes on to the functions that
+read the matrices W (`residualOperations`, a further `changeOfCoordinates`), not to those that read
+`cartesian`. The plane has the same function with 2 × 2 matrices (`symcrys/plane`).
 
 ### Cells of a lattice
 

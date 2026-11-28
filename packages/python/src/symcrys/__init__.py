@@ -2536,8 +2536,8 @@ def change_of_coordinates(
     (0.1234 stays 0.1234). P is rational in a change between lattice bases, as in ITA: an entry of P
     that needs a fraction with a denominator above tolerance^(−1/3) (46 at 10⁻⁵), such as cos 30° of
     a rotation, is refused (docs/conventions.md, "Tolerances"). A transformed operation has a
-    ``matrix`` and a ``translation`` alone: other fields of the record (``cartesian``, in the
-    magnetic API ``time_reversal``) are not carried over, so they are matched by index. Raises
+    ``matrix`` and a ``translation`` alone: other fields of the record (``cartesian``,
+    ``time_reversal: False``) are not carried over, so they are matched by index. Raises
     SymcrysError for an operation combined with time reversal (``time_reversal`` set and not
     ``False``; time reversal belongs to the magnetic API), a singular P, an entry of P that is not
     rational within the tolerance, a quantity of the wrong shape, an unknown quantity, an operation

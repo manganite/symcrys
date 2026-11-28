@@ -93,6 +93,9 @@ def test_the_two_modules_have_the_same_names() -> None:
     only_classes |= {"CrystalForm", "CrystalFormType", "CrystalFormTypeKey", "WyckoffPosition"}
     only_magnetic = {"PointGroupType", "TimeParity", "CRYSTAL_CLASS_KEYS", "GREY_POINT_GROUP_KEYS"}
     only_magnetic |= {"BLACK_WHITE_POINT_GROUP_KEYS"}
+    # A change of coordinates keeps the time reversal of the operations in the magnetic API.
+    only_classes |= {"CoordinateChange", "TransformedOperation"}
+    only_magnetic |= {"MagneticCoordinateChange", "MagneticTransformedOperation"}
     assert set(symcrys.__all__) - only_classes == set(magnetic.__all__) - only_magnetic
     assert symcrys.magnetic is magnetic and magnetic.VERSION == symcrys.VERSION == symcrys.__version__
 
@@ -757,6 +760,33 @@ def test_change_of_coordinates_gives_its_operations_as_arrays_that_can_be_passed
     planar = plane.change_of_coordinates([[1, 1], [-1, 1]], operations=plane.operations("p4mm"))
     assert isinstance(planar["operations"], plane.TransformedOperations)
     assert planar["operations"].matrix.shape == (8, 2, 2)
+
+
+def test_magnetic_change_of_coordinates_carries_the_time_reversal_through() -> None:
+    # -3'm on rhombohedral axes, to hexagonal axes and back (ITA 2016 Table 5.1.3.1, obverse).
+    p = [[1, 0, 1], [-1, 1, 1], [0, -1, 1]]
+    ops = magnetic.operations("-3'm", axes="rhombohedral")
+    there = magnetic.change_of_coordinates(p, operations=ops)["operations"]
+    assert isinstance(there, magnetic.TransformedOperations)
+    assert there.time_reversal is not None and there.time_reversal.dtype == np.bool_
+    assert (there.time_reversal == ops.time_reversal).all() and there.time_reversal.any()
+    assert there[1]["time_reversal"] is bool(ops.time_reversal[1])
+    assert set(there[0]) == {"matrix", "translation", "time_reversal"}
+    assert (there[[0, 1]].time_reversal == ops.time_reversal[:2]).all()
+    with pytest.raises(ValueError):
+        there.time_reversal[0] = True
+    back = magnetic.change_of_coordinates(np.linalg.inv(p), operations=there)["operations"]
+    assert (back.matrix == ops.matrix).all() and (back.time_reversal == ops.time_reversal).all()
+    assert copy.deepcopy(there).time_reversal is not None and pickle.loads(pickle.dumps(there)).time_reversal is not None
+    # Without time reversal in the list: no field, as before.
+    spatial = magnetic.change_of_coordinates(p, operations=[{"matrix": m} for m in ops.matrix])["operations"]
+    assert spatial.time_reversal is None and set(spatial[0]) == {"matrix", "translation"}
+    assert (spatial.matrix == there.matrix).all()
+    assert magnetic.change_of_coordinates(p, operations=[])["operations"].time_reversal is None
+    with pytest.raises(symcrys.SymcrysError, match="give time_reversal for every operation or for none"):
+        magnetic.change_of_coordinates(np.eye(3), operations=[{"matrix": np.eye(3), "time_reversal": True}, {"matrix": np.eye(3)}])
+    # symcrys stays spatial.
+    assert symcrys.change_of_coordinates(p, operations=symcrys.operations("-3m", axes="rhombohedral"))["operations"][0].keys() == {"matrix", "translation"}
 
 
 def test_messages_keep_the_values_the_caller_passed() -> None:

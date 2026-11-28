@@ -1164,12 +1164,25 @@ async function generate(name, cfg) {
     const record = readDeclaration(ctx.exports.get(cfg.record), name, cfg.record);
     const entries = Object.entries(cfg.fields).filter(([k]) => k !== '//');
     const pyDtype = (/** @type {string} */ d) => (d === 'bool' ? 'np.bool_' : `np.${d}`);
-    const fieldLines = entries.flatMap(([k, [dtype, shape]]) => {
+    // A field marked "optional" (api.json) is None where the result has it for no operation; it
+    // comes after the others, since a dataclass field with a default must.
+    const optional = (/** @type {any[]} */ entry) => entry[2] === 'optional';
+    const firstOptional = entries.findIndex(([, e]) => optional(e));
+    if (firstOptional >= 0 && entries.slice(firstOptional).some(([, e]) => !optional(e))) {
+      throw new Error(`${name}: the optional fields of ${cfg.record} come last in api.json`);
+    }
+    const fieldLines = entries.flatMap(([k, entry]) => {
+      const [dtype, shape] = entry;
       const f = record.fields.find((/** @type {Field} */ x) => x.name === k);
       if (!f) throw new Error(`${name}: the record ${cfg.record} has no field ${k}`);
+      if (optional(entry) !== f.optional) {
+        throw new Error(`${name}: ${cfg.record}.${k} is ${f.optional ? '' : 'not '}optional, api.json says otherwise`);
+      }
       const dims = ['n', ...shape].join(', ');
-      const doc = `${dtype} array of shape (${dims}${shape.length ? '' : ','}), one row per operation. ${f.doc}`;
-      return [`    ${snake(k)}: NDArray[${pyDtype(dtype)}]`, ...quote(wrapParagraphs(doc, '', 3), '    ')];
+      const none = optional(entry) ? ' None where the operations given have no such field.' : '';
+      const doc = `${dtype} array of shape (${dims}${shape.length ? '' : ','}), one row per operation. ${f.doc}${none}`;
+      const ann = optional(entry) ? `Optional[NDArray[${pyDtype(dtype)}]] = None` : `NDArray[${pyDtype(dtype)}]`;
+      return [`    ${snake(k)}: ${ann}`, ...quote(wrapParagraphs(doc, '', 3), '    ')];
     });
     const missing = record.fields
       .filter((/** @type {Field} */ f) => !cfg.fields[f.name])
@@ -1224,7 +1237,8 @@ async function generate(name, cfg) {
         `class ${opRecord}(TypedDict):`,
         ...quote([`One operation of \`\`${cls}\`\` (\`\`ops[i]\`\`, \`\`for op in ops\`\`).`], '    '),
         '',
-        ...entries.flatMap(([k, [dtype, shape]]) => {
+        ...entries.flatMap(([k, entry]) => {
+          const [dtype, shape] = entry;
           const f = record.fields.find((/** @type {Field} */ x) => x.name === k);
           const py = shape.length
             ? `NDArray[${pyDtype(dtype)}]`
@@ -1233,7 +1247,11 @@ async function generate(name, cfg) {
               : dtype === 'int64'
                 ? 'int'
                 : 'float';
-          return [`    ${snake(k)}: ${py}`, ...quote(wrapParagraphs(f.doc, '', 3), '    ')];
+          if (optional(entry)) ctx.notRequired = true;
+          return [
+            `    ${snake(k)}: ${optional(entry) ? `NotRequired[${py}]` : py}`,
+            ...quote(wrapParagraphs(f.doc, '', 3), '    '),
+          ];
         }),
       ].join('\n'),
     );

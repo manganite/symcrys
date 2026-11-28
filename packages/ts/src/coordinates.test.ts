@@ -189,11 +189,74 @@ describe('changeOfCoordinates', () => {
   });
 
   it('keeps a record of operations as given otherwise: other fields are not carried over', () => {
-    const result = magnetic.changeOfCoordinates(
+    const result = classes.changeOfCoordinates(
       { linearPart: R },
-      { operations: magnetic.operations("-3'm", { axes: 'rhombohedral' }) },
+      { operations: classes.operations('-3m', { axes: 'rhombohedral' }) },
     );
     expect(Object.keys(result.operations![0]).sort()).toEqual(['matrix', 'translation']);
+    // timeReversal: false, accepted in symcrys, is not carried over either.
+    const unprimed = classes.operations('-3m', { axes: 'rhombohedral' }).map((op) => ({ ...op, timeReversal: false }));
+    const without = classes.changeOfCoordinates({ linearPart: R }, { operations: unprimed as never });
+    expect(Object.keys(without.operations![0]).sort()).toEqual(['matrix', 'translation']);
+  });
+
+  it('carries the time reversal of each operation through in the magnetic API, not cartesian', () => {
+    const given = magnetic.operations("-3'm", { axes: 'rhombohedral' });
+    const result = magnetic.changeOfCoordinates({ linearPart: R }, { operations: given });
+    expect(Object.keys(result.operations![0]).sort()).toEqual(['matrix', 'timeReversal', 'translation']);
+    expect(result.operations!.map((op) => op.timeReversal)).toEqual(given.map((op) => op.timeReversal));
+    expect(result.operations!.some((op) => op.timeReversal)).toBe(true);
+    // The spatial part is that of the crystallographic API.
+    const spatial = classes.changeOfCoordinates(
+      { linearPart: R },
+      { operations: given.map(({ matrix }) => ({ matrix })) },
+    );
+    expect(result.operations!.map(({ matrix, translation }) => ({ matrix, translation }))).toEqual(spatial.operations);
+    expect(Object.isFrozen(result.operations![0])).toBe(true);
+    // Without timeReversal in the list, the result is spatial, as before.
+    const none = magnetic.changeOfCoordinates(
+      { linearPart: R },
+      { operations: given.map(({ matrix }) => ({ matrix })) },
+    );
+    expect(Object.keys(none.operations![0]).sort()).toEqual(['matrix', 'translation']);
+    // An empty list stays empty.
+    expect(magnetic.changeOfCoordinates({ linearPart: R }, { operations: [] }).operations).toEqual([]);
+  });
+
+  it('gives operations of the magnetic API that the functions of the matrices W take again', () => {
+    // -3'm on rhombohedral axes, carried to hexagonal axes by R and back by its inverse.
+    const given = magnetic.operations("-3'm", { axes: 'rhombohedral' });
+    const there = magnetic.changeOfCoordinates({ linearPart: R }, { operations: given });
+    const back = magnetic.changeOfCoordinates(
+      { linearPart: there.inverse.linearPart },
+      { operations: there.operations },
+    );
+    expect(back.operations!.map((op) => [op.matrix, op.timeReversal])).toEqual(
+      given.map((op) => [op.matrix, op.timeReversal]),
+    );
+    // On hexagonal axes every operation keeps the hexagonal metric, each with its time reversal.
+    const kept = magnetic.residualOperations(
+      there.operations! as readonly { matrix: Mat3; timeReversal: boolean }[],
+      magnetic.latticeBasis("-3'm"),
+    );
+    expect(kept.map((op) => op.timeReversal)).toEqual(given.map((op) => op.timeReversal));
+  });
+
+  it('refuses a list in the magnetic API in which some operations have timeReversal and others not', () => {
+    const op = { matrix: magnetic.operations('1')[0].matrix, translation: [0, 0, 0] as Vec3 };
+    const I = op.matrix;
+    expect(() =>
+      magnetic.changeOfCoordinates({ linearPart: I }, { operations: [{ ...op, timeReversal: true }, op] }),
+    ).toThrow(
+      /operation 0 has timeReversal and operation 1 has not: give timeReversal for every operation or for none/,
+    );
+    expect(() =>
+      magnetic.changeOfCoordinates({ linearPart: I }, { operations: [op, { ...op, timeReversal: false }] }),
+    ).toThrow(/operation 1 has timeReversal and operation 0 has not/);
+    // A value that is no boolean is named as such first.
+    expect(() =>
+      magnetic.changeOfCoordinates({ linearPart: I }, { operations: [op, { ...op, timeReversal: 'yes' } as never] }),
+    ).toThrow(/timeReversal must be true, false or absent/);
   });
 
   it('gives only the quantities asked for, frozen', () => {
