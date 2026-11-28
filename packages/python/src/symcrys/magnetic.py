@@ -213,14 +213,17 @@ class TransformedOperation(TypedDict):
     """W′ = P⁻¹WP, integer entries."""
     translation: NDArray[np.float64]
     """w′ = P⁻¹(w + (W − I)p), not reduced modulo the lattice."""
+    time_reversal: NotRequired[bool]
+    """The time reversal of the operation given; present when the operations given have it."""
 
 
 @dataclass(frozen=True, eq=False)
 class TransformedOperations:
     """The operations of ``change_of_coordinates`` in the new coordinate system as arrays, one row
     per operation, in the order given: each a matrix W′ and a translation w′, not reduced modulo the
-    lattice. Frozen, its arrays read-only; ``len(ops)`` is the number of operations; they can be
-    passed back to ``change_of_coordinates``.
+    lattice, and the time reversal of the operation given, if the operations given have it. Frozen,
+    its arrays read-only; ``len(ops)`` is the number of operations; they can be passed back to
+    ``change_of_coordinates``.
     """
 
     matrix: NDArray[np.int64]
@@ -228,6 +231,10 @@ class TransformedOperations:
     translation: NDArray[np.float64]
     """float64 array of shape (n, 3), one row per operation. w′ = P⁻¹(w + (W − I)p), not reduced modulo
     the lattice.
+    """
+    time_reversal: Optional[NDArray[np.bool_]] = None
+    """bool array of shape (n,), one row per operation. The time reversal of the operation given;
+    present when the operations given have it. None where the operations given have no such field.
     """
 
     _symcrys_operations = True
@@ -252,7 +259,7 @@ class TransformedOperations:
     def __getitem__(self, index: slice | Sequence[int] | NDArray[Any]) -> TransformedOperations: ...
 
     def __getitem__(self, index: int | np.integer[Any] | slice | Sequence[int] | NDArray[Any]) -> TransformedOperation | TransformedOperations:
-        """One operation as a dict ``{"matrix", "translation"}`` for an integer, otherwise
+        """One operation as a dict ``{"matrix", "translation", "time_reversal"}`` (an optional field only where present) for an integer, otherwise
         the ``TransformedOperations`` of the selected rows (a slice, a list of indices, a boolean mask)."""
         result: TransformedOperation | TransformedOperations = _shared.operation_at(self, index)
         return result
@@ -642,8 +649,8 @@ class TensorForm(TypedDict):
 
 _OPERATION_FIELDS = {"matrix": (np.int64, (3, 3)), "cartesian": (np.float64, (3, 3)), "time_reversal": (np.bool_, ())}
 _S_Operations = ("ops", Operations, {"matrix": (np.int64, (3, 3)), "cartesian": (np.float64, (3, 3)), "timeReversal": (np.bool_, ())})
-_TRANSFORMED_FIELDS = {"matrix": (np.int64, (3, 3)), "translation": (np.float64, (3,))}
-_S_TransformedOperations = ("ops", TransformedOperations, {"matrix": (np.int64, (3, 3)), "translation": (np.float64, (3,))})
+_TRANSFORMED_FIELDS = {"matrix": (np.int64, (3, 3)), "translation": (np.float64, (3,)), "time_reversal": (np.bool_, ())}
+_S_TransformedOperations = ("ops", TransformedOperations, {"matrix": (np.int64, (3, 3)), "translation": (np.float64, (3,)), "timeReversal": (np.bool_, ())})
 _S_InverseTransformation = (
     "d",
     {
@@ -929,12 +936,30 @@ is. ``'gyrotropic'`` is optical activity.
 """
 
 
+@overload
+def residual_operations(
+    operations: TransformedOperations,
+    basis: ArrayLike,
+    *,
+    tolerance: Optional[float] = None,
+) -> TransformedOperations: ...
+
+
+@overload
 def residual_operations(
     operations: Operations | Sequence[Mapping[str, Any]],
     basis: ArrayLike,
     *,
     tolerance: Optional[float] = None,
-) -> Operations:
+) -> Operations: ...
+
+
+def residual_operations(
+    operations: Operations | TransformedOperations | Sequence[Mapping[str, Any]],
+    basis: ArrayLike,
+    *,
+    tolerance: Optional[float] = None,
+) -> Operations | TransformedOperations:
     """The operations of a list that keep the metric of a cell: W with WᵀGW = G, G the metric tensor
     of ``basis``. The operations are read by ``matrix``, the integer matrix W on lattice
     coordinates, as ``operations`` gives them; the list is taken as it is and the kept operations
@@ -962,8 +987,8 @@ def residual_operations(
         _shared.array(basis, "basis", np.float64),
         _shared.options(tolerance=tolerance),
     )
-    ops = operations if isinstance(operations, Operations) else _shared.operations_of(given, Operations)
-    result: Operations = _shared.select(ops, kept)
+    ops = operations if isinstance(operations, (Operations, TransformedOperations)) else _shared.operations_of(given, Operations)
+    result: Operations | TransformedOperations = _shared.select(ops, kept)
     return result
 
 
@@ -992,10 +1017,13 @@ def change_of_coordinates(
     fraction to rounding (1/3 as 0.3333333333) is that fraction, another number is taken as it is
     (0.1234 stays 0.1234). P is rational in a change between lattice bases, as in ITA: an entry of P
     that needs a fraction with a denominator above tolerance^(−1/3) (46 at 10⁻⁵), such as cos 30° of
-    a rotation, is refused (docs/conventions.md, "Tolerances"). A transformed operation has a
-    ``matrix`` and a ``translation`` alone: other fields of the record (``cartesian``, in the
-    magnetic API ``time_reversal``) are not carried over, so they are matched by index. Raises
-    SymcrysError for a singular P, an entry of P that is not rational within the tolerance, a
+    a rotation, is refused (docs/conventions.md, "Tolerances"). A transformed operation keeps the
+    time reversal of the operation given (``time_reversal``), so that it can be passed on to the
+    functions that read the matrices W (``residual_operations``, a further
+    ``change_of_coordinates``); when no operation has ``time_reversal``, none of the results has it.
+    Other fields of the record (``cartesian``) are not carried over. Raises SymcrysError for a
+    ``time_reversal`` that is not a boolean, a list in which some operations have ``time_reversal``
+    and others do not, a singular P, an entry of P that is not rational within the tolerance, a
     quantity of the wrong shape, an unknown quantity, an operation with det W ≠ ±1, and one whose W′
     is not integral (the new basis does not span a lattice that the operation maps onto itself).
 

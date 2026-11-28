@@ -142,9 +142,15 @@ def operation_list(operations: Any, keys: tuple[str, ...] = ("cartesian",), bare
     return [dict(op) for op in ops]
 
 
+def present_fields(operations: Any) -> list[str]:
+    """The fields of a record of arrays that it has: an optional field (default None) that is None,
+    because no operation has it, is left out."""
+    return [f.name for f in dataclasses.fields(operations) if getattr(operations, f.name) is not None]
+
+
 def records(operations: Any) -> list[dict[str, Any]]:
     """The ``Operations`` of a module as a list of records, one per operation."""
-    fields = [f.name for f in dataclasses.fields(operations)]
+    fields = present_fields(operations)
     return [{name: getattr(operations, name)[i] for name in fields} for i in range(len(operations))]
 
 
@@ -177,7 +183,7 @@ def operation_at(operations: Any, index: Any) -> Any:
     """``ops[index]``: for an integer one operation as a dict (a bool for a field of one value per
     operation), otherwise the ``Operations`` of the rows that ``index`` selects (a slice, a sequence
     of integers, a boolean mask of length n)."""
-    fields = [f.name for f in dataclasses.fields(operations)]
+    fields = present_fields(operations)
     n = len(operations)
     if index is None or isinstance(index, (bool, np.bool_)):
         raise TypeError(f"Operations cannot be indexed by {index!r}")
@@ -258,7 +264,10 @@ def freeze(operations: Any, fields: Mapping[str, tuple[Any, tuple[int, ...]]]) -
     writes: each is a read-only view of a read-only copy, which numpy does not let anyone
     make writable again."""
     n = None
+    optional = {f.name for f in dataclasses.fields(operations) if f.default is None}
     for name, (dtype, shape) in fields.items():
+        if name in optional and getattr(operations, name) is None:
+            continue
         base = _checked(type(operations).__name__, name, getattr(operations, name), dtype, shape)
         if n is not None and len(base) != n:
             raise _engine.SymcrysError(f"{type(operations).__name__}: {name} has {len(base)} operations, the others {n}", "RangeError")

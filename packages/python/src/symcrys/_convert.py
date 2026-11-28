@@ -16,6 +16,7 @@
 
 from __future__ import annotations
 
+import dataclasses
 import re
 from typing import Any
 
@@ -223,7 +224,16 @@ def convert(x: Any, schema: tuple[Any, ...]) -> Any:
         return CUSTOM[schema[1]](x)
     if kind == "ops":
         cls, spec = schema[1], schema[2]
-        return cls(**{snake(k): np.asarray([e[k] for e in x], dtype=dtype).reshape((len(x), *shape)) for k, (dtype, shape) in spec.items()})
+        # An optional field (default None) is None where no operation has it; the library gives it
+        # for every operation or for none.
+        optional = {f.name for f in dataclasses.fields(cls) if f.default is None}
+        columns: dict[str, Any] = {}
+        for k, (dtype, shape) in spec.items():
+            if snake(k) in optional and (not x or any(k not in e for e in x)):
+                columns[snake(k)] = None
+            else:
+                columns[snake(k)] = np.asarray([e[k] for e in x], dtype=dtype).reshape((len(x), *shape))
+        return cls(**columns)
     raise ValueError(f"unknown schema {schema!r}")
 
 

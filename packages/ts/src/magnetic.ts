@@ -41,7 +41,7 @@ export {
   type MillerValues,
 } from './indices.js';
 export {
-  changeOfCoordinates,
+  changeOfCoordinatesWithTimeReversal as changeOfCoordinates,
   type AffineOperation,
   type CoordinateChange,
   type CoordinateQuantities,
