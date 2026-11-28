@@ -555,19 +555,31 @@ function checkRotation(rotation: unknown, what: string, of: string, tolerance: n
 function checkTensor(tensor: unknown, rank: number, index?: number): readonly number[] {
   const dim = 3 ** rank;
   if (!Array.isArray(tensor) || tensor.length !== dim) {
-    const which = index === undefined ? `A tensor of rank ${rank}` : `Tensor ${index} (rank ${rank})`;
-    throw new RangeError(`${which} has ${dim} components, not ${shown(tensor)}`);
+    throw new RangeError(
+      index === undefined
+        ? `A tensor of rank ${rank} has ${dim} components, not ${shown(tensor)}`
+        : `Tensor ${index} must have ${dim} components (rank ${rank}), not ${shown(tensor)}`,
+    );
   }
   checkNumbers(tensor, dim, index === undefined ? 'The tensor' : `Tensor ${index}`);
   return tensor as readonly number[];
 }
 
-/** Whether a rotation argument is a list of rotations: an entry of it has matrices, not numbers, as rows. */
+/** "1 tensor", "2 tensors". */
+function count(n: number, noun: string): string {
+  return `${n} ${noun}${n === 1 ? '' : 's'}`;
+}
+
+/**
+ * Whether a rotation argument is a list of rotations: an empty list, or one with an entry that is a
+ * matrix (a non-empty list of lists). A rotation has rows of numbers, so a row that is wrong is
+ * reported as a row of the rotation.
+ */
 function isRotationList(rotation: unknown): boolean {
   if (!Array.isArray(rotation)) return false;
   if (rotation.length === 0) return true;
   return Array.from(rotation as unknown[]).some(
-    (r) => Array.isArray(r) && Array.from(r as unknown[]).some(Array.isArray),
+    (r) => Array.isArray(r) && r.length > 0 && Array.from(r as unknown[]).every(Array.isArray),
   );
 }
 
@@ -648,7 +660,7 @@ export function rotateTensors(
     const given = Array.from(rotation as unknown[]);
     if (given.length !== tensors.length) {
       throw new RangeError(
-        `${tensors.length} tensors and ${given.length} rotations: pass one rotation for all, or one per tensor`,
+        `${count(tensors.length, 'tensor')} and ${count(given.length, 'rotation')}: pass one rotation for all, or one per tensor`,
       );
     }
     given.forEach((r, i) => {

@@ -83,11 +83,13 @@ time(
   () => vectors.map((v) => classes.rotateTensor(v, turn, 'pyroelectric')),
   20,
 );
-time('rotateTensors, rank 1, 1000 tensors', () => classes.rotateTensors(vectors, turn, 'pyroelectric'), 20);
-const tensors4 = Array.from({ length: 1000 }, () => tensor4);
-time(
-  'rotateTensors, rank 4, 1000 tensors',
-  () => classes.rotateTensors(tensors4, turn, { rank: 4, kind: 'polar', intrinsic: 'none' }),
-  5,
-);
+// rotateTensors at ranks 1 to 4: one rotation for 1000 tensors, one rotation per tensor, an empty list.
+const turns = Array.from({ length: 1000 }, (_, i) => classes.operations('m-3m')[i % 48].cartesian);
+for (const rank of [1, 2, 3, 4]) {
+  const spec = { rank, kind: 'polar', intrinsic: 'none' };
+  const list = Array.from({ length: 1000 }, (_, i) => Array.from({ length: 3 ** rank }, (_, j) => Math.sin(i + j)));
+  time(`rotateTensors, rank ${rank}, 1000 tensors, one rotation`, () => classes.rotateTensors(list, turn, spec), 5);
+  time(`rotateTensors, rank ${rank}, 1000 tensors, 1000 rotations`, () => classes.rotateTensors(list, turns, spec), 5);
+}
+time('rotateTensors, an empty list', () => classes.rotateTensors([], turn, 'pyroelectric'), 2000);
 time('siteSymmetry m-3m, [111]', () => classes.siteSymmetry('m-3m', { uvw: [1, 1, 1] }));

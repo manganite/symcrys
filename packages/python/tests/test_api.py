@@ -356,6 +356,32 @@ def test_rotate_tensors_takes_a_stack_and_one_rotation_or_one_per_tensor() -> No
         symcrys.rotate_tensors(np.zeros((0, 3)), 2 * np.eye(3), "pyroelectric")
 
 
+def test_rotate_tensor_names_itself_and_the_rotation_as_given() -> None:
+    # Review of #249: rotate_tensor calls rotateTensors, but its messages name rotate_tensor, and a
+    # rotation is counted as given (flattened), not as repeated by broadcasting.
+    with pytest.raises(symcrys.SymcrysError, match=r"^rotate_tensor: every number"):
+        symcrys.rotate_tensor(np.array([np.nan, 0, 0]), np.eye(3), "pyroelectric")
+    with pytest.raises(symcrys.SymcrysError, match=r"^magnetic\.rotate_tensor: every number"):
+        magnetic.rotate_tensor(np.array([np.nan, 0, 0]), np.eye(3), "ferromagnetic")
+    with pytest.raises(symcrys.SymcrysError, match=r"^Rotation 1 is not an orthogonal"):
+        symcrys.rotate_tensor(np.zeros((3, 3)), np.stack([np.eye(3), 2 * np.eye(3)])[:, None], "pyroelectric")
+
+
+def test_rotate_tensor_sends_one_rotation_once(monkeypatch: pytest.MonkeyPatch) -> None:
+    # Review of #249: a stack of one rotation, (1, 3, 3), goes to the library as one rotation.
+    sent: list[Any] = []
+    call = symcrys._shared.call
+
+    def recorded(name: str, *args: Any) -> Any:
+        sent.append(np.asarray(args[1]).shape)
+        return call(name, *args)
+
+    monkeypatch.setattr(symcrys._shared, "call", recorded)
+    vectors = np.arange(30, dtype=float).reshape(10, 3)
+    got = symcrys.rotate_tensor(vectors, np.eye(3)[None], "pyroelectric")
+    assert sent == [(3, 3)] and got.shape == (10, 3)
+
+
 def test_rotate_tensor_rotates_a_stack_in_one_call(monkeypatch: pytest.MonkeyPatch) -> None:
     names: list[str] = []
     call = symcrys._shared.call

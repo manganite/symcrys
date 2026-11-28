@@ -490,6 +490,12 @@ describe('rotateTensors', () => {
 
   it('refuses lists of other lengths, wrong rotations and wrong tensors, naming the one', () => {
     const v = [1, 0, 0];
+    // One tensor or rotation is singular in the message (review of #249).
+    expect(() => rotateTensors([v], [R1, R1], spec(1))).toThrow(/^1 tensor and 2 rotations:/);
+    expect(() => rotateTensors([], [R1], spec(1))).toThrow(/^0 tensors and 1 rotation:/);
+    // A rotation with a wrong row is one rotation with that row, not a list (review of #249).
+    const badRow = [[1, 0, 0], [0, 1, 0], [[0], 0, 1]] as unknown as Mat3; // prettier-ignore
+    expect(() => rotateTensors([v], badRow, spec(1))).toThrow(/Row 2 of the rotation must be 3 finite numbers/);
     expect(() => rotateTensors([v, v, v], [R1, R1], spec(1))).toThrow(
       /3 tensors and 2 rotations: pass one rotation for all, or one per tensor/,
     );
@@ -521,7 +527,9 @@ describe('rotateTensors', () => {
         spec(1),
       ),
     ).toThrow(/Row 1 of rotation 1/);
-    expect(() => rotateTensors([v, [1, 2]], R1, spec(1))).toThrow(/Tensor 1 \(rank 1\) has 3 components, not \[1,2\]/);
+    expect(() => rotateTensors([v, [1, 2]], R1, spec(1))).toThrow(
+      /Tensor 1 must have 3 components \(rank 1\), not \[1,2\]/,
+    );
     expect(() => rotateTensors([v, [1, Number.NaN, 0]], R1, spec(1))).toThrow(/Tensor 1/);
     // eslint-disable-next-line no-sparse-arrays
     expect(() => rotateTensors([v, , v] as never, R1, spec(1))).toThrow(/Tensor 1/);

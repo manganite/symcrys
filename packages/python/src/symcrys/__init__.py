@@ -2313,7 +2313,8 @@ def rotate_tensor(
     tensor in the frame of a surface, pass the matrix whose rows are the new axes in the old frame.
     The kind of tensor is given by its specification or by the name of a property in
     ``TENSOR_PROPERTIES``. Raises SymcrysError for a rotation that is not orthogonal within the
-    tolerance (per matrix entry of RᵀR).
+    tolerance (per matrix entry of RᵀR). For many tensors, ``rotate_tensors`` checks the rotation
+    and the specification once.
 
     Parameters
     ----------

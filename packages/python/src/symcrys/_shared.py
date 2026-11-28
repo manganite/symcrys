@@ -314,16 +314,24 @@ def rotate_tensor(call: Any, value: Any, tensor: Any, rotation: Any, spec_or_nam
             f"the stacks of the tensor {t.shape} and of the rotation {r.shape} do not broadcast", "RangeError"
         ) from None
     tensors = np.broadcast_to(t, lead + core).reshape(-1, 3**rank)
-    if r.ndim == 2:
-        # One rotation for all: the library checks it once.
-        rotations: NDArray[Any] = r
-    elif len(tensors) == 0:
-        # An empty stack: the first rotation given is still checked, if there is one.
-        given_rotations = r.reshape(-1, 3, 3)
-        rotations = given_rotations[0] if len(given_rotations) else given_rotations
-    else:
-        rotations = np.broadcast_to(r, lead + (3, 3)).reshape(-1, 3, 3)
-    out = call("rotateTensors", tensors, rotations, given, options)
+    stack = r.reshape(-1, 3, 3)
+    try:
+        if len(stack) == 1 or (len(tensors) == 0 and len(stack)):
+            # One rotation for all, checked once; for an empty stack the first rotation given is
+            # still checked.
+            rotations: NDArray[Any] = stack[0]
+        elif len(tensors) == 0:
+            rotations = stack
+        else:
+            if r.shape[:-2] != lead:
+                # Broadcasting repeats rotations: the given ones are checked first, so that a
+                # message counts them as given (flattened), not as repeated.
+                call("rotateTensors", np.zeros((len(stack), 3**rank)), stack, given, options)
+            rotations = np.broadcast_to(r, lead + (3, 3)).reshape(-1, 3, 3)
+        out = call("rotateTensors", tensors, rotations, given, options)
+    except _engine.SymcrysError as e:
+        # The caller called rotate_tensor: a message names it, not the function it calls.
+        raise _engine.SymcrysError(str(e).replace("rotate_tensors", "rotate_tensor", 1), "RangeError") from None
     return np.asarray(out, dtype=np.float64).reshape(lead + core)
 
 

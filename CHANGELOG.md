@@ -11,7 +11,8 @@ All notable changes to symcrys are recorded here. The format follows
 - `rotateTensors(tensors, rotation, spec)` in `symcrys` and `symcrys/magnetic` (Python
   `rotate_tensors`): a list of tensors rotated by one rotation or by one rotation per tensor, the
   specification and the rotations checked once. `rotate_tensor` of the Python package rotates a stack
-  through it in one call of the library, instead of one call per tensor (#240).
+  through it in one call of the library, instead of one call per tensor (#240); a rotation of a
+  stack that is not orthogonal is named by its index in the stack given, flattened.
 
 ### Changed
 
