@@ -831,9 +831,6 @@ describe('lists of operations of the plane: siteSymmetryOf, orbitOf (#208)', () 
       general: true,
     });
     expect(plane.orbitOf([], { uv: [1, 2] })).toEqual([{ uv: [1, 2], operations: [] }]);
-    // A coordinate just below 0 lies in [0, 1) too, as with any group: x − floor(x) rounds to 1 there.
-    expect(plane.siteSymmetryOf([], { point: [-1e-17, 0.4] }).point).toEqual([0, 0.4]);
-    expect(plane.siteSymmetryOf(plane.operations('p1'), { point: [-1e-17, 0.4] }).point).toEqual([0, 0.4]);
   });
 
   it('refuse a list that is not a group', () => {
@@ -1297,12 +1294,12 @@ describe('#238: what the review of #247 found', () => {
 });
 
 describe('edge cases found while removing duplicated tables (#233)', () => {
-  it.fails('a coordinate just below 0 lies in [0, 1) under the empty list too (#233)', () => {
+  it('a coordinate just below 0 lies in [0, 1) under the empty list too (#233)', () => {
     // x − floor(x) rounds to 1 for x = −10⁻¹⁷; every non-empty list gives 0 there.
     expect(plane.siteSymmetryOf([], { point: [-1e-17, 0.4] }).point).toEqual([0, 0.4]);
   });
 
-  it.fails('the orbit of a coordinate just below 0 lies in [0, 1) under the empty list too (#233)', () => {
+  it('the orbit of a coordinate just below 0 lies in [0, 1) under the empty list too (#233)', () => {
     expect(plane.orbitOf([], { point: [-1e-17, 0.4] })[0].point).toEqual([0, 0.4]);
   });
 
