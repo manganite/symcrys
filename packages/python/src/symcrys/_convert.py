@@ -21,6 +21,9 @@ from typing import Any
 
 import numpy as np
 
+# numpy.ma without its stubs: some versions of NumPy leave its functions untyped.
+_ma: Any = np.ma
+
 def snake(name: str) -> str:
     return re.sub(r"(?<=[a-z0-9])([A-Z])", r"_\1", name).lower()
 
@@ -91,10 +94,10 @@ def check_raw(x: Any) -> None:
                             raise _unsafe(int(v))
                 continue
             stack.extend((v, depth + 1) for v in e)
-        elif np.ma.isMaskedArray(e):
-            if np.ma.getmaskarray(e).any():
+        elif _ma.isMaskedArray(e):
+            if _ma.getmaskarray(e).any():
                 raise InvalidInput(f"a masked array with masked values cannot be passed to symcrys, not {e}")
-            stack.append((np.ma.getdata(e), depth))
+            stack.append((_ma.getdata(e), depth))
         elif isinstance(e, np.ndarray):
             check_array(e)
             if e.dtype.kind == "O":
@@ -136,9 +139,9 @@ def to_js(x: Any) -> Any:
     Raises InvalidInput (UnsafeInteger for an integer beyond 2**53 - 1 in magnitude) for what the
     conversion would lose: see ``check_raw``, and keys that are not strings or that name one field
     twice (``time_parity`` and ``timeParity``)."""
-    if np.ma.isMaskedArray(x):
+    if _ma.isMaskedArray(x):
         check_raw(x)
-        return to_js(np.ma.getdata(x))
+        return to_js(_ma.getdata(x))
     if isinstance(x, np.ndarray):
         check_raw(x)
         if x.dtype.kind in "mM":
