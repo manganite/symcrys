@@ -331,6 +331,13 @@ def test_rotate_tensor_takes_arrays_of_any_shape() -> None:
         symcrys.rotate_tensor(np.zeros((0, 3, 3, 3)), 2 * np.eye(3), SHG)
 
 
+def test_tensor_form_gives_its_largest_coefficient_as_a_float() -> None:
+    form = symcrys.tensor_form("6mm", "piezoelectric")
+    assert type(form["largest_coefficient"]) is float
+    assert form["largest_coefficient"] == np.abs(form["basis"]).max()
+    assert magnetic.tensor_form("m-3m", "pyroelectric")["largest_coefficient"] == 0.0
+
+
 def test_rotate_tensors_takes_a_stack_and_one_rotation_or_one_per_tensor() -> None:
     rz = np.array([[0.0, -1.0, 0.0], [1.0, 0.0, 0.0], [0.0, 0.0, 1.0]])
     tensors = np.arange(54, dtype=float).reshape(2, 3, 3, 3)

@@ -248,6 +248,7 @@ def _tensor_form(x: Any) -> Any:
         "basis": np.asarray(x["basis"], dtype=np.float64).reshape((n, *(3,) * rank)),
         "parameters": np.asarray(x["parameters"], dtype=np.int64).reshape(n, rank),
         "relations": np.asarray(x["relations"], dtype=np.float64).reshape((dim - n, *(3,) * rank)),
+        "largest_coefficient": float(x["largestCoefficient"]),
     }
 
 
