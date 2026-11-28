@@ -1,6 +1,8 @@
 /**
  * ITC symbols of every setting of the 32 crystal classes, with their sources. Expected values for
- * itc.reference.test.ts; independent of the library data (GUIDE.md, "Correctness and tests").
+ * itc.reference.test.ts and classData.reference.test.ts; independent of the library data (GUIDE.md,
+ * "Correctness and tests"). The settings of a class are listed in the order of their index
+ * (docs/conventions.md, "Settings").
  *
  * Sources of a symbol (`shortSource`, `fullSource`), by fixture class (GUIDE.md, "Correctness and
  * tests"):

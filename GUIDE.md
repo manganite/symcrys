@@ -53,7 +53,8 @@ results. It is not a digital interface to printed tables.
 - **Library data are only:**
   - generators and centrings;
   - the time-reversal assignment of the black-and-white groups;
-  - vocabulary (names of crystal forms, of lattices);
+  - vocabulary (names of crystal forms, of lattices; the Schoenflies symbol of each of the 32
+    classes);
   - explicitly named convention data that cannot be derived (each one marked as such in the code
     and in `docs/conventions.md`).
 - **Everything else is computed** from these: operations and their order, Wyckoff positions,

@@ -1,6 +1,6 @@
 /**
- * The 32 crystal classes in the ITC frame, exactly: per class and ITC setting its
- * symbols, and the operations as ITA prints them, integer matrices W in the conventional basis
+ * The 32 crystal classes in the ITC frame, exactly: per class its crystal system, its Schoenflies
+ * symbol and its ITC settings, and per setting the operations as ITA prints them, integer matrices W in the conventional basis
  * (x̃ = W·x), in ITA's order, built from ITA's selected generators. The Cartesian matrices are
  * derived, B·W·B⁻¹. Nothing here is derived from the Birss frame: the source is ITA's selected
  * generators (5th ed., Part 7; `generatorData.ts`); the general position of ITA 6th ed. Table 3.2.3.2 is
@@ -11,8 +11,8 @@
  * `m2m` come from `mm2` by the settings cab and bca of ITA 2016 Table 1.5.4.4 (§ 1.5.4.3, p. 96:
  * cab turns Pmm2 into P2mm); their operations keep the order of the printed setting.
  *
- * Internal; read by pointGroups.ts and orbits.ts. The settings are numbered by the rule
- * given at `ClassSetting.index`.
+ * The full and short symbols of the settings are computed from their operations
+ * (classSymbols.ts). Internal. The settings are numbered by the rule given at `ClassSetting.index`.
  */
 
 import { MAX_CLASS_ORDER } from '../tolerances.js';
@@ -31,7 +31,10 @@ import {
 } from '../spaceGroups/affine.js';
 import { ZERO } from '../spaceGroups/rational.js';
 
-/** One ITC setting of a class. */
+/**
+ * One ITC setting of a class: what identifies it. Its symbols are computed from its operations
+ * (classSymbols.ts).
+ */
 export interface ClassSetting {
   /**
    * 1-based: the ITC default first; then monoclinic unique axis c (b is the
@@ -39,10 +42,6 @@ export interface ClassSetting {
    * orientation of `-42m`, `-6m2` and the trigonal classes.
    */
   readonly index: number;
-  /** The ITC short symbol. */
-  readonly short: string;
-  /** The ITC full symbol, positions separated by single spaces. */
-  readonly full: string;
   /** Monoclinic only: the unique axis. */
   readonly uniqueAxis?: 'a' | 'b' | 'c';
   /** Trigonal only: the axes of the conventional basis. */
@@ -61,7 +60,10 @@ export interface ClassSetting {
 export interface ClassData {
   readonly key: PointGroupKey;
   readonly crystalSystem: CrystalSystem;
-  /** The Schoenflies symbol, as ITA Table 3.2.3.2 prints it. */
+  /**
+   * The Schoenflies symbol, as ITA Table 3.2.3.2 prints it: vocabulary, one name per class
+   * (GUIDE.md, "Own structure").
+   */
   readonly schoenflies: string;
   readonly settings: readonly ClassSetting[];
 }
@@ -82,34 +84,21 @@ const SETTING_BCA: IntMat3 = [
   [0, 1, 0],
 ];
 
-const one = (index: number, short: string, full = short): ClassSetting => ({ index, short, full, isDefault: true });
+/**
+ * The setting of a trigonal class with rhombohedral axes (ITA Table 3.2.3.2, pp. 753–759), the
+ * operations from ITA's generators of the R group in rhombohedral axes.
+ */
+const rhombohedral = (index: number): ClassSetting => ({ index, axes: 'rhombohedral', isDefault: false });
 
-/** A class with one setting. */
-const single = (
-  key: PointGroupKey,
-  crystalSystem: CrystalSystem,
-  schoenflies: string,
-  full: string = key,
-): ClassData => ({
+/** A class with one setting; a trigonal class with hexagonal and with rhombohedral axes. */
+const single = (key: PointGroupKey, crystalSystem: CrystalSystem, schoenflies: string): ClassData => ({
   key,
   crystalSystem,
   schoenflies,
   settings:
     crystalSystem === 'trigonal'
-      ? [{ ...one(1, key, full), axes: 'hexagonal' }, rhombohedral(2, key, full)]
-      : [one(1, key, full)],
-});
-
-/**
- * The setting of a trigonal class with rhombohedral axes (ITA Table 3.2.3.2, pp. 753–759): the
- * symbol ITA prints there, the operations from ITA's generators of the R group in rhombohedral axes.
- */
-const rhombohedral = (index: number, short: string, full: string): ClassSetting => ({
-  index,
-  short,
-  full,
-  axes: 'rhombohedral',
-  isDefault: false,
+      ? [{ index: 1, axes: 'hexagonal', isDefault: true }, rhombohedral(2)]
+      : [{ index: 1, isDefault: true }],
 });
 
 /**
@@ -120,107 +109,84 @@ const rhombohedral = (index: number, short: string, full: string): ClassSetting 
  * monoclinic part of ITA 2016 Table 1.5.4.4 (p. 97) is that of unique axis b so carried (C121 →
  * B211, P1c1 → Pb11).
  */
-const monoclinic = (key: PointGroupKey, schoenflies: string): ClassData => {
-  const full = (position: number) => [0, 1, 2].map((i) => (i === position ? key : '1')).join(' ');
-  return {
-    key,
-    crystalSystem: 'monoclinic',
-    schoenflies,
-    settings: [
-      { index: 1, short: key, full: full(1), uniqueAxis: 'b', isDefault: true },
-      { index: 2, short: key, full: full(2), uniqueAxis: 'c', isDefault: false },
-      {
-        index: 3,
-        short: key,
-        full: full(0),
-        uniqueAxis: 'a',
-        isDefault: false,
-        from: { index: 1, basis: SETTING_BCA },
-      },
-    ],
-  };
-};
+const monoclinic = (key: PointGroupKey, schoenflies: string): ClassData => ({
+  key,
+  crystalSystem: 'monoclinic',
+  schoenflies,
+  settings: [
+    { index: 1, uniqueAxis: 'b', isDefault: true },
+    { index: 2, uniqueAxis: 'c', isDefault: false },
+    { index: 3, uniqueAxis: 'a', isDefault: false, from: { index: 1, basis: SETTING_BCA } },
+  ],
+});
 
 /**
- * A class with two orientations: the ITC default first (docs/conventions.md, "Settings"), then the
- * other one; with hexagonal axes for a trigonal class.
+ * A class with two orientations, both printed in ITA Table 3.2.3.2: the ITC default first
+ * (docs/conventions.md, "Settings"), then the other one (the entries of `SELECTED_GENERATORS` name
+ * which); a trigonal class with hexagonal axes, and then with rhombohedral axes.
  */
-const pair = (
-  key: PointGroupKey,
-  crystalSystem: CrystalSystem,
-  schoenflies: string,
-  standard: [string, string],
-  other: [string, string],
-  withRhombohedral?: [string, string],
-): ClassData => {
-  const axes = crystalSystem === 'trigonal' ? ({ axes: 'hexagonal' } as const) : {};
+const pair = (key: PointGroupKey, crystalSystem: CrystalSystem, schoenflies: string): ClassData => {
+  const trigonal = crystalSystem === 'trigonal';
+  const axes = trigonal ? ({ axes: 'hexagonal' } as const) : {};
   return {
     key,
     crystalSystem,
     schoenflies,
     settings: [
-      { index: 1, short: standard[0], full: standard[1], ...axes, isDefault: true },
-      { index: 2, short: other[0], full: other[1], ...axes, isDefault: false },
-      ...(withRhombohedral ? [rhombohedral(3, withRhombohedral[0], withRhombohedral[1])] : []),
+      { index: 1, ...axes, isDefault: true },
+      { index: 2, ...axes, isDefault: false },
+      ...(trigonal ? [rhombohedral(3)] : []),
     ],
   };
 };
 
-/** The 32 classes in the order of `POINT_GROUP_KEYS`, with the ITC symbols of ITA Table 3.2.3.2 (headlines). */
+/**
+ * The 32 classes in the order of `POINT_GROUP_KEYS`, with the crystal systems and Schoenflies
+ * symbols of ITA Table 3.2.3.2 (headlines).
+ */
 export const CLASSES: readonly ClassData[] = [
   single('1', 'triclinic', 'C1'),
   single('-1', 'triclinic', 'Ci'),
   monoclinic('2', 'C2'),
   monoclinic('m', 'Cs'),
   monoclinic('2/m', 'C2h'),
-  single('222', 'orthorhombic', 'D2', '2 2 2'),
+  single('222', 'orthorhombic', 'D2'),
   {
     key: 'mm2',
     crystalSystem: 'orthorhombic',
     schoenflies: 'C2v',
     settings: [
-      { index: 1, short: 'mm2', full: 'm m 2', isDefault: true },
-      {
-        index: 2,
-        short: '2mm',
-        full: '2 m m',
-        isDefault: false,
-        from: { index: 1, basis: SETTING_CAB },
-      },
-      {
-        index: 3,
-        short: 'm2m',
-        full: 'm 2 m',
-        isDefault: false,
-        from: { index: 1, basis: SETTING_BCA },
-      },
+      { index: 1, isDefault: true },
+      // 2mm and m2m
+      { index: 2, isDefault: false, from: { index: 1, basis: SETTING_CAB } },
+      { index: 3, isDefault: false, from: { index: 1, basis: SETTING_BCA } },
     ],
   },
-  single('mmm', 'orthorhombic', 'D2h', '2/m 2/m 2/m'),
+  single('mmm', 'orthorhombic', 'D2h'),
   single('4', 'tetragonal', 'C4'),
   single('-4', 'tetragonal', 'S4'),
   single('4/m', 'tetragonal', 'C4h'),
-  single('422', 'tetragonal', 'D4', '4 2 2'),
-  single('4mm', 'tetragonal', 'C4v', '4 m m'),
-  pair('-42m', 'tetragonal', 'D2d', ['-42m', '-4 2 m'], ['-4m2', '-4 m 2']),
-  single('4/mmm', 'tetragonal', 'D4h', '4/m 2/m 2/m'),
+  single('422', 'tetragonal', 'D4'),
+  single('4mm', 'tetragonal', 'C4v'),
+  pair('-42m', 'tetragonal', 'D2d'), // -42m, -4m2
+  single('4/mmm', 'tetragonal', 'D4h'),
   single('3', 'trigonal', 'C3'),
   single('-3', 'trigonal', 'C3i'),
-  pair('32', 'trigonal', 'D3', ['321', '3 2 1'], ['312', '3 1 2'], ['32', '3 2']),
-  pair('3m', 'trigonal', 'C3v', ['3m1', '3 m 1'], ['31m', '3 1 m'], ['3m', '3 m']),
-  pair('-3m', 'trigonal', 'D3d', ['-3m1', '-3 2/m 1'], ['-31m', '-3 1 2/m'], ['-3m', '-3 2/m']),
+  pair('32', 'trigonal', 'D3'), // 321, 312, 32 with rhombohedral axes
+  pair('3m', 'trigonal', 'C3v'), // 3m1, 31m, 3m
+  pair('-3m', 'trigonal', 'D3d'), // -3m1, -31m, -3m
   single('6', 'hexagonal', 'C6'),
   single('-6', 'hexagonal', 'C3h'),
   single('6/m', 'hexagonal', 'C6h'),
-  single('622', 'hexagonal', 'D6', '6 2 2'),
-  single('6mm', 'hexagonal', 'C6v', '6 m m'),
-  pair('-6m2', 'hexagonal', 'D3h', ['-6m2', '-6 m 2'], ['-62m', '-6 2 m']),
-  single('6/mmm', 'hexagonal', 'D6h', '6/m 2/m 2/m'),
-  single('23', 'cubic', 'T', '2 3'),
-  single('m-3', 'cubic', 'Th', '2/m -3'),
-  single('432', 'cubic', 'O', '4 3 2'),
-  single('-43m', 'cubic', 'Td', '-4 3 m'),
-  single('m-3m', 'cubic', 'Oh', '4/m -3 2/m'),
+  single('622', 'hexagonal', 'D6'),
+  single('6mm', 'hexagonal', 'C6v'),
+  pair('-6m2', 'hexagonal', 'D3h'), // -6m2, -62m
+  single('6/mmm', 'hexagonal', 'D6h'),
+  single('23', 'cubic', 'T'),
+  single('m-3', 'cubic', 'Th'),
+  single('432', 'cubic', 'O'),
+  single('-43m', 'cubic', 'Td'),
+  single('m-3m', 'cubic', 'Oh'),
 ];
 
 const BY_KEY = new Map(CLASSES.map((c) => [c.key, c]));
@@ -248,11 +214,20 @@ const transform = (w: IntMat3, p: IntMat3): IntMat3 =>
 /** A matrix as a point operation (W, 0), for the exact group arithmetic of affine.ts. */
 const asOperation = (w: IntMat3): ExactOperation => ({ matrix: w, translation: [ZERO, ZERO, ZERO] });
 
+/**
+ * The key of a printed setting in `SELECTED_GENERATORS`: `key|index`, with the unique axis or the
+ * axes of the setting (`2|2|unique axis c`, `32|3|rhombohedral axes`).
+ */
+export function generatorKey(key: PointGroupKey, s: ClassSetting): string {
+  const axis = s.uniqueAxis ? `|unique axis ${s.uniqueAxis}` : s.axes ? `|${s.axes} axes` : '';
+  return `${key}|${s.index}${axis}`;
+}
+
 /** ITA's selected generators of a setting, or those of the printed setting it comes from, carried by P. */
 export function settingLatticeGenerators(key: PointGroupKey, index: number): readonly IntMat3[] {
   const s = classSettingData(key, index);
   if (s.from) return settingLatticeGenerators(key, s.from.index).map((w) => transform(w, s.from!.basis));
-  const gens = SELECTED_GENERATORS[`${key}|${s.full}${s.axes === 'rhombohedral' ? '|rhombohedral' : ''}`];
+  const gens = SELECTED_GENERATORS[generatorKey(key, s)];
   if (!gens) throw new Error(`No ITA generators for ${key} setting ${index}`);
   return gens;
 }

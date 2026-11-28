@@ -21,6 +21,7 @@ import {
   settingLatticeOperations,
   classSettingData,
 } from './classData.js';
+import { classSettingSymbols } from './classSymbols.js';
 import type { IntMat3 } from './generatorData.js';
 import {
   BLACK_WHITE_CLASSES,
@@ -539,16 +540,13 @@ function settingSymbols(d: GroupData, index: number): { readonly short: string; 
 }
 
 /**
- * Short and full symbol of a setting by the rule. A crystal class: from the ITC class data
- * (classData.ts). A grey group: the symbols of its class followed by `1'`. A black-and-white group:
- * the symbols of its class in the same frame, with the primes of its operations
- * (magneticSymbols.ts).
+ * Short and full symbol of a setting by the rule. A crystal class: computed from the symmetry
+ * elements of its operations along the symmetry directions (classSymbols.ts). A grey group: the
+ * symbols of its class followed by `1'`. A black-and-white group: the symbols of its class in the
+ * same frame, with the primes of its operations (magneticSymbols.ts).
  */
 function derivedSymbols(d: GroupData, index: number): { readonly short: string; readonly full: string } {
-  if (d.type === 'I') {
-    const s = classSettingData(d.key as PointGroupKey, index);
-    return Object.freeze({ short: s.short, full: s.full });
-  }
+  if (d.type === 'I') return classSettingSymbols(d.key as PointGroupKey, index);
   const cacheKey = `${d.key}#${index}`;
   let result = symbolCache.get(cacheKey);
   if (!result) {
