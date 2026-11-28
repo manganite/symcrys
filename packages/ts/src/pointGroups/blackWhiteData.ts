@@ -25,7 +25,7 @@ import type { CartesianOperation } from '../operations.js';
 import type { BlackWhitePointGroupKey, PointGroupKey } from './keys.js';
 import { CLASSES, classData, settingCartesianOperations, settingTimeReversal } from './classData.js';
 import { classSettingSymbols } from './classSymbols.js';
-import { primedSymbols } from './magneticSymbols.js';
+import { magneticSchoenflies, primedSymbols } from './magneticSymbols.js';
 
 /** One ITC setting of a black-and-white group. */
 export interface BlackWhiteSetting {
@@ -226,9 +226,6 @@ function framesOf(crystalClass: PointGroupKey, frame: number, primed: readonly b
   return distinct;
 }
 
-/** The Schoenflies symbol of a class as ITC Vol. D writes it (`S6` for `C3i`). */
-const volumeD = (s: string): string => (s === 'C3i' ? 'S6' : s);
-
 let classSignatures: Map<string, PointGroupKey> | undefined;
 
 /**
@@ -257,7 +254,7 @@ function group(data: GroupData): BlackWhiteGroup {
   return {
     key,
     crystalClass,
-    schoenflies: `${volumeD(cls.schoenflies)}(${volumeD(classData(classOfOperations(subgroup)).schoenflies)})`,
+    schoenflies: magneticSchoenflies(`${cls.schoenflies}(${classData(classOfOperations(subgroup)).schoenflies})`),
     settings: frames.map((f, i) => {
       const classSetting = cls.settings.find((s) => s.index === f.classIndex)!;
       const classSymbols = classSettingSymbols(crystalClass, f.classIndex);

@@ -12,6 +12,14 @@ import { crystalFamily, familyBasis, type CrystalFamily, type CrystalSystem } fr
 import type { CartesianOperation } from '../operations.js';
 import { LATTICE_SYMMETRY_DIRECTIONS } from '../symmetryDirections.js';
 
+/**
+ * A Schoenflies symbol in the notation of the magnetic point groups: `S6` for the class -3, where
+ * ITA writes `C3i` (Table 3.2.1.2) and the crystallographic API with it, so `S6R` for its grey group
+ * and `S6(C3)`, `D3d(S6)`, `C6h(S6)` for black-and-white groups, as ITC Vol. D writes them
+ * (Table 1.5.2.3). Every other symbol is the same in both.
+ */
+export const magneticSchoenflies = (s: string): string => s.replace(/C3i/g, 'S6');
+
 /** The Cartesian direction of the first symmetry direction of each position of the full symbol. */
 function positionDirections(family: CrystalFamily): readonly Vec3[] {
   const positions = LATTICE_SYMMETRY_DIRECTIONS[family];
