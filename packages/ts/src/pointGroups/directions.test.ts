@@ -125,8 +125,10 @@ describe('a point of the plane: { point }', () => {
 
 describe('edge cases found while removing duplicated tables (#233)', () => {
   it.fails('a name of Object.prototype is an unknown key, not a family (#233)', () => {
-    for (const name of ['toString', '__proto__', 'constructor']) {
-      expect(() => classes.latticeBasis(name as never)).toThrow(`Unknown point group key: "${name}"`);
+    for (const api of [classes, magnetic]) {
+      for (const name of ['toString', '__proto__', 'constructor']) {
+        expect(() => api.latticeBasis(name as never)).toThrow(`Unknown point group key: "${name}"`);
+      }
     }
   });
 });

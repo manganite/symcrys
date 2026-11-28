@@ -1299,6 +1299,10 @@ describe('edge cases found while removing duplicated tables (#233)', () => {
     expect(plane.siteSymmetryOf([], { point: [-1e-17, 0.4] }).point).toEqual([0, 0.4]);
   });
 
+  it.fails('the orbit of a coordinate just below 0 lies in [0, 1) under the empty list too (#233)', () => {
+    expect(plane.orbitOf([], { point: [-1e-17, 0.4] })[0].point).toEqual([0, 0.4]);
+  });
+
   it('a coordinate just below 0 lies in [0, 1) under a group', () => {
     expect(plane.siteSymmetryOf(plane.operations('p1'), { point: [-1e-17, 0.4] }).point).toEqual([0, 0.4]);
   });
