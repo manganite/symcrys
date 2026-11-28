@@ -492,24 +492,33 @@ describe('the conditioning of a basis: largestCoefficient (#241)', () => {
             if (!(e instanceof RangeError)) throw e;
           }
         }
-  const counts = new Map<number, number>();
   for (const key of MAGNETIC_POINT_GROUP_KEYS) {
     it(`${key}: the largest magnitude of a coefficient, 1 or 2 in every setting and for every kind of tensor, 0 for none`, () => {
       for (const s of settings(key)) {
         for (const sp of allSpecs) {
           const form = tensorForm(key, sp, { setting: s.index });
           const largest = Math.max(0, ...form.basis.flat().map(Math.abs));
-          expect(form.largestCoefficient, `${key} ${s.index}`).toBe(largest);
+          expect(form.largestCoefficient, `setting ${s.index} ${JSON.stringify(sp)}`).toBe(largest);
           expect(form.basis.length === 0 ? [0] : [1, 2]).toContain(form.largestCoefficient);
-          counts.set(form.largestCoefficient, (counts.get(form.largestCoefficient) ?? 0) + 1);
         }
       }
     });
   }
 
-  it('each of 0, 1 and 2 occurs among the forms of the groups, so the tests above see the bound', () => {
-    // Runs after the tests of the groups (vitest runs the tests of a file in order).
-    expect([...counts.keys()].sort()).toEqual([0, 1, 2]);
+  it('each of 0, 1 and 2 occurs among the forms the tests above take, so they see the bound', () => {
+    // A witness of each value, independent of the order of the tests: a vector of a centrosymmetric
+    // group vanishes, the vector of class 1 is free, and the rank-4 tensor symmetric in its last
+    // pair has the coefficient 2 in a trigonal group.
+    const witnesses: [MagneticPointGroupKey, TensorSpec, number][] = [
+      ['-1', spec(1), 0],
+      ['1', spec(1), 1],
+      ['3', spec(4, 'polar', 'symmetric-last-pair'), 2],
+    ];
+    for (const [key, sp, value] of witnesses) {
+      expect(allSpecs).toContainEqual(sp);
+      expect(MAGNETIC_POINT_GROUP_KEYS).toContain(key);
+      expect(tensorForm(key, sp).largestCoefficient).toBe(value);
+    }
   });
 
   it('is about cot θ for the polar axis of 4mm tilted by θ about y', () => {
