@@ -609,15 +609,17 @@ when they differ by less than the tolerance, in the metric of their kind:
   of f(xy)·f(y)⁻¹ over the group, repeated until it settles, which turns matrices that are a group
   within a small error into an exact representation nearby, then made orthogonal by its invariant
   metric. The result is checked, since a small last step does not prove a group: its products and
-  RᵀR lie within 10⁻⁹ per entry of the elements and of the identity (`IDEAL_RESIDUAL`), and every
-  operation of the caller within the tolerance of an element; otherwise the call is a RangeError.
+  RᵀR lie within 10⁻⁹ per entry of the elements and of the identity (`IDEAL_RESIDUAL`), its
+  elements are distinct (a closure that kept near copies of an operation settles onto duplicates),
+  and every operation of the caller lies within the tolerance of an element; otherwise the call is a
+  RangeError.
   `pointGroupOf` identifies the exact group, whose traces are exact. The rank of a tensor form is the trace of the group average of the exact
   group, exact in any frame, and its free parameters are sought first among components larger
   than ten times the distance between the caller's matrices and the exact group, so that a component of the order of that error is not
   taken for an independent one. Operations rounded to 4, 5 or 6 decimals give the form of
   the exact group for every class in every setting, and its number of free parameters in a general
-  orientation, for all 122 groups (`tensors/tolerance.test.ts`). `isCentrosymmetricOf` only closes
-  the list within the tolerance and seeks the inversion in it.
+  orientation, for all 122 groups (`tensors/tolerance.test.ts`). `isCentrosymmetricOf` seeks the
+  inversion in the exact group.
 - **The tolerance must exceed the errors of the products.** Closing a list multiplies its
   matrices, and their errors add up: matrices rounded to n decimals need a tolerance of about
   10^(1−n), not 10^(−n). With the default, matrices rounded to 6 decimals pass in any orientation;

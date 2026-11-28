@@ -347,7 +347,8 @@ export function idealOfList(operations: readonly CartesianOperation[], tolerance
 /** The RangeError of an exact group farther than the tolerance from the caller's operations. */
 const notNear = (tolerance: number, d: number): RangeError =>
   new RangeError(
-    `The operations do not settle into a group within the tolerance ${tolerance}: an operation lies ${d.toPrecision(2)} from the nearest element of the exact group`,
+    `The operations do not settle into a group within the tolerance ${tolerance}: an operation lies ` +
+      `${d.toPrecision(2)} from the nearest element of the exact group; pass a larger tolerance, or more accurate matrices`,
   );
 
 /** The averaging of `idealGroup` on a list that is a group within `tolerance`, index for index. */
@@ -444,7 +445,10 @@ function idealOfGroup(group: readonly CartesianOperation[], tolerance: number): 
 
 /**
  * Checks that matrices are a group of orthogonal matrices with the product table `table`, each
- * residual below `IDEAL_RESIDUAL` per entry; a RangeError that names the residual otherwise.
+ * residual below `IDEAL_RESIDUAL` per entry, and that its elements are distinct: the closure keeps
+ * its elements at least `tolerance` apart, so two of the same time reversal closer than that are one
+ * operation averaged twice, from a closure that kept near copies of it. A RangeError that names what
+ * is wrong otherwise.
  */
 function checkExactGroup(
   group: readonly CartesianOperation[],
@@ -474,10 +478,24 @@ function checkExactGroup(
         }
     }
   }
+  const remedy = 'pass a smaller tolerance, or more accurate matrices';
   if (!(orthogonality < IDEAL_RESIDUAL && closure < IDEAL_RESIDUAL)) {
     throw new RangeError(
       `The operations do not settle into a group within the tolerance ${tolerance}: the result is ` +
-        `orthogonal to ${orthogonality.toPrecision(2)} and closed under products to ${closure.toPrecision(2)}, not to ${IDEAL_RESIDUAL}`,
+        `orthogonal to ${orthogonality.toPrecision(2)} and closed under products to ` +
+        `${closure.toPrecision(2)}, not to ${IDEAL_RESIDUAL}; ${remedy}`,
     );
   }
+  for (let x = 0; x < flat.length; x++)
+    for (let y = x + 1; y < flat.length; y++) {
+      if (group[x].timeReversal !== group[y].timeReversal) continue;
+      let d = 0;
+      for (let e = 0; e < 9; e++) d = Math.max(d, Math.abs(flat[x][e] - flat[y][e]));
+      if (d < tolerance) {
+        throw new RangeError(
+          `The operations do not settle into a group within the tolerance ${tolerance}: elements ${x} ` +
+            `and ${y} of their closure settle onto one operation, so the closure kept near copies of it; ${remedy}`,
+        );
+      }
+    }
 }

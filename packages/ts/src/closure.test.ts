@@ -175,9 +175,10 @@ describe('#241: the postconditions of idealGroup', () => {
       [0, 0, 1],
     ];
     const wrong: string[] = [];
-    // Large noise at large tolerances, where 0.15.0 violates them (in 4 of these 400 inputs), and small
+    // Large noise at large tolerances, where 0.15.0 violates them (in 3 of these 400 inputs), and small
     // noise as a check that the bounds hold for ordinary input.
-    for (const key of ['m-3m', '6/mmm', '4/mmm', '23'] as const) {
+    // -6m2 and 622: closures that keep near copies of an operation, which settle onto duplicates.
+    for (const key of ['m-3m', '6/mmm', '4/mmm', '23', '-6m2', '622'] as const) {
       for (const amplitude of [1e-3, 2e-2]) {
         for (const tol of [0.05, 0.09]) {
           for (let seed = 1; seed <= 25; seed++) {
@@ -195,6 +196,8 @@ describe('#241: the postconditions of idealGroup', () => {
             }
             const R = group.operations.map((op) => op.cartesian);
             const where = `${key} ${amplitude} ${tol} ${seed}`;
+            // Every input lies within the tolerance of the group of the key, so an accepted group is it.
+            if (R.length !== classes.operations(key).length) wrong.push(`${where}: ${R.length} elements`);
             if (R.some((a) => maxDiff(mul(a[0].map((_, j) => a.map((row) => row[j])) as unknown as Mat3, a), I) > 1e-9))
               wrong.push(`${where}: not orthogonal`);
             if (R.some((a) => R.some((b) => Math.min(...R.map((c) => maxDiff(mul(a, b), c))) > 1e-9)))
@@ -206,5 +209,40 @@ describe('#241: the postconditions of idealGroup', () => {
       }
     }
     expect(wrong.slice(0, 5)).toEqual([]);
+  });
+});
+
+describe('#241: what the review of #248 found', () => {
+  const rangeErrorOr = <T>(f: () => T): T | 'RangeError' => {
+    try {
+      return f();
+    } catch (e) {
+      if (e instanceof RangeError) return 'RangeError';
+      throw e;
+    }
+  };
+  // -6m2 with entries moved by up to 0.02 (seeds 33 and 45) at the tolerance 0.09: the closure
+  // settled onto duplicate elements; tensorFormOf gave no piezoelectric component, -6m2 has one
+  // (ITA 2016 Table 3.2.2.1, p. 739), and allowsPropertyOf said true.
+  for (const seed of [33, 45]) {
+    it(`-6m2, seed ${seed}: the answer of -6m2 or a RangeError`, () => {
+      const spatial = noisy(classes.operations('-6m2'), 0.02, seededRandom(seed)).map(({ cartesian }) => ({
+        cartesian,
+      }));
+      const form = rangeErrorOr(() => classes.tensorFormOf(spatial, 'piezoelectric', { tolerance: 0.09 }));
+      if (form !== 'RangeError') expect(form.basis).toHaveLength(1);
+      const allowed = rangeErrorOr(() => classes.allowsPropertyOf(spatial, 'piezoelectric', { tolerance: 0.09 }));
+      if (allowed !== 'RangeError') expect(allowed).toBe(true);
+      const key = rangeErrorOr(() => classes.pointGroupOf(spatial, { tolerance: 0.09 }));
+      if (key !== 'RangeError') expect(key?.key).toBe('-6m2');
+    });
+  }
+
+  it('isCentrosymmetricOf makes the list exact as tensorFormOf does: it refuses what tensorFormOf refuses', () => {
+    const spatial = noisy(classes.operations('23'), 0.03, seededRandom(8)).map(({ cartesian }) => ({ cartesian }));
+    const form = rangeErrorOr(() => classes.tensorFormOf(spatial, 'piezoelectric', { tolerance: 0.09 }));
+    const centro = rangeErrorOr(() => classes.isCentrosymmetricOf(spatial, { tolerance: 0.09 }));
+    expect(centro === 'RangeError').toBe(form === 'RangeError');
+    if (centro !== 'RangeError') expect(centro).toBe(false);
   });
 });

@@ -114,8 +114,9 @@ function keyOfSignature(s: string): MagneticPointGroupKey | undefined {
  * operation of order 5, a group larger than 96). Throws a RangeError for an operation without an
  * orthogonal Cartesian matrix (`cartesian`; within `tolerance`, at least `EPSILON`), for an
  * operation that does not say whether it is combined with time reversal, and if the operations do
- * not close into a finite group within the tolerance or not into an exact group near them, the error of
- * `tensorFormOf` for the same input (matrices with errors too large for it, which give more than 200 elements or near copies
+ * not close into a finite group within the tolerance or not into an exact group near them, the
+ * error of `tensorFormOf` for the same input (matrices with errors too large for it, which give
+ * more than 200 elements or near copies
  * of one operation, or a rotation by an angle that is not 360°/n).
  * The classes `1` and `-1` have one setting and no orientation, so they always have
  * setting 1.
