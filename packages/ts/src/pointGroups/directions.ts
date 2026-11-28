@@ -5,7 +5,7 @@
  * frame").
  */
 
-import { checkNumbers, checkOptions, SETTING_KEYS, shown } from '../checks.js';
+import { checkNumbers, checkOptions, SETTING_KEYS, shown, everyEntry } from '../checks.js';
 import { apply, inverse, transpose, type Mat3, type Vec3 } from '../linalg.js';
 import { deepFreeze } from '../freeze.js';
 import { settingBasis } from './classData.js';
@@ -48,7 +48,7 @@ export function indicesOf(value: unknown, name: string): readonly [number, numbe
   if (
     !Array.isArray(value) ||
     value.length !== 3 ||
-    !value.every((x) => typeof x === 'number' && Number.isSafeInteger(x)) ||
+    !everyEntry(value, (x) => typeof x === 'number' && Number.isSafeInteger(x)) ||
     value.every((x) => x === 0)
   ) {
     throw new RangeError(`${name} must be three (safe) integers, not all zero: ${shown(value)}`);

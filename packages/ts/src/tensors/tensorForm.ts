@@ -556,7 +556,8 @@ export function rotateTensor(
   if (!Array.isArray(rotation) || rotation.length !== 3) {
     throw new RangeError(`The rotation must be a 3 × 3 matrix, not ${shown(rotation)}`);
   }
-  rotation.forEach((row, i) => checkNumbers(row, 3, `Row ${i} of the rotation`));
+  // Array.from: a hole is undefined, and refused, not skipped.
+  Array.from(rotation as unknown[]).forEach((row, i) => checkNumbers(row, 3, `Row ${i} of the rotation`));
   checkOrthogonalWithin(rotation, 'The rotation', toleranceOf(options, 'operations'));
   const { rank } = resolved;
   const dim = 3 ** rank;
