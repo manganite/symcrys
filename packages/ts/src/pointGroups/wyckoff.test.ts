@@ -4,6 +4,9 @@ import { siteSymmetryOf } from '../siteSymmetry.js';
 import { POINT_GROUP_KEYS, generators, operations, settings } from './pointGroups.js';
 import { GREY_POINT_GROUP_KEYS } from './keys.js';
 import { numericHkl, representativeFace, wyckoffPosition, wyckoffPositions } from './wyckoff.js';
+import { classData } from './classData.js';
+import { inverse, mul } from '../testUtils/independentGroups.js';
+import { carryCoordinates, carryFace, carrySymbol, readPattern } from '../testUtils/settingChange.js';
 
 const ALL_SETTINGS = POINT_GROUP_KEYS.flatMap((key) => settings(key).map((s) => ({ key, s })));
 const DIRECTIONS: Vec3[] = [
@@ -344,4 +347,58 @@ describe('reading printed Miller indices', () => {
       expect(() => numericHkl(bad), bad).toThrow(/Unreadable/);
     }
   });
+});
+
+describe('wyckoffPositions of the settings ITA does not print', () => {
+  // The settings that come from a printed one by a change of basis P (classData.ts, `from`).
+  const unprinted = POINT_GROUP_KEYS.flatMap((key) =>
+    classData(key).settings.flatMap((s) => (s.from ? [{ key, index: s.index, from: s.from }] : [])),
+  );
+
+  it('are five: unique axis a of 2, m and 2/m, and 2mm and m2m of mm2', () => {
+    expect(unprinted.map(({ key, index }) => `${key} #${index}`)).toEqual([
+      '2 #3',
+      'm #3',
+      '2/m #3',
+      'mm2 #2',
+      'mm2 #3',
+    ]);
+  });
+
+  for (const { key, index, from } of unprinted) {
+    it(`${key}, setting ${index}: are the positions of setting ${from.index} carried by P, letter by letter`, () => {
+      const p = from.basis.map((row) => [...row]);
+      // The operations are those of the printed setting carried by P, P⁻¹·W·P, in their order, so
+      // that the site-symmetry operations of a carried position have the same indices.
+      const printedOps = operations(key, { setting: from.index });
+      const ops = operations(key, { setting: index });
+      ops.forEach((op, i) => {
+        const w = mul(
+          mul(
+            inverse(p),
+            printedOps[i].matrix.map((r) => [...r]),
+          ),
+          p,
+        ).map((r) => r.map((x) => x + 0));
+        expect(op.matrix, `operation ${i}`).toEqual(w);
+      });
+      // Monoclinic site symmetries (`2`, `m`, `2/m`) name the element on the unique axis and are not
+      // oriented (docs/conventions.md, "Site symmetry and Wyckoff positions").
+      const oriented = classData(key).crystalSystem !== 'monoclinic';
+      const printed = wyckoffPositions(key, { setting: from.index });
+      const computed = wyckoffPositions(key, { setting: index });
+      computed.forEach((w, i) => {
+        const q = printed[i];
+        const label = `${key} #${index} ${w.letter}`;
+        expect(w.multiplicity, label).toBe(q.multiplicity);
+        expect(w.siteSymmetry, label).toBe(oriented ? carrySymbol(q.siteSymmetry, p) : q.siteSymmetry);
+        expect(
+          w.coordinates.map((c) => readPattern(c, 'xyz').matrix),
+          label,
+        ).toEqual(q.coordinates.map((c) => carryCoordinates(c, p)));
+        expect(readPattern(w.millerIndices, 'hkl'), label).toEqual(carryFace(q.millerIndices, p));
+        expect(w.siteSymmetryOperations, label).toEqual(q.siteSymmetryOperations);
+      });
+    });
+  }
 });

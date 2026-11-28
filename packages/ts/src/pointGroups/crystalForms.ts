@@ -6,10 +6,9 @@
 
 import { SETTING_KEYS, checkOptions } from '../checks.js';
 import type { PointGroupKey, SettingOptions } from './pointGroups.js';
-import { classSettingData } from './classData.js';
-import { computedFormRows, type FormRow } from './formRows.js';
+import { computedFormRows } from './formRows.js';
 import { FORM_TYPE_DATA, FORM_TYPE_KEYS, type CrystalFormTypeKey } from './formTypes.js';
-import { tableSetting, permutationFromSetting1, permutePattern, wyckoffPositions } from './wyckoff.js';
+import { tableSetting, wyckoffPositions } from './wyckoff.js';
 
 export { FORM_TYPE_KEYS, type CrystalFormTypeKey } from './formTypes.js';
 
@@ -66,29 +65,14 @@ export const CRYSTAL_FORM_TYPES: Readonly<Record<CrystalFormTypeKey, CrystalForm
   ) as Record<CrystalFormTypeKey, CrystalFormType>,
 );
 
-const HKL = 'hkl';
-
-/**
- * The rows of a setting, computed (formRows.ts); for a setting ITA does not print, those of
- * setting 1 carried into its frame.
- */
-function settingRows(key: PointGroupKey, setting: number): readonly FormRow[] {
-  if (classSettingData(key, setting).from === undefined) return computedFormRows(key, setting);
-  const r = permutationFromSetting1(key, setting);
-  return settingRows(key, 1).map(([letter, basic, type, miller, condition]) => {
-    if (condition !== undefined) throw new Error(`Cannot carry the condition ${condition} into another setting`);
-    return [letter, basic, type, permutePattern(miller, r, HKL)];
-  });
-}
-
 const cache = new Map<string, readonly CrystalForm[]>();
 
 /**
  * The crystal forms of a crystal class in ITA's order: by Wyckoff position (general position
  * first), each position's basic forms before its limiting forms, as ITA 6th ed. Table 3.2.3.2
  * prints them. Crystal classes only (throws a RangeError for a magnetic point group with time
- * reversal), like the Wyckoff positions. For the settings ITA does not print (`mm2` settings 2 and 3, monoclinic unique axis a), the forms of
- * setting 1 carried into their frame.
+ * reversal), like the Wyckoff positions, and for the settings ITA does not print (`mm2` settings 2
+ * and 3, monoclinic unique axis a) computed in the same way.
  */
 export function crystalForms(key: PointGroupKey, options?: SettingOptions): readonly CrystalForm[] {
   checkOptions(options, SETTING_KEYS, 'crystalForms');
@@ -98,7 +82,7 @@ export function crystalForms(key: PointGroupKey, options?: SettingOptions): read
   if (!result) {
     const positions = wyckoffPositions(key, { setting });
     result = Object.freeze(
-      settingRows(key, setting).map(([letter, basic, type, millerIndices, condition]) => {
+      computedFormRows(key, setting).map(([letter, basic, type, millerIndices, condition]) => {
         const position = positions.find((p) => p.letter === letter);
         if (!position) throw new Error(`Point group ${key}, setting ${setting}: no Wyckoff position ${letter}`);
         if (CRYSTAL_FORM_TYPES[type].faces !== position.multiplicity) {

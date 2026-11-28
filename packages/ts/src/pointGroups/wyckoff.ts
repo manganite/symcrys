@@ -7,9 +7,8 @@
 
 import { checkOptions, pick, SETTING_KEYS, shown, TOLERANCE_KEYS } from '../checks.js';
 import { apply, inverse, multiply, transpose, type Mat3, type Vec3 } from '../linalg.js';
-import { crystalFamily } from '../lattice.js';
 import { substituteMillerIndices } from '../indices.js';
-import { settingBasis, classData, classSettingData } from './classData.js';
+import { settingBasis, classSettingData } from './classData.js';
 import {
   settingIndexOf,
   isMagneticPointGroupKey,
@@ -28,7 +27,7 @@ import {
   type DirectionInput,
   type FaceIndices,
 } from './directions.js';
-import { computedWyckoffRows, type WyckoffRow } from './wyckoffRows.js';
+import { computedWyckoffRows } from './wyckoffRows.js';
 
 /** A face (hkl): three Miller indices in the conventional basis (for hexagonal axes without i = −(h + k)). */
 export type Hkl = readonly [number, number, number];
@@ -90,81 +89,6 @@ export function normal(basis: Mat3, hkl: Hkl): Vec3 {
   return [v[0] / n, v[1] / n, v[2] / n];
 }
 
-const XYZ = 'xyz';
-const HKL = 'hkl';
-
-/**
- * A printed pattern carried by a signed permutation r of the axes (new axis i = r[i][j] × old axis j).
- * Only for components that are `0`, a number, or a plain letter with an optional `-` (as in `mm2`); a
- * letter is renamed after its new position. A factor such as `2x` throws.
- */
-export function permutePattern(pattern: string, r: Mat3, letters: string): string {
-  const old = pattern.split(',');
-  if (old.length !== 3) throw new Error(`Cannot carry ${pattern} into another setting`);
-  return [0, 1, 2]
-    .map((i) => {
-      const j = [0, 1, 2].find((k) => Math.abs(r[i][k]) === 1);
-      if (j === undefined) throw new Error('Not a signed permutation');
-      const c = old[j];
-      if (c === '0') return '0';
-      const negative = c.startsWith('-') !== r[i][j] < 0;
-      const body = c.replace(/^-/, '');
-      if (!/^(\d+|[a-z])$/.test(body)) throw new Error(`Cannot carry ${pattern} into another setting`);
-      const renamed = /^\d+$/.test(body) ? body : letters[i];
-      return (negative ? '-' : '') + renamed;
-    })
-    .join(',');
-}
-
-/** An oriented site-symmetry symbol with three positions, carried by r: new position i is old position j. */
-function permuteSymbol(symbolText: string, r: Mat3): string {
-  if (symbolText === '1') return symbolText;
-  if (symbolText.length !== 3) throw new Error(`Cannot carry ${symbolText} into another setting`);
-  return [0, 1, 2].map((i) => symbolText[[0, 1, 2].find((k) => Math.abs(r[i][k]) === 1) ?? -1]).join('');
-}
-
-/**
- * The permutation r that carries setting 1 of a class into `setting` (new axis i = r[i][j] × old
- * axis j), for the settings ITA does not print (`mm2` settings 2 and 3, monoclinic unique axis a):
- * the transpose of the change
- * of basis P of the ITC class data ((a′, b′, c′) = (a, b, c)·P, classData.ts). Coordinates (P⁻¹·x)
- * and Miller indices (h·P) are carried by the same r only because P is a signed permutation
- * (P⁻¹ = Pᵀ); throws for a setting that is not carried from setting 1 by one.
- */
-export function permutationFromSetting1(key: PointGroupKey, setting: number): Mat3 {
-  const from = classSettingData(key, setting).from;
-  if (from?.index !== 1) throw new Error(`Point group ${key}, setting ${setting}: not carried from setting 1`);
-  const p = from.basis;
-  const signedPermutation = [0, 1, 2].every(
-    (i) =>
-      p[i].filter((v) => v !== 0).length === 1 &&
-      p[i].every((v) => v === 0 || Math.abs(v) === 1) &&
-      p.filter((row) => row[i] !== 0).length === 1,
-  );
-  if (!signedPermutation)
-    throw new Error(`Point group ${key}, setting ${setting}: not a signed permutation of setting 1`);
-  return [0, 1, 2].map((i) => [0, 1, 2].map((j) => p[j][i])) as unknown as Mat3;
-}
-
-/**
- * The rows of a setting, computed (wyckoffRows.ts); for a setting ITA does not print (one that comes
- * from setting 1 by a change of basis), those of setting 1 carried into its frame, so that the
- * letters are those of setting 1.
- */
-function settingRows(key: PointGroupKey, setting: number): readonly WyckoffRow[] {
-  if (classSettingData(key, setting).from === undefined) return computedWyckoffRows(key, setting);
-  const r = permutationFromSetting1(key, setting);
-  // A monoclinic site symmetry (`2`, `m`, `2/m`) names the element on the unique axis, not a position.
-  const oriented = crystalFamily(classData(key).crystalSystem) !== 'monoclinic';
-  return settingRows(key, 1).map(([letter, mult, site, coords, miller]) => [
-    letter,
-    mult,
-    oriented ? permuteSymbol(site, r) : site,
-    coords.map((c) => permutePattern(c, r, XYZ)),
-    permutePattern(miller, r, HKL),
-  ]);
-}
-
 /**
  * The lattice basis in which the Cartesian normals of the representatives are computed, that of the
  * setting (classData.ts, `settingBasis`): monoclinic and triclinic a, b, c along x, y, z; rhombohedral
@@ -212,9 +136,9 @@ export function tableSetting(key: PointGroupKey, options?: SettingOptions, what 
 /**
  * The Wyckoff positions of a point group for directions, in ITA's order (general position
  * first), for the 32 crystal classes only (throws a RangeError for a magnetic point group with
- * time reversal). The point at the origin
- * (letter o) is not a direction and is left out. For the settings ITA does not print (`mm2` settings 2 and 3, monoclinic unique axis a), the positions
- * of setting 1 carried into their frame.
+ * time reversal). The point at the origin (letter o) is not a direction and is left out. The
+ * settings ITA does not print (`mm2` settings 2 and 3, monoclinic unique axis a) are computed in
+ * the same way, each position with the letter of the position of setting 1 it comes from.
  */
 export function wyckoffPositions(key: PointGroupKey, options?: SettingOptions): readonly WyckoffPosition[] {
   checkOptions(options, SETTING_KEYS, 'wyckoffPositions');
@@ -224,7 +148,7 @@ export function wyckoffPositions(key: PointGroupKey, options?: SettingOptions): 
   if (!result) {
     const ops = operations(key, { setting });
     result = Object.freeze(
-      settingRows(key, setting).map(([letter, multiplicity, site, coordinates, millerIndices]) => {
+      computedWyckoffRows(key, setting).map(([letter, multiplicity, site, coordinates, millerIndices]) => {
         const stab = siteSymmetryOfGroup(ops, representativeFace(key, setting, millerIndices).cartesian, EPSILON);
         if (stab.multiplicity !== multiplicity) {
           throw new Error(

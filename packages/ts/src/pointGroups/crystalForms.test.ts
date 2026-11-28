@@ -6,6 +6,8 @@ import { siteSymmetryOf } from '../siteSymmetry.js';
 import { CRYSTAL_FORM_TYPES, crystalForms } from './crystalForms.js';
 import { POINT_GROUP_KEYS, operations, settings } from './pointGroups.js';
 import { wyckoffPosition, wyckoffPositions } from './wyckoff.js';
+import { classData } from './classData.js';
+import { carryFace, readPattern } from '../testUtils/settingChange.js';
 
 const ALL_SETTINGS = POINT_GROUP_KEYS.flatMap((key) => settings(key).map((s) => ({ key, s })));
 
@@ -131,4 +133,38 @@ describe('crystalForms', () => {
     expect(Object.isFrozen(crystalForms('4mm')) && Object.isFrozen(f)).toBe(true);
     expect('representative' in f).toBe(false);
   });
+});
+
+describe('crystalForms of the settings ITA does not print', () => {
+  // The settings that come from a printed one by a change of basis P (classData.ts, `from`).
+  const unprinted = POINT_GROUP_KEYS.flatMap((key) =>
+    classData(key).settings.flatMap((s) => (s.from ? [{ key, index: s.index, from: s.from }] : [])),
+  );
+
+  it('are five settings', () => {
+    expect(unprinted).toHaveLength(5);
+  });
+
+  for (const { key, index, from } of unprinted) {
+    it(`${key}, setting ${index}: are the forms of setting ${from.index} carried by P, in the same order`, () => {
+      const p = from.basis.map((row) => [...row]);
+      const printed = crystalForms(key, { setting: from.index });
+      const computed = crystalForms(key, { setting: index });
+      const positions = wyckoffPositions(key, { setting: index });
+      expect(computed).toHaveLength(printed.length);
+      computed.forEach((f, i) => {
+        const q = printed[i];
+        const label = `${key} #${index} ${f.letter} ${f.formType}`;
+        expect([f.letter, f.multiplicity, f.basic, f.formType, f.condition], label).toEqual([
+          q.letter,
+          q.multiplicity,
+          q.basic,
+          q.formType,
+          q.condition,
+        ]);
+        expect(f.siteSymmetry, label).toBe(positions.find((w) => w.letter === f.letter)?.siteSymmetry);
+        expect(readPattern(f.millerIndices, 'hkl'), label).toEqual(carryFace(q.millerIndices, p));
+      });
+    });
+  }
 });
