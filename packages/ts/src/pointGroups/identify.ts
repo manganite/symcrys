@@ -12,9 +12,11 @@ import { EPSILON, MAX_POINT_GROUP_ORDER, toleranceOf, type ToleranceOptions } fr
 import { axialVector, rotationAxis, type OperationKind } from './elements.js';
 import {
   MAGNETIC_POINT_GROUP_KEYS,
+  operationInvariants,
   operations as groupOperations,
   settings,
   type MagneticPointGroupKey,
+  type OperationInvariants,
 } from './pointGroups.js';
 
 /**
@@ -95,10 +97,17 @@ const signature = (ops: readonly CartesianOperation[], tolerance = EPSILON): str
 
 let bySignature: Map<string, MagneticPointGroupKey> | undefined;
 
+/** The counts of a group from the invariants of its operations, written as `signature` writes them. */
+const signatureOfInvariants = (invariants: readonly OperationInvariants[]): string =>
+  invariants
+    .map((k) => `${k.det}:${k.trace}${k.timeReversal ? "'" : ''}`)
+    .sort()
+    .join(' ');
+
 function keyOfSignature(s: string): MagneticPointGroupKey | undefined {
   if (!bySignature) {
     bySignature = new Map();
-    for (const key of MAGNETIC_POINT_GROUP_KEYS) bySignature.set(signature(groupOperations(key)), key);
+    for (const key of MAGNETIC_POINT_GROUP_KEYS) bySignature.set(signatureOfInvariants(operationInvariants(key)), key);
   }
   return bySignature.get(s);
 }

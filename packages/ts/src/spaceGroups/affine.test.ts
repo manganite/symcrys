@@ -4,6 +4,7 @@ import {
   applyToPoint,
   closure,
   compose,
+  cosetsByGenerators,
   determinant,
   dimensionOf,
   equalModLattice,
@@ -230,5 +231,23 @@ describe('closure', () => {
     expect(() => closure([], { dimension: 5 })).toThrow(RangeError);
     expect(() => closure([], { dimension: 2.5 })).toThrow(RangeError);
     expect(closure([], { dimension: 2 }).map(formatOperation)).toEqual(['x,y']);
+  });
+});
+
+describe('cosetsByGenerators', () => {
+  it('builds the group coset by coset, in the order of its generators', () => {
+    // 4mm from the fourfold rotation and a mirror: 1, 4, 2, 4³, then the mirror times each.
+    const list = cosetsByGenerators([op('-y,x,z'), op('-x,y,z')], 3, 48).map(formatOperation);
+    expect(list).toEqual(['x,y,z', '-y,x,z', '-x,-y,z', 'y,-x,z', '-x,y,z', 'y,x,z', 'x,-y,z', '-y,-x,z']);
+    // A centring: p2 with the translation 1/2,1/2 gives the cosets of c2 modulo the lattice.
+    expect(cosetsByGenerators([op('-x,-y'), op('x+1/2,y+1/2')], 2, 12)).toHaveLength(4);
+  });
+
+  it('refuses generators that do not give a group coset by coset', () => {
+    // A threefold rotation about [111] does not normalise the group of a fourfold rotation about z:
+    // its cosets of that group are 12 operations, and they are not closed (the group is 432, of order 24).
+    expect(() => cosetsByGenerators([op('-y,x,z'), op('z,x,y')], 3, 48)).toThrow(/give no group/);
+    // A generator of infinite order modulo the lattice (a shear) is stopped at the largest order.
+    expect(() => cosetsByGenerators([op('x+y,y,z')], 3, 48)).toThrow(/at most 48/);
   });
 });
