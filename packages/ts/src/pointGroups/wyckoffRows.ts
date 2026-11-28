@@ -332,7 +332,9 @@ const cache = new Map<string, readonly WyckoffRow[]>();
  * The Wyckoff positions of a setting of a crystal class for directions, general position first,
  * then by descending letter (the order of print); the origin is left out.
  *
- * - Letters: multiplicity ascending, then fewer free parameters, then `LETTER_ORDER`.
+ * - Letters: multiplicity ascending, then fewer free parameters, then `LETTER_ORDER`; in a setting
+ *   that comes from a printed one by a change of basis (`from`, classData.ts), then the letter of
+ *   the position of the printed setting that the change of basis carries onto it.
  * - First representative: the element of the orbit first by `pointRank`, or the one listed in
  *   `FIRST_POINT_EXCEPTIONS`; its coordinates are the images under the operations in their order,
  *   each once.
@@ -369,6 +371,36 @@ export function wyckoffRowsWith(
   setting: number,
   conventions: WyckoffConventions,
 ): readonly WyckoffRow[] {
+  const ops = settingLatticeOperations(key, setting) as unknown as Mat[];
+  const bravaisMiller =
+    crystalFamily(classData(key).crystalSystem) === 'hexagonal' &&
+    classSettingData(key, setting).axes !== 'rhombohedral';
+  const rows = specialRows(key, setting, conventions);
+  const letters = 'abcdefghijklmnopqrstuvwxyz';
+  const general: WyckoffRow = [
+    letters[rows.length],
+    ops.length,
+    '1',
+    ops.map((w) => formatTriplet(w)),
+    bravaisMiller ? 'h,k,i,l' : 'h,k,l',
+  ];
+  const special: WyckoffRow[] = rows.map((r, i) => [letters[i], r.multiplicity, r.siteSymmetry, r.coordinates, r.face]);
+  return deepFreeze([general, ...special.reverse()]);
+}
+
+/** A special position of a setting: its row, its first representative and its orbit. */
+interface SpecialRow {
+  readonly multiplicity: number;
+  readonly dimension: number;
+  readonly siteSymmetry: string;
+  readonly coordinates: readonly string[];
+  readonly face: string;
+  readonly first: readonly Vec[];
+  readonly orbit: readonly (readonly Vec[])[];
+}
+
+/** The special positions of a setting in letter order (letter a first). */
+function specialRows(key: PointGroupKey, setting: number, conventions: WyckoffConventions): SpecialRow[] {
   const data = classSettingData(key, setting);
   const symbol = classSettingSymbols(key, setting).short;
   const ops = settingLatticeOperations(key, setting) as unknown as Mat[];
@@ -377,7 +409,7 @@ export function wyckoffRowsWith(
   const pointExceptions = (conventions.firstPoints[symbol] ?? []).map((p) => keyOf(patternSpan(p, 'xyz')));
   const faceExceptions = (conventions.firstFaces[symbol] ?? []).map((p) => keyOf(patternSpan(p, 'hkl')));
   const used = new Set<string>();
-  const rows = specialPositions(ops).map((p) => {
+  const rows: SpecialRow[] = specialPositions(ops).map((p) => {
     const listed = p.orbit.find((v) => pointExceptions.includes(keyOf(v)));
     if (listed) used.add(keyOf(listed));
     const first = listed ?? [...p.orbit].sort((a, b) => compareRanks(pointRank(a), pointRank(b)))[0];
@@ -404,34 +436,44 @@ export function wyckoffRowsWith(
       siteSymmetry: orientedSymbol(key, setting, site),
       coordinates,
       face: formatFace(face, bravaisMiller),
+      first,
+      orbit: p.orbit,
     };
   });
   const listedCount = pointExceptions.length + faceExceptions.length;
   if (used.size !== listedCount) throw new Error(`A first representative listed for ${symbol} is in no orbit`);
-  const order = conventions.letterOrder[symbol] ?? [];
-  const tie = (s: string): number => order.indexOf(s);
-  rows.sort(
-    (a, b) => a.multiplicity - b.multiplicity || a.dimension - b.dimension || tie(a.siteSymmetry) - tie(b.siteSymmetry),
-  );
+  const tie = letterTie(key, setting, conventions);
+  rows.sort((a, b) => a.multiplicity - b.multiplicity || a.dimension - b.dimension || tie(a) - tie(b));
   rows.forEach((r, i) => {
     const next = rows[i + 1];
     if (
       next &&
       next.multiplicity === r.multiplicity &&
       next.dimension === r.dimension &&
-      (tie(r.siteSymmetry) < 0 || tie(r.siteSymmetry) === tie(next.siteSymmetry))
+      (tie(r) < 0 || tie(r) === tie(next))
     ) {
       throw new Error(`Point group ${symbol}: no letter order for ${r.siteSymmetry} and ${next.siteSymmetry}`);
     }
   });
-  const letters = 'abcdefghijklmnopqrstuvwxyz';
-  const general: WyckoffRow = [
-    letters[rows.length],
-    ops.length,
-    '1',
-    ops.map((w) => formatTriplet(w)),
-    bravaisMiller ? 'h,k,i,l' : 'h,k,l',
-  ];
-  const special: WyckoffRow[] = rows.map((r, i) => [letters[i], r.multiplicity, r.siteSymmetry, r.coordinates, r.face]);
-  return deepFreeze([general, ...special.reverse()]);
+  return rows;
+}
+
+/**
+ * The order of the letters among positions of equal multiplicity and dimension: by `LETTER_ORDER`;
+ * in a setting that comes from a printed one by a change of basis P (`from`, classData.ts), by the
+ * letter of the position of the printed setting that P carries onto it (a vector x′ of the setting
+ * is P·x′ in the printed one, ITA 2016 eq. (1.5.1.4), p. 76), so that a position keeps its letter.
+ * A position without a place in the order gives −1.
+ */
+function letterTie(key: PointGroupKey, setting: number, conventions: WyckoffConventions): (row: SpecialRow) => number {
+  const from = classSettingData(key, setting).from;
+  if (from === undefined) {
+    const order = conventions.letterOrder[classSettingSymbols(key, setting).short] ?? [];
+    return (row) => order.indexOf(row.siteSymmetry);
+  }
+  const printed = specialRows(key, from.index, conventions);
+  return (row) => {
+    const carried = new Set(row.orbit.map((v) => keyOf(v.map((x) => apply(from.basis, x)))));
+    return printed.findIndex((p) => carried.has(keyOf(p.first)));
+  };
 }

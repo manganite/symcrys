@@ -873,13 +873,15 @@ printed settings:
   belong to the same Wyckoff position (ITA 6th ed., § 3.2.1.2.4 (i), p. 729); `millerIndices` is the
   first.
 - **Settings ITA does not print** (`mm2` settings 2 and 3, `2mm` and `m2m`; monoclinic unique
-  axis a, whose site symmetries `2`, `m`, `2/m` name the element on the unique axis and are not
-  permuted): the positions of
-  setting 1 carried into their frame, a permutation of the axes (the settings cab and bca of ITA
-  (2016) Table 1.5.4.4): same letters and multiplicities, the
-  positions of the oriented symbol permuted, the coordinates and Miller indices permuted and their
-  letters renamed after their new position (`m..`, `0,y,z`, `0,k,l` in `mm2` become `.m.`, `x,0,z`,
-  `h,0,l` in `2mm`), every triplet of a position in the order of setting 1.
+  axis a): computed from their operations like the printed ones (below), each position with the
+  letter of the position of setting 1 that the change of basis carries onto it (the settings cab
+  and bca of ITA (2016) Table 1.5.4.4, a permutation of the axes). They are thus the positions of
+  setting 1 carried into their frame: same letters and multiplicities, the positions of the oriented
+  symbol permuted (monoclinic site symmetries `2`, `m`, `2/m` name the element on the unique axis
+  and stay as they are), the coordinates and Miller indices permuted with their parameters named
+  after their new axis (`m..`, `0,y,z`, `0,k,l` in `mm2` become `.m.`, `x,0,z`, `h,0,l` in `2mm`),
+  every triplet of a position in the order of setting 1, which a test checks against the change of
+  basis.
 - The **coordinates** are ITA's in full: the triplets of a position are the
   images of its first under the general position, in the order of the general position, which a
   test checks for all 45 printed entries against the transcription (`wyckoff.reference.test.ts`).
@@ -893,7 +895,8 @@ printed settings:
   equal, print states no rule (the letter "is merely a coding scheme", § 2.1.3.11 (ii), p. 162, to
   which § 3.2.1.2.3, p. 727, refers for the point groups); this order is convention data,
   `LETTER_ORDER`, the oriented symbols in letter order for 222, mm2, mmm, 422, 4mm, 4/mmm, 622,
-  6mm, -6m2, -62m, 6/mmm and m-3m (15 sets of positions).
+  6mm, -6m2, -62m, 6/mmm and m-3m (15 sets of positions). In a setting ITA does not print, the
+  order is that of the letters of setting 1, which needs no entry of its own.
 - **First representative:** the element of the orbit whose reduced row echelon form, made integer
   and primitive, has the smallest greatest coefficient, then the fewest negative coefficients, then
   the fewest nonzero ones, then the earliest pivots, then the greatest coefficients in reading
@@ -993,8 +996,10 @@ tetragonal dipyramids of 422, (h0l) and (hhl)).
   -43m and m-3m both are basic forms of the position, elsewhere both are limiting forms. A face
   with numbers must meet the condition: `millerIndices('h,h,l', { h: 1, l: 3 })` is (113), a face of
   the |h| < |l| form, and (331) one of the other.
-- **Groups.** As the Wyckoff positions: the 32 crystal classes only (a RangeError otherwise), and the settings ITA does not print (`mm2` settings 2 and 3, monoclinic unique axis a) are
-  setting 1 carried into their frame.
+- **Groups.** As the Wyckoff positions: the 32 crystal classes only (a RangeError otherwise); the
+  settings ITA does not print (`mm2` settings 2 and 3, monoclinic unique axis a) are computed in the
+  same way, from their Wyckoff positions, and give the forms of setting 1 carried into their frame,
+  in the same order, which a test checks against the change of basis.
 - **Faces with numbers and their normals:** `millerIndices` and `faceNormal`, as for the Wyckoff
   positions; the form and its kind do not depend on the cell angles.
 - **Print anchors.** Table 3.2.3.2 for the forms of each position, Table 3.2.1.3 for the 47 forms. The
