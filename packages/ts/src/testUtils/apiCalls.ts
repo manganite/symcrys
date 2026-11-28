@@ -130,6 +130,8 @@ function pointGroupCalls(entry: 'symcrys' | 'symcrys/magnetic'): ApiCall[] {
   const hexagonal = api.latticeBasis('6/mmm');
   const piezo = api.tensorForm('1', 'piezoelectric').basis[0];
   c('rotateTensor', piezo, unit, 'piezoelectric');
+  c('rotateTensors', [piezo, piezo.map((x) => 2 * x)], unit, 'piezoelectric');
+  c('rotateTensors', [piezo, piezo], [unit, api.operations('m-3m')[5].cartesian], 'piezoelectric');
   c('toVoigt', piezo, 'piezoelectric', { factors: [2] });
   c('fromVoigt', classes.toVoigt(piezo, 'piezoelectric', { factors: [2] }), 'piezoelectric', { factors: [2] });
   c(

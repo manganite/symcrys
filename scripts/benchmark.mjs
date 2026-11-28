@@ -77,4 +77,17 @@ time(
   () => classes.rotateTensor(tensor4, turn, { rank: 4, kind: 'polar', intrinsic: 'none' }),
   2000,
 );
+const vectors = Array.from({ length: 1000 }, (_, i) => [Math.sin(i), Math.cos(i), 1]);
+time(
+  'rotateTensor, rank 1, a loop over 1000 tensors',
+  () => vectors.map((v) => classes.rotateTensor(v, turn, 'pyroelectric')),
+  20,
+);
+time('rotateTensors, rank 1, 1000 tensors', () => classes.rotateTensors(vectors, turn, 'pyroelectric'), 20);
+const tensors4 = Array.from({ length: 1000 }, () => tensor4);
+time(
+  'rotateTensors, rank 4, 1000 tensors',
+  () => classes.rotateTensors(tensors4, turn, { rank: 4, kind: 'polar', intrinsic: 'none' }),
+  5,
+);
 time('siteSymmetry m-3m, [111]', () => classes.siteSymmetry('m-3m', { uvw: [1, 1, 1] }));

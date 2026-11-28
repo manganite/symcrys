@@ -6,6 +6,13 @@ All notable changes to symcrys are recorded here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- `rotateTensors(tensors, rotation, spec)` in `symcrys` and `symcrys/magnetic` (Python
+  `rotate_tensors`): a list of tensors rotated by one rotation or by one rotation per tensor, the
+  specification and the rotations checked once. `rotate_tensor` of the Python package rotates a stack
+  through it in one call of the library, instead of one call per tensor (#240).
+
 ### Changed
 
 - **Breaking:** `wyckoffDistances` of `symcrys/plane` refuses a basis that contradicts the cell

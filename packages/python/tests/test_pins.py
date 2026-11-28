@@ -90,7 +90,7 @@ INT_FIELDS = {
 }
 
 # Results that are tensors: shape (3, …, 3) per tensor in Python, flat components in TypeScript.
-TENSOR_RESULTS = {"fromVoigt", "rotateTensor"}
+TENSOR_RESULTS = {"fromVoigt", "rotateTensor", "rotateTensors"}
 
 
 def snake(name: str) -> str:

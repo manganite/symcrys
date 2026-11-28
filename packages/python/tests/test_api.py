@@ -8,6 +8,7 @@ import threading
 from types import MappingProxyType
 
 import typing
+from typing import Any
 
 import numpy as np
 import pytest
@@ -328,6 +329,47 @@ def test_rotate_tensor_takes_arrays_of_any_shape() -> None:
         assert symcrys.rotate_tensor(np.eye(3), rotations, spec).shape == (4, 3, 3)  # type: ignore[arg-type]
     with pytest.raises(symcrys.SymcrysError, match="orthogonal"):
         symcrys.rotate_tensor(np.zeros((0, 3, 3, 3)), 2 * np.eye(3), SHG)
+
+
+def test_rotate_tensors_takes_a_stack_and_one_rotation_or_one_per_tensor() -> None:
+    rz = np.array([[0.0, -1.0, 0.0], [1.0, 0.0, 0.0], [0.0, 0.0, 1.0]])
+    tensors = np.arange(54, dtype=float).reshape(2, 3, 3, 3)
+    expected = np.einsum("ia,jb,kc,nabc->nijk", rz, rz, rz, tensors)
+    got = symcrys.rotate_tensors(tensors, rz, SHG)
+    assert got.shape == (2, 3, 3, 3) and got.dtype == np.float64
+    assert np.allclose(got, expected)
+    assert symcrys.rotate_tensors(tensors.reshape(2, 27), rz, SHG).shape == (2, 27)
+    rotations = symcrys.operations("4").cartesian[:2]
+    each = symcrys.rotate_tensors(tensors, rotations, SHG)
+    assert all(np.array_equal(each[i], symcrys.rotate_tensor(tensors[i], rotations[i], SHG)) for i in range(2))
+    # Rank 1: (n, 3) is n vectors; an axial vector changes sign under an improper rotation.
+    assert np.allclose(magnetic.rotate_tensors(np.eye(3), -np.eye(3), "ferromagnetic"), np.eye(3))
+    assert np.allclose(symcrys.rotate_tensors(np.eye(3), -np.eye(3), "pyroelectric"), -np.eye(3))
+    assert symcrys.rotate_tensors(np.zeros((0, 3)), rz, "pyroelectric").shape == (0, 3)
+    with pytest.raises(symcrys.SymcrysError, match="2 tensors and 4 rotations"):
+        symcrys.rotate_tensors(tensors, symcrys.operations("4").cartesian, SHG)
+    with pytest.raises(symcrys.SymcrysError, match=r"a stack of tensors of rank 3 has the shape \(n, 3, 3, 3\) or \(n, 27\)"):
+        symcrys.rotate_tensors(tensors[0], rz, SHG)
+    with pytest.raises(symcrys.SymcrysError, match=r"the rotation has the shape \(3, 3\), or \(n, 3, 3\)"):
+        symcrys.rotate_tensors(tensors, rz[:2], SHG)
+    with pytest.raises(symcrys.SymcrysError, match="orthogonal"):
+        symcrys.rotate_tensors(np.zeros((0, 3)), 2 * np.eye(3), "pyroelectric")
+
+
+def test_rotate_tensor_rotates_a_stack_in_one_call(monkeypatch: pytest.MonkeyPatch) -> None:
+    names: list[str] = []
+    call = symcrys._shared.call
+
+    def counted(name: str, *args: Any) -> Any:
+        names.append(name)
+        return call(name, *args)
+
+    rotations = symcrys.operations("m-3m").cartesian
+    monkeypatch.setattr(symcrys._shared, "call", counted)
+    vectors = np.arange(3 * 48, dtype=float).reshape(48, 3)
+    got = symcrys.rotate_tensor(vectors, rotations, "pyroelectric")
+    assert names == ["rotateTensors"]
+    assert np.allclose(got, np.einsum("nia,na->ni", rotations, vectors))
 
 
 def test_library_errors_are_value_errors_with_the_message() -> None:

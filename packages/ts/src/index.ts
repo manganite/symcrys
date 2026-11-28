@@ -83,6 +83,7 @@ export {
   pointGroupOf,
   pointGroups,
   rotateTensor,
+  rotateTensors,
   toVoigt,
   fromVoigt,
   settings,

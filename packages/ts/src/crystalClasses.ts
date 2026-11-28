@@ -32,6 +32,7 @@ import * as site from './siteSymmetry.js';
 import { TENSOR_PROPERTIES as ALL_TENSOR_PROPERTIES } from './tensors/propertyTable.js';
 import type { TensorPropertyName as MagneticTensorPropertyName } from './tensors/propertyTable.js';
 import * as tensors from './tensors/tensorForm.js';
+import { rotateTensors as rotateEachTensor } from './tensors/tensorForm.js';
 import * as voigtNotation from './tensors/voigt.js';
 import type {
   IntrinsicSymmetry,
@@ -806,6 +807,25 @@ export function rotateTensor(
   options?: ToleranceOptions,
 ): readonly number[] {
   return tensors.rotateTensor(tensor, rotation, timeEven(spec), options);
+}
+
+/**
+ * A list of tensors, each in a frame rotated by `rotation`, one orthogonal matrix for all or a list
+ * of them, one per tensor: entry i is `rotateTensor(tensors[i], R, spec)` with R the rotation or
+ * the i-th rotation. The specification and the rotations are checked once, not per tensor. Throws a
+ * RangeError for a list of rotations of another length than the list of tensors, and as
+ * `rotateTensor` does.
+ *
+ * @remarks A list of rotations is told from one rotation by its entries: a rotation has rows of
+ * numbers, a list of rotations has matrices. An empty list is a list of rotations.
+ */
+export function rotateTensors(
+  tensors: readonly (readonly number[])[],
+  rotation: Mat3 | readonly Mat3[],
+  spec: TensorSpec | TensorPropertyName,
+  options?: ToleranceOptions,
+): readonly (readonly number[])[] {
+  return rotateEachTensor(tensors, rotation, timeEven(spec), options);
 }
 
 /**
