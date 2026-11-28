@@ -14,6 +14,7 @@ import { matrixRank, satisfies } from '../testUtils/rank.js';
 import { YARIV_PANELS, basisScheme, printedScheme } from '../testUtils/yariv.js';
 import {
   rotateTensor,
+  rotateTensors,
   tensorForm,
   tensorFormOf,
   type IntrinsicSymmetry,
@@ -419,6 +420,122 @@ describe('rotateTensor', () => {
         expect(sameSpan(rotated, tensorFormOf(rotatedOps, sp).basis, dim), `${key} rank ${sp.rank}`).toBe(true);
       }
     }
+  });
+});
+
+describe('rotateTensors', () => {
+  const rot = (axis: Vec3, deg: number): Mat3 => {
+    const [x, y, z] = axis.map((c) => c / Math.hypot(...axis));
+    const c = Math.cos((deg * Math.PI) / 180);
+    const s = Math.sin((deg * Math.PI) / 180);
+    const t = 1 - c;
+    return [
+      [t * x * x + c, t * x * y - s * z, t * x * z + s * y],
+      [t * x * y + s * z, t * y * y + c, t * y * z - s * x],
+      [t * x * z - s * y, t * y * z + s * x, t * z * z + c],
+    ];
+  };
+  const R1 = rot([1, 2, 3], 37);
+  const improper = rot([-2, 1, 0.5], 111).map((r) => r.map((x) => -x)) as unknown as Mat3;
+  const I: Mat3 = [
+    [1, 0, 0],
+    [0, 1, 0],
+    [0, 0, 1],
+  ];
+
+  it('rotates each tensor by one rotation or by its own, as the independent transformation does', () => {
+    for (const rank of [0, 1, 2, 3, 4] as const) {
+      const dim = 3 ** rank;
+      const list = [0, 1, 2].map((k) => Array.from({ length: dim }, (_, i) => Math.sin(7 * k + i + 1)));
+      for (const kind of ['polar', 'axial'] as const) {
+        const sp = spec(rank, kind);
+        const f = (r: Mat3) => (kind === 'axial' ? Math.sign(det(r)) : 1);
+        const one = rotateTensors(list, improper, sp);
+        expect(one).toHaveLength(3);
+        one.forEach((t, k) =>
+          expect(close(t, transform(list[k], improper, rank, f(improper))), `${rank} ${kind}`).toBe(true),
+        );
+        const each = [R1, improper, I];
+        rotateTensors(list, each, sp).forEach((t, k) =>
+          expect(close(t, transform(list[k], each[k], rank, f(each[k]))), `${rank} ${kind} ${k}`).toBe(true),
+        );
+      }
+    }
+  });
+
+  it('gives what rotateTensor gives, bit for bit, and frozen', () => {
+    const list = [0, 1].map((k) => Array.from({ length: 27 }, (_, i) => Math.cos(5 * k + i)));
+    const sp = spec(3, 'axial');
+    const got = rotateTensors(list, [R1, improper], sp);
+    expect(got).toEqual([rotateTensor(list[0], R1, sp), rotateTensor(list[1], improper, sp)]);
+    expect(Object.isFrozen(got) && got.every((t) => Object.isFrozen(t))).toBe(true);
+  });
+
+  it('an empty list of tensors gives an empty list, and still checks the rotation and the specification', () => {
+    expect(rotateTensors([], R1, spec(2))).toEqual([]);
+    expect(rotateTensors([], [], spec(2))).toEqual([]);
+    expect(() =>
+      rotateTensors(
+        [],
+        [
+          [2, 0, 0],
+          [0, 1, 0],
+          [0, 0, 1],
+        ] as Mat3,
+        spec(1),
+      ),
+    ).toThrow(/The rotation is not an orthogonal/);
+    expect(() => rotateTensors([], R1, { ...spec(1), rank: 5 as TensorRank })).toThrow(RangeError);
+  });
+
+  it('refuses lists of other lengths, wrong rotations and wrong tensors, naming the one', () => {
+    const v = [1, 0, 0];
+    // One tensor or rotation is singular in the message (review of #249).
+    expect(() => rotateTensors([v], [R1, R1], spec(1))).toThrow(/^1 tensor and 2 rotations:/);
+    expect(() => rotateTensors([], [R1], spec(1))).toThrow(/^0 tensors and 1 rotation:/);
+    // A rotation with a wrong row is one rotation with that row, not a list (review of #249).
+    const badRow = [[1, 0, 0], [0, 1, 0], [[0], 0, 1]] as unknown as Mat3; // prettier-ignore
+    expect(() => rotateTensors([v], badRow, spec(1))).toThrow(/Row 2 of the rotation must be 3 finite numbers/);
+    expect(() => rotateTensors([v, v, v], [R1, R1], spec(1))).toThrow(
+      /3 tensors and 2 rotations: pass one rotation for all, or one per tensor/,
+    );
+    expect(() =>
+      rotateTensors(
+        [v, v],
+        [
+          R1,
+          [
+            [2, 0, 0],
+            [0, 1, 0],
+            [0, 0, 1],
+          ] as Mat3,
+        ],
+        spec(1),
+      ),
+    ).toThrow(/Rotation 1 is not an orthogonal/);
+    expect(() =>
+      rotateTensors(
+        [v, v],
+        [
+          R1,
+          [
+            [1, 0, 0],
+            [0, 1],
+            [0, 0, 1],
+          ] as unknown as Mat3,
+        ],
+        spec(1),
+      ),
+    ).toThrow(/Row 1 of rotation 1/);
+    expect(() => rotateTensors([v, [1, 2]], R1, spec(1))).toThrow(
+      /Tensor 1 must have 3 components \(rank 1\), not \[1,2\]/,
+    );
+    expect(() => rotateTensors([v, [1, Number.NaN, 0]], R1, spec(1))).toThrow(/Tensor 1/);
+    // eslint-disable-next-line no-sparse-arrays
+    expect(() => rotateTensors([v, , v] as never, R1, spec(1))).toThrow(/Tensor 1/);
+    expect(() => rotateTensors(v as never, R1, spec(1))).toThrow(RangeError);
+    expect(() => rotateTensors({} as never, R1, spec(1))).toThrow(/a list of tensors/);
+    expect(() => rotateTensors([v], R1, spec(1), { tolerance: 1e-3, x: 1 } as never)).toThrow(RangeError);
   });
 });
 

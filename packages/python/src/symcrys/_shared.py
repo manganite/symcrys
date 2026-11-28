@@ -278,14 +278,8 @@ def freeze(operations: Any, fields: Mapping[str, tuple[Any, tuple[int, ...]]]) -
         object.__setattr__(operations, name, view)
 
 
-def rotate_tensor(call: Any, value: Any, tensor: Any, rotation: Any, spec_or_name: Any, options: Any) -> NDArray[np.float64]:
-    """``rotate_tensor`` of the generated modules: the tensor keeps its shape, (3, …, 3) or
-    the flat (3**rank,), and leading axes of the tensor and of the rotation (…, 3, 3) are stacks,
-    broadcast against each other as NumPy does. The library rotates one tensor by one rotation per
-    call; this only loops."""
-    t = array(tensor, "tensor", np.float64)
-    r = array(rotation, "rotation")
-    given = spec(spec_or_name)
+def _rank(value: Any, given: Any) -> int | None:
+    """The rank of a tensor specification or name, or None where the library is to say what is wrong."""
     if isinstance(given, str):
         rank = value("TENSOR_PROPERTIES").get(given, {}).get("spec", {}).get("rank")
     else:
@@ -294,6 +288,20 @@ def rotate_tensor(call: Any, value: Any, tensor: Any, rotation: Any, spec_or_nam
         if isinstance(rank, (np.integer, np.floating, float)) and not isinstance(rank, bool) and float(rank).is_integer():
             rank = int(rank)
     if not isinstance(rank, int) or isinstance(rank, bool) or not 0 <= rank <= 4:
+        return None
+    return rank
+
+
+def rotate_tensor(call: Any, value: Any, tensor: Any, rotation: Any, spec_or_name: Any, options: Any) -> NDArray[np.float64]:
+    """``rotate_tensor`` of the generated modules: the tensor keeps its shape, (3, …, 3) or
+    the flat (3**rank,), and leading axes of the tensor and of the rotation (…, 3, 3) are stacks,
+    broadcast against each other as NumPy does. The stack goes to the library in one call of
+    ``rotateTensors``."""
+    t = array(tensor, "tensor", np.float64)
+    r = array(rotation, "rotation")
+    given = spec(spec_or_name)
+    rank = _rank(value, given)
+    if rank is None:
         # An unknown name or a wrong specification: the library says what is wrong.
         return np.asarray(call("rotateTensor", t.reshape(-1), r, given, options), dtype=np.float64)
     full = (3,) * rank
@@ -315,14 +323,49 @@ def rotate_tensor(call: Any, value: Any, tensor: Any, rotation: Any, spec_or_nam
             f"the stacks of the tensor {t.shape} and of the rotation {r.shape} do not broadcast", "RangeError"
         ) from None
     tensors = np.broadcast_to(t, lead + core).reshape(-1, 3**rank)
-    rotations = np.broadcast_to(r, lead + (3, 3)).reshape(-1, 3, 3)
-    if len(tensors) == 0:
-        # An empty stack: one call with a zero tensor, so that a wrong rotation or specification is
-        # still refused.
-        given_rotations = r.reshape(-1, 3, 3)
-        call("rotateTensor", np.zeros(3**rank), given_rotations[0] if len(given_rotations) else np.eye(3), given, options)
-    out = [call("rotateTensor", tt, rr, given, options) for tt, rr in zip(tensors, rotations)]
+    stack = r.reshape(-1, 3, 3)
+    try:
+        if len(stack) == 1 or (len(tensors) == 0 and len(stack)):
+            # One rotation for all, checked once; for an empty stack the first rotation given is
+            # still checked.
+            rotations: NDArray[Any] = stack[0]
+        elif len(tensors) == 0:
+            rotations = stack
+        else:
+            if r.shape[:-2] != lead:
+                # Broadcasting repeats rotations: the given ones are checked first, so that a
+                # message counts them as given (flattened), not as repeated.
+                call("rotateTensors", np.zeros((len(stack), 3**rank)), stack, given, options)
+            rotations = np.broadcast_to(r, lead + (3, 3)).reshape(-1, 3, 3)
+        out = call("rotateTensors", tensors, rotations, given, options)
+    except _engine.SymcrysError as e:
+        # The caller called rotate_tensor: a message names it, not the function it calls.
+        raise _engine.SymcrysError(str(e).replace("rotate_tensors", "rotate_tensor", 1), "RangeError") from None
     return np.asarray(out, dtype=np.float64).reshape(lead + core)
+
+
+def rotate_tensors(call: Any, value: Any, tensors: Any, rotation: Any, spec_or_name: Any, options: Any) -> NDArray[np.float64]:
+    """``rotate_tensors`` of the generated modules: a stack of n tensors, of the shape (n, 3, …, 3)
+    or (n, 3**rank), and one rotation (3, 3) or one per tensor (n, 3, 3); the result has the shape
+    of the stack. The library checks the rotations and the specification once."""
+    t = array(tensors, "tensors", np.float64)
+    r = array(rotation, "rotation")
+    given = spec(spec_or_name)
+    rank = _rank(value, given)
+    if rank is None:
+        # An unknown name or a wrong specification: the library says what is wrong.
+        return np.asarray(call("rotateTensors", t, r, given, options), dtype=np.float64)
+    full = (3,) * rank
+    if not (t.ndim == 1 + rank and t.shape[1:] == full) and not (t.ndim == 2 and t.shape[1] == 3**rank):
+        structured = "(n" + ", 3" * rank + ")" if rank else "(n,)"
+        shapes = f"{structured} or (n, {3**rank})" if rank != 1 else "(n, 3)"
+        raise _engine.SymcrysError(f"a stack of tensors of rank {rank} has the shape {shapes}, not {t.shape}", "RangeError")
+    if not (r.shape == (3, 3) or (r.ndim == 3 and r.shape[1:] == (3, 3))):
+        raise _engine.SymcrysError(
+            f"the rotation has the shape (3, 3), or (n, 3, 3) for one per tensor, not {r.shape}", "RangeError"
+        )
+    out = call("rotateTensors", t.reshape(len(t), 3**rank), r, given, options)
+    return np.asarray(out, dtype=np.float64).reshape(t.shape)
 
 
 def value(name: str) -> Any:

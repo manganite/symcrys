@@ -959,6 +959,7 @@ __all__ = [
     "reduce_indices",
     "residual_operations",
     "rotate_tensor",
+    "rotate_tensors",
     "settings",
     "site_symmetry",
     "site_symmetry_of",
@@ -2330,7 +2331,8 @@ def rotate_tensor(
     tensor in the frame of a surface, pass the matrix whose rows are the new axes in the old frame.
     The kind of tensor is given by its specification or by the name of a property in
     ``TENSOR_PROPERTIES``. Raises SymcrysError for a rotation that is not orthogonal within the
-    tolerance (per matrix entry of RᵀR).
+    tolerance (per matrix entry of RᵀR). For many tensors, ``rotate_tensors`` checks the rotation
+    and the specification once.
 
     Parameters
     ----------
@@ -2352,6 +2354,46 @@ def rotate_tensor(
         _call,
         _value,
         tensor,
+        rotation,
+        spec,
+        _shared.options(tolerance=tolerance),
+    )
+    return result
+
+
+def rotate_tensors(
+    tensors: ArrayLike,
+    rotation: ArrayLike,
+    spec: TensorSpec | Mapping[str, Any] | TensorPropertyName,
+    *,
+    tolerance: Optional[float] = None,
+) -> NDArray[np.float64]:
+    """A list of tensors, each in a frame rotated by ``rotation``, one orthogonal matrix for all or
+    a list of them, one per tensor: entry i is ``rotate_tensor(tensors[i], R, spec)`` with R the
+    rotation or the i-th rotation. The specification and the rotations are checked once, not per
+    tensor. Raises SymcrysError for a list of rotations of another length than the list of tensors,
+    and as ``rotate_tensor`` does.
+
+    Parameters
+    ----------
+    tolerance : keyword-only, optional
+        Two numbers closer than this count as equal; default ``EPSILON`` (10⁻⁵). It is measured per
+        matrix entry for operations, as the distance of unit vectors for directions and per
+        coordinate modulo the lattice for points (docs/conventions.md, "Tolerances").
+
+    Returns
+    -------
+    numpy.ndarray
+        A float64 array of the shape of ``tensors``: a stack of n tensors, each of the shape (3, …,
+        3) or the flat (3**rank,), where the structured shape is read first (at rank 1 an (n, 3)
+        array is n vectors). ``rotation`` is one rotation (3, 3) for all tensors or one per tensor
+        (n, 3, 3). For stacks that broadcast against each other, ``rotate_tensor`` takes any leading
+        axes.
+    """
+    result: NDArray[np.float64] = _shared.rotate_tensors(
+        _call,
+        _value,
+        tensors,
         rotation,
         spec,
         _shared.options(tolerance=tolerance),

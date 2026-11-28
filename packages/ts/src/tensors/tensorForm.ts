@@ -537,37 +537,59 @@ export function checkedSpec(spec: TensorSpec | TensorPropertyName): {
 }
 
 /**
- * The tensor `tensor` in a frame rotated by the orthogonal
- * matrix `rotation`: t′_{i…} = f·Σ R_{ia}…R_{…}·t_{a…}, with f = det(R) for an axial tensor and 1
- * for a polar one. To express a tensor in the frame of a surface, pass the matrix whose rows are
- * the new axes in the old frame. Time parity plays no part. The kind of tensor is given by its
- * specification or by the name of a property in `TENSOR_PROPERTIES`. Throws a RangeError for a
- * rotation that is not orthogonal within the tolerance (per matrix entry of RᵀR).
+ * A rotation of a caller, checked: a 3 × 3 matrix of finite numbers, orthogonal within the
+ * tolerance. `what` names it in a message ("The rotation", "Rotation 2"), `of` in the message on a
+ * row ("the rotation", "rotation 2").
  */
-export function rotateTensor(
-  tensor: readonly number[],
-  rotation: Mat3,
-  spec: TensorSpec | TensorPropertyName,
-  options?: ToleranceOptions,
-): readonly number[] {
-  checkOptions(options, TOLERANCE_KEYS, 'rotateTensor');
-  const resolved = specOf(spec);
-  checkSpec(resolved);
+function checkRotation(rotation: unknown, what: string, of: string, tolerance: number): Mat3 {
   if (!Array.isArray(rotation) || rotation.length !== 3) {
-    throw new RangeError(`The rotation must be a 3 × 3 matrix, not ${shown(rotation)}`);
+    throw new RangeError(`${what} must be a 3 × 3 matrix, not ${shown(rotation)}`);
   }
   // Array.from: a hole is undefined, and refused, not skipped.
-  Array.from(rotation as unknown[]).forEach((row, i) => checkNumbers(row, 3, `Row ${i} of the rotation`));
-  checkOrthogonalWithin(rotation, 'The rotation', toleranceOf(options, 'operations'));
-  const { rank } = resolved;
+  Array.from(rotation as unknown[]).forEach((row, i) => checkNumbers(row, 3, `Row ${i} of ${of}`));
+  checkOrthogonalWithin(rotation as unknown as Mat3, what, tolerance);
+  return rotation as unknown as Mat3;
+}
+
+/** A tensor of a caller, checked: `3^rank` finite numbers; `index` is its place in a list. */
+function checkTensor(tensor: unknown, rank: number, index?: number): readonly number[] {
   const dim = 3 ** rank;
-  if (!Array.isArray(tensor) || tensor.length !== dim)
-    throw new RangeError(`A tensor of rank ${rank} has ${dim} components, not ${shown(tensor)}`);
-  checkNumbers(tensor, dim, 'The tensor');
-  const m = rotation.flat();
-  const f = resolved.kind === 'axial' ? Math.sign(det(rotation)) : 1;
-  // One index at a time: t′ = R along index 1, then along index 2, …, rank·3^(rank+1) products
-  // instead of rank·9^rank; index k of the flat position has the stride 3^(rank−1−k).
+  if (!Array.isArray(tensor) || tensor.length !== dim) {
+    throw new RangeError(
+      index === undefined
+        ? `A tensor of rank ${rank} has ${dim} components, not ${shown(tensor)}`
+        : `Tensor ${index} must have ${dim} components (rank ${rank}), not ${shown(tensor)}`,
+    );
+  }
+  checkNumbers(tensor, dim, index === undefined ? 'The tensor' : `Tensor ${index}`);
+  return tensor as readonly number[];
+}
+
+/** "1 tensor", "2 tensors". */
+function count(n: number, noun: string): string {
+  return `${n} ${noun}${n === 1 ? '' : 's'}`;
+}
+
+/**
+ * Whether a rotation argument is a list of rotations: an empty list, or one with an entry that is a
+ * matrix (a non-empty list of lists). A rotation has rows of numbers, so a row that is wrong is
+ * reported as a row of the rotation.
+ */
+function isRotationList(rotation: unknown): boolean {
+  if (!Array.isArray(rotation)) return false;
+  if (rotation.length === 0) return true;
+  return Array.from(rotation as unknown[]).some(
+    (r) => Array.isArray(r) && r.length > 0 && Array.from(r as unknown[]).every(Array.isArray),
+  );
+}
+
+/**
+ * The kernel of the rotation, for checked input: t′ = f·R along index 1, then along index 2, …,
+ * rank·3^(rank+1) products instead of rank·9^rank; index k of the flat position has the stride
+ * 3^(rank−1−k). `m` is the rotation by rows, flat.
+ */
+function rotated(tensor: readonly number[], m: readonly number[], f: number, rank: number): number[] {
+  const dim = 3 ** rank;
   let current: number[] = tensor.map((x) => x + 0);
   for (let k = 0; k < rank; k++) {
     const stride = 3 ** (rank - 1 - k);
@@ -580,5 +602,81 @@ export function rotateTensor(
     }
     current = next;
   }
-  return deepFreeze(current.map((x) => f * x + 0));
+  return current.map((x) => f * x + 0);
+}
+
+/** The factor of a rotation for a tensor of the kind: det(R) for an axial tensor, 1 for a polar one. */
+function kindFactor(kind: TensorKind, rotation: Mat3): number {
+  return kind === 'axial' ? Math.sign(det(rotation)) : 1;
+}
+
+/**
+ * The tensor `tensor` in a frame rotated by the orthogonal
+ * matrix `rotation`: t′_{i…} = f·Σ R_{ia}…R_{…}·t_{a…}, with f = det(R) for an axial tensor and 1
+ * for a polar one. To express a tensor in the frame of a surface, pass the matrix whose rows are
+ * the new axes in the old frame. Time parity plays no part. The kind of tensor is given by its
+ * specification or by the name of a property in `TENSOR_PROPERTIES`. Throws a RangeError for a
+ * rotation that is not orthogonal within the tolerance (per matrix entry of RᵀR). For many tensors,
+ * `rotateTensors` checks the rotation and the specification once.
+ */
+export function rotateTensor(
+  tensor: readonly number[],
+  rotation: Mat3,
+  spec: TensorSpec | TensorPropertyName,
+  options?: ToleranceOptions,
+): readonly number[] {
+  checkOptions(options, TOLERANCE_KEYS, 'rotateTensor');
+  const resolved = specOf(spec);
+  checkSpec(resolved);
+  const r = checkRotation(rotation, 'The rotation', 'the rotation', toleranceOf(options, 'operations'));
+  const checked = checkTensor(tensor, resolved.rank);
+  return deepFreeze(rotated(checked, r.flat(), kindFactor(resolved.kind, r), resolved.rank));
+}
+
+/**
+ * A list of tensors, each in a frame rotated by `rotation`, one orthogonal matrix for all or a list
+ * of them, one per tensor: entry i is `rotateTensor(tensors[i], R, spec)` with R the rotation or
+ * the i-th rotation. The specification and the rotations are checked once, not per tensor. Throws a
+ * RangeError for a list of rotations of another length than the list of tensors, and as
+ * `rotateTensor` does.
+ *
+ * @remarks A list of rotations is told from one rotation by its entries: a rotation has rows of
+ * numbers, a list of rotations has matrices. An empty list is a list of rotations.
+ */
+export function rotateTensors(
+  tensors: readonly (readonly number[])[],
+  rotation: Mat3 | readonly Mat3[],
+  spec: TensorSpec | TensorPropertyName,
+  options?: ToleranceOptions,
+): readonly (readonly number[])[] {
+  checkOptions(options, TOLERANCE_KEYS, 'rotateTensors');
+  const resolved = specOf(spec);
+  checkSpec(resolved);
+  const tolerance = toleranceOf(options, 'operations');
+  if (!Array.isArray(tensors)) throw new RangeError(`The tensors are a list of tensors, not ${shown(tensors)}`);
+  const list = isRotationList(rotation);
+  const rotations: { m: readonly number[]; f: number }[] = [];
+  if (list) {
+    const given = Array.from(rotation as unknown[]);
+    if (given.length !== tensors.length) {
+      throw new RangeError(
+        `${count(tensors.length, 'tensor')} and ${count(given.length, 'rotation')}: pass one rotation for all, or one per tensor`,
+      );
+    }
+    given.forEach((r, i) => {
+      const m = checkRotation(r, `Rotation ${i}`, `rotation ${i}`, tolerance);
+      rotations.push({ m: m.flat(), f: kindFactor(resolved.kind, m) });
+    });
+  } else {
+    const m = checkRotation(rotation, 'The rotation', 'the rotation', tolerance);
+    rotations.push({ m: m.flat(), f: kindFactor(resolved.kind, m) });
+  }
+  // Array.from: a hole is undefined, and refused, not skipped.
+  const checked = Array.from(tensors as unknown[]).map((t, i) => checkTensor(t, resolved.rank, i));
+  return deepFreeze(
+    checked.map((t, i) => {
+      const { m, f } = rotations[list ? i : 0];
+      return rotated(t, m, f, resolved.rank);
+    }),
+  );
 }

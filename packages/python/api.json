@@ -142,6 +142,10 @@
       "returns": "float64",
       "body": "rotate_tensor"
     },
+    "rotateTensors": {
+      "returns": "float64",
+      "body": "rotate_tensors"
+    },
     "latticeBasis": {
       "returns": "float64"
     },
